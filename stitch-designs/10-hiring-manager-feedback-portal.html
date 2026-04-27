@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EXECUTIVE_OS // FEEDBACK_PORTAL</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 18px;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#4edea3",
+                        "error": "#ffb4ab",
+                        "surface-container": "#171f33",
+                        "primary-container": "#2563eb",
+                        "surface-tint": "#b4c5ff",
+                        "secondary": "#4edea3",
+                        "outline-variant": "#434655",
+                        "inverse-primary": "#0053db",
+                        "surface-dim": "#0b1326",
+                        "on-tertiary": "#472a00",
+                        "surface-variant": "#2d3449",
+                        "on-primary": "#002a78",
+                        "primary-fixed": "#dbe1ff",
+                        "on-background": "#dae2fd",
+                        "surface-container-high": "#222a3d",
+                        "on-surface-variant": "#c3c6d7",
+                        "surface": "#0b1326",
+                        "primary": "#b4c5ff",
+                        "inverse-on-surface": "#283044",
+                        "on-primary-container": "#eeefff",
+                        "on-secondary": "#003824",
+                        "on-tertiary-container": "#ffeedd",
+                        "on-error": "#690005",
+                        "inverse-surface": "#dae2fd",
+                        "on-tertiary-fixed": "#2a1700",
+                        "surface-container-highest": "#2d3449",
+                        "background": "#0b1326",
+                        "surface-bright": "#31394d",
+                        "error-container": "#93000a",
+                        "tertiary-fixed": "#ffddb8",
+                        "tertiary-container": "#996100",
+                        "surface-container-low": "#131b2e",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-error-container": "#ffdad6",
+                        "tertiary": "#ffb95f",
+                        "outline": "#8d90a0",
+                        "on-secondary-fixed": "#002113",
+                        "on-secondary-container": "#00311f",
+                        "on-primary-fixed": "#00174b",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-surface": "#dae2fd",
+                        "on-secondary-fixed-variant": "#005236",
+                        "surface-container-lowest": "#060e20",
+                        "secondary-container": "#00a572",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "primary-fixed-dim": "#b4c5ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "density-compact": "4px",
+                        "margin": "16px",
+                        "density-comfortable": "12px",
+                        "unit": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-xl": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "mono-data": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar from JSON -->
+<header class="fixed top-0 z-50 w-full h-10 flex items-center justify-between px-3 bg-slate-900/90 backdrop-blur-sm border-b border-slate-800">
+<div class="flex items-center">
+<span class="font-black tracking-widest text-slate-100 border-r border-slate-700 pr-4 mr-4 font-mono uppercase tracking-tighter text-[11px]">EXECUTIVE_OS // ALPHA-01</span>
+<div class="flex items-center bg-slate-800/50 px-2 py-0.5 rounded border border-slate-700">
+<span class="material-symbols-outlined text-slate-500 mr-2" style="font-size: 14px;">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-slate-300 font-mono text-[10px] w-48 placeholder:text-slate-600 uppercase" placeholder="CMD+K TO SEARCH_SYSTEM" type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-400 hover:bg-slate-800 hover:text-white transition-colors duration-75 cursor-crosshair h-8 w-8 flex items-center justify-center rounded">
+<span class="material-symbols-outlined">terminal</span>
+</button>
+<button class="text-slate-400 hover:bg-slate-800 hover:text-white transition-colors duration-75 cursor-crosshair h-8 w-8 flex items-center justify-center rounded">
+<span class="material-symbols-outlined">sensors</span>
+</button>
+<button class="text-slate-400 hover:bg-slate-800 hover:text-white transition-colors duration-75 cursor-crosshair h-8 w-8 flex items-center justify-center rounded relative">
+<span class="material-symbols-outlined">notifications_active</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<button class="text-slate-400 hover:bg-slate-800 hover:text-white transition-colors duration-75 cursor-crosshair h-8 w-8 flex items-center justify-center rounded">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar from JSON -->
+<nav class="fixed left-0 top-0 h-screen w-16 bg-slate-950 border-r border-slate-800 flex flex-col pt-12 pb-4 z-40">
+<div class="flex flex-col items-center py-4 space-y-8 flex-1">
+<div class="group relative">
+<button class="text-slate-500 flex flex-col items-center py-4 w-full hover:bg-slate-900 hover:text-slate-200 transition-all duration-100 ease-in-out">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-mono text-[10px] mt-1">Deep-Dive</span>
+</button>
+</div>
+<div class="group relative w-full">
+<button class="text-slate-500 flex flex-col items-center py-4 w-full hover:bg-slate-900 hover:text-slate-200 transition-all duration-100 ease-in-out">
+<span class="material-symbols-outlined">view_kanban</span>
+<span class="font-mono text-[10px] mt-1">Shortlists</span>
+</button>
+</div>
+<div class="group relative w-full">
+<button class="bg-blue-600/10 text-blue-500 border-l-2 border-blue-600 flex flex-col items-center py-4 w-full transition-all duration-100 ease-in-out">
+<span class="material-symbols-outlined">rate_review</span>
+<span class="font-mono text-[10px] mt-1 uppercase">Feedback</span>
+</button>
+</div>
+<div class="group relative w-full">
+<button class="text-slate-500 flex flex-col items-center py-4 w-full hover:bg-slate-900 hover:text-slate-200 transition-all duration-100 ease-in-out">
+<span class="material-symbols-outlined">settings_applications</span>
+<span class="font-mono text-[10px] mt-1">Admin</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col items-center space-y-4">
+<button class="text-slate-500 hover:text-slate-200">
+<span class="material-symbols-outlined">description</span>
+</button>
+<button class="text-slate-500 hover:text-error">
+<span class="material-symbols-outlined">power_settings_new</span>
+</button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-16 mt-10 p-6 min-h-[calc(100vh-40px)] flex flex-col gap-6">
+<!-- Dashboard Header -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-outline-variant/30 pb-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-secondary font-mono-data text-mono-data uppercase bg-secondary/10 px-1.5 py-0.5 rounded">SYSTEM_LIVE</span>
+<span class="text-on-surface-variant font-mono-data text-mono-data">MANDATE: MD_STRATEGY_OPS_2024</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface uppercase tracking-tight">Hiring Manager Feedback Portal</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="bg-primary text-on-primary px-4 py-2 font-label-caps text-label-caps flex items-center gap-2 rounded hover:brightness-110 transition-all">
+<span class="material-symbols-outlined" style="font-size: 16px;">refresh</span>
+                    RECALIBRATE SYSTEM
+                </button>
+<button class="bg-surface-container-high border border-outline-variant text-on-surface px-4 py-2 font-label-caps text-label-caps flex items-center gap-2 rounded hover:bg-surface-bright transition-all">
+<span class="material-symbols-outlined" style="font-size: 16px;">calendar_month</span>
+                    SYNC CALENDAR
+                </button>
+</div>
+</section>
+<!-- Main Layout: Bento Grid -->
+<div class="grid grid-cols-12 gap-6 flex-1">
+<!-- Left Column: Active Slate Overview -->
+<aside class="col-span-12 lg:col-span-3 flex flex-col gap-4">
+<div class="bg-surface-container-low border border-outline-variant rounded p-4">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 flex items-center justify-between">
+                        ACTIVE_SLATE_METRICS
+                        <span class="text-primary">04_PENDING</span>
+</h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-2 bg-surface-container-lowest rounded">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Avg. Score</span>
+<span class="text-mono-data font-mono-data text-secondary">8.4/10</span>
+</div>
+<div class="flex items-center justify-between p-2 bg-surface-container-lowest rounded">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Time to Sub</span>
+<span class="text-mono-data font-mono-data text-on-surface">12.4d</span>
+</div>
+<div class="flex items-center justify-between p-2 bg-surface-container-lowest rounded">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Consensus</span>
+<span class="text-mono-data font-mono-data text-primary">HIGH</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant rounded p-4 flex-1">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4">MANDATE_CALIBRATION</h3>
+<div class="space-y-6 mt-4">
+<div class="space-y-2">
+<div class="flex justify-between text-label-caps uppercase text-on-surface-variant">
+<span>Technical Depth</span>
+<span class="text-primary">+15%</span>
+</div>
+<input class="w-full accent-primary h-1 bg-surface-variant rounded-full appearance-none" type="range"/>
+<div class="flex justify-between text-[8px] uppercase text-slate-500">
+<span>Functional</span>
+<span>Expert</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-caps uppercase text-on-surface-variant">
+<span>Scale Experience</span>
+<span class="text-secondary">OPTIMAL</span>
+</div>
+<input class="w-full accent-secondary h-1 bg-surface-variant rounded-full appearance-none" type="range"/>
+<div class="flex justify-between text-[8px] uppercase text-slate-500">
+<span>Startup</span>
+<span>Fortune 50</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-caps uppercase text-on-surface-variant">
+<span>Comp Benchmarking</span>
+<span class="text-error">NEED_SCALE</span>
+</div>
+<input class="w-full accent-error h-1 bg-surface-variant rounded-full appearance-none" type="range"/>
+<div class="flex justify-between text-[8px] uppercase text-slate-500">
+<span>Below Mkt</span>
+<span>Aggressive</span>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-2 border border-primary/30 text-primary text-label-caps font-label-caps hover:bg-primary/10 transition-colors uppercase">
+                        Commit Parameters
+                    </button>
+</div>
+</aside>
+<!-- Center Column: Candidate Review Cards -->
+<div class="col-span-12 lg:col-span-6 flex flex-col gap-6">
+<!-- Swipe Header -->
+<div class="flex items-center justify-between bg-surface-container rounded p-3 border-l-4 border-primary">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">priority_high</span>
+<p class="text-body-md font-body-md text-on-surface">Currently reviewing <span class="text-primary font-bold">Marcus Thorne</span> (Sub 04/12)</p>
+</div>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-variant"><span class="material-symbols-outlined">arrow_back</span></button>
+<button class="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-variant"><span class="material-symbols-outlined">arrow_forward</span></button>
+</div>
+</div>
+<!-- Main Review Card -->
+<div class="bg-surface-container-high border border-outline-variant rounded-lg overflow-hidden flex flex-col relative">
+<!-- High-contrast score badge -->
+<div class="absolute top-4 right-4 z-10 bg-slate-950/80 backdrop-blur border border-secondary p-3 text-center">
+<div class="text-label-caps text-secondary uppercase">OS_FIT</div>
+<div class="text-headline-xl font-mono-data text-secondary">94%</div>
+</div>
+<div class="flex flex-col md:flex-row">
+<div class="w-full md:w-1/3 aspect-square md:aspect-auto">
+<img class="w-full h-full object-cover grayscale brightness-75" data-alt="professional executive headshot of a middle aged man with graying hair, serious expression, wearing a navy suit, studio lighting, corporate aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuANW8I6fh2UPZ39jLBzVlBYuOETkTpXPxAF_ASventKKo27n4I07NQ-FXInbR3PsKdEUSHrjTG7jJSC7HnyY9yDm45O6LWnENe0EuZ35EYtarSgITXae32J3x6AYgZQzhiGQmkW1U1iaPewhNO3uhUMhRDqN-dMTogkxiVoscYcQ8NmpXKd9F-b6tjMH1PKnmy2mjkY7vWnAdCNhqr3R4O6-YPr6oSAtPV4gK_oCT-2TCVpaDedv_Fk78M3SjQMsLpKIJ1sFu-8fEo"/>
+</div>
+<div class="p-6 flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="text-label-caps bg-surface-container-highest px-2 py-0.5 text-on-surface-variant">CURRENT: SVP OPS @ CLOUDSCALE</span>
+</div>
+<h2 class="text-headline-xl font-headline-xl text-on-surface uppercase mb-4">Marcus Thorne</h2>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="border-l border-outline-variant pl-3">
+<div class="text-label-caps text-on-surface-variant">EXPERIENCE</div>
+<div class="text-body-md font-mono-data">18_YEARS</div>
+</div>
+<div class="border-l border-outline-variant pl-3">
+<div class="text-label-caps text-on-surface-variant">LOCATION</div>
+<div class="text-body-md font-mono-data">PALO_ALTO</div>
+</div>
+</div>
+<div class="space-y-3 mb-6">
+<div class="bg-surface-container-lowest p-3 border border-outline-variant/30">
+<div class="flex items-center gap-2 text-primary mb-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">auto_awesome</span>
+<span class="text-label-caps uppercase">AI_SYNTHESIS_INSIGHT</span>
+</div>
+<p class="text-body-sm text-on-surface-variant italic">"Led 3 major exits in SaaS. High alignment with your 'Speed-to-Market' priority but current compensation is 12% above projected range."</p>
+</div>
+</div>
+</div>
+<!-- Swipe Interaction -->
+<div class="flex items-center gap-4">
+<button class="flex-1 py-4 bg-error-container/20 border border-error/50 text-error hover:bg-error-container/40 transition-all flex flex-col items-center justify-center rounded">
+<span class="material-symbols-outlined" style="font-size: 32px;">close</span>
+<span class="text-label-caps mt-1">REJECT</span>
+</button>
+<button class="flex-1 py-4 bg-secondary-container/20 border border-secondary/50 text-secondary hover:bg-secondary-container/40 transition-all flex flex-col items-center justify-center rounded">
+<span class="material-symbols-outlined" style="font-size: 32px;">check</span>
+<span class="text-label-caps mt-1">ADVANCE</span>
+</button>
+<button class="px-6 py-4 bg-surface-container-highest border border-outline-variant text-on-surface-variant hover:text-white transition-all flex flex-col items-center justify-center rounded">
+<span class="material-symbols-outlined" style="font-size: 32px;">schedule</span>
+<span class="text-label-caps mt-1">INTERVIEW</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive Comment Feed -->
+<div class="bg-surface-container-low border border-outline-variant rounded p-4">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-3 uppercase">Stakeholder Commentary</h3>
+<div class="space-y-3">
+<div class="flex gap-3">
+<div class="w-8 h-8 rounded bg-surface-variant flex items-center justify-center text-[10px] font-bold">CTO</div>
+<div class="bg-surface-container-lowest p-3 rounded-r-lg rounded-bl-lg flex-1 border-l-2 border-primary">
+<p class="text-body-sm text-on-surface">Technically sound, but I'm worried about the cultural shift from a F500 to our pace.</p>
+<span class="text-[9px] text-slate-500 uppercase mt-1 block">2 hours ago</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+</div>
+<input class="flex-1 bg-surface-container-lowest border border-outline-variant focus:border-primary focus:ring-0 text-body-sm rounded px-3 py-2 uppercase font-mono" placeholder="ADD FEEDBACK_STRING..." type="text"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: System Status & Logistics -->
+<aside class="col-span-12 lg:col-span-3 flex flex-col gap-6">
+<!-- Logistics Card -->
+<div class="bg-surface-container-low border border-outline-variant rounded p-4">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 uppercase">Logistics Pipeline</h3>
+<div class="space-y-4">
+<div class="p-3 border border-outline-variant bg-surface-container-lowest rounded group hover:border-primary transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="text-primary font-mono-data">CONFIRMED</span>
+<span class="material-symbols-outlined text-slate-500 group-hover:text-primary">open_in_new</span>
+</div>
+<div class="text-body-md font-bold text-on-surface">Round 1: Sarah Jenkins</div>
+<div class="text-body-sm text-on-surface-variant mt-1">Oct 24, 09:00 AM (EST)</div>
+</div>
+<div class="p-3 border border-outline-variant bg-surface-container-lowest rounded opacity-60">
+<div class="flex justify-between items-start mb-2">
+<span class="text-on-surface-variant font-mono-data">PENDING_HM</span>
+<span class="material-symbols-outlined text-slate-500">pending</span>
+</div>
+<div class="text-body-md font-bold text-on-surface">Deep-Dive: David Wu</div>
+<div class="text-body-sm text-on-surface-variant mt-1">Awaiting your availability</div>
+</div>
+</div>
+<button class="w-full mt-4 py-2 bg-surface-container-highest text-on-surface text-label-caps font-label-caps hover:bg-surface-bright transition-all border border-outline-variant uppercase">
+                        View Full Pipeline
+                    </button>
+</div>
+<!-- Talent Map Mini-Viz -->
+<div class="bg-surface-container-low border border-outline-variant rounded p-4 flex-1">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 uppercase">Market Benchmark</h3>
+<div class="relative h-48 w-full border border-outline-variant bg-slate-950/50 rounded flex items-center justify-center">
+<!-- Simulated Chart/Viz -->
+<div class="absolute inset-0 flex items-center justify-center opacity-20">
+<svg class="w-full h-full" viewbox="0 0 100 100">
+<circle class="text-slate-700" cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-width="0.5"></circle>
+<circle class="text-slate-700" cx="50" cy="50" fill="none" r="30" stroke="currentColor" stroke-width="0.5"></circle>
+<circle class="text-slate-700" cx="50" cy="50" fill="none" r="20" stroke="currentColor" stroke-width="0.5"></circle>
+<line class="text-slate-700" stroke="currentColor" stroke-width="0.5" x1="50" x2="50" y1="10" y2="90"></line>
+<line class="text-slate-700" stroke="currentColor" stroke-width="0.5" x1="10" x2="90" y1="50" y2="50"></line>
+</svg>
+</div>
+<!-- Active points -->
+<div class="w-2 h-2 bg-secondary rounded-full absolute top-1/4 left-1/3 shadow-[0_0_8px_rgba(78,222,163,0.5)]"></div>
+<div class="w-2 h-2 bg-primary rounded-full absolute top-1/2 right-1/4 shadow-[0_0_8px_rgba(37,99,235,0.5)]"></div>
+<div class="w-2 h-2 bg-error rounded-full absolute bottom-1/3 left-1/2 shadow-[0_0_8px_rgba(255,180,171,0.5)]"></div>
+<div class="text-center z-10 px-4">
+<span class="text-label-caps text-on-surface-variant uppercase">Alignment Radar</span>
+<p class="text-[9px] text-slate-500 mt-2">Visualization of candidate clustering relative to target profile</p>
+</div>
+</div>
+<div class="mt-4 space-y-2">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-secondary rounded-full"></span>
+<span class="text-body-sm text-on-surface-variant">Top Match Cluster</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-primary rounded-full"></span>
+<span class="text-body-sm text-on-surface-variant">Marcus Thorne (Active)</span>
+</div>
+</div>
+</div>
+</aside></div>
+</main>
+<!-- AI Command Bar Footer -->
+<footer class="fixed bottom-0 left-16 right-0 h-10 bg-slate-900 border-t border-slate-800 flex items-center px-4 z-50">
+<span class="text-primary font-mono-data mr-3">&gt;</span>
+<input class="bg-transparent border-none focus:ring-0 text-[11px] font-mono-data text-on-surface w-full uppercase placeholder:text-slate-600" placeholder="TYPE COMMAND: 'RECALIBRATE FOR AGGRESSIVE GROWTH' OR 'SCHEDULE MARCUS FOR TUESDAY'..." type="text"/>
+<div class="flex items-center gap-4 ml-auto">
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
+<span class="text-[9px] font-mono-data text-secondary uppercase">OS_UP_TO_DATE</span>
+</div>
+<div class="text-[9px] font-mono-data text-slate-500 border-l border-slate-700 pl-4">
+                V.01.2.9-NODE_01
+            </div>
+</div>
+</footer>
+</body></html>

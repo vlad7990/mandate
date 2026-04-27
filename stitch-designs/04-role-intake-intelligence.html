@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-tertiary-container": "#ffeedd",
+                "surface-tint": "#b4c5ff",
+                "surface-container": "#171f33",
+                "outline": "#8d90a0",
+                "inverse-primary": "#0053db",
+                "tertiary-fixed": "#ffddb8",
+                "on-surface-variant": "#c3c6d7",
+                "secondary": "#4edea3",
+                "surface-bright": "#31394d",
+                "error": "#ffb4ab",
+                "secondary-fixed": "#6ffbbe",
+                "primary-fixed": "#dbe1ff",
+                "on-tertiary": "#472a00",
+                "on-primary-fixed": "#00174b",
+                "secondary-container": "#00a572",
+                "on-surface": "#dae2fd",
+                "on-background": "#dae2fd",
+                "tertiary-container": "#996100",
+                "background": "#0b1326",
+                "on-error-container": "#ffdad6",
+                "on-secondary-container": "#00311f",
+                "on-primary-fixed-variant": "#003ea8",
+                "on-primary": "#002a78",
+                "tertiary": "#ffb95f",
+                "surface-container-highest": "#2d3449",
+                "secondary-fixed-dim": "#4edea3",
+                "on-tertiary-fixed": "#2a1700",
+                "primary": "#b4c5ff",
+                "on-tertiary-fixed-variant": "#653e00",
+                "surface-container-high": "#222a3d",
+                "primary-container": "#2563eb",
+                "surface-container-lowest": "#060e20",
+                "error-container": "#93000a",
+                "surface-dim": "#0b1326",
+                "on-secondary-fixed": "#002113",
+                "surface-variant": "#2d3449",
+                "on-secondary": "#003824",
+                "tertiary-fixed-dim": "#ffb95f",
+                "surface": "#0b1326",
+                "on-error": "#690005",
+                "outline-variant": "#434655",
+                "surface-container-low": "#131b2e",
+                "on-secondary-fixed-variant": "#005236",
+                "on-primary-container": "#eeefff",
+                "primary-fixed-dim": "#b4c5ff",
+                "inverse-on-surface": "#283044",
+                "inverse-surface": "#dae2fd"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "margin": "16px",
+                "unit": "4px",
+                "density-compact": "4px",
+                "density-comfortable": "12px",
+                "gutter": "12px"
+            },
+            "fontFamily": {
+                "headline-xl": ["Inter"],
+                "label-caps": ["Inter"],
+                "headline-md": ["Inter"],
+                "body-md": ["Inter"],
+                "mono-data": ["JetBrains Mono"],
+                "body-sm": ["Inter"]
+            },
+            "fontSize": {
+                "headline-xl": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700"}],
+                "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                "mono-data": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 18px;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0b1326; }
+        ::-webkit-scrollbar-thumb { background: #334155; }
+        .terminal-grid { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 24px 24px; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md overflow-hidden h-screen flex">
+<!-- SIDE NAVIGATION RAIL -->
+<aside class="fixed left-0 top-0 h-full w-20 border-r border-slate-800 bg-slate-950 flex flex-col items-center py-4 z-50">
+<div class="mb-8">
+<span class="font-black text-blue-600 tracking-widest text-lg">M_OS</span>
+</div>
+<nav class="flex flex-col gap-6 items-center flex-1">
+<div class="text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 cursor-pointer">
+<span class="material-symbols-outlined">search</span>
+</div>
+<div class="text-blue-500 border-l-2 border-blue-600 bg-slate-900/50 p-2 cursor-pointer">
+<span class="material-symbols-outlined">groups</span>
+</div>
+<div class="text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 cursor-pointer">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div class="text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 cursor-pointer">
+<span class="material-symbols-outlined">robot_2</span>
+</div>
+</nav>
+<div class="flex flex-col gap-6 items-center mt-auto">
+<div class="text-slate-500 hover:text-slate-300 p-2">
+<span class="material-symbols-outlined">terminal</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of a professional executive in a dark suit with a neutral background, high contrast lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB99o4bpCtnoZRJPJgY6U84e6SsLuCbnK1uiang-1Pifulldz2ynARd4OazdgTiWyTqELFNjCxPLpNMD8s89MMkflQbnxgZvG_tE3SJAa_z0s_UFJKI2w-rgIqeqfCtETYJ2nYrh16V3CDNXrHi_nWEr8cDa51plLpsFLdWNGmuG1AuGZhvJh3vXFCCsyPPHrFveBHYp7MA-rY8rSFpobFUn3K-SpC-NOc83sorhr5IrigNA16pGnwG-ut3Z_KhzgbTuQBNAaqRczA"/>
+</div>
+</div>
+</aside>
+<!-- MAIN CONTENT AREA -->
+<main class="flex-1 ml-20 flex flex-col min-h-screen terminal-grid">
+<!-- TOP NAV BAR -->
+<header class="flex justify-between items-center h-12 w-full px-6 bg-slate-900 border-b border-slate-800">
+<div class="flex items-center gap-6">
+<span class="font-bold text-slate-100 font-mono text-[11px] uppercase">MANDATE_CORE</span>
+<div class="flex gap-4">
+<span class="text-blue-400 font-bold font-mono text-[11px]">HEALTH: OPTIMAL</span>
+<span class="text-slate-400 font-mono text-[11px]">CONV: 12.4%</span>
+<span class="text-slate-400 font-mono text-[11px]">ACTIVE: 42D</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-primary-container text-on-primary-container font-mono text-[11px] px-3 py-1 rounded-sm hover:opacity-80 transition-all uppercase">COMMAND_LINE</button>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications_paused</span>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">history_edu</span>
+</div>
+</header>
+<!-- DASHBOARD CANVAS -->
+<div class="p-6 flex-1 flex flex-col gap-6 overflow-y-auto">
+<!-- SECTION 1: COMMAND INPUT -->
+<section class="max-w-4xl mx-auto w-full">
+<div class="bg-surface-container-lowest border border-blue-600 p-1 flex items-center shadow-[0_0_15px_rgba(37,99,235,0.2)]">
+<div class="bg-blue-600 px-3 py-2 text-on-primary-fixed font-mono-data text-label-caps flex items-center justify-center">
+                        COMMAND:
+                    </div>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-primary font-mono-data text-headline-md px-4 placeholder-slate-700" placeholder="Input role mandate... e.g. Head of IT Ops for RBC Capital Markets" type="text" value="Head of IT Ops for RBC Capital Markets"/>
+<div class="px-4 text-slate-500 font-mono-data text-body-sm animate-pulse">
+                        █
+                    </div>
+</div>
+</section>
+<!-- GRID LAYOUT FOR INTELLIGENCE -->
+<div class="grid grid-cols-12 gap-6 flex-1">
+<!-- LEFT COLUMN: DECOMPOSITION ENGINE -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
+<!-- AI DECOMPOSITION VIEW -->
+<div class="bg-surface-container border border-slate-800 p-4">
+<div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+<h2 class="font-headline-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">analytics</span>
+                                AI DECOMPOSITION ENGINE
+                            </h2>
+<span class="font-mono-data text-label-caps text-secondary bg-secondary/10 px-2 py-0.5">LIVE ANALYSIS</span>
+</div>
+<div class="grid grid-cols-3 gap-4 mb-6">
+<div class="p-3 border border-slate-700 bg-surface-container-low">
+<p class="font-label-caps text-slate-500 mb-1">INFERRED LEVEL</p>
+<p class="font-mono-data text-headline-md text-on-surface">MD / SVP [L9]</p>
+</div>
+<div class="p-3 border border-slate-700 bg-surface-container-low">
+<p class="font-label-caps text-slate-500 mb-1">COMPENSATION EST.</p>
+<p class="font-mono-data text-headline-md text-secondary">$450K - $620K TC</p>
+</div>
+<div class="p-3 border border-slate-700 bg-surface-container-low">
+<p class="font-label-caps text-slate-500 mb-1">SCOPE</p>
+<p class="font-mono-data text-headline-md text-on-surface">GLOBAL / 24-7</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6 mb-6">
+<!-- Engineering vs Ops Radar-style bars -->
+<div class="space-y-4">
+<h3 class="font-label-caps text-primary border-l-2 border-primary pl-2 uppercase">Core Decomposition</h3>
+<div class="space-y-3">
+<div>
+<div class="flex justify-between font-mono-data text-body-sm mb-1">
+<span>ENGINEERING</span>
+<span class="text-blue-400">35%</span>
+</div>
+<div class="h-1 bg-slate-800 w-full">
+<div class="h-full bg-blue-500" style="width: 35%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-mono-data text-body-sm mb-1">
+<span>OPERATIONS</span>
+<span class="text-secondary">65%</span>
+</div>
+<div class="h-1 bg-slate-800 w-full">
+<div class="h-full bg-secondary" style="width: 65%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-mono-data text-body-sm mb-1">
+<span>INFRASTRUCTURE</span>
+<span class="text-blue-400">80%</span>
+</div>
+<div class="h-1 bg-slate-800 w-full">
+<div class="h-full bg-blue-500" style="width: 80%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-mono-data text-body-sm mb-1">
+<span>APPLICATIONS</span>
+<span class="text-blue-400">20%</span>
+</div>
+<div class="h-1 bg-slate-800 w-full">
+<div class="h-full bg-blue-500" style="width: 20%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Insight Panel -->
+<div class="bg-tertiary-container/10 border border-tertiary/20 p-4 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-1 opacity-20">
+<span class="material-symbols-outlined text-4xl">lightbulb</span>
+</div>
+<h3 class="font-label-caps text-tertiary mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">psychology</span>
+                                    DEEPER MANDATE
+                                </h3>
+<p class="text-body-sm text-on-tertiary-container leading-relaxed italic">
+                                    "Client is facing significant technical debt in legacy bond-trading platforms. The primary goal isn't just 'uptime', it's the modernization of the reliability engineering layer without disrupting high-frequency flows."
+                                </p>
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="bg-slate-900 border border-tertiary/30 text-tertiary font-mono-data text-[9px] px-2 py-0.5">HFT_STABILITY</span>
+<span class="bg-slate-900 border border-tertiary/30 text-tertiary font-mono-data text-[9px] px-2 py-0.5">SRE_TRANSITION</span>
+</div>
+</div>
+</div>
+</div>
+<!-- JOB SPEC GENERATOR (SIDE BY SIDE) -->
+<div class="bg-surface-container border border-slate-800 flex flex-col h-[400px]">
+<div class="flex items-center justify-between p-3 border-b border-slate-800 bg-slate-900/50">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-md text-on-surface">JOB SPEC GENERATOR</h2>
+<div class="flex bg-slate-950 p-1 rounded-sm gap-1">
+<button class="px-3 py-1 bg-primary-container text-on-primary-container font-label-caps">DRAFT_04</button>
+<button class="px-3 py-1 text-slate-500 font-label-caps hover:bg-slate-800 transition-colors">HISTORY</button>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="border border-outline-variant px-3 py-1 font-mono-data text-body-sm flex items-center gap-2 hover:bg-slate-800">
+<span class="material-symbols-outlined text-[14px]">content_copy</span> EXPORT_PDF
+                                </button>
+<button class="bg-secondary-container text-on-secondary-container px-3 py-1 font-mono-data text-body-sm hover:brightness-110">
+                                    FINALIZE_SPEC
+                                </button>
+</div>
+</div>
+<div class="flex flex-1 overflow-hidden">
+<!-- AI DRAFT VIEW -->
+<div class="w-1/2 p-4 border-r border-slate-800 overflow-y-auto">
+<div class="flex items-center gap-2 mb-4">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-caps text-slate-400">AI-GENERATED CONTENT</span>
+</div>
+<div class="font-mono-data text-body-sm space-y-4 text-slate-300">
+<p class="text-primary font-bold text-headline-md">Head of IT Operations</p>
+<p><span class="text-secondary"># ROLE SUMMARY</span><br/>
+                                    Oversee the mission-critical infrastructure supporting RBC Capital Markets. Responsible for 99.999% uptime across global trading venues.</p>
+<p><span class="text-secondary"># KEY CHALLENGES</span><br/>
+                                    1. Transition from legacy monoliths to cloud-native microservices.<br/>
+                                    2. Incident management orchestration during US-market open spikes.<br/>
+                                    3. Managing a team of 45+ SREs across 3 time zones.</p>
+<p><span class="text-secondary"># TECH STACK EXPECTED</span><br/>
+                                    Kubernetes, AWS, Terraform, Splunk, ServiceNow, Python.</p>
+</div>
+</div>
+<!-- COMPARISON / VERSION CONTROL -->
+<div class="w-1/2 bg-slate-950/50 p-4 overflow-y-auto">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-slate-600"></span>
+<span class="font-label-caps text-slate-500">PREVIOUS VERSION (DRAFT_03)</span>
+</div>
+<span class="text-error font-mono-data text-[10px]">- 42 WORDS</span>
+</div>
+<div class="font-mono-data text-body-sm space-y-4 text-slate-600 grayscale opacity-70 line-through decoration-error/50">
+<p class="font-bold">Director of Infrastructure</p>
+<p>Primary lead for all bank systems. Manage data center operations and physical server maintenance...</p>
+<p>Maintain network security protocols and oversee helpdesk ticketing system...</p>
+</div>
+<div class="mt-8 pt-4 border-t border-slate-800">
+<p class="font-label-caps text-slate-500 mb-2">SYSTEM DIFF NOTES</p>
+<div class="bg-error-container/10 border border-error/20 p-2 text-[10px] text-error font-mono-data">
+                                        REMOVED: "Data center focus" (Outdated)<br/>
+                                        ADDED: "SRE focus", "Global Cloud Transition"
+                                    </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: CONTEXT LAYER -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<!-- TARGET COMPANY: RBC CONTEXT -->
+<div class="bg-surface-container border border-slate-800">
+<div class="relative h-24 w-full">
+<img class="w-full h-full object-cover opacity-50" data-alt="Futuristic skyscraper corporate headquarters with sleek glass facade and moody architectural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8JxY_VH7sle6o6odXY32Bv_Z82Cq0NWNf303-nv5AgrpKqwPbm3TKZy8tmaky1BRHTzQBQ3a8OkihRfeq4c7OxTBoI72tkB46EpnWAxE8Qj8xgJrDXv6ANfAhrNkxhVNNIVOKGkWi2REYFiIB3H4jzI9i1fE5Itu_9mzuQbW2qxgskNuYsgPqwXDvQU939c6GEbogS2rrCADrrYwPbO0q_8EKe6YtD3T4ytU41mADpWTqVIyFze0k9ywF7N90YdtR9CsRMJd7iBo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container to-transparent"></div>
+<div class="absolute bottom-2 left-4">
+<h2 class="font-headline-md text-on-surface">RBC CAPITAL MARKETS</h2>
+<p class="font-mono-data text-label-caps text-slate-400 uppercase">Sector: Financial Services / T1 Bank</p>
+</div>
+</div>
+<div class="p-4 space-y-6">
+<!-- ORG STRUCTURE -->
+<div>
+<h3 class="font-label-caps text-primary border-b border-slate-800 pb-1 mb-3">ORG CONTEXT</h3>
+<div class="space-y-2">
+<div class="flex items-center justify-between font-mono-data text-body-sm">
+<span class="text-slate-400">REPORTING LINE:</span>
+<span class="text-on-surface">CTO (GIB)</span>
+</div>
+<div class="flex items-center justify-between font-mono-data text-body-sm">
+<span class="text-slate-400">TEAM SIZE:</span>
+<span class="text-on-surface">120 DIRECT/INDIRECT</span>
+</div>
+<div class="flex items-center justify-between font-mono-data text-body-sm">
+<span class="text-slate-400">BUDGET AUTH:</span>
+<span class="text-secondary">$12M OPEX</span>
+</div>
+</div>
+</div>
+<!-- TECH MATURITY -->
+<div>
+<h3 class="font-label-caps text-primary border-b border-slate-800 pb-1 mb-3">TECH MATURITY INDEX</h3>
+<div class="flex items-end gap-1 h-12">
+<div class="bg-blue-500 w-full h-[30%]"></div>
+<div class="bg-blue-500 w-full h-[45%]"></div>
+<div class="bg-blue-500 w-full h-[80%]"></div>
+<div class="bg-blue-500 w-full h-[60%]"></div>
+<div class="bg-blue-500 w-full h-[90%] border-t-2 border-secondary shadow-[0_0_10px_rgba(78,222,163,0.5)]"></div>
+<div class="bg-slate-800 w-full h-[40%]"></div>
+<div class="bg-slate-800 w-full h-[30%]"></div>
+</div>
+<div class="flex justify-between mt-1 font-mono-data text-[9px] text-slate-500">
+<span>CLOUD</span>
+<span>CI/CD</span>
+<span>AI/ML</span>
+<span>LEGACY</span>
+</div>
+</div>
+<!-- INDUSTRY BENCHMARKING -->
+<div class="bg-slate-900 border border-slate-800 p-3">
+<h3 class="font-label-caps text-on-surface mb-2">TALENT MOVEMENT</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-sm bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">trending_up</span>
+</div>
+<div>
+<p class="font-mono-data text-body-sm text-on-surface">Goldman Sachs → RBC</p>
+<p class="text-[10px] text-slate-500">Net inflow of SRE talent last 6 months</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-sm bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-error">trending_down</span>
+</div>
+<div>
+<p class="font-mono-data text-body-sm text-on-surface">RBC → Fintech</p>
+<p class="text-[10px] text-slate-500">Exit velocity high at L6-L7 levels</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RECENT QUERIES / HISTORY -->
+<div class="bg-surface-container-low border border-slate-800 p-4">
+<h3 class="font-label-caps text-slate-500 mb-3">RECENT INTELLIGENCE SESSIONS</h3>
+<div class="space-y-2">
+<div class="group flex items-center justify-between p-2 hover:bg-slate-900 cursor-pointer transition-colors border-l-2 border-transparent hover:border-blue-600">
+<div class="overflow-hidden">
+<p class="font-mono-data text-body-sm text-on-surface truncate">VP Infrastructure, ScotiaBank</p>
+<p class="text-[9px] text-slate-600 uppercase">Analysis Complete · 2h ago</p>
+</div>
+<span class="material-symbols-outlined text-slate-700 group-hover:text-primary">arrow_forward_ios</span>
+</div>
+<div class="group flex items-center justify-between p-2 hover:bg-slate-900 cursor-pointer transition-colors border-l-2 border-transparent hover:border-blue-600">
+<div class="overflow-hidden">
+<p class="font-mono-data text-body-sm text-on-surface truncate">Chief Info Sec Officer, TD</p>
+<p class="text-[9px] text-slate-600 uppercase">Analysis Complete · 5h ago</p>
+</div>
+<span class="material-symbols-outlined text-slate-700 group-hover:text-primary">arrow_forward_ios</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- FOOTER STATUS BAR -->
+<footer class="h-8 bg-slate-950 border-t border-slate-800 px-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-mono-data text-[10px] text-slate-400">ENGINE_STABLE: 12.0.4</span>
+</div>
+<div class="h-4 w-px bg-slate-800"></div>
+<span class="font-mono-data text-[10px] text-slate-500 uppercase">Tokens: 2,401 / 100,000</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="font-mono-data text-[10px] text-blue-500">ENCRYPTION: AES-256</span>
+<span class="font-mono-data text-[10px] text-slate-500">M_OS SESSION ID: #8822-XP</span>
+</div>
+</footer>
+</main>
+</body></html>

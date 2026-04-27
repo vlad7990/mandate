@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#4edea3",
+                        "surface-container-lowest": "#060e20",
+                        "on-tertiary-container": "#ffeedd",
+                        "on-secondary-container": "#00311f",
+                        "inverse-surface": "#dae2fd",
+                        "surface-bright": "#31394d",
+                        "on-secondary-fixed": "#002113",
+                        "surface-variant": "#2d3449",
+                        "primary-container": "#2563eb",
+                        "outline-variant": "#434655",
+                        "on-primary-fixed": "#00174b",
+                        "on-primary-container": "#eeefff",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-secondary": "#003824",
+                        "surface-container-highest": "#2d3449",
+                        "outline": "#8d90a0",
+                        "surface": "#0b1326",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-tertiary": "#472a00",
+                        "tertiary-container": "#996100",
+                        "on-error-container": "#ffdad6",
+                        "secondary": "#4edea3",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-secondary-fixed-variant": "#005236",
+                        "background": "#0b1326",
+                        "on-background": "#dae2fd",
+                        "surface-container": "#171f33",
+                        "surface-dim": "#0b1326",
+                        "surface-tint": "#b4c5ff",
+                        "inverse-on-surface": "#283044",
+                        "surface-container-low": "#131b2e",
+                        "on-primary": "#002a78",
+                        "primary-fixed": "#dbe1ff",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#dae2fd",
+                        "tertiary": "#ffb95f",
+                        "error-container": "#93000a",
+                        "on-surface-variant": "#c3c6d7",
+                        "primary": "#b4c5ff",
+                        "secondary-container": "#00a572",
+                        "error": "#ffb4ab",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-container-high": "#222a3d",
+                        "inverse-primary": "#0053db"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "12px",
+                        "density-compact": "4px",
+                        "density-comfortable": "12px",
+                        "unit": "4px",
+                        "margin": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "headline-xl": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "mono-data": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "headline-xl": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .data-grid-border { border: 1px solid #334155; }
+        .cell-indicator-blue { border-left: 2px solid #2563eb; }
+        .cell-indicator-green { border-left: 2px solid #4edea3; }
+        .cell-indicator-gold { border-left: 2px solid #ffb95f; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0b1326; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-container selection:text-white overflow-hidden">
+<div class="flex h-screen w-full">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-screen w-64 shrink-0 overflow-y-auto bg-slate-900 dark:bg-slate-900 border-r border-slate-800 dark:border-slate-800 z-50">
+<div class="p-6 flex flex-col gap-1">
+<div class="font-black text-slate-200 tracking-tighter text-lg">STRATEGIC_INTEL</div>
+<div class="font-mono text-[11px] leading-tight text-slate-400">V4.2 ACTIVE_SESSION</div>
+</div>
+<nav class="flex-1 mt-4">
+<div class="text-slate-500 font-mono text-[10px] uppercase tracking-widest px-6 mb-2">Main Ecosystem</div>
+<div class="text-slate-400 hover:text-slate-200 px-4 py-3 flex items-center gap-3 hover:bg-slate-800/40 cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[18px]">search</span>
+<span class="font-mono text-[11px]">Candidate Search</span>
+</div>
+<!-- Active Item: Talent Pipeline -->
+<div class="bg-slate-800/80 text-blue-400 border-l-2 border-blue-600 px-4 py-3 flex items-center gap-3 cursor-pointer brightness-125">
+<span class="material-symbols-outlined text-[18px]">account_tree</span>
+<span class="font-mono text-[11px]">Talent Pipeline</span>
+</div>
+<div class="text-slate-400 hover:text-slate-200 px-4 py-3 flex items-center gap-3 hover:bg-slate-800/40 cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[18px]">insights</span>
+<span class="font-mono text-[11px]">Market Intel</span>
+</div>
+<div class="text-slate-400 hover:text-slate-200 px-4 py-3 flex items-center gap-3 hover:bg-slate-800/40 cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[18px]">business_center</span>
+<span class="font-mono text-[11px]">Client Portal</span>
+</div>
+<div class="text-slate-400 hover:text-slate-200 px-4 py-3 flex items-center gap-3 hover:bg-slate-800/40 cursor-pointer transition-all">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+<span class="font-mono text-[11px]">System Config</span>
+</div>
+</nav>
+<div class="mt-auto p-4 border-t border-slate-800">
+<div class="flex items-center gap-2 text-secondary-fixed-dim font-mono text-[11px]">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>Status: Nominal</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-12 px-3 w-full sticky top-0 z-50 bg-slate-900 dark:bg-slate-900 border-b border-slate-800 dark:border-slate-800">
+<div class="flex items-center gap-4">
+<div class="text-sm font-bold text-slate-100 dark:text-slate-50 tracking-tighter">EXEC_OS // TERMINAL</div>
+<div class="h-4 w-[1px] bg-slate-700"></div>
+<div class="flex items-center bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono text-[10px]">
+<span class="material-symbols-outlined text-[14px] mr-2">search</span>
+<span>SEARCH_INDEX...</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex gap-1">
+<button class="p-1.5 text-slate-400 hover:bg-slate-800 transition-colors rounded">
+<span class="material-symbols-outlined text-[18px]">dns</span>
+</button>
+<button class="p-1.5 text-slate-400 hover:bg-slate-800 transition-colors rounded">
+<span class="material-symbols-outlined text-[18px]">memory</span>
+</button>
+<button class="p-1.5 text-blue-500 hover:bg-slate-800 transition-colors rounded relative">
+<span class="material-symbols-outlined text-[18px]">notifications_active</span>
+<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-error rounded-full"></span>
+</button>
+</div>
+<div class="h-6 w-6 rounded bg-slate-700 border border-slate-600 overflow-hidden">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="Professional headshot of a male executive in a charcoal suit, neutral studio background, high-end corporate photography style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_dMEzxgbnJh4iMginiqNd5cI7IiSQzuB3r72ypYvk2aIs7THF3QSn0ZJgxeKSOBye0PZAYqwILmngVJsVsvNTojIoHCsqPxgdrTIiL1TZAh4_HupG8ssnNFcJx0ZBQJqvuaFXLo6uBj6lVBH2LoDUs1M-lkWJW797i-NzUr3gM9uwL70VK2dBRuDnlWPLXh_NV6hsZ-RB-2ctbRfsMJWBL-3LIw0WLCK2hVb9sMfUk3L4gV4FgaFS4guD7x89t9SkXKTWEgp4w1Y"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="flex-1 p-gutter overflow-y-auto">
+<!-- Project Context Header -->
+<div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-label-caps text-label-caps text-secondary-fixed-dim bg-secondary-container/20 px-2 py-0.5 rounded">ACTIVE_SEARCH</span>
+<span class="font-mono-data text-mono-data text-outline">ID: PRJ-992-DELTA</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-background">Chief Financial Officer (CFO)</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Global FinTech Corp | New York / Remote | $450k Base + Carry</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant hover:bg-surface-container-high transition-colors font-mono-data text-mono-data text-on-surface">
+<span class="material-symbols-outlined text-[16px]">visibility</span> PREVIEW_SLATE
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary-container text-white hover:brightness-110 active:scale-[0.98] transition-all font-mono-data text-mono-data">
+<span class="material-symbols-outlined text-[16px]">send</span> FINALIZE_SUBMISSION
+                        </button>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-gutter h-full">
+<!-- Left Column: Source Candidates -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-gutter">
+<div class="bg-surface-container border border-outline-variant p-3 flex flex-col h-[calc(100vh-280px)]">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-label-caps text-label-caps text-outline uppercase">Qualified Pool (8)</h3>
+<span class="material-symbols-outlined text-[16px] text-outline">sort</span>
+</div>
+<div class="flex flex-col gap-2 overflow-y-auto pr-1">
+<!-- Candidate Card 1 -->
+<div class="bg-surface-container-high border border-outline-variant p-3 cursor-grab active:cursor-grabbing hover:border-primary transition-colors group">
+<div class="flex justify-between items-start mb-2">
+<div class="flex gap-3">
+<div class="w-10 h-10 bg-slate-700 overflow-hidden">
+<img alt="Candidate" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="Professional headshot of a female executive, confident expression, minimalist professional attire, clean studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtijQiT8G6-FdiF99zhw09cUle4O49gmgvgAvLArc51NvcBoquIIUa-OHGkTE-0RWJjt48pJqeETpU8eH1yxZB_TEoiiAOaU3St6zqoeGnKjwsEUMboak5n6IcIndaonJXuwEjVjMtU8j4MthGad4beAcE6SEyzoJzfjRmn-kYqGvqD59XMN2Scw_XuBpRVt_HOCJHTyrYlinIuWntaUyw2fMQkwfXoRKHsK8vYbhU4QCGskeDs8GzlgCtb-1L9qsQIyZixEku6EE"/>
+</div>
+<div>
+<div class="font-headline-md text-body-md text-on-surface">Elena Rodriguez</div>
+<div class="font-mono-data text-mono-data text-outline">SVP Finance @ Neobank</div>
+</div>
+</div>
+<div class="font-label-caps text-label-caps bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded">98% FIT</div>
+</div>
+<div class="flex gap-1 mt-3">
+<div class="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[90%]"></div>
+</div>
+<div class="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[85%]"></div>
+</div>
+<div class="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[95%]"></div>
+</div>
+</div>
+</div>
+<!-- Candidate Card 2 -->
+<div class="bg-surface-container-high border border-outline-variant p-3 cursor-grab hover:border-primary transition-colors group">
+<div class="flex justify-between items-start mb-2">
+<div class="flex gap-3">
+<div class="w-10 h-10 bg-slate-700 overflow-hidden">
+<img alt="Candidate" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="Close up portrait of a male business leader, sharp focus, neutral tones, executive presence" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDN-gJzoEmpal_yckvZMavpifauK1HtipF-7EeM0dCDPja2t8TaI3ecNLaAEYmi3H4Zhb_hIVTCm1JBqE2oTjoeh5Em3xhhH2-cPhSvbd8MLYzhmJ8sy3Zae4_PlvrPmXDyXlOONVKvRdbT3QoULP0bp8ywqyeNkYVq7vcoKqrykrEl24j1gsLw8Lb_He2OU-XGetWryHBHR0rJq366XS--vKpbLkltoVivYpcYQ_hkbsgeUat6kILAJ8L6_GGDzWGGDwKeSRzI4mA"/>
+</div>
+<div>
+<div class="font-headline-md text-body-md text-on-surface">Marcus Thorne</div>
+<div class="font-mono-data text-mono-data text-outline">CFO @ BlueChip Crypto</div>
+</div>
+</div>
+<div class="font-label-caps text-label-caps bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded">94% FIT</div>
+</div>
+<div class="flex gap-1 mt-3">
+<div class="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[80%]"></div>
+</div>
+<div class="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[90%]"></div>
+</div>
+<div class="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[70%]"></div>
+</div>
+</div>
+</div>
+<!-- Candidate Card 3 -->
+<div class="bg-surface-container-high border border-outline-variant p-3 cursor-grab hover:border-primary transition-colors group opacity-60">
+<div class="flex justify-between items-start mb-2">
+<div class="flex gap-3">
+<div class="w-10 h-10 bg-slate-700 overflow-hidden">
+<img alt="Candidate" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="Headshot of a mid-40s professional woman, sharp corporate style, soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAnXka5xoWlemodCibWA9TMN6ZxF1aDlH3G-Num07sb7aF33JeY6IlQmXTZWW6gGwQpwuIIu7pfbpoN1_ZImD3A9Rl518O-v9m88hq7iJJrHv3-R-EHMqydqUbqzkZjCUGzsunQ6dj8T2xinz1xvcuhU8UWTFwAedjLNlZ4NCgnElClL8lN2ETrRx-b1DsexzQTQUFQXOX7jLWs_afLVhWDP1-z_fkvehB9k63vTZEdj5nk6XH7xLW-Si6QTffEHMAYeLXn80V6So"/>
+</div>
+<div>
+<div class="font-headline-md text-body-md text-on-surface">Sarah Jenkins</div>
+<div class="font-mono-data text-mono-data text-outline">VP Finance @ Stripe</div>
+</div>
+</div>
+<div class="font-label-caps text-label-caps bg-outline text-surface px-1.5 py-0.5 rounded">89% FIT</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Shortlist Builder -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-gutter">
+<!-- Top 3 Slate Dropzone -->
+<div class="bg-slate-900/50 border-2 border-dashed border-outline-variant p-gutter flex flex-col min-h-[400px]">
+<div class="flex items-center justify-between mb-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Final Shortlist: "The Top 3"</h2>
+<p class="font-body-sm text-body-sm text-outline">Drag candidates here to define the submission slate.</p>
+</div>
+<div class="flex items-center gap-1">
+<div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
+<span class="font-mono-data text-mono-data text-secondary-fixed-dim uppercase">Live Comparison Mode</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter flex-1">
+<!-- Slot 1: Filled -->
+<div class="bg-surface-container-low border border-outline-variant flex flex-col relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-secondary shadow-[0_0_10px_rgba(78,222,163,0.3)]"></div>
+<div class="p-4 flex-1">
+<div class="flex justify-between items-start mb-4">
+<div class="w-14 h-14 bg-slate-700 border-2 border-slate-600">
+<img alt="Selected Candidate" class="w-full h-full object-cover" data-alt="Professional portrait of a male executive in a dark suit, confident posture, dark office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAoK5R_2dSs0RBf-xsFNXroztJFsf_zqPKC5T2IFzYmH_SqYDKyvIzvkx85ALWkqRxM_VRV8CvoMiTxBA9H4dXzcip-clYbeezKspKrzL4YnB8Nvu9IaggUFcNx1j6DosGT_3C3pFidJ7BTGfEzeyHOJwYi9tPXcKh_A0YzM-O0fJyaaklwZ6PIWBsPuPfuP3Zyh9J-g2vT-VDxjqTDvOzNxzjgmvuOG1SsqcC7wJE3U7yzAL3WJWtbTPQavzZiRZ7Xy0eBoo0FI4"/>
+</div>
+<button class="text-outline hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[20px]">cancel</span>
+</button>
+</div>
+<div class="font-headline-md text-headline-md text-on-surface mb-1">David Chen</div>
+<div class="font-mono-data text-mono-data text-outline mb-4">Former CFO @ Revolut</div>
+<!-- Benchmarking Sparklines -->
+<div class="space-y-3">
+<div>
+<div class="flex justify-between font-label-caps text-label-caps mb-1">
+<span>Leadership</span>
+<span class="text-secondary">9.8</span>
+</div>
+<div class="h-1.5 bg-slate-800 w-full">
+<div class="h-full bg-secondary w-[98%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-caps text-label-caps mb-1">
+<span>Scalability</span>
+<span class="text-secondary">9.2</span>
+</div>
+<div class="h-1.5 bg-slate-800 w-full">
+<div class="h-full bg-secondary w-[92%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-caps text-label-caps mb-1">
+<span>Domain Exp.</span>
+<span class="text-secondary">8.9</span>
+</div>
+<div class="h-1.5 bg-slate-800 w-full">
+<div class="h-full bg-secondary w-[89%]"></div>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-4 border-t border-outline-variant">
+<div class="font-label-caps text-label-caps text-outline uppercase mb-2">Key Value Prop</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant italic">"Unrivaled experience scaling fintech through Series D and IPO. Strong regulatory background in EMEA/APAC."</p>
+</div>
+</div>
+</div>
+<!-- Slot 2: Empty/Dropzone -->
+<div class="bg-surface-container-low border-2 border-dashed border-outline-variant flex flex-col items-center justify-center p-6 text-center group hover:bg-slate-800/40 transition-colors">
+<div class="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-outline">add</span>
+</div>
+<div class="font-label-caps text-label-caps text-outline uppercase tracking-widest">Assign Candidate</div>
+<div class="font-mono-data text-[10px] text-slate-600 mt-2">SLOT_02_VACANT</div>
+</div>
+<!-- Slot 3: Empty/Dropzone -->
+<div class="bg-surface-container-low border-2 border-dashed border-outline-variant flex flex-col items-center justify-center p-6 text-center group hover:bg-slate-800/40 transition-colors">
+<div class="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-outline">add</span>
+</div>
+<div class="font-label-caps text-label-caps text-outline uppercase tracking-widest">Assign Candidate</div>
+<div class="font-mono-data text-[10px] text-slate-600 mt-2">SLOT_03_VACANT</div>
+</div>
+</div>
+</div>
+<!-- Narrative & Submission Section -->
+<div class="bg-surface-container border border-outline-variant p-gutter">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-4 tracking-widest">Submission Narrative</h3>
+<div class="relative">
+<div class="absolute left-3 top-3 font-mono-data text-primary text-[14px]">&gt;</div>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant focus:border-primary focus:ring-0 text-on-surface font-mono-data text-body-md p-3 pl-8 min-h-[120px] resize-none" placeholder="Execute strategic summary for the Hiring Manager... Describe why this mix provides optimal coverage for the CFO role requirements."></textarea>
+<div class="flex justify-between items-center mt-2 px-1">
+<div class="flex gap-4">
+<div class="flex items-center gap-1 font-mono-data text-[10px] text-outline">
+<span class="material-symbols-outlined text-[12px]">spellcheck</span> AI_ANALYSIS_ENABLED
+                                        </div>
+<div class="flex items-center gap-1 font-mono-data text-[10px] text-outline">
+<span class="material-symbols-outlined text-[12px]">lock</span> ENCRYPTED_CHANNEL
+                                        </div>
+</div>
+<div class="font-mono-data text-[10px] text-outline uppercase">424 Words</div>
+</div>
+</div>
+<div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-outline-variant">
+<div class="flex items-center gap-6">
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-outline">RECIPIENT</span>
+<span class="font-body-md text-on-surface">Jameson Burke (CEO)</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-[10px] text-outline">DUE_DATE</span>
+<span class="font-body-md text-on-surface">Oct 24, 2023</span>
+</div>
+</div>
+<div class="flex gap-3 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none px-6 py-3 border border-outline-variant font-label-caps text-label-caps text-on-surface hover:bg-surface-container-high transition-all uppercase tracking-widest">
+                                        Save Draft
+                                    </button>
+<button class="flex-1 sm:flex-none px-8 py-3 bg-primary text-on-primary font-label-caps text-label-caps hover:brightness-110 active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-2">
+                                        Finalize &amp; Send <span class="material-symbols-outlined text-[18px]">bolt</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- AI-Command Input Footer -->
+<footer class="h-12 bg-slate-900 border-t border-slate-800 flex items-center px-4 relative">
+<div class="font-mono text-blue-500 mr-3">&gt;</div>
+<input class="bg-transparent border-none focus:ring-0 text-slate-200 font-mono text-xs w-full placeholder-slate-600" placeholder="SYSTEM_COMMAND: Add @Elena_Rodriguez to comparison... | Generate summary from interview notes... | Benchmarking salaries for CFO roles in NYC..." type="text"/>
+<div class="flex gap-4 ml-4">
+<div class="flex items-center gap-1.5">
+<div class="w-1.5 h-1.5 bg-secondary rounded-full"></div>
+<span class="font-mono text-[10px] text-slate-500">ML_MODEL: ACTIVE</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-slate-500 text-[14px]">history</span>
+<span class="font-mono text-[10px] text-slate-500">CMD_HISTORY</span>
+</div>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

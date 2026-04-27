@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MANDATE_OS | VP Engineering - Global Fintech</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#ffeedd",
+                        "surface-tint": "#b4c5ff",
+                        "surface-container": "#171f33",
+                        "outline": "#8d90a0",
+                        "inverse-primary": "#0053db",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-surface-variant": "#c3c6d7",
+                        "secondary": "#4edea3",
+                        "surface-bright": "#31394d",
+                        "error": "#ffb4ab",
+                        "secondary-fixed": "#6ffbbe",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary": "#472a00",
+                        "on-primary-fixed": "#00174b",
+                        "secondary-container": "#00a572",
+                        "on-surface": "#dae2fd",
+                        "on-background": "#dae2fd",
+                        "tertiary-container": "#996100",
+                        "background": "#0b1326",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#00311f",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-primary": "#002a78",
+                        "tertiary": "#ffb95f",
+                        "surface-container-highest": "#2d3449",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-tertiary-fixed": "#2a1700",
+                        "primary": "#b4c5ff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-container-high": "#222a3d",
+                        "primary-container": "#2563eb",
+                        "surface-container-lowest": "#060e20",
+                        "error-container": "#93000a",
+                        "surface-dim": "#0b1326",
+                        "on-secondary-fixed": "#002113",
+                        "surface-variant": "#2d3449",
+                        "on-secondary": "#003824",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface": "#0b1326",
+                        "on-error": "#690005",
+                        "outline-variant": "#434655",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-primary-container": "#eeefff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "inverse-on-surface": "#283044",
+                        "inverse-surface": "#dae2fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin": "16px",
+                        "unit": "4px",
+                        "density-compact": "4px",
+                        "density-comfortable": "12px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "mono-data": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1326; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #434655; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md overflow-hidden h-screen flex">
+<!-- SideNavBar (Shell) -->
+<nav class="fixed left-0 top-0 h-full w-20 border-r border-slate-800 bg-slate-950 dark:bg-[#020617] flex flex-col items-center py-4 z-50">
+<div class="mb-8 flex flex-col items-center gap-1">
+<span class="font-black text-blue-600 dark:text-[#2563EB] tracking-widest text-lg">M</span>
+<span class="font-mono uppercase tracking-tighter text-[8px] text-slate-500">V.02.BR</span>
+</div>
+<div class="flex flex-col gap-6 flex-1">
+<button class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 rounded">
+<span class="material-symbols-outlined">search</span>
+<span class="font-mono uppercase tracking-tighter text-[8px]">Search</span>
+</button>
+<!-- Active Tab: Talent Pool (Assuming Mandate OS focus) -->
+<button class="flex flex-col items-center gap-1 text-blue-500 border-l-2 border-blue-600 bg-slate-900/50 transition-colors duration-150 p-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-mono uppercase tracking-tighter text-[8px]">Talent</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 rounded">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-mono uppercase tracking-tighter text-[8px]">Data</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 rounded">
+<span class="material-symbols-outlined">robot_2</span>
+<span class="font-mono uppercase tracking-tighter text-[8px]">Agents</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 rounded">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-mono uppercase tracking-tighter text-[8px]">Config</span>
+</button>
+</div>
+<div class="flex flex-col gap-4 mt-auto">
+<button class="text-slate-500 hover:text-slate-300"><span class="material-symbols-outlined">terminal</span></button>
+<div class="w-8 h-8 rounded-full border border-slate-700 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a professional male executive in a dark suit with a focused expression and neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeeRytZ3F3lndCObdIpKIc6eD0sS7G9b8LQKuW1wX86lsQD6JbDYZWYsVdNEs_pmvkUUVvga1fbTRZW1FgGOtDNpdHcFuWPIoP6xJYXvs13xHzL8Z6uzf-UJLdugpSCFG3QD0z7DAhxf8NuLnyXaiKax8CBdy1ZkM2RlNDZ6S1YHUXAQRPqZde1uDyaG8vEiI11N0BRAWFDfe22utND1Fj_QMxekgVWZSXMKKVpGr_FaR8LlZsP_QpRHLwT4LeIJ61QNuithEYEZU"/>
+</div>
+</div>
+</nav>
+<main class="flex-1 ml-20 flex flex-col h-screen">
+<!-- TopNavBar (Shell) -->
+<header class="flex justify-between items-center h-12 w-full pl-6 pr-6 bg-slate-900 dark:bg-[#0F172A] border-b border-slate-800 dark:border-[#334155]">
+<div class="flex items-center gap-6">
+<span class="font-bold text-slate-100 dark:text-[#F8FAFC] font-mono text-[11px] uppercase">MANDATE_CORE // VP_ENG_FINTECH</span>
+<div class="flex gap-4 border-l border-slate-700 pl-6">
+<span class="text-blue-400 font-bold font-mono text-[11px] uppercase">HEALTH: OPTIMAL</span>
+<span class="text-slate-400 font-mono text-[11px] uppercase">CONV: 12.4%</span>
+<span class="text-slate-400 font-mono text-[11px] uppercase">ACTIVE: 42D</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-400 hover:text-blue-400 font-mono text-[11px] uppercase">COMMAND_LINE</button>
+<button class="text-slate-400 hover:text-blue-400 font-mono text-[11px] uppercase">EXPORT_RECAP</button>
+<div class="flex gap-2 ml-2">
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-blue-400 text-lg">notifications_paused</span>
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-blue-400 text-lg">history_edu</span>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<div class="flex-1 overflow-hidden grid grid-cols-12 p-4 gap-4">
+<!-- Left: Search Health & Metrics (Bento Style) -->
+<div class="col-span-12 flex gap-4 h-24">
+<div class="flex-1 bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between">
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-slate-400">PIPELINE VELOCITY</span>
+<span class="material-symbols-outlined text-secondary text-sm">trending_up</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-mono-data text-2xl text-on-surface">4.8</span>
+<span class="text-[10px] text-slate-500 font-mono uppercase">Candidates / Week</span>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between">
+<span class="font-label-caps text-slate-400">SOURCING EFFICACY</span>
+<div class="h-8 flex items-end gap-1">
+<div class="w-full bg-secondary/20 h-2 rounded-t-sm"></div>
+<div class="w-full bg-secondary/40 h-4 rounded-t-sm"></div>
+<div class="w-full bg-secondary h-6 rounded-t-sm"></div>
+<div class="w-full bg-secondary h-3 rounded-t-sm"></div>
+<div class="w-full bg-secondary h-5 rounded-t-sm"></div>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between">
+<span class="font-label-caps text-slate-400">HM FEEDBACK ROUNDS</span>
+<div class="flex items-center gap-4">
+<span class="font-mono-data text-2xl text-on-surface">14</span>
+<div class="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="bg-primary w-2/3 h-full"></div>
+</div>
+</div>
+</div>
+<div class="flex-[1.5] bg-surface-container-low border border-outline-variant p-3 flex items-center justify-between">
+<div>
+<span class="font-label-caps text-slate-400 block mb-1">MANDATE STATUS</span>
+<span class="px-2 py-1 bg-secondary-container/20 border border-secondary text-secondary font-mono text-[10px] uppercase">Funnel Health: OPTIMAL</span>
+</div>
+<div class="text-right">
+<span class="font-mono-data text-xl text-primary">T-Minus 18D</span>
+<span class="block text-[9px] text-slate-500 font-mono uppercase">Projected Close</span>
+</div>
+</div>
+</div>
+<!-- Center: Cumulative Ranking (High Density Table) -->
+<div class="col-span-9 bg-surface-container-low border border-outline-variant flex flex-col">
+<div class="p-3 border-b border-outline-variant flex justify-between items-center bg-surface-container">
+<h2 class="font-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">leaderboard</span>
+                        CUMULATIVE_CANDIDATE_RANKING
+                    </h2>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 border border-slate-700 font-mono text-[10px] text-slate-400">N=248</span>
+<span class="px-2 py-0.5 border border-slate-700 font-mono text-[10px] text-slate-400">SORT: SCORE_DESC</span>
+</div>
+</div>
+<div class="flex-1 overflow-auto">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-high z-10">
+<tr class="font-label-caps text-slate-500 border-b border-outline-variant">
+<th class="p-3 w-12">RK</th>
+<th class="p-3">CANDIDATE / CURRENT_ROLE</th>
+<th class="p-3">TIER</th>
+<th class="p-3">PERSPECTIVE_SCORE (ENG vs RISK)</th>
+<th class="p-3">ARCHETYPE</th>
+<th class="p-3 text-right">ACTION</th>
+</tr>
+</thead>
+<tbody class="font-mono-data text-[12px]">
+<!-- Row 1 -->
+<tr class="border-b border-slate-800 hover:bg-slate-900/40 transition-colors group">
+<td class="p-3">
+<div class="flex items-center gap-1">
+<span class="text-primary font-bold">01</span>
+<span class="material-symbols-outlined text-secondary text-xs">keyboard_double_arrow_up</span>
+</div>
+</td>
+<td class="p-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-sm bg-slate-800 overflow-hidden border border-slate-700">
+<img class="w-full h-full object-cover grayscale" data-alt="professional portrait of a man in his 40s with a sharp haircut and professional studio lighting on dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN5_RP6wltis0FwG6d3_KeY-T1YcmGZRHPd0n7MXfvvi7a3sJHKuz0TjnHT8WZsiONyaBY7EFfowyKc539_DqQr6neswH9XfJAZbT5iDfOA1r2I3LDWON7rTgBTrWBGZUQX5ykSyMXk0TtX-UExda0CKeckJxHAiL4H_1MJ3OcH8w5MxHVVfPFSvjKvhGO2ZTRLUtwtMhpuDHTaDkYuYj7aASZaYc72eNss8T4TKudHpwDQ2nqlqK64cAundQu-qCBVoTr-YMY3N8"/>
+</div>
+<div>
+<div class="text-on-surface font-bold uppercase">Marcus Thorne</div>
+<div class="text-[10px] text-slate-500">CTO @ Revolut_UK</div>
+</div>
+</div>
+</td>
+<td class="p-3">
+<span class="bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 text-[9px] uppercase font-bold">Tier 1</span>
+</td>
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="flex-1 h-3 flex gap-0.5">
+<div class="h-full bg-secondary w-[92%]"></div>
+<div class="h-full bg-tertiary w-[84%]"></div>
+</div>
+<span class="text-[10px] text-slate-400">92/84</span>
+</div>
+</td>
+<td class="p-3">
+<span class="text-on-surface-variant font-mono">TRANSFORMER</span>
+</td>
+<td class="p-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-400 hover:text-primary transition-opacity">open_in_new</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-slate-800 hover:bg-slate-900/40 transition-colors group">
+<td class="p-3">
+<div class="flex items-center gap-1">
+<span class="text-primary font-bold">02</span>
+<span class="material-symbols-outlined text-slate-500 text-xs">horizontal_rule</span>
+</div>
+</td>
+<td class="p-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-sm bg-slate-800 overflow-hidden border border-slate-700">
+<img class="w-full h-full object-cover grayscale" data-alt="modern professional woman with glasses looking confident in a corporate tech setting, natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCo_SrdVqpmj51cvsxN9leVPkdjoAxdiKSNeUV0arWMglPQ3a1kLIz_9urtCETczHl3jqwktWvg9HKnI9dnfYwBCho57f7TS18T-ErZcDfeuiTkaYAUbY3SveDFTuYtb-WIynp-snZDzub7ATYwRmz7jT1I4hPkFc6mntT93VPVfNHiZXQUZbRyeiKxGypLUU2FSU0o2tVOwFq2JShHfL51Gx31YupMDQntLwUICgpjBXlpRhStJsgVhiAUQF_W83T0pGlrWMVf33k"/>
+</div>
+<div>
+<div class="text-on-surface font-bold uppercase">Elena Vance</div>
+<div class="text-[10px] text-slate-500">VP Eng @ Stripe_Global</div>
+</div>
+</div>
+</td>
+<td class="p-3">
+<span class="bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 text-[9px] uppercase font-bold">Tier 1</span>
+</td>
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="flex-1 h-3 flex gap-0.5">
+<div class="h-full bg-secondary w-[89%]"></div>
+<div class="h-full bg-tertiary w-[91%]"></div>
+</div>
+<span class="text-[10px] text-slate-400">89/91</span>
+</div>
+</td>
+<td class="p-3">
+<span class="text-on-surface-variant font-mono">STABILIZER</span>
+</td>
+<td class="p-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-400 hover:text-primary transition-opacity">open_in_new</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="border-b border-slate-800 hover:bg-slate-900/40 transition-colors group bg-slate-900/20">
+<td class="p-3">
+<div class="flex items-center gap-1">
+<span class="text-primary font-bold">03</span>
+<span class="material-symbols-outlined text-secondary text-xs">keyboard_arrow_up</span>
+</div>
+</td>
+<td class="p-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-sm bg-slate-800 overflow-hidden border border-slate-700">
+<img class="w-full h-full object-cover grayscale" data-alt="professional male portrait with minimalist background, soft focus, high-end business photography style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMgyU2Zjk90xYlM2Ol9lTKCU-rP4amOpBWkLXDi3G4S_gu804piQG9oIZCMgTmtVO019O079TAUFRZ58voLyOtUvo3oGnEEjEnjFePfDwCRTawnqUcPAK_kEbSteE5QFVCkBc1zXIDqWmF5sja7TJ38tDNZLzZWsu7Qu6xfIvorzfAPbRHYUrhb0FW0j3SPzXP1UMpmQavLQiTw3tN4xzle5LPRfSM9PiyoEHJrNW0jL9fFgH6U4QIW2o0k3MY4IqAJiHTeu_T7jE"/>
+</div>
+<div>
+<div class="text-on-surface font-bold uppercase">Chen Wei</div>
+<div class="text-[10px] text-slate-500">Head of Platform @ Ant_Group</div>
+</div>
+</div>
+</td>
+<td class="p-3">
+<span class="bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 text-[9px] uppercase font-bold">Tier 1</span>
+</td>
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="flex-1 h-3 flex gap-0.5">
+<div class="h-full bg-secondary w-[94%]"></div>
+<div class="h-full bg-tertiary w-[78%]"></div>
+</div>
+<span class="text-[10px] text-slate-400">94/78</span>
+</div>
+</td>
+<td class="p-3">
+<span class="text-on-surface-variant font-mono">SCALER</span>
+</td>
+<td class="p-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-400 hover:text-primary transition-opacity">open_in_new</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="border-b border-slate-800 hover:bg-slate-900/40 transition-colors group">
+<td class="p-3">
+<div class="flex items-center gap-1">
+<span class="text-primary font-bold">04</span>
+<span class="material-symbols-outlined text-error text-xs">keyboard_arrow_down</span>
+</div>
+</td>
+<td class="p-3">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-sm bg-slate-800 overflow-hidden border border-slate-700">
+<img class="w-full h-full object-cover grayscale" data-alt="headshot of a female tech leader with neutral expression, professional studio lighting, dark corporate color palette" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSyZsTH83mA2ZqNOH803WQ-Hg5ozN3q8TkUcMhKJ-NqJlMaDymjDXXkGEcmLFmwloUNPkK_kYgCWrtMSEWbu5bXKJBAwZmn5r4ropY4JLuobYHV0nLcrWLcWyABp78XqFKa2-QzoB7iNgWXiaLniMjhnWwqnvRtUU2HDGhvJqQISxtLaFKdhz8Fs53h3UCA0wtMZS2KPjT1w8K72Vld1Fi-cX7yunJbjpd9nqrLrnTTCA358JMoSMDZcPY6XPoanXlbvMTNsIG4p4"/>
+</div>
+<div>
+<div class="text-on-surface font-bold uppercase">Sarah Jenkins</div>
+<div class="text-[10px] text-slate-500">Engineering Director @ Monzo</div>
+</div>
+</div>
+</td>
+<td class="p-3">
+<span class="bg-slate-800 text-slate-400 border border-slate-700 px-1.5 py-0.5 text-[9px] uppercase font-bold">Tier 2</span>
+</td>
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="flex-1 h-3 flex gap-0.5">
+<div class="h-full bg-secondary w-[81%]"></div>
+<div class="h-full bg-tertiary w-[88%]"></div>
+</div>
+<span class="text-[10px] text-slate-400">81/88</span>
+</div>
+</td>
+<td class="p-3">
+<span class="text-on-surface-variant font-mono">CULTURE_SYNC</span>
+</td>
+<td class="p-3 text-right">
+<button class="opacity-0 group-hover:opacity-100 material-symbols-outlined text-slate-400 hover:text-primary transition-opacity">open_in_new</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Right: AI Agent Activity Sidebar -->
+<div class="col-span-3 flex flex-col gap-4">
+<!-- AI Agent Monitor -->
+<div class="bg-surface-container-low border border-outline-variant flex-1 flex flex-col">
+<div class="p-3 border-b border-outline-variant bg-surface-container flex items-center justify-between">
+<span class="font-label-caps text-slate-400">AI_AGENT_MONITOR</span>
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+</div>
+<div class="p-3 flex flex-col gap-4">
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center text-[10px] font-mono">
+<span class="text-on-surface">INTAKE_AGENT</span>
+<span class="text-slate-500">IDLE</span>
+</div>
+<div class="w-full h-1 bg-slate-800">
+<div class="bg-slate-700 w-full h-full"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center text-[10px] font-mono">
+<span class="text-on-surface">RESEARCH_AGENT</span>
+<span class="text-secondary">PROCESSING_LINKEDIN</span>
+</div>
+<div class="w-full h-1 bg-slate-800 overflow-hidden">
+<div class="bg-secondary w-2/3 h-full animate-[shimmer_2s_infinite]"></div>
+</div>
+<div class="text-[9px] text-slate-500 font-mono mt-1 italic">
+                                &gt; Scraping 14 target profiles from 'Fintech Hubs'
+                            </div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center text-[10px] font-mono">
+<span class="text-on-surface">RANKING_AGENT</span>
+<span class="text-primary">UPDATING_SCORES</span>
+</div>
+<div class="w-full h-1 bg-slate-800">
+<div class="bg-primary w-1/4 h-full"></div>
+</div>
+</div>
+</div>
+<!-- System Logs -->
+<div class="mt-auto p-3 border-t border-outline-variant bg-slate-950/50">
+<span class="font-label-caps text-slate-500 block mb-2">SYSTEM_LOGS</span>
+<div class="font-mono-data text-[9px] text-slate-400 space-y-1">
+<p>[14:22:01] <span class="text-secondary">INFO:</span> New lead found: J. Doe (Adyen)</p>
+<p>[14:21:44] <span class="text-primary">EXEC:</span> Score recalibration complete.</p>
+<p>[14:18:12] <span class="text-slate-500">WARN:</span> API Throttle on LinkedIn_V2</p>
+</div>
+</div>
+</div>
+<!-- Benchmarking Radar Placeholder -->
+<div class="h-40 bg-surface-container-low border border-outline-variant p-3">
+<span class="font-label-caps text-slate-400 block mb-2">CULTURAL_RADAR</span>
+<div class="flex items-center justify-center h-24">
+<!-- Pseudo-Radar Chart using CSS Borders -->
+<div class="relative w-20 h-20 border border-slate-700 rotate-45">
+<div class="absolute inset-0 border border-slate-700 scale-75"></div>
+<div class="absolute inset-0 border border-slate-700 scale-50"></div>
+<!-- Active Polygon -->
+<div class="absolute inset-2 border-2 border-primary/40 bg-primary/5"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom: AI Command Bar -->
+<div class="col-span-12 h-14 bg-slate-950 border border-primary/30 flex items-center px-4 gap-4 shadow-[0_0_15px_rgba(37,99,235,0.1)]">
+<span class="font-mono-data text-primary font-bold text-lg">COMMAND &gt;</span>
+<input class="bg-transparent border-none focus:ring-0 flex-1 font-mono-data text-on-surface placeholder:text-slate-700" placeholder="Trigger agents, filter candidates, or generate recap report..." type="text"/>
+<div class="flex gap-4">
+<span class="text-[10px] text-slate-500 font-mono">ENTER TO EXECUTE</span>
+<span class="text-[10px] text-slate-500 font-mono">ESC TO ABORT</span>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MANDATE_OS | Sourcing Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#ffeedd",
+                        "surface-tint": "#b4c5ff",
+                        "surface-container": "#171f33",
+                        "outline": "#8d90a0",
+                        "inverse-primary": "#0053db",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-surface-variant": "#c3c6d7",
+                        "secondary": "#4edea3",
+                        "surface-bright": "#31394d",
+                        "error": "#ffb4ab",
+                        "secondary-fixed": "#6ffbbe",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary": "#472a00",
+                        "on-primary-fixed": "#00174b",
+                        "secondary-container": "#00a572",
+                        "on-surface": "#dae2fd",
+                        "on-background": "#dae2fd",
+                        "tertiary-container": "#996100",
+                        "background": "#0b1326",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#00311f",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-primary": "#002a78",
+                        "tertiary": "#ffb95f",
+                        "surface-container-highest": "#2d3449",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-tertiary-fixed": "#2a1700",
+                        "primary": "#b4c5ff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-container-high": "#222a3d",
+                        "primary-container": "#2563eb",
+                        "surface-container-lowest": "#060e20",
+                        "error-container": "#93000a",
+                        "surface-dim": "#0b1326",
+                        "on-secondary-fixed": "#002113",
+                        "surface-variant": "#2d3449",
+                        "on-secondary": "#003824",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface": "#0b1326",
+                        "on-error": "#690005",
+                        "outline-variant": "#434655",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-primary-container": "#eeefff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "inverse-on-surface": "#283044",
+                        "inverse-surface": "#dae2fd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin": "16px",
+                        "unit": "4px",
+                        "density-compact": "4px",
+                        "density-comfortable": "12px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "mono-data": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 18px;
+        }
+        .terminal-glow {
+            text-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #060e20;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+<!-- SideNavBar (Predicted Rail) -->
+<aside class="fixed left-0 top-0 h-full w-20 border-r border-slate-800 bg-slate-950 dark:bg-[#020617] flex flex-col items-center py-4 z-50">
+<div class="mb-8">
+<span class="font-black text-blue-600 dark:text-[#2563EB] tracking-widest text-lg uppercase">MOS</span>
+<div class="font-mono uppercase tracking-tighter text-[8px] text-center text-slate-500">V.02.BR</div>
+</div>
+<nav class="flex flex-col gap-6 flex-1">
+<button class="text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 rounded">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 rounded">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+</button>
+<button class="text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 rounded">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+</button>
+<button class="text-blue-500 border-l-2 border-blue-600 bg-slate-900/50 p-2 rounded brightness-125">
+<span class="material-symbols-outlined" data-icon="robot_2">robot_2</span>
+</button>
+<button class="text-slate-500 hover:text-slate-300 hover:bg-slate-900 transition-colors duration-150 p-2 rounded">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</nav>
+<div class="mt-auto flex flex-col gap-4 items-center">
+<span class="material-symbols-outlined text-slate-500 hover:text-slate-300 cursor-pointer" data-icon="terminal">terminal</span>
+<div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700">
+<img alt="Executive Profile" data-alt="Close-up portrait of a sharp executive in a dark suit with a modern office background in soft focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8vp8r8utfsV8dFPECd3PG04sGqTSsPwdZCO9XCHUZbe5TYCkivijk-sEqRt9KDelMv6LfZo64kubw3eoIFmd-3Yv6g89I7k3cuAl57qbwN26qnyuSYFtGHWitnrxcvZ7EHDsCr1Dvwzl0JbBOXatrxdADP7Sxifk5r2u90Xoh63Ew0VqKTG5F_wR96hZ8L6p76mQwLxMJ835g3FleliQMcosw5iFThf1WSTQIRlWfI4iKi3YnfJ0xRFjKhZh3vO5qOZug3oZ8Wlc"/>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Predicted Shell) -->
+<header class="flex justify-between items-center h-12 w-full pl-24 pr-6 bg-slate-900 dark:bg-[#0F172A] border-b border-slate-800 fixed top-0 z-40">
+<div class="flex items-center gap-6">
+<span class="font-bold text-slate-100 dark:text-[#F8FAFC] font-mono text-[11px]">MANDATE_CORE // SOURCE_INTEL</span>
+<div class="flex gap-4">
+<span class="font-mono text-[11px] uppercase text-secondary">HEALTH: OPTIMAL</span>
+<span class="font-mono text-[11px] uppercase text-blue-400 font-bold">CONV: 12.4%</span>
+<span class="font-mono text-[11px] uppercase text-slate-400">ACTIVE: 42D</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="font-mono text-[10px] uppercase border border-slate-700 px-2 py-1 text-slate-400 hover:text-blue-400 transition-all">EXPORT_RECAP</button>
+<button class="bg-primary-container text-on-primary-container font-mono text-[10px] px-3 py-1 font-bold uppercase">COMMAND_LINE</button>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer" data-icon="notifications_paused">notifications_paused</span>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer" data-icon="history_edu">history_edu</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pl-20 pt-12 h-screen flex flex-col bg-background">
+<!-- Grid Layout for Sourcing Intel -->
+<div class="flex-1 grid grid-cols-12 gap-0 overflow-hidden">
+<!-- Left Column: Strategy & Boolean Builder -->
+<div class="col-span-8 border-r border-slate-800 flex flex-col overflow-y-auto custom-scrollbar">
+<!-- Section 1: Boolean Search Generator -->
+<section class="p-6 border-b border-slate-800 bg-surface-container-low">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h2 class="font-headline-md text-primary tracking-tight">BOOLEAN SEARCH GEN</h2>
+<p class="font-mono-data text-slate-500 uppercase">Automated string synthesis engine</p>
+</div>
+<div class="flex gap-2">
+<span class="bg-secondary/10 text-secondary font-mono-data text-[10px] px-2 py-0.5 border border-secondary/20 uppercase">Optimization: Active</span>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-4">
+<!-- Query Input -->
+<div class="bg-surface-container-lowest border border-slate-700 p-4 relative group">
+<div class="flex items-center gap-2 mb-2">
+<span class="text-blue-500 font-mono text-sm">&gt;</span>
+<span class="font-mono-data text-slate-400 uppercase text-[10px]">Primary Directives</span>
+</div>
+<div class="font-mono text-blue-100 text-sm break-all leading-relaxed">
+                                ("Product Designer" OR "UX Designer" OR "Product Architect") AND ("Fintech" OR "Payments" OR "Neo-bank") AND ("Scale-up" OR "Series C" OR "Unicorn") -agency -recruiter
+                            </div>
+<div class="absolute right-4 bottom-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-slate-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span>
+</button>
+<button class="text-slate-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="refresh">refresh</span>
+</button>
+</div>
+</div>
+<!-- Generated Channels -->
+<div class="grid grid-cols-3 gap-3">
+<div class="bg-slate-900 border border-slate-800 p-3">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-caps text-slate-500">LINKEDIN_STR</span>
+<span class="material-symbols-outlined text-xs text-slate-600" data-icon="link">link</span>
+</div>
+<div class="font-mono text-[10px] text-slate-300 truncate">title:("Product Designer") ...</div>
+</div>
+<div class="bg-slate-900 border border-slate-800 p-3">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-caps text-slate-500">XRAY_GOOGLE</span>
+<span class="material-symbols-outlined text-xs text-slate-600" data-icon="travel_explore">travel_explore</span>
+</div>
+<div class="font-mono text-[10px] text-slate-300 truncate">site:linkedin.com/in/ intitle:...</div>
+</div>
+<div class="bg-slate-900 border border-slate-800 p-3">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-caps text-slate-500">ATS_LOCAL</span>
+<span class="material-symbols-outlined text-xs text-slate-600" data-icon="database">database</span>
+</div>
+<div class="font-mono text-[10px] text-slate-300 truncate">tags:designer AND status:active...</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Sourcing Strategy Engine -->
+<section class="p-6 bg-background flex-1">
+<h2 class="font-headline-md text-slate-200 mb-6">STRATEGY_ENGINE_V1</h2>
+<div class="grid grid-cols-2 gap-8">
+<!-- Target Companies -->
+<div>
+<div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-4">
+<span class="font-label-caps text-slate-400">TARGET_POOL</span>
+<span class="font-mono-data text-blue-500 text-[10px]">14 ENTITIES</span>
+</div>
+<ul class="space-y-2">
+<li class="flex items-center justify-between p-2 bg-surface-container-low border-l-2 border-secondary">
+<span class="font-body-sm text-slate-200">Stripe</span>
+<span class="font-label-caps text-slate-500">PRIORITY_H</span>
+</li>
+<li class="flex items-center justify-between p-2 bg-surface-container-low border-l-2 border-secondary">
+<span class="font-body-sm text-slate-200">Revolut</span>
+<span class="font-label-caps text-slate-500">PRIORITY_H</span>
+</li>
+<li class="flex items-center justify-between p-2 bg-surface-container-low border-l-2 border-slate-600">
+<span class="font-body-sm text-slate-200">Wise</span>
+<span class="font-label-caps text-slate-500">PRIORITY_M</span>
+</li>
+<li class="flex items-center justify-between p-2 bg-surface-container-low border-l-2 border-error">
+<span class="font-body-sm text-slate-500 line-through">Klarna</span>
+<span class="font-label-caps text-error text-[8px]">EXCLUDED</span>
+</li>
+</ul>
+<button class="mt-4 w-full border border-dashed border-slate-700 py-2 font-mono text-[10px] text-slate-500 hover:border-slate-500 hover:text-slate-300 transition-all">
+                                + ADD_ENTITY_CLUSTER
+                            </button>
+</div>
+<!-- Archetype Filters -->
+<div>
+<div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-4">
+<span class="font-label-caps text-slate-400">ARCHETYPE_FILTERS</span>
+<span class="material-symbols-outlined text-xs text-slate-500" data-icon="filter_list">filter_list</span>
+</div>
+<div class="space-y-4">
+<div class="flex flex-wrap gap-2">
+<span class="bg-blue-600 text-white font-mono-data text-[9px] px-2 py-1">TENURE: 3Y+</span>
+<span class="bg-blue-600 text-white font-mono-data text-[9px] px-2 py-1">GROWTH_EXP</span>
+<span class="bg-blue-600 text-white font-mono-data text-[9px] px-2 py-1">TECHNICAL_POLL</span>
+<span class="border border-slate-700 text-slate-400 font-mono-data text-[9px] px-2 py-1">NON_REMOTE</span>
+</div>
+<div class="bg-surface-container-high p-4 border border-slate-700">
+<div class="font-label-caps text-blue-400 mb-2">INCLUSION_LOGIC</div>
+<p class="font-body-sm text-slate-400 italic leading-relaxed">
+                                        "Prioritize talent from firms that completed Series C in 2022. Exclude founders of currently active stealth startups."
+                                    </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Queue & Metrics -->
+<div class="col-span-4 bg-surface-container-low flex flex-col overflow-hidden">
+<!-- Section 3: Source Performance -->
+<section class="p-6 border-b border-slate-800">
+<h2 class="font-label-caps text-slate-500 mb-4">CHANNEL_EFFICIENCY</h2>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-background border border-slate-800 p-3">
+<div class="text-slate-500 font-label-caps text-[9px]">LINKEDIN</div>
+<div class="text-xl font-mono text-secondary">4.2%</div>
+<div class="w-full bg-slate-900 h-1 mt-2">
+<div class="bg-secondary h-1" style="width: 42%;"></div>
+</div>
+</div>
+<div class="bg-background border border-slate-800 p-3">
+<div class="text-slate-500 font-label-caps text-[9px]">REFERRALS</div>
+<div class="text-xl font-mono text-blue-400">18.0%</div>
+<div class="w-full bg-slate-900 h-1 mt-2">
+<div class="bg-blue-400 h-1" style="width: 80%;"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 5: Active Sourcing Queue -->
+<section class="flex-1 flex flex-col min-h-0">
+<div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+<h2 class="font-label-caps text-slate-200">INBOUND_QUEUE (L-60M)</h2>
+<span class="bg-blue-600 text-[10px] font-bold px-2 rounded-full">08</span>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
+<!-- Candidate Card -->
+<div class="bg-background border border-slate-800 p-3 hover:border-blue-500/50 transition-colors group cursor-pointer">
+<div class="flex gap-3">
+<div class="w-10 h-10 bg-slate-800 flex-shrink-0">
+<img alt="Candidate" data-alt="Portrait of a professional woman with glasses and a friendly expression in a bright modern workspace" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnRat9ql6WDngJ3sO4rpW2s-qNh30LlPDmLiLXUwGPAMQ7L77gM33xmahZZVjD-QAz9aZ-9oEEyZf03ybVXzvORw3h7jf9vKj5Of1bVw5WTmDBffija8Xj_5xiJTBhmX4lN3P2tkwI9jQmf1Jz6ZQAfcaeWh3JeQYQOEhAlWenoiO2s3FVvRsMXIOOXa6aixwNsRODjGLzH_gDjxRsmJ5XXFfwOhpPOk1lL6E2e0CwIV9TDfIH_bYn3X01h_5JFmtC7D5Olbs0Va8"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between">
+<span class="font-bold text-slate-200 truncate">Elena Markov</span>
+<span class="font-mono-data text-[9px] text-secondary">FIT: 96%</span>
+</div>
+<div class="font-mono-data text-[10px] text-slate-500">Senior Product Designer @ Revolut</div>
+<div class="mt-2 flex gap-1">
+<span class="text-[8px] bg-slate-800 px-1 border border-slate-700 text-slate-400 uppercase">Fintech</span>
+<span class="text-[8px] bg-slate-800 px-1 border border-slate-700 text-slate-400 uppercase">Scale-up</span>
+</div>
+</div>
+</div>
+<div class="mt-3 grid grid-cols-2 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="bg-blue-600 text-[10px] py-1 font-mono uppercase font-bold text-white">Approve</button>
+<button class="bg-slate-800 text-[10px] py-1 font-mono uppercase text-slate-400">Reject</button>
+</div>
+</div>
+<div class="bg-background border border-slate-800 p-3 hover:border-blue-500/50 transition-colors group cursor-pointer">
+<div class="flex gap-3">
+<div class="w-10 h-10 bg-slate-800 flex-shrink-0">
+<img alt="Candidate" data-alt="Headshot of a man with a beard wearing a simple black t-shirt against a clean grey background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZ_IrFmTGT18FXl9rA2-aMoQagOemU62LZhzewRRIF0YnWwjanof6GDh00bt7fpgAXCC0sW0tzeDmaGqUm2Fc49S4IDG-QyqgW98aXi8GMy5bgjrLenkLBf_9rC9fe9PT9KmvB6QdplexwwVGn0Nu7vOhqExXdJy64WP0DyCQClQsBe7zQCyvaWB5CvZ7GS2nIbuYN2NPlEiPHiLguEEvYTgY27DyLkRTT9h32omwqhjTzoGtgntbDuOgM7LBe2SkbiFMPGOzm3Pg"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between">
+<span class="font-bold text-slate-200 truncate">James Sterling</span>
+<span class="font-mono-data text-[9px] text-secondary">FIT: 91%</span>
+</div>
+<div class="font-mono-data text-[10px] text-slate-500">Design Lead @ Stripe</div>
+<div class="mt-2 flex gap-1">
+<span class="text-[8px] bg-slate-800 px-1 border border-slate-700 text-slate-400 uppercase">Ex-Apple</span>
+<span class="text-[8px] bg-slate-800 px-1 border border-slate-700 text-slate-400 uppercase">Payments</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-background border border-slate-800 p-3 hover:border-blue-500/50 transition-colors group cursor-pointer">
+<div class="flex gap-3">
+<div class="w-10 h-10 bg-slate-800 flex-shrink-0">
+<img alt="Candidate" data-alt="Close-up of a woman in business casual attire smiling in a softly lit professional environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAILW1yl91X5O-h-aAMx3jWkGjMBnSkQ0H6HJM75nEymhgDFuFq0uPzUtIbTatkjUXy9WoLABohVq8-UzOLOH8zU2KQT9oe44cyj-QSN3GOWbgb3QAZwCjH98QLEgp4NO9tDrVOQtZAIeFdCkorRDTY5VKs6Cl_7Pc7QfYFuQeyyFjYAAPVun6nsbbMz4vDniTnMTBDKO7kIlOKGFi25txGT15RkM8CuZjh_c-15utwtqljsok2ZOcVKtmOFZSqcxDovBIF_9xuj9E"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between">
+<span class="font-bold text-slate-200 truncate">Sarah Chen</span>
+<span class="font-mono-data text-[9px] text-tertiary">FIT: 84%</span>
+</div>
+<div class="font-mono-data text-[10px] text-slate-500">Product Manager @ Wise</div>
+<div class="mt-2 flex gap-1">
+<span class="text-[8px] bg-slate-800 px-1 border border-slate-700 text-slate-400 uppercase">Design-led</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 4: Query Management (History) -->
+<section class="bg-slate-950 border-t border-slate-800 p-4">
+<h2 class="font-label-caps text-slate-500 mb-3">HISTORICAL_QUERIES</h2>
+<div class="space-y-2">
+<div class="flex items-center justify-between group">
+<div class="min-w-0">
+<div class="font-mono text-[9px] text-slate-400 truncate uppercase">Product Arch - EMEA - Oct 12</div>
+<div class="font-mono text-[8px] text-slate-600">42 results · 12% acceptance</div>
+</div>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 px-2 py-0.5 font-mono text-[8px] text-blue-400 border border-slate-700">REGEN</button>
+</div>
+<div class="flex items-center justify-between group border-t border-slate-900 pt-2">
+<div class="min-w-0">
+<div class="font-mono text-[9px] text-slate-400 truncate uppercase">Head of Design - Global - Oct 08</div>
+<div class="font-mono text-[8px] text-slate-600">18 results · 05% acceptance</div>
+</div>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 px-2 py-0.5 font-mono text-[8px] text-blue-400 border border-slate-700">REGEN</button>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- AI Command Input (Footer Bar) -->
+<div class="h-14 bg-slate-950 border-t border-slate-800 flex items-center px-6 gap-4">
+<span class="text-blue-500 font-mono font-bold">&gt;</span>
+<input class="bg-transparent border-none focus:ring-0 text-blue-100 font-mono text-sm w-full" placeholder="Modify sourcing parameters (e.g., 'Only focus on unicorn startups in the UK')" type="text"/>
+<div class="flex items-center gap-4 text-slate-600 font-mono text-[10px]">
+<span>ESC to clear</span>
+<span class="w-px h-4 bg-slate-800"></span>
+<span class="text-blue-600">ENTER to execute</span>
+</div>
+</div>
+</main>
+<!-- Floating Action Button - Only for Search Actions -->
+<button class="fixed right-6 bottom-20 bg-primary-container text-on-primary-container p-4 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform z-50">
+<span class="material-symbols-outlined" data-icon="rocket_launch">rocket_launch</span>
+</button>
+</body></html>

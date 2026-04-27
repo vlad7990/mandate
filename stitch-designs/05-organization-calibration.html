@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 18px;
+        }
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-primary-fixed": "#00174b",
+                        "outline": "#8d90a0",
+                        "surface-container-high": "#222a3d",
+                        "secondary": "#4edea3",
+                        "on-tertiary-container": "#ffeedd",
+                        "secondary-fixed": "#6ffbbe",
+                        "surface-variant": "#2d3449",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#eeefff",
+                        "tertiary": "#ffb95f",
+                        "surface-container-lowest": "#060e20",
+                        "surface-container": "#171f33",
+                        "error-container": "#93000a",
+                        "secondary-fixed-dim": "#4edea3",
+                        "error": "#ffb4ab",
+                        "on-secondary": "#003824",
+                        "background": "#0b1326",
+                        "on-surface": "#dae2fd",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "surface-container-low": "#131b2e",
+                        "secondary-container": "#00a572",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-bright": "#31394d",
+                        "on-surface-variant": "#c3c6d7",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-secondary-container": "#00311f",
+                        "on-background": "#dae2fd",
+                        "inverse-primary": "#0053db",
+                        "on-error": "#690005",
+                        "inverse-surface": "#dae2fd",
+                        "inverse-on-surface": "#283044",
+                        "tertiary-container": "#996100",
+                        "primary-container": "#2563eb",
+                        "on-tertiary": "#472a00",
+                        "surface-tint": "#b4c5ff",
+                        "primary-fixed": "#dbe1ff",
+                        "outline-variant": "#434655",
+                        "surface": "#0b1326",
+                        "on-secondary-fixed-variant": "#005236",
+                        "surface-dim": "#0b1326",
+                        "tertiary-fixed": "#ffddb8",
+                        "primary": "#b4c5ff",
+                        "on-primary": "#002a78",
+                        "on-secondary-fixed": "#002113"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "density-compact": "4px",
+                        "unit": "4px",
+                        "density-comfortable": "12px",
+                        "margin": "16px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700"}],
+                        "headline-xl": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "mono-data": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-hidden">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm flex justify-between items-center px-6 py-3">
+<div class="text-lg font-black tracking-tighter text-slate-50 font-mono">EXECUTIVE INTELLIGENCE</div>
+<nav class="hidden md:flex gap-8">
+<a class="font-inter text-xs uppercase tracking-widest font-semibold text-slate-400 hover:text-slate-100 transition-colors" href="#">Solutions</a>
+<a class="font-inter text-xs uppercase tracking-widest font-semibold text-slate-400 hover:text-slate-100 transition-colors" href="#">Intelligence</a>
+<a class="font-inter text-xs uppercase tracking-widest font-semibold text-slate-400 hover:text-slate-100 transition-colors" href="#">Network</a>
+<a class="font-inter text-xs uppercase tracking-widest font-semibold text-slate-400 hover:text-slate-100 transition-colors" href="#">Pricing</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="font-inter text-xs uppercase tracking-widest font-semibold text-slate-400 hover:text-slate-100 transition-colors">Sign In</button>
+<button class="font-inter text-xs uppercase tracking-widest font-semibold text-blue-600 dark:text-blue-500 bg-slate-100 px-4 py-2 rounded-sm active:scale-[0.98] transition-transform">Get Started</button>
+</div>
+</header>
+<div class="flex h-screen pt-[53px]">
+<!-- SideNavBar - Calibration Sequence Progress -->
+<aside class="fixed left-0 top-[53px] h-full w-64 border-r border-slate-800 bg-slate-950 flex flex-col py-8">
+<div class="px-6 mb-10">
+<div class="text-blue-500 font-bold tracking-widest font-mono text-[10px] leading-tight uppercase">ONBOARDING_CORE</div>
+<div class="text-slate-500 font-mono text-[9px] uppercase tracking-tighter mt-1">V.2.0.4 - SYSTEM ACTIVE</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Active Step: Identity -->
+<div class="bg-slate-900 text-blue-400 border-l-2 border-blue-600 px-4 py-3 flex items-center gap-3 cursor-pointer brightness-110">
+<span class="material-symbols-outlined" data-icon="fingerprint">fingerprint</span>
+<span class="font-mono text-[10px] leading-tight uppercase">Identity</span>
+</div>
+<!-- Inactive Steps -->
+<div class="text-slate-500 px-4 py-3 flex items-center gap-3 opacity-60 hover:bg-slate-900 hover:text-slate-200 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+<span class="font-mono text-[10px] leading-tight uppercase">Expertise</span>
+</div>
+<div class="text-slate-500 px-4 py-3 flex items-center gap-3 opacity-60 hover:bg-slate-900 hover:text-slate-200 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-mono text-[10px] leading-tight uppercase">Criteria</span>
+</div>
+<div class="text-slate-500 px-4 py-3 flex items-center gap-3 opacity-60 hover:bg-slate-900 hover:text-slate-200 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+<span class="font-mono text-[10px] leading-tight uppercase">Review</span>
+</div>
+</nav>
+<div class="px-6 mt-auto pb-12">
+<button class="w-full py-3 border border-slate-700 font-mono text-[10px] text-slate-400 uppercase tracking-widest hover:bg-slate-900 transition-colors">
+                    COMPLETE SEQUENCE
+                </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 overflow-y-auto bg-surface relative">
+<!-- Background Decorative Element -->
+<div class="absolute inset-0 opacity-[0.03] pointer-events-none overflow-hidden">
+<div class="grid grid-cols-12 h-full w-full">
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+<div class="border-r border-on-surface h-full"></div>
+</div>
+</div>
+<div class="max-w-4xl mx-auto py-16 px-12 relative z-10">
+<div class="mb-12">
+<div class="flex items-center gap-3 mb-2">
+<span class="h-[1px] w-8 bg-primary"></span>
+<span class="font-label-caps text-label-caps text-primary uppercase">Calibration Step 01</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface mb-2">Organization Identity</h1>
+<p class="font-body-md text-on-surface-variant max-w-xl">Initialize your recruitment parameters. This data anchors our neural search agents to your specific corporate culture and market vertical.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Left Column: Form Fields -->
+<div class="space-y-8">
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Legal Entity Name</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-none p-3 font-mono-data text-mono-data text-on-surface focus:border-primary focus:ring-0 placeholder:text-slate-700 transition-colors" placeholder="e.g. GLOBAL VENTURES HOLDINGS" type="text"/>
+<div class="flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-tertiary" style="font-size: 14px;">info</span>
+<span class="font-body-sm text-[10px] text-tertiary/70 uppercase">Used for public benchmarking &amp; historical analysis</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Industry Vertical Focus</label>
+<div class="relative">
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-none p-3 font-mono-data text-mono-data text-on-surface focus:border-primary focus:ring-0 appearance-none transition-colors">
+<option>FINANCIAL_SERVICES / PRIVATE_EQUITY</option>
+<option>TECHNOLOGY / QUANTUM_COMPUTING</option>
+<option>BIOTECH / PHARMACEUTICALS</option>
+<option>HEAVY_INDUSTRY / MANUFACTURING</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">expand_more</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Core Seniority Threshold</label>
+<div class="grid grid-cols-3 gap-2">
+<button class="border border-primary bg-primary/10 py-3 font-mono-data text-mono-data text-primary text-center">MD / C-SUITE</button>
+<button class="border border-outline-variant py-3 font-mono-data text-mono-data text-on-surface-variant text-center hover:bg-surface-container-highest transition-colors">SVP / VP</button>
+<button class="border border-outline-variant py-3 font-mono-data text-mono-data text-on-surface-variant text-center hover:bg-surface-container-highest transition-colors">DIRECTOR</button>
+</div>
+</div>
+</div>
+<!-- Right Column: Visual Feedback / Tooltips -->
+<div class="space-y-4">
+<div class="bg-surface-container border border-outline-variant p-6 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="material-symbols-outlined" style="font-size: 48px;">hub</span>
+</div>
+<h3 class="font-label-caps text-label-caps text-secondary mb-3 uppercase">AI Tuning Logic</h3>
+<div class="space-y-4">
+<div class="flex gap-4">
+<div class="w-1 h-8 bg-secondary mt-1"></div>
+<div>
+<p class="font-mono-data text-[11px] leading-normal text-on-surface">Agent <span class="text-secondary">#01-SCANNER</span> uses vertical focus to narrow candidate pools by 92% based on cross-industry volatility metrics.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-1 h-8 bg-slate-700 mt-1"></div>
+<div>
+<p class="font-mono-data text-[11px] leading-normal text-slate-400">Agent <span class="text-slate-300">#02-QUALIFIER</span> awaiting 'Expertise' inputs to define skill-graph weighting.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="border border-slate-800 p-4 rounded-sm flex items-start gap-4">
+<span class="material-symbols-outlined text-blue-500" data-weight="fill">verified</span>
+<div>
+<h4 class="font-label-caps text-[10px] text-on-surface uppercase">Encryption Active</h4>
+<p class="font-body-sm text-[11px] text-slate-500 mt-1">All organizational data is hashed using SHA-256 and stored in isolation. Session expires in 14:59.</p>
+</div>
+</div>
+<!-- Mini Map / Location Context -->
+<div class="h-32 bg-slate-900 border border-slate-800 relative group overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent z-10"></div>
+<img alt="Dark stylized global map with glowing neural connections" class="w-full h-full object-cover opacity-30 grayscale group-hover:scale-105 transition-transform duration-700" data-alt="abstract dark world map with neon blue connectivity nodes and data flow lines on a charcoal background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQfmD9foRIrL7vXTvrNspgR94QVQjEn_y3V06VXByzWRe7aSFpGCXmK-lfwCUMCTkN3ASTnbkWxuhbgq7GBm9ypQ-zLYStttv1XBd1YXdRem1mQQF6KMWLq6zk514MdkCzA-K8CJRmm2HboFsJ8yk3CaxODCCy1mN8ZwGYhkq3x4YXfoFUzyUnT6EVcWvs0hMwnHTbXedKNRT2uqiJa1Cq1pIK9v3qf71el2SkspDXjfvzTKGMsEZPSrHDjQSZJaIyzajgBVrLz8w"/>
+<div class="absolute bottom-3 left-3 z-20 flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-500" style="font-size: 14px;">location_on</span>
+<span class="font-mono-data text-[10px] text-blue-500 uppercase tracking-widest">Global Reach: ACTIVE</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="mt-16 pt-8 border-t border-slate-800 flex justify-between items-center">
+<button class="flex items-center gap-2 text-slate-500 font-label-caps text-label-caps uppercase hover:text-slate-200 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+                        Abort Sequence
+                    </button>
+<div class="flex gap-4">
+<button class="px-8 py-3 bg-surface-container-highest border border-slate-700 font-label-caps text-label-caps text-on-surface uppercase tracking-widest hover:border-slate-500 transition-all">Save Draft</button>
+<button class="px-10 py-3 bg-primary-container text-on-primary-container font-label-caps text-label-caps uppercase tracking-widest active:scale-95 transition-all">Initiate Step 02</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer Component -->
+<footer class="fixed bottom-0 w-full bg-slate-950 border-t border-slate-900 z-50">
+<div class="flex flex-col md:flex-row justify-between items-center p-6 gap-4 w-full">
+<div class="text-slate-600 font-bold font-mono text-[9px] uppercase tracking-tighter">© 2024 EXECUTIVE INTELLIGENCE INTERFACE // ENCRYPTED SESSION</div>
+<div class="flex gap-6">
+<a class="font-mono text-[9px] uppercase tracking-tighter text-slate-600 hover:text-blue-500 underline decoration-slate-700 transition-colors duration-300" href="#">Privacy.md</a>
+<a class="font-mono text-[9px] uppercase tracking-tighter text-slate-600 hover:text-blue-500 underline decoration-slate-700 transition-colors duration-300" href="#">Terms.sys</a>
+<a class="font-mono text-[9px] uppercase tracking-tighter text-slate-600 hover:text-blue-500 underline decoration-slate-700 transition-colors duration-300" href="#">Compliance.iso</a>
+<a class="font-mono text-[9px] uppercase tracking-tighter text-slate-600 hover:text-blue-500 underline decoration-slate-700 transition-colors duration-300" href="#">Security.log</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#4edea3",
+                        "surface-container-lowest": "#060e20",
+                        "on-tertiary-container": "#ffeedd",
+                        "on-secondary-container": "#00311f",
+                        "inverse-surface": "#dae2fd",
+                        "surface-bright": "#31394d",
+                        "on-secondary-fixed": "#002113",
+                        "surface-variant": "#2d3449",
+                        "primary-container": "#2563eb",
+                        "outline-variant": "#434655",
+                        "on-primary-fixed": "#00174b",
+                        "on-primary-container": "#eeefff",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-secondary": "#003824",
+                        "surface-container-highest": "#2d3449",
+                        "outline": "#8d90a0",
+                        "surface": "#0b1326",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-tertiary": "#472a00",
+                        "tertiary-container": "#996100",
+                        "on-error-container": "#ffdad6",
+                        "secondary": "#4edea3",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-secondary-fixed-variant": "#005236",
+                        "background": "#0b1326",
+                        "on-background": "#dae2fd",
+                        "surface-container": "#171f33",
+                        "surface-dim": "#0b1326",
+                        "surface-tint": "#b4c5ff",
+                        "inverse-on-surface": "#283044",
+                        "surface-container-low": "#131b2e",
+                        "on-primary": "#002a78",
+                        "primary-fixed": "#dbe1ff",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#dae2fd",
+                        "tertiary": "#ffb95f",
+                        "error-container": "#93000a",
+                        "on-surface-variant": "#c3c6d7",
+                        "primary": "#b4c5ff",
+                        "secondary-container": "#00a572",
+                        "error": "#ffb4ab",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-container-high": "#222a3d",
+                        "inverse-primary": "#0053db"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "12px",
+                        "density-compact": "4px",
+                        "density-comfortable": "12px",
+                        "unit": "4px",
+                        "margin": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "headline-xl": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "mono-data": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "headline-xl": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "700"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 18px;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+        .terminal-grid { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 24px 24px; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-container selection:text-white overflow-hidden">
+<!-- TopNavBar Implementation -->
+<header class="bg-slate-900 dark:bg-slate-900 flex justify-between items-center h-12 px-3 w-full sticky top-0 z-50 border-b border-slate-800 dark:border-slate-800 font-mono text-xs uppercase tracking-widest">
+<div class="flex items-center gap-4">
+<span class="text-sm font-bold text-slate-100 dark:text-slate-50 tracking-tighter">EXEC_OS // TERMINAL</span>
+<div class="h-4 w-[1px] bg-slate-700"></div>
+<div class="flex items-center gap-2 text-blue-500 font-bold">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="hidden md:inline">INTEL_SCAN: MARCUS_THORNE</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="hover:bg-slate-800 dark:hover:bg-slate-800 transition-colors p-1.5 flex items-center">
+<span class="material-symbols-outlined" data-icon="dns">dns</span>
+</button>
+<button class="hover:bg-slate-800 dark:hover:bg-slate-800 transition-colors p-1.5 flex items-center">
+<span class="material-symbols-outlined" data-icon="memory">memory</span>
+</button>
+<button class="hover:bg-slate-800 dark:hover:bg-slate-800 transition-colors p-1.5 flex items-center">
+<span class="material-symbols-outlined text-blue-500" data-icon="notifications_active">notifications_active</span>
+</button>
+<div class="h-6 w-6 rounded-sm overflow-hidden border border-slate-700">
+<img alt="User profile" data-alt="professional headshot of a male executive in a dark suit with a neutral expression against a grey background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcA66g3joopkYbn4zt5OtlhaOGEbqQ8mYobShnPc3FFKoS6ZU3IVKOk0l1vE3Btc_QwWsE6kjVOAojxTrKU4CCjZ5gT6cmVhaNl0_kC3qnE-PriLFWVjcHR1fVdg9Lu5WZ2t0OXqY7G63OkPhvwMP3zK0y9VM--eEYvxiXsssw_kAe9km4l0q_2qBpqB7dOe5TGQmWa8Iq2hry8TaAf48WLf2TSVaehzCqN-J4juLi2BLWExzh9L65jrTuN51CPrX39ecNHNH4Uzc"/>
+</div>
+</div>
+</header>
+<div class="flex h-[calc(100vh-48px)]">
+<!-- SideNavBar Implementation -->
+<aside class="bg-slate-900 dark:bg-slate-900 flex flex-col h-screen w-64 shrink-0 overflow-y-auto border-r border-slate-800 dark:border-slate-800 font-mono text-[11px] leading-tight">
+<div class="p-4 border-b border-slate-800">
+<div class="font-black text-slate-200 text-sm tracking-tighter">STRATEGIC_INTEL</div>
+<div class="text-slate-500 text-[9px] mt-1">V4.2 ACTIVE_SESSION</div>
+</div>
+<nav class="flex-1 py-4">
+<div class="bg-slate-800/80 text-blue-400 border-l-2 border-blue-600 px-4 py-3 flex items-center gap-3 cursor-pointer brightness-125">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span>Candidate Search</span>
+</div>
+<div class="text-slate-400 hover:text-slate-200 px-4 py-3 flex items-center gap-3 hover:bg-slate-800/40 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span>Talent Pipeline</span>
+</div>
+<div class="text-slate-400 hover:text-slate-200 px-4 py-3 flex items-center gap-3 hover:bg-slate-800/40 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span>Market Intel</span>
+</div>
+<div class="text-slate-400 hover:text-slate-200 px-4 py-3 flex items-center gap-3 hover:bg-slate-800/40 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="business_center">business_center</span>
+<span>Client Portal</span>
+</div>
+<div class="text-slate-400 hover:text-slate-200 px-4 py-3 flex items-center gap-3 hover:bg-slate-800/40 transition-all cursor-pointer">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span>System Config</span>
+</div>
+</nav>
+<div class="p-4 border-t border-slate-800 text-secondary flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+<span>Status: Nominal</span>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto custom-scrollbar terminal-grid bg-surface">
+<div class="p-gutter lg:p-6 space-y-gutter">
+<!-- Candidate Header & Archetype -->
+<div class="flex flex-col md:flex-row gap-gutter">
+<div class="bg-surface-container border border-outline-variant p-4 flex-1 flex gap-4 items-start">
+<div class="relative">
+<img alt="Marcus Thorne" class="w-24 h-24 rounded border-2 border-primary grayscale hover:grayscale-0 transition-all" data-alt="high-resolution portrait of a focused executive in his 40s wearing a crisp white shirt and navy blazer with cinematic side lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdptLKQlFgtBmWmKvGiodgMvGnQ6ReuQepXtiEh6Ka27zB_wobPzNBBNY9FBzs4hJryg4q-YLSpm_Y1kGr1QGkBNKepolxV94J1-DN5lsl04VEyWzpIcIMDNz33yBwuxridaLDGw1QiJvAKxmcGWTS1qcQVl3jFHJaVEF9xQfHteLEGfE9oq5yQQbtIyraKf5ZwRTcOrbK7UZCprhZP9id4_6CieW-Bx31g2GCKt-q-FJ4o_mzpEGVeuOsJpcjQUvCkk7XkQ_Cjyk"/>
+<div class="absolute -bottom-2 -right-2 bg-secondary text-on-secondary text-label-caps px-2 py-1 border border-surface">FIT: 98.4%</div>
+</div>
+<div class="space-y-1">
+<h1 class="font-headline-xl text-on-surface uppercase tracking-tight">Marcus Thorne</h1>
+<p class="font-mono-data text-blue-400">SENIOR_VP_PRODUCT // NEXT_GEN_SYSTEMS</p>
+<div class="flex flex-wrap gap-2 pt-2">
+<span class="bg-surface-container-highest border border-outline text-label-caps px-2 py-0.5">LOC: LONDON_UK</span>
+<span class="bg-surface-container-highest border border-outline text-label-caps px-2 py-0.5">EXP: 18.5Y</span>
+<span class="bg-surface-container-highest border border-outline text-label-caps px-2 py-0.5">AVAIL: 3MO</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container border border-outline-variant p-4 w-full md:w-80 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="text-label-caps text-outline">ARCHETYPE</span>
+<span class="material-symbols-outlined text-secondary" data-icon="bolt">bolt</span>
+</div>
+<div class="py-2">
+<h2 class="font-headline-md text-secondary uppercase">TRANSFORMER</h2>
+<p class="text-body-sm text-on-surface-variant mt-1 leading-tight">Specializes in post-acquisition integration and legacy tech debt liquidation.</p>
+</div>
+<div class="w-full bg-surface-container-low h-1 mt-2">
+<div class="bg-secondary h-full w-[92%]"></div>
+</div>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- AI Summary & Key Traits (Span 8) -->
+<div class="md:col-span-8 space-y-gutter">
+<!-- AI-Parsed CV Summary -->
+<div class="bg-surface-container border border-outline-variant overflow-hidden">
+<div class="bg-surface-container-high px-4 py-2 border-b border-outline-variant flex justify-between items-center">
+<span class="text-label-caps text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+                                    AI_CORE_SYNTHESIS
+                                </span>
+<span class="text-mono-data text-blue-500 text-[9px]">CONFIDENCE: 0.992</span>
+</div>
+<div class="p-4 font-body-md text-on-surface leading-relaxed">
+<span class="text-secondary font-mono-data text-[14px] mr-1">&gt;</span> Thorne represents a rare hybrid of deep technical architecture and ruthless commercial execution. His tenure at <span class="text-blue-400">ScaleVantage (2018-2023)</span> saw a 400% ARR growth while simultaneously reducing cloud infrastructure overhead by 32%. His leadership style is "Directive-Collaborative," flourishing in high-pressure environments where rapid pivot decisions are required. Exhibits exceptional resilience during complex M&amp;A due diligence.
+                            </div>
+</div>
+<!-- Strengths/Weaknesses/Risks -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<div class="bg-surface-container border-l-2 border-l-secondary border-y border-r border-outline-variant p-3">
+<h4 class="text-label-caps text-secondary mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+                                    STRENGTHS
+                                </h4>
+<ul class="text-body-sm space-y-2 text-on-surface-variant font-mono-data">
+<li class="flex items-start gap-2"><span class="text-secondary">+</span> Hyper-scale cloud ops</li>
+<li class="flex items-start gap-2"><span class="text-secondary">+</span> Radical P&amp;L ownership</li>
+<li class="flex items-start gap-2"><span class="text-secondary">+</span> Executive presence</li>
+</ul>
+</div>
+<div class="bg-surface-container border-l-2 border-l-tertiary border-y border-r border-outline-variant p-3">
+<h4 class="text-label-caps text-tertiary mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+                                    DEVELOPMENT
+                                </h4>
+<ul class="text-body-sm space-y-2 text-on-surface-variant font-mono-data">
+<li class="flex items-start gap-2"><span class="text-tertiary">-</span> Low patience for SME lag</li>
+<li class="flex items-start gap-2"><span class="text-tertiary">-</span> Over-relies on data metrics</li>
+<li class="flex items-start gap-2"><span class="text-tertiary">-</span> Narrow marketing exposure</li>
+</ul>
+</div>
+<div class="bg-surface-container border-l-2 border-l-error border-y border-r border-outline-variant p-3">
+<h4 class="text-label-caps text-error mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="report">report</span>
+                                    RISK_VECTORS
+                                </h4>
+<ul class="text-body-sm space-y-2 text-on-surface-variant font-mono-data">
+<li class="flex items-start gap-2"><span class="text-error">!</span> Compensation sensitivity</li>
+<li class="flex items-start gap-2"><span class="text-error">!</span> Retainment at 24mo mark</li>
+<li class="flex items-start gap-2"><span class="text-error">!</span> Current equity clawback</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Fit Scoring (Span 4) -->
+<div class="md:col-span-4 bg-surface-container border border-outline-variant p-4 flex flex-col">
+<span class="text-label-caps text-outline mb-6">MULTI-DIMENSIONAL_FIT</span>
+<div class="flex-1 space-y-6">
+<!-- Radar-style replacement: Progress segments -->
+<div class="space-y-2">
+<div class="flex justify-between text-mono-data">
+<span class="text-on-surface">TECHNICAL_MASTERY</span>
+<span class="text-secondary">94%</span>
+</div>
+<div class="grid grid-cols-10 gap-1">
+<div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div>
+<div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-surface-container-high"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-mono-data">
+<span class="text-on-surface">DOMAIN_EXPERTISE</span>
+<span class="text-secondary">88%</span>
+</div>
+<div class="grid grid-cols-10 gap-1">
+<div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div>
+<div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-surface-container-high"></div><div class="h-1.5 bg-surface-container-high"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-mono-data">
+<span class="text-on-surface">SCALE_ADAPTABILITY</span>
+<span class="text-secondary">99%</span>
+</div>
+<div class="grid grid-cols-10 gap-1">
+<div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div>
+<div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div><div class="h-1.5 bg-secondary"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-mono-data">
+<span class="text-on-surface">CULTURE_RESISTANCE</span>
+<span class="text-tertiary">12%</span>
+</div>
+<div class="grid grid-cols-10 gap-1">
+<div class="h-1.5 bg-tertiary"></div><div class="h-1.5 bg-surface-container-high"></div><div class="h-1.5 bg-surface-container-high"></div><div class="h-1.5 bg-surface-container-high"></div><div class="h-1.5 bg-surface-container-high"></div>
+<div class="h-1.5 bg-surface-container-high"></div><div class="h-1.5 bg-surface-container-high"></div><div class="h-1.5 bg-surface-container-high"></div><div class="h-1.5 bg-surface-container-high"></div><div class="h-1.5 bg-surface-container-high"></div>
+</div>
+</div>
+</div>
+<div class="mt-8 p-3 border border-secondary/20 bg-secondary/5">
+<p class="text-[10px] text-secondary font-mono-data uppercase tracking-widest text-center">SUMMARY: IDEAL FOR MANDATE_ALPHA</p>
+</div>
+</div>
+</div>
+<!-- Career Timeline against Mandate -->
+<div class="bg-surface-container border border-outline-variant">
+<div class="bg-surface-container-high px-4 py-2 border-b border-outline-variant">
+<span class="text-label-caps text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="route">route</span>
+                            CAREER_PROGRESSION_MAP_VS_MANDATE
+                        </span>
+</div>
+<div class="p-6 overflow-x-auto custom-scrollbar">
+<div class="min-w-[800px] relative">
+<!-- Mandate Target Line -->
+<div class="absolute top-0 bottom-0 left-[20%] border-l-2 border-dashed border-blue-500/50 z-0">
+<span class="absolute -top-4 -left-12 text-[8px] font-mono-data text-blue-400">MANDATE_START_THRESHOLD</span>
+</div>
+<div class="space-y-8 relative z-10">
+<!-- Step 1 -->
+<div class="flex items-center gap-8">
+<div class="w-48 shrink-0 text-right">
+<div class="text-label-caps text-on-surface">2023 - PRESENT</div>
+<div class="text-body-sm text-outline">NEXT_GEN_SYSTEMS</div>
+</div>
+<div class="relative flex-1">
+<div class="h-[1px] bg-outline-variant absolute top-1/2 left-0 right-0 -z-10"></div>
+<div class="flex items-center gap-4">
+<div class="w-4 h-4 bg-secondary border-4 border-surface ring-1 ring-secondary"></div>
+<div class="bg-surface-container-high border border-outline-variant p-2 rounded-sm shadow-xl">
+<div class="text-mono-data text-secondary">SVP PRODUCT &amp; OPS</div>
+<div class="text-[10px] text-on-surface-variant">Overseeing 400+ engineers, $120M OpEx budget.</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex items-center gap-8">
+<div class="w-48 shrink-0 text-right">
+<div class="text-label-caps text-on-surface">2018 - 2023</div>
+<div class="text-body-sm text-outline">SCALEVANTAGE</div>
+</div>
+<div class="relative flex-1">
+<div class="h-[1px] bg-outline-variant absolute top-1/2 left-0 right-0 -z-10"></div>
+<div class="flex items-center gap-4">
+<div class="w-4 h-4 bg-secondary border-4 border-surface ring-1 ring-secondary"></div>
+<div class="bg-surface-container-high border border-outline-variant p-2 rounded-sm">
+<div class="text-mono-data text-secondary">VP ENGINEERING</div>
+<div class="text-[10px] text-on-surface-variant">Built core data infrastructure. Series B to Exit.</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="flex items-center gap-8">
+<div class="w-48 shrink-0 text-right">
+<div class="text-label-caps text-on-surface">2014 - 2018</div>
+<div class="text-body-sm text-outline">BLUE_CORE_TECH</div>
+</div>
+<div class="relative flex-1 opacity-50">
+<div class="h-[1px] bg-outline-variant absolute top-1/2 left-0 right-0 -z-10"></div>
+<div class="flex items-center gap-4">
+<div class="w-4 h-4 bg-outline-variant border-4 border-surface ring-1 ring-outline-variant"></div>
+<div class="bg-surface-container-high border border-outline-variant p-2 rounded-sm">
+<div class="text-mono-data text-outline">SR. ARCHITECT</div>
+<div class="text-[10px] text-outline">Lead Architect for distributed ledger projects.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- AI Command Input - Sticky Bottom -->
+<div class="fixed bottom-0 left-64 right-0 bg-slate-900 border-t border-slate-800 p-2 z-50">
+<div class="max-w-4xl mx-auto flex items-center gap-3 px-3 py-1.5 bg-surface-container-lowest border border-slate-700 font-mono-data">
+<span class="text-secondary">&gt;</span>
+<input class="bg-transparent border-none focus:ring-0 text-secondary w-full placeholder:text-slate-600 text-[12px]" placeholder="Ask Intelligence Core about Marcus (e.g. 'Simulate 2-year retention risk')" type="text"/>
+<span class="text-[9px] text-slate-500 whitespace-nowrap">CMD + K TO EXECUTE</span>
+</div>
+</div>
+</body></html>
