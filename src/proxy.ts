@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/session";
 
-const PUBLIC_PATHS = new Set(["/", "/auth/signin", "/auth/signup", "/auth/callback"]);
+const PUBLIC_PATHS = new Set(["/auth/signin", "/auth/signup", "/auth/callback"]);
 const AUTH_ONLY_REDIRECT_TARGETS = new Set(["/auth/signin", "/auth/signup"]);
 
 async function handle(request: NextRequest) {
