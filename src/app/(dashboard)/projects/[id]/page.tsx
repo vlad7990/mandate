@@ -3,7 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   AgentTiles,
-  AGENT_TILES,
+  type AgentTileAction,
+  type AgentTileKey,
   type AgentTileState,
 } from "@/components/projects/agent-tiles";
 import {
@@ -27,6 +28,12 @@ type ProjectRow = {
   company_context: Partial<CompanyContext> | null;
 };
 
+type SpecState = {
+  hasAny: boolean;
+  hasFinal: boolean;
+  isGenerating: boolean;
+};
+
 function isAnalysisReady(row: ProjectRow): boolean {
   return Boolean(row.calibration_model?.role_title);
 }
@@ -35,16 +42,22 @@ function hasCalibrationWeights(row: ProjectRow): boolean {
   return typeof row.calibration_model?.dimension_weights?.technical === "number";
 }
 
-function tileStates(row: ProjectRow): Record<
-  (typeof AGENT_TILES)[number]["key"],
-  AgentTileState
-> {
+function tileStates(
+  row: ProjectRow,
+  spec: SpecState
+): Record<AgentTileKey, AgentTileState> {
   const ready = isAnalysisReady(row);
   const calibrated = hasCalibrationWeights(row);
+  let role_spec: AgentTileState;
+  if (spec.hasFinal) role_spec = "complete";
+  else if (spec.isGenerating || spec.hasAny) role_spec = "active";
+  else if (calibrated) role_spec = "active";
+  else role_spec = "queued";
+
   return {
     intake: ready ? "complete" : "active",
     company_research: ready ? "complete" : "active",
-    role_spec: "queued",
+    role_spec,
     calibration: calibrated ? "complete" : ready ? "active" : "queued",
   };
 }
@@ -75,6 +88,26 @@ export default async function ProjectPage({
   const calibrated = hasCalibrationWeights(project);
   const calibration = (project.calibration_model ?? {}) as Partial<CalibrationModel>;
   const company = (project.company_context ?? {}) as Partial<CompanyContext>;
+
+  // Pull a compact summary of the project's job_specs to drive the role_spec
+  // tile state and the "Build / Open Job Spec" CTA.
+  const { data: specRows } = await supabase
+    .from("job_specs")
+    .select("id, is_final, is_generating")
+    .eq("project_id", id);
+
+  const spec: SpecState = {
+    hasAny: (specRows?.length ?? 0) > 0,
+    hasFinal: (specRows ?? []).some((r) => r.is_final),
+    isGenerating: (specRows ?? []).some((r) => r.is_generating),
+  };
+
+  const specAction: AgentTileAction = {
+    label: spec.hasAny ? "Open Job Spec" : "Build Job Spec",
+    href: `/projects/${project.id}/spec`,
+    enabled: calibrated,
+    disabledHint: calibrated ? undefined : "Awaiting calibration",
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -133,7 +166,10 @@ export default async function ProjectPage({
             </span>
           )}
         </div>
-        <AgentTiles states={tileStates(project)} />
+        <AgentTiles
+          states={tileStates(project, spec)}
+          actions={{ role_spec: specAction }}
+        />
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
