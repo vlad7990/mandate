@@ -234,6 +234,14 @@ export default async function RankingPage({
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Link
+              href={`/projects/${project.id}/feedback`}
+              prefetch={false}
+              className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[14px]">rate_review</span>
+              Submit Feedback
+            </Link>
             <RefreshScoresButton projectId={project.id} />
             <Link
               href={`/projects/${project.id}/ranking/compare`}

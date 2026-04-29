@@ -17,6 +17,17 @@ import {
 } from "@/lib/ai/onboarding-analysis";
 import { ProjectPoller } from "./project-poller";
 
+type RecalibrationSummary = {
+  feedback_id?: string;
+  summary?: string;
+  applied_at?: string;
+  applied_adjustments?: Array<{
+    dimension: string;
+    delta: number;
+    reason: string;
+  }>;
+};
+
 type ProjectRow = {
   id: string;
   title: string;
@@ -26,6 +37,7 @@ type ProjectRow = {
   created_at: string | null;
   calibration_model: Partial<CalibrationModel> | null;
   company_context: Partial<CompanyContext> | null;
+  recalibration_summary: RecalibrationSummary | null;
 };
 
 type SpecState = {
@@ -73,7 +85,7 @@ export default async function ProjectPage({
   const { data, error } = await supabase
     .from("projects")
     .select(
-      "id, title, company_name, one_line_input, status, created_at, calibration_model, company_context"
+      "id, title, company_name, one_line_input, status, created_at, calibration_model, company_context, recalibration_summary"
     )
     .eq("id", id)
     .single();
@@ -145,6 +157,14 @@ export default async function ProjectPage({
                 View Rankings
               </Link>
               <Link
+                href={`/projects/${project.id}/feedback`}
+                prefetch={false}
+                className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[14px]">rate_review</span>
+                Feedback
+              </Link>
+              <Link
                 href={`/projects/${project.id}/onboarding`}
                 className={
                   calibrated
@@ -170,6 +190,13 @@ export default async function ProjectPage({
           </span>
         </div>
       </header>
+
+      {project.recalibration_summary?.summary && (
+        <RecalibrationBanner
+          projectId={project.id}
+          summary={project.recalibration_summary}
+        />
+      )}
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
@@ -366,6 +393,73 @@ function DimensionWeightsCard({
       )}
     </section>
   );
+}
+
+function RecalibrationBanner({
+  projectId,
+  summary,
+}: {
+  projectId: string;
+  summary: RecalibrationSummary;
+}) {
+  return (
+    <Link
+      href={`/projects/${projectId}/feedback`}
+      prefetch={false}
+      className="block bg-secondary-fixed-dim/5 border border-secondary-fixed-dim/40 hover:border-secondary-fixed-dim/60 transition-colors p-4 group"
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className="material-symbols-outlined text-secondary-fixed-dim mt-0.5"
+          style={{ fontVariationSettings: "'FILL' 1", fontSize: "20px" }}
+        >
+          refresh
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest">
+            Calibration recalibrated{summary.applied_at ? ` · ${formatRelative(summary.applied_at)}` : ""}
+          </div>
+          <p className="text-on-surface text-body-main mt-1">
+            {summary.summary}
+          </p>
+          {Array.isArray(summary.applied_adjustments) &&
+            summary.applied_adjustments.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {summary.applied_adjustments.map((adj, i) => (
+                  <span
+                    key={i}
+                    className={
+                      adj.delta >= 0
+                        ? "px-2 py-0.5 border border-secondary-fixed-dim/40 text-secondary-fixed-dim font-mono-label text-mono-label uppercase tracking-wider"
+                        : "px-2 py-0.5 border border-error/40 text-error font-mono-label text-mono-label uppercase tracking-wider"
+                    }
+                  >
+                    {adj.dimension} {adj.delta >= 0 ? "+" : ""}{adj.delta}
+                  </span>
+                ))}
+              </div>
+            )}
+        </div>
+        <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform shrink-0">
+          View
+          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function formatRelative(iso: string): string {
+  const t = new Date(iso).getTime();
+  const diffMs = Date.now() - t;
+  const min = Math.round(diffMs / 60_000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const hrs = Math.round(min / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toISOString().slice(0, 10);
 }
 
 function BuildSourcingCta({ projectId }: { projectId: string }) {

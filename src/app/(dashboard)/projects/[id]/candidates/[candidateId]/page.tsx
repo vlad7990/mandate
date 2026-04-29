@@ -115,7 +115,7 @@ export default async function CandidateProfilePage({
     <div className="min-h-full bg-surface text-on-surface">
       <div className="max-w-7xl mx-auto px-6 py-10 space-y-6">
         {/* breadcrumb */}
-        <div className="flex items-center gap-3 font-mono-label text-mono-label uppercase tracking-widest text-outline">
+        <div className="flex items-center gap-3 font-mono-label text-mono-label uppercase tracking-widest text-outline flex-wrap">
           <Link
             href={`/projects/${project.id}/candidates`}
             prefetch={false}
@@ -128,6 +128,14 @@ export default async function CandidateProfilePage({
           <span className="text-primary truncate max-w-md">
             {candidate.full_name}
           </span>
+          <Link
+            href={`/projects/${project.id}/feedback?candidate=${candidate.id}`}
+            prefetch={false}
+            className="ml-auto px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-[14px]">rate_review</span>
+            Submit Feedback
+          </Link>
         </div>
 
         {parseError && (
