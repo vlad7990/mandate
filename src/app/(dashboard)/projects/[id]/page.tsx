@@ -170,6 +170,7 @@ export default async function ProjectPage({
           states={tileStates(project, spec)}
           actions={{ role_spec: specAction }}
         />
+        {spec.hasFinal && <BuildSourcingCta projectId={project.id} />}
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -346,5 +347,41 @@ function DimensionWeightsCard({
         </p>
       )}
     </section>
+  );
+}
+
+function BuildSourcingCta({ projectId }: { projectId: string }) {
+  return (
+    <Link
+      href={`/projects/${projectId}/sourcing`}
+      prefetch={false}
+      className="block bg-primary-container/10 border border-primary-container/40 hover:border-primary-container hover:bg-primary-container/15 transition-colors p-4 group"
+    >
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <span
+            className="material-symbols-outlined text-[20px] text-primary"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            travel_explore
+          </span>
+          <div>
+            <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
+              Job spec is final · Next step
+            </div>
+            <div className="text-on-surface text-body-main font-semibold mt-0.5">
+              Build Sourcing Queries
+            </div>
+            <div className="text-outline text-body-main mt-0.5">
+              Synthesise LinkedIn boolean variants, Google X-Ray, and ATS strings from the canonical spec.
+            </div>
+          </div>
+        </div>
+        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform">
+          Open
+          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+        </span>
+      </div>
+    </Link>
   );
 }
