@@ -246,12 +246,20 @@ export default async function RankingPage({
             <Link
               href={`/projects/${project.id}/ranking/compare`}
               prefetch={false}
-              className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
+              className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-[14px]">
                 compare_arrows
               </span>
               Compare 2–3
+            </Link>
+            <Link
+              href={`/projects/${project.id}/shortlist`}
+              prefetch={false}
+              className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[14px]">view_kanban</span>
+              Build Shortlist
             </Link>
           </div>
         </header>

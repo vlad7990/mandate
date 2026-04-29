@@ -157,6 +157,14 @@ export default async function ProjectPage({
                 View Rankings
               </Link>
               <Link
+                href={`/projects/${project.id}/shortlist`}
+                prefetch={false}
+                className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[14px]">view_kanban</span>
+                Build Shortlist
+              </Link>
+              <Link
                 href={`/projects/${project.id}/feedback`}
                 prefetch={false}
                 className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
