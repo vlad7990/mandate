@@ -127,7 +127,7 @@ export default async function ProjectPage({
             {project.status ?? "active"}
           </span>
           {ready && (
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2 flex-wrap">
               <Link
                 href={`/projects/${project.id}/candidates`}
                 prefetch={false}
@@ -135,6 +135,14 @@ export default async function ProjectPage({
               >
                 <span className="material-symbols-outlined text-[14px]">groups</span>
                 Candidates
+              </Link>
+              <Link
+                href={`/projects/${project.id}/ranking`}
+                prefetch={false}
+                className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[14px]">leaderboard</span>
+                View Rankings
               </Link>
               <Link
                 href={`/projects/${project.id}/onboarding`}
