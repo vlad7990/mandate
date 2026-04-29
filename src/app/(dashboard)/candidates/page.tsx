@@ -5,6 +5,7 @@ import {
   type Archetype,
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
+import { MastHead } from "@/components/ui/mast-head";
 import { cn } from "@/lib/utils";
 
 type ProjectLite = {
@@ -33,26 +34,40 @@ type ScoreLite = {
   tier: string | null;
 };
 
+// Stronger pipeline chips: each stage gets a filled background tinted to
+// the same family as its border, so the chip reads as a state badge
+// rather than just an outline. Hired/Rejected are the loudest since
+// they're terminal states.
 const STAGE_TONES: Record<string, string> = {
-  found: "border-outline-variant text-on-surface-variant",
-  reviewed: "border-primary-container/40 text-primary",
-  matched: "border-primary-container/40 text-primary",
-  shortlisted: "border-secondary-fixed-dim/40 text-secondary-fixed-dim",
-  submitted: "border-secondary-fixed-dim/40 text-secondary-fixed-dim",
-  interviewed: "border-tertiary/40 text-tertiary",
-  passed_rounds: "border-tertiary/40 text-tertiary",
-  finalist: "border-secondary-fixed-dim/60 text-secondary-fixed-dim",
-  offer: "border-secondary-fixed-dim/60 text-secondary-fixed-dim",
+  found: "bg-surface-container-high border-outline-variant text-on-surface-variant",
+  reviewed: "bg-primary-container/10 border-primary-container/50 text-primary",
+  matched: "bg-primary-container/10 border-primary-container/50 text-primary",
+  shortlisted:
+    "bg-secondary-fixed-dim/10 border-secondary-fixed-dim/50 text-secondary-fixed-dim",
+  submitted:
+    "bg-secondary-fixed-dim/10 border-secondary-fixed-dim/50 text-secondary-fixed-dim",
+  interviewed: "bg-tertiary/10 border-tertiary/50 text-tertiary",
+  passed_rounds: "bg-tertiary/10 border-tertiary/50 text-tertiary",
+  finalist:
+    "bg-secondary-fixed-dim/15 border-secondary-fixed-dim/70 text-secondary-fixed-dim",
+  offer:
+    "bg-secondary-fixed-dim/15 border-secondary-fixed-dim/70 text-secondary-fixed-dim",
   hired:
-    "bg-secondary-fixed-dim/10 border-secondary-fixed-dim/60 text-secondary-fixed-dim",
-  rejected: "border-error/40 text-error",
+    "bg-secondary-fixed-dim/20 border-secondary-fixed-dim text-secondary-fixed-dim",
+  rejected: "bg-error/10 border-error/60 text-error",
 };
 
+// Archetype chips also get filled backgrounds so they sit on the same
+// visual weight as pipeline stages; a recruiter scanning a row should
+// see two equally-weighted state badges, not "stage" louder than
+// "archetype".
 const ARCHETYPE_TONES: Record<Archetype, string> = {
-  Builder: "border-primary-container/40 text-primary",
-  Operator: "border-secondary-fixed-dim/40 text-secondary-fixed-dim",
-  Transformer: "border-tertiary/40 text-tertiary",
-  Infrastructure: "border-outline-variant text-on-surface-variant",
+  Builder: "bg-primary-container/10 border-primary-container/50 text-primary",
+  Operator:
+    "bg-secondary-fixed-dim/10 border-secondary-fixed-dim/50 text-secondary-fixed-dim",
+  Transformer: "bg-tertiary/10 border-tertiary/50 text-tertiary",
+  Infrastructure:
+    "bg-surface-container-high border-outline-variant text-on-surface-variant",
 };
 
 export default async function GlobalCandidatesPage() {
@@ -163,56 +178,64 @@ function ProjectGroup({
   candidates: CandidateLite[];
   scores: Map<string, ScoreLite>;
 }) {
+  // Each project gets a mast-head chapter break (matches the ranking
+  // tier-section treatment) so a long org-wide scroll has visible
+  // structure. The mast-head links to the project page; row card below
+  // is a separate target.
   return (
-    <section className="bg-surface-container-low border border-outline-variant rounded overflow-hidden">
-      <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-outline-variant bg-surface-container">
-        <Link
-          href={`/projects/${project.id}`}
-          prefetch={false}
-          className="flex items-center gap-3 min-w-0 hover:text-primary transition-colors"
-        >
-          <span className="material-symbols-outlined text-[16px] text-primary">
-            folder_open
-          </span>
-          <div className="min-w-0">
-            <div className="text-on-surface text-body-main font-semibold truncate">
-              {project.title}
-            </div>
-            <div className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-              {project.company_name}
-            </div>
-          </div>
-        </Link>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="px-2 py-0.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-wider">
-            {candidates.length} candidate{candidates.length === 1 ? "" : "s"}
-          </span>
-          <span
-            className={cn(
-              "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider",
-              (project.status ?? "active") === "active"
-                ? "border-secondary/40 text-secondary"
-                : "border-outline-variant text-outline"
-            )}
-          >
-            {project.status ?? "active"}
-          </span>
-        </div>
-      </header>
+    <section className="space-y-2">
+      <Link
+        href={`/projects/${project.id}`}
+        prefetch={false}
+        className="block group"
+      >
+        <MastHead
+          tone={(project.status ?? "active") === "active" ? "primary" : "neutral"}
+          icon="folder_open"
+          label={
+            <span className="flex items-center gap-2">
+              <span className="truncate max-w-[18rem] group-hover:underline">
+                {project.title}
+              </span>
+              <span className="text-outline">·</span>
+              <span className="text-outline truncate max-w-[14rem]">
+                {project.company_name}
+              </span>
+            </span>
+          }
+          meta={
+            <span className="flex items-center gap-2">
+              <span>
+                {candidates.length} candidate{candidates.length === 1 ? "" : "s"}
+              </span>
+              <span
+                className={cn(
+                  "px-1.5 py-0.5 border",
+                  (project.status ?? "active") === "active"
+                    ? "border-secondary/40 text-secondary"
+                    : "border-outline-variant text-outline"
+                )}
+              >
+                {project.status ?? "active"}
+              </span>
+            </span>
+          }
+        />
+      </Link>
       {candidates.length === 0 ? (
-        <div className="p-4 text-body-main text-outline italic">
+        <div className="bg-surface-container-low border border-outline-variant p-4 text-body-main text-outline italic">
           No candidates uploaded yet.{" "}
           <Link
             href={`/projects/${project.id}/candidates/new`}
             prefetch={false}
-            className="text-primary hover:underline"
+            className="text-primary hover:underline not-italic"
           >
             Add one
           </Link>
           .
         </div>
       ) : (
-        <ul className="divide-y divide-outline-variant/40">
+        <ul className="bg-surface-container-low border border-outline-variant divide-y divide-outline-variant/40">
           {candidates.map((c) => (
             <CandidateRow
               key={c.id}
@@ -243,7 +266,7 @@ function CandidateRow({
       <Link
         href={`/projects/${projectId}/candidates/${candidate.id}`}
         prefetch={false}
-        className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors group"
+        className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-high transition-colors group"
       >
         <span className="w-9 h-9 rounded bg-surface-container border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase shrink-0">
           {initials(candidate.full_name)}

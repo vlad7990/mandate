@@ -7,6 +7,7 @@ import {
   type FeedbackType,
 } from "@/lib/ai/feedback-analysis";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
+import { MastHead } from "@/components/ui/mast-head";
 import { cn } from "@/lib/utils";
 import { FeedbackForm, type CandidateOption } from "./feedback-form";
 
@@ -195,10 +196,12 @@ export default async function FeedbackPage({
         />
 
         <section className="space-y-3">
-          <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]">history</span>
-            Active Review Logs
-          </h2>
+          <MastHead
+            tone="primary"
+            icon="history"
+            label="Active Review Logs"
+            meta={`${feedback.length} ${feedback.length === 1 ? "entry" : "entries"}`}
+          />
           {feedback.length === 0 ? (
             <div className="bg-surface-container-low border border-outline-variant p-8 text-center text-body-main text-outline">
               No feedback yet. Submit one above to bootstrap the audit log.
@@ -250,28 +253,55 @@ function FeedbackEntry({
 
   const ftype = row.feedback_type as FeedbackType;
   const ftypeLabel = FEEDBACK_TYPE_LABELS[ftype] ?? row.feedback_type;
+  // More visually distinct chips: each type gets a filled background +
+  // its own icon so the recruiter can tell them apart at a glance,
+  // without the chips becoming louder than the body content.
+  const ftypeStyles: Record<
+    FeedbackType,
+    { className: string; icon: string }
+  > = {
+    hiring_manager: {
+      className:
+        "bg-primary-container/15 border-primary-container/60 text-primary",
+      icon: "supervisor_account",
+    },
+    interview_outcome: {
+      className: "bg-tertiary/10 border-tertiary/60 text-tertiary",
+      icon: "event_note",
+    },
+    recruiter_note: {
+      className: "bg-surface-container-high border-outline text-on-surface-variant",
+      icon: "edit_note",
+    },
+  };
+  const ftypeStyle =
+    ftypeStyles[ftype] ?? ftypeStyles.recruiter_note;
 
   return (
     <li
       className={cn(
-        "bg-surface-container-low border p-4 space-y-3",
+        "bg-surface-container-low border p-4 space-y-3 relative overflow-hidden",
         recalibrated
           ? "border-secondary-fixed-dim/40 bg-secondary-fixed-dim/5"
           : "border-outline-variant"
       )}
     >
+      {/* Recalibration left-edge accent — same instrumentation language
+          as the dashboard KPI tiles, signals "this row mattered". */}
+      {recalibrated && (
+        <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-secondary-fixed-dim" />
+      )}
       <header className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <span
             className={cn(
-              "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider",
-              ftype === "hiring_manager"
-                ? "border-primary-container/40 text-primary"
-                : ftype === "interview_outcome"
-                  ? "border-tertiary/40 text-tertiary"
-                  : "border-outline-variant text-on-surface-variant"
+              "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider flex items-center gap-1.5",
+              ftypeStyle.className
             )}
           >
+            <span className="material-symbols-outlined text-[12px]">
+              {ftypeStyle.icon}
+            </span>
             {ftypeLabel}
           </span>
           {candidate ? (
@@ -426,42 +456,49 @@ function WeightAdjustmentsCard({
   return (
     <div
       className={cn(
-        "border p-3 space-y-2",
+        "border px-3 py-2.5 space-y-2",
         applied
           ? "border-secondary-fixed-dim/40 bg-secondary-fixed-dim/5"
           : "border-outline-variant bg-surface-container"
       )}
     >
-      <h4 className="font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
-        <span className="material-symbols-outlined text-[12px]">tune</span>
-        Suggested weight adjustments
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <h4 className="font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-[12px]">tune</span>
+          Weight adjustments
+        </h4>
         <span
           className={cn(
-            "ml-auto px-1.5 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider",
+            "px-1.5 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider",
             applied
-              ? "border-secondary-fixed-dim/40 text-secondary-fixed-dim"
-              : "border-outline-variant text-outline"
+              ? "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
+              : "border-tertiary/60 bg-tertiary/10 text-tertiary"
           )}
         >
-          {applied ? "APPLIED" : "PENDING"}
+          {applied ? "Applied" : "Pending"}
         </span>
-      </h4>
-      <ul className="space-y-1.5">
+      </div>
+      {/* Compact two-column grid — dimension chip + reason text. The
+          delta lives inside the chip so the row reads as a single
+          adjustment unit. */}
+      <ul className="space-y-1">
         {adjustments.map((adj, i) => (
           <li
             key={i}
-            className="grid grid-cols-[80px_50px_1fr] gap-3 font-mono-data text-body-main"
+            className="grid grid-cols-[110px_1fr] gap-3 items-baseline font-mono-data text-body-main"
           >
-            <span className="text-on-surface uppercase tracking-wider">
-              {adj.dimension}
-            </span>
             <span
               className={cn(
-                "tabular-nums",
-                adj.delta > 0 ? "text-secondary-fixed-dim" : "text-error"
+                "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-widest flex items-center justify-between gap-2 shrink-0",
+                adj.delta > 0
+                  ? "border-secondary-fixed-dim/60 text-secondary-fixed-dim"
+                  : "border-error/60 text-error"
               )}
             >
-              {adj.delta > 0 ? `+${adj.delta}` : adj.delta}
+              <span className="truncate">{adj.dimension}</span>
+              <span className="tabular-nums shrink-0">
+                {adj.delta > 0 ? `+${adj.delta}` : adj.delta}
+              </span>
             </span>
             <span className="text-on-surface-variant">{adj.reason}</span>
           </li>

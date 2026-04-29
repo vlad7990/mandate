@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { MastHead } from "@/components/ui/mast-head";
 import {
   type Archetype,
   type FitDimensions,
@@ -398,21 +399,21 @@ export function ShortlistBuilder({
           </section>
 
           <section className="col-span-12 lg:col-span-8">
-            <div className="bg-surface-container-low border-2 border-dashed border-outline-variant p-4 flex flex-col gap-4 min-h-[400px]">
-              <header className="flex items-center justify-between gap-2 flex-wrap">
-                <div>
-                  <h2 className="font-h2 text-h2 text-on-surface">
-                    Final Shortlist · &ldquo;Top {slateSize}&rdquo;
-                  </h2>
-                  <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider mt-1">
-                    Add from the pool. Reorder with up/down arrows.
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-wider">
-                  <span className="w-2 h-2 rounded-full bg-secondary-fixed-dim animate-pulse" />
-                  Live comparison mode
-                </div>
-              </header>
+            <div className="bg-surface-container-low border-2 border-dashed border-outline-variant p-4 flex flex-col gap-3 min-h-[400px]">
+              <MastHead
+                tone="secondary"
+                icon="view_kanban"
+                label={`Final Shortlist · Top ${slateSize}`}
+                meta={
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim animate-pulse" />
+                    Live comparison mode
+                  </span>
+                }
+              />
+              <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+                Add from the pool. Reorder with up/down arrows.
+              </p>
               <div
                 className={cn(
                   "grid gap-3 flex-1",
@@ -445,10 +446,13 @@ export function ShortlistBuilder({
             </div>
 
             {/* Narrative + finalize */}
-            <div className="bg-surface-container border border-outline-variant p-4 mt-4 space-y-4">
-              <h3 className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
-                Submission Narrative
-              </h3>
+            <div className="bg-surface-container border border-outline-variant p-4 mt-3 space-y-3">
+              <MastHead
+                tone="primary"
+                icon="edit_note"
+                label="Submission Narrative"
+                meta={`${wordCount} words`}
+              />
               <div className="relative">
                 <span className="absolute left-3 top-3 font-mono-data text-primary">
                   &gt;
@@ -462,7 +466,7 @@ export function ShortlistBuilder({
                 />
                 <div className="flex justify-between items-center mt-2 px-1">
                   <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-                    {wordCount} words · auto-saved on Generate / Submit
+                    Auto-saved on Generate / Submit
                   </span>
                   <button
                     type="button"
@@ -758,86 +762,113 @@ function ReportPreview({
   onCopy: () => void;
 }) {
   return (
-    <article className="bg-surface-container border border-outline-variant p-5 space-y-4">
-      <header className="flex items-center justify-between gap-2 flex-wrap">
-        <div>
-          <h2 className="font-h2 text-h2 text-primary uppercase tracking-tight flex items-center gap-2">
-            <span className="material-symbols-outlined">description</span>
-            Submission Report
+    <article className="bg-surface-container border border-outline-variant relative overflow-hidden">
+      {/* Document accent — a thin primary band at the top sets the
+          "submission deliverable" tone vs the rest of the working
+          surface. */}
+      <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary-container via-primary to-primary-container/40" />
+
+      <header className="px-6 pt-6 pb-4 border-b border-outline-variant/60 flex items-start justify-between gap-3 flex-wrap">
+        <div className="space-y-2 min-w-0">
+          <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
+            <span className="material-symbols-outlined text-[14px]">description</span>
+            Submission Document
+          </div>
+          <h2 className="font-h1 text-h1 text-on-surface tracking-tight">
+            {roleTitle}
           </h2>
-          <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest mt-1">
-            {roleTitle} @ {companyName} · {report.candidates.length} candidate{report.candidates.length === 1 ? "" : "s"}
-          </p>
+          <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+            {companyName} · {report.candidates.length} candidate{report.candidates.length === 1 ? "" : "s"} · drafted {new Date().toISOString().slice(0, 10)}
+          </div>
         </div>
         <button
           type="button"
           onClick={onCopy}
-          className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shrink-0"
         >
           <span className="material-symbols-outlined text-[14px]">content_copy</span>
           Copy Report
         </button>
       </header>
 
-      <section className="space-y-2">
-        <h3 className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-          Executive summary
-        </h3>
-        <p className="text-body-main text-on-surface leading-relaxed">
-          {report.executive_summary}
-        </p>
-      </section>
-
-      <section className="space-y-2">
-        <h3 className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-          Slate rationale
-        </h3>
-        <p className="text-body-main text-on-surface-variant leading-relaxed">
-          {report.slate_rationale}
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <h3 className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-          Candidate briefs
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {report.candidates.map((c) => (
-            <CandidateBriefCard key={c.candidate_id} brief={c} />
-          ))}
-        </div>
-      </section>
-
-      {report.scenarios.length > 0 && (
-        <section className="space-y-2">
-          <h3 className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-            Scenarios
-          </h3>
-          <ul className="space-y-2">
-            {report.scenarios.map((s, i) => (
-              <li
-                key={i}
-                className="bg-surface-container-low border-l-2 border-primary-container/60 px-3 py-2"
-              >
-                <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
-                  {s.headline}
-                </div>
-                <p className="text-body-main text-on-surface-variant mt-1">
-                  {s.detail}
-                </p>
-              </li>
-            ))}
-          </ul>
+      <div className="px-6 py-5 space-y-6">
+        {/* Executive summary as a blockquote-style block — pulls the
+            recruiter's eye to the headline takeaway first. */}
+        <section className="border-l-2 border-primary-container/60 pl-4 space-y-2">
+          <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
+            Executive summary
+          </div>
+          <p className="text-h2 font-h2 text-on-surface leading-snug tracking-tight">
+            {report.executive_summary}
+          </p>
         </section>
-      )}
 
-      <section className="bg-secondary-fixed-dim/5 border border-secondary-fixed-dim/40 px-4 py-3">
-        <div className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-          Recommended next step
-        </div>
-        <p className="text-body-main text-on-surface mt-1">{report.next_step}</p>
-      </section>
+        <section className="space-y-2">
+          <MastHead
+            tone="neutral"
+            label="Slate rationale"
+            icon="layers"
+          />
+          <p className="text-body-main text-on-surface-variant leading-relaxed">
+            {report.slate_rationale}
+          </p>
+        </section>
+
+        <section className="space-y-3">
+          <MastHead
+            tone="primary"
+            icon="groups"
+            label="Candidate briefs"
+            meta={`${report.candidates.length} brief${report.candidates.length === 1 ? "" : "s"}`}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {report.candidates.map((c) => (
+              <CandidateBriefCard key={c.candidate_id} brief={c} />
+            ))}
+          </div>
+        </section>
+
+        {report.scenarios.length > 0 && (
+          <section className="space-y-3">
+            <MastHead
+              tone="tertiary"
+              icon="alt_route"
+              label="Scenarios"
+              meta={`${report.scenarios.length} trade-off${report.scenarios.length === 1 ? "" : "s"}`}
+            />
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {report.scenarios.map((s, i) => (
+                <li
+                  key={i}
+                  className="bg-surface-container-low border-l-2 border-tertiary/60 px-3 py-2"
+                >
+                  <div className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest">
+                    {s.headline}
+                  </div>
+                  <p className="text-body-main text-on-surface-variant mt-1 leading-snug">
+                    {s.detail}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="bg-secondary-fixed-dim/5 border border-secondary-fixed-dim/40 px-4 py-3 flex items-start gap-3">
+          <span
+            className="material-symbols-outlined text-[18px] text-secondary-fixed-dim mt-0.5"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            arrow_forward
+          </span>
+          <div className="min-w-0">
+            <div className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest">
+              Recommended next step
+            </div>
+            <p className="text-body-main text-on-surface mt-1">{report.next_step}</p>
+          </div>
+        </section>
+      </div>
     </article>
   );
 }

@@ -666,37 +666,53 @@ function SectionCard({
   return (
     <article
       className={cn(
-        "bg-surface-container-low border p-5 space-y-3 transition-colors",
+        "bg-surface-container-low border p-5 space-y-3 transition-colors relative overflow-hidden",
         diffEntry?.changed
-          ? "border-tertiary/40"
+          ? "border-tertiary/60"
           : "border-outline-variant"
       )}
     >
+      {/* Top-edge accent. Tertiary when this section diverges from the
+          final, secondary-dim otherwise — the article reads as
+          "instrument panel for one section" rather than a generic card. */}
+      <div
+        className={cn(
+          "absolute left-0 right-0 top-0 h-0.5",
+          diffEntry?.changed ? "bg-tertiary/80" : "bg-secondary-fixed-dim/40"
+        )}
+      />
       <header className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <span
-            className="material-symbols-outlined text-[16px] text-secondary-fixed-dim"
-            style={{ fontVariationSettings: "'FILL' 1" }}
+            className={cn(
+              "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-1.5",
+              "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
+            )}
           >
-            {def.icon}
-          </span>
-          <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest">
+            <span
+              className="material-symbols-outlined text-[12px]"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              {def.icon}
+            </span>
             # {def.short}
           </span>
           <span className="text-on-surface text-body-main font-semibold">
             {def.label}
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {diffEntry?.changed && (
             <span
               className={cn(
-                "font-mono-label text-mono-label uppercase tracking-wider",
-                diffEntry.wordDelta >= 0 ? "text-secondary-fixed-dim" : "text-error"
+                "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider tabular-nums",
+                diffEntry.wordDelta >= 0
+                  ? "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
+                  : "border-error/60 bg-error/10 text-error"
               )}
             >
               {diffEntry.wordDelta >= 0 ? "+" : ""}
-              {diffEntry.wordDelta} WORDS
+              {diffEntry.wordDelta}W vs final
             </span>
           )}
           {!readonly && (
@@ -1036,53 +1052,72 @@ function HistoryView({
   currentSpecId: string;
   finalSpecId: string | null;
 }) {
+  // Tighter list: each entry is a single dense row (py-2) with a left
+  // accent rail keyed to its state (final / current / draft / generating)
+  // so the eye picks the canonical line out of a long history scroll.
   return (
-    <div className="bg-surface-container-low border border-outline-variant p-5 space-y-3">
+    <div className="bg-surface-container-low border border-outline-variant p-4 space-y-2">
       <header className="flex items-center justify-between">
         <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
           <span className="material-symbols-outlined text-[14px]">history</span>
           Version History
         </h3>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-          {versions.length} VERSIONS
+          {versions.length} {versions.length === 1 ? "version" : "versions"}
         </span>
       </header>
-      <ol className="divide-y divide-outline-variant/40">
+      <ol className="space-y-1">
         {versions.map((v) => {
           const isCurrent = v.id === currentSpecId;
           const isFinal = v.id === finalSpecId;
+          // Left rail tone — final wins over current wins over draft.
+          const railTone = isFinal
+            ? "border-l-secondary-fixed-dim"
+            : isCurrent
+              ? "border-l-primary-container"
+              : v.is_generating
+                ? "border-l-tertiary"
+                : "border-l-outline-variant";
+          const stateTone = isFinal
+            ? "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
+            : isCurrent
+              ? "border-primary-container bg-primary-container/10 text-primary"
+              : v.is_generating
+                ? "border-tertiary/60 bg-tertiary/10 text-tertiary"
+                : "border-outline-variant text-outline";
           return (
             <li
               key={v.id}
               className={cn(
-                "py-3 flex items-center justify-between gap-3",
-                isCurrent && "bg-primary-container/5 -mx-3 px-3"
+                "border-l-2 px-3 py-2 flex items-center justify-between gap-3 bg-surface-container/50 hover:bg-surface-container transition-colors",
+                railTone
               )}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 min-w-0">
                 <span
                   className={cn(
-                    "font-mono-label text-mono-label uppercase tracking-widest px-2 py-0.5 border",
-                    isFinal
-                      ? "border-secondary-fixed-dim/40 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
-                      : isCurrent
-                        ? "border-primary-container bg-primary-container/10 text-primary"
-                        : "border-outline-variant text-outline"
+                    "font-mono-label text-mono-label uppercase tracking-widest px-2 py-0.5 border tabular-nums",
+                    stateTone
                   )}
                 >
                   V{String(v.version).padStart(2, "0")}
                 </span>
                 <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-                  {isFinal ? "FINAL" : isCurrent ? "CURRENT" : "DRAFT"}
+                  {isFinal
+                    ? "Final"
+                    : isCurrent
+                      ? "Current"
+                      : v.is_generating
+                        ? (
+                          <span className="flex items-center gap-1.5 text-tertiary">
+                            <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" />
+                            Generating
+                          </span>
+                        )
+                        : "Draft"}
                 </span>
-                {v.is_generating && (
-                  <span className="font-mono-label text-mono-label text-tertiary uppercase tracking-wider flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" />
-                    GENERATING
-                  </span>
-                )}
               </div>
-              <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+              <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider tabular-nums shrink-0">
                 {formatRelative(v.updated_at)}
               </span>
             </li>
