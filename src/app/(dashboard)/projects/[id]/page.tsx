@@ -127,17 +127,27 @@ export default async function ProjectPage({
             {project.status ?? "active"}
           </span>
           {ready && (
-            <Link
-              href={`/projects/${project.id}/onboarding`}
-              className={
-                calibrated
-                  ? "ml-auto px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
-                  : "ml-auto px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
-              }
-            >
-              <span className="material-symbols-outlined text-[14px]">tune</span>
-              {calibrated ? "Re-run Calibration" : "Start Onboarding"}
-            </Link>
+            <div className="ml-auto flex items-center gap-2">
+              <Link
+                href={`/projects/${project.id}/candidates`}
+                prefetch={false}
+                className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[14px]">groups</span>
+                Candidates
+              </Link>
+              <Link
+                href={`/projects/${project.id}/onboarding`}
+                className={
+                  calibrated
+                    ? "px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+                    : "px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
+                }
+              >
+                <span className="material-symbols-outlined text-[14px]">tune</span>
+                {calibrated ? "Re-run Calibration" : "Start Onboarding"}
+              </Link>
+            </div>
           )}
         </div>
         <div className="flex items-center gap-3 text-on-surface-variant text-body-main">
