@@ -8,10 +8,15 @@ import {
   ANTI_PATTERNS_MIN,
   MUST_HAVES_MAX,
   MUST_HAVES_MIN,
+  PRIORITY_SIGNALS_MAX,
+  PRIORITY_SIGNALS_MIN,
+  PRIORITY_WEIGHT_MAX,
+  PRIORITY_WEIGHT_MIN,
   ROLE_ORIGIN_OPTIONS,
   STAKEHOLDERS_MAX,
   STAKEHOLDERS_MIN,
   type OnboardingResponses,
+  type PrioritySignal,
   type RoleOrigin,
 } from "@/lib/ai/onboarding-analysis";
 
@@ -19,6 +24,18 @@ const ROLE_ORIGIN_VALUES = ROLE_ORIGIN_OPTIONS.map((o) => o.value) as readonly R
 
 function clean(arr: string[]): string[] {
   return arr.map((s) => s.trim()).filter(Boolean);
+}
+
+function cleanPrioritySignals(arr: PrioritySignal[]): PrioritySignal[] {
+  return arr
+    .map((p) => ({ name: p.name.trim(), weight: Math.round(Number(p.weight)) }))
+    .filter(
+      (p) =>
+        p.name.length > 0 &&
+        Number.isFinite(p.weight) &&
+        p.weight >= PRIORITY_WEIGHT_MIN &&
+        p.weight <= PRIORITY_WEIGHT_MAX
+    );
 }
 
 function validate(responses: OnboardingResponses): string | null {
@@ -42,14 +59,12 @@ function validate(responses: OnboardingResponses): string | null {
   ) {
     return `Provide between ${STAKEHOLDERS_MIN} and ${STAKEHOLDERS_MAX} stakeholders.`;
   }
-  for (const w of [
-    responses.priority_signals.technical,
-    responses.priority_signals.leadership,
-    responses.priority_signals.domain,
-  ]) {
-    if (!Number.isFinite(w) || w < 1 || w > 10) {
-      return "Priority signals must be between 1 and 10.";
-    }
+  const priorities = cleanPrioritySignals(responses.priority_signals);
+  if (
+    priorities.length < PRIORITY_SIGNALS_MIN ||
+    priorities.length > PRIORITY_SIGNALS_MAX
+  ) {
+    return `Provide between ${PRIORITY_SIGNALS_MIN} and ${PRIORITY_SIGNALS_MAX} priority signals (each with a name and a weight ${PRIORITY_WEIGHT_MIN}–${PRIORITY_WEIGHT_MAX}).`;
   }
   return null;
 }
@@ -72,11 +87,7 @@ export async function submitOnboarding(
         focus: s.focus.trim(),
       }))
       .filter((s) => s.name || s.role || s.focus),
-    priority_signals: {
-      technical: Math.round(responses.priority_signals.technical),
-      leadership: Math.round(responses.priority_signals.leadership),
-      domain: Math.round(responses.priority_signals.domain),
-    },
+    priority_signals: cleanPrioritySignals(responses.priority_signals),
   };
 
   await deriveAndStoreCalibration(projectId, sanitized);

@@ -15,6 +15,10 @@ export const ANTI_PATTERNS_MIN = 1;
 export const ANTI_PATTERNS_MAX = 5;
 export const STAKEHOLDERS_MIN = 1;
 export const STAKEHOLDERS_MAX = 5;
+export const PRIORITY_SIGNALS_MIN = 1;
+export const PRIORITY_SIGNALS_MAX = 8;
+export const PRIORITY_WEIGHT_MIN = 1;
+export const PRIORITY_WEIGHT_MAX = 10;
 
 export type Stakeholder = {
   name: string;
@@ -22,10 +26,9 @@ export type Stakeholder = {
   focus: string;
 };
 
-export type PrioritySignals = {
-  technical: number;
-  leadership: number;
-  domain: number;
+export type PrioritySignal = {
+  name: string;
+  weight: number;
 };
 
 export type OnboardingResponses = {
@@ -33,7 +36,7 @@ export type OnboardingResponses = {
   must_haves: string[];
   anti_patterns: string[];
   stakeholders: Stakeholder[];
-  priority_signals: PrioritySignals;
+  priority_signals: PrioritySignal[];
 };
 
 export const DIMENSION_KEYS = [
@@ -52,12 +55,18 @@ export type CalibrationDerivation = {
   weights_rationale: string;
 };
 
+export const DEFAULT_PRIORITY_SIGNALS: PrioritySignal[] = [
+  { name: "Technical Depth", weight: 5 },
+  { name: "Leadership Scale", weight: 5 },
+  { name: "Domain Expertise", weight: 5 },
+];
+
 export const EMPTY_RESPONSES: OnboardingResponses = {
   role_origin: "new_hire",
   must_haves: ["", "", ""],
   anti_patterns: [""],
   stakeholders: [{ name: "", role: "", focus: "" }],
-  priority_signals: { technical: 5, leadership: 5, domain: 5 },
+  priority_signals: DEFAULT_PRIORITY_SIGNALS,
 };
 
 export const CALIBRATION_WEIGHTS_SCHEMA = {
@@ -72,36 +81,26 @@ export const CALIBRATION_WEIGHTS_SCHEMA = {
       properties: {
         technical: {
           type: "integer",
-          minimum: 0,
-          maximum: 10,
           description:
             "Hands-on technical depth required: architecture, code, systems, modern stacks.",
         },
         domain: {
           type: "integer",
-          minimum: 0,
-          maximum: 10,
           description:
             "Industry / sector knowledge: vertical fluency, business context, customer types.",
         },
         leadership: {
           type: "integer",
-          minimum: 0,
-          maximum: 10,
           description:
             "People / org leadership: building teams, executive presence, stakeholder mgmt.",
         },
         regulatory: {
           type: "integer",
-          minimum: 0,
-          maximum: 10,
           description:
             "Compliance, audit, risk, regulator relationships, controls maturity.",
         },
         transformation: {
           type: "integer",
-          minimum: 0,
-          maximum: 10,
           description:
             "Change leadership: turnaround, scaling, modernisation, M&A integration.",
         },
@@ -117,12 +116,12 @@ export const CALIBRATION_WEIGHTS_SCHEMA = {
 
 export const CALIBRATION_SYSTEM_PROMPT = `You are an executive-search calibration analyst. Given a recruiter's onboarding answers and the existing role / company context, derive a five-dimension scoring model that will be used to rank candidates.
 
-Output strictly conforms to the provided JSON schema. All five weights are integers 0–10.
+Output strictly conforms to the provided JSON schema. Each weight MUST be an integer between 0 and 10 inclusive. Do not return values outside this range.
 
 Rules:
 - Use the full 0–10 range. Do not cluster every weight at 5.
 - Differentiate: at least one dimension should be ≥ 7 and at least one should be ≤ 4 unless the inputs genuinely demand a flat profile.
-- 'priority_signals' from the recruiter is the strongest signal for technical / leadership / domain. Boost or reduce accordingly.
+- 'priority_signals' is a recruiter-supplied list of named signals with weights 1–10. Map each signal's name to the closest dimension(s) and let the recruiter's weight steer the dimension upward proportionally. Examples: "Technical Depth" → technical; "Leadership Scale" → leadership; "Domain Expertise" → domain; "Regulatory Experience" → regulatory; "Post-Merger Integration" / "Turnaround" → transformation. A signal can map to more than one dimension (e.g. "Compliance Leadership" splits across regulatory + leadership).
 - 'must_haves' and 'anti_patterns' refine the picture: e.g. heavy regulatory must-haves → bump regulatory; "must have built from zero" or "post-merger integration" → bump transformation.
 - 'role_origin' matters: 'expansion' often raises transformation; 'backfill' often raises leadership / domain; 'new_hire' depends on context.
 - Industry / business model from company_context informs the regulatory baseline (FS / Banking / Insurance / Healthcare → higher floor).

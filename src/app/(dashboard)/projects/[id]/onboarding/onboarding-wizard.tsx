@@ -7,13 +7,19 @@ import { cn } from "@/lib/utils";
 import {
   ANTI_PATTERNS_MAX,
   ANTI_PATTERNS_MIN,
+  DEFAULT_PRIORITY_SIGNALS,
   EMPTY_RESPONSES,
   MUST_HAVES_MAX,
   MUST_HAVES_MIN,
+  PRIORITY_SIGNALS_MAX,
+  PRIORITY_SIGNALS_MIN,
+  PRIORITY_WEIGHT_MAX,
+  PRIORITY_WEIGHT_MIN,
   ROLE_ORIGIN_OPTIONS,
   STAKEHOLDERS_MAX,
   STAKEHOLDERS_MIN,
   type OnboardingResponses,
+  type PrioritySignal,
   type RoleOrigin,
   type Stakeholder,
 } from "@/lib/ai/onboarding-analysis";
@@ -77,7 +83,7 @@ const STEPS: StepDef[] = [
     eyebrow: "Calibration Step 05",
     title: "Role Priority Signals",
     blurb:
-      "Rank technical depth, leadership, and domain expertise. The calibration agent will distil these into a five-dimension scoring model.",
+      "Name and weight the signals that matter most for this role. The calibration agent maps each signal to its closest dimension and lets your weights steer the five-dimension scoring model.",
   },
 ];
 
@@ -109,7 +115,9 @@ export function OnboardingWizard({
       { name: "", role: "", focus: "" }
     ),
     priority_signals:
-      initial?.priority_signals ?? EMPTY_RESPONSES.priority_signals,
+      Array.isArray(initial?.priority_signals) && initial.priority_signals.length > 0
+        ? initial.priority_signals
+        : DEFAULT_PRIORITY_SIGNALS.map((p) => ({ ...p })),
   }));
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -139,6 +147,7 @@ export function OnboardingWizard({
         const msg = e instanceof Error ? e.message : "Calibration failed.";
         // Next.js redirect throws an internal error; ignore it.
         if (msg.includes("NEXT_REDIRECT")) return;
+        console.error("[onboarding] submit failed:", e);
         toast.error(msg);
       }
     });
@@ -280,8 +289,8 @@ export function OnboardingWizard({
                   />
                 )}
                 {step === 5 && (
-                  <StepPriorities
-                    value={responses.priority_signals}
+                  <StepPrioritySignals
+                    values={responses.priority_signals}
                     onChange={(v) =>
                       setResponses((r) => ({ ...r, priority_signals: v }))
                     }
@@ -603,71 +612,97 @@ function FieldInput({
   );
 }
 
-function StepPriorities({
-  value,
+function StepPrioritySignals({
+  values,
   onChange,
 }: {
-  value: { technical: number; leadership: number; domain: number };
-  onChange: (v: { technical: number; leadership: number; domain: number }) => void;
+  values: PrioritySignal[];
+  onChange: (next: PrioritySignal[]) => void;
 }) {
-  const sliders: { key: keyof typeof value; label: string; caption: string }[] = [
-    {
-      key: "technical",
-      label: "Technical Depth",
-      caption: "Hands-on architecture, systems, modern stacks.",
-    },
-    {
-      key: "leadership",
-      label: "Leadership",
-      caption: "Org-building, executive presence, stakeholder mgmt.",
-    },
-    {
-      key: "domain",
-      label: "Domain Expertise",
-      caption: "Industry / vertical fluency and customer context.",
-    },
-  ];
+  const filled = values.filter((p) => p.name.trim()).length;
+  const update = (i: number, patch: Partial<PrioritySignal>) =>
+    onChange(values.map((row, j) => (j === i ? { ...row, ...patch } : row)));
+  const remove = (i: number) => onChange(values.filter((_, j) => j !== i));
+  const append = () =>
+    onChange([...values, { name: "", weight: 5 }]);
+
   return (
-    <div className="space-y-5">
-      <span className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider block">
-        Rank these signals (1 = low, 10 = critical)
-      </span>
-      {sliders.map((s) => (
-        <div
-          key={s.key}
-          className="border border-outline-variant bg-surface-container-low p-4 space-y-3"
-        >
-          <div className="flex items-baseline justify-between">
-            <div>
-              <div className="font-mono-data text-mono-data text-on-surface uppercase tracking-wider">
-                {s.label}
-              </div>
-              <div className="text-body-main text-on-surface-variant mt-0.5">
-                {s.caption}
+    <div className="space-y-3">
+      <div className="flex items-baseline justify-between">
+        <span className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider">
+          Priority signals — name each, weight 1–10
+        </span>
+        <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+          {filled} / {PRIORITY_SIGNALS_MAX}
+        </span>
+      </div>
+      <div className="space-y-3">
+        {values.map((p, i) => (
+          <div
+            key={i}
+            className="border border-outline-variant bg-surface-container-low p-4 space-y-3"
+          >
+            <div className="flex items-stretch gap-2">
+              <span className="bg-surface-container-lowest border border-outline-variant px-3 flex items-center font-mono-label text-mono-label text-outline uppercase">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <input
+                type="text"
+                value={p.name}
+                placeholder="e.g. Regulatory Experience"
+                onChange={(e) => update(i, { name: e.target.value })}
+                className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-none px-3 py-3 font-mono-data text-mono-data text-on-surface placeholder:text-outline-variant focus:border-primary focus:ring-0 outline-none transition-colors"
+              />
+              {values.length > PRIORITY_SIGNALS_MIN && (
+                <button
+                  type="button"
+                  onClick={() => remove(i)}
+                  className="px-3 border border-outline-variant text-outline hover:text-destructive hover:border-destructive transition-colors"
+                  aria-label={`Remove priority signal ${i + 1}`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min={PRIORITY_WEIGHT_MIN}
+                max={PRIORITY_WEIGHT_MAX}
+                step={1}
+                value={p.weight}
+                onChange={(e) =>
+                  update(i, { weight: Number(e.target.value) })
+                }
+                className="flex-1 accent-primary-container"
+                aria-label={`Weight for ${p.name || `signal ${i + 1}`}`}
+              />
+              <div className="font-h2 text-h2 text-primary tabular-nums w-10 text-right">
+                {p.weight}
               </div>
             </div>
-            <div className="font-h2 text-h2 text-primary tabular-nums">
-              {value[s.key]}
+            <div className="flex justify-between font-mono-label text-mono-label text-outline uppercase tracking-wider">
+              <span>0{PRIORITY_WEIGHT_MIN} · Low</span>
+              <span>{PRIORITY_WEIGHT_MAX} · Critical</span>
             </div>
           </div>
-          <input
-            type="range"
-            min={1}
-            max={10}
-            step={1}
-            value={value[s.key]}
-            onChange={(e) =>
-              onChange({ ...value, [s.key]: Number(e.target.value) })
-            }
-            className="w-full accent-primary-container"
-            aria-label={s.label}
-          />
-          <div className="flex justify-between font-mono-label text-mono-label text-outline uppercase tracking-wider">
-            <span>01 · Low</span>
-            <span>10 · Critical</span>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+          {PRIORITY_SIGNALS_MIN}–{PRIORITY_SIGNALS_MAX} signals · weight 1–10 each
+        </span>
+        {values.length < PRIORITY_SIGNALS_MAX && (
+          <button
+            type="button"
+            onClick={append}
+            className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 hover:brightness-110 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[14px]">add</span>
+            Add Priority Signal
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -794,12 +829,29 @@ function stepValidity(
       return { ok: true };
     }
     case 5: {
-      const ok =
-        [r.priority_signals.technical, r.priority_signals.leadership, r.priority_signals.domain]
-          .every((n) => Number.isFinite(n) && n >= 1 && n <= 10);
-      return ok
+      const named = r.priority_signals.filter((p) => p.name.trim());
+      if (named.length < PRIORITY_SIGNALS_MIN)
+        return {
+          ok: false,
+          message: `Add at least ${PRIORITY_SIGNALS_MIN} priority signal.`,
+        };
+      if (named.length > PRIORITY_SIGNALS_MAX)
+        return {
+          ok: false,
+          message: `Maximum ${PRIORITY_SIGNALS_MAX} priority signals.`,
+        };
+      const allWeightsValid = named.every(
+        (p) =>
+          Number.isFinite(p.weight) &&
+          p.weight >= PRIORITY_WEIGHT_MIN &&
+          p.weight <= PRIORITY_WEIGHT_MAX
+      );
+      return allWeightsValid
         ? { ok: true }
-        : { ok: false, message: "Priority signals must be between 1 and 10." };
+        : {
+            ok: false,
+            message: `Each weight must be between ${PRIORITY_WEIGHT_MIN} and ${PRIORITY_WEIGHT_MAX}.`,
+          };
     }
     default:
       return { ok: true };
