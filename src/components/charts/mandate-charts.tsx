@@ -37,8 +37,10 @@ export type MandateBarDatum = {
    */
   fill?: string | null;
   /**
-   * Free-form metadata passed through to the tooltip formatter so callers
-   * can render richer hover content (e.g. percent of total, cumulative).
+   * Pre-formatted display string for the tooltip. When set, the tooltip
+   * renders this verbatim instead of the raw value — server components
+   * can use it to carry richer hover content (e.g. "5 candidates · 30%")
+   * across the server/client boundary as a plain string.
    */
   meta?: string;
 };
@@ -55,19 +57,22 @@ const DEFAULT_BAR_CONFIG: ChartConfig = {
  * stages, health status breakdowns, source distributions. Tokenised
  * against the surface palette: grid uses outline-variant, ticks use
  * outline, bars use primary-container by default.
+ *
+ * No `formatter` prop: this is a Client Component, and Next.js disallows
+ * passing functions across the server/client boundary. Server callers
+ * pre-format their tooltip text into each datum's `meta` field instead
+ * — strings cross the boundary cleanly.
  */
 export function MandateHorizontalBarChart({
   data,
   className,
   valueLabel = "Count",
   defaultFill = "var(--color-primary-container)",
-  formatter,
 }: {
   data: MandateBarDatum[];
   className?: string;
   valueLabel?: string;
   defaultFill?: string;
-  formatter?: (value: number, datum: MandateBarDatum) => string;
 }) {
   const config: ChartConfig = React.useMemo(
     () => ({
@@ -114,15 +119,9 @@ export function MandateHorizontalBarChart({
               indicator="dot"
               formatter={(rawValue, name, item) => {
                 const datum = item.payload as MandateBarDatum;
-                const display = formatter
-                  ? formatter(Number(rawValue), datum)
-                  : String(rawValue);
                 return (
                   <span className="font-mono-data text-on-surface tabular-nums">
-                    {display}
-                    {datum.meta ? (
-                      <span className="text-outline ml-2">{datum.meta}</span>
-                    ) : null}
+                    {datum.meta ?? String(rawValue)}
                   </span>
                 );
               }}

@@ -353,15 +353,19 @@ function SourceSection({
   // and so tooltips / accessibility come for free. The 'unspecified'
   // bucket is tone-shifted so the recruiter notices the gap (encourages
   // tagging sources on upload).
-  const data: MandateBarDatum[] = breakdown.map((row) => ({
-    label: row.source,
-    value: row.count,
-    fill:
-      row.source === "unspecified"
-        ? "var(--color-tertiary)"
-        : "var(--color-secondary-fixed-dim)",
-    meta: total > 0 ? `${Math.round((row.count / total) * 100)}%` : undefined,
-  }));
+  const data: MandateBarDatum[] = breakdown.map((row) => {
+    const pct = total > 0 ? Math.round((row.count / total) * 100) : null;
+    const countLabel = `${row.count} candidate${row.count === 1 ? "" : "s"}`;
+    return {
+      label: row.source,
+      value: row.count,
+      fill:
+        row.source === "unspecified"
+          ? "var(--color-tertiary)"
+          : "var(--color-secondary-fixed-dim)",
+      meta: pct != null ? `${countLabel} · ${pct}%` : countLabel,
+    };
+  });
   return (
     <section className="bg-surface-container-low border border-outline-variant p-5 space-y-3">
       <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
@@ -370,7 +374,6 @@ function SourceSection({
       </h2>
       <MandateHorizontalBarChart
         data={data}
-        formatter={(v) => `${v} candidate${v === 1 ? "" : "s"}`}
         className="h-[200px]"
       />
     </section>

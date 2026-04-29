@@ -61,11 +61,15 @@ export default async function PortfolioAnalyticsPage() {
     const stage = (c.pipeline_stage ?? "found") as PipelineStage;
     stageCounts.set(stage, (stageCounts.get(stage) ?? 0) + 1);
   }
-  const pipelineData: MandateBarDatum[] = FUNNEL_STAGES.map((stage) => ({
-    label: PIPELINE_LABELS[stage],
-    value: stageCounts.get(stage) ?? 0,
-    fill: stage === "rejected" ? "var(--color-error)" : null,
-  }));
+  const pipelineData: MandateBarDatum[] = FUNNEL_STAGES.map((stage) => {
+    const value = stageCounts.get(stage) ?? 0;
+    return {
+      label: PIPELINE_LABELS[stage],
+      value,
+      fill: stage === "rejected" ? "var(--color-error)" : null,
+      meta: `${value} candidate${value === 1 ? "" : "s"}`,
+    };
+  });
 
   // Weekly velocity over the last 8 weeks. Bucketed in a top-level
   // helper because Date.now() is impure and react-hooks/purity rejects
@@ -96,11 +100,15 @@ export default async function PortfolioAnalyticsPage() {
     metrics.totalProjects - healthBuckets.stalled - healthBuckets.at_risk;
   const healthData: MandateBarDatum[] = (
     ["healthy", "stalled", "at_risk"] as HealthStatus[]
-  ).map((status) => ({
-    label: HEALTH_LABELS[status],
-    value: healthBuckets[status],
-    fill: HEALTH_FILL[status],
-  }));
+  ).map((status) => {
+    const value = healthBuckets[status];
+    return {
+      label: HEALTH_LABELS[status],
+      value,
+      fill: HEALTH_FILL[status],
+      meta: `${value} project${value === 1 ? "" : "s"}`,
+    };
+  });
 
   return (
     <div className="p-6 space-y-6">
@@ -150,7 +158,6 @@ export default async function PortfolioAnalyticsPage() {
       >
         <MandateHorizontalBarChart
           data={pipelineData}
-          formatter={(v) => `${v} candidate${v === 1 ? "" : "s"}`}
           className="h-[320px]"
         />
       </ChartCard>
@@ -163,7 +170,6 @@ export default async function PortfolioAnalyticsPage() {
         >
           <MandateHorizontalBarChart
             data={healthData}
-            formatter={(v) => `${v} project${v === 1 ? "" : "s"}`}
             className="h-[200px]"
           />
         </ChartCard>
