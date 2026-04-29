@@ -15,6 +15,13 @@ import {
   DIMENSION_KEYS,
   type DimensionKey,
 } from "@/lib/ai/onboarding-analysis";
+import { computeProjectHealth } from "@/lib/metrics/health";
+import {
+  HEALTH_LABELS,
+  type HealthAlert,
+  type HealthStatus,
+  type ProjectHealthSummary,
+} from "@/lib/metrics/types";
 import { ProjectPoller } from "./project-poller";
 
 type RecalibrationSummary = {
@@ -114,6 +121,13 @@ export default async function ProjectPage({
     isGenerating: (specRows ?? []).some((r) => r.is_generating),
   };
 
+  // Project health drives the weekly summary card. Computed here (not in
+  // the card component) so it stays in the same server-component pass as
+  // the other queries — avoids a second round-trip on render.
+  const health: ProjectHealthSummary | null = ready
+    ? await computeProjectHealth(project.id)
+    : null;
+
   const specAction: AgentTileAction = {
     label: spec.hasAny ? "Open Job Spec" : "Build Job Spec",
     href: `/projects/${project.id}/spec`,
@@ -155,6 +169,14 @@ export default async function ProjectPage({
               >
                 <span className="material-symbols-outlined text-[14px]">leaderboard</span>
                 View Rankings
+              </Link>
+              <Link
+                href={`/projects/${project.id}/metrics`}
+                prefetch={false}
+                className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[14px]">analytics</span>
+                Metrics
               </Link>
               <Link
                 href={`/projects/${project.id}/shortlist`}
@@ -204,6 +226,10 @@ export default async function ProjectPage({
           projectId={project.id}
           summary={project.recalibration_summary}
         />
+      )}
+
+      {health && (
+        <WeeklyHealthCard projectId={project.id} health={health} />
       )}
 
       <section className="space-y-3">
@@ -503,5 +529,136 @@ function BuildSourcingCta({ projectId }: { projectId: string }) {
         </span>
       </div>
     </Link>
+  );
+}
+
+const HEALTH_TONE: Record<HealthStatus, string> = {
+  healthy:
+    "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim",
+  stalled: "border-tertiary/60 bg-tertiary/10 text-tertiary",
+  at_risk: "border-error/60 bg-error/10 text-error",
+};
+
+const HEALTH_DOT: Record<HealthStatus, string> = {
+  healthy: "bg-secondary-fixed-dim",
+  stalled: "bg-tertiary",
+  at_risk: "bg-error",
+};
+
+function WeeklyHealthCard({
+  projectId,
+  health,
+}: {
+  projectId: string;
+  health: ProjectHealthSummary;
+}) {
+  return (
+    <Link
+      href={`/projects/${projectId}/metrics`}
+      prefetch={false}
+      className="block bg-surface-container-low border border-outline-variant hover:border-primary transition-colors p-4 group"
+    >
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+            This week
+          </span>
+          <span
+            className={
+              "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider flex items-center gap-1.5 " +
+              HEALTH_TONE[health.status]
+            }
+          >
+            <span
+              className={
+                "w-1.5 h-1.5 rounded-full " +
+                HEALTH_DOT[health.status] +
+                (health.status === "at_risk" ? " animate-pulse" : "")
+              }
+            />
+            {HEALTH_LABELS[health.status]}
+          </span>
+        </div>
+        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform">
+          Open metrics
+          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+        </span>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
+        <WeeklyKpi
+          label="Sourced"
+          value={String(health.candidatesThisWeek).padStart(2, "0")}
+          unit="this week"
+        />
+        <WeeklyKpi
+          label="Feedback"
+          value={String(health.feedbackThisWeek).padStart(2, "0")}
+          unit="this week"
+        />
+        <WeeklyKpi
+          label="Rank Δ"
+          value={String(health.rankingChangesThisWeek).padStart(2, "0")}
+          unit="changes 7d"
+        />
+        <WeeklyKpi
+          label="Last activity"
+          value={
+            health.lastActivityAt
+              ? formatRelative(health.lastActivityAt)
+              : "—"
+          }
+          unit={`${health.totalCandidates} total`}
+        />
+      </div>
+      {health.alerts.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {health.alerts.map((alert) => (
+            <HealthAlertChip key={alert.code} alert={alert} />
+          ))}
+        </div>
+      )}
+    </Link>
+  );
+}
+
+function WeeklyKpi({
+  label,
+  value,
+  unit,
+}: {
+  label: string;
+  value: string;
+  unit: string;
+}) {
+  return (
+    <div className="space-y-0.5">
+      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider block">
+        {label}
+      </span>
+      <span className="font-h2 text-h2 text-on-surface tabular-nums">
+        {value}
+      </span>
+      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider block">
+        {unit}
+      </span>
+    </div>
+  );
+}
+
+function HealthAlertChip({ alert }: { alert: HealthAlert }) {
+  const tone =
+    alert.severity === "critical"
+      ? "border-error/60 text-error"
+      : "border-tertiary/60 text-tertiary";
+  return (
+    <span
+      title={alert.detail}
+      className={
+        "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider " +
+        tone
+      }
+    >
+      {alert.label}
+    </span>
   );
 }

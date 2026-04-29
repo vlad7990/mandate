@@ -1,5 +1,14 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { computePortfolioMetrics } from "@/lib/metrics/portfolio";
+import {
+  ALERT_LABELS,
+  HEALTH_LABELS,
+  type HealthAlert,
+  type HealthStatus,
+  type PortfolioMetrics,
+} from "@/lib/metrics/types";
+import { cn } from "@/lib/utils";
 
 type ProjectRow = {
   id: string;
@@ -15,16 +24,31 @@ const STATUS_TONE: Record<string, string> = {
   closed: "bg-outline/10 text-outline border-outline-variant",
 };
 
+const HEALTH_TONE: Record<HealthStatus, string> = {
+  healthy:
+    "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim",
+  stalled: "border-tertiary/60 bg-tertiary/10 text-tertiary",
+  at_risk: "border-error/60 bg-error/10 text-error",
+};
+
+const HEALTH_DOT: Record<HealthStatus, string> = {
+  healthy: "bg-secondary-fixed-dim",
+  stalled: "bg-tertiary",
+  at_risk: "bg-error",
+};
+
 function formatDate(value: string | null) {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "2-digit",
-  }).toUpperCase();
+  return new Date(value)
+    .toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "2-digit",
+    })
+    .toUpperCase();
 }
 
-function tone(status: string | null) {
+function projectStatusTone(status: string | null) {
   if (!status) return STATUS_TONE.active;
   return STATUS_TONE[status.toLowerCase()] ?? STATUS_TONE.active;
 }
@@ -37,8 +61,11 @@ export default async function DashboardHomePage() {
     .order("created_at", { ascending: false });
 
   const projects: ProjectRow[] = data ?? [];
-  const projectCount = projects.length;
-  const activeCount = projects.filter((p) => (p.status ?? "active") === "active").length;
+
+  // Portfolio metrics fan out to per-project health computations. The
+  // fan-out is fine for tens of projects per org; if a single org grows
+  // to hundreds we'll want a server-side rollup RPC.
+  const metrics = await computePortfolioMetrics();
 
   return (
     <div className="p-4 grid grid-cols-12 gap-4">
@@ -48,7 +75,11 @@ export default async function DashboardHomePage() {
         </div>
       )}
 
-      <KpiRow projectCount={projectCount} activeCount={activeCount} />
+      <PortfolioKpiRow metrics={metrics} />
+
+      {metrics.attentionList.length > 0 && (
+        <AttentionPanel attentionList={metrics.attentionList} />
+      )}
 
       <div className="col-span-12 flex justify-between items-center pt-2">
         <div className="flex items-center gap-3">
@@ -57,7 +88,7 @@ export default async function DashboardHomePage() {
             ACTIVE_MANDATES
           </h2>
           <span className="px-2 py-0.5 border border-outline-variant font-mono-label text-mono-label text-outline tracking-wider">
-            N={projectCount}
+            N={metrics.totalProjects}
           </span>
         </div>
         <Link
@@ -69,41 +100,45 @@ export default async function DashboardHomePage() {
         </Link>
       </div>
 
-      {projectCount === 0 ? <EmptyState /> : <ProjectsTable projects={projects} />}
+      {projects.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <ProjectsTable projects={projects} attentionList={metrics.attentionList} />
+      )}
     </div>
   );
 }
 
-function KpiRow({
-  projectCount,
-  activeCount,
-}: {
-  projectCount: number;
-  activeCount: number;
-}) {
+function PortfolioKpiRow({ metrics }: { metrics: PortfolioMetrics }) {
+  const attentionCount = metrics.attentionList.length;
   return (
     <div className="col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
       <KpiTile
-        label="ACTIVE SEARCHES"
-        value={projectCount.toString().padStart(2, "0")}
-        unit="OPEN MANDATES"
+        label="Active Searches"
+        value={metrics.activeProjects.toString().padStart(2, "0")}
+        unit={`${metrics.totalProjects} total`}
         accent="primary"
       />
       <KpiTile
-        label="PIPELINE VELOCITY"
-        value="—"
-        unit="CANDIDATES / WEEK"
-      />
-      <KpiTile
-        label="HM FEEDBACK ROUNDS"
-        value="—"
-        unit="LAST 30D"
-      />
-      <KpiTile
-        label="ON-TRACK"
-        value={activeCount.toString().padStart(2, "0")}
-        unit="HEALTHY"
+        label="Total Candidates"
+        value={metrics.totalCandidates.toString().padStart(2, "0")}
+        unit={`+${metrics.totalCandidatesThisWeek} this week`}
         accent="secondary"
+      />
+      <KpiTile
+        label="Avg Velocity"
+        value={metrics.averageWeeklyVelocity.toFixed(1)}
+        unit="cand / week / search"
+      />
+      <KpiTile
+        label="Needs Attention"
+        value={attentionCount.toString().padStart(2, "0")}
+        unit={
+          attentionCount === 0
+            ? "All healthy"
+            : `${metrics.totalFeedbackThisWeek} feedback 7d`
+        }
+        accent={attentionCount > 0 ? "warn" : "secondary"}
       />
     </div>
   );
@@ -118,26 +153,111 @@ function KpiTile({
   label: string;
   value: string;
   unit: string;
-  accent?: "primary" | "secondary";
+  accent?: "primary" | "secondary" | "warn";
 }) {
-  const accentClass =
+  const valueColor =
     accent === "primary"
       ? "text-primary"
       : accent === "secondary"
-        ? "text-secondary"
-        : "text-on-surface";
+        ? "text-secondary-fixed-dim"
+        : accent === "warn"
+          ? "text-tertiary"
+          : "text-on-surface";
   return (
     <div className="bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between min-h-[96px] rounded">
       <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
         {label}
       </span>
       <div className="flex items-baseline gap-2">
-        <span className={`font-mono-data text-2xl ${accentClass}`}>{value}</span>
-        <span className="text-[10px] text-outline font-mono uppercase tracking-tighter">
-          {unit}
+        <span className={cn("font-h2 text-h2 tabular-nums", valueColor)}>
+          {value}
         </span>
       </div>
+      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+        {unit}
+      </span>
     </div>
+  );
+}
+
+function AttentionPanel({
+  attentionList,
+}: {
+  attentionList: PortfolioMetrics["attentionList"];
+}) {
+  return (
+    <section className="col-span-12 bg-surface-container-low border border-outline-variant rounded">
+      <header className="flex items-center justify-between gap-2 p-3 border-b border-outline-variant bg-surface-container">
+        <h3 className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest flex items-center gap-2">
+          <span className="material-symbols-outlined text-[14px]">notification_important</span>
+          Searches Needing Attention
+        </h3>
+        <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+          {attentionList.length} flagged
+        </span>
+      </header>
+      <ul className="divide-y divide-outline-variant/40">
+        {attentionList.map((row) => (
+          <li key={row.projectId}>
+            <Link
+              href={`/projects/${row.projectId}/metrics`}
+              prefetch={false}
+              className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors group"
+            >
+              <span
+                className={cn(
+                  "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider flex items-center gap-1.5 shrink-0",
+                  HEALTH_TONE[row.status]
+                )}
+              >
+                <span
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    HEALTH_DOT[row.status],
+                    row.status === "at_risk" ? "animate-pulse" : ""
+                  )}
+                />
+                {HEALTH_LABELS[row.status]}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-on-surface text-body-main font-semibold truncate">
+                  {row.title}
+                </div>
+                <div className="font-mono-data text-body-main text-on-surface-variant truncate">
+                  {row.companyName}
+                </div>
+              </div>
+              <div className="hidden md:flex flex-wrap gap-1.5 shrink-0">
+                {row.alerts.slice(0, 4).map((a) => (
+                  <AlertChip key={a.code} alert={a} />
+                ))}
+              </div>
+              <span className="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">
+                chevron_right
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function AlertChip({ alert }: { alert: HealthAlert }) {
+  const tone =
+    alert.severity === "critical"
+      ? "border-error/60 text-error"
+      : "border-tertiary/60 text-tertiary";
+  return (
+    <span
+      title={alert.detail}
+      className={cn(
+        "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider",
+        tone
+      )}
+    >
+      {ALERT_LABELS[alert.code]}
+    </span>
   );
 }
 
@@ -169,7 +289,19 @@ function EmptyState() {
   );
 }
 
-function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
+function ProjectsTable({
+  projects,
+  attentionList,
+}: {
+  projects: ProjectRow[];
+  attentionList: PortfolioMetrics["attentionList"];
+}) {
+  const healthByProject = new Map(
+    attentionList.map((row) => [
+      row.projectId,
+      { status: row.status, alerts: row.alerts },
+    ])
+  );
   return (
     <div className="col-span-12 bg-surface-container-low border border-outline-variant rounded overflow-hidden">
       <div className="p-3 border-b border-outline-variant flex justify-between items-center bg-surface-container">
@@ -187,13 +319,15 @@ function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
               <th className="p-3 w-12">#</th>
               <th className="p-3">TITLE / COMPANY</th>
               <th className="p-3 w-32">STATUS</th>
+              <th className="p-3 w-32">HEALTH</th>
               <th className="p-3 w-28">CREATED</th>
-              <th className="p-3 w-28 text-right">ACTION</th>
+              <th className="p-3 w-16 text-right">ACTION</th>
             </tr>
           </thead>
           <tbody className="font-mono-data">
             {projects.map((p, i) => {
               const status = (p.status ?? "active").toLowerCase();
+              const health = healthByProject.get(p.id);
               return (
                 <tr
                   key={p.id}
@@ -217,10 +351,37 @@ function ProjectsTable({ projects }: { projects: ProjectRow[] }) {
                   </td>
                   <td className="p-3">
                     <span
-                      className={`px-1.5 py-0.5 text-[9px] uppercase font-bold border ${tone(p.status)}`}
+                      className={cn(
+                        "px-1.5 py-0.5 text-[9px] uppercase font-bold border",
+                        projectStatusTone(p.status)
+                      )}
                     >
                       {status}
                     </span>
+                  </td>
+                  <td className="p-3">
+                    {health ? (
+                      <span
+                        className={cn(
+                          "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider flex items-center gap-1.5 w-fit",
+                          HEALTH_TONE[health.status]
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full",
+                            HEALTH_DOT[health.status],
+                            health.status === "at_risk" ? "animate-pulse" : ""
+                          )}
+                        />
+                        {HEALTH_LABELS[health.status]}
+                      </span>
+                    ) : (
+                      <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim" />
+                        {HEALTH_LABELS.healthy}
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 text-on-surface-variant text-mono-label">
                     {formatDate(p.created_at)}
