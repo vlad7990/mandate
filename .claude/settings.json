@@ -1,0 +1,34 @@
+{
+  "agents": {
+    "disabled": [
+      "blockchain-developer",
+      "minecraft-bukkit-pro",
+      "flutter-expert",
+      "unity-developer",
+      "golang-pro",
+      "rust-pro",
+      "scala-pro",
+      "julia-pro",
+      "cpp-pro",
+      "c-pro",
+      "haskell-pro",
+      "django-pro",
+      "fastapi-pro",
+      "angular-migration",
+      "arm-cortex-expert",
+      "anti-reversing-techniques",
+      "binary-analysis-patterns",
+      "malware-analyst",
+      "memory-forensics",
+      "reverse-engineer",
+      "defi-protocol-templates",
+      "nft-standards",
+      "solidity-security",
+      "web3-testing",
+      "firmware-analyst",
+      "godot-gdscript-patterns",
+      "backtesting-frameworks",
+      "quant-analyst"
+    ]
+  }
+}

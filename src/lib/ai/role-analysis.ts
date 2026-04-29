@@ -49,10 +49,15 @@ export type RoleAnalysis = {
   business_model: string;
 };
 
+import type { DimensionWeights } from "./onboarding-analysis";
+
 export type CalibrationModel = Pick<
   RoleAnalysis,
   "role_title" | "inferred_scope" | "missing_information" | "role_structure"
->;
+> & {
+  dimension_weights?: DimensionWeights;
+  weights_rationale?: string;
+};
 
 export type CompanyContext = {
   company_name: RoleAnalysis["company_name"];

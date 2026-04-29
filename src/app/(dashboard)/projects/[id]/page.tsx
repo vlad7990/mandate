@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
@@ -9,6 +10,10 @@ import {
   type CalibrationModel,
   type CompanyContext,
 } from "@/lib/ai/role-analysis";
+import {
+  DIMENSION_KEYS,
+  type DimensionKey,
+} from "@/lib/ai/onboarding-analysis";
 import { ProjectPoller } from "./project-poller";
 
 type ProjectRow = {
@@ -26,16 +31,21 @@ function isAnalysisReady(row: ProjectRow): boolean {
   return Boolean(row.calibration_model?.role_title);
 }
 
+function hasCalibrationWeights(row: ProjectRow): boolean {
+  return typeof row.calibration_model?.dimension_weights?.technical === "number";
+}
+
 function tileStates(row: ProjectRow): Record<
   (typeof AGENT_TILES)[number]["key"],
   AgentTileState
 > {
   const ready = isAnalysisReady(row);
+  const calibrated = hasCalibrationWeights(row);
   return {
     intake: ready ? "complete" : "active",
     company_research: ready ? "complete" : "active",
     role_spec: "queued",
-    calibration: "queued",
+    calibration: calibrated ? "complete" : ready ? "active" : "queued",
   };
 }
 
@@ -62,6 +72,7 @@ export default async function ProjectPage({
 
   const project = data as ProjectRow;
   const ready = isAnalysisReady(project);
+  const calibrated = hasCalibrationWeights(project);
   const calibration = (project.calibration_model ?? {}) as Partial<CalibrationModel>;
   const company = (project.company_context ?? {}) as Partial<CompanyContext>;
 
@@ -82,6 +93,19 @@ export default async function ProjectPage({
           <span className="px-2 py-0.5 border border-secondary/40 bg-secondary/10 text-secondary font-mono-label text-mono-label uppercase tracking-wider">
             {project.status ?? "active"}
           </span>
+          {ready && (
+            <Link
+              href={`/projects/${project.id}/onboarding`}
+              className={
+                calibrated
+                  ? "ml-auto px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+                  : "ml-auto px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
+              }
+            >
+              <span className="material-symbols-outlined text-[14px]">tune</span>
+              {calibrated ? "Re-run Calibration" : "Start Onboarding"}
+            </Link>
+          )}
         </div>
         <div className="flex items-center gap-3 text-on-surface-variant text-body-main">
           {ready ? (
@@ -116,6 +140,8 @@ export default async function ProjectPage({
         <RoleSummaryCard ready={ready} calibration={calibration} />
         <CompanySummaryCard ready={ready} company={company} />
       </section>
+
+      {calibrated && <DimensionWeightsCard calibration={calibration} />}
 
       {ready && Array.isArray(calibration.missing_information) && calibration.missing_information.length > 0 && (
         <section className="bg-tertiary-container/10 border border-tertiary/30 p-4 rounded space-y-3">
@@ -234,5 +260,55 @@ function SkeletonRows({ rows }: { rows: number }) {
         </div>
       ))}
     </div>
+  );
+}
+
+function DimensionWeightsCard({
+  calibration,
+}: {
+  calibration: Partial<CalibrationModel>;
+}) {
+  const weights = calibration.dimension_weights;
+  if (!weights) return null;
+  return (
+    <section className="bg-surface-container-low border border-outline-variant rounded p-5 space-y-4">
+      <header className="flex items-center justify-between">
+        <h3 className="font-mono-label text-mono-label text-secondary-fixed uppercase tracking-widest flex items-center gap-2">
+          <span className="material-symbols-outlined text-[14px]">tune</span>
+          Calibration Weights
+        </h3>
+        <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+          0–10 SCALE · MULTI-DIMENSION
+        </span>
+      </header>
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {DIMENSION_KEYS.map((k: DimensionKey) => {
+          const v = Math.max(0, Math.min(10, weights[k] ?? 0));
+          return (
+            <div key={k} className="space-y-2">
+              <div className="flex items-baseline justify-between">
+                <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+                  {k}
+                </span>
+                <span className="font-h2 text-h2 text-primary tabular-nums">
+                  {v}
+                </span>
+              </div>
+              <div className="h-1.5 bg-surface-container-highest overflow-hidden">
+                <div
+                  className="h-full bg-primary-container"
+                  style={{ width: `${(v / 10) * 100}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {calibration.weights_rationale && (
+        <p className="text-body-main text-on-surface-variant pt-3 border-t border-outline-variant/40">
+          {calibration.weights_rationale}
+        </p>
+      )}
+    </section>
   );
 }
