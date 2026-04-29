@@ -153,59 +153,17 @@ export default async function ProjectPage({
             {project.status ?? "active"}
           </span>
           {ready && (
-            <div className="ml-auto flex items-center gap-2 flex-wrap">
-              <Link
-                href={`/projects/${project.id}/candidates`}
-                prefetch={false}
-                className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[14px]">groups</span>
-                Candidates
-              </Link>
-              <Link
-                href={`/projects/${project.id}/ranking`}
-                prefetch={false}
-                className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[14px]">leaderboard</span>
-                View Rankings
-              </Link>
-              <Link
-                href={`/projects/${project.id}/metrics`}
-                prefetch={false}
-                className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[14px]">analytics</span>
-                Metrics
-              </Link>
-              <Link
-                href={`/projects/${project.id}/shortlist`}
-                prefetch={false}
-                className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[14px]">view_kanban</span>
-                Build Shortlist
-              </Link>
-              <Link
-                href={`/projects/${project.id}/feedback`}
-                prefetch={false}
-                className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
-              >
-                <span className="material-symbols-outlined text-[14px]">rate_review</span>
-                Feedback
-              </Link>
-              <Link
-                href={`/projects/${project.id}/onboarding`}
-                className={
-                  calibrated
-                    ? "px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
-                    : "px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
-                }
-              >
-                <span className="material-symbols-outlined text-[14px]">tune</span>
-                {calibrated ? "Re-run Calibration" : "Start Onboarding"}
-              </Link>
-            </div>
+            <Link
+              href={`/projects/${project.id}/onboarding`}
+              className={
+                calibrated
+                  ? "ml-auto px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
+                  : "ml-auto px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
+              }
+            >
+              <span className="material-symbols-outlined text-[14px]">tune</span>
+              {calibrated ? "Re-run Calibration" : "Start Onboarding"}
+            </Link>
           )}
         </div>
         <div className="flex items-center gap-3 text-on-surface-variant text-body-main">
@@ -220,6 +178,8 @@ export default async function ProjectPage({
           </span>
         </div>
       </header>
+
+      {ready && <ProjectModuleNav projectId={project.id} />}
 
       {project.recalibration_summary?.summary && (
         <RecalibrationBanner
@@ -660,5 +620,53 @@ function HealthAlertChip({ alert }: { alert: HealthAlert }) {
     >
       {alert.label}
     </span>
+  );
+}
+
+/**
+ * Module nav strip that lives below the project header. The header used to
+ * carry six CTA buttons and a primary action; that crowded the hero info.
+ * Splitting nav into its own strip lets each link breathe and signals
+ * "modules of the search" rather than "buttons attached to the title".
+ *
+ * Server component — no client interactivity. Active-state highlighting
+ * happens at the route level (each module has its own page) so this strip
+ * is purely outbound.
+ */
+const PROJECT_MODULES: Array<{
+  href: (id: string) => string;
+  label: string;
+  icon: string;
+}> = [
+  { href: (id) => `/projects/${id}/candidates`, label: "Candidates", icon: "groups" },
+  { href: (id) => `/projects/${id}/ranking`, label: "Rankings", icon: "leaderboard" },
+  { href: (id) => `/projects/${id}/metrics`, label: "Metrics", icon: "analytics" },
+  { href: (id) => `/projects/${id}/shortlist`, label: "Shortlist", icon: "view_kanban" },
+  { href: (id) => `/projects/${id}/feedback`, label: "Feedback", icon: "rate_review" },
+];
+
+function ProjectModuleNav({ projectId }: { projectId: string }) {
+  return (
+    <nav
+      aria-label="Project modules"
+      className="bg-surface-container-low border border-outline-variant"
+    >
+      <ul className="flex divide-x divide-outline-variant overflow-x-auto">
+        {PROJECT_MODULES.map((mod) => (
+          <li key={mod.label} className="flex-1 min-w-[120px]">
+            <Link
+              href={mod.href(projectId)}
+              prefetch={false}
+              className="flex items-center justify-center gap-2 px-4 py-3 font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest hover:text-primary hover:bg-surface-container transition-colors"
+            >
+              <span className="material-symbols-outlined text-[14px]">
+                {mod.icon}
+              </span>
+              {mod.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }

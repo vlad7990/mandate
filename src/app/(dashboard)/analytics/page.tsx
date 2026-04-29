@@ -10,6 +10,11 @@ import {
   HEALTH_LABELS,
   type HealthStatus,
 } from "@/lib/metrics/types";
+import {
+  MandateHorizontalBarChart,
+  MandateLineChart,
+  type MandateBarDatum,
+} from "@/components/charts/mandate-charts";
 import { cn } from "@/lib/utils";
 
 type CandidateLite = {
@@ -30,53 +35,72 @@ const HEALTH_DOT: Record<HealthStatus, string> = {
   at_risk: "bg-error",
 };
 
+const HEALTH_FILL: Record<HealthStatus, string> = {
+  healthy: "var(--color-secondary-fixed-dim)",
+  stalled: "var(--color-tertiary)",
+  at_risk: "var(--color-error)",
+};
+
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export default async function PortfolioAnalyticsPage() {
   const supabase = await createServerSupabaseClient();
 
-  // The portfolio rollup fans out one health-compute per project. We pull
-  // candidate rows separately here to avoid duplicating that work for the
-  // stage and weekly-velocity charts — both want raw rows, not the
-  // pre-bucketed health summary.
   const [metrics, candidatesQ] = await Promise.all([
     computePortfolioMetrics(),
-    supabase
-      .from("candidates")
-      .select("pipeline_stage, created_at"),
+    supabase.from("candidates").select("pipeline_stage, created_at"),
   ]);
 
   const candidates = (candidatesQ.data ?? []) as CandidateLite[];
 
+  // Pipeline stage distribution. 'rejected' tinted error so it reads as
+  // off-funnel; everything else inherits the chart's primary fill.
   const stageCounts = new Map<PipelineStage, number>();
   for (const stage of FUNNEL_STAGES) stageCounts.set(stage, 0);
   for (const c of candidates) {
     const stage = (c.pipeline_stage ?? "found") as PipelineStage;
     stageCounts.set(stage, (stageCounts.get(stage) ?? 0) + 1);
   }
-  const maxStageCount = Math.max(1, ...Array.from(stageCounts.values()));
+  const pipelineData: MandateBarDatum[] = FUNNEL_STAGES.map((stage) => ({
+    label: PIPELINE_LABELS[stage],
+    value: stageCounts.get(stage) ?? 0,
+    fill: stage === "rejected" ? "var(--color-error)" : null,
+  }));
 
-  // 8-week velocity series. Reversed so the chart reads left-to-right
-  // oldest → newest. Bucketing lives in a top-level helper because
-  // `Date.now()` is impure and react-hooks/purity rejects impure calls
-  // in a server-component render body.
-  const WEEKS = 8;
-  const weeklySeries = bucketByWeek(candidates, WEEKS).slice().reverse();
-  const maxWeek = Math.max(1, ...weeklySeries);
+  // Weekly velocity over the last 8 weeks. Bucketed in a top-level
+  // helper because Date.now() is impure and react-hooks/purity rejects
+  // it inside server-component render bodies.
+  const weeklyBuckets = bucketByWeek(candidates, 8);
+  const weeklyData: MandateBarDatum[] = weeklyBuckets
+    .map((value, bucketIndex) => ({
+      // bucketIndex 0 = this week; later we reverse so the chart reads
+      // left-to-right oldest → newest with the rightmost bar being now.
+      label: bucketIndex === 0 ? "this" : `T-${bucketIndex}w`,
+      value,
+    }))
+    .slice()
+    .reverse();
 
-  // Health histogram — projects bucketed by computed status.
+  // Health histogram. attentionList already excludes healthy projects
+  // (those have zero alerts), so the healthy bucket is computed via
+  // subtraction.
   const healthBuckets: Record<HealthStatus, number> = {
     healthy: 0,
     stalled: 0,
     at_risk: 0,
   };
-  // attentionList is the projects with ≥1 alert. Healthy projects = total - attention.
   for (const row of metrics.attentionList) {
     healthBuckets[row.status] += 1;
   }
   healthBuckets.healthy =
     metrics.totalProjects - healthBuckets.stalled - healthBuckets.at_risk;
-  const healthMax = Math.max(1, ...Object.values(healthBuckets));
+  const healthData: MandateBarDatum[] = (
+    ["healthy", "stalled", "at_risk"] as HealthStatus[]
+  ).map((status) => ({
+    label: HEALTH_LABELS[status],
+    value: healthBuckets[status],
+    fill: HEALTH_FILL[status],
+  }));
 
   return (
     <div className="p-6 space-y-6">
@@ -91,7 +115,7 @@ export default async function PortfolioAnalyticsPage() {
         </div>
       </header>
 
-      {/* KPI strip — same shape as the dashboard root, but read-only here. */}
+      {/* KPI strip */}
       <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KpiTile
           label="Active Searches"
@@ -118,146 +142,45 @@ export default async function PortfolioAnalyticsPage() {
         />
       </section>
 
-      {/* Three-up chart row. Use plain divs styled as bars — no charting
-          library, since the data shape is small and the existing palette
-          gives us a consistent look. */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ChartCard
-          title="Candidates by Pipeline Stage"
-          icon="filter_alt"
-          subtitle={`${candidates.length} total`}
-        >
-          <ul className="space-y-2">
-            {FUNNEL_STAGES.map((stage) => {
-              const count = stageCounts.get(stage) ?? 0;
-              const pct = (count / maxStageCount) * 100;
-              const isRejected = stage === "rejected";
-              return (
-                <li
-                  key={stage}
-                  className="grid grid-cols-[140px_1fr_60px] gap-3 items-center"
-                >
-                  <span
-                    className={cn(
-                      "font-mono-label text-mono-label uppercase tracking-widest",
-                      isRejected ? "text-error" : "text-on-surface"
-                    )}
-                  >
-                    {PIPELINE_LABELS[stage]}
-                  </span>
-                  <div className="h-2 bg-surface-container border border-outline-variant overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full transition-all",
-                        isRejected
-                          ? "bg-error/40"
-                          : count > 0
-                            ? "bg-primary-container"
-                            : "bg-transparent"
-                      )}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <span className="font-mono-data text-mono-data text-on-surface tabular-nums text-right">
-                    {count}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </ChartCard>
+      {/* Charts: pipeline (full-width) + health (half) + velocity (half) */}
+      <ChartCard
+        title="Candidates by Pipeline Stage"
+        icon="filter_alt"
+        subtitle={`${candidates.length} total`}
+      >
+        <MandateHorizontalBarChart
+          data={pipelineData}
+          formatter={(v) => `${v} candidate${v === 1 ? "" : "s"}`}
+          className="h-[320px]"
+        />
+      </ChartCard>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartCard
           title="Projects by Health Status"
           icon="monitor_heart"
           subtitle={`${metrics.totalProjects} mandate${metrics.totalProjects === 1 ? "" : "s"}`}
         >
-          <ul className="space-y-3">
-            {(["healthy", "stalled", "at_risk"] as HealthStatus[]).map(
-              (status) => {
-                const count = healthBuckets[status];
-                const pct = (count / healthMax) * 100;
-                return (
-                  <li
-                    key={status}
-                    className="grid grid-cols-[140px_1fr_60px] gap-3 items-center"
-                  >
-                    <span
-                      className={cn(
-                        "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider flex items-center gap-1.5 w-fit",
-                        HEALTH_TONE[status]
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "w-1.5 h-1.5 rounded-full",
-                          HEALTH_DOT[status],
-                          status === "at_risk" ? "animate-pulse" : ""
-                        )}
-                      />
-                      {HEALTH_LABELS[status]}
-                    </span>
-                    <div className="h-2 bg-surface-container border border-outline-variant overflow-hidden">
-                      <div
-                        className={cn("h-full", HEALTH_DOT[status])}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <span className="font-mono-data text-mono-data text-on-surface tabular-nums text-right">
-                      {count}
-                    </span>
-                  </li>
-                );
-              }
-            )}
-          </ul>
+          <MandateHorizontalBarChart
+            data={healthData}
+            formatter={(v) => `${v} project${v === 1 ? "" : "s"}`}
+            className="h-[200px]"
+          />
+        </ChartCard>
+
+        <ChartCard
+          title="Weekly Velocity"
+          icon="trending_up"
+          subtitle="last 8 weeks · candidates added per week"
+        >
+          <MandateLineChart
+            data={weeklyData}
+            valueLabel="Candidates"
+            stroke="var(--color-primary)"
+            className="h-[200px]"
+          />
         </ChartCard>
       </div>
-
-      <ChartCard
-        title="Weekly Velocity (last 8 weeks)"
-        icon="trending_up"
-        subtitle="candidates added per week, all mandates combined"
-      >
-        <div className="flex items-end gap-2 h-32">
-          {weeklySeries.map((value, i) => {
-            const isCurrent = i === weeklySeries.length - 1;
-            const pct = (value / maxWeek) * 100;
-            const weeksAgo = weeklySeries.length - 1 - i;
-            const label =
-              weeksAgo === 0 ? "this" : `T-${weeksAgo}w`;
-            return (
-              <div
-                key={i}
-                className="flex-1 flex flex-col items-center gap-2 min-w-0"
-              >
-                <span className="font-mono-data text-body-main text-on-surface tabular-nums">
-                  {value}
-                </span>
-                <div className="w-full h-24 bg-surface-container border border-outline-variant flex flex-col justify-end overflow-hidden">
-                  <div
-                    className={cn(
-                      "transition-all",
-                      isCurrent
-                        ? "bg-primary-container"
-                        : "bg-secondary-fixed-dim/60"
-                    )}
-                    style={{ height: `${pct}%` }}
-                  />
-                </div>
-                <span
-                  className={cn(
-                    "font-mono-label text-mono-label uppercase tracking-wider truncate",
-                    isCurrent ? "text-primary" : "text-outline"
-                  )}
-                >
-                  {label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </ChartCard>
 
       {metrics.attentionList.length > 0 && (
         <section className="bg-surface-container-low border border-outline-variant rounded">
@@ -319,6 +242,28 @@ export default async function PortfolioAnalyticsPage() {
   );
 }
 
+/**
+ * Bucket candidates by week-of-creation relative to now. Bucket 0 = this
+ * week (T..T-7d). Lives outside the server component so the impure
+ * `Date.now()` call doesn't trigger react-hooks/purity in render.
+ */
+function bucketByWeek(
+  candidates: Array<{ created_at: string | null }>,
+  weeks: number
+): number[] {
+  const now = Date.now();
+  const buckets = Array<number>(weeks).fill(0);
+  for (const c of candidates) {
+    if (!c.created_at) continue;
+    const weeksAgo = (now - new Date(c.created_at).getTime()) / WEEK_MS;
+    const bucket = Math.floor(weeksAgo);
+    if (bucket >= 0 && bucket < weeks) {
+      buckets[bucket] += 1;
+    }
+  }
+  return buckets;
+}
+
 function ChartCard({
   title,
   icon,
@@ -348,29 +293,6 @@ function ChartCard({
   );
 }
 
-/**
- * Bucket candidates by week-of-creation relative to now. Bucket 0 = this
- * week (T..T-7d), bucket N = T-(N*7d)..T-((N+1)*7d). Lives outside the
- * server component so the impure `Date.now()` call doesn't trigger
- * react-hooks/purity in the render body.
- */
-function bucketByWeek(
-  candidates: Array<{ created_at: string | null }>,
-  weeks: number
-): number[] {
-  const now = Date.now();
-  const buckets = Array<number>(weeks).fill(0);
-  for (const c of candidates) {
-    if (!c.created_at) continue;
-    const weeksAgo = (now - new Date(c.created_at).getTime()) / WEEK_MS;
-    const bucket = Math.floor(weeksAgo);
-    if (bucket >= 0 && bucket < weeks) {
-      buckets[bucket] += 1;
-    }
-  }
-  return buckets;
-}
-
 function KpiTile({
   label,
   value,
@@ -391,7 +313,20 @@ function KpiTile({
           ? "text-tertiary"
           : "text-on-surface";
   return (
-    <div className="bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between min-h-[96px] rounded">
+    <div className="bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between min-h-[96px] rounded relative overflow-hidden">
+      {/* Subtle accent bar — terminal/instrumentation feel */}
+      <div
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-0.5",
+          accent === "primary"
+            ? "bg-primary"
+            : accent === "secondary"
+              ? "bg-secondary-fixed-dim"
+              : accent === "warn"
+                ? "bg-tertiary"
+                : "bg-outline-variant"
+        )}
+      />
       <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
         {label}
       </span>

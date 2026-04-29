@@ -12,6 +12,10 @@ import {
   type FunnelEntry,
   type HealthStatus,
 } from "@/lib/metrics/types";
+import {
+  MandateHorizontalBarChart,
+  type MandateBarDatum,
+} from "@/components/charts/mandate-charts";
 import { cn } from "@/lib/utils";
 
 type ProjectRow = {
@@ -345,36 +349,30 @@ function SourceSection({
   if (total === 0) {
     return null;
   }
+  // Use the shared chart wrapper for visual consistency with /analytics
+  // and so tooltips / accessibility come for free. The 'unspecified'
+  // bucket is tone-shifted so the recruiter notices the gap (encourages
+  // tagging sources on upload).
+  const data: MandateBarDatum[] = breakdown.map((row) => ({
+    label: row.source,
+    value: row.count,
+    fill:
+      row.source === "unspecified"
+        ? "var(--color-tertiary)"
+        : "var(--color-secondary-fixed-dim)",
+    meta: total > 0 ? `${Math.round((row.count / total) * 100)}%` : undefined,
+  }));
   return (
     <section className="bg-surface-container-low border border-outline-variant p-5 space-y-3">
       <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
         <span className="material-symbols-outlined text-[14px]">share</span>
         Source Performance
       </h2>
-      <ul className="space-y-1.5">
-        {breakdown.map((row) => {
-          const pct = total > 0 ? (row.count / total) * 100 : 0;
-          return (
-            <li
-              key={row.source}
-              className="grid grid-cols-[160px_1fr_60px] gap-3 items-center"
-            >
-              <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest truncate">
-                {row.source}
-              </span>
-              <div className="h-1.5 bg-surface-container-high overflow-hidden">
-                <div
-                  className="h-full bg-secondary-fixed-dim/60"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <span className="font-mono-data text-mono-data text-on-surface tabular-nums text-right">
-                {row.count}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+      <MandateHorizontalBarChart
+        data={data}
+        formatter={(v) => `${v} candidate${v === 1 ? "" : "s"}`}
+        className="h-[200px]"
+      />
     </section>
   );
 }

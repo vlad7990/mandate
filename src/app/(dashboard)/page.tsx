@@ -163,8 +163,19 @@ function KpiTile({
         : accent === "warn"
           ? "text-tertiary"
           : "text-on-surface";
+  const accentBar =
+    accent === "primary"
+      ? "bg-primary"
+      : accent === "secondary"
+        ? "bg-secondary-fixed-dim"
+        : accent === "warn"
+          ? "bg-tertiary"
+          : "bg-outline-variant";
   return (
-    <div className="bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between min-h-[96px] rounded">
+    <div className="bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between min-h-[96px] rounded relative overflow-hidden">
+      {/* Left-edge accent — terminal/instrumentation feel without
+          adding chart-like noise to the tile. */}
+      <div className={cn("absolute left-0 top-0 bottom-0 w-0.5", accentBar)} />
       <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
         {label}
       </span>

@@ -358,9 +358,20 @@ function TierSection({
   rows: Array<{ base: CandidateBase; score: ScoreRow }>;
 }) {
   const band = TIER_BANDS[tier];
+  // Tier-tinted leading rule + chip + range label, with the rule running
+  // edge-to-edge so the section reads as a single mast-headed block in
+  // the leaderboard scroll. Stronger visual anchor than a floating chip.
+  const ruleColor =
+    tier === "tier_1"
+      ? "bg-secondary-fixed-dim/60"
+      : tier === "tier_2"
+        ? "bg-primary-container/60"
+        : tier === "tier_3"
+          ? "bg-tertiary/40"
+          : "bg-error/40";
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-center gap-3 flex-wrap">
         <span
           className={cn(
             "font-mono-label text-mono-label uppercase tracking-widest border px-3 py-1.5",
@@ -369,6 +380,7 @@ function TierSection({
         >
           {band.label} · {rows.length} candidate{rows.length === 1 ? "" : "s"}
         </span>
+        <div className={cn("flex-1 h-px", ruleColor)} />
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
           OVERALL {band.min}–{band.max === 7.99 ? "7.99" : band.max === 5.99 ? "5.99" : band.max === 3.99 ? "3.99" : band.max}
         </span>
