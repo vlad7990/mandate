@@ -10,6 +10,7 @@ import {
 } from "./sourcing-analysis";
 import type { CalibrationModel, CompanyContext } from "./role-analysis";
 import type { JobSpecSections } from "./job-spec-analysis";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
 const SOURCING_MODEL = "claude-sonnet-4-6";
 
@@ -18,6 +19,11 @@ export type GenerationContext = {
   job_spec_version: number;
   calibration: Partial<CalibrationModel>;
   company: Partial<CompanyContext>;
+  /** Skill-injection scope. Optional. */
+  skill_context?: {
+    project_id: string | null;
+    organization_id: string | null;
+  };
 };
 
 /**
@@ -40,10 +46,14 @@ export async function generateAllSourcingQueries(
     2
   );
 
+  const system = await applySkillsToPrompt(SOURCING_FULL_SYSTEM_PROMPT, {
+    projectId: ctx.skill_context?.project_id ?? null,
+    organizationId: ctx.skill_context?.organization_id ?? null,
+  });
   const response = await anthropic.messages.create({
     model: SOURCING_MODEL,
     max_tokens: 2048,
-    system: SOURCING_FULL_SYSTEM_PROMPT,
+    system,
     messages: [{ role: "user", content: userPrompt }],
     output_config: {
       format: {
@@ -86,10 +96,14 @@ export async function regenerateSingleQuery(
     2
   );
 
+  const singleSystem = await applySkillsToPrompt(SOURCING_SINGLE_SYSTEM_PROMPT, {
+    projectId: ctx.skill_context?.project_id ?? null,
+    organizationId: ctx.skill_context?.organization_id ?? null,
+  });
   const response = await anthropic.messages.create({
     model: SOURCING_MODEL,
     max_tokens: 1024,
-    system: SOURCING_SINGLE_SYSTEM_PROMPT,
+    system: singleSystem,
     messages: [{ role: "user", content: userPrompt }],
     output_config: {
       format: {

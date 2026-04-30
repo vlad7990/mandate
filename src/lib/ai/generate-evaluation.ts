@@ -19,6 +19,7 @@ import {
   type CompanyContext,
 } from "./role-analysis";
 import { TIER_BANDS, type Tier } from "@/lib/ranking/scoring-engine";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
 const EVAL_MODEL = "claude-sonnet-4-6";
 
@@ -64,6 +65,11 @@ type EvaluationInput = {
     weights: DimensionWeights | null;
   };
   competitors: EvaluationInputCompetitor[];
+  /** Skill-injection context. Optional so unit-test callers don't have to thread it. */
+  skill_context?: {
+    project_id: string | null;
+    organization_id: string | null;
+  };
 };
 
 // ────────────────────────────────────────────────────────────────────────
@@ -82,11 +88,15 @@ export async function generateCandidateEvaluation(
 ): Promise<CandidateEvaluation> {
   const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
+  const system = await applySkillsToPrompt(CANDIDATE_EVALUATION_SYSTEM_PROMPT, {
+    projectId: input.skill_context?.project_id ?? null,
+    organizationId: input.skill_context?.organization_id ?? null,
+  });
 
   const response = await anthropic.messages.create({
     model: EVAL_MODEL,
     max_tokens: 3500,
-    system: CANDIDATE_EVALUATION_SYSTEM_PROMPT,
+    system,
     messages: [{ role: "user", content: userPrompt }],
     output_config: {
       format: {
@@ -175,7 +185,9 @@ export async function ensureCandidateEvaluation(
   // Cache miss — build the input and call the agent.
   const { data: project, error: pErr } = await supabase
     .from("projects")
-    .select("id, title, company_name, calibration_model, company_context")
+    .select(
+      "id, title, company_name, calibration_model, company_context, organization_id"
+    )
     .eq("id", projectId)
     .single<{
       id: string;
@@ -183,6 +195,7 @@ export async function ensureCandidateEvaluation(
       company_name: string;
       calibration_model: Partial<CalibrationModel> | null;
       company_context: Partial<CompanyContext> | null;
+      organization_id: string | null;
     }>();
 
   if (pErr || !project) return null;
@@ -274,6 +287,10 @@ export async function ensureCandidateEvaluation(
       weights,
     },
     competitors,
+    skill_context: {
+      project_id: project.id,
+      organization_id: project.organization_id,
+    },
   });
 
   if (!evaluation) return null;

@@ -7,6 +7,7 @@ import {
 } from "./comparison-analysis";
 import type { CalibrationModel } from "./role-analysis";
 import type { CandidateProfile } from "./cv-parsing";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
 const COMPARISON_MODEL = "claude-sonnet-4-6";
 
@@ -24,6 +25,11 @@ export type ComparisonInputCandidate = {
 export type ComparisonInput = {
   calibration: Partial<CalibrationModel>;
   candidates: ComparisonInputCandidate[];
+  /** Skill-injection scope. Optional. */
+  skill_context?: {
+    project_id: string | null;
+    organization_id: string | null;
+  };
 };
 
 /**
@@ -43,11 +49,15 @@ export async function generateComparisonAnalysis(
 
   const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
+  const system = await applySkillsToPrompt(COMPARISON_SYSTEM_PROMPT, {
+    projectId: input.skill_context?.project_id ?? null,
+    organizationId: input.skill_context?.organization_id ?? null,
+  });
 
   const response = await anthropic.messages.create({
     model: COMPARISON_MODEL,
     max_tokens: 1500,
-    system: COMPARISON_SYSTEM_PROMPT,
+    system,
     messages: [{ role: "user", content: userPrompt }],
     output_config: {
       format: {

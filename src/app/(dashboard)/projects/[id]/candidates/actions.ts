@@ -139,6 +139,8 @@ export async function uploadAndParseCv(formData: FormData): Promise<void> {
     parsed = await parseCv(fileBytes, file.type, {
       calibration: project.calibration_model ?? {},
       company: project.company_context ?? {},
+      projectId,
+      organizationId,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "CV parsing failed.";

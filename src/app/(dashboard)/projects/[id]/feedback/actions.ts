@@ -165,6 +165,10 @@ export async function submitFeedbackAction(formData: FormData): Promise<void> {
             profile: (candidate.cv_structured ?? {}) as Partial<CandidateProfile>,
           }
         : null,
+      skill_context: {
+        project_id: projectId,
+        organization_id: auth.organizationId,
+      },
     });
   } catch (err) {
     interpretError =

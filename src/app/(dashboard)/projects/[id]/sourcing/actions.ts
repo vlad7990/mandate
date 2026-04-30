@@ -45,6 +45,7 @@ async function requireAuth(): Promise<AuthContext> {
 type ProjectRow = {
   calibration_model: Partial<CalibrationModel> | null;
   company_context: Partial<CompanyContext> | null;
+  organization_id: string | null;
 };
 
 type FinalSpecRow = {
@@ -66,7 +67,7 @@ async function loadGenerationContext(
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("calibration_model, company_context")
+    .select("calibration_model, company_context, organization_id")
     .eq("id", projectId)
     .single<ProjectRow>();
 
@@ -99,6 +100,10 @@ async function loadGenerationContext(
     job_spec_version: finalSpec.version,
     calibration: project.calibration_model ?? {},
     company: project.company_context ?? {},
+    skill_context: {
+      project_id: projectId,
+      organization_id: project.organization_id,
+    },
   };
 }
 

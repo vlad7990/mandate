@@ -20,6 +20,7 @@ type ProjectRow = {
   title: string;
   company_name: string;
   calibration_model: Partial<CalibrationModel> | null;
+  organization_id: string | null;
 };
 
 type CandidateRow = {
@@ -88,7 +89,7 @@ export default async function ComparisonPage({
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, title, company_name, calibration_model")
+    .select("id, title, company_name, calibration_model, organization_id")
     .eq("id", id)
     .single<ProjectRow>();
 
@@ -166,6 +167,10 @@ export default async function ComparisonPage({
           rank: score.rank_position,
           overall_score: score.overall_score,
         })),
+        skill_context: {
+          project_id: project.id,
+          organization_id: project.organization_id,
+        },
       });
     } catch (err) {
       analysisError =

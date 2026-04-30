@@ -9,6 +9,7 @@ import {
 import type { CalibrationModel } from "./role-analysis";
 import type { OnboardingResponses } from "./onboarding-analysis";
 import type { CandidateProfile } from "./cv-parsing";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
 const FEEDBACK_MODEL = "claude-sonnet-4-6";
 
@@ -41,6 +42,11 @@ export type InterpretFeedbackInput = {
     full_name: string;
     profile: Partial<CandidateProfile>;
   } | null;
+  /** Skill-injection scope. Optional. */
+  skill_context?: {
+    project_id: string | null;
+    organization_id: string | null;
+  };
 };
 
 /**
@@ -53,11 +59,15 @@ export async function interpretFeedback(
 ): Promise<FeedbackInterpretation> {
   const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
+  const system = await applySkillsToPrompt(FEEDBACK_INTERPRETATION_SYSTEM_PROMPT, {
+    projectId: input.skill_context?.project_id ?? null,
+    organizationId: input.skill_context?.organization_id ?? null,
+  });
 
   const response = await anthropic.messages.create({
     model: FEEDBACK_MODEL,
     max_tokens: 1500,
-    system: FEEDBACK_INTERPRETATION_SYSTEM_PROMPT,
+    system,
     messages: [{ role: "user", content: userPrompt }],
     output_config: {
       format: {

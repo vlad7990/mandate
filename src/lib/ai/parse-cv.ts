@@ -7,6 +7,7 @@ import {
   type CandidateProfile,
 } from "./cv-parsing";
 import type { CalibrationModel, CompanyContext } from "./role-analysis";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
 const PARSE_MODEL = "claude-sonnet-4-6";
 
@@ -18,6 +19,9 @@ export type ParseContext = {
   /** Calibration model + company context the candidate is being evaluated against. */
   calibration: Partial<CalibrationModel>;
   company: Partial<CompanyContext>;
+  /** Org / project the parse is running for — used by Skills Studio to inject active skills. */
+  projectId?: string | null;
+  organizationId?: string | null;
 };
 
 /**
@@ -38,11 +42,15 @@ export async function parseCv(
 
   const anthropic = getAnthropic();
   const userMessage = await buildUserMessage(fileBytes, mimeType, ctx);
+  const system = await applySkillsToPrompt(CV_PARSING_SYSTEM_PROMPT, {
+    projectId: ctx.projectId ?? null,
+    organizationId: ctx.organizationId ?? null,
+  });
 
   const response = await anthropic.messages.create({
     model: PARSE_MODEL,
     max_tokens: 4096,
-    system: CV_PARSING_SYSTEM_PROMPT,
+    system,
     messages: [{ role: "user", content: userMessage }],
     output_config: {
       format: {

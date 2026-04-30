@@ -10,6 +10,7 @@ import {
 } from "./job-spec-analysis";
 import type { CalibrationModel, CompanyContext } from "./role-analysis";
 import type { OnboardingResponses } from "./onboarding-analysis";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
 const JOB_SPEC_MODEL = "claude-sonnet-4-6";
 
@@ -37,6 +38,7 @@ async function createReadOnlySupabaseClient() {
 }
 
 type ProjectContext = {
+  organization_id: string | null;
   calibration_model: Partial<CalibrationModel> | null;
   company_context: Partial<CompanyContext> | null;
   onboarding_responses: Partial<OnboardingResponses> | null;
@@ -60,7 +62,9 @@ export async function generateAndStoreJobSpec(
 
   const { data: project, error: fetchError } = await supabase
     .from("projects")
-    .select("calibration_model, company_context, onboarding_responses")
+    .select(
+      "organization_id, calibration_model, company_context, onboarding_responses"
+    )
     .eq("id", projectId)
     .single<ProjectContext>();
 
@@ -85,10 +89,14 @@ export async function generateAndStoreJobSpec(
   let sections: JobSpecSections;
   try {
     const anthropic = getAnthropic();
+    const system = await applySkillsToPrompt(JOB_SPEC_SYSTEM_PROMPT, {
+      projectId,
+      organizationId: project.organization_id,
+    });
     const response = await anthropic.messages.create({
       model: JOB_SPEC_MODEL,
       max_tokens: 4096,
-      system: JOB_SPEC_SYSTEM_PROMPT,
+      system,
       messages: [{ role: "user", content: userPrompt }],
       output_config: {
         format: {

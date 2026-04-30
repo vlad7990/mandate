@@ -113,6 +113,18 @@ export default async function SettingsPage() {
             {isFounder ? " · founder" : profile.role ? ` · ${profile.role}` : ""}
           </p>
         </div>
+        <nav className="flex items-center gap-2 flex-wrap">
+          <Link
+            href="/settings/skills"
+            prefetch={false}
+            className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <span className="material-symbols-outlined text-[14px]" aria-hidden>
+              neurology
+            </span>
+            Skills Studio
+          </Link>
+        </nav>
       </header>
 
       {!isFounder && (
