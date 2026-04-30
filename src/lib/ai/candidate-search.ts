@@ -84,7 +84,10 @@ export const CANDIDATE_SEARCH_SCHEMA = {
         required: ["candidate_id", "match_score", "reasoning"],
         properties: {
           candidate_id: { type: "string" },
-          match_score: { type: "integer", minimum: 0, maximum: 100 },
+          // Anthropic structured output doesn't support `minimum` /
+          // `maximum` on integers; the 0–100 bound is enforced by the
+          // system prompt's "Numeric bounds" block.
+          match_score: { type: "integer" },
           reasoning: { type: "string" },
         },
       },
@@ -102,6 +105,9 @@ Array length discipline (the schema cannot enforce these — YOU must):
 - parsed_criteria.must_haves: 2–6 short keyword phrases. 0 only when the query is empty/nonsensical.
 - parsed_criteria.nice_to_haves: 0–4 entries.
 - matches: 0–25 entries, ranked by match_score descending. Drop anything with match_score < 30.
+
+Numeric bounds (the schema cannot enforce these either, so YOU must):
+- match_score: integer 0–100 inclusive. Do not return values outside this range.
 
 Rules:
 - Use the candidate_id values exactly as supplied. Never invent ids.

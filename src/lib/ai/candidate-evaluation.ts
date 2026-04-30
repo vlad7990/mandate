@@ -203,8 +203,11 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
         required: ["dimension", "score", "weight", "commentary"],
         properties: {
           dimension: { type: "string", enum: dimensionEnum },
-          score: { type: "integer", minimum: 0, maximum: 10 },
-          weight: { type: "integer", minimum: 0, maximum: 10 },
+          // Anthropic structured output doesn't support `minimum` /
+          // `maximum` on integer fields. The 0–10 bound is enforced by
+          // the system prompt's "Numeric bounds" block.
+          score: { type: "integer" },
+          weight: { type: "integer" },
           commentary: { type: "string" },
         },
       },
@@ -277,8 +280,9 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
     },
     gaps: {
       type: "array",
-      minItems: 1,
-      // maxItems (3) enforced by the system prompt only.
+      // Counts (1–3) enforced by the system prompt only — Anthropic
+      // structured output supports `minItems` of 0 or 1, but for
+      // consistency every array constraint lives in the prompt.
       items: {
         type: "object",
         additionalProperties: false,
@@ -389,14 +393,18 @@ export const CANDIDATE_EVALUATION_SYSTEM_PROMPT = `You are an executive-search e
 
 Output strictly conforms to the provided JSON schema. No preamble. No markdown inside string values. Plain prose, single paragraph per field unless the field is explicitly a list.
 
-Array length discipline (the schema cannot enforce minimums above 1, so YOU must):
+Array length discipline (the schema cannot enforce these counts, so YOU must):
 - scoring_table: provide EXACTLY 5 rows — one per dimension (technical, domain, leadership, regulatory, transformation). No more, no fewer.
 - profile_summary.background_bullets: provide AT LEAST 3 and at most 6 bullets.
 - strengths: provide AT LEAST 3 and at most 4 strength blocks.
 - gaps: provide AT LEAST 1 and at most 3 gap blocks. If you genuinely cannot find a gap, return one item that flags the most likely hiring-manager objection.
 - positioning.talking_points: provide AT LEAST 2 and at most 3 talking points.
 - comparison.competitors: 0 to 3 rows — empty array when no slate is provided.
-A response that under-fills any of these arrays is invalid; revise before returning.
+A response that under-fills or over-fills any of these arrays is invalid; revise before returning.
+
+Numeric bounds (the schema cannot enforce these either, so YOU must):
+- scoring_table[*].score: integer 0–10 inclusive. Do not return values outside this range.
+- scoring_table[*].weight: integer 0–10 inclusive. Mirror the project's calibration_model.dimension_weights exactly.
 
 Style rules:
 - Be direct. The recruiter is reading this to make a go/no-go call, not to feel reassured.
