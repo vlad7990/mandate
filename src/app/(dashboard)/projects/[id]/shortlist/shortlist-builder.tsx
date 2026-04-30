@@ -461,6 +461,7 @@ export function ShortlistBuilder({
                   return (
                     <SlateCard
                       key={candidate.id}
+                      projectId={projectId}
                       candidate={candidate}
                       slot={i + 1}
                       total={slate.length}
@@ -646,6 +647,7 @@ function EmptySlot({ index }: { index: number }) {
 }
 
 function SlateCard({
+  projectId,
   candidate,
   slot,
   total,
@@ -654,6 +656,7 @@ function SlateCard({
   onMoveDown,
   disabled,
 }: {
+  projectId: string;
   candidate: PoolCandidate;
   slot: number;
   total: number;
@@ -723,9 +726,13 @@ function SlateCard({
         </header>
 
         <div>
-          <div className="font-h2 text-h2 text-on-surface leading-tight">
+          <Link
+            href={`/projects/${projectId}/candidates/${candidate.id}`}
+            prefetch={false}
+            className="font-h2 text-h2 text-on-surface leading-tight hover:text-primary transition-colors focus-visible:outline-none focus-visible:underline"
+          >
             {candidate.full_name}
-          </div>
+          </Link>
           <div className="font-mono-data text-body-main text-outline">
             {candidate.current_title ?? "—"}
             {candidate.current_company ? ` @ ${candidate.current_company}` : ""}
@@ -795,6 +802,16 @@ function SlateCard({
             </StatusChip>
           )}
         </div>
+        <Link
+          href={`/projects/${projectId}/candidates/${candidate.id}`}
+          prefetch={false}
+          className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1 hover:brightness-110 transition-colors focus-visible:outline-none focus-visible:underline"
+        >
+          View profile
+          <span className="material-symbols-outlined text-[12px]" aria-hidden>
+            arrow_forward
+          </span>
+        </Link>
       </div>
     </article>
   );

@@ -15,7 +15,8 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { href: "/", label: "Projects", icon: "folder_open" },
-  { href: "/candidates", label: "Candidates", icon: "groups", matchPrefix: true },
+  { href: "/candidates", label: "Candidates", icon: "groups" },
+  { href: "/candidates/search", label: "AI Search", icon: "neurology" },
   { href: "/analytics", label: "Analytics", icon: "analytics", matchPrefix: true },
   { href: "/settings", label: "Settings", icon: "settings", matchPrefix: true },
 ];

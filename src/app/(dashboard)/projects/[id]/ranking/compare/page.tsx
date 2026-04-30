@@ -222,7 +222,11 @@ export default async function ComparisonPage({
 
         {selected.length >= 2 && (
           <>
-            <ComparisonGrid selected={selected} weights={weights} />
+            <ComparisonGrid
+              projectId={project.id}
+              selected={selected}
+              weights={weights}
+            />
             {analysis ? (
               <TradeoffPanel analysis={analysis} selected={selected} />
             ) : (
@@ -245,9 +249,11 @@ function parseIds(raw: string | undefined): string[] {
 }
 
 function ComparisonGrid({
+  projectId,
   selected,
   weights,
 }: {
+  projectId: string;
   selected: Array<{ base: CandidateRow; score: ScoreRow }>;
   weights:
     | { technical: number; domain: number; leadership: number; regulatory: number; transformation: number }
@@ -287,7 +293,13 @@ function ComparisonGrid({
               </span>
               <div className="min-w-0">
                 <h3 className="font-h2 text-h2 text-on-surface leading-tight truncate">
-                  {base.full_name}
+                  <Link
+                    href={`/projects/${projectId}/candidates/${base.id}`}
+                    prefetch={false}
+                    className="hover:text-primary transition-colors focus-visible:outline-none focus-visible:underline"
+                  >
+                    {base.full_name}
+                  </Link>
                 </h3>
                 <div className="font-mono-data text-mono-data text-secondary-fixed-dim uppercase tracking-wider">
                   RANK #{String(score.rank_position ?? 0).padStart(2, "0")} · FIT{" "}

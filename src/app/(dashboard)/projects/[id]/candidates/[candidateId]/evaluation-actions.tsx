@@ -35,22 +35,44 @@ export function EvaluationActions({
         candidate_title: null,
         candidate_company: null,
       });
-      const filename = buildFilename(candidateName, evaluation);
+      const filename = buildFilename(candidateName, evaluation, "md");
       const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      // Revoke after a tick — Safari needs the URL alive when click fires.
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      triggerDownload(blob, filename);
       toast.success("Report downloaded");
     } catch (err) {
       console.error("[evaluation] download failed:", err);
       toast.error("Could not download report.");
     }
+  };
+
+  const [pdfPending, startPdf] = useTransition();
+  const handleDownloadPdf = () => {
+    if (pdfPending) return;
+    startPdf(async () => {
+      try {
+        // PDF rendering pulls a ~150KB chunk via dynamic import so the
+        // candidate page doesn't ship the renderer to every visitor.
+        const [{ pdf }, { EvaluationPdfDocument }] = await Promise.all([
+          import("@react-pdf/renderer"),
+          import("@/lib/pdf/evaluation-document"),
+        ]);
+        const blob = await pdf(
+          <EvaluationPdfDocument
+            evaluation={evaluation}
+            meta={{
+              candidate_name: candidateName,
+              candidate_title: null,
+              candidate_company: null,
+            }}
+          />
+        ).toBlob();
+        triggerDownload(blob, buildFilename(candidateName, evaluation, "pdf"));
+        toast.success("PDF downloaded");
+      } catch (err) {
+        console.error("[evaluation] pdf export failed:", err);
+        toast.error("Could not export PDF.");
+      }
+    });
   };
 
   const handleDraftEmail = () => {
@@ -93,7 +115,25 @@ export function EvaluationActions({
           <span className="material-symbols-outlined text-[14px]" aria-hidden>
             file_download
           </span>
-          Download Report
+          Markdown
+        </button>
+        <button
+          type="button"
+          onClick={handleDownloadPdf}
+          disabled={pdfPending}
+          aria-busy={pdfPending ? true : undefined}
+          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <span
+            className={cn(
+              "material-symbols-outlined text-[14px]",
+              pdfPending && "animate-spin"
+            )}
+            aria-hidden
+          >
+            {pdfPending ? "progress_activity" : "picture_as_pdf"}
+          </span>
+          {pdfPending ? "Building" : "Download PDF"}
         </button>
         <button
           type="button"
@@ -322,12 +362,28 @@ function EmailDraftDialog({
 // Helpers
 // ────────────────────────────────────────────────────────────────────────
 
-function buildFilename(name: string, evaluation: CandidateEvaluation): string {
+function buildFilename(
+  name: string,
+  evaluation: CandidateEvaluation,
+  ext: "md" | "pdf"
+): string {
   const slug = name
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   const date = evaluation.generated_at.slice(0, 10);
-  return `evaluation-${slug || "candidate"}-${date}.md`;
+  return `evaluation-${slug || "candidate"}-${date}.${ext}`;
+}
+
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // Revoke after a tick — Safari needs the URL alive when click fires.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

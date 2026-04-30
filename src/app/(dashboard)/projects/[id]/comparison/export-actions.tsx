@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   comparisonToEmail,
   comparisonToHtml,
@@ -21,6 +22,7 @@ type Props = {
 
 export function ComparisonExportActions(props: Props) {
   const [emailOpen, setEmailOpen] = useState(false);
+  const [pdfPending, startPdf] = useTransition();
 
   const handleDownloadMarkdown = () => {
     try {
@@ -42,6 +44,38 @@ export function ComparisonExportActions(props: Props) {
       console.error("[comparison] html export failed:", err);
       toast.error("Could not export HTML.");
     }
+  };
+
+  const handleDownloadPdf = () => {
+    if (pdfPending) return;
+    startPdf(async () => {
+      try {
+        const [{ pdf }, { ComparisonPdfDocument }] = await Promise.all([
+          import("@react-pdf/renderer"),
+          import("@/lib/pdf/comparison-document"),
+        ]);
+        const blob = await pdf(
+          <ComparisonPdfDocument
+            rows={props.rows}
+            weights={props.weights}
+            insight={props.insight}
+            context={props.context}
+          />
+        ).toBlob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = buildFilename(props.context, "pdf");
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast.success("PDF downloaded");
+      } catch (err) {
+        console.error("[comparison] pdf export failed:", err);
+        toast.error("Could not export PDF.");
+      }
+    });
   };
 
   return (
@@ -66,6 +100,24 @@ export function ComparisonExportActions(props: Props) {
             print
           </span>
           Download HTML
+        </button>
+        <button
+          type="button"
+          onClick={handleDownloadPdf}
+          disabled={pdfPending}
+          aria-busy={pdfPending ? true : undefined}
+          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <span
+            className={cn(
+              "material-symbols-outlined text-[14px]",
+              pdfPending && "animate-spin"
+            )}
+            aria-hidden
+          >
+            {pdfPending ? "progress_activity" : "picture_as_pdf"}
+          </span>
+          {pdfPending ? "Building" : "Download PDF"}
         </button>
         <button
           type="button"
