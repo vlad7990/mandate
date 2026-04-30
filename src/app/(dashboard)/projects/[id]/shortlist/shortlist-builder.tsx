@@ -5,7 +5,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { MastHead } from "@/components/ui/mast-head";
+import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import {
   type Archetype,
   type FitDimensions,
@@ -64,11 +66,11 @@ const FIT_DIMENSION_LABELS: Record<keyof FitDimensions, string> = {
   transformation: "Transformation",
 };
 
-const ARCHETYPE_TONES: Record<Archetype, string> = {
-  Builder: "border-primary-container/40 text-primary",
-  Operator: "border-secondary-fixed-dim/40 text-secondary-fixed-dim",
-  Transformer: "border-tertiary/40 text-tertiary",
-  Infrastructure: "border-outline-variant text-on-surface-variant",
+const ARCHETYPE_TONE: Record<Archetype, ChipTone> = {
+  Builder: "primary",
+  Operator: "secondary",
+  Transformer: "warn",
+  Infrastructure: "neutral",
 };
 
 export function ShortlistBuilder({
@@ -233,38 +235,39 @@ export function ShortlistBuilder({
 
   return (
     <div className="min-h-full bg-surface text-on-surface">
-      <div className="max-w-7xl mx-auto px-6 py-10 space-y-6">
-        {/* breadcrumb */}
-        <div className="flex items-center gap-3 font-mono-label text-mono-label uppercase tracking-widest text-outline">
-          <Link
-            href={`/projects/${projectId}`}
-            prefetch={false}
-            className="hover:text-on-surface transition-colors flex items-center gap-1.5"
-          >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-            Mandate
-          </Link>
-          <span className="text-outline-variant">/</span>
-          <span className="text-on-surface-variant">{roleTitle}</span>
-          <span className="text-outline-variant">/</span>
-          <span className="text-primary">Shortlist</span>
-        </div>
+      <div className="max-w-[1600px] mx-auto px-6 py-6 space-y-5">
+        <BreadcrumbRail
+          segments={[
+            { label: "Mandate", href: "/" },
+            { label: roleTitle, href: `/projects/${projectId}`, maxChars: 32 },
+            { label: "Shortlist" },
+          ]}
+        />
 
         {/* Header */}
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-outline-variant/40 pb-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-mono-label text-mono-label text-secondary-fixed-dim bg-secondary-fixed-dim/10 px-2 py-0.5 uppercase tracking-widest">
-                {submittedAt ? "SUBMITTED" : "ACTIVE_SLATE"}
-              </span>
-              <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <StatusChip
+                tone={submittedAt ? "secondary" : "primary"}
+                intensity="filled"
+                dot
+                pulse={!submittedAt}
+              >
+                {submittedAt ? "Submitted" : "Active Slate"}
+              </StatusChip>
+              <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
                 {companyName.toUpperCase()}
               </span>
             </div>
-            <h1 className="font-h1 text-h1 text-on-surface">{roleTitle}</h1>
-            <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest mt-1">
-              Slate: {slate.length} / {slateSize} ·{" "}
-              {pool.length} ranked candidates available
+            <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
+              {roleTitle}
+            </h1>
+            <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest tabular-nums">
+              Slate: <span className="text-primary">
+                {String(slate.length).padStart(2, "0")}/{String(slateSize).padStart(2, "0")}
+              </span>{" "}
+              · {String(pool.length).padStart(2, "0")} ranked available
               {submittedAt ? ` · submitted ${formatRelative(submittedAt)}` : ""}
             </p>
           </div>
@@ -274,13 +277,14 @@ export function ShortlistBuilder({
               onClick={handleGenerateReport}
               disabled={slate.length === 0 || reportPending || mutationPending}
               aria-busy={reportPending ? true : undefined}
-              className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <span
                 className={cn(
                   "material-symbols-outlined text-[14px]",
                   reportPending && "animate-spin"
                 )}
+                aria-hidden
               >
                 {reportPending ? "progress_activity" : "auto_awesome"}
               </span>
@@ -293,13 +297,14 @@ export function ShortlistBuilder({
                 slate.length === 0 || submitPending || mutationPending
               }
               aria-busy={submitPending ? true : undefined}
-              className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <span
                 className={cn(
                   "material-symbols-outlined text-[14px]",
                   submitPending && "animate-spin"
                 )}
+                aria-hidden
               >
                 {submitPending ? "progress_activity" : "send"}
               </span>
@@ -312,47 +317,63 @@ export function ShortlistBuilder({
           </div>
         </header>
 
-        {/* Slate-size presets */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Slate-size segmented control. Buttons share borders so the
+            row reads as a single instrument switch rather than three
+            stand-alone chips. Custom-N input docks to the right edge as
+            a manual override. */}
+        <div className="flex items-center gap-3 flex-wrap">
           <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
             Slate size
           </span>
-          {SLATE_PRESETS.map((preset) => (
-            <button
-              key={preset.value}
-              type="button"
-              onClick={() => handlePresetSize(preset.value)}
-              disabled={mutationPending || slateSize === preset.value}
-              className={cn(
-                "px-3 py-1.5 border font-mono-label text-mono-label uppercase tracking-widest transition-colors",
-                slateSize === preset.value && customSize === ""
-                  ? "border-primary-container bg-primary-container/10 text-primary"
-                  : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary"
-              )}
-            >
-              {preset.label}
-            </button>
-          ))}
-          <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-            · Custom
-          </span>
-          <input
-            type="number"
-            min={1}
-            max={10}
-            value={customSize}
-            onChange={(e) => setCustomSize(e.target.value)}
-            placeholder="N"
-            className="w-16 bg-surface-container-lowest border border-outline-variant rounded-none px-2 py-1.5 font-mono-data text-body-main text-on-surface focus:border-primary focus:ring-0 outline-none transition-colors"
-          />
-          <button
-            type="button"
-            onClick={handleCustomSize}
-            disabled={!customSize || mutationPending}
-            className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          <div
+            role="group"
+            aria-label="Slate size presets"
+            className="inline-flex border border-outline-variant divide-x divide-outline-variant"
           >
-            Apply
-          </button>
+            {SLATE_PRESETS.map((preset) => {
+              const active = slateSize === preset.value && customSize === "";
+              return (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => handlePresetSize(preset.value)}
+                  disabled={mutationPending}
+                  aria-pressed={active}
+                  className={cn(
+                    "px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary disabled:cursor-not-allowed",
+                    active
+                      ? "bg-primary-container/15 text-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
+                  )}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
+          </div>
+          <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+            Custom
+          </span>
+          <div className="inline-flex border border-outline-variant divide-x divide-outline-variant">
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={customSize}
+              onChange={(e) => setCustomSize(e.target.value)}
+              placeholder="N"
+              aria-label="Custom slate size"
+              className="w-14 bg-surface-container-lowest px-2 py-1.5 font-mono-data text-body-main text-on-surface tabular-nums focus:outline-none focus:bg-surface-container-low transition-colors"
+            />
+            <button
+              type="button"
+              onClick={handleCustomSize}
+              disabled={!customSize || mutationPending}
+              className="px-3 py-1.5 text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container-high hover:text-primary transition-colors disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
+            >
+              Apply
+            </button>
+          </div>
         </div>
 
         {/* Two columns: pool + slate */}
@@ -399,19 +420,27 @@ export function ShortlistBuilder({
           </section>
 
           <section className="col-span-12 lg:col-span-8">
-            <div className="bg-surface-container-low border-2 border-dashed border-outline-variant p-4 flex flex-col gap-3 min-h-[400px]">
+            <div className="bg-surface-container-low border border-outline-variant p-4 flex flex-col gap-3 min-h-[400px]">
               <MastHead
                 tone="secondary"
                 icon="view_kanban"
-                label={`Final Shortlist · Top ${slateSize}`}
+                label={
+                  <span className="flex items-baseline gap-2 tabular-nums">
+                    Final Shortlist
+                    <span className="text-outline">· Top {slateSize}</span>
+                  </span>
+                }
                 meta={
                   <span className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim animate-pulse" />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim animate-pulse"
+                      aria-hidden
+                    />
                     Live comparison mode
                   </span>
                 }
               />
-              <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+              <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
                 Add from the pool. Reorder with up/down arrows.
               </p>
               <div
@@ -522,7 +551,7 @@ function PoolCard({
         type="button"
         onClick={onAdd}
         disabled={disabled}
-        className="w-full bg-surface-container-high border border-outline-variant p-3 hover:border-primary transition-colors group disabled:opacity-50 disabled:cursor-not-allowed text-left"
+        className="w-full bg-surface-container-high border border-outline-variant p-3 hover:border-primary transition-colors group disabled:opacity-50 disabled:cursor-not-allowed text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-start gap-2 min-w-0">
@@ -539,7 +568,7 @@ function PoolCard({
               </div>
             </div>
           </div>
-          <span className="font-mono-label text-mono-label uppercase tracking-wider text-secondary-fixed-dim shrink-0">
+          <span className="font-mono-label text-mono-label uppercase tracking-widest text-secondary-fixed-dim shrink-0 tabular-nums">
             #{String(candidate.rank ?? 0).padStart(2, "0")} ·{" "}
             {candidate.overall != null ? candidate.overall.toFixed(1) : "—"}
           </span>
@@ -573,19 +602,21 @@ function PoolCard({
           </div>
         )}
         <div className="flex items-center justify-between mt-2">
-          {candidate.archetype && (
-            <span
-              className={cn(
-                "px-1.5 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider",
-                ARCHETYPE_TONES[candidate.archetype]
-              )}
+          {candidate.archetype ? (
+            <StatusChip
+              tone={ARCHETYPE_TONE[candidate.archetype]}
+              intensity="soft"
             >
               {candidate.archetype}
-            </span>
+            </StatusChip>
+          ) : (
+            <span />
           )}
           <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
             Add
-            <span className="material-symbols-outlined text-[12px]">add</span>
+            <span className="material-symbols-outlined text-[12px]" aria-hidden>
+              add
+            </span>
           </span>
         </div>
       </button>
@@ -595,14 +626,19 @@ function PoolCard({
 
 function EmptySlot({ index }: { index: number }) {
   return (
-    <div className="bg-surface-container-lowest border-2 border-dashed border-outline-variant flex flex-col items-center justify-center p-6 text-center min-h-[280px]">
-      <div className="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center mb-4">
-        <span className="material-symbols-outlined text-outline">add</span>
+    <div
+      className="bg-surface-container-lowest border border-dashed border-outline-variant/70 flex flex-col items-center justify-center p-6 text-center min-h-[280px]"
+      role="presentation"
+    >
+      <div className="w-12 h-12 border border-outline-variant flex items-center justify-center mb-4">
+        <span className="material-symbols-outlined text-outline" aria-hidden>
+          add
+        </span>
       </div>
       <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
         Assign Candidate
       </span>
-      <span className="font-mono-data text-body-main text-outline mt-2">
+      <span className="font-mono-data text-body-main text-outline mt-2 tabular-nums">
         SLOT_{String(index).padStart(2, "0")}_VACANT
       </span>
     </div>
@@ -628,43 +664,59 @@ function SlateCard({
 }) {
   return (
     <article className="bg-surface-container-low border border-outline-variant flex flex-col relative overflow-hidden group">
-      <span className="absolute top-0 left-0 w-full h-1 bg-secondary-fixed-dim shadow-[0_0_10px_rgba(78,222,163,0.3)]" />
+      <span
+        className="absolute top-0 left-0 w-full h-0.5 bg-secondary-fixed-dim"
+        aria-hidden
+      />
       <div className="p-4 flex-1 space-y-4">
         <header className="flex justify-between items-start gap-2">
-          <span className="w-12 h-12 rounded bg-surface-container border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase">
+          <span
+            className="w-11 h-11 bg-surface-container border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase shrink-0"
+            aria-hidden
+          >
             {initials(candidate.full_name)}
           </span>
-          <div className="flex flex-col items-end gap-1">
-            <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest">
-              SLOT {String(slot).padStart(2, "0")}
+          <div className="flex flex-col items-end gap-1.5">
+            <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest tabular-nums">
+              Slot {String(slot).padStart(2, "0")}
             </span>
-            <div className="flex items-center gap-1">
+            <div
+              className="inline-flex border border-outline-variant divide-x divide-outline-variant"
+              role="group"
+              aria-label={`Slate controls for ${candidate.full_name}`}
+            >
               <button
                 type="button"
                 onClick={onMoveUp}
                 disabled={disabled || slot === 1}
                 aria-label={`Move ${candidate.full_name} up`}
-                className="w-6 h-6 border border-outline-variant text-outline hover:text-primary hover:border-primary transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-7 h-7 text-outline hover:text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
               >
-                <span className="material-symbols-outlined text-[12px]">arrow_upward</span>
+                <span className="material-symbols-outlined text-[14px]" aria-hidden>
+                  arrow_upward
+                </span>
               </button>
               <button
                 type="button"
                 onClick={onMoveDown}
                 disabled={disabled || slot >= total}
                 aria-label={`Move ${candidate.full_name} down`}
-                className="w-6 h-6 border border-outline-variant text-outline hover:text-primary hover:border-primary transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-7 h-7 text-outline hover:text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
               >
-                <span className="material-symbols-outlined text-[12px]">arrow_downward</span>
+                <span className="material-symbols-outlined text-[14px]" aria-hidden>
+                  arrow_downward
+                </span>
               </button>
               <button
                 type="button"
                 onClick={onRemove}
                 disabled={disabled}
                 aria-label={`Remove ${candidate.full_name} from slate`}
-                className="w-6 h-6 border border-outline-variant text-outline hover:text-error hover:border-error transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-7 h-7 text-outline hover:text-error hover:bg-error/10 transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-error"
               >
-                <span className="material-symbols-outlined text-[12px]">close</span>
+                <span className="material-symbols-outlined text-[14px]" aria-hidden>
+                  close
+                </span>
               </button>
             </div>
           </div>
@@ -729,20 +781,18 @@ function SlateCard({
           </div>
         )}
 
-        <div className="flex items-center justify-between font-mono-label text-mono-label text-outline uppercase tracking-wider pt-2 border-t border-outline-variant/40">
-          <span>
+        <div className="flex items-center justify-between font-mono-label text-mono-label text-outline uppercase tracking-widest pt-2 border-t border-outline-variant/40">
+          <span className="tabular-nums">
             Rank #{String(candidate.rank ?? 0).padStart(2, "0")} ·{" "}
             {candidate.overall != null ? `${candidate.overall.toFixed(1)}/10` : "—"}
           </span>
           {candidate.archetype && (
-            <span
-              className={cn(
-                "px-1.5 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider",
-                ARCHETYPE_TONES[candidate.archetype]
-              )}
+            <StatusChip
+              tone={ARCHETYPE_TONE[candidate.archetype]}
+              intensity="soft"
             >
               {candidate.archetype}
-            </span>
+            </StatusChip>
           )}
         </div>
       </div>
@@ -878,12 +928,12 @@ function CandidateBriefCard({
 }: {
   brief: ShortlistReport["candidates"][number];
 }) {
-  const recColor =
+  const recTone: ChipTone =
     brief.recommendation === "advance"
-      ? "border-secondary-fixed-dim/60 text-secondary-fixed-dim"
+      ? "secondary"
       : brief.recommendation === "pause"
-        ? "border-tertiary/40 text-tertiary"
-        : "border-outline-variant text-on-surface-variant";
+        ? "warn"
+        : "neutral";
   return (
     <article className="bg-surface-container-low border border-outline-variant p-4 space-y-3">
       <header className="flex items-start justify-between gap-2">
@@ -891,19 +941,14 @@ function CandidateBriefCard({
           <h4 className="text-on-surface text-body-main font-semibold truncate">
             {brief.full_name}
           </h4>
-          <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+          <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
             {brief.rank != null ? `#${String(brief.rank).padStart(2, "0")}` : "—"}
             {brief.overall_score != null ? ` · ${brief.overall_score.toFixed(1)}/10` : ""}
           </p>
         </div>
-        <span
-          className={cn(
-            "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider",
-            recColor
-          )}
-        >
+        <StatusChip tone={recTone} intensity="filled">
           {brief.recommendation}
-        </span>
+        </StatusChip>
       </header>
       <p className="text-body-main text-on-surface-variant leading-snug">
         {brief.headline}

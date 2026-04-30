@@ -15,24 +15,20 @@ import {
   MandateLineChart,
   type MandateBarDatum,
 } from "@/components/charts/mandate-charts";
-import { cn } from "@/lib/utils";
+import { KpiTile } from "@/components/ui/kpi-tile";
+import { LiveTick } from "@/components/ui/live-tick";
+import { MastHead } from "@/components/ui/mast-head";
+import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 
 type CandidateLite = {
   pipeline_stage: string | null;
   created_at: string | null;
 };
 
-const HEALTH_TONE: Record<HealthStatus, string> = {
-  healthy:
-    "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim",
-  stalled: "border-tertiary/60 bg-tertiary/10 text-tertiary",
-  at_risk: "border-error/60 bg-error/10 text-error",
-};
-
-const HEALTH_DOT: Record<HealthStatus, string> = {
-  healthy: "bg-secondary-fixed-dim",
-  stalled: "bg-tertiary",
-  at_risk: "bg-error",
+const HEALTH_CHIP: Record<HealthStatus, ChipTone> = {
+  healthy: "secondary",
+  stalled: "warn",
+  at_risk: "danger",
 };
 
 const HEALTH_FILL: Record<HealthStatus, string> = {
@@ -81,9 +77,14 @@ export default async function PortfolioAnalyticsPage() {
       // left-to-right oldest → newest with the rightmost bar being now.
       label: bucketIndex === 0 ? "this" : `T-${bucketIndex}w`,
       value,
+      meta: `${value} candidate${value === 1 ? "" : "s"} ${bucketIndex === 0 ? "this week" : `${bucketIndex}w ago`}`,
     }))
     .slice()
     .reverse();
+
+  const lastWeek = weeklyBuckets[0] ?? 0;
+  const previousWeek = weeklyBuckets[1] ?? 0;
+  const weeklyDelta = lastWeek - previousWeek;
 
   // Health histogram. attentionList already excludes healthy projects
   // (those have zero alerts), so the healthy bucket is computed via
@@ -111,20 +112,31 @@ export default async function PortfolioAnalyticsPage() {
   });
 
   return (
-    <div className="p-6 space-y-6">
-      <header className="flex justify-between items-end gap-4 flex-wrap">
+    <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
+      <header className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-h1 text-h1 text-primary">PORTFOLIO ANALYTICS</h1>
-          <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest mt-1">
-            {metrics.totalProjects} mandate{metrics.totalProjects === 1 ? "" : "s"} ·{" "}
-            {metrics.totalCandidates} candidates ·{" "}
-            {metrics.totalCandidatesThisWeek} added this week
+          <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest mb-1">
+            Workspace // Analytics
+          </div>
+          <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
+            PORTFOLIO ANALYTICS
+          </h1>
+          <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest mt-1.5 tabular-nums">
+            {String(metrics.totalProjects).padStart(2, "0")} mandate
+            {metrics.totalProjects === 1 ? "" : "s"} ·{" "}
+            {String(metrics.totalCandidates).padStart(2, "0")} candidates ·{" "}
+            +{metrics.totalCandidatesThisWeek} this week
           </p>
         </div>
+        <LiveTick nowOnServer label="Snapshot" />
       </header>
 
-      {/* KPI strip */}
-      <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* KPI strip — uses the shared instrument tile so dashboard, project,
+          and analytics all read with the same visual rhythm. */}
+      <section
+        aria-label="Portfolio key metrics"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+      >
         <KpiTile
           label="Active Searches"
           value={String(metrics.activeProjects).padStart(2, "0")}
@@ -134,8 +146,16 @@ export default async function PortfolioAnalyticsPage() {
         <KpiTile
           label="Total Candidates"
           value={String(metrics.totalCandidates).padStart(2, "0")}
-          unit={`+${metrics.totalCandidatesThisWeek} this week`}
+          unit="across portfolio"
           accent="secondary"
+          delta={
+            metrics.totalCandidatesThisWeek > 0
+              ? {
+                  direction: "up",
+                  label: `+${metrics.totalCandidatesThisWeek} 7d`,
+                }
+              : { direction: "flat", label: "0 7d" }
+          }
         />
         <KpiTile
           label="Avg Velocity"
@@ -150,16 +170,12 @@ export default async function PortfolioAnalyticsPage() {
         />
       </section>
 
-      {/* Charts: pipeline (full-width) + health (half) + velocity (half) */}
       <ChartCard
         title="Candidates by Pipeline Stage"
         icon="filter_alt"
         subtitle={`${candidates.length} total`}
       >
-        <MandateHorizontalBarChart
-          data={pipelineData}
-          className="h-[320px]"
-        />
+        <MandateHorizontalBarChart data={pipelineData} className="h-[320px]" />
       </ChartCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -168,16 +184,38 @@ export default async function PortfolioAnalyticsPage() {
           icon="monitor_heart"
           subtitle={`${metrics.totalProjects} mandate${metrics.totalProjects === 1 ? "" : "s"}`}
         >
-          <MandateHorizontalBarChart
-            data={healthData}
-            className="h-[200px]"
-          />
+          <MandateHorizontalBarChart data={healthData} className="h-[200px]" />
         </ChartCard>
 
         <ChartCard
           title="Weekly Velocity"
           icon="trending_up"
           subtitle="last 8 weeks · candidates added per week"
+          headerExtra={
+            <span
+              className={
+                "font-mono-label text-mono-label uppercase tracking-widest tabular-nums flex items-center gap-1 " +
+                (weeklyDelta > 0
+                  ? "text-secondary-fixed-dim"
+                  : weeklyDelta < 0
+                    ? "text-error"
+                    : "text-outline")
+              }
+            >
+              <span
+                className="material-symbols-outlined text-[12px]"
+                aria-hidden
+              >
+                {weeklyDelta > 0
+                  ? "trending_up"
+                  : weeklyDelta < 0
+                    ? "trending_down"
+                    : "trending_flat"}
+              </span>
+              {weeklyDelta > 0 ? "+" : ""}
+              {weeklyDelta} vs prev
+            </span>
+          }
         >
           <MandateLineChart
             data={weeklyData}
@@ -189,41 +227,32 @@ export default async function PortfolioAnalyticsPage() {
       </div>
 
       {metrics.attentionList.length > 0 && (
-        <section className="bg-surface-container-low border border-outline-variant rounded">
-          <header className="flex items-center justify-between gap-2 p-3 border-b border-outline-variant bg-surface-container">
-            <h2 className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest flex items-center gap-2">
-              <span className="material-symbols-outlined text-[14px]">
-                notification_important
+        <section className="space-y-2">
+          <MastHead
+            tone="tertiary"
+            icon="notification_important"
+            label="Searches Needing Attention"
+            meta={
+              <span className="tabular-nums">
+                {String(metrics.attentionList.length).padStart(2, "0")} flagged
               </span>
-              Searches Needing Attention
-            </h2>
-            <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-              {metrics.attentionList.length} flagged
-            </span>
-          </header>
-          <ul className="divide-y divide-outline-variant/40">
+            }
+          />
+          <ul className="bg-surface-container-low border border-outline-variant divide-y divide-outline-variant/40">
             {metrics.attentionList.map((row) => (
               <li key={row.projectId}>
                 <Link
                   href={`/projects/${row.projectId}/metrics`}
                   prefetch={false}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors group"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-high transition-colors group focus-visible:outline-none focus-visible:bg-surface-container-high focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
                 >
-                  <span
-                    className={cn(
-                      "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider flex items-center gap-1.5 shrink-0",
-                      HEALTH_TONE[row.status]
-                    )}
+                  <StatusChip
+                    tone={HEALTH_CHIP[row.status]}
+                    dot
+                    pulse={row.status === "at_risk"}
                   >
-                    <span
-                      className={cn(
-                        "w-1.5 h-1.5 rounded-full",
-                        HEALTH_DOT[row.status],
-                        row.status === "at_risk" ? "animate-pulse" : ""
-                      )}
-                    />
                     {HEALTH_LABELS[row.status]}
-                  </span>
+                  </StatusChip>
                   <div className="flex-1 min-w-0">
                     <div className="text-on-surface text-body-main font-semibold truncate">
                       {row.title}
@@ -232,10 +261,14 @@ export default async function PortfolioAnalyticsPage() {
                       {row.companyName}
                     </div>
                   </div>
-                  <span className="hidden md:inline font-mono-label text-mono-label text-outline uppercase tracking-wider">
-                    {row.alerts.length} alert{row.alerts.length === 1 ? "" : "s"}
+                  <span className="hidden md:inline font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
+                    {String(row.alerts.length).padStart(2, "0")} alert
+                    {row.alerts.length === 1 ? "" : "s"}
                   </span>
-                  <span className="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">
+                  <span
+                    className="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors shrink-0"
+                    aria-hidden
+                  >
                     chevron_right
                   </span>
                 </Link>
@@ -274,76 +307,34 @@ function ChartCard({
   title,
   icon,
   subtitle,
+  headerExtra,
   children,
 }: {
   title: string;
   icon: string;
   subtitle?: string;
+  headerExtra?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <article className="bg-surface-container-low border border-outline-variant p-4 space-y-4">
-      <header className="flex items-center justify-between gap-2 flex-wrap">
+    <article className="bg-surface-container-low border border-outline-variant">
+      <header className="px-4 py-2.5 border-b border-outline-variant bg-surface-container flex items-center justify-between gap-3 flex-wrap">
         <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">{icon}</span>
+          <span className="material-symbols-outlined text-[14px]" aria-hidden>
+            {icon}
+          </span>
           {title}
         </h2>
-        {subtitle && (
-          <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-            {subtitle}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {subtitle && (
+            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
+              {subtitle}
+            </span>
+          )}
+          {headerExtra}
+        </div>
       </header>
-      {children}
+      <div className="p-4">{children}</div>
     </article>
-  );
-}
-
-function KpiTile({
-  label,
-  value,
-  unit,
-  accent,
-}: {
-  label: string;
-  value: string;
-  unit: string;
-  accent?: "primary" | "secondary" | "warn";
-}) {
-  const valueColor =
-    accent === "primary"
-      ? "text-primary"
-      : accent === "secondary"
-        ? "text-secondary-fixed-dim"
-        : accent === "warn"
-          ? "text-tertiary"
-          : "text-on-surface";
-  return (
-    <div className="bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between min-h-[96px] rounded relative overflow-hidden">
-      {/* Subtle accent bar — terminal/instrumentation feel */}
-      <div
-        className={cn(
-          "absolute left-0 top-0 bottom-0 w-0.5",
-          accent === "primary"
-            ? "bg-primary"
-            : accent === "secondary"
-              ? "bg-secondary-fixed-dim"
-              : accent === "warn"
-                ? "bg-tertiary"
-                : "bg-outline-variant"
-        )}
-      />
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-        {label}
-      </span>
-      <div className="flex items-baseline gap-2">
-        <span className={cn("font-h2 text-h2 tabular-nums", valueColor)}>
-          {value}
-        </span>
-      </div>
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-        {unit}
-      </span>
-    </div>
   );
 }

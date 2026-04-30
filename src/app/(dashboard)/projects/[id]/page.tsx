@@ -22,6 +22,9 @@ import {
   type HealthStatus,
   type ProjectHealthSummary,
 } from "@/lib/metrics/types";
+import { MastHead } from "@/components/ui/mast-head";
+import { LiveTick } from "@/components/ui/live-tick";
+import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { ProjectPoller } from "./project-poller";
 
 type RecalibrationSummary = {
@@ -51,6 +54,12 @@ type SpecState = {
   hasAny: boolean;
   hasFinal: boolean;
   isGenerating: boolean;
+};
+
+const HEALTH_CHIP: Record<HealthStatus, ChipTone> = {
+  healthy: "secondary",
+  stalled: "warn",
+  at_risk: "danger",
 };
 
 function isAnalysisReady(row: ProjectRow): boolean {
@@ -135,49 +144,28 @@ export default async function ProjectPage({
     disabledHint: calibrated ? undefined : "Awaiting calibration",
   };
 
+  const projectStatus = (project.status ?? "active").toLowerCase();
+  const statusTone: ChipTone =
+    projectStatus === "active"
+      ? "secondary"
+      : projectStatus === "paused"
+        ? "warn"
+        : "neutral";
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
       <ProjectPoller analysisReady={ready} />
 
-      <header className="space-y-3">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-            MANDATE //
-          </span>
-          {ready ? (
-            <h1 className="font-h2 text-h2 text-on-surface">{project.title}</h1>
-          ) : (
-            <div className="h-7 w-72 bg-surface-container-high rounded animate-pulse" />
-          )}
-          <span className="px-2 py-0.5 border border-secondary/40 bg-secondary/10 text-secondary font-mono-label text-mono-label uppercase tracking-wider">
-            {project.status ?? "active"}
-          </span>
-          {ready && (
-            <Link
-              href={`/projects/${project.id}/onboarding`}
-              className={
-                calibrated
-                  ? "ml-auto px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
-                  : "ml-auto px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
-              }
-            >
-              <span className="material-symbols-outlined text-[14px]">tune</span>
-              {calibrated ? "Re-run Calibration" : "Start Onboarding"}
-            </Link>
-          )}
-        </div>
-        <div className="flex items-center gap-3 text-on-surface-variant text-body-main">
-          {ready ? (
-            <span>{project.company_name}</span>
-          ) : (
-            <div className="h-4 w-48 bg-surface-container-high rounded animate-pulse" />
-          )}
-          <span className="text-outline">·</span>
-          <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-            {project.one_line_input}
-          </span>
-        </div>
-      </header>
+      <ProjectHero
+        ready={ready}
+        calibrated={calibrated}
+        title={project.title}
+        companyName={project.company_name}
+        oneLineInput={project.one_line_input}
+        status={projectStatus}
+        statusTone={statusTone}
+        projectId={project.id}
+      />
 
       {ready && <ProjectModuleNav projectId={project.id} />}
 
@@ -193,18 +181,23 @@ export default async function ProjectPage({
       )}
 
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]">robot_2</span>
-            Agent Stack
-          </h2>
-          {!ready && (
-            <span className="font-mono-label text-mono-label text-primary uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Live analysis in progress
-            </span>
-          )}
-        </div>
+        <MastHead
+          tone="primary"
+          icon="robot_2"
+          label="Agent Stack"
+          meta={
+            !ready ? (
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                Live analysis in progress
+              </span>
+            ) : (
+              <span className="tabular-nums">
+                4/4 agents · {calibrated ? "calibrated" : "calibration pending"}
+              </span>
+            )
+          }
+        />
         <AgentTiles
           states={tileStates(project, spec)}
           actions={{ role_spec: specAction }}
@@ -220,23 +213,125 @@ export default async function ProjectPage({
       {calibrated && <DimensionWeightsCard calibration={calibration} />}
 
       {ready && Array.isArray(calibration.missing_information) && calibration.missing_information.length > 0 && (
-        <section className="bg-tertiary-container/10 border border-tertiary/30 p-4 rounded space-y-3">
+        <section className="bg-tertiary-container/10 border border-tertiary/30 px-4 py-3 space-y-3">
           <h3 className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+            <span
+              className="material-symbols-outlined text-[14px]"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+              aria-hidden
+            >
               psychology
             </span>
-            Information Required
+            Information Required ·{" "}
+            <span className="tabular-nums">
+              {String(calibration.missing_information.length).padStart(2, "0")}
+            </span>
           </h3>
           <ul className="space-y-1.5 list-disc list-inside text-on-tertiary-container text-body-main">
             {calibration.missing_information.map((item, i) => (
-              <li key={i} className="font-body-main">
-                {item}
-              </li>
+              <li key={i}>{item}</li>
             ))}
           </ul>
         </section>
       )}
     </div>
+  );
+}
+
+function ProjectHero({
+  ready,
+  calibrated,
+  title,
+  companyName,
+  oneLineInput,
+  status,
+  statusTone,
+  projectId,
+}: {
+  ready: boolean;
+  calibrated: boolean;
+  title: string;
+  companyName: string;
+  oneLineInput: string;
+  status: string;
+  statusTone: ChipTone;
+  projectId: string;
+}) {
+  return (
+    <header className="space-y-3">
+      <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-2 flex-wrap">
+        <Link
+          href="/"
+          prefetch={false}
+          className="hover:text-on-surface transition-colors focus-visible:outline-none focus-visible:text-primary focus-visible:underline focus-visible:underline-offset-2"
+        >
+          Mandate
+        </Link>
+        <span className="text-outline-variant" aria-hidden>
+          /
+        </span>
+        <span className="text-primary">Project</span>
+      </div>
+
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="space-y-2 min-w-0 flex-1">
+          {ready ? (
+            <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
+              {title}
+            </h1>
+          ) : (
+            <div
+              className="h-9 w-72 bg-surface-container-high animate-pulse"
+              role="status"
+              aria-label="Loading mandate title"
+            />
+          )}
+          <div className="flex items-center gap-3 flex-wrap font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
+            <StatusChip tone={statusTone} dot pulse={status === "active"}>
+              {status}
+            </StatusChip>
+            {ready ? (
+              <span className="text-on-surface-variant">{companyName}</span>
+            ) : (
+              <div
+                className="h-3 w-32 bg-surface-container-high animate-pulse inline-block align-middle"
+                role="status"
+                aria-label="Loading company"
+              />
+            )}
+            <span className="text-outline-variant" aria-hidden>
+              ·
+            </span>
+            <span className="text-outline truncate max-w-[40ch]">
+              {oneLineInput}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <LiveTick nowOnServer label="Snapshot" />
+          {ready && (
+            <Link
+              href={`/projects/${projectId}/onboarding`}
+              prefetch={false}
+              className={
+                calibrated
+                  ? "px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  : "px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              }
+            >
+              <span
+                className="material-symbols-outlined text-[14px]"
+                aria-hidden
+              >
+                tune
+              </span>
+              {calibrated ? "Re-run Calibration" : "Start Onboarding"}
+            </Link>
+          )}
+        </div>
+      </div>
+    </header>
   );
 }
 
@@ -248,22 +343,31 @@ function RoleSummaryCard({
   calibration: Partial<CalibrationModel>;
 }) {
   return (
-    <div className="bg-surface-container-low border border-outline-variant rounded p-5 space-y-4">
-      <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-        <span className="material-symbols-outlined text-[14px]">badge</span>
-        Role Calibration
-      </h3>
-      {ready ? (
-        <div className="space-y-3">
-          <Field label="TITLE" value={calibration.role_title} />
-          <Field label="SENIORITY" value={calibration.role_structure?.seniority} />
-          <Field label="FUNCTION" value={calibration.role_structure?.function} />
-          <FieldBlock label="INFERRED SCOPE" value={calibration.inferred_scope} />
-        </div>
-      ) : (
-        <SkeletonRows rows={4} />
-      )}
-    </div>
+    <article className="bg-surface-container-low border border-outline-variant">
+      <header className="px-4 py-2.5 border-b border-outline-variant bg-surface-container">
+        <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
+          <span
+            className="material-symbols-outlined text-[14px]"
+            aria-hidden
+          >
+            badge
+          </span>
+          Role Calibration
+        </h3>
+      </header>
+      <div className="p-4">
+        {ready ? (
+          <dl className="space-y-2.5">
+            <Field label="Title" value={calibration.role_title} />
+            <Field label="Seniority" value={calibration.role_structure?.seniority} />
+            <Field label="Function" value={calibration.role_structure?.function} />
+            <FieldBlock label="Inferred Scope" value={calibration.inferred_scope} />
+          </dl>
+        ) : (
+          <SkeletonRows rows={4} />
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -275,33 +379,42 @@ function CompanySummaryCard({
   company: Partial<CompanyContext>;
 }) {
   return (
-    <div className="bg-surface-container-low border border-outline-variant rounded p-5 space-y-4">
-      <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-        <span className="material-symbols-outlined text-[14px]">domain</span>
-        Company Context
-      </h3>
-      {ready ? (
-        <div className="space-y-3">
-          <Field label="NAME" value={company.company_name} />
-          <Field label="INDUSTRY" value={company.industry} />
-          <Field label="BUSINESS MODEL" value={company.business_model} />
-        </div>
-      ) : (
-        <SkeletonRows rows={3} />
-      )}
-    </div>
+    <article className="bg-surface-container-low border border-outline-variant">
+      <header className="px-4 py-2.5 border-b border-outline-variant bg-surface-container">
+        <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
+          <span
+            className="material-symbols-outlined text-[14px]"
+            aria-hidden
+          >
+            domain
+          </span>
+          Company Context
+        </h3>
+      </header>
+      <div className="p-4">
+        {ready ? (
+          <dl className="space-y-2.5">
+            <Field label="Name" value={company.company_name} />
+            <Field label="Industry" value={company.industry} />
+            <Field label="Business Model" value={company.business_model} />
+          </dl>
+        ) : (
+          <SkeletonRows rows={3} />
+        )}
+      </div>
+    </article>
   );
 }
 
 function Field({ label, value }: { label: string; value: string | undefined }) {
   return (
-    <div className="flex justify-between items-baseline gap-4">
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+    <div className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
+      <dt className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
         {label}
-      </span>
-      <span className="text-on-surface text-body-main text-right">
+      </dt>
+      <dd className="font-mono-data text-body-main text-on-surface text-right truncate">
         {value ?? "—"}
-      </span>
+      </dd>
     </div>
   );
 }
@@ -314,23 +427,25 @@ function FieldBlock({
   value: string | undefined;
 }) {
   return (
-    <div className="space-y-1 pt-1 border-t border-outline-variant/40">
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider block">
+    <div className="space-y-1.5 pt-2.5 border-t border-outline-variant/40">
+      <dt className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
         {label}
-      </span>
-      <p className="text-on-surface text-body-main leading-relaxed">{value ?? "—"}</p>
+      </dt>
+      <dd className="text-on-surface text-body-main leading-relaxed">
+        {value ?? "—"}
+      </dd>
     </div>
   );
 }
 
 function SkeletonRows({ rows }: { rows: number }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" role="status" aria-label="Loading content">
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="space-y-1.5">
-          <div className="h-3 w-20 bg-surface-container-high rounded animate-pulse" />
+          <div className="h-3 w-20 bg-surface-container-high animate-pulse" />
           <div
-            className="h-4 bg-surface-container-high rounded animate-pulse"
+            className="h-4 bg-surface-container-high animate-pulse"
             style={{ width: `${50 + ((i * 17) % 40)}%` }}
           />
         </div>
@@ -347,30 +462,42 @@ function DimensionWeightsCard({
   const weights = calibration.dimension_weights;
   if (!weights) return null;
   return (
-    <section className="bg-surface-container-low border border-outline-variant rounded p-5 space-y-4">
-      <header className="flex items-center justify-between">
-        <h3 className="font-mono-label text-mono-label text-secondary-fixed uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">tune</span>
+    <section className="bg-surface-container-low border border-outline-variant">
+      <header className="px-4 py-2.5 border-b border-outline-variant bg-surface-container flex items-center justify-between gap-2 flex-wrap">
+        <h3 className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest flex items-center gap-2">
+          <span
+            className="material-symbols-outlined text-[14px]"
+            aria-hidden
+          >
+            tune
+          </span>
           Calibration Weights
         </h3>
-        <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-          0–10 SCALE · MULTI-DIMENSION
+        <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider tabular-nums">
+          0–10 scale · multi-dimension
         </span>
       </header>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="p-4 grid grid-cols-2 md:grid-cols-5 gap-4">
         {DIMENSION_KEYS.map((k: DimensionKey) => {
           const v = Math.max(0, Math.min(10, weights[k] ?? 0));
           return (
             <div key={k} className="space-y-2">
               <div className="flex items-baseline justify-between">
-                <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+                <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
                   {k}
                 </span>
-                <span className="font-h2 text-h2 text-primary tabular-nums">
+                <span className="font-h2 text-h2 text-primary tabular-nums leading-none">
                   {v}
                 </span>
               </div>
-              <div className="h-1.5 bg-surface-container-highest overflow-hidden">
+              <div
+                className="h-1.5 bg-surface-container-highest overflow-hidden"
+                role="meter"
+                aria-valuemin={0}
+                aria-valuemax={10}
+                aria-valuenow={v}
+                aria-label={`${k} weight`}
+              >
                 <div
                   className="h-full bg-primary-container"
                   style={{ width: `${(v / 10) * 100}%` }}
@@ -381,7 +508,7 @@ function DimensionWeightsCard({
         })}
       </div>
       {calibration.weights_rationale && (
-        <p className="text-body-main text-on-surface-variant pt-3 border-t border-outline-variant/40">
+        <p className="px-4 pb-4 text-body-main text-on-surface-variant border-t border-outline-variant/40 pt-4">
           {calibration.weights_rationale}
         </p>
       )}
@@ -400,43 +527,45 @@ function RecalibrationBanner({
     <Link
       href={`/projects/${projectId}/feedback`}
       prefetch={false}
-      className="block bg-secondary-fixed-dim/5 border border-secondary-fixed-dim/40 hover:border-secondary-fixed-dim/60 transition-colors p-4 group"
+      className="block bg-secondary-fixed-dim/5 border border-secondary-fixed-dim/40 hover:border-secondary-fixed-dim/70 hover:bg-secondary-fixed-dim/10 transition-colors p-4 group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-fixed-dim"
     >
       <div className="flex items-start gap-3">
         <span
-          className="material-symbols-outlined text-secondary-fixed-dim mt-0.5"
-          style={{ fontVariationSettings: "'FILL' 1", fontSize: "20px" }}
+          className="material-symbols-outlined text-secondary-fixed-dim mt-0.5 text-[20px]"
+          style={{ fontVariationSettings: "'FILL' 1" }}
+          aria-hidden
         >
           refresh
         </span>
         <div className="flex-1 min-w-0">
-          <div className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest">
-            Calibration recalibrated{summary.applied_at ? ` · ${formatRelative(summary.applied_at)}` : ""}
+          <div className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest tabular-nums">
+            Calibration recalibrated
+            {summary.applied_at ? ` · ${formatRelative(summary.applied_at)}` : ""}
           </div>
-          <p className="text-on-surface text-body-main mt-1">
-            {summary.summary}
-          </p>
+          <p className="text-on-surface text-body-main mt-1">{summary.summary}</p>
           {Array.isArray(summary.applied_adjustments) &&
             summary.applied_adjustments.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {summary.applied_adjustments.map((adj, i) => (
-                  <span
+                  <StatusChip
                     key={i}
-                    className={
-                      adj.delta >= 0
-                        ? "px-2 py-0.5 border border-secondary-fixed-dim/40 text-secondary-fixed-dim font-mono-label text-mono-label uppercase tracking-wider"
-                        : "px-2 py-0.5 border border-error/40 text-error font-mono-label text-mono-label uppercase tracking-wider"
-                    }
+                    tone={adj.delta >= 0 ? "secondary" : "danger"}
+                    intensity="soft"
                   >
-                    {adj.dimension} {adj.delta >= 0 ? "+" : ""}{adj.delta}
-                  </span>
+                    <span className="tabular-nums">
+                      {adj.dimension} {adj.delta >= 0 ? "+" : ""}
+                      {adj.delta}
+                    </span>
+                  </StatusChip>
                 ))}
               </div>
             )}
         </div>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform shrink-0">
           View
-          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+          <span className="material-symbols-outlined text-[14px]" aria-hidden>
+            arrow_forward
+          </span>
         </span>
       </div>
     </Link>
@@ -461,13 +590,14 @@ function BuildSourcingCta({ projectId }: { projectId: string }) {
     <Link
       href={`/projects/${projectId}/sourcing`}
       prefetch={false}
-      className="block bg-primary-container/10 border border-primary-container/40 hover:border-primary-container hover:bg-primary-container/15 transition-colors p-4 group"
+      className="block bg-primary-container/10 border border-primary-container/40 hover:border-primary-container hover:bg-primary-container/15 transition-colors p-4 group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <span
             className="material-symbols-outlined text-[20px] text-primary"
             style={{ fontVariationSettings: "'FILL' 1" }}
+            aria-hidden
           >
             travel_explore
           </span>
@@ -478,32 +608,21 @@ function BuildSourcingCta({ projectId }: { projectId: string }) {
             <div className="text-on-surface text-body-main font-semibold mt-0.5">
               Build Sourcing Queries
             </div>
-            <div className="text-outline text-body-main mt-0.5">
+            <div className="text-on-surface-variant text-body-main mt-0.5">
               Synthesise LinkedIn boolean variants, Google X-Ray, and ATS strings from the canonical spec.
             </div>
           </div>
         </div>
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform">
+        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform shrink-0">
           Open
-          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+          <span className="material-symbols-outlined text-[14px]" aria-hidden>
+            arrow_forward
+          </span>
         </span>
       </div>
     </Link>
   );
 }
-
-const HEALTH_TONE: Record<HealthStatus, string> = {
-  healthy:
-    "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim",
-  stalled: "border-tertiary/60 bg-tertiary/10 text-tertiary",
-  at_risk: "border-error/60 bg-error/10 text-error",
-};
-
-const HEALTH_DOT: Record<HealthStatus, string> = {
-  healthy: "bg-secondary-fixed-dim",
-  stalled: "bg-tertiary",
-  at_risk: "bg-error",
-};
 
 function WeeklyHealthCard({
   projectId,
@@ -516,35 +635,35 @@ function WeeklyHealthCard({
     <Link
       href={`/projects/${projectId}/metrics`}
       prefetch={false}
-      className="block bg-surface-container-low border border-outline-variant hover:border-primary transition-colors p-4 group"
+      className="block bg-surface-container-low border border-outline-variant hover:border-primary transition-colors group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-            This week
-          </span>
+      <header className="px-4 py-2.5 border-b border-outline-variant bg-surface-container flex items-center justify-between gap-2 flex-wrap">
+        <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
           <span
-            className={
-              "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider flex items-center gap-1.5 " +
-              HEALTH_TONE[health.status]
-            }
+            className="material-symbols-outlined text-[14px]"
+            aria-hidden
           >
-            <span
-              className={
-                "w-1.5 h-1.5 rounded-full " +
-                HEALTH_DOT[health.status] +
-                (health.status === "at_risk" ? " animate-pulse" : "")
-              }
-            />
+            monitor_heart
+          </span>
+          This Week
+        </h3>
+        <div className="flex items-center gap-2">
+          <StatusChip
+            tone={HEALTH_CHIP[health.status]}
+            dot
+            pulse={health.status === "at_risk"}
+          >
             {HEALTH_LABELS[health.status]}
+          </StatusChip>
+          <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform">
+            Open metrics
+            <span className="material-symbols-outlined text-[14px]" aria-hidden>
+              arrow_forward
+            </span>
           </span>
         </div>
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform">
-          Open metrics
-          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-        </span>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
+      </header>
+      <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-outline-variant/40">
         <WeeklyKpi
           label="Sourced"
           value={String(health.candidatesThisWeek).padStart(2, "0")}
@@ -571,7 +690,7 @@ function WeeklyHealthCard({
         />
       </div>
       {health.alerts.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="px-4 py-2.5 border-t border-outline-variant/40 flex flex-wrap gap-1.5">
           {health.alerts.map((alert) => (
             <HealthAlertChip key={alert.code} alert={alert} />
           ))}
@@ -591,14 +710,14 @@ function WeeklyKpi({
   unit: string;
 }) {
   return (
-    <div className="space-y-0.5">
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider block">
+    <div className="px-4 py-3 space-y-1">
+      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest block">
         {label}
       </span>
-      <span className="font-h2 text-h2 text-on-surface tabular-nums">
+      <span className="font-h2 text-h2 text-on-surface tabular-nums leading-none block">
         {value}
       </span>
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider block">
+      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest block">
         {unit}
       </span>
     </div>
@@ -606,20 +725,16 @@ function WeeklyKpi({
 }
 
 function HealthAlertChip({ alert }: { alert: HealthAlert }) {
-  const tone =
-    alert.severity === "critical"
-      ? "border-error/60 text-error"
-      : "border-tertiary/60 text-tertiary";
   return (
-    <span
-      title={alert.detail}
-      className={
-        "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider " +
-        tone
-      }
+    <StatusChip
+      tone={alert.severity === "critical" ? "danger" : "warn"}
+      intensity="soft"
     >
+      <span className="sr-only">
+        {alert.severity === "critical" ? "Critical: " : "Warning: "}
+      </span>
       {alert.label}
-    </span>
+    </StatusChip>
   );
 }
 
@@ -657,9 +772,12 @@ function ProjectModuleNav({ projectId }: { projectId: string }) {
             <Link
               href={mod.href(projectId)}
               prefetch={false}
-              className="flex items-center justify-center gap-2 px-4 py-3 font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest hover:text-primary hover:bg-surface-container transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-3 font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest hover:text-primary hover:bg-surface-container transition-colors focus-visible:outline-none focus-visible:bg-surface-container focus-visible:text-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
             >
-              <span className="material-symbols-outlined text-[14px]">
+              <span
+                className="material-symbols-outlined text-[14px]"
+                aria-hidden
+              >
                 {mod.icon}
               </span>
               {mod.label}

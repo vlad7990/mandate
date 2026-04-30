@@ -13,6 +13,9 @@ import {
   type CompanyContext,
 } from "@/lib/ai/role-analysis";
 import { cn } from "@/lib/utils";
+import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { LiveTick } from "@/components/ui/live-tick";
+import { StatusChip } from "@/components/ui/status-chip";
 import { PipelineSelect } from "./pipeline-select";
 
 type ProjectRow = {
@@ -51,11 +54,11 @@ const ARCHETYPE_BLURBS: Record<Archetype, string> = {
     "Deep platform / SRE / IT-ops focus — reliability and the substrate teams build on.",
 };
 
-const ARCHETYPE_TONES: Record<Archetype, string> = {
-  Builder: "border-primary-container/40 text-primary",
-  Operator: "border-secondary-fixed-dim/40 text-secondary-fixed-dim",
-  Transformer: "border-tertiary/40 text-tertiary",
-  Infrastructure: "border-outline-variant text-on-surface-variant",
+const ARCHETYPE_TEXT: Record<Archetype, string> = {
+  Builder: "text-primary",
+  Operator: "text-secondary-fixed-dim",
+  Transformer: "text-tertiary",
+  Infrastructure: "text-on-surface-variant",
 };
 
 const FIT_DIMENSION_LABELS: Record<keyof FitDimensions, string> = {
@@ -76,9 +79,7 @@ export default async function CandidateProfilePage({
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select(
-      "id, title, company_name, calibration_model, company_context"
-    )
+    .select("id, title, company_name, calibration_model, company_context")
     .eq("id", id)
     .single<ProjectRow>();
 
@@ -110,324 +111,383 @@ export default async function CandidateProfilePage({
   const stage = (candidate.pipeline_stage ?? "found") as PipelineStage;
   const archetype = (candidate.archetype as Archetype | null) ??
     (profile.archetype as Archetype | undefined) ?? null;
+  const fitPct = computeFitPct(
+    profile.fit_dimensions,
+    project.calibration_model?.dimension_weights ?? null
+  );
 
   return (
-    <div className="min-h-full bg-surface text-on-surface">
-      <div className="max-w-7xl mx-auto px-6 py-10 space-y-6">
-        {/* breadcrumb */}
-        <div className="flex items-center gap-3 font-mono-label text-mono-label uppercase tracking-widest text-outline flex-wrap">
-          <Link
-            href={`/projects/${project.id}/candidates`}
-            prefetch={false}
-            className="hover:text-on-surface transition-colors flex items-center gap-1.5"
+    <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
+      <BreadcrumbRail
+        segments={[
+          { label: "Mandate", href: "/" },
+          { label: project.title, href: `/projects/${project.id}`, maxChars: 24 },
+          { label: "Candidates", href: `/projects/${project.id}/candidates` },
+          { label: candidate.full_name, maxChars: 28 },
+        ]}
+      />
+
+      {parseError && (
+        <div
+          role="alert"
+          className="bg-error/10 border border-error/60 px-4 py-3 flex items-start gap-3"
+        >
+          <span
+            className="material-symbols-outlined text-error text-[18px] mt-0.5"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+            aria-hidden
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-            Candidates
-          </Link>
-          <span className="text-outline-variant">/</span>
-          <span className="text-primary truncate max-w-md">
-            {candidate.full_name}
+            error
           </span>
-          <Link
-            href={`/projects/${project.id}/feedback?candidate=${candidate.id}`}
-            prefetch={false}
-            className="ml-auto px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5"
+          <div>
+            <div className="font-mono-label text-mono-label text-error uppercase tracking-widest">
+              CV parse failed
+            </div>
+            <p className="font-mono-data text-body-main text-on-surface-variant mt-1">
+              {parseError}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isProcessing && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="bg-primary-container/10 border border-primary-container/40 px-4 py-3 flex items-center gap-3"
+        >
+          <span
+            className="material-symbols-outlined text-primary animate-spin"
+            aria-hidden
           >
-            <span className="material-symbols-outlined text-[14px]">rate_review</span>
-            Submit Feedback
-          </Link>
+            progress_activity
+          </span>
+          <div>
+            <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
+              AI parse in flight
+            </div>
+            <p className="font-mono-data text-body-main text-on-surface-variant mt-0.5">
+              Refresh in a few seconds — the structured profile lands here when
+              the agent finishes.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <CandidateHero
+        candidate={candidate}
+        profile={profile}
+        archetype={archetype}
+        stage={stage}
+        projectId={project.id}
+        fitPct={fitPct}
+      />
+
+      <ArchetypeStrip
+        archetype={archetype}
+        fitSummary={profile.fit_summary}
+      />
+
+      {/* Bento grid: AI summary + strengths/dev/risks (8) | fit (4) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8 space-y-4">
+          <SynthesisCard summary={profile.summary} />
+
+          <SignalsLedger
+            strengths={profile.strengths}
+            development={profile.development_areas}
+            risks={profile.risks}
+          />
+
+          <CareerTimeline roles={profile.roles} />
         </div>
 
-        {parseError && (
-          <div className="bg-error-container/10 border border-error/40 px-4 py-3 flex items-start gap-3">
-            <span
-              className="material-symbols-outlined text-error mt-0.5"
-              style={{ fontVariationSettings: "'FILL' 1", fontSize: "18px" }}
-            >
-              error
-            </span>
-            <div>
-              <div className="font-mono-label text-mono-label text-error uppercase tracking-widest">
-                CV parse failed
-              </div>
-              <p className="font-mono-data text-body-main text-on-surface-variant mt-1">
-                {parseError}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {isProcessing && (
-          <div className="bg-primary-container/10 border border-primary-container/40 px-4 py-3 flex items-center gap-3">
-            <span className="material-symbols-outlined text-primary animate-spin">
-              progress_activity
-            </span>
-            <div>
-              <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
-                AI parse in flight
-              </div>
-              <p className="font-mono-data text-body-main text-on-surface-variant mt-0.5">
-                Refresh in a few seconds — the structured profile lands here
-                when the agent finishes.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Header card + Archetype */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="bg-surface-container border border-outline-variant p-5 flex-1 flex gap-5 items-start">
-            <div className="relative shrink-0">
-              <div className="w-24 h-24 rounded border-2 border-primary bg-surface-container-high flex items-center justify-center font-h2 text-h2 text-on-surface uppercase">
-                {initials(candidate.full_name)}
-              </div>
-            </div>
-            <div className="space-y-2 min-w-0">
-              <h1 className="font-h1 text-h1 text-on-surface uppercase tracking-tight truncate">
-                {candidate.full_name}
-              </h1>
-              <p className="font-mono-data text-body-main text-primary truncate">
-                {(candidate.current_title ?? "—").toUpperCase()}{" "}
-                {candidate.current_company ? (
-                  <span className="text-on-surface-variant">
-                    {"// "}
-                    {candidate.current_company.toUpperCase()}
-                  </span>
-                ) : null}
-              </p>
-              <div className="flex flex-wrap gap-2 pt-1">
-                {profile.location && (
-                  <Tag>LOC: {profile.location.toUpperCase()}</Tag>
-                )}
-                {typeof profile.years_experience === "number" && (
-                  <Tag>EXP: {profile.years_experience}Y</Tag>
-                )}
-                {candidate.email && (
-                  <a
-                    href={`mailto:${candidate.email}`}
-                    className="px-2 py-0.5 border border-outline bg-surface-container-highest font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider hover:text-primary hover:border-primary transition-colors"
-                  >
-                    {candidate.email}
-                  </a>
-                )}
-                {candidate.linkedin_url && (
-                  <a
-                    href={candidate.linkedin_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-2 py-0.5 border border-outline bg-surface-container-highest font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider hover:text-primary hover:border-primary transition-colors flex items-center gap-1.5"
-                  >
-                    <span className="material-symbols-outlined text-[12px]">link</span>
-                    LinkedIn
-                  </a>
-                )}
-              </div>
-              <div className="pt-2">
-                <PipelineSelect
-                  candidateId={candidate.id}
-                  projectId={project.id}
-                  current={stage}
-                />
-              </div>
-            </div>
-          </div>
-
-          <ArchetypeCard
-            archetype={archetype}
+        <div className="lg:col-span-4 space-y-4">
+          <FitCard
+            dimensions={profile.fit_dimensions}
+            weights={project.calibration_model?.dimension_weights ?? null}
             fitSummary={profile.fit_summary}
-            fitDimensions={profile.fit_dimensions}
-            weights={
-              project.calibration_model?.dimension_weights ?? null
-            }
+            fitPct={fitPct}
+          />
+          <SignalCard title="Domain" icon="domain" value={profile.domain} />
+          <SignalCard title="Scale" icon="trending_up" value={profile.scale} />
+          <ChipCard
+            title="Tech Exposure"
+            icon="hub"
+            items={profile.tech_exposure ?? []}
+          />
+          <ChipCard
+            title="Transformation"
+            icon="autorenew"
+            items={profile.transformation_experience ?? []}
           />
         </div>
-
-        {/* Bento grid: AI summary + strengths/dev/risks (8) | fit (4) */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div className="md:col-span-8 space-y-4">
-            <SynthesisCard summary={profile.summary} />
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <ListCard
-                tone="strengths"
-                title="STRENGTHS"
-                icon="trending_up"
-                items={profile.strengths}
-                marker="+"
-              />
-              <ListCard
-                tone="development"
-                title="DEVELOPMENT"
-                icon="warning"
-                items={profile.development_areas}
-                marker="-"
-              />
-              <ListCard
-                tone="risks"
-                title="RISK_VECTORS"
-                icon="report"
-                items={profile.risks}
-                marker="!"
-              />
-            </div>
-
-            <CareerTimeline roles={profile.roles} />
-          </div>
-
-          <div className="md:col-span-4 space-y-4">
-            <FitCard
-              dimensions={profile.fit_dimensions}
-              weights={project.calibration_model?.dimension_weights ?? null}
-              fitSummary={profile.fit_summary}
-            />
-            <SignalCard
-              title="Domain"
-              icon="domain"
-              value={profile.domain}
-            />
-            <SignalCard
-              title="Scale"
-              icon="trending_up"
-              value={profile.scale}
-            />
-            <ChipCard
-              title="Tech Exposure"
-              icon="hub"
-              items={profile.tech_exposure ?? []}
-            />
-            <ChipCard
-              title="Transformation"
-              icon="autorenew"
-              items={profile.transformation_experience ?? []}
-            />
-          </div>
-        </div>
-
-        <footer className="pt-4 border-t border-outline-variant/60 flex items-center justify-between flex-wrap gap-3">
-          <Link
-            href={`/projects/${project.id}/candidates`}
-            prefetch={false}
-            className="flex items-center gap-2 text-outline font-mono-label text-mono-label uppercase tracking-widest hover:text-on-surface transition-colors"
-          >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-            All candidates
-          </Link>
-          <div className="font-mono-label text-mono-label text-outline uppercase tracking-wider flex items-center gap-3">
-            {candidate.cv_url && (
-              <span>{candidate.cv_url.split("/").pop()}</span>
-            )}
-            <span>UPDATED {formatRelative(candidate.updated_at)}</span>
-          </div>
-        </footer>
       </div>
+
+      <footer className="pt-4 border-t border-outline-variant/60 flex items-center justify-between flex-wrap gap-3">
+        <Link
+          href={`/projects/${project.id}/candidates`}
+          prefetch={false}
+          className="flex items-center gap-2 text-outline font-mono-label text-mono-label uppercase tracking-widest hover:text-on-surface transition-colors focus-visible:outline-none focus-visible:text-primary focus-visible:underline focus-visible:underline-offset-2"
+        >
+          <span className="material-symbols-outlined text-[14px]" aria-hidden>
+            arrow_back
+          </span>
+          All candidates
+        </Link>
+        <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-3 tabular-nums">
+          {candidate.cv_url && (
+            <span className="truncate max-w-[24ch]">
+              {candidate.cv_url.split("/").pop()}
+            </span>
+          )}
+          <LiveTick iso={candidate.updated_at} label="Updated" pulse={false} />
+        </div>
+      </footer>
     </div>
   );
 }
 
-function ArchetypeCard({
+function CandidateHero({
+  candidate,
+  profile,
+  archetype,
+  stage,
+  projectId,
+  fitPct,
+}: {
+  candidate: CandidateRow;
+  profile: Partial<CandidateProfile>;
+  archetype: Archetype | null;
+  stage: PipelineStage;
+  projectId: string;
+  fitPct: number | null;
+}) {
+  return (
+    <article className="bg-surface-container border border-outline-variant relative overflow-hidden">
+      {/* Tonal accent strip — archetype-coloured if available, else
+          neutral. Sets the dossier's identity at a glance without the
+          heavy primary-border-2 the previous design used. */}
+      <div
+        className={cn(
+          "absolute inset-x-0 top-0 h-0.5",
+          archetype === "Builder"
+            ? "bg-primary"
+            : archetype === "Operator"
+              ? "bg-secondary-fixed-dim"
+              : archetype === "Transformer"
+                ? "bg-tertiary"
+                : "bg-outline"
+        )}
+        aria-hidden
+      />
+      <div className="p-5 flex flex-col md:flex-row gap-5 items-start">
+        <div className="shrink-0">
+          <div className="w-20 h-20 border border-outline-variant bg-surface-container-high flex items-center justify-center font-h2 text-h2 text-on-surface uppercase">
+            {initials(candidate.full_name)}
+          </div>
+        </div>
+        <div className="flex-1 min-w-0 space-y-3">
+          <div className="space-y-1.5">
+            <h1 className="font-h1 text-h1 text-on-surface tracking-tight truncate">
+              {candidate.full_name}
+            </h1>
+            <p className="font-mono-data text-body-main text-on-surface-variant truncate">
+              {(candidate.current_title ?? "—").toUpperCase()}
+              {candidate.current_company ? (
+                <>
+                  <span className="text-outline-variant px-2" aria-hidden>
+                    {"//"}
+                  </span>
+                  <span className="text-primary">
+                    {candidate.current_company.toUpperCase()}
+                  </span>
+                </>
+              ) : null}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {profile.location && (
+              <StatusChip tone="neutral" intensity="filled">
+                LOC: {profile.location.toUpperCase()}
+              </StatusChip>
+            )}
+            {typeof profile.years_experience === "number" && (
+              <StatusChip tone="neutral" intensity="filled">
+                EXP: <span className="tabular-nums">{profile.years_experience}Y</span>
+              </StatusChip>
+            )}
+            {candidate.email && (
+              <a
+                href={`mailto:${candidate.email}`}
+                className="px-2 py-0.5 border border-outline-variant bg-surface-container-high font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider hover:text-primary hover:border-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+              >
+                {candidate.email}
+              </a>
+            )}
+            {candidate.linkedin_url && (
+              <a
+                href={candidate.linkedin_url}
+                target="_blank"
+                rel="noreferrer"
+                className="px-2 py-0.5 border border-outline-variant bg-surface-container-high font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider hover:text-primary hover:border-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+              >
+                <span className="material-symbols-outlined text-[12px]" aria-hidden>
+                  link
+                </span>
+                LinkedIn
+              </a>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <PipelineSelect
+              candidateId={candidate.id}
+              projectId={projectId}
+              current={stage}
+            />
+            <Link
+              href={`/projects/${projectId}/feedback?candidate=${candidate.id}`}
+              prefetch={false}
+              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <span className="material-symbols-outlined text-[14px]" aria-hidden>
+                rate_review
+              </span>
+              Submit Feedback
+            </Link>
+          </div>
+        </div>
+
+        {/* Right-rail KPI block — overall fit + archetype quick read */}
+        <div className="shrink-0 w-full md:w-56 border border-outline-variant bg-surface-container-low p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+              Overall Fit
+            </span>
+            {archetype && (
+              <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
+                {archetype}
+              </span>
+            )}
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span
+              className={cn(
+                "font-h1 text-h1 tabular-nums leading-none",
+                fitPct == null
+                  ? "text-outline"
+                  : fitPct >= 70
+                    ? "text-secondary-fixed-dim"
+                    : fitPct >= 45
+                      ? "text-tertiary"
+                      : "text-error"
+              )}
+            >
+              {fitPct == null ? "—" : fitPct}
+            </span>
+            {fitPct != null && (
+              <span className="text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest">
+                %
+              </span>
+            )}
+          </div>
+          <div
+            className="w-full bg-surface-container-highest h-1.5 overflow-hidden"
+            role="meter"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={fitPct ?? 0}
+            aria-label="Overall fit percentage"
+          >
+            <div
+              className={cn(
+                "h-full transition-[width]",
+                fitPct == null
+                  ? "bg-outline-variant"
+                  : fitPct >= 70
+                    ? "bg-secondary-fixed-dim"
+                    : fitPct >= 45
+                      ? "bg-tertiary"
+                      : "bg-error"
+              )}
+              style={{ width: `${fitPct ?? 0}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ArchetypeStrip({
   archetype,
   fitSummary,
-  fitDimensions,
-  weights,
 }: {
   archetype: Archetype | null;
   fitSummary: string | undefined;
-  fitDimensions: FitDimensions | undefined;
-  weights:
-    | { technical: number; domain: number; leadership: number; regulatory: number; transformation: number }
-    | null;
 }) {
-  const fitPct = useFitPct(fitDimensions, weights);
-
+  if (!archetype && !fitSummary) return null;
   return (
-    <div className="bg-surface-container border border-outline-variant p-5 w-full md:w-80 flex flex-col justify-between gap-3">
-      <div className="flex items-start justify-between">
-        <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-          ARCHETYPE
-        </span>
-        <span
-          className="material-symbols-outlined text-secondary-fixed-dim"
-          style={{ fontVariationSettings: "'FILL' 1", fontSize: "18px" }}
-        >
-          bolt
-        </span>
-      </div>
-      <div className="space-y-1">
-        {archetype ? (
-          <>
-            <h2
+    <article className="bg-surface-container-low border border-outline-variant p-4 flex items-start gap-4">
+      <span
+        className="material-symbols-outlined text-secondary-fixed-dim text-[20px] mt-0.5 shrink-0"
+        style={{ fontVariationSettings: "'FILL' 1" }}
+        aria-hidden
+      >
+        bolt
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+            Archetype
+          </span>
+          {archetype ? (
+            <span
               className={cn(
                 "font-h2 text-h2 uppercase tracking-tight",
-                ARCHETYPE_TONES[archetype]
+                ARCHETYPE_TEXT[archetype]
               )}
             >
               {archetype}
-            </h2>
-            <p className="text-body-main text-on-surface-variant leading-snug">
-              {ARCHETYPE_BLURBS[archetype]}
-            </p>
-          </>
-        ) : (
-          <h2 className="font-h2 text-h2 text-outline">— Awaiting parse —</h2>
+            </span>
+          ) : (
+            <span className="font-h2 text-h2 text-outline">— Awaiting parse —</span>
+          )}
+        </div>
+        {archetype && (
+          <p className="text-body-main text-on-surface-variant mt-1 leading-snug">
+            {ARCHETYPE_BLURBS[archetype]}
+          </p>
         )}
-      </div>
-      <div className="space-y-1">
-        <div className="flex items-baseline justify-between font-mono-label text-mono-label text-outline uppercase tracking-wider">
-          <span>OVERALL FIT</span>
-          <span
-            className={cn(
-              "tabular-nums",
-              fitPct == null
-                ? "text-outline"
-                : fitPct >= 70
-                  ? "text-secondary-fixed-dim"
-                  : fitPct >= 45
-                    ? "text-tertiary"
-                    : "text-error"
-            )}
-          >
-            {fitPct == null ? "—" : `${fitPct}%`}
-          </span>
-        </div>
-        <div className="w-full bg-surface-container-low h-1">
-          <div
-            className={cn(
-              "h-full transition-all",
-              fitPct == null
-                ? "bg-outline-variant"
-                : fitPct >= 70
-                  ? "bg-secondary-fixed-dim"
-                  : fitPct >= 45
-                    ? "bg-tertiary"
-                    : "bg-error"
-            )}
-            style={{ width: `${fitPct ?? 0}%` }}
-          />
-        </div>
         {fitSummary && (
-          <p className="text-body-main text-on-surface-variant pt-2 border-t border-outline-variant/40">
+          <p className="text-body-main text-on-surface mt-2 pt-2 border-t border-outline-variant/40 leading-relaxed">
             {fitSummary}
           </p>
         )}
       </div>
-    </div>
+    </article>
   );
 }
 
 function SynthesisCard({ summary }: { summary: string | undefined }) {
   return (
     <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2 border-b border-outline-variant flex justify-between items-center">
+      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex justify-between items-center">
         <span className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">psychology</span>
+          <span className="material-symbols-outlined text-[14px]" aria-hidden>
+            psychology
+          </span>
           AI_CORE_SYNTHESIS
         </span>
-        <span className="font-mono-data text-mono-data text-primary">
-          {summary ? "PARSED" : "PENDING"}
-        </span>
+        <StatusChip tone={summary ? "secondary" : "neutral"} intensity="soft">
+          {summary ? "Parsed" : "Pending"}
+        </StatusChip>
       </header>
-      <div className="p-4 text-on-surface text-body-main leading-relaxed">
-        <span className="text-secondary-fixed-dim font-mono-data text-body-main mr-1">
+      <div className="p-4 text-on-surface text-body-main leading-relaxed font-mono-data">
+        <span
+          className="text-secondary-fixed-dim font-mono-data mr-1.5"
+          aria-hidden
+        >
           &gt;
         </span>
         {summary || (
@@ -440,53 +500,99 @@ function SynthesisCard({ summary }: { summary: string | undefined }) {
   );
 }
 
-function ListCard({
-  tone,
+function SignalsLedger({
+  strengths,
+  development,
+  risks,
+}: {
+  strengths: string[] | undefined;
+  development: string[] | undefined;
+  risks: string[] | undefined;
+}) {
+  // Three signal columns rendered as a single bordered ledger with
+  // vertical dividers — denser and more terminal than three separate
+  // cards. Each column carries a tonal left rule so the recruiter's eye
+  // can find the signal type without re-reading the heading.
+  return (
+    <article className="bg-surface-container-low border border-outline-variant overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-outline-variant/60">
+        <SignalColumn
+          title="Strengths"
+          icon="trending_up"
+          tone="secondary"
+          marker="+"
+          items={strengths ?? []}
+        />
+        <SignalColumn
+          title="Development"
+          icon="warning"
+          tone="warn"
+          marker="−"
+          items={development ?? []}
+        />
+        <SignalColumn
+          title="Risk Vectors"
+          icon="report"
+          tone="danger"
+          marker="!"
+          items={risks ?? []}
+        />
+      </div>
+    </article>
+  );
+}
+
+function SignalColumn({
   title,
   icon,
-  items,
+  tone,
   marker,
+  items,
 }: {
-  tone: "strengths" | "development" | "risks";
   title: string;
   icon: string;
-  items: string[] | undefined;
+  tone: "secondary" | "warn" | "danger";
   marker: string;
+  items: string[];
 }) {
-  const palette =
-    tone === "strengths"
-      ? "border-l-secondary-fixed-dim text-secondary-fixed-dim"
-      : tone === "development"
-        ? "border-l-tertiary text-tertiary"
-        : "border-l-error text-error";
-  const list = items ?? [];
-
+  const headingClass =
+    tone === "secondary"
+      ? "text-secondary-fixed-dim"
+      : tone === "warn"
+        ? "text-tertiary"
+        : "text-error";
+  const ruleClass =
+    tone === "secondary"
+      ? "border-l-secondary-fixed-dim"
+      : tone === "warn"
+        ? "border-l-tertiary"
+        : "border-l-error";
   return (
-    <div
-      className={cn(
-        "bg-surface-container border-l-2 border-y border-r border-outline-variant p-3",
-        palette.split(" ")[0]
-      )}
-    >
+    <div className={cn("p-4 border-l-2", ruleClass)}>
       <h4
         className={cn(
-          "font-mono-label text-mono-label uppercase tracking-widest mb-3 flex items-center gap-2",
-          palette.split(" ")[1]
+          "font-mono-label text-mono-label uppercase tracking-widest mb-3 flex items-center gap-2 tabular-nums",
+          headingClass
         )}
       >
-        <span className="material-symbols-outlined text-[14px]">{icon}</span>
+        <span className="material-symbols-outlined text-[14px]" aria-hidden>
+          {icon}
+        </span>
         {title}
+        <span className="text-outline">· {String(items.length).padStart(2, "0")}</span>
       </h4>
       <ul className="space-y-2">
-        {list.length === 0 && (
+        {items.length === 0 && (
           <li className="text-body-main text-outline italic">—</li>
         )}
-        {list.map((item, i) => (
+        {items.map((item, i) => (
           <li
             key={i}
             className="flex items-start gap-2 font-mono-data text-body-main text-on-surface-variant"
           >
-            <span className={cn(palette.split(" ")[1], "shrink-0")}>{marker}</span>
+            <span className={cn(headingClass, "shrink-0")} aria-hidden>
+              {marker}
+            </span>
             <span>{item}</span>
           </li>
         ))}
@@ -499,46 +605,72 @@ function FitCard({
   dimensions,
   weights,
   fitSummary,
+  fitPct,
 }: {
   dimensions: FitDimensions | undefined;
   weights:
     | { technical: number; domain: number; leadership: number; regulatory: number; transformation: number }
     | null;
   fitSummary: string | undefined;
+  fitPct: number | null;
 }) {
-  const dims = (Object.keys(FIT_DIMENSION_LABELS) as Array<keyof FitDimensions>);
+  const dims = Object.keys(FIT_DIMENSION_LABELS) as Array<keyof FitDimensions>;
 
   return (
-    <div className="bg-surface-container border border-outline-variant p-4 flex flex-col">
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest mb-4">
-        MULTI-DIMENSIONAL FIT
-      </span>
-      <div className="space-y-4 flex-1">
+    <article className="bg-surface-container border border-outline-variant overflow-hidden">
+      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2">
+        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
+          <span className="material-symbols-outlined text-[14px]" aria-hidden>
+            radar
+          </span>
+          Multi-dimensional Fit
+        </span>
+        {fitPct != null && (
+          <span className="font-mono-label text-mono-label uppercase tracking-widest tabular-nums text-on-surface-variant">
+            <span className="text-primary">{fitPct}%</span> overall
+          </span>
+        )}
+      </header>
+      <div className="p-4 space-y-4">
         {dims.map((dim) => {
           const score = clamp10(dimensions?.[dim]);
           const weight = clamp10(weights?.[dim]);
           return (
-            <div key={dim} className="space-y-2">
+            <div key={dim} className="space-y-1.5">
               <div className="flex justify-between items-baseline font-mono-data text-mono-data">
                 <span className="text-on-surface uppercase">
                   {FIT_DIMENSION_LABELS[dim]}
                 </span>
-                <span
-                  className={cn(
-                    "tabular-nums",
-                    score == null
-                      ? "text-outline"
-                      : score >= 7
-                        ? "text-secondary-fixed-dim"
-                        : score >= 4
-                          ? "text-on-surface"
-                          : "text-tertiary"
+                <span className="flex items-baseline gap-2">
+                  <span
+                    className={cn(
+                      "tabular-nums",
+                      score == null
+                        ? "text-outline"
+                        : score >= 7
+                          ? "text-secondary-fixed-dim"
+                          : score >= 4
+                            ? "text-on-surface"
+                            : "text-tertiary"
+                    )}
+                  >
+                    {score == null ? "—" : `${score * 10}%`}
+                  </span>
+                  {weight != null && (
+                    <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider tabular-nums">
+                      W:{weight}
+                    </span>
                   )}
-                >
-                  {score == null ? "—" : `${score * 10}%`}
                 </span>
               </div>
-              <div className="grid grid-cols-10 gap-1">
+              <div
+                className="grid grid-cols-10 gap-1"
+                role="meter"
+                aria-valuemin={0}
+                aria-valuemax={10}
+                aria-valuenow={score ?? 0}
+                aria-label={`${FIT_DIMENSION_LABELS[dim]} score`}
+              >
                 {Array.from({ length: 10 }).map((_, i) => {
                   const filled = score != null && i < score;
                   return (
@@ -554,27 +686,25 @@ function FitCard({
                               : "bg-tertiary"
                           : "bg-surface-container-high"
                       )}
+                      aria-hidden
                     />
                   );
                 })}
               </div>
-              {weight != null && (
-                <div className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-                  Role weight: {weight}/10
-                </div>
-              )}
             </div>
           );
         })}
       </div>
       {fitSummary && (
-        <div className="mt-6 p-3 border border-secondary-fixed-dim/30 bg-secondary-fixed-dim/5">
-          <p className="font-mono-data text-body-main text-secondary-fixed-dim leading-snug">
-            {fitSummary}
-          </p>
+        <div className="px-4 pb-4">
+          <div className="border-l-2 border-secondary-fixed-dim/60 bg-secondary-fixed-dim/5 px-3 py-2">
+            <p className="font-mono-data text-body-main text-secondary-fixed-dim leading-snug">
+              {fitSummary}
+            </p>
+          </div>
         </div>
       )}
-    </div>
+    </article>
   );
 }
 
@@ -588,15 +718,19 @@ function SignalCard({
   value: string | undefined;
 }) {
   return (
-    <div className="bg-surface-container-low border border-outline-variant p-4 space-y-2">
-      <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-        <span className="material-symbols-outlined text-[14px]">{icon}</span>
-        {title}
-      </h3>
-      <p className="text-body-main text-on-surface-variant">
+    <article className="bg-surface-container-low border border-outline-variant">
+      <header className="px-4 py-2 border-b border-outline-variant/60 bg-surface-container">
+        <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
+          <span className="material-symbols-outlined text-[14px]" aria-hidden>
+            {icon}
+          </span>
+          {title}
+        </h3>
+      </header>
+      <p className="px-4 py-3 text-body-main text-on-surface-variant">
         {value || <span className="italic text-outline">—</span>}
       </p>
-    </div>
+    </article>
   );
 }
 
@@ -610,26 +744,35 @@ function ChipCard({
   items: string[];
 }) {
   return (
-    <div className="bg-surface-container-low border border-outline-variant p-4 space-y-2">
-      <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-        <span className="material-symbols-outlined text-[14px]">{icon}</span>
-        {title}
-      </h3>
-      {items.length === 0 ? (
-        <p className="text-body-main text-outline italic">—</p>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {items.map((item, i) => (
-            <span
-              key={i}
-              className="px-2 py-0.5 border border-outline-variant bg-surface-container font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
+    <article className="bg-surface-container-low border border-outline-variant">
+      <header className="px-4 py-2 border-b border-outline-variant/60 bg-surface-container flex items-center justify-between gap-2">
+        <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
+          <span className="material-symbols-outlined text-[14px]" aria-hidden>
+            {icon}
+          </span>
+          {title}
+        </h3>
+        <span className="font-mono-label text-mono-label text-outline tabular-nums">
+          {String(items.length).padStart(2, "0")}
+        </span>
+      </header>
+      <div className="px-4 py-3">
+        {items.length === 0 ? (
+          <p className="text-body-main text-outline italic">—</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {items.map((item, i) => (
+              <span
+                key={i}
+                className="px-2 py-0.5 border border-outline-variant bg-surface-container font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -641,31 +784,40 @@ function CareerTimeline({
   const list = roles ?? [];
   return (
     <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2 border-b border-outline-variant">
+      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2">
         <span className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">route</span>
-          CAREER PROGRESSION MAP
+          <span className="material-symbols-outlined text-[14px]" aria-hidden>
+            route
+          </span>
+          Career Progression Map
+        </span>
+        <span className="font-mono-label text-mono-label text-outline tabular-nums">
+          {String(list.length).padStart(2, "0")} role
+          {list.length === 1 ? "" : "s"}
         </span>
       </header>
       {list.length === 0 ? (
-        <div className="p-6 text-body-main text-outline italic">
+        <div className="p-5 text-body-main text-outline italic">
           Career history will populate here once the CV is parsed.
         </div>
       ) : (
-        <div className="p-6 space-y-6">
+        <ol className="p-5 space-y-5">
           {list.map((role, i) => (
-            <div key={i} className="flex items-start gap-6">
-              <div className="w-44 shrink-0 text-right">
-                <div className="font-mono-label text-mono-label text-on-surface uppercase tracking-widest">
-                  {role.start_date} — {role.end_date.toUpperCase()}
+            <li key={i} className="grid grid-cols-[8.5rem_1fr] gap-4 items-start">
+              <div className="text-right pt-0.5">
+                <div className="font-mono-label text-mono-label text-on-surface uppercase tracking-widest tabular-nums">
+                  {role.start_date}{role.end_date ? ` — ${role.end_date.toUpperCase()}` : ""}
                 </div>
-                <div className="text-body-main text-outline mt-0.5">
+                <div className="text-body-main text-on-surface-variant mt-0.5 truncate">
                   {role.company}
                 </div>
               </div>
-              <div className="flex items-start gap-3 flex-1 min-w-0">
-                <div className="w-3 h-3 mt-1.5 bg-secondary-fixed-dim border-4 border-surface ring-1 ring-secondary-fixed-dim shrink-0" />
-                <div className="bg-surface-container-high border border-outline-variant p-3 flex-1">
+              <div className="flex items-start gap-3 min-w-0">
+                <div
+                  className="w-2 h-2 mt-2 bg-secondary-fixed-dim ring-1 ring-secondary-fixed-dim/40 ring-offset-2 ring-offset-surface-container shrink-0"
+                  aria-hidden
+                />
+                <div className="bg-surface-container-high border border-outline-variant px-3 py-2 flex-1 min-w-0">
                   <div className="font-mono-data text-mono-data text-secondary-fixed-dim uppercase tracking-wider">
                     {role.title}
                   </div>
@@ -674,19 +826,11 @@ function CareerTimeline({
                   </p>
                 </div>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       )}
     </article>
-  );
-}
-
-function Tag({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="px-2 py-0.5 border border-outline bg-surface-container-highest font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider">
-      {children}
-    </span>
   );
 }
 
@@ -698,12 +842,8 @@ function clamp10(v: number | undefined | null): number | null {
 /**
  * Compute a weighted overall fit % from the candidate's per-dimension scores
  * and the project's role weights. Returns null when either side is missing.
- *
- * Uses sum(score_i * weight_i) / sum(weight_i * 10) — i.e. weighted average
- * of the score ratios. Falls back to a simple average when weights are
- * unavailable so the candidate still gets a meaningful number.
  */
-function useFitPct(
+function computeFitPct(
   dimensions: FitDimensions | undefined,
   weights:
     | { technical: number; domain: number; leadership: number; regulatory: number; transformation: number }
@@ -744,19 +884,6 @@ function initials(name: string): string {
       .map((s) => s[0]?.toUpperCase() ?? "")
       .join("") || "??"
   );
-}
-
-function formatRelative(iso: string): string {
-  const t = new Date(iso).getTime();
-  const diffMs = Date.now() - t;
-  const min = Math.round(diffMs / 60_000);
-  if (min < 1) return "JUST NOW";
-  if (min < 60) return `${min}M AGO`;
-  const hrs = Math.round(min / 60);
-  if (hrs < 24) return `${hrs}H AGO`;
-  const days = Math.round(hrs / 24);
-  if (days < 7) return `${days}D AGO`;
-  return new Date(iso).toISOString().slice(0, 10);
 }
 
 // Forces TS to treat ARCHETYPES as imported even if unused above (it's referenced by Archetype).

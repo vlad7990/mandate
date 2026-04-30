@@ -8,7 +8,10 @@ import {
   type HealthStatus,
   type PortfolioMetrics,
 } from "@/lib/metrics/types";
-import { cn } from "@/lib/utils";
+import { KpiTile } from "@/components/ui/kpi-tile";
+import { LiveTick } from "@/components/ui/live-tick";
+import { MastHead } from "@/components/ui/mast-head";
+import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 
 type ProjectRow = {
   id: string;
@@ -18,23 +21,16 @@ type ProjectRow = {
   created_at: string | null;
 };
 
-const STATUS_TONE: Record<string, string> = {
-  active: "bg-secondary/10 text-secondary border-secondary/30",
-  paused: "bg-tertiary/10 text-tertiary border-tertiary/30",
-  closed: "bg-outline/10 text-outline border-outline-variant",
+const STATUS_CHIP: Record<string, ChipTone> = {
+  active: "secondary",
+  paused: "warn",
+  closed: "neutral",
 };
 
-const HEALTH_TONE: Record<HealthStatus, string> = {
-  healthy:
-    "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim",
-  stalled: "border-tertiary/60 bg-tertiary/10 text-tertiary",
-  at_risk: "border-error/60 bg-error/10 text-error",
-};
-
-const HEALTH_DOT: Record<HealthStatus, string> = {
-  healthy: "bg-secondary-fixed-dim",
-  stalled: "bg-tertiary",
-  at_risk: "bg-error",
+const HEALTH_CHIP: Record<HealthStatus, ChipTone> = {
+  healthy: "secondary",
+  stalled: "warn",
+  at_risk: "danger",
 };
 
 function formatDate(value: string | null) {
@@ -48,9 +44,9 @@ function formatDate(value: string | null) {
     .toUpperCase();
 }
 
-function projectStatusTone(status: string | null) {
-  if (!status) return STATUS_TONE.active;
-  return STATUS_TONE[status.toLowerCase()] ?? STATUS_TONE.active;
+function projectStatusChipTone(status: string | null): ChipTone {
+  if (!status) return STATUS_CHIP.active;
+  return STATUS_CHIP[status.toLowerCase()] ?? STATUS_CHIP.active;
 }
 
 export default async function DashboardHomePage() {
@@ -68,12 +64,24 @@ export default async function DashboardHomePage() {
   const metrics = await computePortfolioMetrics();
 
   return (
-    <div className="p-4 grid grid-cols-12 gap-4">
+    <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
       {error && (
-        <div className="col-span-12 border border-error/40 bg-error-container/30 text-error px-4 py-3 rounded text-body-main">
-          Could not load projects: {error.message}
+        <div
+          role="alert"
+          className="border border-error/60 bg-error/10 text-error px-4 py-3 font-mono-data text-body-main flex items-start gap-3"
+        >
+          <span
+            className="material-symbols-outlined text-[18px] mt-0.5"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+            aria-hidden
+          >
+            error
+          </span>
+          <span>Could not load projects: {error.message}</span>
         </div>
       )}
+
+      <PortfolioHeader metrics={metrics} />
 
       <PortfolioKpiRow metrics={metrics} />
 
@@ -81,38 +89,75 @@ export default async function DashboardHomePage() {
         <AttentionPanel attentionList={metrics.attentionList} />
       )}
 
-      <div className="col-span-12 flex justify-between items-center pt-2">
-        <div className="flex items-center gap-3">
-          <h2 className="font-h2 text-h2 text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">leaderboard</span>
-            ACTIVE_MANDATES
-          </h2>
-          <span className="px-2 py-0.5 border border-outline-variant font-mono-label text-mono-label text-outline tracking-wider">
-            N={metrics.totalProjects}
-          </span>
-        </div>
-        <Link
-          href="/projects/new"
-          className="bg-primary-container text-on-primary-container px-4 py-2 rounded font-mono-label text-mono-label uppercase tracking-wider hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          New Search
-        </Link>
-      </div>
+      <section className="space-y-3">
+        <MastHead
+          tone="primary"
+          icon="leaderboard"
+          label={
+            <span className="flex items-center gap-2">
+              <span>Active Mandates</span>
+              <span className="px-1.5 py-0.5 border border-outline-variant text-outline tabular-nums">
+                N={String(metrics.totalProjects).padStart(2, "0")}
+              </span>
+            </span>
+          }
+          meta={
+            <span className="flex items-center gap-3">
+              <span>Sort: Newest</span>
+              <Link
+                href="/projects/new"
+                prefetch={false}
+                className="bg-primary-container text-on-primary-container px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <span
+                  className="material-symbols-outlined text-[14px]"
+                  aria-hidden
+                >
+                  add
+                </span>
+                New Search
+              </Link>
+            </span>
+          }
+        />
 
-      {projects.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <ProjectsTable projects={projects} attentionList={metrics.attentionList} />
-      )}
+        {projects.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <ProjectsTable projects={projects} attentionList={metrics.attentionList} />
+        )}
+      </section>
     </div>
+  );
+}
+
+function PortfolioHeader({ metrics }: { metrics: PortfolioMetrics }) {
+  return (
+    <header className="flex items-end justify-between gap-4 flex-wrap">
+      <div>
+        <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest mb-1">
+          Workspace // Portfolio
+        </div>
+        <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
+          PORTFOLIO COMMAND
+        </h1>
+        <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest mt-1.5 tabular-nums">
+          {String(metrics.activeProjects).padStart(2, "0")} active ·{" "}
+          {String(metrics.totalCandidates).padStart(2, "0")} candidates ·{" "}
+          {metrics.attentionList.length === 0
+            ? "All searches healthy"
+            : `${String(metrics.attentionList.length).padStart(2, "0")} need attention`}
+        </p>
+      </div>
+      <LiveTick nowOnServer label="Snapshot" />
+    </header>
   );
 }
 
 function PortfolioKpiRow({ metrics }: { metrics: PortfolioMetrics }) {
   const attentionCount = metrics.attentionList.length;
   return (
-    <div className="col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <KpiTile
         label="Active Searches"
         value={metrics.activeProjects.toString().padStart(2, "0")}
@@ -122,13 +167,22 @@ function PortfolioKpiRow({ metrics }: { metrics: PortfolioMetrics }) {
       <KpiTile
         label="Total Candidates"
         value={metrics.totalCandidates.toString().padStart(2, "0")}
-        unit={`+${metrics.totalCandidatesThisWeek} this week`}
+        unit="across portfolio"
         accent="secondary"
+        delta={
+          metrics.totalCandidatesThisWeek > 0
+            ? {
+                direction: "up",
+                label: `+${metrics.totalCandidatesThisWeek} 7d`,
+              }
+            : { direction: "flat", label: "0 7d" }
+        }
       />
       <KpiTile
         label="Avg Velocity"
         value={metrics.averageWeeklyVelocity.toFixed(1)}
         unit="cand / week / search"
+        accent="neutral"
       />
       <KpiTile
         label="Needs Attention"
@@ -144,67 +198,26 @@ function PortfolioKpiRow({ metrics }: { metrics: PortfolioMetrics }) {
   );
 }
 
-function KpiTile({
-  label,
-  value,
-  unit,
-  accent,
-}: {
-  label: string;
-  value: string;
-  unit: string;
-  accent?: "primary" | "secondary" | "warn";
-}) {
-  const valueColor =
-    accent === "primary"
-      ? "text-primary"
-      : accent === "secondary"
-        ? "text-secondary-fixed-dim"
-        : accent === "warn"
-          ? "text-tertiary"
-          : "text-on-surface";
-  const accentBar =
-    accent === "primary"
-      ? "bg-primary"
-      : accent === "secondary"
-        ? "bg-secondary-fixed-dim"
-        : accent === "warn"
-          ? "bg-tertiary"
-          : "bg-outline-variant";
-  return (
-    <div className="bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between min-h-[96px] rounded relative overflow-hidden">
-      {/* Left-edge accent — terminal/instrumentation feel without
-          adding chart-like noise to the tile. */}
-      <div className={cn("absolute left-0 top-0 bottom-0 w-0.5", accentBar)} />
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-        {label}
-      </span>
-      <div className="flex items-baseline gap-2">
-        <span className={cn("font-h2 text-h2 tabular-nums", valueColor)}>
-          {value}
-        </span>
-      </div>
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-        {unit}
-      </span>
-    </div>
-  );
-}
-
 function AttentionPanel({
   attentionList,
 }: {
   attentionList: PortfolioMetrics["attentionList"];
 }) {
   return (
-    <section className="col-span-12 bg-surface-container-low border border-outline-variant rounded">
-      <header className="flex items-center justify-between gap-2 p-3 border-b border-outline-variant bg-surface-container">
-        <h3 className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">notification_important</span>
+    <section className="bg-surface-container-low border border-outline-variant">
+      <header className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-outline-variant bg-surface-container">
+        <h2 className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest flex items-center gap-2">
+          <span
+            className="material-symbols-outlined text-[14px]"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+            aria-hidden
+          >
+            notification_important
+          </span>
           Searches Needing Attention
-        </h3>
-        <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-          {attentionList.length} flagged
+        </h2>
+        <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider tabular-nums">
+          {String(attentionList.length).padStart(2, "0")} flagged
         </span>
       </header>
       <ul className="divide-y divide-outline-variant/40">
@@ -213,23 +226,15 @@ function AttentionPanel({
             <Link
               href={`/projects/${row.projectId}/metrics`}
               prefetch={false}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors group"
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-high transition-colors group focus-visible:outline-none focus-visible:bg-surface-container-high focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
             >
-              <span
-                className={cn(
-                  "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider flex items-center gap-1.5 shrink-0",
-                  HEALTH_TONE[row.status]
-                )}
+              <StatusChip
+                tone={HEALTH_CHIP[row.status]}
+                dot
+                pulse={row.status === "at_risk"}
               >
-                <span
-                  className={cn(
-                    "w-1.5 h-1.5 rounded-full",
-                    HEALTH_DOT[row.status],
-                    row.status === "at_risk" ? "animate-pulse" : ""
-                  )}
-                />
                 {HEALTH_LABELS[row.status]}
-              </span>
+              </StatusChip>
               <div className="flex-1 min-w-0">
                 <div className="text-on-surface text-body-main font-semibold truncate">
                   {row.title}
@@ -238,12 +243,20 @@ function AttentionPanel({
                   {row.companyName}
                 </div>
               </div>
-              <div className="hidden md:flex flex-wrap gap-1.5 shrink-0">
+              <div className="hidden md:flex flex-wrap gap-1.5 shrink-0 max-w-[60%] justify-end">
                 {row.alerts.slice(0, 4).map((a) => (
                   <AlertChip key={a.code} alert={a} />
                 ))}
+                {row.alerts.length > 4 && (
+                  <span className="px-2 py-0.5 border border-outline-variant text-outline font-mono-label text-mono-label uppercase tracking-wider tabular-nums">
+                    +{row.alerts.length - 4}
+                  </span>
+                )}
               </div>
-              <span className="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">
+              <span
+                className="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors shrink-0"
+                aria-hidden
+              >
                 chevron_right
               </span>
             </Link>
@@ -255,44 +268,53 @@ function AttentionPanel({
 }
 
 function AlertChip({ alert }: { alert: HealthAlert }) {
-  const tone =
-    alert.severity === "critical"
-      ? "border-error/60 text-error"
-      : "border-tertiary/60 text-tertiary";
+  const tone: ChipTone = alert.severity === "critical" ? "danger" : "warn";
+  // The full alert detail used to be in a `title` attribute (hover-only,
+  // fails touch and keyboard). We surface the short label visually and
+  // keep the detail accessible via the project's Metrics page where it
+  // belongs in long form.
   return (
-    <span
-      title={alert.detail}
-      className={cn(
-        "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider",
-        tone
-      )}
-    >
+    <StatusChip tone={tone} intensity="soft">
+      <span className="sr-only">
+        {alert.severity === "critical" ? "Critical: " : "Warning: "}
+      </span>
       {ALERT_LABELS[alert.code]}
-    </span>
+    </StatusChip>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="col-span-12 flex items-center justify-center min-h-[420px] bg-surface-container-low border border-outline-variant rounded relative overflow-hidden">
-      <div className="absolute inset-0 terminal-grid opacity-10 pointer-events-none" />
+    <div className="flex items-center justify-center min-h-[420px] bg-surface-container-low border border-outline-variant relative overflow-hidden">
+      <div
+        className="absolute inset-0 terminal-grid opacity-10 pointer-events-none"
+        aria-hidden
+      />
       <div className="text-center max-w-md p-8 relative z-10">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded border border-outline-variant bg-surface-container mb-6">
-          <span className="material-symbols-outlined text-outline text-3xl">
+        <div className="inline-flex items-center justify-center w-16 h-16 border border-outline-variant bg-surface-container mb-6">
+          <span
+            className="material-symbols-outlined text-outline text-3xl"
+            aria-hidden
+          >
             radar
           </span>
         </div>
-        <h3 className="font-h2 text-h2 text-on-surface mb-3">
+        <h2 className="font-h2 text-h2 text-on-surface mb-3">
           No active mandates yet.
-        </h3>
-        <p className="text-on-surface-variant font-body-main mb-6">
+        </h2>
+        <p className="text-on-surface-variant text-body-main mb-6">
           Initialize a search to deploy the agent stack.
         </p>
         <Link
           href="/projects/new"
-          className="bg-primary-container text-on-primary-container px-4 py-2 rounded font-mono-label text-mono-label uppercase tracking-wider hover:brightness-110 active:scale-[0.98] transition-all inline-flex items-center gap-2"
+          className="bg-primary-container text-on-primary-container px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] inline-flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[18px]">add</span>
+          <span
+            className="material-symbols-outlined text-[18px]"
+            aria-hidden
+          >
+            add
+          </span>
           New Search
         </Link>
       </div>
@@ -314,96 +336,94 @@ function ProjectsTable({
     ])
   );
   return (
-    <div className="col-span-12 bg-surface-container-low border border-outline-variant rounded overflow-hidden">
-      <div className="p-3 border-b border-outline-variant flex justify-between items-center bg-surface-container">
-        <h3 className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-          MANDATE_PIPELINE
-        </h3>
-        <span className="px-2 py-0.5 border border-outline-variant font-mono-label text-mono-label text-outline tracking-wider">
-          SORT: NEWEST
-        </span>
-      </div>
+    <div className="bg-surface-container-low border border-outline-variant overflow-hidden">
       <div className="overflow-auto">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-surface-container-high">
-            <tr className="font-mono-label text-mono-label text-outline border-b border-outline-variant uppercase tracking-wider">
-              <th className="p-3 w-12">#</th>
-              <th className="p-3">TITLE / COMPANY</th>
-              <th className="p-3 w-32">STATUS</th>
-              <th className="p-3 w-32">HEALTH</th>
-              <th className="p-3 w-28">CREATED</th>
-              <th className="p-3 w-16 text-right">ACTION</th>
+          <caption className="sr-only">
+            All mandates ordered by creation date (newest first).
+          </caption>
+          <thead className="bg-surface-container border-b border-outline-variant">
+            <tr className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+              <th scope="col" className="px-4 py-2 w-12 tabular-nums">
+                #
+              </th>
+              <th scope="col" className="px-4 py-2">
+                Title / Company
+              </th>
+              <th scope="col" className="px-4 py-2 w-28">
+                Status
+              </th>
+              <th scope="col" className="px-4 py-2 w-32">
+                Health
+              </th>
+              <th scope="col" className="px-4 py-2 w-28 tabular-nums">
+                Created
+              </th>
+              <th scope="col" className="px-4 py-2 w-12 text-right">
+                <span className="sr-only">Open</span>
+              </th>
             </tr>
           </thead>
           <tbody className="font-mono-data">
             {projects.map((p, i) => {
               const status = (p.status ?? "active").toLowerCase();
               const health = healthByProject.get(p.id);
+              const healthStatus: HealthStatus = health?.status ?? "healthy";
               return (
                 <tr
                   key={p.id}
-                  className="border-b border-outline-variant/40 hover:bg-surface-container/40 transition-colors group"
+                  className="border-b border-outline-variant/40 last:border-b-0 hover:bg-surface-container/40 focus-within:bg-surface-container/40 transition-colors group"
                 >
-                  <td className="p-3 text-primary font-bold">
+                  <td className="px-4 py-3 text-primary font-bold tabular-nums">
                     {(i + 1).toString().padStart(2, "0")}
                   </td>
-                  <td className="p-3">
+                  <td className="px-4 py-3">
                     <Link
                       href={`/projects/${p.id}`}
-                      className="block hover:text-primary transition-colors"
+                      prefetch={false}
+                      className="block hover:text-primary transition-colors focus-visible:outline-none focus-visible:text-primary"
                     >
-                      <div className="text-on-surface font-bold uppercase">
+                      <div className="text-on-surface font-bold uppercase truncate">
                         {p.title}
                       </div>
-                      <div className="text-mono-label text-outline mt-0.5">
+                      <div className="text-mono-label font-mono-label text-outline uppercase tracking-wider mt-0.5 truncate">
                         {p.company_name}
                       </div>
                     </Link>
                   </td>
-                  <td className="p-3">
-                    <span
-                      className={cn(
-                        "px-1.5 py-0.5 text-[9px] uppercase font-bold border",
-                        projectStatusTone(p.status)
-                      )}
+                  <td className="px-4 py-3">
+                    <StatusChip
+                      tone={projectStatusChipTone(p.status)}
+                      intensity="soft"
                     >
                       {status}
-                    </span>
+                    </StatusChip>
                   </td>
-                  <td className="p-3">
-                    {health ? (
-                      <span
-                        className={cn(
-                          "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-wider flex items-center gap-1.5 w-fit",
-                          HEALTH_TONE[health.status]
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "w-1.5 h-1.5 rounded-full",
-                            HEALTH_DOT[health.status],
-                            health.status === "at_risk" ? "animate-pulse" : ""
-                          )}
-                        />
-                        {HEALTH_LABELS[health.status]}
-                      </span>
-                    ) : (
-                      <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-wider flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim" />
-                        {HEALTH_LABELS.healthy}
-                      </span>
-                    )}
+                  <td className="px-4 py-3">
+                    <StatusChip
+                      tone={HEALTH_CHIP[healthStatus]}
+                      dot
+                      pulse={healthStatus === "at_risk"}
+                    >
+                      {HEALTH_LABELS[healthStatus]}
+                    </StatusChip>
                   </td>
-                  <td className="p-3 text-on-surface-variant text-mono-label">
+                  <td className="px-4 py-3 text-on-surface-variant text-mono-label font-mono-label tabular-nums">
                     {formatDate(p.created_at)}
                   </td>
-                  <td className="p-3 text-right">
+                  <td className="px-4 py-3 text-right">
                     <Link
                       href={`/projects/${p.id}`}
                       aria-label={`Open ${p.title}`}
-                      className="opacity-0 group-hover:opacity-100 material-symbols-outlined text-outline hover:text-primary transition-opacity"
+                      prefetch={false}
+                      className="inline-flex items-center justify-center w-8 h-8 text-outline opacity-60 group-hover:opacity-100 hover:text-primary transition-[opacity,color] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary focus-visible:opacity-100"
                     >
-                      open_in_new
+                      <span
+                        className="material-symbols-outlined text-[18px]"
+                        aria-hidden
+                      >
+                        chevron_right
+                      </span>
                     </Link>
                   </td>
                 </tr>
@@ -415,3 +435,4 @@ function ProjectsTable({
     </div>
   );
 }
+
