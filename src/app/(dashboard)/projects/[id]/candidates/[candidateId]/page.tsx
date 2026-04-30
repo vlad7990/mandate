@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { LiveTick } from "@/components/ui/live-tick";
 import { StatusChip } from "@/components/ui/status-chip";
+import { ensureCandidateEvaluation } from "@/lib/ai/generate-evaluation";
+import { EvaluationReport } from "./evaluation-report";
 import { PipelineSelect } from "./pipeline-select";
 
 type ProjectRow = {
@@ -116,6 +118,13 @@ export default async function CandidateProfilePage({
     project.calibration_model?.dimension_weights ?? null
   );
 
+  // Generate the executive evaluation on first profile visit. The gate
+  // is idempotent: cache hit returns the stored report immediately;
+  // miss runs the agent (~6–10s), persists, and returns. Falls back to
+  // null when the CV isn't ready yet — the page renders a placeholder
+  // panel instead of the full report.
+  const evaluation = await ensureCandidateEvaluation(candidate.id, project.id);
+
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
       <BreadcrumbRail
@@ -187,6 +196,21 @@ export default async function CandidateProfilePage({
         archetype={archetype}
         fitSummary={profile.fit_summary}
       />
+
+      {evaluation ? (
+        <EvaluationReport
+          evaluation={evaluation}
+          candidateId={candidate.id}
+          candidateName={candidate.full_name}
+          projectId={project.id}
+        />
+      ) : profile.fit_dimensions ? (
+        <EvaluationPendingPanel
+          processing={isProcessing}
+          candidateId={candidate.id}
+          projectId={project.id}
+        />
+      ) : null}
 
       {/* Bento grid: AI summary + strengths/dev/risks (8) | fit (4) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -883,6 +907,59 @@ function initials(name: string): string {
       .slice(0, 2)
       .map((s) => s[0]?.toUpperCase() ?? "")
       .join("") || "??"
+  );
+}
+
+/**
+ * Pending state for the executive evaluation. Two cases:
+ *   1. CV is still parsing — point at the existing "AI parse in flight"
+ *      banner above and explain the evaluation will follow.
+ *   2. CV is parsed but the agent failed on this request — instruct a
+ *      refresh. The gate retries idempotently on the next render.
+ */
+function EvaluationPendingPanel({
+  processing,
+}: {
+  processing: boolean;
+  candidateId: string;
+  projectId: string;
+}) {
+  return (
+    <article className="bg-surface-container border border-outline-variant relative overflow-hidden">
+      <div
+        className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary-container/30 via-primary/30 to-primary-container/10"
+        aria-hidden
+      />
+      <div className="px-5 py-4 flex items-start gap-3">
+        <span
+          className={cn(
+            "material-symbols-outlined text-primary text-[20px] mt-0.5",
+            processing && "animate-spin"
+          )}
+          aria-hidden
+        >
+          {processing ? "progress_activity" : "fact_check"}
+        </span>
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
+            Executive Evaluation Report
+          </div>
+          {processing ? (
+            <p className="text-body-main text-on-surface-variant leading-relaxed">
+              The CV is still being parsed. Once parsing completes, the
+              evaluation agent will run automatically and the report will
+              appear here on the next visit.
+            </p>
+          ) : (
+            <p className="text-body-main text-on-surface-variant leading-relaxed">
+              The evaluation agent could not produce a report on the last
+              attempt. Refresh the page to retry — generation is
+              idempotent and only runs again on cache miss.
+            </p>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }
 
