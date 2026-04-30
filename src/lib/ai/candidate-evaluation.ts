@@ -194,7 +194,8 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
   properties: {
     scoring_table: {
       type: "array",
-      minItems: 5,
+      // minItems removed — Anthropic structured output rejects values
+      // > 1. The system prompt enforces "exactly 5 rows" instead.
       maxItems: 5,
       items: {
         type: "object",
@@ -222,7 +223,8 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
         },
         background_bullets: {
           type: "array",
-          minItems: 3,
+          // minItems > 1 not supported by Anthropic structured output;
+          // the system prompt enforces "at least 3" explicitly.
           maxItems: 6,
           items: { type: "string" },
           description:
@@ -255,7 +257,8 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
     },
     strengths: {
       type: "array",
-      minItems: 3,
+      // minItems > 1 not supported by Anthropic structured output;
+      // the system prompt enforces "at least 3" explicitly.
       maxItems: 4,
       items: {
         type: "object",
@@ -359,7 +362,8 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
         },
         talking_points: {
           type: "array",
-          minItems: 2,
+          // minItems > 1 not supported by Anthropic structured output;
+          // the system prompt enforces "at least 2" explicitly.
           maxItems: 3,
           items: { type: "string" },
           description:
@@ -388,6 +392,15 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
 export const CANDIDATE_EVALUATION_SYSTEM_PROMPT = `You are an executive-search evaluation analyst preparing a written dossier for a hiring manager. You receive the structured candidate profile, the role's calibration model and weights, the company context, and (when available) up to three other ranked candidates from the same project's slate. You produce a single executive evaluation report.
 
 Output strictly conforms to the provided JSON schema. No preamble. No markdown inside string values. Plain prose, single paragraph per field unless the field is explicitly a list.
+
+Array length discipline (the schema cannot enforce minimums above 1, so YOU must):
+- scoring_table: provide EXACTLY 5 rows — one per dimension (technical, domain, leadership, regulatory, transformation). No more, no fewer.
+- profile_summary.background_bullets: provide AT LEAST 3 and at most 6 bullets.
+- strengths: provide AT LEAST 3 and at most 4 strength blocks.
+- gaps: provide AT LEAST 1 and at most 3 gap blocks. If you genuinely cannot find a gap, return one item that flags the most likely hiring-manager objection.
+- positioning.talking_points: provide AT LEAST 2 and at most 3 talking points.
+- comparison.competitors: 0 to 3 rows — empty array when no slate is provided.
+A response that under-fills any of these arrays is invalid; revise before returning.
 
 Style rules:
 - Be direct. The recruiter is reading this to make a go/no-go call, not to feel reassured.
