@@ -17,8 +17,18 @@ import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { LiveTick } from "@/components/ui/live-tick";
 import { StatusChip } from "@/components/ui/status-chip";
 import { ensureCandidateEvaluation } from "@/lib/ai/generate-evaluation";
+import { ContactFieldsRail } from "./contact-fields";
+import {
+  ArchetypeSelect,
+  EditableList,
+  EditableNumber,
+  EditableText,
+  EditableTextarea,
+} from "./editable-fields";
 import { EvaluationReport } from "./evaluation-report";
+import { CandidateNotesPanel, type CandidateNote } from "./notes-panel";
 import { PipelineSelect } from "./pipeline-select";
+import { RetryEvaluationButton } from "./retry-evaluation-button";
 
 type ProjectRow = {
   id: string;
@@ -34,6 +44,11 @@ type CandidateRow = {
   full_name: string;
   email: string | null;
   linkedin_url: string | null;
+  twitter_url: string | null;
+  github_url: string | null;
+  website_url: string | null;
+  phone: string | null;
+  location: string | null;
   current_title: string | null;
   current_company: string | null;
   archetype: string | null;
@@ -93,7 +108,7 @@ export default async function CandidateProfilePage({
   const { data: candidate, error: candError } = await supabase
     .from("candidates")
     .select(
-      "id, project_id, full_name, email, linkedin_url, current_title, current_company, archetype, pipeline_stage, cv_url, cv_structured, cv_processing, cv_parse_error, updated_at"
+      "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, pipeline_stage, cv_url, cv_structured, cv_processing, cv_parse_error, updated_at"
     )
     .eq("id", candidateId)
     .single<CandidateRow>();
@@ -106,6 +121,10 @@ export default async function CandidateProfilePage({
   if (candidate.project_id !== id) {
     redirect(`/projects/${id}/candidates`);
   }
+
+  // Local alias so client components nested directly in the page body
+  // can pass the project id without spelling out `project.id` each time.
+  const projectId = project.id;
 
   const profile = (candidate.cv_structured ?? {}) as Partial<CandidateProfile>;
   const isProcessing = candidate.cv_processing;
@@ -124,6 +143,57 @@ export default async function CandidateProfilePage({
   // null when the CV isn't ready yet — the page renders a placeholder
   // panel instead of the full report.
   const evaluation = await ensureCandidateEvaluation(candidate.id, project.id);
+
+  // Notes feed for the candidate. Pinned first, then newest. RLS scopes
+  // by org, so the SELECT is implicitly safe across orgs.
+  const { data: rawNotes } = await supabase
+    .from("candidate_notes")
+    .select(
+      "id, candidate_id, note_type, content, is_pinned, call_duration_minutes, created_by, created_at, updated_at"
+    )
+    .eq("candidate_id", candidate.id)
+    .order("is_pinned", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  type RawNote = {
+    id: string;
+    candidate_id: string;
+    note_type: string;
+    content: string;
+    is_pinned: boolean;
+    call_duration_minutes: number | null;
+    created_by: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+  const noteRows = (rawNotes ?? []) as RawNote[];
+
+  // Stitch a display name onto each note. We resolve in one query keyed
+  // by created_by so a recruiter's name shows up next to their note.
+  const authorIds = Array.from(
+    new Set(noteRows.map((n) => n.created_by).filter((v): v is string => !!v))
+  );
+  let authorMap = new Map<string, string>();
+  if (authorIds.length > 0) {
+    const { data: authors } = await supabase
+      .from("users")
+      .select("id, full_name, email")
+      .in("id", authorIds);
+    authorMap = new Map(
+      (authors ?? []).map((a) => [
+        a.id as string,
+        ((a as { full_name?: string | null }).full_name?.trim() ||
+          (a as { email?: string | null }).email ||
+          "Unknown") as string,
+      ])
+    );
+  }
+
+  const notes = noteRows.map((n) => ({
+    ...n,
+    note_type: n.note_type as CandidateNote["note_type"],
+    created_by_name: n.created_by ? authorMap.get(n.created_by) ?? null : null,
+  }));
 
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
@@ -215,9 +285,15 @@ export default async function CandidateProfilePage({
       {/* Bento grid: AI summary + strengths/dev/risks (8) | fit (4) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 space-y-4">
-          <SynthesisCard summary={profile.summary} />
+          <SynthesisCard
+            candidateId={candidate.id}
+            projectId={projectId}
+            summary={profile.summary}
+          />
 
           <SignalsLedger
+            candidateId={candidate.id}
+            projectId={projectId}
             strengths={profile.strengths}
             development={profile.development_areas}
             risks={profile.risks}
@@ -233,8 +309,22 @@ export default async function CandidateProfilePage({
             fitSummary={profile.fit_summary}
             fitPct={fitPct}
           />
-          <SignalCard title="Domain" icon="domain" value={profile.domain} />
-          <SignalCard title="Scale" icon="trending_up" value={profile.scale} />
+          <EditableSignalCard
+            candidateId={candidate.id}
+            projectId={projectId}
+            field="domain"
+            title="Domain"
+            icon="domain"
+            value={profile.domain ?? null}
+          />
+          <EditableSignalCard
+            candidateId={candidate.id}
+            projectId={projectId}
+            field="scale"
+            title="Scale"
+            icon="trending_up"
+            value={profile.scale ?? null}
+          />
           <ChipCard
             title="Tech Exposure"
             icon="hub"
@@ -247,6 +337,13 @@ export default async function CandidateProfilePage({
           />
         </div>
       </div>
+
+      <CandidateNotesPanel
+        candidateId={candidate.id}
+        projectId={projectId}
+        candidateName={candidate.full_name}
+        notes={notes as CandidateNote[]}
+      />
 
       <footer className="pt-4 border-t border-outline-variant/60 flex items-center justify-between flex-wrap gap-3">
         <Link
@@ -313,55 +410,84 @@ function CandidateHero({
         </div>
         <div className="flex-1 min-w-0 space-y-3">
           <div className="space-y-1.5">
-            <h1 className="font-h1 text-h1 text-on-surface tracking-tight truncate">
-              {candidate.full_name}
+            <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
+              <EditableText
+                candidateId={candidate.id}
+                projectId={projectId}
+                field="full_name"
+                value={candidate.full_name}
+                placeholder="Candidate name"
+                required
+                ariaLabel="full name"
+              />
             </h1>
-            <p className="font-mono-data text-body-main text-on-surface-variant truncate">
-              {(candidate.current_title ?? "—").toUpperCase()}
-              {candidate.current_company ? (
-                <>
-                  <span className="text-outline-variant px-2" aria-hidden>
-                    {"//"}
-                  </span>
-                  <span className="text-primary">
-                    {candidate.current_company.toUpperCase()}
-                  </span>
-                </>
-              ) : null}
+            <p className="font-mono-data text-body-main text-on-surface-variant flex items-baseline gap-2 flex-wrap">
+              <EditableText
+                candidateId={candidate.id}
+                projectId={projectId}
+                field="current_title"
+                value={candidate.current_title}
+                placeholder="Current title"
+                ariaLabel="current title"
+                inputClassName="uppercase"
+                className="uppercase"
+              />
+              <span className="text-outline-variant" aria-hidden>
+                {"//"}
+              </span>
+              <span className="text-primary uppercase">
+                <EditableText
+                  candidateId={candidate.id}
+                  projectId={projectId}
+                  field="current_company"
+                  value={candidate.current_company}
+                  placeholder="Current company"
+                  ariaLabel="current company"
+                />
+              </span>
             </p>
+            <div className="flex items-center gap-2">
+              <ArchetypeSelect
+                candidateId={candidate.id}
+                projectId={projectId}
+                value={archetype}
+              />
+            </div>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {profile.location && (
-              <StatusChip tone="neutral" intensity="filled">
-                LOC: {profile.location.toUpperCase()}
-              </StatusChip>
-            )}
-            {typeof profile.years_experience === "number" && (
-              <StatusChip tone="neutral" intensity="filled">
-                EXP: <span className="tabular-nums">{profile.years_experience}Y</span>
-              </StatusChip>
-            )}
-            {candidate.email && (
-              <a
-                href={`mailto:${candidate.email}`}
-                className="px-2 py-0.5 border border-outline-variant bg-surface-container-high font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider hover:text-primary hover:border-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
-              >
-                {candidate.email}
-              </a>
-            )}
-            {candidate.linkedin_url && (
-              <a
-                href={candidate.linkedin_url}
-                target="_blank"
-                rel="noreferrer"
-                className="px-2 py-0.5 border border-outline-variant bg-surface-container-high font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider hover:text-primary hover:border-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
-              >
-                <span className="material-symbols-outlined text-[12px]" aria-hidden>
-                  link
-                </span>
-                LinkedIn
-              </a>
-            )}
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <span className="px-2 py-0.5 border border-outline-variant bg-surface-container-high font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant inline-flex items-center gap-1">
+                EXP:
+                <EditableNumber
+                  candidateId={candidate.id}
+                  projectId={projectId}
+                  field="years_experience"
+                  value={
+                    typeof profile.years_experience === "number"
+                      ? profile.years_experience
+                      : null
+                  }
+                  unit="Y"
+                  placeholder="—Y"
+                  ariaLabel="years of experience"
+                />
+              </span>
+            </div>
+            <ContactFieldsRail
+              candidateId={candidate.id}
+              projectId={projectId}
+              initial={{
+                email: candidate.email,
+                phone: candidate.phone,
+                // Fallback to the parsed CV value when the typed
+                // column hasn't been overridden yet.
+                location: candidate.location ?? profile.location ?? null,
+                linkedin_url: candidate.linkedin_url,
+                twitter_url: candidate.twitter_url,
+                github_url: candidate.github_url,
+                website_url: candidate.website_url,
+              }}
+            />
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <PipelineSelect
@@ -493,7 +619,15 @@ function ArchetypeStrip({
   );
 }
 
-function SynthesisCard({ summary }: { summary: string | undefined }) {
+function SynthesisCard({
+  candidateId,
+  projectId,
+  summary,
+}: {
+  candidateId: string;
+  projectId: string;
+  summary: string | undefined;
+}) {
   return (
     <article className="bg-surface-container border border-outline-variant overflow-hidden">
       <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex justify-between items-center">
@@ -508,27 +642,29 @@ function SynthesisCard({ summary }: { summary: string | undefined }) {
         </StatusChip>
       </header>
       <div className="p-4 text-on-surface text-body-main leading-relaxed font-mono-data">
-        <span
-          className="text-secondary-fixed-dim font-mono-data mr-1.5"
-          aria-hidden
-        >
-          &gt;
-        </span>
-        {summary || (
-          <span className="text-outline italic">
-            Synthesis will appear once the CV is parsed.
-          </span>
-        )}
+        <EditableTextarea
+          candidateId={candidateId}
+          projectId={projectId}
+          field="summary"
+          value={summary ?? null}
+          rows={5}
+          placeholder="Add a one-paragraph synthesis."
+          emptyState={<>Synthesis will appear once the CV is parsed. Click to write one manually.</>}
+        />
       </div>
     </article>
   );
 }
 
 function SignalsLedger({
+  candidateId,
+  projectId,
   strengths,
   development,
   risks,
 }: {
+  candidateId: string;
+  projectId: string;
   strengths: string[] | undefined;
   development: string[] | undefined;
   risks: string[] | undefined;
@@ -541,6 +677,9 @@ function SignalsLedger({
     <article className="bg-surface-container-low border border-outline-variant overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-outline-variant/60">
         <SignalColumn
+          candidateId={candidateId}
+          projectId={projectId}
+          field="strengths"
           title="Strengths"
           icon="trending_up"
           tone="secondary"
@@ -548,6 +687,9 @@ function SignalsLedger({
           items={strengths ?? []}
         />
         <SignalColumn
+          candidateId={candidateId}
+          projectId={projectId}
+          field="development_areas"
           title="Development"
           icon="warning"
           tone="warn"
@@ -555,6 +697,9 @@ function SignalsLedger({
           items={development ?? []}
         />
         <SignalColumn
+          candidateId={candidateId}
+          projectId={projectId}
+          field="risks"
           title="Risk Vectors"
           icon="report"
           tone="danger"
@@ -567,12 +712,18 @@ function SignalsLedger({
 }
 
 function SignalColumn({
+  candidateId,
+  projectId,
+  field,
   title,
   icon,
   tone,
   marker,
   items,
 }: {
+  candidateId: string;
+  projectId: string;
+  field: "strengths" | "development_areas" | "risks";
   title: string;
   icon: string;
   tone: "secondary" | "warn" | "danger";
@@ -605,22 +756,17 @@ function SignalColumn({
         {title}
         <span className="text-outline">· {String(items.length).padStart(2, "0")}</span>
       </h4>
-      <ul className="space-y-2">
-        {items.length === 0 && (
-          <li className="text-body-main text-outline italic">—</li>
-        )}
-        {items.map((item, i) => (
-          <li
-            key={i}
-            className="flex items-start gap-2 font-mono-data text-body-main text-on-surface-variant"
-          >
-            <span className={cn(headingClass, "shrink-0")} aria-hidden>
-              {marker}
-            </span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
+      <EditableList
+        candidateId={candidateId}
+        projectId={projectId}
+        field={field}
+        items={items}
+        marker={marker}
+        markerClass={headingClass}
+        emptyLabel="No items yet — add the first."
+        addLabel={`Add ${title.toLowerCase()}`}
+        itemPlaceholder={`Type a ${title.toLowerCase().replace(/s$/, "")}…`}
+      />
     </div>
   );
 }
@@ -732,14 +878,20 @@ function FitCard({
   );
 }
 
-function SignalCard({
+function EditableSignalCard({
+  candidateId,
+  projectId,
+  field,
   title,
   icon,
   value,
 }: {
+  candidateId: string;
+  projectId: string;
+  field: "domain" | "scale";
   title: string;
   icon: string;
-  value: string | undefined;
+  value: string | null;
 }) {
   return (
     <article className="bg-surface-container-low border border-outline-variant">
@@ -751,9 +903,16 @@ function SignalCard({
           {title}
         </h3>
       </header>
-      <p className="px-4 py-3 text-body-main text-on-surface-variant">
-        {value || <span className="italic text-outline">—</span>}
-      </p>
+      <div className="px-4 py-3 text-body-main text-on-surface-variant">
+        <EditableText
+          candidateId={candidateId}
+          projectId={projectId}
+          field={field}
+          value={value}
+          placeholder={`Click to add ${title.toLowerCase()}.`}
+          ariaLabel={title.toLowerCase()}
+        />
+      </div>
     </article>
   );
 }
@@ -919,6 +1078,8 @@ function initials(name: string): string {
  */
 function EvaluationPendingPanel({
   processing,
+  candidateId,
+  projectId,
 }: {
   processing: boolean;
   candidateId: string;
@@ -930,19 +1091,26 @@ function EvaluationPendingPanel({
         className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary-container/30 via-primary/30 to-primary-container/10"
         aria-hidden
       />
-      <div className="px-5 py-4 flex items-start gap-3">
+      <div className="px-5 py-4 flex items-start gap-3 flex-wrap">
         <span
           className={cn(
-            "material-symbols-outlined text-primary text-[20px] mt-0.5",
-            processing && "animate-spin"
+            "material-symbols-outlined text-[20px] mt-0.5",
+            processing ? "text-primary animate-spin" : "text-tertiary"
           )}
           aria-hidden
         >
-          {processing ? "progress_activity" : "fact_check"}
+          {processing ? "progress_activity" : "error"}
         </span>
         <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
-            Executive Evaluation Report
+          <div
+            className={cn(
+              "font-mono-label text-mono-label uppercase tracking-widest",
+              processing ? "text-primary" : "text-tertiary"
+            )}
+          >
+            {processing
+              ? "Executive Evaluation Report — Pending"
+              : "Executive Evaluation Report — Generation Failed"}
           </div>
           {processing ? (
             <p className="text-body-main text-on-surface-variant leading-relaxed">
@@ -953,11 +1121,18 @@ function EvaluationPendingPanel({
           ) : (
             <p className="text-body-main text-on-surface-variant leading-relaxed">
               The evaluation agent could not produce a report on the last
-              attempt. Refresh the page to retry — generation is
-              idempotent and only runs again on cache miss.
+              attempt. Click <span className="text-on-surface font-semibold">Retry Evaluation</span>{" "}
+              to clear the cache and regenerate. Generation is idempotent —
+              a successful retry replaces the cached failure.
             </p>
           )}
         </div>
+        {!processing && (
+          <RetryEvaluationButton
+            candidateId={candidateId}
+            projectId={projectId}
+          />
+        )}
       </div>
     </article>
   );
