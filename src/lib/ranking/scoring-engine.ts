@@ -5,17 +5,12 @@ import type {
   CandidateProfile,
   FitDimensions,
 } from "@/lib/ai/cv-parsing";
+import { TIER_BANDS, TIER_ORDER, type Tier } from "./tiers";
 
-export type Tier = "tier_1" | "tier_2" | "tier_3" | "tier_4";
-
-export const TIER_BANDS: Record<Tier, { min: number; max: number; label: string }> = {
-  tier_1: { min: 8, max: 10, label: "Tier 1 · Optimal" },
-  tier_2: { min: 6, max: 7.99, label: "Tier 2 · Strong" },
-  tier_3: { min: 4, max: 5.99, label: "Tier 3 · Stretch" },
-  tier_4: { min: 0, max: 3.99, label: "Tier 4 · Below Bar" },
-};
-
-export const TIER_ORDER: Tier[] = ["tier_1", "tier_2", "tier_3", "tier_4"];
+// Re-export the client-safe tier vocabulary so existing server-side
+// callers can keep importing from "@/lib/ranking/scoring-engine".
+export { TIER_BANDS, TIER_ORDER };
+export type { Tier };
 
 export type ScoredCandidate = {
   scoreRowId: string | null;

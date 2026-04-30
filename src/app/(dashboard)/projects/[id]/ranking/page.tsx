@@ -233,6 +233,16 @@ export default async function RankingPage({
             Compare
           </Link>
           <Link
+            href={`/projects/${project.id}/comparison`}
+            prefetch={false}
+            className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <span className="material-symbols-outlined text-[14px]" aria-hidden>
+              insights
+            </span>
+            Full Comparison
+          </Link>
+          <Link
             href={`/projects/${project.id}/shortlist`}
             prefetch={false}
             className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
