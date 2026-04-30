@@ -5,8 +5,74 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   EVALUATION_KEY,
   ensureCandidateEvaluation,
-  type CvStructuredWithEvaluation,
 } from "@/lib/ai/generate-evaluation";
+
+// ────────────────────────────────────────────────────────────────────────
+// Auth helper
+// ────────────────────────────────────────────────────────────────────────
+
+type AuthContext = {
+  userId: string;
+  organizationId: string;
+};
+
+/**
+ * Active-user gate shared by every mutating action in this file.
+ *
+ * Why this exists separately from RLS: the database helper
+ * `current_user_org_id()` returns the row's organization_id without
+ * checking `users.status`. That means a user whose status flipped to
+ * `pending` or `suspended` since they last refreshed the dashboard
+ * still has a valid Supabase JWT and could trigger server actions
+ * directly. The dashboard layout's redirect catches them on a normal
+ * page visit but does not protect server-action POSTs invoked with a
+ * still-valid token. Every mutation in this file therefore re-checks
+ * status against the live row before writing.
+ */
+async function requireActiveUser(): Promise<AuthContext> {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthenticated.");
+
+  const { data: profile, error } = await supabase
+    .from("users")
+    .select("organization_id, status")
+    .eq("id", user.id)
+    .single<{ organization_id: string | null; status: string }>();
+
+  if (error || !profile?.organization_id || profile.status !== "active") {
+    throw new Error("Account is not provisioned.");
+  }
+
+  return { userId: user.id, organizationId: profile.organization_id };
+}
+
+/**
+ * Confirm the candidate belongs to the requested project. Used in
+ * conjunction with `requireActiveUser` to keep server-action requests
+ * defended against client-side parameter tampering.
+ */
+async function assertCandidateBelongsToProject(
+  candidateId: string,
+  projectId: string
+): Promise<void> {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("candidates")
+    .select("project_id")
+    .eq("id", candidateId)
+    .single<{ project_id: string }>();
+  if (error || !data) throw new Error("Candidate not found.");
+  if (data.project_id !== projectId) {
+    throw new Error("Candidate does not belong to the requested project.");
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Evaluation regenerate
+// ────────────────────────────────────────────────────────────────────────
 
 /**
  * Force a fresh evaluation by clearing the cached evaluation on the
@@ -22,40 +88,24 @@ export async function regenerateEvaluationAction(
     throw new Error("Missing candidateId or projectId.");
   }
 
+  await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
+
+  // Clear the cached evaluation atomically via the RPC. This avoids the
+  // read-modify-write race where a concurrent inline edit could revive
+  // the deleted key by writing back stale JSON.
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated.");
-
-  // Clear the cached evaluation. We read-then-write rather than using a
-  // SQL JSONB delete because the column type is plain JSONB and the
-  // Supabase client doesn't expose a partial-update primitive.
-  const { data: candidate, error: readErr } = await supabase
-    .from("candidates")
-    .select("project_id, cv_structured")
-    .eq("id", candidateId)
-    .single<{ project_id: string; cv_structured: unknown }>();
-
-  if (readErr || !candidate) {
-    throw new Error("Candidate not found.");
-  }
-  if (candidate.project_id !== projectId) {
-    throw new Error("Candidate does not belong to the requested project.");
-  }
-
-  const cv = (candidate.cv_structured ?? {}) as CvStructuredWithEvaluation;
-  if (cv[EVALUATION_KEY]) {
-    const { [EVALUATION_KEY]: _drop, ...rest } = cv;
-    void _drop;
-    const { error: clearErr } = await supabase
-      .from("candidates")
-      .update({
-        cv_structured: rest,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", candidateId);
-    if (clearErr) throw new Error(`Failed to clear evaluation: ${clearErr.message}`);
+  const { error: clearErr } = await supabase.rpc(
+    "update_cv_structured_field",
+    {
+      p_candidate_id: candidateId,
+      p_project_id: projectId,
+      p_key: EVALUATION_KEY,
+      p_value: null,
+    }
+  );
+  if (clearErr) {
+    throw new Error(`Failed to clear evaluation: ${clearErr.message}`);
   }
 
   const fresh = await ensureCandidateEvaluation(candidateId, projectId);
@@ -111,27 +161,8 @@ export async function updateCandidateContact(
     throw new Error(`Unknown contact field: ${field}`);
   }
 
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated.");
-
-  // RLS scopes by org, but we still confirm the candidate belongs to
-  // the requested project so a malformed client request can't write
-  // across projects.
-  const { data: candidate, error: readErr } = await supabase
-    .from("candidates")
-    .select("project_id")
-    .eq("id", candidateId)
-    .single<{ project_id: string }>();
-
-  if (readErr || !candidate) {
-    throw new Error("Candidate not found.");
-  }
-  if (candidate.project_id !== projectId) {
-    throw new Error("Candidate does not belong to the requested project.");
-  }
+  await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
 
   const trimmed = rawValue.trim();
   let nextValue: string | null;
@@ -151,6 +182,7 @@ export async function updateCandidateContact(
     nextValue = trimmed;
   }
 
+  const supabase = await createServerSupabaseClient();
   const { error: updateErr } = await supabase
     .from("candidates")
     .update({
@@ -230,17 +262,22 @@ export type CandidateEditableField =
 type FieldValue = string | string[] | number | null;
 
 /**
- * Inline-update one editable field on a candidate. The action handles
- * three storage shapes behind one entry point:
+ * Inline-update one editable field on a candidate. Three storage
+ * shapes hide behind a single entry point:
  *   * core text columns (full_name, current_title, current_company)
  *     → typed columns on `candidates`.
  *   * archetype → typed column AND mirrored back into cv_structured.
  *   * everything CV-derived (summary, strengths/development_areas/risks,
- *     domain, scale, years_experience) → spread into the cv_structured
- *     JSONB so future renderers and exports keep reading the same shape.
+ *     domain, scale, years_experience) → one top-level key on the
+ *     cv_structured JSONB.
  *
- * Empty strings, empty arrays, and `null` clear the field. Numeric
- * input is coerced and clamped at non-negative.
+ * Concurrency: the cv_structured key is mutated via the SQL-level
+ * `update_cv_structured_field` RPC (jsonb_set in a single UPDATE). The
+ * old read-modify-write code path raced with the executive-evaluation
+ * generator and with parallel inline edits; the RPC serialises on the
+ * row lock so the lost-update class of bug goes away.
+ *
+ * Empty strings, empty arrays, and `null` clear the field.
  */
 export async function updateCandidateField(
   candidateId: string,
@@ -252,38 +289,10 @@ export async function updateCandidateField(
     throw new Error("Missing candidateId or projectId.");
   }
 
+  await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
+
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated.");
-
-  const { data: candidate, error: readErr } = await supabase
-    .from("candidates")
-    .select("project_id, cv_structured")
-    .eq("id", candidateId)
-    .single<{ project_id: string; cv_structured: unknown }>();
-
-  if (readErr || !candidate) {
-    throw new Error("Candidate not found.");
-  }
-  if (candidate.project_id !== projectId) {
-    throw new Error("Candidate does not belong to the requested project.");
-  }
-
-  const updates: Record<string, unknown> = {
-    updated_at: new Date().toISOString(),
-  };
-  const currentCv = (candidate.cv_structured ?? {}) as Record<string, unknown>;
-  let nextCv: Record<string, unknown> | null = null;
-  const setCvField = (k: string, v: unknown) => {
-    if (!nextCv) nextCv = { ...currentCv };
-    if (v === null || v === undefined) {
-      delete nextCv[k];
-    } else {
-      nextCv[k] = v;
-    }
-  };
 
   if ((CORE_TEXT_FIELDS as readonly string[]).includes(field)) {
     if (typeof value !== "string" && value !== null) {
@@ -293,28 +302,59 @@ export async function updateCandidateField(
     if (field === "full_name" && (!next || next.length === 0)) {
       throw new Error("Name cannot be blank.");
     }
-    updates[field] = next && next.length > 0 ? next : null;
-    // Mirror full_name into cv_structured so exports stay coherent.
-    if (field === "full_name") setCvField("full_name", updates[field]);
+    const stored = next && next.length > 0 ? next : null;
+
+    const { error: updateErr } = await supabase
+      .from("candidates")
+      .update({
+        [field]: stored,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", candidateId);
+    if (updateErr) {
+      throw new Error(`Failed to update ${field}: ${updateErr.message}`);
+    }
+
+    // Mirror full_name into cv_structured atomically so exports stay coherent.
+    if (field === "full_name") {
+      await rpcSetCvField(candidateId, projectId, "full_name", stored);
+    }
   } else if (field === "archetype") {
+    let next: ArchetypeValue | null;
     if (value === null || value === "") {
-      updates.archetype = null;
-      setCvField("archetype", null);
+      next = null;
     } else if (
       typeof value === "string" &&
       (ARCHETYPE_VALUES as readonly string[]).includes(value)
     ) {
-      updates.archetype = value as ArchetypeValue;
-      setCvField("archetype", value);
+      next = value as ArchetypeValue;
     } else {
       throw new Error("Invalid archetype.");
     }
+
+    const { error: updateErr } = await supabase
+      .from("candidates")
+      .update({
+        archetype: next,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", candidateId);
+    if (updateErr) {
+      throw new Error(`Failed to update archetype: ${updateErr.message}`);
+    }
+
+    await rpcSetCvField(candidateId, projectId, "archetype", next);
   } else if ((CV_TEXT_FIELDS as readonly string[]).includes(field)) {
     if (typeof value !== "string" && value !== null) {
       throw new Error(`${field} must be text.`);
     }
     const next = typeof value === "string" ? value.trim() : null;
-    setCvField(field, next && next.length > 0 ? next : null);
+    await rpcSetCvField(
+      candidateId,
+      projectId,
+      field,
+      next && next.length > 0 ? next : null
+    );
   } else if ((CV_LIST_FIELDS as readonly string[]).includes(field)) {
     if (!Array.isArray(value)) {
       throw new Error(`${field} must be an array.`);
@@ -323,10 +363,10 @@ export async function updateCandidateField(
       .filter((v): v is string => typeof v === "string")
       .map((v) => v.trim())
       .filter((v) => v.length > 0);
-    setCvField(field, cleaned);
+    await rpcSetCvField(candidateId, projectId, field, cleaned);
   } else if (field === "years_experience") {
     if (value === null || value === "") {
-      setCvField("years_experience", null);
+      await rpcSetCvField(candidateId, projectId, "years_experience", null);
     } else {
       const n =
         typeof value === "number"
@@ -337,24 +377,43 @@ export async function updateCandidateField(
       if (!Number.isFinite(n) || n < 0) {
         throw new Error("Years of experience must be a non-negative number.");
       }
-      setCvField("years_experience", Math.round(n));
+      await rpcSetCvField(
+        candidateId,
+        projectId,
+        "years_experience",
+        Math.round(n)
+      );
     }
   } else {
     throw new Error(`Unknown field: ${field}`);
   }
 
-  if (nextCv) {
-    updates.cv_structured = nextCv;
-  }
-
-  const { error: updateErr } = await supabase
-    .from("candidates")
-    .update(updates)
-    .eq("id", candidateId);
-
-  if (updateErr) {
-    throw new Error(`Failed to update ${field}: ${updateErr.message}`);
-  }
-
   revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
+}
+
+/**
+ * Atomically set or delete a single top-level key on
+ * `candidates.cv_structured` via the migration-021 RPC. Pass `null`
+ * (or `undefined`) for `value` to delete the key; any other value —
+ * including string, number, array, object — is JSON-encoded by the
+ * Supabase client and written via `jsonb_set`.
+ */
+async function rpcSetCvField(
+  candidateId: string,
+  projectId: string,
+  key: string,
+  value: unknown
+): Promise<void> {
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.rpc("update_cv_structured_field", {
+    p_candidate_id: candidateId,
+    p_project_id: projectId,
+    p_key: key,
+    // Supabase encodes JS arrays/objects/scalars to jsonb. `null` here
+    // becomes SQL NULL, which the RPC interprets as "delete the key".
+    p_value: value === undefined ? null : value,
+  });
+  if (error) {
+    throw new Error(`Failed to update ${key}: ${error.message}`);
+  }
 }
