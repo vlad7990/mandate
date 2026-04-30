@@ -16,9 +16,8 @@ import {
   deleteNoteAction,
   togglePinAction,
   updateNoteAction,
-  NOTE_TYPES,
-  type NoteType,
 } from "./notes-actions";
+import { NOTE_TYPES, type NoteType } from "./notes-constants";
 
 export type CandidateNote = {
   id: string;

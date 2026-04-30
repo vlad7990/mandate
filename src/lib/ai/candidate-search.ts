@@ -63,22 +63,21 @@ export const CANDIDATE_SEARCH_SCHEMA = {
       properties: {
         intent: { type: "string" },
         must_haves: {
+          // Counts (0–6) enforced by the system prompt; Anthropic
+          // structured output doesn't support maxItems.
           type: "array",
-          minItems: 0,
-          maxItems: 6,
           items: { type: "string" },
         },
         nice_to_haves: {
+          // Counts (0–4) enforced by the system prompt only.
           type: "array",
-          minItems: 0,
-          maxItems: 4,
           items: { type: "string" },
         },
       },
     },
     matches: {
       type: "array",
-      maxItems: 25,
+      // maxItems (25) enforced by the system prompt only.
       items: {
         type: "object",
         additionalProperties: false,
@@ -98,6 +97,11 @@ export const CANDIDATE_SEARCH_SCHEMA = {
 export const CANDIDATE_SEARCH_SYSTEM_PROMPT = `You are an executive-search retrieval analyst. A recruiter gives you a natural-language search query plus a compact directory of the org's candidates. You return a ranked list of candidate ids with a 0–100 match score and a one-sentence rationale.
 
 Output strictly conforms to the JSON schema. No preamble.
+
+Array length discipline (the schema cannot enforce these — YOU must):
+- parsed_criteria.must_haves: 2–6 short keyword phrases. 0 only when the query is empty/nonsensical.
+- parsed_criteria.nice_to_haves: 0–4 entries.
+- matches: 0–25 entries, ranked by match_score descending. Drop anything with match_score < 30.
 
 Rules:
 - Use the candidate_id values exactly as supplied. Never invent ids.

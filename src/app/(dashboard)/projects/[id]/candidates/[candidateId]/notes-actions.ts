@@ -2,15 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { NOTE_TYPES, type NoteType } from "./notes-constants";
 
-export const NOTE_TYPES = [
-  "general",
-  "call",
-  "meeting",
-  "email",
-  "interview",
-] as const;
-export type NoteType = (typeof NOTE_TYPES)[number];
+// NOTE_TYPES / NoteType used to live here, but a "use server" file can
+// only export async functions — every const export becomes a server
+// action reference at runtime, breaking client-side .map/.includes.
+// Callers import the constants directly from ./notes-constants.
 
 type AuthContext = {
   userId: string;

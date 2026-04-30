@@ -194,9 +194,9 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
   properties: {
     scoring_table: {
       type: "array",
-      // minItems removed — Anthropic structured output rejects values
-      // > 1. The system prompt enforces "exactly 5 rows" instead.
-      maxItems: 5,
+      // Anthropic structured output rejects minItems > 1 AND maxItems
+      // entirely. Counts (exactly 5 rows here) are enforced by the
+      // system prompt's "Array length discipline" block.
       items: {
         type: "object",
         additionalProperties: false,
@@ -223,9 +223,8 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
         },
         background_bullets: {
           type: "array",
-          // minItems > 1 not supported by Anthropic structured output;
-          // the system prompt enforces "at least 3" explicitly.
-          maxItems: 6,
+          // Counts (3–6) enforced by the system prompt; schema can't
+          // express minItems > 1 or maxItems.
           items: { type: "string" },
           description:
             "3–6 short factual bullets. Each bullet 6–14 words. Quote concrete numbers from the CV (scope, scale, tenure).",
@@ -257,9 +256,8 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
     },
     strengths: {
       type: "array",
-      // minItems > 1 not supported by Anthropic structured output;
-      // the system prompt enforces "at least 3" explicitly.
-      maxItems: 4,
+      // Counts (3–4) enforced by the system prompt; schema can't
+      // express minItems > 1 or maxItems.
       items: {
         type: "object",
         additionalProperties: false,
@@ -280,7 +278,7 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
     gaps: {
       type: "array",
       minItems: 1,
-      maxItems: 3,
+      // maxItems (3) enforced by the system prompt only.
       items: {
         type: "object",
         additionalProperties: false,
@@ -310,7 +308,7 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
         },
         competitors: {
           type: "array",
-          maxItems: 3,
+          // maxItems (3) enforced by the system prompt only.
           items: {
             type: "object",
             additionalProperties: false,
@@ -362,9 +360,7 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
         },
         talking_points: {
           type: "array",
-          // minItems > 1 not supported by Anthropic structured output;
-          // the system prompt enforces "at least 2" explicitly.
-          maxItems: 3,
+          // Counts (2–3) enforced by the system prompt only.
           items: { type: "string" },
           description:
             "2–3 talking points. Each is a complete sentence the recruiter can say verbatim.",
