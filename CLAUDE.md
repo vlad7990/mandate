@@ -23,3 +23,6 @@
 - [ ] Add error monitoring (Sentry or similar)
 - [ ] Write onboarding documentation
 - [ ] Set up status page
+- [ ] Run Lighthouse audit on / marketing page and fix any LCP/CLS issues from animations before public launch
+- [ ] Test all landing page animations on mobile devices
+- [ ] Verify simulator works correctly in production (rate limiting, API responses)

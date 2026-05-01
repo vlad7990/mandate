@@ -1527,8 +1527,19 @@
   background-position: 100% 0;
   -webkit-background-clip: text;
   background-clip: text;
+  /*
+   * `-webkit-text-fill-color` is what actually pipes the gradient onto
+   * the text shape in modern browsers. We deliberately leave `color`
+   * as `var(--fg)` (instead of `transparent`) so the headline stays
+   * visible during the brief windows where the gradient paint isn't
+   * available — Fraunces still loading via next/font, hot-reload
+   * race, or a browser that doesn't honor `background-clip: text`
+   * cleanly. In supported browsers the text-fill-color override wins
+   * and the shimmer paints; in any failure mode the text falls back
+   * to solid foreground rather than going invisible.
+   */
   -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: var(--fg);
   animation: text-shimmer 2400ms ease-out 800ms 1 forwards;
 }
 
