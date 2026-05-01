@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Mandate favicon. Square format, dark Bloomberg-Terminal background +
+  electric-blue monospace M. Drawn as paths rather than rendered text so
+  the M stays crisp at 16×16 / 32×32 — sharp's librsvg text rasterisation
+  smears at tiny sizes when relying on system font fallbacks.
+
+  Geometry: 64×64 viewBox. The M occupies (10, 10) → (54, 54) with 8px
+  bar thickness and a centred V notch — gives the chunky monospace M
+  look without anti-aliasing artefacts at favicon sizes.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  width="64"
+  height="64"
+  shape-rendering="geometricPrecision"
+>
+  <!-- Dark background — full square -->
+  <rect width="64" height="64" fill="#0a0a0f" />
+
+  <!--
+    M as a single filled polygon. Outer perimeter starts at bottom-left,
+    walks up the left bar, across the inner V, down the right bar, then
+    cuts back through the inner notches.
+
+         (22,10)         (42,10)
+       ┌─┐                 ┌─┐
+       │ │\               /│ │
+       │ │ \             / │ │
+       │ │  \           /  │ │
+       │ │   \         /   │ │
+       │ │    \       /    │ │
+       │ │     \     /     │ │
+       │ │      ╲   ╱      │ │
+       │ │       ╲ ╱       │ │
+       │ │      (32,33)    │ │
+       │ │                 │ │
+       │ │                 │ │
+       └─┘                 └─┘
+     (10,54)             (54,54)
+  -->
+  <path
+    fill="#3b82f6"
+    d="M 10 54
+       L 10 10
+       L 22 10
+       L 32 26
+       L 42 10
+       L 54 10
+       L 54 54
+       L 44 54
+       L 44 28
+       L 36 40
+       L 32 35
+       L 28 40
+       L 20 28
+       L 20 54
+       Z"
+  />
+</svg>

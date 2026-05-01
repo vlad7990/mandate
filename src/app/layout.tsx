@@ -67,6 +67,19 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+    // SVG first — modern browsers prefer it; PNG fallbacks cover
+    // Safari + older Chrome / Firefox that won't render SVG favicons
+    // at every size cleanly. apple-touch-icon is the home-screen
+    // artefact iOS Safari saves when "Add to Home Screen" runs.
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+    shortcut: ["/favicon.ico"],
+  },
 };
 
 export default function RootLayout({
