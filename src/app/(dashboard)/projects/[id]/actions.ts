@@ -12,6 +12,13 @@ import {
 import { runRoleAnalysis } from "@/lib/ai/run-role-analysis";
 import { runClientPsychology } from "@/lib/ai/run-client-psychology";
 import { runCompanyCulture } from "@/lib/ai/run-company-culture";
+import { runSearchHealth } from "@/lib/ai/run-search-health";
+import type {
+  HealthSuggestion,
+  HealthSuggestionsBlob,
+} from "@/lib/ai/search-health-agent";
+import { computeProjectHealth } from "@/lib/metrics/health";
+import { computePipelineMetrics } from "@/lib/metrics/pipeline";
 import {
   type CalibrationModel,
   type CompanyContext,
@@ -564,4 +571,320 @@ export async function toggleCultureFlagAction(
   }
 
   revalidatePath(`/projects/${projectId}`);
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Search Health AI Suggestions
+//
+// Triggered on demand from the project page / metrics page when the
+// computed health is stalled or at_risk. Persists to
+// projects.health_suggestions so the panel can render the latest
+// set without re-running the agent on every visit.
+// ────────────────────────────────────────────────────────────────────────
+
+export async function generateHealthSuggestionsAction(
+  projectId: string
+): Promise<HealthSuggestionsBlob> {
+  if (!projectId) throw new Error("Missing projectId.");
+  const auth = await requireActiveUser();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: project, error: projectErr } = await supabase
+    .from("projects")
+    .select(
+      "id, title, company_name, calibration_model, company_context, organization_id"
+    )
+    .eq("id", projectId)
+    .single<{
+      id: string;
+      title: string;
+      company_name: string;
+      calibration_model: unknown;
+      company_context: unknown;
+      organization_id: string | null;
+    }>();
+  if (projectErr || !project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  // Compute health + pipeline metrics fresh — the dashboard caches
+  // these but the agent should always run on the live state.
+  const [health, pipeline, queriesQ, feedbackQ] = await Promise.all([
+    computeProjectHealth(projectId),
+    computePipelineMetrics(projectId),
+    supabase
+      .from("boolean_queries")
+      .select("query_type, search_type, content, version")
+      .eq("project_id", projectId)
+      .order("version", { ascending: false }),
+    supabase
+      .from("feedback")
+      .select("feedback_type, content, interpreted, created_at")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
+
+  if (health.status === "healthy") {
+    throw new Error(
+      "Project health is healthy — suggestions are only generated when stalled or at-risk."
+    );
+  }
+
+  // Reduce queries to one row per slot (highest version wins).
+  type QueryRow = {
+    query_type: string;
+    search_type: string;
+    content: string;
+    version: number;
+  };
+  const seenSlots = new Set<string>();
+  const queries: SearchHealthQueryShape[] = [];
+  for (const row of (queriesQ.data ?? []) as QueryRow[]) {
+    const slot = slotKeyFor(row.query_type, row.search_type);
+    if (!slot || seenSlots.has(slot)) continue;
+    seenSlots.add(slot);
+    queries.push({
+      slot,
+      content: row.content,
+      version: row.version,
+      word_count: wordCount(row.content),
+    });
+  }
+
+  type FbRow = {
+    feedback_type: string;
+    content: string;
+    interpreted: { summary?: string } | null;
+    created_at: string;
+  };
+  const recent_feedback = ((feedbackQ.data ?? []) as FbRow[]).map((f) => ({
+    feedback_type: f.feedback_type,
+    summary: f.interpreted?.summary ?? null,
+    content: f.content,
+    created_at: f.created_at,
+  }));
+
+  const result = await runSearchHealth(
+    {
+      project: {
+        title: project.title,
+        company_name: project.company_name,
+        calibration: project.calibration_model ?? {},
+        company_context: project.company_context ?? {},
+      },
+      health,
+      pipeline_summary: {
+        active_pool_size: pipeline.activePoolSize,
+        rejected_count: pipeline.rejectedCount,
+        weekly_velocity: pipeline.weeklyVelocity,
+        funnel: pipeline.funnel.map((f) => ({
+          stage: f.stage,
+          count: f.count,
+        })),
+      },
+      boolean_queries: queries,
+      recent_feedback,
+    },
+    {
+      projectId,
+      organizationId: project.organization_id,
+    }
+  );
+
+  const { error: updateErr } = await supabase
+    .from("projects")
+    .update({
+      health_suggestions: result,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+  if (updateErr) {
+    throw new Error(
+      `Failed to persist suggestions: ${updateErr.message}`
+    );
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/metrics`);
+  return result;
+}
+
+export async function dismissHealthSuggestionAction(
+  projectId: string,
+  suggestionId: string
+): Promise<void> {
+  if (!projectId || !suggestionId) {
+    throw new Error("Missing projectId or suggestionId.");
+  }
+  const auth = await requireActiveUser();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("health_suggestions, organization_id")
+    .eq("id", projectId)
+    .single<{
+      health_suggestions: HealthSuggestionsBlob | null;
+      organization_id: string | null;
+    }>();
+  if (!project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+  if (!project.health_suggestions) return;
+
+  const next = {
+    ...project.health_suggestions,
+    suggestions: project.health_suggestions.suggestions.map((s) =>
+      s.id === suggestionId ? { ...s, dismissed: true } : s
+    ),
+  };
+
+  const { error } = await supabase
+    .from("projects")
+    .update({
+      health_suggestions: next,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+  if (error) throw new Error(`Failed to dismiss: ${error.message}`);
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/metrics`);
+}
+
+/**
+ * Apply a sourcing-category suggestion. Treats the suggestion's
+ * applicable_payload.replacement as the new boolean query content
+ * and inserts a new boolean_queries row at version+1 — same flow
+ * the recruiter would run via "Regenerate" on the sourcing page,
+ * minus the AI call.
+ */
+export async function applySourcingSuggestionAction(
+  projectId: string,
+  suggestionId: string
+): Promise<{ slot: string; version: number }> {
+  if (!projectId || !suggestionId) {
+    throw new Error("Missing projectId or suggestionId.");
+  }
+  const auth = await requireActiveUser();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("health_suggestions, organization_id")
+    .eq("id", projectId)
+    .single<{
+      health_suggestions: HealthSuggestionsBlob | null;
+      organization_id: string | null;
+    }>();
+  if (!project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+  if (!project.health_suggestions) {
+    throw new Error("No suggestions available — generate first.");
+  }
+
+  const suggestion = project.health_suggestions.suggestions.find(
+    (s: HealthSuggestion) => s.id === suggestionId
+  );
+  if (!suggestion) throw new Error("Suggestion not found.");
+  if (suggestion.category !== "sourcing") {
+    throw new Error("Only sourcing suggestions can be auto-applied today.");
+  }
+  const slot = suggestion.applicable_slot;
+  const replacement = suggestion.applicable_payload?.replacement;
+  if (!slot || typeof replacement !== "string" || replacement.trim().length === 0) {
+    throw new Error("Suggestion is missing slot or replacement content.");
+  }
+
+  // Map slot to (query_type, search_type) the boolean_queries row uses.
+  const meta = SLOT_META[slot];
+  if (!meta) throw new Error(`Unknown slot: ${slot}`);
+
+  // Find current max version for the slot.
+  const { data: existing } = await supabase
+    .from("boolean_queries")
+    .select("version")
+    .eq("project_id", projectId)
+    .eq("query_type", meta.query_type)
+    .eq("search_type", meta.search_type)
+    .order("version", { ascending: false })
+    .limit(1);
+  const nextVersion =
+    Array.isArray(existing) && existing.length > 0
+      ? (existing[0].version as number) + 1
+      : 1;
+
+  const { error: insertErr } = await supabase
+    .from("boolean_queries")
+    .insert({
+      project_id: projectId,
+      organization_id: auth.organizationId,
+      query_type: meta.query_type,
+      search_type: meta.search_type,
+      content: replacement.trim(),
+      version: nextVersion,
+      updated_at: new Date().toISOString(),
+    });
+  if (insertErr) {
+    throw new Error(`Failed to apply suggestion: ${insertErr.message}`);
+  }
+
+  // Mark the suggestion as dismissed so it doesn't keep tempting the
+  // recruiter to apply again.
+  const updated = {
+    ...project.health_suggestions,
+    suggestions: project.health_suggestions.suggestions.map(
+      (s: HealthSuggestion) =>
+        s.id === suggestionId ? { ...s, dismissed: true } : s
+    ),
+  };
+  await supabase
+    .from("projects")
+    .update({
+      health_suggestions: updated,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/metrics`);
+  revalidatePath(`/projects/${projectId}/sourcing`);
+  return { slot, version: nextVersion };
+}
+
+type SearchHealthQueryShape = {
+  slot: string;
+  content: string;
+  version: number;
+  word_count: number;
+};
+
+const SLOT_META: Record<
+  string,
+  { query_type: string; search_type: string }
+> = {
+  linkedin_exact: { query_type: "linkedin", search_type: "exact" },
+  linkedin_broad: { query_type: "linkedin", search_type: "broad" },
+  linkedin_adjacent: { query_type: "linkedin", search_type: "adjacent" },
+  linkedin_competitor: { query_type: "linkedin", search_type: "competitor" },
+  google_xray: { query_type: "google_xray", search_type: "exact" },
+  ats: { query_type: "ats", search_type: "exact" },
+};
+
+function slotKeyFor(query_type: string, search_type: string): string | null {
+  for (const [slot, meta] of Object.entries(SLOT_META)) {
+    if (meta.query_type === query_type && meta.search_type === search_type) {
+      return slot;
+    }
+  }
+  return null;
+}
+
+function wordCount(content: string): number {
+  return content.trim().split(/\s+/).filter(Boolean).length;
 }

@@ -270,3 +270,67 @@ export async function saveQueryEditAction(
 
   revalidatePath(`/projects/${projectId}/sourcing`);
 }
+
+/**
+ * Restore a historical version by inserting a new boolean_queries row
+ * at version+1 with the historical content. Mirrors the regenerate
+ * flow's append-only behaviour — the prior history stays intact so
+ * the recruiter can roll forward from any point.
+ */
+export async function restoreQueryVersionAction(
+  projectId: string,
+  rowId: string
+): Promise<{ slot: string; version: number }> {
+  const { organizationId } = await requireAuth();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: source, error: srcErr } = await supabase
+    .from("boolean_queries")
+    .select("query_type, search_type, content, version")
+    .eq("id", rowId)
+    .eq("project_id", projectId)
+    .single<{
+      query_type: string;
+      search_type: string;
+      content: string;
+      version: number;
+    }>();
+
+  if (srcErr || !source) {
+    throw new Error("Source version not found.");
+  }
+
+  // Find current max version for the slot.
+  const { data: latest } = await supabase
+    .from("boolean_queries")
+    .select("version")
+    .eq("project_id", projectId)
+    .eq("query_type", source.query_type)
+    .eq("search_type", source.search_type)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ version: number }>();
+
+  const nextVersion = (latest?.version ?? source.version) + 1;
+
+  const { error: insertErr } = await supabase
+    .from("boolean_queries")
+    .insert({
+      project_id: projectId,
+      organization_id: organizationId,
+      query_type: source.query_type,
+      search_type: source.search_type,
+      content: source.content,
+      version: nextVersion,
+      updated_at: new Date().toISOString(),
+    });
+  if (insertErr) {
+    throw new Error(`Failed to restore version: ${insertErr.message}`);
+  }
+
+  revalidatePath(`/projects/${projectId}/sourcing`);
+  return {
+    slot: `${source.query_type}_${source.search_type}`,
+    version: nextVersion,
+  };
+}

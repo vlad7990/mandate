@@ -37,8 +37,10 @@ import {
 } from "./candidate-search-panel";
 import { ClientIntelligencePanel } from "./client-intelligence-panel";
 import { CultureIntelligencePanel } from "./culture-intelligence-panel";
+import { HealthSuggestionsPanel } from "./health-suggestions-panel";
 import type { ClientPsychology } from "@/lib/ai/client-psychology-agent";
 import type { CultureProfile } from "@/lib/ai/company-culture-agent";
+import type { HealthSuggestionsBlob } from "@/lib/ai/search-health-agent";
 import {
   normaliseAnnotationMap,
   normaliseFlagArray,
@@ -69,6 +71,7 @@ type ProjectRow = {
     | null;
   recalibration_summary: RecalibrationSummary | null;
   client_psychology: ClientPsychology | null;
+  health_suggestions: HealthSuggestionsBlob | null;
 };
 
 type SpecState = {
@@ -122,7 +125,7 @@ export default async function ProjectPage({
   const { data, error } = await supabase
     .from("projects")
     .select(
-      "id, title, company_name, one_line_input, status, created_at, calibration_model, company_context, recalibration_summary, client_psychology"
+      "id, title, company_name, one_line_input, status, created_at, calibration_model, company_context, recalibration_summary, client_psychology, health_suggestions"
     )
     .eq("id", id)
     .single();
@@ -213,6 +216,14 @@ export default async function ProjectPage({
 
       {health && (
         <WeeklyHealthCard projectId={project.id} health={health} />
+      )}
+
+      {health && (
+        <HealthSuggestionsPanel
+          projectId={project.id}
+          initial={project.health_suggestions}
+          healthStatus={health.status}
+        />
       )}
 
       <section className="space-y-3">

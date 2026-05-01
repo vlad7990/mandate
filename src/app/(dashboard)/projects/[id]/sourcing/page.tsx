@@ -10,6 +10,10 @@ import {
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
 import { SourcingEditor } from "./sourcing-editor";
 import { SourcingEmpty } from "./sourcing-empty";
+import {
+  SourcingVersionHistory,
+  type SlotVersions,
+} from "./version-history";
 
 type ProjectRow = {
   id: string;
@@ -144,16 +148,85 @@ export default async function SourcingPage({
     queries[slot.key] = state?.content ?? "";
   }
 
+  // Per-version performance — count candidates created while each
+  // version was the active one. A version is "active" from its
+  // updated_at until the next version's updated_at (or now). The
+  // spec calls this "candidates found while using V2".
+  const slotVersions = await buildSlotVersions(supabase, id, slotStates);
+
   return (
-    <SourcingEditor
-      projectId={project.id}
-      roleTitle={project.title}
-      companyName={project.company_name}
-      finalSpecVersion={finalSpec.version}
-      slotStates={slotStates}
-      initialQueries={queries}
-      calibration={project.calibration_model ?? {}}
-      companyContext={project.company_context ?? {}}
-    />
+    <>
+      <SourcingEditor
+        projectId={project.id}
+        roleTitle={project.title}
+        companyName={project.company_name}
+        finalSpecVersion={finalSpec.version}
+        slotStates={slotStates}
+        initialQueries={queries}
+        calibration={project.calibration_model ?? {}}
+        companyContext={project.company_context ?? {}}
+      />
+      <div className="max-w-7xl mx-auto px-6 pb-10">
+        <SourcingVersionHistory
+          projectId={project.id}
+          slots={slotVersions}
+        />
+      </div>
+    </>
   );
+}
+
+async function buildSlotVersions(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  projectId: string,
+  slotStates: Record<SlotKey, SlotState | null>
+): Promise<SlotVersions[]> {
+  // Pull every candidate created_at for the project so we can
+  // attribute by timestamp window. Cheap because we only need one
+  // column.
+  const { data: candidateRows } = await supabase
+    .from("candidates")
+    .select("created_at")
+    .eq("project_id", projectId);
+  const candidateTimestamps = ((candidateRows ?? []) as Array<{
+    created_at: string;
+  }>)
+    .map((r) => new Date(r.created_at).getTime())
+    .filter((t) => Number.isFinite(t))
+    .sort((a, b) => a - b);
+
+  return SLOTS.map((slot): SlotVersions => {
+    const state = slotStates[slot.key];
+    if (!state) return { slot: slot.key, versions: [] };
+
+    // history is sorted version desc; build ascending so we can
+    // compute window endpoints by looking at the next version's
+    // updated_at.
+    const ascending = [...state.history].sort(
+      (a, b) => a.version - b.version
+    );
+
+    const versions = ascending.map((entry, i) => {
+      const start = new Date(entry.updated_at).getTime();
+      const end =
+        i + 1 < ascending.length
+          ? new Date(ascending[i + 1].updated_at).getTime()
+          : Number.POSITIVE_INFINITY;
+      const candidates_attributed = candidateTimestamps.filter(
+        (t) => t >= start && t < end
+      ).length;
+      return {
+        rowId: entry.rowId,
+        version: entry.version,
+        content: entry.content,
+        updated_at: entry.updated_at,
+        candidates_attributed,
+      };
+    });
+
+    // Newest first so the version-history component renders in the
+    // same order recruiters expect.
+    versions.sort((a, b) => b.version - a.version);
+    return { slot: slot.key, versions };
+  });
 }

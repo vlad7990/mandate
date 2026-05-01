@@ -17,11 +17,14 @@ import {
   type MandateBarDatum,
 } from "@/components/charts/mandate-charts";
 import { cn } from "@/lib/utils";
+import type { HealthSuggestionsBlob } from "@/lib/ai/search-health-agent";
+import { HealthSuggestionsPanel } from "../health-suggestions-panel";
 
 type ProjectRow = {
   id: string;
   title: string;
   company_name: string;
+  health_suggestions: HealthSuggestionsBlob | null;
 };
 
 const HEALTH_TONES: Record<HealthStatus, string> = {
@@ -46,7 +49,7 @@ export default async function ProjectMetricsPage({
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, title, company_name")
+    .select("id, title, company_name, health_suggestions")
     .eq("id", id)
     .single<ProjectRow>();
 
@@ -188,6 +191,12 @@ export default async function ProjectMetricsPage({
             </ul>
           </section>
         )}
+
+        <HealthSuggestionsPanel
+          projectId={project.id}
+          initial={project.health_suggestions}
+          healthStatus={health.status}
+        />
 
         {/* Funnel */}
         <FunnelSection

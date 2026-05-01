@@ -9,6 +9,10 @@ import { JobSpecEditor } from "./job-spec-editor";
 import { JobSpecEmpty } from "./job-spec-empty";
 import { JobSpecError } from "./job-spec-error";
 import { JobSpecGenerating } from "./job-spec-generating";
+import {
+  SpecDiffPanel,
+  type SpecVersionPayload,
+} from "./spec-diff-panel";
 
 type ProjectRow = {
   id: string;
@@ -173,6 +177,47 @@ export default async function JobSpecPage({
     ? normalizeSections(finalRow.content_json)
     : null;
 
+  // Author display names for the diff panel's timeline. One query
+  // covers every distinct created_by uuid across versions.
+  const authorIds = Array.from(
+    new Set(
+      rows
+        .map((r) => r.created_by)
+        .filter((v): v is string => typeof v === "string")
+    )
+  );
+  let authorNames = new Map<string, string>();
+  if (authorIds.length > 0) {
+    const { data: authors } = await supabase
+      .from("users")
+      .select("id, full_name, email")
+      .in("id", authorIds);
+    authorNames = new Map(
+      ((authors ?? []) as Array<{
+        id: string;
+        full_name: string | null;
+        email: string | null;
+      }>).map((u) => [
+        u.id,
+        (u.full_name?.trim() || u.email || "Unknown") as string,
+      ])
+    );
+  }
+
+  const diffVersions: SpecVersionPayload[] = rows
+    .filter((r) => !r.is_generating)
+    .map((r) => ({
+      id: r.id,
+      version: r.version,
+      is_final: r.is_final,
+      updated_at: r.updated_at,
+      created_at: r.created_at,
+      created_by_name: r.created_by
+        ? authorNames.get(r.created_by) ?? null
+        : null,
+      sections: normalizeSections(r.content_json),
+    }));
+
   return (
     <JobSpecEditor
       // Force a clean remount when the editor spec changes (e.g. an
@@ -212,6 +257,14 @@ export default async function JobSpecPage({
                 failedGenerationRow.generation_error ?? "Generation failed.",
             }
           : null
+      }
+      versionDiffPanel={
+        diffVersions.length > 1 ? (
+          <SpecDiffPanel
+            versions={diffVersions}
+            currentSpecId={editorRow.id}
+          />
+        ) : null
       }
     />
   );

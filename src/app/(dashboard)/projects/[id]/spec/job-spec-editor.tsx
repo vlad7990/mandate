@@ -58,6 +58,12 @@ type Props = {
     version: number;
     error: string;
   } | null;
+  /**
+   * Optional rich diff panel rendered below the editor when ≥2
+   * versions exist. Server-built so the side-by-side, timeline, and
+   * divergence callout don't re-fetch every version's content_json.
+   */
+  versionDiffPanel?: React.ReactNode;
 };
 
 type Tab = "draft" | "history";
@@ -80,6 +86,7 @@ export function JobSpecEditor({
   calibration,
   activeGeneration,
   failedGeneration,
+  versionDiffPanel,
 }: Props) {
   const router = useRouter();
   const [sections, setSections] = useState<JobSpecSections>(initialSections);
@@ -384,6 +391,10 @@ export function JobSpecEditor({
           </div>
         </footer>
       </div>
+
+      {versionDiffPanel && (
+        <div className="mt-5">{versionDiffPanel}</div>
+      )}
 
       {confirmFinalOpen && (
         <FinalizeConfirm
