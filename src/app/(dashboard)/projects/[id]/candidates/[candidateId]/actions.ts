@@ -13,6 +13,8 @@ import {
   type RecruiterAssessment,
 } from "@/lib/recruiter-assessment";
 import type { Tier } from "@/lib/ranking/tiers";
+import { runPositioning, type PositioningInput } from "@/lib/ai/run-positioning";
+import type { PositioningResult } from "@/lib/ai/positioning-agent";
 
 // ────────────────────────────────────────────────────────────────────────
 // Auth helper
@@ -508,3 +510,131 @@ export async function updateRecruiterAssessment(
 
   revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
 }
+
+// ────────────────────────────────────────────────────────────────────────
+// Positioning Agent — generate 3 pitches + 3 email templates
+// ────────────────────────────────────────────────────────────────────────
+
+const POSITIONING_KEY = "positioning_kit" as const;
+
+/**
+ * Run the positioning agent for this candidate against this role and
+ * persist the result onto cv_structured.positioning_kit via the atomic
+ * RPC. Returns the generated artefacts so the panel can render them
+ * immediately without a re-fetch.
+ */
+export async function generatePositioningAction(
+  candidateId: string,
+  projectId: string
+): Promise<PositioningResult> {
+  if (!candidateId || !projectId) {
+    throw new Error("Missing candidateId or projectId.");
+  }
+
+  const auth = await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
+
+  const supabase = await createServerSupabaseClient();
+
+  // Pull project + candidate + recent feedback in parallel.
+  const [projectQ, candidateQ, feedbackQ] = await Promise.all([
+    supabase
+      .from("projects")
+      .select(
+        "id, title, company_name, calibration_model, company_context, organization_id"
+      )
+      .eq("id", projectId)
+      .single<{
+        id: string;
+        title: string;
+        company_name: string;
+        calibration_model: unknown;
+        company_context: unknown;
+        organization_id: string | null;
+      }>(),
+    supabase
+      .from("candidates")
+      .select(
+        "id, full_name, current_title, current_company, archetype, cv_structured, recruiter_assessment"
+      )
+      .eq("id", candidateId)
+      .single<{
+        id: string;
+        full_name: string;
+        current_title: string | null;
+        current_company: string | null;
+        archetype: string | null;
+        cv_structured: unknown;
+        recruiter_assessment: unknown;
+      }>(),
+    supabase
+      .from("feedback")
+      .select("feedback_type, content, interpreted, created_at")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
+
+  if (projectQ.error || !projectQ.data) {
+    throw new Error("Project not found.");
+  }
+  if (projectQ.data.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+  if (candidateQ.error || !candidateQ.data) {
+    throw new Error("Candidate not found.");
+  }
+
+  const project = projectQ.data;
+  const candidate = candidateQ.data;
+  const cv = (candidate.cv_structured ?? {}) as Record<string, unknown>;
+
+  type FbRow = {
+    feedback_type: string;
+    content: string;
+    interpreted: { summary?: string } | null;
+    created_at: string;
+  };
+  const recentFeedback = ((feedbackQ.data ?? []) as FbRow[]).map((f) => ({
+    feedback_type: f.feedback_type,
+    content: f.content,
+    summary: f.interpreted?.summary ?? null,
+    created_at: f.created_at,
+  }));
+
+  const input: PositioningInput = {
+    role: {
+      role_title: project.title,
+      company_name: project.company_name,
+      calibration: project.calibration_model ?? {},
+      company_context: project.company_context ?? {},
+    },
+    candidate: {
+      candidate_id: candidate.id,
+      full_name: candidate.full_name,
+      current_title: candidate.current_title,
+      current_company: candidate.current_company,
+      archetype: candidate.archetype,
+      profile: cv,
+      evaluation: cv["evaluation"] ?? null,
+      recruiter_assessment: candidate.recruiter_assessment ?? null,
+    },
+    recent_feedback: recentFeedback,
+  };
+
+  const result = await runPositioning(input, {
+    projectId,
+    organizationId: project.organization_id,
+  });
+
+  // Persist atomically to cv_structured.positioning_kit.
+  await rpcSetCvField(candidateId, projectId, POSITIONING_KEY, result);
+
+  revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
+  return result;
+}
+
+// Note: the cv_structured key for the positioning kit is intentionally
+// not exported from this "use server" file — Next.js only allows async
+// function exports here. Components read the kit straight off
+// cv_structured.positioning_kit.

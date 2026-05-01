@@ -783,6 +783,8 @@ const PROJECT_MODULES: Array<{
   { href: (id) => `/projects/${id}/metrics`, label: "Metrics", icon: "analytics" },
   { href: (id) => `/projects/${id}/shortlist`, label: "Shortlist", icon: "view_kanban" },
   { href: (id) => `/projects/${id}/feedback`, label: "Feedback", icon: "rate_review" },
+  { href: (id) => `/projects/${id}/reports`, label: "Weekly Report", icon: "summarize" },
+  { href: (id) => `/projects/${id}/hiring-manager`, label: "HM Portal", icon: "share" },
 ];
 
 function ProjectModuleNav({ projectId }: { projectId: string }) {

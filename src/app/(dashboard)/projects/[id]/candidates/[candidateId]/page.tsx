@@ -31,7 +31,9 @@ import { EvaluationReport } from "./evaluation-report";
 import { CandidateNotesPanel, type CandidateNote } from "./notes-panel";
 import { PipelineSelect } from "./pipeline-select";
 import { RecruiterAssessmentPanel } from "./recruiter-assessment-panel";
+import { PositioningPanel } from "./positioning-panel";
 import { TierComparison } from "@/components/ui/tier-comparison";
+import type { PositioningResult } from "@/lib/ai/positioning-agent";
 import { RetryEvaluationButton } from "./retry-evaluation-button";
 
 type ProjectRow = {
@@ -308,6 +310,15 @@ export default async function CandidateProfilePage({
         projectId={project.id}
         aiTier={aiTier}
         initial={recruiterAssessment}
+      />
+
+      <PositioningPanel
+        candidateId={candidate.id}
+        projectId={project.id}
+        candidateName={candidate.full_name}
+        initial={
+          ((profile as { positioning_kit?: PositioningResult }).positioning_kit) ?? null
+        }
       />
 
       {/* Bento grid: AI summary + strengths/dev/risks (8) | fit (4) */}
