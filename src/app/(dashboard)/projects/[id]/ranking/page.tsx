@@ -21,6 +21,8 @@ import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { LiveTick } from "@/components/ui/live-tick";
 import { MastHead, type MastTone } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
+import { TierComparison } from "@/components/ui/tier-comparison";
+import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { RefreshScoresButton } from "./refresh-button";
 
 type ProjectRow = {
@@ -39,6 +41,7 @@ type CandidateBase = {
   pipeline_stage: string | null;
   cv_processing: boolean;
   cv_structured: unknown;
+  recruiter_assessment: unknown;
 };
 
 type ScoreRow = {
@@ -67,13 +70,6 @@ const DIMENSIONS: Array<{
   { key: "regulatory", scoreField: "regulatory_score", label: "Regulatory", short: "REGUL" },
   { key: "transformation", scoreField: "transformation_score", label: "Transformation", short: "XFORM" },
 ];
-
-const TIER_TONE: Record<Tier, ChipTone> = {
-  tier_1: "secondary",
-  tier_2: "primary",
-  tier_3: "warn",
-  tier_4: "danger",
-};
 
 const TIER_MAST: Record<Tier, MastTone> = {
   tier_1: "secondary",
@@ -114,7 +110,7 @@ export default async function RankingPage({
   const { data: rawCandidates } = await supabase
     .from("candidates")
     .select(
-      "id, full_name, current_title, current_company, archetype, pipeline_stage, cv_processing, cv_structured"
+      "id, full_name, current_title, current_company, archetype, pipeline_stage, cv_processing, cv_structured, recruiter_assessment"
     )
     .eq("project_id", id);
 
@@ -403,6 +399,7 @@ function CandidateRow({
   const stage = (candidate.pipeline_stage ?? "found") as PipelineStage;
   const movement = movementSummary(score.rank_position, score.previous_rank);
   const overall = typeof score.overall_score === "number" ? score.overall_score : 0;
+  const recruiter = normaliseRecruiterAssessment(candidate.recruiter_assessment);
 
   return (
     <li>
@@ -445,9 +442,11 @@ function CandidateRow({
                 {overall.toFixed(1)}
               </div>
             </div>
-            <StatusChip tone={TIER_TONE[score.tier as Tier]}>
-              {tierShortLabel(TIER_BANDS[score.tier as Tier].label)}
-            </StatusChip>
+            <TierComparison
+              aiTier={score.tier as Tier}
+              recruiterTier={recruiter.tier}
+              compact
+            />
             {archetype && (
               <span className="hidden md:inline">
                 <StatusChip tone={ARCHETYPE_TONE[archetype]} intensity="soft">
@@ -648,12 +647,6 @@ function movementSummary(
   const delta = previous - current;
   if (delta > 0) return { kind: "up", delta };
   return { kind: "down", delta: -delta };
-}
-
-function tierShortLabel(label: string): string {
-  // Tier labels arrive as e.g. "Tier 1 · Strong fit"; we keep just the
-  // tier identifier ("Tier 1") for the chip so it stays compact.
-  return label.split(" · ")[0] ?? label;
 }
 
 function initials(name: string): string {

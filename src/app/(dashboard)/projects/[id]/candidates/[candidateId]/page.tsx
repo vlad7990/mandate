@@ -17,6 +17,8 @@ import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { LiveTick } from "@/components/ui/live-tick";
 import { StatusChip } from "@/components/ui/status-chip";
 import { ensureCandidateEvaluation } from "@/lib/ai/generate-evaluation";
+import { type Tier } from "@/lib/ranking/tiers";
+import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { ContactFieldsRail } from "./contact-fields";
 import {
   ArchetypeSelect,
@@ -28,6 +30,8 @@ import {
 import { EvaluationReport } from "./evaluation-report";
 import { CandidateNotesPanel, type CandidateNote } from "./notes-panel";
 import { PipelineSelect } from "./pipeline-select";
+import { RecruiterAssessmentPanel } from "./recruiter-assessment-panel";
+import { TierComparison } from "@/components/ui/tier-comparison";
 import { RetryEvaluationButton } from "./retry-evaluation-button";
 
 type ProjectRow = {
@@ -57,6 +61,7 @@ type CandidateRow = {
   cv_structured: unknown;
   cv_processing: boolean;
   cv_parse_error: string | null;
+  recruiter_assessment: unknown;
   updated_at: string;
 };
 
@@ -108,7 +113,7 @@ export default async function CandidateProfilePage({
   const { data: candidate, error: candError } = await supabase
     .from("candidates")
     .select(
-      "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, pipeline_stage, cv_url, cv_structured, cv_processing, cv_parse_error, updated_at"
+      "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, pipeline_stage, cv_url, cv_structured, cv_processing, cv_parse_error, recruiter_assessment, updated_at"
     )
     .eq("id", candidateId)
     .single<CandidateRow>();
@@ -143,6 +148,20 @@ export default async function CandidateProfilePage({
   // null when the CV isn't ready yet — the page renders a placeholder
   // panel instead of the full report.
   const evaluation = await ensureCandidateEvaluation(candidate.id, project.id);
+
+  // AI-derived tier from candidate_scores (the canonical source of
+  // truth — `evaluation.final_verdict.tier` is a snapshot per report).
+  const { data: scoreRow } = await supabase
+    .from("candidate_scores")
+    .select("tier, overall_score")
+    .eq("project_id", project.id)
+    .eq("candidate_id", candidate.id)
+    .maybeSingle<{ tier: string | null; overall_score: number | null }>();
+  const aiTier = (scoreRow?.tier as Tier | null) ?? null;
+
+  const recruiterAssessment = normaliseRecruiterAssessment(
+    candidate.recruiter_assessment
+  );
 
   // Notes feed for the candidate. Pinned first, then newest. RLS scopes
   // by org, so the SELECT is implicitly safe across orgs.
@@ -260,6 +279,8 @@ export default async function CandidateProfilePage({
         stage={stage}
         projectId={project.id}
         fitPct={fitPct}
+        aiTier={aiTier}
+        recruiterTier={recruiterAssessment.tier}
       />
 
       <ArchetypeStrip
@@ -281,6 +302,13 @@ export default async function CandidateProfilePage({
           projectId={project.id}
         />
       ) : null}
+
+      <RecruiterAssessmentPanel
+        candidateId={candidate.id}
+        projectId={project.id}
+        aiTier={aiTier}
+        initial={recruiterAssessment}
+      />
 
       {/* Bento grid: AI summary + strengths/dev/risks (8) | fit (4) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -376,6 +404,8 @@ function CandidateHero({
   stage,
   projectId,
   fitPct,
+  aiTier,
+  recruiterTier,
 }: {
   candidate: CandidateRow;
   profile: Partial<CandidateProfile>;
@@ -383,6 +413,8 @@ function CandidateHero({
   stage: PipelineStage;
   projectId: string;
   fitPct: number | null;
+  aiTier: Tier | null;
+  recruiterTier: Tier | null;
 }) {
   return (
     <article className="bg-surface-container border border-outline-variant relative overflow-hidden">
@@ -446,12 +478,13 @@ function CandidateHero({
                 />
               </span>
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 flex-wrap">
               <ArchetypeSelect
                 candidateId={candidate.id}
                 projectId={projectId}
                 value={archetype}
               />
+              <TierComparison aiTier={aiTier} recruiterTier={recruiterTier} />
             </div>
           </div>
           <div className="space-y-1.5">

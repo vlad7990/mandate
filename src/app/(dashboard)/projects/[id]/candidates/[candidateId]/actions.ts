@@ -6,6 +6,13 @@ import {
   EVALUATION_KEY,
   ensureCandidateEvaluation,
 } from "@/lib/ai/generate-evaluation";
+import {
+  PRESENT_DECISIONS,
+  RECRUITER_TIERS,
+  type PresentDecision,
+  type RecruiterAssessment,
+} from "@/lib/recruiter-assessment";
+import type { Tier } from "@/lib/ranking/tiers";
 
 // ────────────────────────────────────────────────────────────────────────
 // Auth helper
@@ -416,4 +423,88 @@ async function rpcSetCvField(
   if (error) {
     throw new Error(`Failed to update ${key}: ${error.message}`);
   }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Recruiter assessment (override layer on top of AI evaluation)
+// ────────────────────────────────────────────────────────────────────────
+
+export type RecruiterAssessmentInput = {
+  tier: Tier | null;
+  fit_notes: string;
+  strengths: string[];
+  would_present: PresentDecision | null;
+};
+
+/**
+ * Persist the recruiter's own read on a candidate. Stored on the
+ * `candidates.recruiter_assessment` JSONB column added in migration
+ * 022. Never touches AI-derived fields (cv_structured, scores,
+ * evaluation) — the recruiter's read is always additive.
+ *
+ * Empty assessments (all fields null/empty/empty-array) clear the
+ * column to NULL so the UI can fall back to "no recruiter read yet".
+ */
+export async function updateRecruiterAssessment(
+  candidateId: string,
+  projectId: string,
+  input: RecruiterAssessmentInput
+): Promise<void> {
+  if (!candidateId || !projectId) {
+    throw new Error("Missing candidateId or projectId.");
+  }
+
+  const auth = await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
+
+  // Validate enums; coerce empties.
+  const tier =
+    input.tier && (RECRUITER_TIERS as readonly string[]).includes(input.tier)
+      ? input.tier
+      : null;
+  const wouldPresent =
+    input.would_present &&
+    (PRESENT_DECISIONS as readonly string[]).includes(input.would_present)
+      ? input.would_present
+      : null;
+  const fitNotes =
+    typeof input.fit_notes === "string" ? input.fit_notes.trim() : "";
+  const strengths = Array.isArray(input.strengths)
+    ? input.strengths
+        .filter((s): s is string => typeof s === "string")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0)
+    : [];
+
+  const isEmpty =
+    tier == null &&
+    wouldPresent == null &&
+    fitNotes.length === 0 &&
+    strengths.length === 0;
+
+  const next: RecruiterAssessment | null = isEmpty
+    ? null
+    : {
+        tier,
+        fit_notes: fitNotes,
+        strengths,
+        would_present: wouldPresent,
+        updated_by: auth.userId,
+        updated_at: new Date().toISOString(),
+      };
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase
+    .from("candidates")
+    .update({
+      recruiter_assessment: next,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", candidateId);
+
+  if (error) {
+    throw new Error(`Failed to save recruiter assessment: ${error.message}`);
+  }
+
+  revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
 }

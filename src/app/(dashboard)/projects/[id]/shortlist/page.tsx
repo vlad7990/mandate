@@ -7,6 +7,7 @@ import {
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import { normalizeReport } from "@/lib/ai/shortlist-report";
+import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { ShortlistBuilder, type PoolCandidate } from "./shortlist-builder";
 
 type ProjectRow = {
@@ -33,6 +34,7 @@ type CandidateLite = {
   archetype: string | null;
   pipeline_stage: string | null;
   cv_structured: unknown;
+  recruiter_assessment: unknown;
 };
 
 type ScoreLite = {
@@ -77,7 +79,7 @@ export default async function ShortlistPage({
     supabase
       .from("candidates")
       .select(
-        "id, full_name, current_title, current_company, archetype, pipeline_stage, cv_structured"
+        "id, full_name, current_title, current_company, archetype, pipeline_stage, cv_structured, recruiter_assessment"
       )
       .eq("project_id", id),
     supabase
@@ -97,6 +99,7 @@ export default async function ShortlistPage({
     .map((c) => {
       const score = scoresByCandidate.get(c.id);
       const profile = (c.cv_structured ?? {}) as Partial<CandidateProfile>;
+      const recruiter = normaliseRecruiterAssessment(c.recruiter_assessment);
       return {
         id: c.id,
         full_name: c.full_name,
@@ -107,6 +110,7 @@ export default async function ShortlistPage({
         rank: score?.rank_position ?? null,
         overall: score?.overall_score ?? null,
         tier: score?.tier ?? null,
+        recruiter_tier: recruiter.tier,
         fit_dimensions: extractFit(score),
         headline: profile.summary?.split(/(?<=[.!?])\s/)[0] ?? null,
       };

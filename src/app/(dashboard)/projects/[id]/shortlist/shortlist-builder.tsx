@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { MastHead } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
+import { TierComparison } from "@/components/ui/tier-comparison";
+import type { Tier } from "@/lib/ranking/tiers";
 import {
   type Archetype,
   type FitDimensions,
@@ -37,6 +39,8 @@ export type PoolCandidate = {
   rank: number | null;
   overall: number | null;
   tier: string | null;
+  /** Recruiter override tier from candidates.recruiter_assessment. */
+  recruiter_tier: string | null;
   fit_dimensions: FitDimensions | null;
   headline: string | null;
 };
@@ -602,17 +606,22 @@ function PoolCard({
             })}
           </div>
         )}
-        <div className="flex items-center justify-between mt-2">
-          {candidate.archetype ? (
-            <StatusChip
-              tone={ARCHETYPE_TONE[candidate.archetype]}
-              intensity="soft"
-            >
-              {candidate.archetype}
-            </StatusChip>
-          ) : (
-            <span />
-          )}
+        <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {candidate.archetype && (
+              <StatusChip
+                tone={ARCHETYPE_TONE[candidate.archetype]}
+                intensity="soft"
+              >
+                {candidate.archetype}
+              </StatusChip>
+            )}
+            <TierComparison
+              aiTier={(candidate.tier as Tier | null) ?? null}
+              recruiterTier={(candidate.recruiter_tier as Tier | null) ?? null}
+              compact
+            />
+          </div>
           <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
             Add
             <span className="material-symbols-outlined text-[12px]" aria-hidden>
@@ -788,7 +797,7 @@ function SlateCard({
           </div>
         )}
 
-        <div className="flex items-center justify-between font-mono-label text-mono-label text-outline uppercase tracking-widest pt-2 border-t border-outline-variant/40">
+        <div className="flex items-center justify-between font-mono-label text-mono-label text-outline uppercase tracking-widest pt-2 border-t border-outline-variant/40 gap-2 flex-wrap">
           <span className="tabular-nums">
             Rank #{String(candidate.rank ?? 0).padStart(2, "0")} ·{" "}
             {candidate.overall != null ? `${candidate.overall.toFixed(1)}/10` : "—"}
@@ -801,6 +810,13 @@ function SlateCard({
               {candidate.archetype}
             </StatusChip>
           )}
+        </div>
+        <div className="pt-2 border-t border-outline-variant/40">
+          <TierComparison
+            aiTier={(candidate.tier as Tier | null) ?? null}
+            recruiterTier={(candidate.recruiter_tier as Tier | null) ?? null}
+            compact
+          />
         </div>
         <Link
           href={`/projects/${projectId}/candidates/${candidate.id}`}

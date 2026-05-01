@@ -12,6 +12,10 @@ import {
   type CompanyContext,
 } from "@/lib/ai/role-analysis";
 import {
+  type Archetype,
+  type PipelineStage,
+} from "@/lib/ai/cv-parsing";
+import {
   DIMENSION_KEYS,
   type DimensionKey,
 } from "@/lib/ai/onboarding-analysis";
@@ -22,9 +26,15 @@ import {
   type HealthStatus,
   type ProjectHealthSummary,
 } from "@/lib/metrics/types";
+import { type Tier } from "@/lib/ranking/tiers";
+import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { MastHead } from "@/components/ui/mast-head";
 import { LiveTick } from "@/components/ui/live-tick";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
+import {
+  CandidateSearchPanel,
+  type SearchCandidate,
+} from "./candidate-search-panel";
 import { ProjectPoller } from "./project-poller";
 
 type RecalibrationSummary = {
@@ -137,6 +147,13 @@ export default async function ProjectPage({
     ? await computeProjectHealth(project.id)
     : null;
 
+  // Candidate search pool — shape every candidate the org can see for
+  // the "Find Candidates" panel. We pull the project's own candidates
+  // and the global pool in one batch (RLS scopes by org), tag each row
+  // with whether it lives in THIS project, and stitch the project's
+  // score row + recruiter assessment in.
+  const searchCandidates = ready ? await loadSearchCandidates(project.id) : [];
+
   const specAction: AgentTileAction = {
     label: spec.hasAny ? "Open Job Spec" : "Build Job Spec",
     href: `/projects/${project.id}/spec`,
@@ -204,6 +221,14 @@ export default async function ProjectPage({
         />
         {spec.hasFinal && <BuildSourcingCta projectId={project.id} />}
       </section>
+
+      {ready && (
+        <CandidateSearchPanel
+          projectId={project.id}
+          projectTitle={project.title}
+          candidates={searchCandidates}
+        />
+      )}
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <RoleSummaryCard ready={ready} calibration={calibration} />
@@ -787,4 +812,83 @@ function ProjectModuleNav({ projectId }: { projectId: string }) {
       </ul>
     </nav>
   );
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Candidate search pool loader
+//
+// Pulls every candidate the caller's org can see (RLS scopes by org)
+// plus this project's score rows, then stitches them into the
+// SearchCandidate shape the panel expects. Done in one server pass so
+// the panel renders immediately on page load — the AI call only fires
+// when the recruiter clicks "Analyze Selected".
+// ────────────────────────────────────────────────────────────────────────
+
+async function loadSearchCandidates(
+  projectId: string
+): Promise<SearchCandidate[]> {
+  const supabase = await createServerSupabaseClient();
+
+  type CandidateRow = {
+    id: string;
+    project_id: string | null;
+    full_name: string;
+    current_title: string | null;
+    current_company: string | null;
+    archetype: string | null;
+    pipeline_stage: string | null;
+    recruiter_assessment: unknown;
+  };
+  type ProjectLite = { id: string; title: string };
+  type ScoreRow = {
+    candidate_id: string;
+    rank_position: number | null;
+    overall_score: number | null;
+    tier: string | null;
+  };
+
+  const [candidatesQ, projectsQ, scoresQ] = await Promise.all([
+    supabase
+      .from("candidates")
+      .select(
+        "id, project_id, full_name, current_title, current_company, archetype, pipeline_stage, recruiter_assessment"
+      )
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("projects")
+      .select("id, title"),
+    supabase
+      .from("candidate_scores")
+      .select("candidate_id, rank_position, overall_score, tier")
+      .eq("project_id", projectId),
+  ]);
+
+  const candidates = (candidatesQ.data ?? []) as CandidateRow[];
+  const projects = (projectsQ.data ?? []) as ProjectLite[];
+  const scoreById = new Map<string, ScoreRow>();
+  for (const s of (scoresQ.data ?? []) as ScoreRow[]) {
+    scoreById.set(s.candidate_id, s);
+  }
+  const titleById = new Map(projects.map((p) => [p.id, p.title]));
+
+  return candidates.map<SearchCandidate>((c) => {
+    const score = scoreById.get(c.id);
+    const recruiter = normaliseRecruiterAssessment(c.recruiter_assessment);
+    const inProject = c.project_id === projectId;
+    return {
+      id: c.id,
+      full_name: c.full_name,
+      current_title: c.current_title,
+      current_company: c.current_company,
+      archetype: c.archetype as Archetype | null,
+      pipeline_stage: c.pipeline_stage as PipelineStage | null,
+      in_project: inProject,
+      rank: inProject ? score?.rank_position ?? null : null,
+      overall_score: inProject ? score?.overall_score ?? null : null,
+      ai_tier: inProject ? ((score?.tier as Tier | null) ?? null) : null,
+      recruiter_tier: recruiter.tier,
+      project_id: c.project_id,
+      project_title: c.project_id ? titleById.get(c.project_id) ?? null : null,
+    };
+  });
 }
