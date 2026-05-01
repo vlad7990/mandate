@@ -290,7 +290,9 @@
   font-family: var(--font-display);
   font-weight: 340;
   font-variation-settings: "opsz" 144, "SOFT" 0;
-  font-size: clamp(3rem, 9vw, 8rem);
+  /* Spec — bumped from 9vw to 10vw to push toward the upper bound on
+     mid-width viewports and feel monumental at 1280px+. */
+  font-size: clamp(4rem, 10vw, 8rem);
   line-height: 0.92;
   letter-spacing: -0.035em;
   color: var(--fg);
@@ -2125,5 +2127,79 @@
     --space-section-tight: 3.5rem;
     --space-section-feature: 5rem;
     --space-section-hero: 5rem;
+  }
+}
+
+/* ──────────────── Hero — explicit per-element entrance ─────────── */
+/*
+ * Replaces the auto-stagger on `.m-hero-enter > *:nth-child` with
+ * explicit per-element animation-delay so the spec timings can be
+ * dialed exactly without re-ordering DOM children. All use
+ * `animation-fill-mode: both` so the FROM state is applied during the
+ * delay (no flicker) AND the TO state is held after completion.
+ */
+.m-hero-kicker,
+.m-hero-headline-1,
+.m-hero-sub,
+.m-hero-ctas,
+.m-hero-stats {
+  opacity: 0;
+  animation: hero-rise 1100ms var(--ease-emphatic) forwards;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+.m-hero-kicker { animation-delay: 0ms; display: inline-flex; }
+.m-hero-headline-1 { animation-delay: 200ms; display: inline-block; }
+.m-hero-sub { animation-delay: 600ms; }
+.m-hero-ctas { animation-delay: 900ms; }
+/* Stats rail comes in after the buttons so the page reads top-down. */
+.m-hero-stats { animation-delay: 1100ms; margin-top: 8px; }
+
+/* Pulsing dot on the kicker — same blink keyframe as the nav LIVE
+   indicator so the page's "system is live" motif stays consistent. */
+.m-hero-kicker-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 0.625rem;
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.65);
+  animation: live-blink 1.4s ease-in-out infinite;
+  /* Anchored to the baseline of the kicker text. */
+  vertical-align: middle;
+}
+
+/* Typewriter cursor — block caret in electric blue with the same
+   blink rhythm used elsewhere. Sized in em so it scales with the
+   surrounding font (looks right inside h1, h2, body alike). */
+.m-typewriter-cursor {
+  display: inline-block;
+  width: 0.45em;
+  height: 0.85em;
+  margin-left: 0.05em;
+  background: var(--accent);
+  vertical-align: baseline;
+  translate: 0 0.05em;
+  box-shadow: 0 0 10px var(--accent-glow);
+  animation: term-cursor-blink 540ms steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-hero-kicker,
+  .m-hero-headline-1,
+  .m-hero-sub,
+  .m-hero-ctas,
+  .m-hero-stats {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+  .m-hero-kicker-dot {
+    animation: none;
+  }
+  .m-typewriter-cursor {
+    display: none;
   }
 }

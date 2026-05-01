@@ -8,6 +8,7 @@ import { ScrollProgress } from "./_components/scroll-progress";
 import { TerminalCursor } from "./_components/terminal-cursor";
 import { ParticleField } from "./_components/particle-field";
 import { DataStream } from "./_components/data-stream";
+import { TypewriterReveal } from "./_components/typewriter-reveal";
 
 export const dynamic = "force-static";
 
@@ -91,8 +92,14 @@ function Hero() {
       <span className="m-section__numeral" aria-hidden>
         00
       </span>
+      {/*
+        Drop the auto-stagger m-hero-enter wrapper and instead use
+        explicit per-element classes (.m-hero-{kicker, headline-1, sub,
+        ctas, stats}) — that way the spec timings can be dialed
+        precisely without relying on DOM child order.
+      */}
       <div
-        className="m-container m-hero-enter"
+        className="m-container"
         style={{
           position: "relative",
           zIndex: 2,
@@ -104,24 +111,33 @@ function Hero() {
         }}
       >
         <span
-          className="m-eyebrow"
+          className="m-eyebrow m-hero-kicker"
           style={{ justifySelf: "center" }}
         >
-          <span style={{ color: "var(--accent)" }}>●</span>{" "}
+          <span className="m-hero-kicker-dot" aria-hidden />
           14_AGENTS · 31_MODULES · ONE_OPERATING_SYSTEM
         </span>
 
-        <h1 className="m-display m-display--shimmer">
-          Executive Search.
+        <h1 className="m-display">
+          <span className="m-hero-headline-1">Executive Search.</span>
           <br />
-          <em>Reinvented.</em>
+          <em>
+            <TypewriterReveal
+              text="Reinvented."
+              delay={700}
+              speed={80}
+              cursorDuration={2000}
+            />
+          </em>
         </h1>
 
         <p
-          className="m-lede"
+          className="m-lede m-hero-sub"
           style={{
             margin: "0 auto",
+            maxWidth: 640,
             fontSize: "clamp(1.0625rem, 1.5vw, 1.25rem)",
+            color: "var(--fg-muted)",
           }}
         >
           The AI Operating System that takes you from one-line brief to
@@ -130,12 +146,12 @@ function Hero() {
         </p>
 
         <div
+          className="m-hero-ctas"
           style={{
             display: "flex",
             gap: "0.75rem",
             justifyContent: "center",
             flexWrap: "wrap",
-            marginTop: "0.5rem",
           }}
         >
           <Link
@@ -151,7 +167,9 @@ function Hero() {
           </a>
         </div>
 
-        <HeroDataRail />
+        <div className="m-hero-stats">
+          <HeroDataRail />
+        </div>
       </div>
     </section>
   );
