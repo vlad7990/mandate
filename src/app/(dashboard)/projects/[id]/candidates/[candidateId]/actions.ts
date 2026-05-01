@@ -15,6 +15,12 @@ import {
 import type { Tier } from "@/lib/ranking/tiers";
 import { runPositioning, type PositioningInput } from "@/lib/ai/run-positioning";
 import type { PositioningResult } from "@/lib/ai/positioning-agent";
+import { runCandidateResearch } from "@/lib/ai/run-candidate-research";
+import type { CandidateIntelligenceReport } from "@/lib/ai/candidate-research-agent";
+import { runTriangulation } from "@/lib/ai/run-triangulation";
+import type { TriangulationReport } from "@/lib/ai/triangulation-agent";
+import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-agent";
+import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
 
 // ────────────────────────────────────────────────────────────────────────
 // Auth helper
@@ -928,4 +934,216 @@ export async function overridePsychologyConfidenceAction(
     Object.keys(next).length === 0 ? null : next
   );
   revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Candidate Web Research Agent — public-presence dossier via web_search
+// ────────────────────────────────────────────────────────────────────────
+
+const CANDIDATE_INTELLIGENCE_KEY = "candidate_intelligence" as const;
+
+export async function researchCandidateAction(
+  candidateId: string,
+  projectId: string
+): Promise<CandidateIntelligenceReport> {
+  if (!candidateId || !projectId) {
+    throw new Error("Missing candidateId or projectId.");
+  }
+
+  const auth = await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
+
+  const supabase = await createServerSupabaseClient();
+  const [candidateQ, projectQ] = await Promise.all([
+    supabase
+      .from("candidates")
+      .select(
+        "id, full_name, current_title, current_company, location, linkedin_url, github_url, website_url, cv_structured"
+      )
+      .eq("id", candidateId)
+      .single<{
+        id: string;
+        full_name: string;
+        current_title: string | null;
+        current_company: string | null;
+        location: string | null;
+        linkedin_url: string | null;
+        github_url: string | null;
+        website_url: string | null;
+        cv_structured: unknown;
+      }>(),
+    supabase
+      .from("projects")
+      .select("organization_id")
+      .eq("id", projectId)
+      .single<{ organization_id: string | null }>(),
+  ]);
+
+  if (candidateQ.error || !candidateQ.data) {
+    throw new Error("Candidate not found.");
+  }
+  if (projectQ.error || !projectQ.data) {
+    throw new Error("Project not found.");
+  }
+  if (projectQ.data.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const c = candidateQ.data;
+  const cv = (c.cv_structured ?? {}) as Record<string, unknown>;
+  // Trim heavy CV fields before sending — the model needs narrative
+  // anchors for identity verification, not the full role history.
+  const cv_summary = {
+    summary: cv.summary,
+    domain: cv.domain,
+    scale: cv.scale,
+    years_experience: cv.years_experience,
+    archetype: cv.archetype,
+    tech_exposure: Array.isArray(cv.tech_exposure)
+      ? (cv.tech_exposure as unknown[]).slice(0, 8)
+      : undefined,
+    transformation_experience: Array.isArray(cv.transformation_experience)
+      ? (cv.transformation_experience as unknown[]).slice(0, 5)
+      : undefined,
+  };
+
+  const report = await runCandidateResearch(
+    {
+      candidate: {
+        full_name: c.full_name,
+        current_title: c.current_title,
+        current_company: c.current_company,
+        location: c.location,
+        linkedin_url: c.linkedin_url,
+        github_url: c.github_url,
+        website_url: c.website_url,
+        cv_summary,
+      },
+    },
+    {
+      projectId,
+      candidateId,
+      organizationId: projectQ.data.organization_id,
+    }
+  );
+
+  await rpcSetCvField(
+    candidateId,
+    projectId,
+    CANDIDATE_INTELLIGENCE_KEY,
+    report
+  );
+  revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
+  return report;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Triangulation — synthesise Company + HM + Candidate intelligence into
+// a decision-grade fit report. Gated on all three base reports existing.
+// ────────────────────────────────────────────────────────────────────────
+
+const TRIANGULATION_KEY = "triangulation_report" as const;
+
+export async function generateTriangulationAction(
+  candidateId: string,
+  projectId: string
+): Promise<TriangulationReport> {
+  if (!candidateId || !projectId) {
+    throw new Error("Missing candidateId or projectId.");
+  }
+
+  const auth = await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
+
+  const supabase = await createServerSupabaseClient();
+  const [candidateQ, projectQ] = await Promise.all([
+    supabase
+      .from("candidates")
+      .select(
+        "id, full_name, current_title, current_company, archetype, cv_structured"
+      )
+      .eq("id", candidateId)
+      .single<{
+        id: string;
+        full_name: string;
+        current_title: string | null;
+        current_company: string | null;
+        archetype: string | null;
+        cv_structured: unknown;
+      }>(),
+    supabase
+      .from("projects")
+      .select(
+        "organization_id, company_name, calibration_model, company_context"
+      )
+      .eq("id", projectId)
+      .single<{
+        organization_id: string | null;
+        company_name: string;
+        calibration_model: { role_title?: string | null } | null;
+        company_context: Record<string, unknown> | null;
+      }>(),
+  ]);
+
+  if (candidateQ.error || !candidateQ.data) {
+    throw new Error("Candidate not found.");
+  }
+  if (projectQ.error || !projectQ.data) {
+    throw new Error("Project not found.");
+  }
+  if (projectQ.data.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const cv = (candidateQ.data.cv_structured ?? {}) as Record<string, unknown>;
+  const candidateIntelligence = cv[CANDIDATE_INTELLIGENCE_KEY] as
+    | CandidateIntelligenceReport
+    | undefined;
+  const company = (projectQ.data.company_context ?? {}) as Record<
+    string,
+    unknown
+  >;
+  const companyIntelligence = company.intelligence_report as
+    | CompanyIntelligenceReport
+    | undefined;
+  const hmIntelligence = company.hm_intelligence as
+    | HiringManagerIntelligenceReport
+    | undefined;
+
+  const missing: string[] = [];
+  if (!companyIntelligence) missing.push("Company Intelligence");
+  if (!candidateIntelligence) missing.push("Candidate Intelligence");
+  if (!hmIntelligence) missing.push("Hiring Manager Intelligence");
+  if (missing.length > 0) {
+    throw new Error(
+      `Triangulation needs all three base reports first. Missing: ${missing.join(", ")}.`
+    );
+  }
+
+  const report = await runTriangulation(
+    {
+      candidate: {
+        full_name: candidateQ.data.full_name,
+        current_title: candidateQ.data.current_title,
+        current_company: candidateQ.data.current_company,
+        archetype: candidateQ.data.archetype,
+      },
+      role: {
+        title: projectQ.data.calibration_model?.role_title ?? null,
+        company_name: projectQ.data.company_name,
+      },
+      company_intelligence: companyIntelligence!,
+      candidate_intelligence: candidateIntelligence!,
+      hm_intelligence: hmIntelligence!,
+    },
+    {
+      projectId,
+      candidateId,
+      organizationId: projectQ.data.organization_id,
+    }
+  );
+
+  await rpcSetCvField(candidateId, projectId, TRIANGULATION_KEY, report);
+  revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
+  return report;
 }

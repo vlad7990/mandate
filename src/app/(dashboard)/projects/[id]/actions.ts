@@ -14,6 +14,9 @@ import { runClientPsychology } from "@/lib/ai/run-client-psychology";
 import { runCompanyCulture } from "@/lib/ai/run-company-culture";
 import { runCompanyIntelligence } from "@/lib/ai/run-company-intelligence";
 import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-agent";
+import { runHiringManagerResearch } from "@/lib/ai/run-hiring-manager-research";
+import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
+import type { Stakeholder } from "@/lib/ai/onboarding-analysis";
 import { runSearchHealth } from "@/lib/ai/run-search-health";
 import type {
   HealthSuggestion,
@@ -968,6 +971,110 @@ export async function researchCompanyAction(
   if (updateErr) {
     throw new Error(
       `Failed to persist intelligence report: ${updateErr.message}`
+    );
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  return result;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Hiring Manager Research Agent — public-presence dossier on the HM
+//
+// HM identity is pulled from onboarding_responses.stakeholders. By
+// default we use the first stakeholder; the action accepts an optional
+// override so the recruiter can target a specific stakeholder when
+// there are multiple.
+// ────────────────────────────────────────────────────────────────────────
+
+export async function researchHiringManagerAction(
+  projectId: string,
+  hmNameOverride?: string
+): Promise<HiringManagerIntelligenceReport> {
+  if (!projectId) throw new Error("Missing projectId.");
+  const auth = await requireActiveUser();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: project, error: projectErr } = await supabase
+    .from("projects")
+    .select(
+      "id, company_name, calibration_model, company_context, onboarding_responses, organization_id"
+    )
+    .eq("id", projectId)
+    .single<{
+      id: string;
+      company_name: string;
+      calibration_model: Partial<CalibrationModel> | null;
+      company_context: Record<string, unknown> | null;
+      onboarding_responses: { stakeholders?: Stakeholder[] } | null;
+      organization_id: string | null;
+    }>();
+
+  if (projectErr || !project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const stakeholders = (project.onboarding_responses?.stakeholders ?? []).filter(
+    (s): s is Stakeholder => Boolean(s && typeof s.name === "string" && s.name.trim())
+  );
+
+  const targetName = hmNameOverride?.trim();
+  const hm = targetName
+    ? stakeholders.find(
+        (s) => s.name.trim().toLowerCase() === targetName.toLowerCase()
+      )
+    : stakeholders[0];
+
+  if (!hm) {
+    throw new Error(
+      stakeholders.length === 0
+        ? "No stakeholders captured in onboarding — add the hiring manager before researching them."
+        : `Stakeholder "${targetName}" not found in this project.`
+    );
+  }
+
+  const company = (project.company_context ?? {}) as Partial<CompanyContext>;
+
+  const result = await runHiringManagerResearch(
+    {
+      hm: {
+        name: hm.name,
+        role: hm.role || null,
+        focus: hm.focus || null,
+      },
+      company: {
+        name: company.company_name ?? project.company_name,
+        industry: company.industry ?? null,
+        business_model: company.business_model ?? null,
+      },
+      project: {
+        role_title: project.calibration_model?.role_title ?? null,
+      },
+    },
+    {
+      projectId,
+      organizationId: project.organization_id,
+    }
+  );
+
+  // Merge into company_context alongside intelligence_report and
+  // culture_profile — keep the JSONB column shape consistent.
+  const nextCompany: Record<string, unknown> = {
+    ...(project.company_context ?? {}),
+    hm_intelligence: result,
+  };
+
+  const { error: updateErr } = await supabase
+    .from("projects")
+    .update({
+      company_context: nextCompany,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+  if (updateErr) {
+    throw new Error(
+      `Failed to persist HM intelligence: ${updateErr.message}`
     );
   }
 

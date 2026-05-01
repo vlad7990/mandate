@@ -43,6 +43,13 @@ import {
   normaliseFlagArray,
 } from "@/lib/intelligence/overlays";
 import { PsychologyPanel } from "./psychology-panel";
+import { CandidateIntelligencePanel } from "./candidate-intelligence-panel";
+import { TriangulationPanel } from "./triangulation-panel";
+import type { CandidateIntelligenceReport } from "@/lib/ai/candidate-research-agent";
+import type { TriangulationReport } from "@/lib/ai/triangulation-agent";
+import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-agent";
+import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
+import type { Stakeholder } from "@/lib/ai/onboarding-analysis";
 import { RetryEvaluationButton } from "./retry-evaluation-button";
 
 type ProjectRow = {
@@ -51,8 +58,13 @@ type ProjectRow = {
   company_name: string;
   calibration_model: Partial<CalibrationModel> | null;
   company_context:
-    | (Partial<CompanyContext> & { culture_profile?: CultureProfile })
+    | (Partial<CompanyContext> & {
+        culture_profile?: CultureProfile;
+        intelligence_report?: CompanyIntelligenceReport;
+        hm_intelligence?: HiringManagerIntelligenceReport;
+      })
     | null;
+  onboarding_responses: { stakeholders?: Stakeholder[] } | null;
 };
 
 type CandidateRow = {
@@ -114,7 +126,9 @@ export default async function CandidateProfilePage({
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, title, company_name, calibration_model, company_context")
+    .select(
+      "id, title, company_name, calibration_model, company_context, onboarding_responses"
+    )
     .eq("id", id)
     .single<ProjectRow>();
 
@@ -358,6 +372,18 @@ export default async function CandidateProfilePage({
         )}
       />
 
+      <CandidateIntelligencePanel
+        candidateId={candidate.id}
+        projectId={project.id}
+        candidateName={candidate.full_name}
+        initial={
+          ((profile as { candidate_intelligence?: CandidateIntelligenceReport })
+            .candidate_intelligence) ?? null
+        }
+      />
+
+      <TriangulationTabRail />
+
       {/* Bento grid: AI summary + strengths/dev/risks (8) | fit (4) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-8 space-y-4">
@@ -413,6 +439,28 @@ export default async function CandidateProfilePage({
           />
         </div>
       </div>
+
+      <TriangulationPanel
+        candidateId={candidate.id}
+        projectId={project.id}
+        candidateName={candidate.full_name}
+        companyName={project.company_name}
+        hmName={
+          firstStakeholder(project.onboarding_responses)?.name ?? null
+        }
+        readiness={{
+          company: Boolean(project.company_context?.intelligence_report),
+          candidate: Boolean(
+            (profile as { candidate_intelligence?: CandidateIntelligenceReport })
+              .candidate_intelligence
+          ),
+          hm: Boolean(project.company_context?.hm_intelligence),
+        }}
+        initial={
+          ((profile as { triangulation_report?: TriangulationReport })
+            .triangulation_report) ?? null
+        }
+      />
 
       <CandidateNotesPanel
         candidateId={candidate.id}
@@ -1221,3 +1269,58 @@ function EvaluationPendingPanel({
 
 // Forces TS to treat ARCHETYPES as imported even if unused above (it's referenced by Archetype).
 void ARCHETYPES;
+
+/**
+ * First non-empty stakeholder is treated as the hiring manager — same
+ * convention used on the project page. Triangulation needs the name to
+ * label the HM circle in the Venn diagram and to gate the action.
+ */
+function firstStakeholder(
+  onboarding: { stakeholders?: Stakeholder[] } | null
+): Stakeholder | null {
+  const list = onboarding?.stakeholders ?? [];
+  return list.find((s) => s && typeof s.name === "string" && s.name.trim()) ?? null;
+}
+
+/**
+ * Inline tab rail above the bento grid. The Triangulation panel sits
+ * lower on the page; this rail is purely an anchor jump so the user can
+ * find it without scrolling. Server-rendered — no JS state needed.
+ */
+function TriangulationTabRail() {
+  return (
+    <nav
+      aria-label="Candidate views"
+      className="bg-surface-container-low border border-outline-variant"
+    >
+      <ul className="flex divide-x divide-outline-variant">
+        <li className="flex-1">
+          <a
+            href="#top"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 font-mono-label text-mono-label text-on-surface uppercase tracking-widest hover:bg-surface-container transition-colors"
+          >
+            <span className="material-symbols-outlined text-[14px]" aria-hidden>
+              person
+            </span>
+            Profile
+          </a>
+        </li>
+        <li className="flex-1">
+          <a
+            href="#triangulation"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 font-mono-label text-mono-label text-primary uppercase tracking-widest hover:bg-primary-container/10 transition-colors"
+          >
+            <span
+              className="material-symbols-outlined text-[14px]"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+              aria-hidden
+            >
+              change_history
+            </span>
+            Triangulation
+          </a>
+        </li>
+      </ul>
+    </nav>
+  );
+}

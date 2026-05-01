@@ -39,10 +39,13 @@ import { ClientIntelligencePanel } from "./client-intelligence-panel";
 import { CompanyIntelligencePanel } from "./company-intelligence-panel";
 import { CultureIntelligencePanel } from "./culture-intelligence-panel";
 import { HealthSuggestionsPanel } from "./health-suggestions-panel";
+import { HMIntelligencePanel } from "./hm-intelligence-panel";
 import type { ClientPsychology } from "@/lib/ai/client-psychology-agent";
 import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-agent";
 import type { CultureProfile } from "@/lib/ai/company-culture-agent";
 import type { HealthSuggestionsBlob } from "@/lib/ai/search-health-agent";
+import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
+import type { Stakeholder } from "@/lib/ai/onboarding-analysis";
 import {
   normaliseAnnotationMap,
   normaliseFlagArray,
@@ -72,8 +75,10 @@ type ProjectRow = {
     | (Partial<CompanyContext> & {
         culture_profile?: CultureProfile;
         intelligence_report?: CompanyIntelligenceReport;
+        hm_intelligence?: HiringManagerIntelligenceReport;
       })
     | null;
+  onboarding_responses: { stakeholders?: Stakeholder[] } | null;
   recalibration_summary: RecalibrationSummary | null;
   client_psychology: ClientPsychology | null;
   health_suggestions: HealthSuggestionsBlob | null;
@@ -130,7 +135,7 @@ export default async function ProjectPage({
   const { data, error } = await supabase
     .from("projects")
     .select(
-      "id, title, company_name, one_line_input, status, created_at, calibration_model, company_context, recalibration_summary, client_psychology, health_suggestions"
+      "id, title, company_name, one_line_input, status, created_at, calibration_model, company_context, recalibration_summary, client_psychology, health_suggestions, onboarding_responses"
     )
     .eq("id", id)
     .single();
@@ -273,6 +278,15 @@ export default async function ProjectPage({
       )}
 
       {ready && (
+        <HMIntelligencePanel
+          projectId={project.id}
+          hmName={primaryStakeholder(project.onboarding_responses)?.name ?? null}
+          hmRole={primaryStakeholder(project.onboarding_responses)?.role ?? null}
+          initial={project.company_context?.hm_intelligence ?? null}
+        />
+      )}
+
+      {ready && (
         <CompanyIntelligencePanel
           projectId={project.id}
           companyName={project.company_name}
@@ -330,6 +344,18 @@ export default async function ProjectPage({
       )}
     </div>
   );
+}
+
+/**
+ * The first stakeholder captured in onboarding is treated as the
+ * primary hiring manager. Returns null when nothing was captured —
+ * the HM panel renders an empty state in that case.
+ */
+function primaryStakeholder(
+  onboarding: { stakeholders?: Stakeholder[] } | null
+): Stakeholder | null {
+  const list = onboarding?.stakeholders ?? [];
+  return list.find((s) => s && typeof s.name === "string" && s.name.trim()) ?? null;
 }
 
 function ProjectHero({
