@@ -947,7 +947,7 @@ function Pricing() {
   const tiers = [
     {
       name: "Starter",
-      price: "299",
+      price: "399",
       cadence: "/mo",
       headline: "1 user, 3 active searches",
       points: [
@@ -960,7 +960,7 @@ function Pricing() {
     },
     {
       name: "Growth",
-      price: "799",
+      price: "999",
       cadence: "/mo",
       headline: "5 users, 10 active searches",
       points: [
@@ -974,7 +974,7 @@ function Pricing() {
     },
     {
       name: "Agency",
-      price: "1,499",
+      price: "1,899",
       cadence: "/mo",
       headline: "Unlimited users + searches",
       points: [
@@ -1053,7 +1053,7 @@ function Pricing() {
                     {t.name}
                   </span>
                   <div className="m-price__amount">
-                    <sup>£</sup>
+                    <sup>$</sup>
                     {t.price}
                     <sub style={{ marginLeft: "0.25rem" }}>{t.cadence}</sub>
                   </div>
