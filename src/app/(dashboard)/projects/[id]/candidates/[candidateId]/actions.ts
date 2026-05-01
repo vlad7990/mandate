@@ -638,3 +638,99 @@ export async function generatePositioningAction(
 // not exported from this "use server" file — Next.js only allows async
 // function exports here. Components read the kit straight off
 // cv_structured.positioning_kit.
+
+// ────────────────────────────────────────────────────────────────────────
+// Psychology Agent — generate behavioural / cultural-fit profile
+// ────────────────────────────────────────────────────────────────────────
+
+const PSYCHOLOGY_KEY = "psychology" as const;
+
+/**
+ * Run the candidate psychology agent and persist the result onto
+ * cv_structured.psychology via the atomic JSONB RPC. Returns the
+ * generated profile so the panel renders immediately.
+ */
+export async function generatePsychologyAction(
+  candidateId: string,
+  projectId: string
+) {
+  if (!candidateId || !projectId) {
+    throw new Error("Missing candidateId or projectId.");
+  }
+
+  const auth = await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
+
+  const supabase = await createServerSupabaseClient();
+
+  const [candidateQ, notesQ, projectQ] = await Promise.all([
+    supabase
+      .from("candidates")
+      .select(
+        "id, full_name, current_title, current_company, archetype, cv_structured"
+      )
+      .eq("id", candidateId)
+      .single<{
+        id: string;
+        full_name: string;
+        current_title: string | null;
+        current_company: string | null;
+        archetype: string | null;
+        cv_structured: unknown;
+      }>(),
+    supabase
+      .from("candidate_notes")
+      .select("note_type, content, created_at")
+      .eq("candidate_id", candidateId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("projects")
+      .select("organization_id")
+      .eq("id", projectId)
+      .single<{ organization_id: string | null }>(),
+  ]);
+
+  if (candidateQ.error || !candidateQ.data) {
+    throw new Error("Candidate not found.");
+  }
+  if (projectQ.error || !projectQ.data) {
+    throw new Error("Project not found.");
+  }
+  if (projectQ.data.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const { runPsychology } = await import("@/lib/ai/run-psychology");
+  const candidate = candidateQ.data;
+  const cv = (candidate.cv_structured ?? {}) as Record<string, unknown>;
+  type NoteRow = { note_type: string; content: string; created_at: string };
+  const notes = ((notesQ.data ?? []) as NoteRow[]).map((n) => ({
+    note_type: n.note_type,
+    content: n.content,
+    created_at: n.created_at,
+  }));
+
+  const profile = await runPsychology(
+    {
+      candidate: {
+        candidate_id: candidate.id,
+        full_name: candidate.full_name,
+        current_title: candidate.current_title,
+        current_company: candidate.current_company,
+        archetype: candidate.archetype,
+        profile: cv,
+        evaluation: cv["evaluation"] ?? null,
+      },
+      recruiter_notes: notes,
+    },
+    {
+      projectId,
+      organizationId: projectQ.data.organization_id,
+    }
+  );
+
+  await rpcSetCvField(candidateId, projectId, PSYCHOLOGY_KEY, profile);
+  revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
+  return profile;
+}

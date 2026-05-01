@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   ROLE_ANALYSIS_MAX,
@@ -9,6 +10,8 @@ import {
   type RoleAnalysisResult,
 } from "@/lib/ai/role-analysis-agent";
 import { runRoleAnalysis } from "@/lib/ai/run-role-analysis";
+import { runClientPsychology } from "@/lib/ai/run-client-psychology";
+import { runCompanyCulture } from "@/lib/ai/run-company-culture";
 import {
   type CalibrationModel,
   type CompanyContext,
@@ -207,4 +210,214 @@ function trimProfile(profile: Partial<CandidateProfile>): Partial<CandidateProfi
     tech_exposure: profile.tech_exposure?.slice(0, 8),
     transformation_experience: profile.transformation_experience?.slice(0, 4),
   };
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Client Psychology Agent — derive HM preference model from feedback
+// ────────────────────────────────────────────────────────────────────────
+
+export async function generateClientPsychologyAction(projectId: string) {
+  if (!projectId) throw new Error("Missing projectId.");
+  const auth = await requireActiveUser();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: project, error: projectErr } = await supabase
+    .from("projects")
+    .select(
+      "id, title, company_name, calibration_model, onboarding_responses, organization_id"
+    )
+    .eq("id", projectId)
+    .single<{
+      id: string;
+      title: string;
+      company_name: string;
+      calibration_model: unknown;
+      onboarding_responses: unknown;
+      organization_id: string | null;
+    }>();
+
+  if (projectErr || !project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const [feedbackQ, reviewsQ, candidatesQ] = await Promise.all([
+    supabase
+      .from("feedback")
+      .select(
+        "feedback_type, content, candidate_id, interpreted, triggered_recalibration, created_at"
+      )
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("hiring_manager_reviews")
+      .select("candidate_ratings, top_concern, hm_label, submitted_at")
+      .eq("project_id", projectId)
+      .order("submitted_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("candidates")
+      .select("id, full_name")
+      .eq("project_id", projectId),
+  ]);
+
+  type FbRow = {
+    feedback_type: string;
+    content: string;
+    candidate_id: string | null;
+    interpreted: { summary?: string } | null;
+    triggered_recalibration: boolean;
+    created_at: string;
+  };
+  const feedback = (feedbackQ.data ?? []) as FbRow[];
+  if (feedback.length < 3) {
+    throw new Error(
+      "Need at least 3 feedback rows before the agent can detect patterns."
+    );
+  }
+
+  const candById = new Map<string, string>();
+  for (const c of (candidatesQ.data ?? []) as Array<{
+    id: string;
+    full_name: string;
+  }>) {
+    candById.set(c.id, c.full_name);
+  }
+
+  const result = await runClientPsychology(
+    {
+      project: {
+        title: project.title,
+        company_name: project.company_name,
+        calibration: project.calibration_model ?? {},
+        onboarding: project.onboarding_responses ?? {},
+      },
+      feedback_count: feedback.length,
+      feedback_rows: feedback.map((f) => ({
+        feedback_type: f.feedback_type,
+        content: f.content,
+        candidate_id: f.candidate_id,
+        candidate_name: f.candidate_id
+          ? candById.get(f.candidate_id) ?? null
+          : null,
+        interpreted_summary: f.interpreted?.summary ?? null,
+        triggered_recalibration: f.triggered_recalibration,
+        created_at: f.created_at,
+      })),
+      hm_reviews: ((reviewsQ.data ?? []) as Array<{
+        candidate_ratings: unknown;
+        top_concern: string;
+        hm_label: string;
+        submitted_at: string;
+      }>).map((r) => ({
+        candidate_ratings: r.candidate_ratings,
+        top_concern: r.top_concern,
+        hm_label: r.hm_label,
+        submitted_at: r.submitted_at,
+      })),
+    },
+    {
+      projectId,
+      organizationId: project.organization_id,
+    }
+  );
+
+  const { error: updateErr } = await supabase
+    .from("projects")
+    .update({
+      client_psychology: result,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+  if (updateErr) {
+    throw new Error(
+      `Failed to persist client psychology: ${updateErr.message}`
+    );
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  return result;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Company Culture Agent — derive culture profile
+// ────────────────────────────────────────────────────────────────────────
+
+export async function generateCompanyCultureAction(projectId: string) {
+  if (!projectId) throw new Error("Missing projectId.");
+  const auth = await requireActiveUser();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: project, error: projectErr } = await supabase
+    .from("projects")
+    .select(
+      "id, company_context, onboarding_responses, organization_id"
+    )
+    .eq("id", projectId)
+    .single<{
+      id: string;
+      company_context: unknown;
+      onboarding_responses: unknown;
+      organization_id: string | null;
+    }>();
+
+  if (projectErr || !project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const { data: feedback } = await supabase
+    .from("feedback")
+    .select("feedback_type, content, interpreted, created_at")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  type FbRow = {
+    feedback_type: string;
+    content: string;
+    interpreted: { summary?: string } | null;
+    created_at: string;
+  };
+  const feedback_summaries = ((feedback ?? []) as FbRow[]).map((f) => ({
+    feedback_type: f.feedback_type,
+    summary: f.interpreted?.summary ?? null,
+    content: f.content,
+    created_at: f.created_at,
+  }));
+
+  const result = await runCompanyCulture(
+    {
+      company: project.company_context ?? {},
+      onboarding: project.onboarding_responses ?? {},
+      feedback_summaries,
+    },
+    {
+      projectId,
+      organizationId: project.organization_id,
+    }
+  );
+
+  // Merge into existing company_context.culture_profile.
+  const currentCompany = (project.company_context ?? {}) as Record<
+    string,
+    unknown
+  >;
+  const nextCompany = { ...currentCompany, culture_profile: result };
+
+  const { error: updateErr } = await supabase
+    .from("projects")
+    .update({
+      company_context: nextCompany,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+  if (updateErr) {
+    throw new Error(
+      `Failed to persist culture profile: ${updateErr.message}`
+    );
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  return result;
 }

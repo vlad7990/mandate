@@ -35,6 +35,10 @@ import {
   CandidateSearchPanel,
   type SearchCandidate,
 } from "./candidate-search-panel";
+import { ClientIntelligencePanel } from "./client-intelligence-panel";
+import { CultureIntelligencePanel } from "./culture-intelligence-panel";
+import type { ClientPsychology } from "@/lib/ai/client-psychology-agent";
+import type { CultureProfile } from "@/lib/ai/company-culture-agent";
 import { ProjectPoller } from "./project-poller";
 
 type RecalibrationSummary = {
@@ -56,8 +60,11 @@ type ProjectRow = {
   status: string | null;
   created_at: string | null;
   calibration_model: Partial<CalibrationModel> | null;
-  company_context: Partial<CompanyContext> | null;
+  company_context:
+    | (Partial<CompanyContext> & { culture_profile?: CultureProfile })
+    | null;
   recalibration_summary: RecalibrationSummary | null;
+  client_psychology: ClientPsychology | null;
 };
 
 type SpecState = {
@@ -111,7 +118,7 @@ export default async function ProjectPage({
   const { data, error } = await supabase
     .from("projects")
     .select(
-      "id, title, company_name, one_line_input, status, created_at, calibration_model, company_context, recalibration_summary"
+      "id, title, company_name, one_line_input, status, created_at, calibration_model, company_context, recalibration_summary, client_psychology"
     )
     .eq("id", id)
     .single();
@@ -153,6 +160,13 @@ export default async function ProjectPage({
   // with whether it lives in THIS project, and stitch the project's
   // score row + recruiter assessment in.
   const searchCandidates = ready ? await loadSearchCandidates(project.id) : [];
+
+  // Feedback count gates the Client Intelligence panel (need ≥3 events
+  // before the agent can detect patterns).
+  const { count: feedbackCount } = await supabase
+    .from("feedback")
+    .select("id", { count: "exact", head: true })
+    .eq("project_id", project.id);
 
   const specAction: AgentTileAction = {
     label: spec.hasAny ? "Open Job Spec" : "Build Job Spec",
@@ -227,6 +241,21 @@ export default async function ProjectPage({
           projectId={project.id}
           projectTitle={project.title}
           candidates={searchCandidates}
+        />
+      )}
+
+      {ready && (
+        <ClientIntelligencePanel
+          projectId={project.id}
+          initial={project.client_psychology}
+          feedbackCount={feedbackCount ?? 0}
+        />
+      )}
+
+      {ready && (
+        <CultureIntelligencePanel
+          projectId={project.id}
+          initial={project.company_context?.culture_profile ?? null}
         />
       )}
 

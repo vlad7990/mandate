@@ -34,6 +34,10 @@ import { RecruiterAssessmentPanel } from "./recruiter-assessment-panel";
 import { PositioningPanel } from "./positioning-panel";
 import { TierComparison } from "@/components/ui/tier-comparison";
 import type { PositioningResult } from "@/lib/ai/positioning-agent";
+import type { CandidatePsychology } from "@/lib/ai/psychology-agent";
+import type { CultureProfile } from "@/lib/ai/company-culture-agent";
+import { computeCultureMatch } from "@/lib/culture/culture-match";
+import { PsychologyPanel } from "./psychology-panel";
 import { RetryEvaluationButton } from "./retry-evaluation-button";
 
 type ProjectRow = {
@@ -41,7 +45,9 @@ type ProjectRow = {
   title: string;
   company_name: string;
   calibration_model: Partial<CalibrationModel> | null;
-  company_context: Partial<CompanyContext> | null;
+  company_context:
+    | (Partial<CompanyContext> & { culture_profile?: CultureProfile })
+    | null;
 };
 
 type CandidateRow = {
@@ -319,6 +325,18 @@ export default async function CandidateProfilePage({
         initial={
           ((profile as { positioning_kit?: PositioningResult }).positioning_kit) ?? null
         }
+      />
+
+      <PsychologyPanel
+        candidateId={candidate.id}
+        projectId={project.id}
+        initial={
+          ((profile as { psychology?: CandidatePsychology }).psychology) ?? null
+        }
+        cultureMatch={computeCultureMatch(
+          (profile as { psychology?: CandidatePsychology }).psychology ?? null,
+          project.company_context?.culture_profile ?? null
+        )}
       />
 
       {/* Bento grid: AI summary + strengths/dev/risks (8) | fit (4) */}
