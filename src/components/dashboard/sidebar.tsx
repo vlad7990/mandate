@@ -11,11 +11,19 @@ type NavItem = {
   icon: string;
   /** Treat any path that starts with this as active. */
   matchPrefix?: boolean;
+  /** Optional badge count rendered below the label. */
+  badgeKey?: "network";
 };
 
 const NAV: NavItem[] = [
   { href: "/", label: "Projects", icon: "folder_open" },
   { href: "/candidates", label: "Candidates", icon: "groups" },
+  {
+    href: "/candidates/network",
+    label: "Network",
+    icon: "hub",
+    badgeKey: "network",
+  },
   { href: "/candidates/search", label: "AI Search", icon: "neurology" },
   { href: "/analytics", label: "Analytics", icon: "analytics", matchPrefix: true },
   { href: "/settings", label: "Settings", icon: "settings", matchPrefix: true },
@@ -27,9 +35,12 @@ type SidebarProps = {
     email: string;
     role: string | null;
   };
+  badges?: {
+    network?: number;
+  };
 };
 
-export function Sidebar({ user }: SidebarProps) {
+export function Sidebar({ user, badges }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -80,6 +91,16 @@ export function Sidebar({ user }: SidebarProps) {
               <span className="font-mono uppercase tracking-tighter text-[8px]">
                 {item.label}
               </span>
+              {item.badgeKey && badges?.[item.badgeKey] != null && (
+                <span
+                  className={cn(
+                    "font-mono uppercase tracking-tighter text-[8px] tabular-nums",
+                    active ? "text-primary" : "text-outline"
+                  )}
+                >
+                  {badges[item.badgeKey]}
+                </span>
+              )}
             </Link>
           );
         })}
