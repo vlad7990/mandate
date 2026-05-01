@@ -1,42 +1,82 @@
 /*
- * Mandate marketing surface.
+ * Mandate marketing surface — elevated.
  *
- * Aesthetic direction: Bloomberg Terminal × editorial newsroom. Dense
- * monospaced data type alongside an editorial display serif (Fraunces),
- * surgical electric-blue accent on near-black, persistent grid + grain
- * overlays for atmosphere. Independent from the dashboard's tokens —
- * the dashboard's Material You palette stays untouched.
+ * Aesthetic direction: Bloomberg Terminal × editorial newsroom, with a
+ * strong tilt toward typographic monumentality. Display headlines run
+ * to 8rem+ on desktop in Fraunces with the SOFT axis lit on italics so
+ * key emotional moments inherit a softer terminal-italic form. Each
+ * section is anchored by a numeral that sits behind the content at
+ * 14–18rem, ~3% opacity — the editorial register. Surgical electric-
+ * blue accents, persistent grid + grain overlays, layered radial
+ * glows that intensify around CTAs.
+ *
+ * Animation language is sequenced rather than scattered: each section
+ * earns one orchestrated reveal (hero stagger; pipeline left-to-right
+ * cascade; feature grid 50ms stagger; pricing scale-in; problem cards
+ * stagger). Micro-interactions are short (160–280ms) and use only
+ * transform + opacity for GPU acceleration. All motion is suppressed
+ * on prefers-reduced-motion AND damped at <=640px to spare mobile
+ * thermals.
+ *
+ * Independent from the dashboard tokens — the dashboard's Material
+ * You palette stays untouched.
  */
 
 .marketing-root {
-  /* Palette */
-  --bg: #0a0a0f;
-  --bg-elev-1: #11111a;
-  --bg-elev-2: #181826;
-  --bg-elev-3: #20202f;
+  /* ────────────────────────── Palette ─────────────────────────── */
+  --bg: #08080d;                       /* deepened from #0a0a0f */
+  --bg-elev-1: #10101a;
+  --bg-elev-2: #16161f;
+  --bg-elev-3: #1c1c28;
   --line: #2a2a3a;
-  --line-soft: rgba(255, 255, 255, 0.06);
+  --line-soft: rgba(255, 255, 255, 0.05);
   --line-strong: rgba(255, 255, 255, 0.14);
   --fg: #ececf4;
   --fg-soft: #b6b6c8;
   --fg-muted: #6b6b7e;
   --fg-faint: #3f3f50;
+  --fg-ghost: rgba(236, 236, 244, 0.025);   /* for giant section numerals */
+
   --accent: #3b82f6;
+  --accent-bright: #60a5fa;
   --accent-soft: rgba(59, 130, 246, 0.18);
   --accent-glow: rgba(59, 130, 246, 0.45);
+  --accent-glow-soft: rgba(59, 130, 246, 0.12);
   --accent-2: #22d3ee;
+  --accent-3: #a78bfa;
   --critical: #ef4444;
   --success: #22c55e;
   --warn: #f59e0b;
 
-  /* Typography */
+  /* ─────────────────────── Typography ─────────────────────────── */
   --font-display: var(--font-display), "Fraunces", Georgia, serif;
   --font-body: var(--font-body), "Hanken Grotesk", system-ui, sans-serif;
   --font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
 
-  /* Layout */
+  /* ──────────────────────── Layout ────────────────────────────── */
   --container-max: 1280px;
   --gutter: clamp(1rem, 4vw, 2.5rem);
+
+  /* ───────────────── Motion + easing tokens ─────────────────── */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-emphatic: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* ─────────────────── Elevation / shadow ────────────────────── */
+  --shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 1px 1px rgba(0, 0, 0, 0.4),
+    0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  --shadow-card-hover:
+    0 1px 0 rgba(59, 130, 246, 0.18) inset,
+    0 1px 1px rgba(0, 0, 0, 0.5),
+    0 14px 32px -10px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(59, 130, 246, 0.18),
+    0 0 32px -4px rgba(59, 130, 246, 0.18);
+  --shadow-pricing-featured:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 8px 32px -8px rgba(59, 130, 246, 0.18),
+    0 24px 60px -16px rgba(0, 0, 0, 0.6);
 
   position: relative;
   isolation: isolate;
@@ -51,7 +91,7 @@
   overflow-x: hidden;
 }
 
-/* Persistent terminal grid — fades toward edges via mask */
+/* Persistent terminal grid — dual gradient (radial vignette + slow drift) */
 .marketing-grid {
   position: fixed;
   inset: 0;
@@ -74,19 +114,15 @@
     rgba(0, 0, 0, 0.5) 45%,
     rgba(0, 0, 0, 0) 80%
   );
-  animation: grid-drift 60s linear infinite;
+  animation: grid-drift 80s linear infinite;
 }
 
 @keyframes grid-drift {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: 64px 64px;
-  }
+  from { background-position: 0 0; }
+  to { background-position: 64px 64px; }
 }
 
-/* Film grain overlay — kept ~7% so it reads as texture, not noise */
+/* Film grain overlay — kept ~6% so it reads as texture, not noise */
 .marketing-noise {
   position: fixed;
   inset: 0;
@@ -118,12 +154,64 @@
 .m-section {
   position: relative;
   z-index: 2;
-  padding-block: clamp(4rem, 10vw, 8rem);
+  /* Generous breathing room — landing pages feel cheap when sections
+     sit shoulder-to-shoulder. 8rem on phones, 12rem on desktop. */
+  padding-block: clamp(5rem, 12vw, 12rem);
+  overflow: hidden;
 }
 
 .m-section--tight {
-  padding-block: clamp(3rem, 6vw, 5rem);
+  padding-block: clamp(3rem, 7vw, 6rem);
 }
+
+/*
+ * Section numeral background — the signature editorial move. Sits
+ * behind every section's content at ~3% opacity, very large, in the
+ * monospace family so it reads as a "channel address" rather than
+ * decorative type.
+ */
+.m-section__numeral {
+  position: absolute;
+  top: 50%;
+  left: var(--gutter);
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(8rem, 22vw, 22rem);
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  color: var(--fg-ghost);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  white-space: nowrap;
+}
+
+.m-section__numeral--right {
+  left: auto;
+  right: var(--gutter);
+}
+
+/* Soft gradient seam between sections — prevents the dark slabs from
+   reading as monolithic. Layered above the grid but below content. */
+.m-section__seam {
+  position: absolute;
+  inset-inline: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--line) 30%,
+    var(--accent) 50%,
+    var(--line) 70%,
+    transparent 100%
+  );
+  opacity: 0.4;
+  z-index: 1;
+}
+
+.m-section__seam--top { top: 0; }
+.m-section__seam--bottom { bottom: 0; }
 
 /* Section header — monospace address rail above editorial heading */
 .m-eyebrow {
@@ -132,7 +220,7 @@
   gap: 0.625rem;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--fg-muted);
 }
@@ -144,16 +232,21 @@
   background: var(--accent);
 }
 
-/* Editorial display headline — high optical size, tight tracking,
-   slightly compressed leading. Optical-size axis lets Fraunces lean
-   into its newsprint character at 64px+. */
+/* ─────────────────────── Display typography ─────────────────────── */
+
+/*
+ * Hero display headline: 96px+ on desktop, scales to 8rem (128px). High
+ * optical-size axis pulls Fraunces into its newsprint character;
+ * leading is sub-1 so two-line headlines read as a single block. Italic
+ * variant lights up the SOFT axis for a softer terminal-italic glyph.
+ */
 .m-display {
   font-family: var(--font-display);
-  font-weight: 360;
+  font-weight: 340;
   font-variation-settings: "opsz" 144, "SOFT" 0;
-  font-size: clamp(2.5rem, 6vw, 5rem);
-  line-height: 0.95;
-  letter-spacing: -0.025em;
+  font-size: clamp(3rem, 9vw, 8rem);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
   color: var(--fg);
   text-wrap: balance;
 }
@@ -162,18 +255,25 @@
   font-style: italic;
   font-variation-settings: "opsz" 144, "SOFT" 100;
   color: var(--accent);
-  letter-spacing: -0.015em;
+  letter-spacing: -0.025em;
 }
 
 .m-h2 {
   font-family: var(--font-display);
-  font-weight: 380;
+  font-weight: 360;
   font-variation-settings: "opsz" 96, "SOFT" 0;
-  font-size: clamp(1.875rem, 3.5vw, 2.875rem);
-  line-height: 1.04;
-  letter-spacing: -0.02em;
+  font-size: clamp(2rem, 4.5vw, 3.75rem);
+  line-height: 1;
+  letter-spacing: -0.025em;
   color: var(--fg);
   text-wrap: balance;
+}
+
+.m-h2 em {
+  font-style: italic;
+  font-variation-settings: "opsz" 96, "SOFT" 100;
+  color: var(--accent);
+  letter-spacing: -0.02em;
 }
 
 .m-h3 {
@@ -189,7 +289,7 @@
 .m-lede {
   font-family: var(--font-body);
   font-weight: 400;
-  font-size: clamp(1rem, 1.4vw, 1.1875rem);
+  font-size: clamp(1.0625rem, 1.4vw, 1.25rem);
   line-height: 1.55;
   color: var(--fg-soft);
   text-wrap: pretty;
@@ -227,27 +327,31 @@
   padding: 0.875rem 1.375rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--btn-fg);
   background: var(--btn-bg);
   border: 1px solid var(--btn-line);
   cursor: pointer;
   transition:
-    transform 120ms ease,
-    background 200ms ease,
-    border-color 200ms ease,
-    box-shadow 240ms ease;
+    transform 200ms var(--ease-out),
+    background 220ms var(--ease-out),
+    border-color 220ms var(--ease-out),
+    box-shadow 280ms var(--ease-out),
+    color 220ms var(--ease-out);
   text-decoration: none;
+  /* Slightly nudge text upward for optical alignment with monospace */
+  line-height: 1;
 }
 
 .m-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 32px var(--btn-glow);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 0 36px var(--btn-glow);
 }
 
 .m-btn:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+  transition-duration: 80ms;
 }
 
 .m-btn:focus-visible {
@@ -277,27 +381,58 @@
   color: var(--accent);
 }
 
-.m-btn--ghost::after {
+/* Sliding underline on ghost buttons — the kind of detail that signals
+   intentional design rather than a default Tailwind component. */
+.m-btn--ghost::before {
   content: "";
   position: absolute;
-  inset: 0;
-  border: 1px solid transparent;
-  pointer-events: none;
-  transition: border-color 200ms ease;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 280ms var(--ease-out);
 }
 
-.m-btn--ghost:hover::after {
-  border-color: var(--accent-soft);
+.m-btn--ghost:hover::before {
+  transform: scaleX(1);
 }
 
-/* ───────────────────────── Reveal-on-scroll ──────────────────────── */
+/* The breathing primary CTA — used on the final CTA section to draw
+   the eye without being shouty. Combine with .m-btn--primary. */
+.m-btn--breathe {
+  animation: btn-breathe 3.6s ease-in-out infinite;
+}
+
+@keyframes btn-breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 var(--accent-glow), 0 0 18px var(--accent-glow-soft);
+  }
+  50% {
+    box-shadow: 0 0 28px var(--accent-glow), 0 0 56px var(--accent-glow-soft);
+  }
+}
+
+/* ───────────────────── Reveal-on-scroll system ───────────────────── */
+
+/*
+ * Variants:
+ *   .m-reveal               — single-element fade-up
+ *   .m-reveal-stagger       — children fade-up with 80ms stagger
+ *   .m-reveal-cascade       — children slide in from left, 110ms
+ *                             stagger (used for pipeline + tickers)
+ *   .m-reveal-scale         — children scale up gently, 90ms stagger
+ *                             (used for pricing tiers)
+ */
 
 .m-reveal {
   opacity: 0;
-  transform: translateY(24px);
+  transform: translateY(28px);
   transition:
-    opacity 720ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 800ms var(--ease-out),
+    transform 800ms var(--ease-out);
   will-change: opacity, transform;
 }
 
@@ -306,13 +441,12 @@
   transform: translateY(0);
 }
 
-/* Staggered children — apply via inline style or .m-reveal-stagger > * */
 .m-reveal-stagger > * {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(24px);
   transition:
-    opacity 640ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 640ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 700ms var(--ease-out),
+    transform 700ms var(--ease-out);
 }
 
 .m-reveal-stagger.is-visible > * {
@@ -321,26 +455,64 @@
 }
 
 .m-reveal-stagger.is-visible > *:nth-child(1) { transition-delay: 0ms; }
-.m-reveal-stagger.is-visible > *:nth-child(2) { transition-delay: 80ms; }
-.m-reveal-stagger.is-visible > *:nth-child(3) { transition-delay: 160ms; }
-.m-reveal-stagger.is-visible > *:nth-child(4) { transition-delay: 240ms; }
-.m-reveal-stagger.is-visible > *:nth-child(5) { transition-delay: 320ms; }
-.m-reveal-stagger.is-visible > *:nth-child(6) { transition-delay: 400ms; }
+.m-reveal-stagger.is-visible > *:nth-child(2) { transition-delay: 50ms; }
+.m-reveal-stagger.is-visible > *:nth-child(3) { transition-delay: 100ms; }
+.m-reveal-stagger.is-visible > *:nth-child(4) { transition-delay: 150ms; }
+.m-reveal-stagger.is-visible > *:nth-child(5) { transition-delay: 200ms; }
+.m-reveal-stagger.is-visible > *:nth-child(6) { transition-delay: 250ms; }
+.m-reveal-stagger.is-visible > *:nth-child(7) { transition-delay: 300ms; }
+.m-reveal-stagger.is-visible > *:nth-child(8) { transition-delay: 350ms; }
 
-@media (prefers-reduced-motion: reduce) {
-  .m-reveal,
-  .m-reveal-stagger > * {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-  .marketing-grid {
-    animation: none;
-  }
+/* Cascade — left-to-right pipeline reveal */
+.m-reveal-cascade > * {
+  opacity: 0;
+  transform: translateX(-28px);
+  transition:
+    opacity 700ms var(--ease-out),
+    transform 700ms var(--ease-out);
 }
 
-/* ───────────────────────── Hero-specific atmosphere ──────────────── */
+.m-reveal-cascade.is-visible > * {
+  opacity: 1;
+  transform: translateX(0);
+}
 
+.m-reveal-cascade.is-visible > *:nth-child(1) { transition-delay: 0ms; }
+.m-reveal-cascade.is-visible > *:nth-child(2) { transition-delay: 110ms; }
+.m-reveal-cascade.is-visible > *:nth-child(3) { transition-delay: 220ms; }
+.m-reveal-cascade.is-visible > *:nth-child(4) { transition-delay: 330ms; }
+.m-reveal-cascade.is-visible > *:nth-child(5) { transition-delay: 440ms; }
+.m-reveal-cascade.is-visible > *:nth-child(6) { transition-delay: 550ms; }
+
+/* Scale-up — pricing tiers entrance */
+.m-reveal-scale > * {
+  opacity: 0;
+  transform: translateY(20px) scale(0.94);
+  transition:
+    opacity 720ms var(--ease-out),
+    transform 720ms var(--ease-out);
+}
+
+.m-reveal-scale.is-visible > * {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.m-reveal-scale.is-visible > *:nth-child(1) { transition-delay: 0ms; }
+.m-reveal-scale.is-visible > *:nth-child(2) { transition-delay: 90ms; }
+.m-reveal-scale.is-visible > *:nth-child(3) { transition-delay: 180ms; }
+
+/* ───────────────────── Hero-specific atmosphere ──────────────────── */
+
+.m-hero {
+  position: relative;
+  min-height: calc(100vh - 60px); /* nav offset */
+  display: grid;
+  align-items: center;
+  z-index: 2;
+}
+
+/* Stacked radial glows — outer cyan halo + inner electric-blue core */
 .m-hero-glow {
   position: absolute;
   inset: 0;
@@ -348,14 +520,19 @@
   z-index: 0;
   background:
     radial-gradient(
-      ellipse 60% 40% at 50% 30%,
-      rgba(59, 130, 246, 0.18) 0%,
-      transparent 60%
+      ellipse 70% 50% at 50% 28%,
+      rgba(59, 130, 246, 0.22) 0%,
+      transparent 65%
     ),
     radial-gradient(
-      ellipse 80% 50% at 50% 100%,
-      rgba(34, 211, 238, 0.06) 0%,
+      ellipse 90% 55% at 50% 105%,
+      rgba(34, 211, 238, 0.08) 0%,
       transparent 65%
+    ),
+    radial-gradient(
+      ellipse 40% 30% at 50% 50%,
+      rgba(167, 139, 250, 0.06) 0%,
+      transparent 70%
     );
 }
 
@@ -374,23 +551,23 @@
   opacity: 0.7;
 }
 
-/* Hero entrance — staggered reveal independent of scroll observer */
+/* Hero entrance — staggered, with gentle anticipation */
 .m-hero-enter > * {
   opacity: 0;
-  animation: hero-rise 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: hero-rise 1100ms var(--ease-emphatic) forwards;
 }
 
 .m-hero-enter > *:nth-child(1) { animation-delay: 80ms; }
 .m-hero-enter > *:nth-child(2) { animation-delay: 200ms; }
 .m-hero-enter > *:nth-child(3) { animation-delay: 320ms; }
 .m-hero-enter > *:nth-child(4) { animation-delay: 440ms; }
-.m-hero-enter > *:nth-child(5) { animation-delay: 600ms; }
-.m-hero-enter > *:nth-child(6) { animation-delay: 760ms; }
+.m-hero-enter > *:nth-child(5) { animation-delay: 580ms; }
+.m-hero-enter > *:nth-child(6) { animation-delay: 720ms; }
 
 @keyframes hero-rise {
   from {
     opacity: 0;
-    transform: translateY(32px);
+    transform: translateY(36px);
   }
   to {
     opacity: 1;
@@ -398,14 +575,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .m-hero-enter > * {
-    opacity: 1;
-    animation: none;
-  }
-}
-
-/* Marquee stat ticker */
+/* Marquee stat ticker — faster + more dramatic now */
 .m-ticker {
   position: relative;
   overflow: hidden;
@@ -419,13 +589,13 @@
   gap: 4rem;
   white-space: nowrap;
   padding-block: 1.125rem;
-  animation: ticker-slide 50s linear infinite;
+  animation: ticker-slide 32s linear infinite;
 }
 
 .m-ticker__item {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.14em;
+  font-size: 0.8125rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--fg-soft);
 }
@@ -436,30 +606,48 @@
 }
 
 @keyframes ticker-slide {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
-/* ───────────────────────── Reusable card surfaces ───────────────── */
+/* ───────────────────────── Reusable card surfaces ────────────────── */
 
 .m-card {
   position: relative;
   background: var(--bg-elev-1);
   border: 1px solid var(--line);
-  padding: clamp(1.25rem, 2vw, 1.75rem);
+  padding: clamp(1.5rem, 2vw, 2rem);
+  box-shadow: var(--shadow-card);
   transition:
-    border-color 200ms ease,
-    transform 200ms ease,
-    background 200ms ease;
+    border-color 240ms var(--ease-out),
+    transform 240ms var(--ease-out),
+    background 240ms var(--ease-out),
+    box-shadow 280ms var(--ease-out);
 }
 
 .m-card:hover {
-  border-color: var(--line-strong);
-  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.35);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Inner glow that ramps up on hover — subtle but signals "alive" */
+.m-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    rgba(59, 130, 246, 0.08) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 320ms var(--ease-out);
+}
+
+.m-card:hover::before {
+  opacity: 1;
 }
 
 .m-card--accent {
@@ -483,6 +671,12 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--fg-soft);
+  transition: border-color 200ms var(--ease-out), color 200ms var(--ease-out);
+}
+
+.m-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .m-chip__dot {
@@ -492,7 +686,7 @@
   display: inline-block;
 }
 
-/* ───────────────────────── Pipeline (How It Works) ──────────────── */
+/* ───────────────────── Pipeline (How It Works) ─────────────────── */
 
 .m-pipeline {
   display: grid;
@@ -500,12 +694,18 @@
   gap: 0;
   border: 1px solid var(--line);
   background: var(--bg-elev-1);
+  box-shadow: var(--shadow-card);
 }
 
 .m-pipeline__step {
   position: relative;
-  padding: 1.75rem 1.5rem;
+  padding: 2rem 1.5rem;
   border-right: 1px solid var(--line);
+  transition: background 240ms var(--ease-out);
+}
+
+.m-pipeline__step:hover {
+  background: var(--bg-elev-2);
 }
 
 .m-pipeline__step:last-child {
@@ -523,6 +723,11 @@
   border: 1px solid var(--line);
   transform: translateY(-50%) rotate(45deg);
   z-index: 1;
+  transition: border-color 240ms var(--ease-out);
+}
+
+.m-pipeline__step:hover::after {
+  border-color: var(--accent);
 }
 
 .m-pipeline__step:last-child::after {
@@ -532,9 +737,9 @@
 .m-pipeline__num {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   color: var(--accent);
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.75rem;
 }
 
 @media (max-width: 800px) {
@@ -556,7 +761,7 @@
   }
 }
 
-/* ───────────────────────── Triangulation hero ───────────────────── */
+/* ──────────────────── Triangulation hero ─────────────────────── */
 
 .m-triangulation {
   position: relative;
@@ -587,7 +792,32 @@
   );
 }
 
-/* ───────────────────────── FAQ accordion ────────────────────────── */
+/*
+ * Slow rotation on the diagram. Applied to a wrapper inside the SVG via
+ * the .m-tri-svg class so we can damp it on mobile / reduced-motion.
+ */
+.m-tri-svg {
+  transform-origin: center;
+  animation: tri-pulse 12s ease-in-out infinite;
+}
+
+@keyframes tri-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.015); filter: brightness(1.05); }
+}
+
+/* The three large circles slowly rotate around the center medallion */
+.m-tri-rotor {
+  transform-origin: 270px 245px;
+  animation: tri-rotate 60s linear infinite;
+}
+
+@keyframes tri-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ───────────────────────── FAQ accordion ────────────────────── */
 
 .m-faq__item {
   border-bottom: 1px solid var(--line);
@@ -603,7 +833,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.5rem 0;
+  padding: 1.625rem 0;
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -612,91 +842,129 @@
   font-family: var(--font-display);
   font-weight: 400;
   font-variation-settings: "opsz" 60;
-  font-size: clamp(1.0625rem, 1.4vw, 1.25rem);
+  font-size: clamp(1.0625rem, 1.4vw, 1.3125rem);
   line-height: 1.3;
-  letter-spacing: -0.01em;
-  transition: color 160ms ease;
+  letter-spacing: -0.012em;
+  transition: color 200ms var(--ease-out);
 }
 
 .m-faq__btn:hover {
   color: var(--accent);
 }
 
+/* Chevron icon — rotates smoothly on open */
 .m-faq__icon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   position: relative;
+  transition: transform 320ms var(--ease-out);
 }
 
 .m-faq__icon::before,
 .m-faq__icon::after {
   content: "";
   position: absolute;
+  width: 12px;
+  height: 1.5px;
   background: currentColor;
   top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  transform-origin: center;
-  transition: transform 240ms ease;
+  transition: transform 320ms var(--ease-out);
+}
+
+.m-faq__icon::before {
+  left: 2px;
+  transform: translateY(-50%) rotate(45deg);
+  transform-origin: right center;
 }
 
 .m-faq__icon::after {
-  transform: rotate(90deg);
+  right: 2px;
+  transform: translateY(-50%) rotate(-45deg);
+  transform-origin: left center;
 }
 
-.m-faq__btn[aria-expanded="true"] .m-faq__icon::after {
-  transform: rotate(0);
+.m-faq__btn[aria-expanded="true"] .m-faq__icon {
+  transform: rotate(180deg);
 }
 
 .m-faq__panel {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 320ms ease;
+  transition: max-height 360ms var(--ease-out);
 }
 
 .m-faq__panel[data-open="true"] {
-  max-height: 400px;
+  max-height: 480px;
 }
 
 .m-faq__panel-inner {
-  padding-bottom: 1.5rem;
+  padding-bottom: 1.625rem;
   color: var(--fg-soft);
   line-height: 1.65;
   max-width: 60ch;
 }
 
-/* ───────────────────────── Pricing cards ────────────────────────── */
+/* ──────────────────────── Pricing cards ───────────────────────── */
 
 .m-price {
   position: relative;
   background: var(--bg-elev-1);
   border: 1px solid var(--line);
-  padding: 2rem 1.75rem;
+  padding: 2.25rem 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  transition: border-color 200ms ease, transform 200ms ease;
+  gap: 1.5rem;
+  box-shadow: var(--shadow-card);
+  transition:
+    border-color 240ms var(--ease-out),
+    transform 280ms var(--ease-out),
+    box-shadow 320ms var(--ease-out);
+}
+
+.m-price:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .m-price--featured {
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.12) 0%, var(--bg-elev-1) 70%);
+  background: linear-gradient(
+    180deg,
+    rgba(59, 130, 246, 0.14) 0%,
+    var(--bg-elev-1) 70%
+  );
   border-color: var(--accent);
-  transform: translateY(-12px);
+  transform: translateY(-14px);
+  box-shadow: var(--shadow-pricing-featured);
+  animation: price-pulse 3.6s ease-in-out infinite;
 }
 
 .m-price--featured:hover {
-  transform: translateY(-14px);
+  transform: translateY(-18px);
+}
+
+@keyframes price-pulse {
+  0%, 100% {
+    box-shadow:
+      var(--shadow-pricing-featured),
+      0 0 0 1px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow:
+      var(--shadow-pricing-featured),
+      0 0 0 1px rgba(59, 130, 246, 0.7),
+      0 0 32px rgba(59, 130, 246, 0.16);
+  }
 }
 
 .m-price__amount {
   font-family: var(--font-display);
-  font-size: 3rem;
+  font-size: 3.25rem;
   line-height: 1;
   font-weight: 360;
   font-variation-settings: "opsz" 144;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--fg);
 }
 
@@ -716,12 +984,22 @@
   vertical-align: baseline;
 }
 
-/* ───────────────────────── Live simulator ───────────────────────── */
+/* ─────────────────────── Live simulator ───────────────────────── */
 
 .m-sim {
   position: relative;
   background: var(--bg-elev-1);
   border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
+  transition: border-color 240ms var(--ease-out), box-shadow 320ms var(--ease-out);
+}
+
+.m-sim:focus-within {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 1px rgba(59, 130, 246, 0.2),
+    0 0 36px -6px rgba(59, 130, 246, 0.18);
 }
 
 .m-sim__bar {
@@ -733,7 +1011,7 @@
   background: var(--bg-elev-2);
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--fg-muted);
 }
@@ -760,11 +1038,12 @@
   display: flex;
   gap: 0;
   border-bottom: 1px solid var(--line);
+  position: relative;
 }
 
 .m-sim__input {
   flex: 1;
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem 1.625rem;
   background: transparent;
   color: var(--fg);
   font-family: var(--font-mono);
@@ -779,38 +1058,79 @@
   font-style: italic;
 }
 
+/* When the input is empty + unfocused, the typed-placeholder paints
+   on top of the real placeholder. We hide the native placeholder via
+   color: transparent so only our animated text shows. */
+.m-sim__input.m-sim__input--typing::placeholder {
+  color: transparent;
+}
+
+.m-sim__placeholder {
+  position: absolute;
+  left: 1.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  color: var(--fg-faint);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.m-sim__placeholder::after {
+  content: "▌";
+  margin-left: 1px;
+  color: var(--accent);
+  animation: caret-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes caret-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
 .m-sim__submit {
-  padding-inline: 1.5rem;
+  padding-inline: 1.625rem;
   background: var(--accent);
   color: #fff;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   border: 0;
   cursor: pointer;
-  transition: filter 160ms ease;
+  transition:
+    filter 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
 }
 
 .m-sim__submit:hover:not(:disabled) {
-  filter: brightness(1.1);
+  filter: brightness(1.12);
+  transform: scale(1.02);
+}
+
+.m-sim__submit:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .m-sim__submit:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .m-sim__body {
-  padding: 1.75rem;
-  min-height: 420px;
+  padding: 2rem;
+  min-height: 460px;
 }
 
 .m-sim__progress {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
 }
 
 .m-sim__progress-step {
@@ -819,10 +1139,25 @@
   gap: 0.625rem;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--fg-muted);
-  transition: color 200ms ease;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: progress-step-in 380ms var(--ease-out) forwards;
+  transition: color 220ms var(--ease-out);
+}
+
+.m-sim__progress-step:nth-child(1) { animation-delay: 0ms; }
+.m-sim__progress-step:nth-child(2) { animation-delay: 90ms; }
+.m-sim__progress-step:nth-child(3) { animation-delay: 180ms; }
+.m-sim__progress-step:nth-child(4) { animation-delay: 270ms; }
+
+@keyframes progress-step-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .m-sim__progress-step--active {
@@ -856,15 +1191,27 @@
 .m-sim__bar-fill > span {
   display: block;
   height: 100%;
-  background: var(--accent);
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    var(--accent-bright) 60%,
+    var(--accent) 100%
+  );
+  background-size: 200% 100%;
   width: 0;
-  transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 1.4s var(--ease-out);
+  animation: bar-shimmer 2.4s linear infinite;
+}
+
+@keyframes bar-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }
 
 .m-sim__row {
   opacity: 0;
-  transform: translateY(8px);
-  animation: row-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform: translateY(10px);
+  animation: row-rise 480ms var(--ease-out) forwards;
 }
 
 @keyframes row-rise {
@@ -881,10 +1228,7 @@
   top: 0;
   z-index: 50;
   border-bottom: 1px solid var(--line);
-  background: rgba(10, 10, 15, 0.78);
-  /* Backdrop blur lifts nav off the grid + grain layers without
-     forcing them dark; keeps the Bloomberg-glass feel as content
-     scrolls underneath. */
+  background: rgba(8, 8, 13, 0.78);
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
@@ -904,6 +1248,11 @@
   color: var(--fg);
   text-decoration: none;
   flex-shrink: 0;
+  transition: opacity 200ms var(--ease-out);
+}
+
+.m-nav__brand:hover {
+  opacity: 0.86;
 }
 
 .m-nav__mark {
@@ -943,16 +1292,9 @@
   flex-shrink: 0;
 }
 
-/* On narrow viewports we drop the BETA chip and tighten the button
-   wordmark — keeps the bar a single tidy row rather than wrapping,
-   which feels less professional. The nav itself never wraps. */
 @media (max-width: 540px) {
-  .m-nav__beta {
-    display: none;
-  }
-  .m-nav__wordmark {
-    letter-spacing: 0.24em;
-  }
+  .m-nav__beta { display: none; }
+  .m-nav__wordmark { letter-spacing: 0.24em; }
   .m-nav__actions .m-btn {
     padding: 0.625rem 0.875rem;
     font-size: 0.6875rem;
@@ -962,11 +1304,7 @@
 }
 
 @media (max-width: 400px) {
-  /* Tightest fallback — hide the wordmark text but keep the M mark
-     so the brand still anchors the bar visually. */
-  .m-nav__wordmark {
-    display: none;
-  }
+  .m-nav__wordmark { display: none; }
 }
 
 /* ───────────────────────── Footer ───────────────────────────────── */
@@ -980,9 +1318,10 @@
 }
 
 .m-link {
+  position: relative;
   color: var(--fg-soft);
   text-decoration: none;
-  transition: color 160ms ease;
+  transition: color 200ms var(--ease-out);
 }
 
 .m-link:hover {
@@ -991,4 +1330,51 @@
 
 .m-link--accent {
   color: var(--accent);
+}
+
+/* ───────────────────────── Motion preferences ──────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-grid,
+  .m-tri-svg,
+  .m-tri-rotor,
+  .m-ticker__track,
+  .m-btn--breathe,
+  .m-price--featured,
+  .m-sim__bar-fill > span,
+  .m-sim__bar-dot--live {
+    animation: none !important;
+  }
+  .m-reveal,
+  .m-reveal-stagger > *,
+  .m-reveal-cascade > *,
+  .m-reveal-scale > *,
+  .m-hero-enter > *,
+  .m-sim__progress-step,
+  .m-sim__row {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+  .m-sim__placeholder::after {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/*
+ * Mobile motion damping — phones are typically thermal-constrained and
+ * users on small screens get less out of the choreography anyway. Cut
+ * the most intensive animations to keep frame rates high. The hero
+ * stagger and reveal-on-scroll still play, just less embellished.
+ */
+@media (max-width: 640px) {
+  .m-tri-rotor { animation-duration: 120s; }
+  .m-tri-svg { animation: none; }
+  .m-btn--breathe { animation-duration: 5s; }
+  .m-price--featured { animation: none; }
+  .marketing-grid { animation: none; }
+  .m-section { padding-block: clamp(4rem, 18vw, 8rem); }
+  .m-section__numeral { font-size: clamp(6rem, 32vw, 12rem); opacity: 0.5; }
 }

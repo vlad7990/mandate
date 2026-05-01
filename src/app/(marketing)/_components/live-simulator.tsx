@@ -1,6 +1,81 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const TYPING_EXAMPLES = [
+  "Head of IT Operations for RBC Capital Markets",
+  "Chief Risk Officer for a UK challenger bank",
+  "VP of Engineering at a Series-C fintech",
+  "CTO for a US healthcare-payer modernisation",
+];
+
+/**
+ * Cycles a typewriter placeholder through a list of example role
+ * briefs while the input is empty AND unfocused. Pauses the animation
+ * when the user focuses the input or starts typing — feels closer to
+ * a real terminal cursor than a spinning gimmick.
+ */
+function useTypingPlaceholder(
+  examples: string[],
+  active: boolean
+): string {
+  const [text, setText] = useState("");
+  const stateRef = useRef({
+    exampleIdx: 0,
+    charIdx: 0,
+    direction: 1 as 1 | -1,
+  });
+
+  useEffect(() => {
+    if (!active) {
+      // Reset deferred to a microtask so the setState lands outside
+      // the synchronous effect body — keeps react-hooks/set-state-in-
+      // effect quiet without needing a remount-by-key dance.
+      stateRef.current = { exampleIdx: 0, charIdx: 0, direction: 1 };
+      const reset = window.setTimeout(() => setText(""), 0);
+      return () => window.clearTimeout(reset);
+    }
+
+    let timer: number | undefined;
+
+    const tick = () => {
+      const s = stateRef.current;
+      const target = examples[s.exampleIdx] ?? "";
+      const nextChar = s.charIdx + s.direction;
+
+      if (s.direction === 1 && nextChar > target.length) {
+        // Finished typing this example — pause, then reverse.
+        timer = window.setTimeout(() => {
+          stateRef.current.direction = -1;
+          tick();
+        }, 1600);
+        return;
+      }
+
+      if (s.direction === -1 && nextChar < 0) {
+        // Finished erasing — advance to next example.
+        stateRef.current.exampleIdx = (s.exampleIdx + 1) % examples.length;
+        stateRef.current.charIdx = 0;
+        stateRef.current.direction = 1;
+        timer = window.setTimeout(tick, 320);
+        return;
+      }
+
+      stateRef.current.charIdx = nextChar;
+      setText(target.slice(0, nextChar));
+      // Type slightly slower than erase — looks more human.
+      const delay = s.direction === 1 ? 56 : 28;
+      timer = window.setTimeout(tick, delay);
+    };
+
+    timer = window.setTimeout(tick, 600);
+    return () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [examples, active]);
+
+  return text;
+}
 
 type DemoResult = {
   role_title: string;
@@ -46,6 +121,13 @@ export function LiveSimulator() {
   const [runId, setRunId] = useState(0);
   const [result, setResult] = useState<DemoResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [focused, setFocused] = useState(false);
+
+  // Typewriter only runs when the input is empty, unfocused, and we're
+  // not mid-request — anything else and the cursor would compete with
+  // the user's own typing or the live progress UI.
+  const showTyping = !focused && input.length === 0 && !pending && !result;
+  const typedPlaceholder = useTypingPlaceholder(TYPING_EXAMPLES, showTyping);
 
   const submit = async (raw: string) => {
     const text = raw.trim();
@@ -100,13 +182,22 @@ export function LiveSimulator() {
         }}
       >
         <input
-          className="m-sim__input"
+          className={`m-sim__input ${
+            showTyping ? "m-sim__input--typing" : ""
+          }`}
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder="e.g. Head of IT Operations for RBC Capital Markets"
           aria-label="Role to analyse"
           disabled={pending}
         />
+        {showTyping && (
+          <span className="m-sim__placeholder" aria-hidden>
+            {typedPlaceholder}
+          </span>
+        )}
         <button
           type="submit"
           className="m-sim__submit"
@@ -181,7 +272,7 @@ function SimulatorIdle() {
           padding: 0,
         }}
       >
-        {EXAMPLES.map((ex) => (
+        {TYPING_EXAMPLES.slice(1).map((ex) => (
           <li key={ex}>
             <button
               type="button"
@@ -208,11 +299,6 @@ function SimulatorIdle() {
   );
 }
 
-const EXAMPLES = [
-  "Chief Risk Officer for a UK challenger bank",
-  "VP of Engineering at a Series-C fintech",
-  "CTO for a US healthcare-payer modernisation",
-];
 
 function SimulatorProgress() {
   // Lazy initializer keeps the step at 0 on mount; subsequent steps

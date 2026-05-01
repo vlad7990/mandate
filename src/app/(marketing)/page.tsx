@@ -72,22 +72,27 @@ function TopNav() {
 function Hero() {
   return (
     <section
-      className="m-section"
-      style={{ position: "relative", paddingTop: "clamp(3rem, 6vw, 5rem)" }}
+      className="m-hero m-section"
+      style={{
+        position: "relative",
+        paddingBlock: "clamp(3rem, 6vw, 5rem)",
+      }}
     >
       <div className="m-hero-glow" aria-hidden />
       <div className="m-hero-scan" aria-hidden />
+      <span className="m-section__numeral" aria-hidden>
+        00
+      </span>
       <div
         className="m-container m-hero-enter"
         style={{
           position: "relative",
           zIndex: 2,
           display: "grid",
-          gap: "1.75rem",
-          maxWidth: 980,
+          gap: "2rem",
+          maxWidth: 1080,
           margin: "0 auto",
           textAlign: "center",
-          paddingBlock: "clamp(2rem, 6vw, 4rem)",
         }}
       >
         <span
@@ -242,21 +247,24 @@ function StatsTicker() {
 function Problem() {
   const cards = [
     {
-      stat: "3–5 days",
+      stat: "3–5",
+      unit: "days",
       title: "to brief a search properly",
       detail:
         "Every recruiter starts from scratch — fragmented intake calls, scattered notes, inconsistent calibration. The first week is gone before sourcing begins.",
       accent: "var(--accent)",
     },
     {
-      stat: "67%",
+      stat: "67",
+      unit: "%",
       title: "evaluation drift across team",
       detail:
         "Two recruiters look at the same CV and rank it differently. Without a shared scoring model, decisions flip with whoever ran the screen call.",
       accent: "var(--warn)",
     },
     {
-      stat: "12+ tools",
+      stat: "12+",
+      unit: "tools",
       title: "with feedback in every one",
       detail:
         "Email threads, ATS notes, Slack DMs, Zoom recordings, recruiter scribbles. The signal that matters is in the inbox, not the system.",
@@ -265,6 +273,9 @@ function Problem() {
   ];
   return (
     <section className="m-section">
+      <span className="m-section__numeral" aria-hidden>
+        02
+      </span>
       <div className="m-container">
         <Reveal className="m-reveal" as="div">
           <span className="m-eyebrow">02 / The status quo</span>
@@ -295,23 +306,41 @@ function Problem() {
                 className="m-card"
                 style={{
                   borderTop: `2px solid ${c.accent}`,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.875rem",
                 }}
               >
                 <div
                   style={{
                     fontFamily: "var(--font-display)",
-                    fontSize: "clamp(2.25rem, 4vw, 3rem)",
+                    fontSize: "clamp(3rem, 6vw, 5rem)",
                     fontVariationSettings: "\"opsz\" 144",
-                    fontWeight: 380,
+                    fontWeight: 360,
                     color: c.accent,
-                    letterSpacing: "-0.02em",
-                    lineHeight: 1,
-                    marginBottom: "0.75rem",
+                    letterSpacing: "-0.035em",
+                    lineHeight: 0.92,
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: "0.5rem",
                   }}
                 >
-                  {c.stat}
+                  <span>{c.stat}</span>
+                  <span
+                    style={{
+                      fontSize: "0.875rem",
+                      fontFamily: "var(--font-mono)",
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                      color: "var(--fg-muted)",
+                      fontVariationSettings: "normal",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {c.unit}
+                  </span>
                 </div>
-                <h3 className="m-h3" style={{ marginBottom: "0.625rem" }}>
+                <h3 className="m-h3" style={{ marginBottom: "0.125rem" }}>
                   {c.title}
                 </h3>
                 <p
@@ -343,6 +372,9 @@ function Simulator() {
       className="m-section"
       style={{ scrollMarginTop: "2rem" }}
     >
+      <span className="m-section__numeral m-section__numeral--right" aria-hidden>
+        03
+      </span>
       <div className="m-container">
         <Reveal className="m-reveal">
           <span className="m-eyebrow">03 / Live</span>
@@ -440,6 +472,9 @@ function HowItWorks() {
   ];
   return (
     <section id="how" className="m-section">
+      <span className="m-section__numeral" aria-hidden>
+        04
+      </span>
       <div className="m-container">
         <Reveal className="m-reveal">
           <span className="m-eyebrow">04 / Pipeline</span>
@@ -448,8 +483,8 @@ function HowItWorks() {
           </h2>
         </Reveal>
 
-        <Reveal className="m-reveal" threshold={0.05}>
-          <div className="m-pipeline" style={{ marginTop: "2.5rem" }}>
+        <Reveal className="m-reveal-cascade" threshold={0.05}>
+          <div className="m-pipeline" style={{ marginTop: "3rem" }}>
             {steps.map((s) => (
               <div key={s.n} className="m-pipeline__step">
                 <div className="m-pipeline__num">STEP {s.n}</div>
@@ -527,6 +562,9 @@ function Stack() {
   ];
   return (
     <section className="m-section">
+      <span className="m-section__numeral m-section__numeral--right" aria-hidden>
+        05
+      </span>
       <div className="m-container">
         <Reveal className="m-reveal">
           <span className="m-eyebrow">05 / Stack</span>
@@ -606,8 +644,11 @@ function Triangulation() {
   return (
     <section
       className="m-section m-triangulation"
-      style={{ paddingBlock: "clamp(5rem, 10vw, 8rem)" }}
+      style={{ paddingBlock: "clamp(6rem, 14vw, 12rem)" }}
     >
+      <span className="m-section__numeral" aria-hidden>
+        06
+      </span>
       <div
         className="m-container"
         style={{
@@ -776,6 +817,9 @@ function Features() {
   ];
   return (
     <section className="m-section">
+      <span className="m-section__numeral m-section__numeral--right" aria-hidden>
+        07
+      </span>
       <div className="m-container">
         <Reveal className="m-reveal">
           <span className="m-eyebrow">07 / Modules</span>
@@ -882,6 +926,9 @@ function Pricing() {
   ];
   return (
     <section id="pricing" className="m-section">
+      <span className="m-section__numeral" aria-hidden>
+        08
+      </span>
       <div className="m-container">
         <Reveal className="m-reveal">
           <span className="m-eyebrow">08 / Pricing</span>
@@ -897,7 +944,7 @@ function Pricing() {
           </p>
         </Reveal>
 
-        <Reveal className="m-reveal-stagger" as="ul" threshold={0.1}>
+        <Reveal className="m-reveal-scale" as="ul" threshold={0.1}>
           <ul
             style={{
               listStyle: "none",
@@ -1051,6 +1098,9 @@ const FAQ_ITEMS = [
 function Faq() {
   return (
     <section className="m-section">
+      <span className="m-section__numeral m-section__numeral--right" aria-hidden>
+        09
+      </span>
       <div className="m-container" style={{ maxWidth: 880 }}>
         <Reveal className="m-reveal">
           <span className="m-eyebrow">09 / Questions</span>
@@ -1083,6 +1133,9 @@ function CtaFooter() {
         borderBlock: "1px solid var(--line)",
       }}
     >
+      <span className="m-section__numeral" aria-hidden>
+        10
+      </span>
       <div className="m-hero-glow" aria-hidden style={{ opacity: 0.5 }} />
       <div
         className="m-container"
@@ -1123,7 +1176,7 @@ function CtaFooter() {
           >
             <Link
               href="/request-access"
-              className="m-btn m-btn--primary"
+              className="m-btn m-btn--primary m-btn--breathe"
               style={{ padding: "1rem 1.75rem", fontSize: "0.8125rem" }}
             >
               <span>Request Access</span>

@@ -40,7 +40,7 @@ export function ThreeCircleAlignment({
       viewBox="0 0 540 460"
       role="img"
       aria-label={`Alignment diagram. Overall ${overall}, candidate↔company ${candidateCompany}, candidate↔HM ${candidateHm}.`}
-      className="w-full h-auto max-w-[540px] mx-auto block"
+      className="m-tri-svg w-full h-auto max-w-[540px] mx-auto block"
     >
       {/* Atmospheric backdrop circles */}
       <defs>
@@ -65,34 +65,39 @@ export function ThreeCircleAlignment({
 
       <circle cx="270" cy="240" r="240" fill="url(#m3-bg-glow)" />
 
-      {/* Three intersecting circles */}
-      <circle
-        cx="270"
-        cy="160"
-        r="135"
-        fill="url(#m3-cand)"
-        stroke="#3b82f6"
-        strokeOpacity="0.55"
-        strokeWidth="1.5"
-      />
-      <circle
-        cx="180"
-        cy="290"
-        r="135"
-        fill="url(#m3-co)"
-        stroke="#22d3ee"
-        strokeOpacity="0.55"
-        strokeWidth="1.5"
-      />
-      <circle
-        cx="360"
-        cy="290"
-        r="135"
-        fill="url(#m3-hm)"
-        stroke="#a78bfa"
-        strokeOpacity="0.55"
-        strokeWidth="1.5"
-      />
+      {/* Three intersecting circles — wrapped in a slow-rotating group
+          so the diagram feels alive. The rotor rotates around the
+          center medallion (270, 245); the medallion itself is rendered
+          outside the rotor so the score number stays upright. */}
+      <g className="m-tri-rotor">
+        <circle
+          cx="270"
+          cy="160"
+          r="135"
+          fill="url(#m3-cand)"
+          stroke="#3b82f6"
+          strokeOpacity="0.55"
+          strokeWidth="1.5"
+        />
+        <circle
+          cx="180"
+          cy="290"
+          r="135"
+          fill="url(#m3-co)"
+          stroke="#22d3ee"
+          strokeOpacity="0.55"
+          strokeWidth="1.5"
+        />
+        <circle
+          cx="360"
+          cy="290"
+          r="135"
+          fill="url(#m3-hm)"
+          stroke="#a78bfa"
+          strokeOpacity="0.55"
+          strokeWidth="1.5"
+        />
+      </g>
 
       {/* Pairwise score pills on overlap edges */}
       <g>
