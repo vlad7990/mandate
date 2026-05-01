@@ -65,6 +65,16 @@ export function ThreeCircleAlignment({
 
       <circle cx="270" cy="240" r="240" fill="url(#m3-bg-glow)" />
 
+      {/* Radar/sonar pulse — three concentric ping rings emanating
+          from the center medallion. Each ring scales 0.2 → 2.4 with a
+          fading opacity over 4s, staggered so there's always one
+          mid-ping. Reduced motion + mobile damp this in marketing.css. */}
+      <g className="m-tri-radar">
+        <circle cx="270" cy="245" r="48" />
+        <circle cx="270" cy="245" r="48" />
+        <circle cx="270" cy="245" r="48" />
+      </g>
+
       {/* Three intersecting circles — wrapped in a slow-rotating group
           so the diagram feels alive. The rotor rotates around the
           center medallion (270, 245); the medallion itself is rendered

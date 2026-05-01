@@ -3,12 +3,18 @@ import { Reveal } from "./_components/reveal";
 import { LiveSimulator } from "./_components/live-simulator";
 import { FaqAccordion } from "./_components/faq-accordion";
 import { ThreeCircleAlignment } from "./_components/three-circle-alignment";
+import { CountUp } from "./_components/count-up";
+import { ScrollProgress } from "./_components/scroll-progress";
+import { TerminalCursor } from "./_components/terminal-cursor";
+import { ParticleField } from "./_components/particle-field";
+import { DataStream } from "./_components/data-stream";
 
 export const dynamic = "force-static";
 
 export default function MarketingLandingPage() {
   return (
     <>
+      <ScrollProgress />
       <TopNav />
       <Hero />
       <StatsTicker />
@@ -42,6 +48,10 @@ function TopNav() {
           <span aria-hidden className="m-nav__beta">
             BETA
           </span>
+          <span className="m-nav__live" aria-hidden>
+            <span className="m-nav__live-dot" />
+            System online
+          </span>
         </Link>
 
         <nav className="m-nav__actions" aria-label="Primary">
@@ -72,14 +82,12 @@ function TopNav() {
 function Hero() {
   return (
     <section
-      className="m-hero m-section"
-      style={{
-        position: "relative",
-        paddingBlock: "clamp(3rem, 6vw, 5rem)",
-      }}
+      className="m-hero m-section m-section--gap-tight-bottom"
+      style={{ position: "relative" }}
     >
       <div className="m-hero-glow" aria-hidden />
       <div className="m-hero-scan" aria-hidden />
+      <ParticleField />
       <span className="m-section__numeral" aria-hidden>
         00
       </span>
@@ -103,7 +111,7 @@ function Hero() {
           14_AGENTS · 31_MODULES · ONE_OPERATING_SYSTEM
         </span>
 
-        <h1 className="m-display">
+        <h1 className="m-display m-display--shimmer">
           Executive Search.
           <br />
           <em>Reinvented.</em>
@@ -151,15 +159,20 @@ function Hero() {
 
 function HeroDataRail() {
   // Six "live readouts" under the CTA — give the page that
-  // trading-floor-screen feel without being noisy. Static numbers, but
-  // monospace tabular feel them in.
-  const items = [
-    { label: "AGENTS", value: "14" },
-    { label: "MODULES", value: "31" },
-    { label: "DIMENSIONS", value: "5" },
-    { label: "PERSPECTIVES", value: "4" },
-    { label: "INTELLIGENCE", value: "3-WAY" },
-    { label: "CALIBRATION", value: "AUTO" },
+  // trading-floor-screen feel without being noisy. Numbers count up
+  // from 0 as the rail enters the viewport.
+  const items: Array<{
+    label: string;
+    to?: number;
+    suffix?: string;
+    text?: string;
+  }> = [
+    { label: "AGENTS", to: 14 },
+    { label: "MODULES", to: 31 },
+    { label: "DIMENSIONS", to: 5 },
+    { label: "PERSPECTIVES", to: 4 },
+    { label: "INTELLIGENCE", text: "3-WAY" },
+    { label: "CALIBRATION", text: "AUTO" },
   ];
   return (
     <div
@@ -194,16 +207,15 @@ function HeroDataRail() {
           >
             {it.label}
           </span>
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "1.25rem",
-              color: "var(--accent)",
-              letterSpacing: "0.04em",
-            }}
-          >
-            {it.value}
-          </span>
+          {it.to !== undefined ? (
+            <CountUp
+              to={it.to}
+              duration={1600}
+              className="m-stat-rail__value"
+            />
+          ) : (
+            <span className="m-stat-rail__value">{it.text}</span>
+          )}
         </div>
       ))}
     </div>
@@ -245,34 +257,49 @@ function StatsTicker() {
 // ────────────────────────────────────────────────────────────────────
 
 function Problem() {
-  const cards = [
+  const cards: Array<{
+    statTo: number;
+    statPrefix?: string;
+    statSuffix?: string;
+    statRange?: string;
+    unit: string;
+    title: string;
+    detail: string;
+    accent: string;
+    cardClass: string;
+  }> = [
     {
-      stat: "3–5",
+      statTo: 5,
+      statRange: "3–5",
       unit: "days",
       title: "to brief a search properly",
       detail:
         "Every recruiter starts from scratch — fragmented intake calls, scattered notes, inconsistent calibration. The first week is gone before sourcing begins.",
       accent: "var(--accent)",
+      cardClass: "m-card",
     },
     {
-      stat: "67",
+      statTo: 67,
       unit: "%",
       title: "evaluation drift across team",
       detail:
         "Two recruiters look at the same CV and rank it differently. Without a shared scoring model, decisions flip with whoever ran the screen call.",
       accent: "var(--warn)",
+      cardClass: "m-card m-card--warn",
     },
     {
-      stat: "12+",
+      statTo: 12,
+      statSuffix: "+",
       unit: "tools",
       title: "with feedback in every one",
       detail:
         "Email threads, ATS notes, Slack DMs, Zoom recordings, recruiter scribbles. The signal that matters is in the inbox, not the system.",
       accent: "var(--critical)",
+      cardClass: "m-card m-card--danger",
     },
   ];
   return (
-    <section className="m-section">
+    <section className="m-section m-section--gap-tight-top m-section--tint-cool">
       <span className="m-section__numeral" aria-hidden>
         02
       </span>
@@ -303,7 +330,7 @@ function Problem() {
             {cards.map((c) => (
               <li
                 key={c.title}
-                className="m-card"
+                className={c.cardClass}
                 style={{
                   borderTop: `2px solid ${c.accent}`,
                   display: "flex",
@@ -325,7 +352,19 @@ function Problem() {
                     gap: "0.5rem",
                   }}
                 >
-                  <span>{c.stat}</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {c.statRange ? (
+                      c.statRange
+                    ) : (
+                      <>
+                        <CountUp
+                          to={c.statTo}
+                          duration={1800}
+                        />
+                        {c.statSuffix}
+                      </>
+                    )}
+                  </span>
                   <span
                     style={{
                       fontSize: "0.875rem",
@@ -369,18 +408,29 @@ function Simulator() {
   return (
     <section
       id="simulator"
-      className="m-section"
+      className="m-section m-section--gap-tight-bottom"
       style={{ scrollMarginTop: "2rem" }}
     >
+      <DataStream />
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
         03
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
-          <span className="m-eyebrow">03 / Live</span>
+          <span className="m-eyebrow">
+            <span className="m-sim__live">
+              <span className="m-sim__live-dot" />
+              <span>LIVE DEMO</span>
+            </span>
+            <span aria-hidden>·</span>
+            03 / Live
+          </span>
           <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "20ch" }}>
             Type any role.{" "}
-            <em>Watch Mandate think.</em>
+            <em>
+              Watch Mandate think.
+              <TerminalCursor delay={400} duration={2400} />
+            </em>
           </h2>
           <p
             className="m-lede"
@@ -471,7 +521,7 @@ function HowItWorks() {
     },
   ];
   return (
-    <section id="how" className="m-section">
+    <section id="how" className="m-section m-section--gap-tight-top">
       <span className="m-section__numeral" aria-hidden>
         04
       </span>
@@ -483,7 +533,7 @@ function HowItWorks() {
           </h2>
         </Reveal>
 
-        <Reveal className="m-reveal-cascade" threshold={0.05}>
+        <Reveal className="m-reveal-cascade m-pipeline-cascade" threshold={0.05}>
           <div className="m-pipeline" style={{ marginTop: "3rem" }}>
             {steps.map((s) => (
               <div key={s.n} className="m-pipeline__step">
@@ -561,7 +611,7 @@ function Stack() {
     },
   ];
   return (
-    <section className="m-section">
+    <section className="m-section m-section--gap-feature-bottom m-section--tint-warm">
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
         05
       </span>
@@ -591,7 +641,7 @@ function Stack() {
             }}
           >
             {cols.map((col) => (
-              <div key={col.title} className="m-card">
+              <div key={col.title} className="m-card m-card--shimmer">
                 <div
                   className="m-mono--label"
                   style={{ color: "var(--accent)", marginBottom: "0.625rem" }}
@@ -620,8 +670,14 @@ function Stack() {
                     padding: 0,
                   }}
                 >
-                  {col.items.map((it) => (
-                    <li key={it} className="m-chip">
+                  {col.items.map((it, i) => (
+                    <li
+                      key={it}
+                      className="m-chip m-chip-pop"
+                      style={{
+                        animationDelay: `${250 + i * 70}ms`,
+                      }}
+                    >
                       <span className="m-chip__dot" />
                       {it}
                     </li>
@@ -643,8 +699,7 @@ function Stack() {
 function Triangulation() {
   return (
     <section
-      className="m-section m-triangulation"
-      style={{ paddingBlock: "clamp(6rem, 14vw, 12rem)" }}
+      className="m-section m-triangulation m-section--gap-feature-top m-section--gap-tight-bottom"
     >
       <span className="m-section__numeral" aria-hidden>
         06
@@ -689,21 +744,9 @@ function Triangulation() {
               }}
             >
               {[
-                {
-                  k: "Candidate ↔ Company",
-                  v: 91,
-                  c: "#22c55e",
-                },
-                {
-                  k: "Candidate ↔ HM",
-                  v: 83,
-                  c: "#f59e0b",
-                },
-                {
-                  k: "Overall alignment",
-                  v: 87,
-                  c: "var(--accent)",
-                },
+                { k: "Candidate ↔ Company", v: 91, c: "#22c55e" },
+                { k: "Candidate ↔ HM", v: 83, c: "#f59e0b" },
+                { k: "Overall alignment", v: 87, c: "var(--accent)" },
               ].map((s) => (
                 <li
                   key={s.k}
@@ -735,9 +778,10 @@ function Triangulation() {
                       fontWeight: 600,
                       color: s.c,
                       letterSpacing: "0.02em",
+                      fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {s.v}
+                    <CountUp to={s.v} duration={1800} />
                   </span>
                   <span
                     style={{
@@ -816,7 +860,7 @@ function Features() {
     },
   ];
   return (
-    <section className="m-section">
+    <section className="m-section m-section--gap-tight-top m-section--tint-cool">
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
         07
       </span>
@@ -840,8 +884,9 @@ function Features() {
             }}
           >
             {cards.map((c) => (
-              <li key={c.name} className="m-card">
+              <li key={c.name} className="m-card m-feature-card">
                 <div
+                  className="m-feature-card__icon"
                   style={{
                     fontSize: "1.75rem",
                     color: "var(--accent)",
@@ -925,7 +970,7 @@ function Pricing() {
     },
   ];
   return (
-    <section id="pricing" className="m-section">
+    <section id="pricing" className="m-section m-section--gap-tight-bottom">
       <span className="m-section__numeral" aria-hidden>
         08
       </span>
@@ -976,7 +1021,7 @@ function Pricing() {
                       textTransform: "uppercase",
                     }}
                   >
-                    Most popular
+                    <span className="m-price__sparkle">Most popular</span>
                   </div>
                 )}
                 <div
@@ -1097,7 +1142,7 @@ const FAQ_ITEMS = [
 
 function Faq() {
   return (
-    <section className="m-section">
+    <section className="m-section m-section--gap-tight-top m-section--gap-feature-bottom">
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
         09
       </span>
@@ -1126,7 +1171,7 @@ function Faq() {
 function CtaFooter() {
   return (
     <section
-      className="m-section"
+      className="m-section m-section--gap-feature-top"
       style={{
         position: "relative",
         background: "var(--bg-elev-1)",
@@ -1136,6 +1181,7 @@ function CtaFooter() {
       <span className="m-section__numeral" aria-hidden>
         10
       </span>
+      <div className="m-cta-bg" aria-hidden />
       <div className="m-hero-glow" aria-hidden style={{ opacity: 0.5 }} />
       <div
         className="m-container"
@@ -1176,7 +1222,7 @@ function CtaFooter() {
           >
             <Link
               href="/request-access"
-              className="m-btn m-btn--primary m-btn--breathe"
+              className="m-btn m-btn--primary m-btn--breathe m-btn--gradient-border"
               style={{ padding: "1rem 1.75rem", fontSize: "0.8125rem" }}
             >
               <span>Request Access</span>

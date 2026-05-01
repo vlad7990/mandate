@@ -333,7 +333,10 @@ function SimulatorProgress() {
 
 function SimulatorResult({ result }: { result: DemoResult }) {
   return (
-    <div style={{ display: "grid", gap: "1.5rem" }}>
+    <div style={{ display: "grid", gap: "1.5rem", position: "relative" }}>
+      {/* Single-pass scan line — sweeps down once when results land */}
+      <span className="m-sim__scanline" aria-hidden />
+
       {/* Top row — role decomposition */}
       <div
         className="m-sim__row"
@@ -457,7 +460,7 @@ function SimulatorResult({ result }: { result: DemoResult }) {
         </div>
       )}
 
-      {/* Boolean queries */}
+      {/* Boolean queries — typewriter reveal per-block via CSS */}
       {result.boolean_queries.length > 0 && (
         <div className="m-sim__row" style={{ animationDelay: "480ms" }}>
           <SectionTitle>Boolean queries</SectionTitle>
@@ -465,6 +468,7 @@ function SimulatorResult({ result }: { result: DemoResult }) {
             {result.boolean_queries.slice(0, 3).map((q, i) => (
               <div
                 key={i}
+                className={`m-sim__bool m-sim__bool--q${i + 1}`}
                 style={{
                   background: "var(--bg)",
                   border: "1px solid var(--line)",
