@@ -892,11 +892,12 @@ function wordCount(content: string): number {
 }
 
 // ────────────────────────────────────────────────────────────────────────
-// Company Intelligence Agent — real-time research via webclaw + Claude
+// Company Intelligence Agent — real-time research via Claude's
+// `web_search` server tool.
 //
 // Triggered manually from the Company Intelligence panel. Pulls the
-// project's existing context, runs the webclaw scrape/search pipeline
-// and Claude synthesis, then merges the report into
+// project's existing context, asks Claude to research the company in
+// real time, then merges the synthesised report into
 // projects.company_context.intelligence_report.
 // ────────────────────────────────────────────────────────────────────────
 
