@@ -109,6 +109,15 @@ const ico = buildIco([
 ]);
 await writeFile(resolve(root, "public/favicon.ico"), ico);
 
+// Mirror to src/app/favicon.ico — Next.js's App Router treats
+// app/favicon.ico as a special file and auto-routes it to
+// /favicon.ico, OVERRIDING anything in public/. Without this mirror,
+// the Vercel/Next scaffolding default keeps winning even after we
+// regenerate our M favicon. Keeping both files in sync via this
+// script means whoever runs `node scripts/build-favicon.mjs` next
+// can't accidentally drift the two copies apart.
+await writeFile(resolve(root, "src/app/favicon.ico"), ico);
+
 // ────────────────────────────────────────────────────────────────────
 // Report
 // ────────────────────────────────────────────────────────────────────
@@ -119,6 +128,7 @@ const files = [
   "public/favicon-32x32.png",
   "public/apple-touch-icon.png",
   "public/favicon.ico",
+  "src/app/favicon.ico",
 ];
 
 for (const f of files) {
