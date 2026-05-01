@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import type {
@@ -83,9 +84,15 @@ export function weightedOverall(
  * movement vs. the prior scoring run.
  */
 export async function computeAndStoreScores(
-  projectId: string
+  projectId: string,
+  client?: SupabaseClient
 ): Promise<ScoredCandidate[]> {
-  const supabase = await createServerSupabaseClient();
+  // Optional client lets unauthenticated server contexts (e.g. the
+  // public hiring-manager portal's after() callback) pass a
+  // service-role client. Default path resolves the SSR client tied to
+  // the caller's session, which is what every recruiter-facing flow
+  // expects.
+  const supabase = client ?? (await createServerSupabaseClient());
 
   // Project context — calibration weights drive the overall score.
   const { data: project, error: projectError } = await supabase

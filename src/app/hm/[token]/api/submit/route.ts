@@ -1,9 +1,18 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import {
   HM_RATINGS,
   type HmRating,
 } from "@/app/(dashboard)/projects/[id]/hiring-manager/feedback-constants";
+import { interpretFeedback } from "@/lib/ai/interpret-feedback";
+import { applyRecalibration } from "@/lib/recalibration/recalibrate";
+import type { CalibrationModel } from "@/lib/ai/role-analysis";
+import type { OnboardingResponses } from "@/lib/ai/onboarding-analysis";
+import type { CandidateProfile } from "@/lib/ai/cv-parsing";
+import type {
+  FeedbackInterpretation,
+  FeedbackType,
+} from "@/lib/ai/feedback-analysis";
 
 // POST /hm/<token>/api/submit
 // Body: {
@@ -131,16 +140,235 @@ export async function POST(
     triggered_recalibration: false,
   }));
 
+  let insertedFeedback: Array<{ id: string; candidate_id: string }> = [];
   if (feedbackRows.length > 0) {
-    const { error: fbErr } = await supabase.from("feedback").insert(feedbackRows);
+    const { data, error: fbErr } = await supabase
+      .from("feedback")
+      .insert(feedbackRows)
+      .select("id, candidate_id");
     if (fbErr) {
       // Non-fatal: the structured review was saved, the recruiter can
       // still see it. Log so we can debug feedback-table schema drift.
       console.error("[hm/submit] failed to mirror feedback rows", fbErr);
+    } else {
+      insertedFeedback = (data ?? []) as Array<{
+        id: string;
+        candidate_id: string;
+      }>;
     }
   }
 
+  // Background: run the Feedback Interpretation Agent on every newly
+  // inserted feedback row, persist the interpretation, and recalibrate
+  // when the agent flags it. The HM has already received their 200 by
+  // the time this fires (after() runs post-response). Errors are
+  // logged but never surface to the HM — they'll be visible to the
+  // recruiter on the project's feedback page.
+  if (insertedFeedback.length > 0) {
+    after(async () => {
+      await runHmFeedbackPipeline({
+        projectId: verified.project_id,
+        rows: insertedFeedback,
+        topConcern: parsed.value.top_concern,
+        hmLabel: parsed.value.hm_label,
+      });
+    });
+  }
+
   return NextResponse.json({ ok: true });
+}
+
+/**
+ * Background pipeline triggered by after() for HM portal submissions.
+ * Runs interpretFeedback per row, persists the interpretation, and
+ * (when flagged) recalibrates the project's calibration weights.
+ *
+ * Uses the service-role client throughout because the public route
+ * has no Supabase session — RLS would otherwise block both the
+ * project read and the feedback updates.
+ */
+async function runHmFeedbackPipeline(args: {
+  projectId: string;
+  rows: Array<{ id: string; candidate_id: string }>;
+  topConcern: string;
+  hmLabel: string;
+}): Promise<void> {
+  const { projectId, rows, topConcern, hmLabel } = args;
+  const supabase = getServiceRoleSupabaseClient();
+
+  // Project context — calibration_model, onboarding_responses,
+  // company_context drive the interpreter.
+  const { data: project, error: projectErr } = await supabase
+    .from("projects")
+    .select("calibration_model, onboarding_responses, organization_id")
+    .eq("id", projectId)
+    .single<{
+      calibration_model: Partial<CalibrationModel> | null;
+      onboarding_responses: Partial<OnboardingResponses> | null;
+      organization_id: string | null;
+    }>();
+
+  if (projectErr || !project) {
+    console.error("[hm/submit/after] failed to load project context", projectErr);
+    return;
+  }
+
+  // Pull the existing feedback content + tail of prior feedback once
+  // (the prior_feedback list is shared across all rows in this run).
+  const rowIds = rows.map((r) => r.id);
+  const { data: insertedRowsRaw } = await supabase
+    .from("feedback")
+    .select("id, candidate_id, content")
+    .in("id", rowIds);
+  const insertedById = new Map<string, { content: string }>();
+  for (const r of (insertedRowsRaw ?? []) as Array<{
+    id: string;
+    candidate_id: string;
+    content: string;
+  }>) {
+    insertedById.set(r.id, { content: r.content });
+  }
+
+  const { data: priorRows } = await supabase
+    .from("feedback")
+    .select(
+      "feedback_type, content, candidate_id, interpreted, triggered_recalibration, created_at"
+    )
+    .eq("project_id", projectId)
+    .not("id", "in", `(${rowIds.map((id) => `"${id}"`).join(",")})`)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  type PriorRow = {
+    feedback_type: string;
+    content: string;
+    candidate_id: string | null;
+    interpreted: { summary?: string } | null;
+    triggered_recalibration: boolean;
+    created_at: string;
+  };
+  const prior_feedback = ((priorRows ?? []) as PriorRow[])
+    .reverse()
+    .map((r) => ({
+      type: r.feedback_type as FeedbackType,
+      content: r.content,
+      candidate_id: r.candidate_id,
+      summary: r.interpreted?.summary ?? null,
+      triggered_recalibration: r.triggered_recalibration,
+      created_at: r.created_at,
+    }));
+
+  // Run each row through the interpreter sequentially. Sequential
+  // (not parallel) on purpose: each row's interpretation can apply
+  // recalibration that the next row should see in the prior_feedback
+  // tail, but we don't refresh prior_feedback per row — the cost of
+  // an extra round trip outweighs the benefit for typical 1–5 row
+  // submissions. If recalibration fires, downstream rows in this
+  // batch use stale weights; that's acceptable — the recruiter will
+  // see the final state on the next visit.
+  for (const row of rows) {
+    const inserted = insertedById.get(row.id);
+    if (!inserted) continue;
+
+    let candidate: {
+      id: string;
+      full_name: string;
+      profile: Partial<CandidateProfile>;
+    } | null = null;
+    if (row.candidate_id) {
+      const { data: candRow } = await supabase
+        .from("candidates")
+        .select("id, full_name, cv_structured")
+        .eq("id", row.candidate_id)
+        .maybeSingle<{
+          id: string;
+          full_name: string;
+          cv_structured: unknown;
+        }>();
+      if (candRow) {
+        candidate = {
+          id: candRow.id,
+          full_name: candRow.full_name,
+          profile: (candRow.cv_structured ?? {}) as Partial<CandidateProfile>,
+        };
+      }
+    }
+
+    let interpretation: FeedbackInterpretation | null = null;
+    try {
+      interpretation = await interpretFeedback({
+        new_feedback: {
+          type: "hm_portal" as FeedbackType,
+          content: inserted.content,
+          candidate_id: row.candidate_id,
+          submitted_role: hmLabel || "hiring_manager",
+        },
+        prior_feedback,
+        calibration: project.calibration_model ?? {},
+        onboarding: project.onboarding_responses ?? {},
+        candidate,
+        skill_context: {
+          project_id: projectId,
+          organization_id: project.organization_id,
+        },
+      });
+    } catch (err) {
+      console.error(
+        "[hm/submit/after] interpretation failed for feedback",
+        row.id,
+        err
+      );
+    }
+
+    // Persist the interpretation (or a failure marker) onto the row.
+    if (interpretation) {
+      const { error: updateErr } = await supabase
+        .from("feedback")
+        .update({ interpreted: interpretation })
+        .eq("id", row.id);
+      if (updateErr) {
+        console.error(
+          "[hm/submit/after] failed to persist interpretation",
+          row.id,
+          updateErr
+        );
+      }
+    } else {
+      await supabase
+        .from("feedback")
+        .update({
+          interpreted: {
+            summary: "AI interpretation failed — see content above.",
+          },
+        })
+        .eq("id", row.id);
+    }
+
+    // Recalibrate when the agent asked for it AND there are real
+    // adjustments. Pass the service-role client through so the
+    // recalibrator's reads/writes don't trip over the unauthenticated
+    // session.
+    if (
+      interpretation?.recalibration_needed &&
+      interpretation.suggested_weight_adjustments.length > 0
+    ) {
+      try {
+        await applyRecalibration(projectId, row.id, interpretation, supabase);
+      } catch (err) {
+        console.error(
+          "[hm/submit/after] recalibration failed for feedback",
+          row.id,
+          err
+        );
+      }
+    }
+  }
+
+  // topConcern is captured in the structured review and the per-row
+  // composeFeedbackContent already embeds it; we don't need to do
+  // anything else with it here. The reference keeps the callback
+  // signature self-documenting and survives future linter sweeps.
+  void topConcern;
 }
 
 type ParsedBody = {

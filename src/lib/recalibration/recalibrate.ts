@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   DIMENSION_KEYS,
@@ -36,9 +37,13 @@ export type RecalibrationResult = {
 export async function applyRecalibration(
   projectId: string,
   feedbackId: string,
-  interpretation: FeedbackInterpretation
+  interpretation: FeedbackInterpretation,
+  client?: SupabaseClient
 ): Promise<RecalibrationResult> {
-  const supabase = await createServerSupabaseClient();
+  // Optional client lets unauthenticated callers (HM portal after()
+  // callback) pass a service-role client; default path resolves the
+  // SSR client bound to the recruiter's session.
+  const supabase = client ?? (await createServerSupabaseClient());
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
@@ -107,7 +112,7 @@ export async function applyRecalibration(
   // failures are logged but do not roll back the calibration update —
   // the next ranking-page visit will auto-score from the fresh weights.
   try {
-    await computeAndStoreScores(projectId);
+    await computeAndStoreScores(projectId, client);
   } catch (err) {
     console.error(
       "[recalibrate] scoring re-run failed (calibration kept)",
