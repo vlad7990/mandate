@@ -112,12 +112,40 @@ export async function applyRecalibration(
   // failures are logged but do not roll back the calibration update —
   // the next ranking-page visit will auto-score from the fresh weights.
   try {
-    await computeAndStoreScores(projectId, client);
+    await computeAndStoreScores(projectId, client, {
+      trigger: {
+        trigger: "recalibration",
+        feedback_id: feedbackId,
+        summary: interpretation.summary,
+      },
+    });
   } catch (err) {
     console.error(
       "[recalibrate] scoring re-run failed (calibration kept)",
       err
     );
+  }
+
+  // Snapshot the new calibration into calibration_history so the
+  // History tab can show the trajectory and the recruiter can restore
+  // an older version if needed. Best-effort — failure does not block
+  // the recalibration flow.
+  try {
+    const { recordCalibrationSnapshot } = await import(
+      "@/lib/calibration/history"
+    );
+    await recordCalibrationSnapshot(
+      projectId,
+      updatedCalibration as CalibrationModel,
+      {
+        change_type: "recalibration",
+        change_reason: interpretation.summary,
+        feedback_id: feedbackId,
+      },
+      client
+    );
+  } catch (err) {
+    console.error("[recalibrate] history snapshot failed", err);
   }
 
   // Mark the feedback row so the audit log can highlight it.

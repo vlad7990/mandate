@@ -334,3 +334,129 @@ export async function restoreQueryVersionAction(
     version: nextVersion,
   };
 }
+
+// ────────────────────────────────────────────────────────────────────────
+// F5 — Sourcing Strategy: target-company generator
+// ────────────────────────────────────────────────────────────────────────
+
+import { runTargetCompanies } from "@/lib/ai/run-target-companies";
+import type { TargetCompaniesReport } from "@/lib/ai/target-companies-agent";
+
+export async function generateTargetCompaniesAction(
+  projectId: string,
+  archetypeHint?: string
+): Promise<TargetCompaniesReport> {
+  if (!projectId) throw new Error("Missing projectId.");
+  const auth = await requireAuth();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: project, error } = await supabase
+    .from("projects")
+    .select(
+      "id, company_name, calibration_model, company_context, organization_id"
+    )
+    .eq("id", projectId)
+    .single<{
+      id: string;
+      company_name: string;
+      calibration_model: Partial<CalibrationModel> | null;
+      company_context: Partial<CompanyContext> | null;
+      organization_id: string | null;
+    }>();
+
+  if (error || !project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const company = project.company_context ?? {};
+  const calibration = project.calibration_model ?? {};
+
+  return runTargetCompanies(
+    {
+      role: {
+        title: calibration.role_title ?? null,
+        seniority: calibration.role_structure?.seniority ?? null,
+        function: calibration.role_structure?.function ?? null,
+      },
+      company: {
+        name: company.company_name ?? project.company_name,
+        industry: company.industry ?? null,
+        business_model: company.business_model ?? null,
+      },
+      calibration,
+      archetype_hint: archetypeHint?.trim() || null,
+    },
+    {
+      projectId,
+      organizationId: project.organization_id,
+    }
+  );
+}
+
+export async function appendCompaniesToBooleanAction(
+  projectId: string,
+  slot: SlotKey,
+  companies: string[]
+): Promise<{ slot: SlotKey; version: number }> {
+  if (!projectId) throw new Error("Missing projectId.");
+  if (!Array.isArray(companies) || companies.length === 0) {
+    throw new Error("No companies to append.");
+  }
+
+  const auth = await requireAuth();
+  const supabase = await createServerSupabaseClient();
+
+  // Reuse the project-org guard via the existing actions's pattern.
+  const { data: project } = await supabase
+    .from("projects")
+    .select("organization_id")
+    .eq("id", projectId)
+    .single<{ organization_id: string | null }>();
+  if (!project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const slotMeta = SLOTS.find((s) => s.key === slot);
+  if (!slotMeta) throw new Error(`Unknown slot: ${slot}`);
+
+  // Pull the latest version for this slot.
+  const { data: existing } = await supabase
+    .from("boolean_queries")
+    .select("content, version")
+    .eq("project_id", projectId)
+    .eq("query_type", slotMeta.query_type)
+    .eq("search_type", slotMeta.search_type)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ content: string; version: number }>();
+
+  // Boolean string append: " OR " into the existing content. Quote
+  // company names that contain spaces — Boolean parsers expect that.
+  const formatted = companies
+    .map((c) => (/\s/.test(c) ? `"${c.replace(/"/g, "")}"` : c))
+    .join(" OR ");
+  const next = existing?.content
+    ? `${existing.content} OR ${formatted}`
+    : formatted;
+  const nextVersion = (existing?.version ?? 0) + 1;
+
+  const { error: insertErr } = await supabase
+    .from("boolean_queries")
+    .insert({
+      project_id: projectId,
+      organization_id: auth.organizationId,
+      query_type: slotMeta.query_type,
+      search_type: slotMeta.search_type,
+      content: next,
+      version: nextVersion,
+    });
+
+  if (insertErr) {
+    throw new Error(`Failed to append: ${insertErr.message}`);
+  }
+
+  revalidatePath(`/projects/${projectId}/sourcing`);
+  return { slot, version: nextVersion };
+}

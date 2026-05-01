@@ -14,6 +14,7 @@ import {
   SourcingVersionHistory,
   type SlotVersions,
 } from "./version-history";
+import { SourcingStrategy } from "./sourcing-strategy";
 
 type ProjectRow = {
   id: string;
@@ -166,6 +167,7 @@ export default async function SourcingPage({
         calibration={project.calibration_model ?? {}}
         companyContext={project.company_context ?? {}}
       />
+      <SourcingStrategy projectId={project.id} />
       <div className="max-w-7xl mx-auto px-6 pb-10">
         <SourcingVersionHistory
           projectId={project.id}

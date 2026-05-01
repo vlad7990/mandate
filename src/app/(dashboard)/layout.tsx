@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar";
 import { Toaster } from "@/components/ui/sonner";
+import { CopilotPanel } from "@/components/copilot/copilot-panel";
 import { countNetworkPeople } from "@/lib/network/network-aggregator";
 
 export default async function DashboardLayout({
@@ -59,6 +60,7 @@ export default async function DashboardLayout({
         <div className="flex-1 overflow-auto">{children}</div>
       </main>
       <Toaster richColors position="top-right" />
+      <CopilotPanel />
     </div>
   );
 }

@@ -3,27 +3,20 @@ import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   ARCHETYPES,
-  PIPELINE_LABELS,
-  type Archetype,
   type CandidateProfile,
-  type FitDimensions,
-  type PipelineStage,
 } from "@/lib/ai/cv-parsing";
-import {
-  computeAndStoreScores,
-  TIER_BANDS,
-  TIER_ORDER,
-  type Tier,
-} from "@/lib/ranking/scoring-engine";
+import { computeAndStoreScores } from "@/lib/ranking/scoring-engine";
+import { type Tier } from "@/lib/ranking/tiers";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
-import { cn } from "@/lib/utils";
 import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { LiveTick } from "@/components/ui/live-tick";
-import { MastHead, type MastTone } from "@/components/ui/mast-head";
-import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
-import { TierComparison } from "@/components/ui/tier-comparison";
-import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
+import { MastHead } from "@/components/ui/mast-head";
 import { RefreshScoresButton } from "./refresh-button";
+import {
+  PerspectiveLeaderboard,
+  type LeaderboardEntry,
+} from "./perspective-leaderboard";
+import type { RankChangeReason } from "./rank-change-types";
 
 type ProjectRow = {
   id: string;
@@ -55,34 +48,9 @@ type ScoreRow = {
   tier: string | null;
   rank_position: number | null;
   previous_rank: number | null;
+  rank_changed_at: string | null;
+  rank_change_reason: RankChangeReason | null;
   updated_at: string | null;
-};
-
-const DIMENSIONS: Array<{
-  key: keyof FitDimensions;
-  scoreField: keyof ScoreRow;
-  label: string;
-  short: string;
-}> = [
-  { key: "technical", scoreField: "technical_score", label: "Technical", short: "TECH" },
-  { key: "domain", scoreField: "domain_score", label: "Domain", short: "DOMAIN" },
-  { key: "leadership", scoreField: "leadership_score", label: "Leadership", short: "LEAD" },
-  { key: "regulatory", scoreField: "regulatory_score", label: "Regulatory", short: "REGUL" },
-  { key: "transformation", scoreField: "transformation_score", label: "Transformation", short: "XFORM" },
-];
-
-const TIER_MAST: Record<Tier, MastTone> = {
-  tier_1: "secondary",
-  tier_2: "primary",
-  tier_3: "tertiary",
-  tier_4: "error",
-};
-
-const ARCHETYPE_TONE: Record<Archetype, ChipTone> = {
-  Builder: "primary",
-  Operator: "secondary",
-  Transformer: "warn",
-  Infrastructure: "neutral",
 };
 
 void ARCHETYPES;
@@ -141,7 +109,7 @@ export default async function RankingPage({
   const { data: scoreRows } = await supabase
     .from("candidate_scores")
     .select(
-      "candidate_id, technical_score, domain_score, leadership_score, regulatory_score, transformation_score, overall_score, tier, rank_position, previous_rank, updated_at"
+      "candidate_id, technical_score, domain_score, leadership_score, regulatory_score, transformation_score, overall_score, tier, rank_position, previous_rank, rank_changed_at, rank_change_reason, updated_at"
     )
     .eq("project_id", id)
     .order("rank_position", { ascending: true });
@@ -151,32 +119,52 @@ export default async function RankingPage({
     scoresByCandidate.set(row.candidate_id, row);
   }
 
-  const ranked: Array<{ base: CandidateBase; score: ScoreRow }> = [];
+  const ranked: LeaderboardEntry[] = [];
   const unscored: CandidateBase[] = [];
   for (const c of candidates) {
     const score = scoresByCandidate.get(c.id);
-    if (score && score.tier && score.rank_position) {
-      ranked.push({ base: c, score });
+    if (
+      score &&
+      score.tier &&
+      score.rank_position != null &&
+      score.technical_score != null &&
+      score.domain_score != null &&
+      score.leadership_score != null &&
+      score.regulatory_score != null &&
+      score.transformation_score != null &&
+      score.overall_score != null
+    ) {
+      ranked.push({
+        candidate: {
+          id: c.id,
+          full_name: c.full_name,
+          current_title: c.current_title,
+          current_company: c.current_company,
+          archetype: c.archetype,
+          pipeline_stage: c.pipeline_stage,
+          recruiter_assessment: c.recruiter_assessment,
+        },
+        score: {
+          candidate_id: score.candidate_id,
+          technical_score: score.technical_score,
+          domain_score: score.domain_score,
+          leadership_score: score.leadership_score,
+          regulatory_score: score.regulatory_score,
+          transformation_score: score.transformation_score,
+          overall_score: score.overall_score,
+          tier: score.tier as Tier,
+          rank_position: score.rank_position,
+          previous_rank: score.previous_rank,
+          rank_changed_at: score.rank_changed_at,
+          rank_change_reason: score.rank_change_reason,
+          updated_at: score.updated_at,
+        },
+      });
     } else {
       unscored.push(c);
     }
   }
-  ranked.sort(
-    (a, b) =>
-      (a.score.rank_position ?? 999) - (b.score.rank_position ?? 999)
-  );
-
-  const byTier: Record<Tier, typeof ranked> = {
-    tier_1: [],
-    tier_2: [],
-    tier_3: [],
-    tier_4: [],
-  };
-  for (const r of ranked) {
-    if (TIER_ORDER.includes(r.score.tier as Tier)) {
-      byTier[r.score.tier as Tier].push(r);
-    }
-  }
+  ranked.sort((a, b) => a.score.rank_position - b.score.rank_position);
 
   const lastUpdated = ranked
     .map((r) => r.score.updated_at)
@@ -258,20 +246,13 @@ export default async function RankingPage({
           hasCandidates={candidates.length > 0}
         />
       ) : (
-        <div className="space-y-6">
-          {TIER_ORDER.map((tier) => {
-            const list = byTier[tier];
-            if (list.length === 0) return null;
-            return (
-              <TierSection
-                key={tier}
-                tier={tier}
-                projectId={project.id}
-                rows={list}
-              />
-            );
-          })}
-        </div>
+        <PerspectiveLeaderboard
+          projectId={project.id}
+          calibrationWeights={
+            project.calibration_model?.dimension_weights ?? null
+          }
+          entries={ranked}
+        />
       )}
 
       {unscored.length > 0 && (
@@ -343,240 +324,6 @@ function EmptyState({
   );
 }
 
-function TierSection({
-  tier,
-  projectId,
-  rows,
-}: {
-  tier: Tier;
-  projectId: string;
-  rows: Array<{ base: CandidateBase; score: ScoreRow }>;
-}) {
-  const band = TIER_BANDS[tier];
-  return (
-    <section className="space-y-2">
-      <MastHead
-        tone={TIER_MAST[tier]}
-        label={
-          <span className="flex items-baseline gap-2">
-            <span>{band.label}</span>
-            <span className="text-outline tabular-nums">
-              · {String(rows.length).padStart(2, "0")} candidate
-              {rows.length === 1 ? "" : "s"}
-            </span>
-          </span>
-        }
-        meta={
-          <span className="tabular-nums">
-            Overall {band.min.toFixed(2)}–{band.max.toFixed(2)}
-          </span>
-        }
-      />
-      <ul className="space-y-2">
-        {rows.map(({ base, score }) => (
-          <CandidateRow
-            key={base.id}
-            projectId={projectId}
-            candidate={base}
-            score={score}
-          />
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function CandidateRow({
-  projectId,
-  candidate,
-  score,
-}: {
-  projectId: string;
-  candidate: CandidateBase;
-  score: ScoreRow;
-}) {
-  const archetype = candidate.archetype as Archetype | null;
-  const stage = (candidate.pipeline_stage ?? "found") as PipelineStage;
-  const movement = movementSummary(score.rank_position, score.previous_rank);
-  const overall = typeof score.overall_score === "number" ? score.overall_score : 0;
-  const recruiter = normaliseRecruiterAssessment(candidate.recruiter_assessment);
-
-  return (
-    <li>
-      <Link
-        href={`/projects/${projectId}/candidates/${candidate.id}`}
-        prefetch={false}
-        className="block bg-surface-container-low border border-outline-variant hover:bg-surface-container-high hover:border-outline transition-colors group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      >
-        <div className="flex items-center gap-4 px-4 py-3 flex-wrap">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <span
-              className="font-h2 text-h2 text-primary tabular-nums w-12 text-right shrink-0"
-              aria-label={`Rank position ${score.rank_position}`}
-            >
-              #{String(score.rank_position).padStart(2, "0")}
-            </span>
-            <RankMovement movement={movement} />
-            <span
-              className="w-10 h-10 bg-surface-container-high border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase shrink-0"
-              aria-hidden
-            >
-              {initials(candidate.full_name)}
-            </span>
-            <div className="min-w-0">
-              <div className="text-on-surface text-body-main font-semibold truncate">
-                {candidate.full_name}
-              </div>
-              <div className="font-mono-data text-body-main text-on-surface-variant truncate">
-                {candidate.current_title ?? "—"}
-                {candidate.current_company ? ` @ ${candidate.current_company}` : ""}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="text-right">
-              <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-                Overall
-              </div>
-              <div className="font-h2 text-h2 text-primary tabular-nums leading-none mt-0.5">
-                {overall.toFixed(1)}
-              </div>
-            </div>
-            <TierComparison
-              aiTier={score.tier as Tier}
-              recruiterTier={recruiter.tier}
-              compact
-            />
-            {archetype && (
-              <span className="hidden md:inline">
-                <StatusChip tone={ARCHETYPE_TONE[archetype]} intensity="soft">
-                  {archetype}
-                </StatusChip>
-              </span>
-            )}
-            <span className="hidden lg:inline">
-              <StatusChip tone="neutral" intensity="soft">
-                {PIPELINE_LABELS[stage]}
-              </StatusChip>
-            </span>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 px-4 py-3 border-t border-outline-variant/40 bg-surface-container-lowest/40">
-          {DIMENSIONS.map((dim) => (
-            <DimensionBar
-              key={dim.key}
-              label={dim.short}
-              value={(score[dim.scoreField] as number | null) ?? 0}
-            />
-          ))}
-        </div>
-      </Link>
-    </li>
-  );
-}
-
-function DimensionBar({ label, value }: { label: string; value: number }) {
-  const v = Math.max(0, Math.min(10, value));
-  const colorClass =
-    v >= 7
-      ? "bg-secondary-fixed-dim"
-      : v >= 4
-        ? "bg-primary"
-        : "bg-tertiary";
-  const textClass =
-    v >= 7
-      ? "text-secondary-fixed-dim"
-      : v >= 4
-        ? "text-primary"
-        : "text-tertiary";
-  return (
-    <div className="space-y-1">
-      <div className="flex items-baseline justify-between">
-        <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-          {label}
-        </span>
-        <span
-          className={cn(
-            "font-mono-data text-mono-data tabular-nums",
-            textClass
-          )}
-        >
-          {v}
-        </span>
-      </div>
-      <div
-        className="grid grid-cols-10 gap-0.5"
-        role="meter"
-        aria-valuemin={0}
-        aria-valuemax={10}
-        aria-valuenow={v}
-        aria-label={`${label} score`}
-      >
-        {Array.from({ length: 10 }).map((_, i) => (
-          <div
-            key={i}
-            className={cn(
-              "h-1.5",
-              i < v ? colorClass : "bg-surface-container-high"
-            )}
-            aria-hidden
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function RankMovement({ movement }: { movement: ReturnType<typeof movementSummary> }) {
-  // Fixed-width container so all four states align flush across rows.
-  // Without this, "NEW" and "+12" pushed the avatar laterally and the
-  // leaderboard read uneven on a long scroll.
-  const base = "font-mono-label text-mono-label uppercase tracking-widest tabular-nums flex items-center gap-1 w-14 shrink-0";
-  if (movement.kind === "new") {
-    return (
-      <span className={cn(base, "text-primary")} title="New entry on this scoring run">
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          fiber_new
-        </span>
-        NEW
-      </span>
-    );
-  }
-  if (movement.kind === "same") {
-    return (
-      <span className={cn(base, "text-outline")} title="Unchanged since last scoring run">
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          remove
-        </span>
-        FLAT
-      </span>
-    );
-  }
-  if (movement.kind === "up") {
-    return (
-      <span
-        className={cn(base, "text-secondary-fixed-dim")}
-        title={`Up ${movement.delta} from previous run`}
-      >
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          arrow_upward
-        </span>
-        +{movement.delta}
-      </span>
-    );
-  }
-  return (
-    <span
-      className={cn(base, "text-error")}
-      title={`Down ${movement.delta} from previous run`}
-    >
-      <span className="material-symbols-outlined text-[14px]" aria-hidden>
-        arrow_downward
-      </span>
-      −{movement.delta}
-    </span>
-  );
-}
 
 function UnscoredSection({
   projectId,
@@ -630,32 +377,3 @@ function UnscoredSection({
   );
 }
 
-type Movement =
-  | { kind: "new" }
-  | { kind: "same" }
-  | { kind: "up"; delta: number }
-  | { kind: "down"; delta: number };
-
-function movementSummary(
-  current: number | null,
-  previous: number | null
-): Movement {
-  if (current == null) return { kind: "new" };
-  if (previous == null) return { kind: "new" };
-  if (current === previous) return { kind: "same" };
-  // Lower rank_position is better (1 = top). previous - current > 0 → moved up.
-  const delta = previous - current;
-  if (delta > 0) return { kind: "up", delta };
-  return { kind: "down", delta: -delta };
-}
-
-function initials(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((s) => s[0]?.toUpperCase() ?? "")
-      .join("") || "??"
-  );
-}

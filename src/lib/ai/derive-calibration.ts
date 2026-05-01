@@ -88,4 +88,22 @@ export async function deriveAndStoreCalibration(
       `Failed to persist calibration weights: ${updateError.message}`
     );
   }
+
+  // Record the initial calibration in the history timeline. Best-
+  // effort — the recruiter sees the model on the project page even if
+  // the snapshot fails.
+  try {
+    const { recordCalibrationSnapshot } = await import(
+      "@/lib/calibration/history"
+    );
+    await recordCalibrationSnapshot(projectId, mergedCalibration, {
+      change_type: "initial",
+      change_reason: "Initial calibration from onboarding",
+    });
+  } catch (err) {
+    console.error(
+      "[derive-calibration] history snapshot failed",
+      err
+    );
+  }
 }
