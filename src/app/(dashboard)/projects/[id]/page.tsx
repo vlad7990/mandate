@@ -36,9 +36,11 @@ import {
   type SearchCandidate,
 } from "./candidate-search-panel";
 import { ClientIntelligencePanel } from "./client-intelligence-panel";
+import { CompanyIntelligencePanel } from "./company-intelligence-panel";
 import { CultureIntelligencePanel } from "./culture-intelligence-panel";
 import { HealthSuggestionsPanel } from "./health-suggestions-panel";
 import type { ClientPsychology } from "@/lib/ai/client-psychology-agent";
+import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-agent";
 import type { CultureProfile } from "@/lib/ai/company-culture-agent";
 import type { HealthSuggestionsBlob } from "@/lib/ai/search-health-agent";
 import {
@@ -67,7 +69,10 @@ type ProjectRow = {
   created_at: string | null;
   calibration_model: Partial<CalibrationModel> | null;
   company_context:
-    | (Partial<CompanyContext> & { culture_profile?: CultureProfile })
+    | (Partial<CompanyContext> & {
+        culture_profile?: CultureProfile;
+        intelligence_report?: CompanyIntelligenceReport;
+      })
     | null;
   recalibration_summary: RecalibrationSummary | null;
   client_psychology: ClientPsychology | null;
@@ -264,6 +269,14 @@ export default async function ProjectPage({
           projectId={project.id}
           initial={project.client_psychology}
           feedbackCount={feedbackCount ?? 0}
+        />
+      )}
+
+      {ready && (
+        <CompanyIntelligencePanel
+          projectId={project.id}
+          companyName={project.company_name}
+          initial={project.company_context?.intelligence_report ?? null}
         />
       )}
 

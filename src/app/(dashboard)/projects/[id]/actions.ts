@@ -12,6 +12,8 @@ import {
 import { runRoleAnalysis } from "@/lib/ai/run-role-analysis";
 import { runClientPsychology } from "@/lib/ai/run-client-psychology";
 import { runCompanyCulture } from "@/lib/ai/run-company-culture";
+import { runCompanyIntelligence } from "@/lib/ai/run-company-intelligence";
+import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-agent";
 import { runSearchHealth } from "@/lib/ai/run-search-health";
 import type {
   HealthSuggestion,
@@ -887,4 +889,87 @@ function slotKeyFor(query_type: string, search_type: string): string | null {
 
 function wordCount(content: string): number {
   return content.trim().split(/\s+/).filter(Boolean).length;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Company Intelligence Agent — real-time research via webclaw + Claude
+//
+// Triggered manually from the Company Intelligence panel. Pulls the
+// project's existing context, runs the webclaw scrape/search pipeline
+// and Claude synthesis, then merges the report into
+// projects.company_context.intelligence_report.
+// ────────────────────────────────────────────────────────────────────────
+
+export async function researchCompanyAction(
+  projectId: string
+): Promise<CompanyIntelligenceReport> {
+  if (!projectId) throw new Error("Missing projectId.");
+  const auth = await requireActiveUser();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: project, error: projectErr } = await supabase
+    .from("projects")
+    .select(
+      "id, company_name, calibration_model, company_context, onboarding_responses, organization_id"
+    )
+    .eq("id", projectId)
+    .single<{
+      id: string;
+      company_name: string;
+      calibration_model: Partial<CalibrationModel> | null;
+      company_context: Record<string, unknown> | null;
+      onboarding_responses: unknown;
+      organization_id: string | null;
+    }>();
+
+  if (projectErr || !project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const company = (project.company_context ?? {}) as Partial<CompanyContext> & {
+    website?: string | null;
+  };
+
+  const result = await runCompanyIntelligence(
+    {
+      company: {
+        name: company.company_name ?? project.company_name,
+        website: company.website ?? null,
+      },
+      project: {
+        role_title: project.calibration_model?.role_title ?? null,
+        industry: company.industry ?? null,
+        business_model: company.business_model ?? null,
+        onboarding: project.onboarding_responses ?? {},
+        calibration: project.calibration_model ?? {},
+      },
+    },
+    {
+      projectId,
+      organizationId: project.organization_id,
+    }
+  );
+
+  // Merge into existing company_context blob alongside culture_profile.
+  const nextCompany: Record<string, unknown> = {
+    ...(project.company_context ?? {}),
+    intelligence_report: result,
+  };
+
+  const { error: updateErr } = await supabase
+    .from("projects")
+    .update({
+      company_context: nextCompany,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+  if (updateErr) {
+    throw new Error(
+      `Failed to persist intelligence report: ${updateErr.message}`
+    );
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  return result;
 }
