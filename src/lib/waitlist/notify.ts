@@ -51,7 +51,7 @@ export async function notifyFoundersOfWaitlistRequest(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: process.env.RESEND_FROM ?? "Mandate <noreply@mandate.app>",
+      from: process.env.RESEND_FROM ?? "Mandate <noreply@getmandate.io>",
       to: [...FOUNDER_EMAILS],
       subject,
       html,
@@ -96,6 +96,6 @@ function siteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL ??
     process.env.VERCEL_URL ??
-    "https://mandate.app"
+    "https://getmandate.io"
   );
 }

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./marketing.css";
 
@@ -22,10 +23,42 @@ const jetbrains = JetBrains_Mono({
   variable: "--font-mono",
 });
 
-export const metadata = {
-  title: "Mandate — Executive Search. Reinvented.",
-  description:
-    "The AI Operating System for executive search. 14 intelligent agents, 31 intelligence modules, 3-way candidate alignment.",
+const PAGE_TITLE = "Mandate — AI Executive Search Operating System";
+const PAGE_DESCRIPTION =
+  "The AI Operating System for Executive Search. From one-line brief to shortlist submission with 14 intelligent agents.";
+
+export const metadata: Metadata = {
+  // Override the root template ("%s · Mandate") with an absolute title
+  // so the marketing landing renders the full marketing string in the
+  // browser tab + share previews. metadataBase is inherited from the
+  // root layout — relative URLs below resolve against
+  // https://getmandate.io.
+  title: { absolute: PAGE_TITLE },
+  description: PAGE_DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: "/",
+    siteName: "Mandate",
+    type: "website",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: PAGE_TITLE,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    images: ["/og.png"],
+  },
 };
 
 export default function MarketingLayout({

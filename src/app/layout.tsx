@@ -19,9 +19,54 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["500", "700"],
 });
 
+const SITE_TITLE = "Mandate — AI Executive Search Operating System";
+const SITE_DESCRIPTION =
+  "The AI Operating System for Executive Search. From one-line brief to shortlist submission with 14 intelligent agents.";
+
 export const metadata: Metadata = {
-  title: "Mandate — Executive Intelligence",
-  description: "AI executive search operating system.",
+  // metadataBase is the resolution origin for every relative URL in
+  // openGraph.images / alternates.canonical / twitter.images below.
+  // Inner routes inherit this — they only need to declare path-relative
+  // values for canonical and og.images.
+  metadataBase: new URL("https://getmandate.io"),
+  title: {
+    default: SITE_TITLE,
+    template: "%s · Mandate",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: "Mandate",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/",
+    siteName: "Mandate",
+    type: "website",
+    locale: "en_US",
+    // Placeholder — drop the actual social card at /public/og.png
+    // (1200×630 recommended). Resolves to https://getmandate.io/og.png
+    // via metadataBase.
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Mandate — AI Executive Search Operating System",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ["/og.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
