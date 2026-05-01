@@ -354,6 +354,21 @@ function ProjectHero({
               {calibrated ? "Re-run Calibration" : "Start Onboarding"}
             </Link>
           )}
+          {ready && (
+            <Link
+              href={`/projects/${projectId}/hiring-manager`}
+              prefetch={false}
+              className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <span
+                className="material-symbols-outlined text-[14px]"
+                aria-hidden
+              >
+                share
+              </span>
+              Share with HM
+            </Link>
+          )}
         </div>
       </div>
     </header>
