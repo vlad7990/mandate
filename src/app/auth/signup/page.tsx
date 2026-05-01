@@ -13,9 +13,13 @@ export default async function SignUpPage({
   return (
     <div className="bg-background text-on-surface font-body-main min-h-screen">
       <header className="fixed top-0 z-50 flex h-12 w-full items-center justify-between px-6 bg-surface-container-lowest/80 backdrop-blur border-b border-outline-variant tracking-tight">
-        <div className="text-lg font-bold tracking-tighter text-on-surface uppercase font-h1">
+        <Link
+          href="/"
+          aria-label="Mandate home"
+          className="text-lg font-bold tracking-tighter text-on-surface uppercase font-h1 hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+        >
           Mandate
-        </div>
+        </Link>
         <div className="flex items-center gap-2 px-2 py-1 bg-surface-container rounded border border-outline-variant">
           <span className="material-symbols-outlined text-[16px] text-primary">dark_mode</span>
           <span className="text-mono-label font-mono-label uppercase text-on-surface-variant">

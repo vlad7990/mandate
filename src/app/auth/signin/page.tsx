@@ -24,9 +24,13 @@ export default async function SignInPage({
       <div className="fixed inset-0 bg-gradient-to-tr from-surface-container-lowest via-background to-surface-container-low opacity-90 z-0" />
 
       <nav className="fixed top-0 left-0 w-full flex justify-between items-center h-12 px-6 bg-transparent z-50">
-        <div className="text-lg font-bold tracking-tighter text-on-surface uppercase font-h1">
+        <Link
+          href="/"
+          aria-label="Mandate home"
+          className="text-lg font-bold tracking-tighter text-on-surface uppercase font-h1 hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+        >
           Mandate
-        </div>
+        </Link>
       </nav>
 
       <main className="z-10 w-full max-w-[420px] px-6">

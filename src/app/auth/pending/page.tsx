@@ -35,6 +35,31 @@ export default async function PendingPage() {
       <div className="fixed inset-0 neural-bg opacity-40 z-0" />
       <div className="fixed inset-0 bg-gradient-to-tr from-surface-container-lowest via-background to-surface-container-low opacity-90 z-0" />
 
+      {/*
+        Fixed top wordmark — mirrors the visual placement of signin/
+        signup, but here clicking it submits a POST to /auth/signout
+        rather than a plain link to /. A pending user IS authenticated,
+        so a direct link to / would just bounce them back here via the
+        proxy → dashboard-layout redirect chain. Signing out first
+        gives them a clean exit to the marketing landing.
+      */}
+      <header className="fixed top-0 left-0 w-full flex items-start h-auto py-3 px-6 bg-transparent z-50">
+        <form action="/auth/signout" method="post">
+          <button
+            type="submit"
+            aria-label="Sign out and return to the Mandate landing page"
+            className="group flex flex-col items-start gap-0.5 text-left bg-transparent border-0 p-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          >
+            <span className="text-lg font-bold tracking-tighter text-on-surface uppercase font-h1 group-hover:text-primary transition-colors">
+              Mandate
+            </span>
+            <span className="font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant group-hover:text-primary transition-colors flex items-center gap-1.5">
+              <span aria-hidden>←</span> Sign out &amp; exit
+            </span>
+          </button>
+        </form>
+      </header>
+
       <main className="relative z-10 w-full max-w-[520px] px-6">
         <div className="bg-surface-container-low border border-outline-variant rounded shadow-2xl p-10 relative">
           <div className="absolute -top-px left-0 w-full h-px bg-gradient-to-r from-transparent via-tertiary to-transparent opacity-50" />
