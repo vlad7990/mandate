@@ -874,6 +874,101 @@
   }
 }
 
+/* ───────────────────────── Top nav (sticky) ────────────────────── */
+
+.m-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--line);
+  background: rgba(10, 10, 15, 0.78);
+  /* Backdrop blur lifts nav off the grid + grain layers without
+     forcing them dark; keeps the Bloomberg-glass feel as content
+     scrolls underneath. */
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+.m-nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.875rem;
+}
+
+.m-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: var(--fg);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.m-nav__mark {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--accent);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), transparent);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.m-nav__wordmark {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+.m-nav__beta {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.18em;
+  color: var(--fg-faint);
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--line);
+  margin-left: 0.5rem;
+}
+
+.m-nav__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-shrink: 0;
+}
+
+/* On narrow viewports we drop the BETA chip and tighten the button
+   wordmark — keeps the bar a single tidy row rather than wrapping,
+   which feels less professional. The nav itself never wraps. */
+@media (max-width: 540px) {
+  .m-nav__beta {
+    display: none;
+  }
+  .m-nav__wordmark {
+    letter-spacing: 0.24em;
+  }
+  .m-nav__actions .m-btn {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    gap: 0.375rem;
+  }
+}
+
+@media (max-width: 400px) {
+  /* Tightest fallback — hide the wordmark text but keep the M mark
+     so the brand still anchors the bar visually. */
+  .m-nav__wordmark {
+    display: none;
+  }
+}
+
 /* ───────────────────────── Footer ───────────────────────────────── */
 
 .m-footer {

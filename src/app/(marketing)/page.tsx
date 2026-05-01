@@ -32,99 +32,25 @@ export default function MarketingLandingPage() {
 
 function TopNav() {
   return (
-    <header
-      style={{
-        position: "relative",
-        zIndex: 10,
-        borderBottom: "1px solid var(--line)",
-        backgroundColor: "rgba(10, 10, 15, 0.72)",
-        backdropFilter: "blur(10px)",
-      }}
-    >
-      <div
-        className="m-container"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingBlock: "1rem",
-          gap: "1rem",
-        }}
-      >
-        <Link
-          href="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.625rem",
-            color: "var(--fg)",
-            textDecoration: "none",
-          }}
-          aria-label="Mandate home"
-        >
-          <span
-            aria-hidden
-            style={{
-              width: 26,
-              height: 26,
-              border: "1px solid var(--accent)",
-              background:
-                "linear-gradient(135deg, rgba(59,130,246,0.4), transparent)",
-              display: "grid",
-              placeItems: "center",
-              fontFamily: "var(--font-mono)",
-              fontSize: 12,
-              fontWeight: 700,
-              color: "#fff",
-            }}
-          >
+    <header className="m-nav">
+      <div className="m-container m-nav__inner">
+        <Link href="/" className="m-nav__brand" aria-label="Mandate home">
+          <span aria-hidden className="m-nav__mark">
             M
           </span>
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.8125rem",
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-            }}
-          >
-            Mandate
-          </span>
-          <span
-            aria-hidden
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.625rem",
-              letterSpacing: "0.18em",
-              color: "var(--fg-faint)",
-              marginLeft: "0.5rem",
-              padding: "0.125rem 0.5rem",
-              border: "1px solid var(--line)",
-            }}
-          >
+          <span className="m-nav__wordmark">Mandate</span>
+          <span aria-hidden className="m-nav__beta">
             BETA
           </span>
         </Link>
 
-        <nav
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "1.5rem",
-            fontFamily: "var(--font-mono)",
-            fontSize: "0.75rem",
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-          }}
-        >
-          <a href="#how" className="m-link">
-            How it works
-          </a>
-          <a href="#pricing" className="m-link">
-            Pricing
-          </a>
-          <Link href="/auth/signin" className="m-link">
-            Sign in
+        <nav className="m-nav__actions" aria-label="Primary">
+          <Link
+            href="/auth/signin"
+            className="m-btn m-btn--ghost"
+            style={{ padding: "0.625rem 1rem" }}
+          >
+            Log In
           </Link>
           <Link
             href="/request-access"
