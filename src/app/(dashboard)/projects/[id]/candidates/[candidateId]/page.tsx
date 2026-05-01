@@ -245,7 +245,7 @@ export default async function CandidateProfilePage({
     <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
       <BreadcrumbRail
         segments={[
-          { label: "Mandate", href: "/" },
+          { label: "Mandate", href: "/home" },
           { label: project.title, href: `/projects/${project.id}`, maxChars: 24 },
           { label: "Candidates", href: `/projects/${project.id}/candidates` },
           { label: candidate.full_name, maxChars: 28 },

@@ -16,7 +16,7 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
-  { href: "/", label: "Projects", icon: "folder_open" },
+  { href: "/home", label: "Projects", icon: "folder_open" },
   { href: "/candidates", label: "Candidates", icon: "groups" },
   {
     href: "/candidates/network",
@@ -49,7 +49,7 @@ export function Sidebar({ user, badges }: SidebarProps) {
       className="fixed left-0 top-0 h-full w-20 border-r border-outline-variant bg-surface-container-lowest flex flex-col items-center py-4 z-50"
     >
       <Link
-        href="/"
+        href="/home"
         aria-label="Mandate home"
         className="mb-8 flex flex-col items-center gap-1"
       >

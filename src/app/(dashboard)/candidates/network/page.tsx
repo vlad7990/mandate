@@ -23,7 +23,7 @@ export default async function NetworkPage() {
     <div className="px-6 py-6 space-y-5 max-w-[1500px] mx-auto">
       <BreadcrumbRail
         segments={[
-          { label: "Mandate", href: "/" },
+          { label: "Mandate", href: "/home" },
           { label: "Candidates", href: "/candidates" },
           { label: "Network" },
         ]}

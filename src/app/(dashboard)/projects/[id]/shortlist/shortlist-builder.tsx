@@ -242,7 +242,7 @@ export function ShortlistBuilder({
       <div className="max-w-[1600px] mx-auto px-6 py-6 space-y-5">
         <BreadcrumbRail
           segments={[
-            { label: "Mandate", href: "/" },
+            { label: "Mandate", href: "/home" },
             { label: roleTitle, href: `/projects/${projectId}`, maxChars: 32 },
             { label: "Shortlist" },
           ]}

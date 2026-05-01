@@ -49,7 +49,7 @@ export default async function WaitlistPage() {
     <div className="px-6 py-6 space-y-5 max-w-[1400px] mx-auto">
       <BreadcrumbRail
         segments={[
-          { label: "Mandate", href: "/" },
+          { label: "Mandate", href: "/home" },
           { label: "Settings", href: "/settings" },
           { label: "Waitlist" },
         ]}

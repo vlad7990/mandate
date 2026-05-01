@@ -1,0 +1,473 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type DemoResult = {
+  role_title: string;
+  company_name: string;
+  seniority: string;
+  function: string;
+  inferred_scope: string;
+  missing_information: string[];
+  calibration_weights: {
+    technical: number;
+    domain: number;
+    leadership: number;
+    regulatory: number;
+    transformation: number;
+  };
+  boolean_queries: string[];
+};
+
+const PROGRESS_STEPS = [
+  "Reading brief",
+  "Researching company",
+  "Calibrating model",
+  "Generating queries",
+] as const;
+
+const DIMENSIONS: Array<{
+  key: keyof DemoResult["calibration_weights"];
+  label: string;
+}> = [
+  { key: "technical", label: "TECHNICAL" },
+  { key: "domain", label: "DOMAIN" },
+  { key: "leadership", label: "LEADERSHIP" },
+  { key: "regulatory", label: "REGULATORY" },
+  { key: "transformation", label: "TRANSFORMATION" },
+];
+
+export function LiveSimulator() {
+  const [input, setInput] = useState("");
+  const [pending, setPending] = useState(false);
+  // Bumped on each submit so the inner ProgressTracker remounts and
+  // its step counter resets cleanly — avoids synchronously setting
+  // state from a useEffect when `pending` flips.
+  const [runId, setRunId] = useState(0);
+  const [result, setResult] = useState<DemoResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (raw: string) => {
+    const text = raw.trim();
+    if (!text || pending) return;
+    setRunId((r) => r + 1);
+    setPending(true);
+    setError(null);
+    setResult(null);
+    try {
+      const response = await fetch("/api/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role_input: text }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(
+          body?.error ||
+            (response.status === 429
+              ? "Rate limit reached — try again in an hour."
+              : `Request failed (${response.status})`)
+        );
+      }
+      const data = (await response.json()) as DemoResult;
+      setResult(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <div className="m-sim">
+      <div className="m-sim__bar">
+        <span
+          className={`m-sim__bar-dot ${
+            pending ? "m-sim__bar-dot--live" : ""
+          }`}
+        />
+        <span>SIMULATOR</span>
+        <span style={{ marginLeft: "auto", color: "var(--fg-faint)" }}>
+          /api/demo
+        </span>
+      </div>
+
+      <form
+        className="m-sim__input-row"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submit(input);
+        }}
+      >
+        <input
+          className="m-sim__input"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="e.g. Head of IT Operations for RBC Capital Markets"
+          aria-label="Role to analyse"
+          disabled={pending}
+        />
+        <button
+          type="submit"
+          className="m-sim__submit"
+          disabled={pending || !input.trim()}
+        >
+          {pending ? "Thinking…" : "Analyze →"}
+        </button>
+      </form>
+
+      <div className="m-sim__body">
+        {!result && !pending && !error && <SimulatorIdle />}
+
+        {pending && <SimulatorProgress key={runId} />}
+
+        {error && (
+          <div
+            role="alert"
+            style={{
+              padding: "1rem",
+              border: "1px solid #ef4444",
+              background: "rgba(239, 68, 68, 0.06)",
+              color: "#fca5a5",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.8125rem",
+              letterSpacing: "0.04em",
+            }}
+          >
+            ✕ {error}
+          </div>
+        )}
+
+        {result && !pending && <SimulatorResult result={result} />}
+      </div>
+    </div>
+  );
+}
+
+function SimulatorIdle() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.75rem",
+        color: "var(--fg-muted)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.6875rem",
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--fg-faint)",
+        }}
+      >
+        $ awaiting_input
+      </div>
+      <p style={{ maxWidth: "44ch", lineHeight: 1.6 }}>
+        Drop any executive search brief above — the messier the better.
+        Mandate decomposes the role, calibrates the scoring model, and
+        drafts the first three Boolean queries while you read this
+        sentence.
+      </p>
+      <ul
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.5rem",
+          marginTop: "0.5rem",
+          listStyle: "none",
+          padding: 0,
+        }}
+      >
+        {EXAMPLES.map((ex) => (
+          <li key={ex}>
+            <button
+              type="button"
+              className="m-chip"
+              style={{ cursor: "pointer", background: "var(--bg-elev-2)" }}
+              onClick={() => {
+                const sim = document.querySelector<HTMLInputElement>(
+                  ".m-sim__input"
+                );
+                if (sim) {
+                  sim.value = ex;
+                  sim.dispatchEvent(new Event("input", { bubbles: true }));
+                  sim.focus();
+                }
+              }}
+            >
+              <span className="m-chip__dot" />
+              {ex}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const EXAMPLES = [
+  "Chief Risk Officer for a UK challenger bank",
+  "VP of Engineering at a Series-C fintech",
+  "CTO for a US healthcare-payer modernisation",
+];
+
+function SimulatorProgress() {
+  // Lazy initializer keeps the step at 0 on mount; subsequent steps
+  // come from the interval callback only — no synchronous setState
+  // in the effect body.
+  const [stepIdx, setStepIdx] = useState(0);
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setStepIdx((i) => Math.min(i + 1, PROGRESS_STEPS.length - 1));
+    }, 2200);
+    return () => window.clearInterval(interval);
+  }, []);
+  return (
+    <div className="m-sim__progress" role="status" aria-live="polite">
+      {PROGRESS_STEPS.map((label, i) => (
+        <div
+          key={label}
+          className={`m-sim__progress-step ${
+            i < stepIdx
+              ? "m-sim__progress-step--done"
+              : i === stepIdx
+                ? "m-sim__progress-step--active"
+                : "m-sim__progress-step--pending"
+          }`}
+        >
+          {label}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SimulatorResult({ result }: { result: DemoResult }) {
+  return (
+    <div style={{ display: "grid", gap: "1.5rem" }}>
+      {/* Top row — role decomposition */}
+      <div
+        className="m-sim__row"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+          gap: "0.75rem",
+          animationDelay: "0ms",
+        }}
+      >
+        <ResultField label="Role" value={result.role_title} accent />
+        <ResultField label="Company" value={result.company_name} />
+        <ResultField label="Seniority" value={result.seniority} />
+        <ResultField label="Function" value={result.function} />
+      </div>
+
+      {/* Inferred scope */}
+      <div className="m-sim__row" style={{ animationDelay: "120ms" }}>
+        <SectionTitle>Inferred scope</SectionTitle>
+        <p
+          style={{
+            color: "var(--fg-soft)",
+            lineHeight: 1.6,
+            fontSize: "0.9375rem",
+          }}
+        >
+          {result.inferred_scope}
+        </p>
+      </div>
+
+      {/* Calibration weights */}
+      <div className="m-sim__row" style={{ animationDelay: "240ms" }}>
+        <SectionTitle>Calibration weights</SectionTitle>
+        <div style={{ display: "grid", gap: "0.625rem" }}>
+          {DIMENSIONS.map((d, i) => {
+            const v = Math.max(
+              0,
+              Math.min(10, result.calibration_weights[d.key] ?? 0)
+            );
+            return (
+              <div
+                key={d.key}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "120px 1fr 32px",
+                  alignItems: "center",
+                  gap: "0.875rem",
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.6875rem",
+                    letterSpacing: "0.16em",
+                    color: "var(--fg-muted)",
+                  }}
+                >
+                  {d.label}
+                </span>
+                <div className="m-sim__bar-fill" aria-hidden>
+                  <span
+                    style={{
+                      // Stagger the bar fills across each dimension for
+                      // a satisfying readout cascade.
+                      transitionDelay: `${360 + i * 90}ms`,
+                      width: `${(v / 10) * 100}%`,
+                    }}
+                  />
+                </div>
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.875rem",
+                    color: "var(--fg)",
+                    textAlign: "right",
+                  }}
+                >
+                  {v}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Missing information */}
+      {result.missing_information.length > 0 && (
+        <div className="m-sim__row" style={{ animationDelay: "360ms" }}>
+          <SectionTitle>Information required</SectionTitle>
+          <ul
+            style={{
+              listStyle: "none",
+              padding: 0,
+              display: "grid",
+              gap: "0.375rem",
+            }}
+          >
+            {result.missing_information.slice(0, 6).map((it, i) => (
+              <li
+                key={i}
+                style={{
+                  display: "flex",
+                  gap: "0.625rem",
+                  alignItems: "flex-start",
+                  color: "var(--fg-soft)",
+                  fontSize: "0.9375rem",
+                }}
+              >
+                <span
+                  style={{
+                    color: "var(--warn)",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  ?
+                </span>
+                {it}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Boolean queries */}
+      {result.boolean_queries.length > 0 && (
+        <div className="m-sim__row" style={{ animationDelay: "480ms" }}>
+          <SectionTitle>Boolean queries</SectionTitle>
+          <div style={{ display: "grid", gap: "0.5rem" }}>
+            {result.boolean_queries.slice(0, 3).map((q, i) => (
+              <div
+                key={i}
+                style={{
+                  background: "var(--bg)",
+                  border: "1px solid var(--line)",
+                  padding: "0.75rem 0.875rem",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.8125rem",
+                  color: "var(--fg)",
+                  letterSpacing: "0.01em",
+                  lineHeight: 1.55,
+                  overflowWrap: "anywhere",
+                  borderLeft: "2px solid var(--accent)",
+                }}
+              >
+                <span
+                  style={{
+                    color: "var(--fg-faint)",
+                    marginRight: "0.625rem",
+                  }}
+                >
+                  Q{i + 1}
+                </span>
+                {q}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h4
+      style={{
+        fontFamily: "var(--font-mono)",
+        fontSize: "0.6875rem",
+        letterSpacing: "0.18em",
+        textTransform: "uppercase",
+        color: "var(--accent)",
+        marginBottom: "0.625rem",
+      }}
+    >
+      {children}
+    </h4>
+  );
+}
+
+function ResultField({
+  label,
+  value,
+  accent = false,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        background: accent ? "var(--accent-soft)" : "var(--bg)",
+        border: `1px solid ${accent ? "rgba(59,130,246,0.4)" : "var(--line)"}`,
+        padding: "0.75rem 0.875rem",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.625rem",
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--fg-muted)",
+          marginBottom: "0.25rem",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: accent ? "var(--font-display)" : "var(--font-body)",
+          fontSize: accent ? "1.125rem" : "0.9375rem",
+          fontWeight: accent ? 420 : 500,
+          color: accent ? "var(--accent)" : "var(--fg)",
+          letterSpacing: accent ? "-0.01em" : "0",
+          lineHeight: 1.25,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}

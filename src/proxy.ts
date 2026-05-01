@@ -1,30 +1,68 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/session";
 
-// Exact-match public paths.
-const PUBLIC_PATHS = new Set(["/auth/signin", "/auth/signup", "/auth/callback"]);
+// Hard-public — skip session refresh entirely. Used for endpoints that
+// must work for unauthenticated visitors with no cookie round-trip
+// (the HM portal token-based pages, the public landing-page demo API).
+const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/api/demo"];
 
-// Prefix public paths — anything starting with one of these is
-// reachable without a Supabase session. /hm/* is the hiring-manager
-// portal (token-based access, no login required); /auth/* covers any
-// auth-flow page we add in future without having to thread it back
-// through PUBLIC_PATHS.
-const PUBLIC_PREFIXES = ["/auth/", "/hm/", "/hm"];
+// Public-facing pages that unauthenticated users SHOULD see. We still
+// run the session refresh on these so authenticated visitors can be
+// bounced to their dashboard, but we never force a sign-in redirect.
+const PUBLIC_PAGES = new Set([
+  "/",
+  "/request-access",
+  "/auth/signin",
+  "/auth/signup",
+  "/auth/callback",
+  "/auth/pending",
+]);
 
-const AUTH_ONLY_REDIRECT_TARGETS = new Set(["/auth/signin", "/auth/signup"]);
+// Pages an authenticated user should never see — they bounce to /home.
+// Marketing landing + raw auth pages count.
+const AUTH_BOUNCE_TARGETS = new Set([
+  "/",
+  "/auth/signin",
+  "/auth/signup",
+]);
+
+function isAlwaysPublic(pathname: string): boolean {
+  return ALWAYS_PUBLIC_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix)
+  );
+}
+
+function isPublicPage(pathname: string): boolean {
+  if (PUBLIC_PAGES.has(pathname)) return true;
+  if (pathname.startsWith("/auth/")) return true;
+  return false;
+}
 
 async function handle(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Bypass session refresh entirely for the public hiring-manager
-  // portal — calls there don't need an authenticated Supabase session
-  // and shouldn't pay the cookie round-trip.
-  if (isPublic(pathname)) {
+  // Hard-public — bypass session entirely.
+  if (isAlwaysPublic(pathname)) {
     return NextResponse.next();
   }
 
   const { response, user } = await updateSession(request);
 
+  // Authenticated visitor on a marketing/auth landing page → bounce
+  // to the dashboard so they don't get stuck on the public surface.
+  if (user && AUTH_BOUNCE_TARGETS.has(pathname)) {
+    const home = request.nextUrl.clone();
+    home.pathname = "/home";
+    home.search = "";
+    return NextResponse.redirect(home);
+  }
+
+  // Unauthenticated visitor on a public-facing page → let them through.
+  if (!user && isPublicPage(pathname)) {
+    return response;
+  }
+
+  // Unauthenticated visitor on a protected page → sign-in with `next`.
   if (!user) {
     const signinUrl = request.nextUrl.clone();
     signinUrl.pathname = "/auth/signin";
@@ -35,21 +73,7 @@ async function handle(request: NextRequest) {
     return NextResponse.redirect(signinUrl);
   }
 
-  if (user && AUTH_ONLY_REDIRECT_TARGETS.has(pathname)) {
-    const home = request.nextUrl.clone();
-    home.pathname = "/";
-    home.search = "";
-    return NextResponse.redirect(home);
-  }
-
   return response;
-}
-
-function isPublic(pathname: string) {
-  if (PUBLIC_PATHS.has(pathname)) return true;
-  return PUBLIC_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(prefix)
-  );
 }
 
 export async function middleware(request: NextRequest) {

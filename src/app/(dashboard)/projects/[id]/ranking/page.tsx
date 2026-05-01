@@ -176,7 +176,7 @@ export default async function RankingPage({
     <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
       <BreadcrumbRail
         segments={[
-          { label: "Mandate", href: "/" },
+          { label: "Mandate", href: "/home" },
           { label: project.title, href: `/projects/${project.id}`, maxChars: 32 },
           { label: "Ranking" },
         ]}

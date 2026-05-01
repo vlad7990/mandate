@@ -381,7 +381,7 @@ function ProjectHero({
     <header className="space-y-3">
       <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-2 flex-wrap">
         <Link
-          href="/"
+          href="/home"
           prefetch={false}
           className="hover:text-on-surface transition-colors focus-visible:outline-none focus-visible:text-primary focus-visible:underline focus-visible:underline-offset-2"
         >
