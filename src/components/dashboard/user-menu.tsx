@@ -63,19 +63,26 @@ export function UserMenu({ displayName, email, role }: UserMenuProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-outline-variant" />
         <DropdownMenuItem asChild>
-          <Link href="/settings" className="cursor-pointer">
-            <span className="material-symbols-outlined text-[16px] mr-2 text-outline">settings</span>
-            Settings
+          <Link
+            href="/settings"
+            className="cursor-pointer font-mono-label text-mono-label uppercase tracking-widest"
+          >
+            <span className="material-symbols-outlined text-[16px] mr-2 text-outline">
+              settings
+            </span>
+            SETTINGS
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-outline-variant" />
         <form action="/auth/signout" method="post">
           <button
             type="submit"
-            className="w-full flex items-center px-3 py-1.5 text-body-main text-error hover:bg-error-container/30 rounded-sm cursor-pointer transition-colors"
+            className="w-full flex items-center px-3 py-1.5 text-error hover:bg-error-container/30 rounded-sm cursor-pointer transition-colors font-mono-label text-mono-label uppercase tracking-widest focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-error"
           >
-            <span className="material-symbols-outlined text-[16px] mr-2">logout</span>
-            Sign Out
+            <span className="material-symbols-outlined text-[16px] mr-2">
+              logout
+            </span>
+            SIGN_OUT
           </button>
         </form>
       </DropdownMenuContent>
