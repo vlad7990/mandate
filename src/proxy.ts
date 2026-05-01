@@ -1,14 +1,31 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/session";
 
+// Exact-match public paths.
 const PUBLIC_PATHS = new Set(["/auth/signin", "/auth/signup", "/auth/callback"]);
+
+// Prefix public paths — anything starting with one of these is
+// reachable without a Supabase session. /hm/* is the hiring-manager
+// portal (token-based access, no login required); /auth/* covers any
+// auth-flow page we add in future without having to thread it back
+// through PUBLIC_PATHS.
+const PUBLIC_PREFIXES = ["/auth/", "/hm/", "/hm"];
+
 const AUTH_ONLY_REDIRECT_TARGETS = new Set(["/auth/signin", "/auth/signup"]);
 
 async function handle(request: NextRequest) {
-  const { response, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
-  if (!user && !isPublic(pathname)) {
+  // Bypass session refresh entirely for the public hiring-manager
+  // portal — calls there don't need an authenticated Supabase session
+  // and shouldn't pay the cookie round-trip.
+  if (isPublic(pathname)) {
+    return NextResponse.next();
+  }
+
+  const { response, user } = await updateSession(request);
+
+  if (!user) {
     const signinUrl = request.nextUrl.clone();
     signinUrl.pathname = "/auth/signin";
     signinUrl.search = "";
@@ -29,7 +46,10 @@ async function handle(request: NextRequest) {
 }
 
 function isPublic(pathname: string) {
-  return PUBLIC_PATHS.has(pathname);
+  if (PUBLIC_PATHS.has(pathname)) return true;
+  return PUBLIC_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix)
+  );
 }
 
 export async function middleware(request: NextRequest) {
