@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Mandate Open Graph card (1200×630).
+
+  Aesthetic rule of thumb: this is the social-share artifact, not a
+  page surface — it has to read in two seconds inside a 600×315 LinkedIn
+  preview. So we go heavy on the wordmark, surgical on the supporting
+  copy, and rely on monospace + a single electric-blue accent for the
+  Bloomberg-Terminal voice that runs across the rest of the marketing
+  surface.
+
+  Fonts: we declare the brand stack first ("JetBrains Mono", "Fraunces")
+  and rely on system fallbacks during raster — librsvg/sharp will pick
+  Menlo + Georgia/Times on macOS, which look fine. If you want pixel-
+  perfect type, install the actual font files on the build machine or
+  bake the wordmark to paths. For a beta launch this is sufficient.
+
+  Convert via: node scripts/build-og.mjs
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1200 630"
+  width="1200"
+  height="630"
+  shape-rendering="geometricPrecision"
+  text-rendering="geometricPrecision"
+>
+  <defs>
+    <!-- Center accent glow — electric blue, soft -->
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.22" />
+      <stop offset="55%" stop-color="#3b82f6" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Bottom band glow — subtle cyan -->
+    <radialGradient id="bottomGlow" cx="50%" cy="100%" r="60%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.06" />
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Vignette so the corners read darker than the center -->
+    <radialGradient id="vignette" cx="50%" cy="50%" r="75%">
+      <stop offset="60%" stop-color="#0a0a0f" stop-opacity="0" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.55" />
+    </radialGradient>
+
+    <!-- Terminal grid pattern — 60px tile, 1px lines at very low alpha -->
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path
+        d="M 60 0 L 0 0 0 60"
+        fill="none"
+        stroke="#ffffff"
+        stroke-opacity="0.04"
+        stroke-width="1"
+      />
+    </pattern>
+  </defs>
+
+  <!-- Layer 1 — base background -->
+  <rect width="1200" height="630" fill="#0a0a0f" />
+
+  <!-- Layer 2 — terminal grid -->
+  <rect width="1200" height="630" fill="url(#grid)" />
+
+  <!-- Layer 3 — atmospheric glows -->
+  <rect width="1200" height="630" fill="url(#centerGlow)" />
+  <rect width="1200" height="630" fill="url(#bottomGlow)" />
+
+  <!-- Layer 4 — corner brackets (terminal frame motif) -->
+  <g stroke="#3b82f6" stroke-width="2" fill="none" stroke-opacity="0.6">
+    <!-- top-left -->
+    <path d="M 32 56 L 32 32 L 56 32" />
+    <!-- top-right -->
+    <path d="M 1144 32 L 1168 32 L 1168 56" />
+    <!-- bottom-left -->
+    <path d="M 32 574 L 32 598 L 56 598" />
+    <!-- bottom-right -->
+    <path d="M 1144 598 L 1168 598 L 1168 574" />
+  </g>
+
+  <!-- Layer 5 — top status row -->
+  <g
+    font-family="'JetBrains Mono', 'Menlo', 'SF Mono', 'Consolas', monospace"
+    font-size="14"
+    letter-spacing="2.4"
+    fill="#6b6b7e"
+  >
+    <!-- Live dot + system label -->
+    <circle cx="74" cy="65" r="4.5" fill="#22c55e" />
+    <text x="88" y="70" text-anchor="start">MANDATE.SYSTEM &#x2014; ONLINE</text>
+    <text x="1152" y="70" text-anchor="end">v01.0 / / CLOSED-BETA</text>
+  </g>
+
+  <!-- Layer 6 — center MANDATE wordmark -->
+  <text
+    x="600"
+    y="316"
+    text-anchor="middle"
+    font-family="'JetBrains Mono', 'Menlo', 'SF Mono', 'Consolas', monospace"
+    font-size="124"
+    font-weight="700"
+    fill="#ececf4"
+    letter-spacing="28"
+  >MANDATE</text>
+
+  <!-- Layer 7 — accent underline + ticks -->
+  <g stroke="#3b82f6" stroke-width="2">
+    <line x1="540" y1="350" x2="660" y2="350" />
+    <line x1="500" y1="350" x2="520" y2="350" stroke-opacity="0.55" />
+    <line x1="680" y1="350" x2="700" y2="350" stroke-opacity="0.55" />
+    <line x1="464" y1="350" x2="478" y2="350" stroke-opacity="0.3" />
+    <line x1="722" y1="350" x2="736" y2="350" stroke-opacity="0.3" />
+  </g>
+
+  <!-- Layer 8 — subtitle in editorial serif italic -->
+  <text
+    x="600"
+    y="408"
+    text-anchor="middle"
+    font-family="'Fraunces', Georgia, 'Times New Roman', serif"
+    font-size="36"
+    font-style="italic"
+    font-weight="400"
+    fill="#ececf4"
+  >AI Executive Search Operating System</text>
+
+  <!-- Layer 9 — bottom data rule -->
+  <line
+    x1="120"
+    y1="500"
+    x2="1080"
+    y2="500"
+    stroke="#ffffff"
+    stroke-opacity="0.1"
+    stroke-width="1"
+  />
+
+  <!-- Layer 10 — bottom tagline -->
+  <text
+    x="600"
+    y="540"
+    text-anchor="middle"
+    font-family="'JetBrains Mono', 'Menlo', 'SF Mono', 'Consolas', monospace"
+    font-size="20"
+    font-weight="500"
+    fill="#3b82f6"
+    letter-spacing="3.2"
+  >14_AGENTS &#xB7; 31_MODULES &#xB7; ONE_OPERATING_SYSTEM</text>
+
+  <!-- Layer 11 — bottom marker row -->
+  <g
+    font-family="'JetBrains Mono', 'Menlo', 'SF Mono', 'Consolas', monospace"
+    font-size="13"
+    letter-spacing="2.4"
+    fill="#3f3f50"
+  >
+    <text x="48" y="592" text-anchor="start">// GETMANDATE.IO</text>
+    <text x="1152" y="592" text-anchor="end">EXECUTIVE_SEARCH.OS</text>
+  </g>
+
+  <!-- Layer 12 — vignette over everything -->
+  <rect
+    width="1200"
+    height="630"
+    fill="url(#vignette)"
+    pointer-events="none"
+  />
+</svg>
