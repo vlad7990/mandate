@@ -649,10 +649,17 @@ const PSYCHOLOGY_KEY = "psychology" as const;
  * Run the candidate psychology agent and persist the result onto
  * cv_structured.psychology via the atomic JSONB RPC. Returns the
  * generated profile so the panel renders immediately.
+ *
+ * Optional `recruiterContext` — free text the recruiter pastes into
+ * the regenerate dialog ("confirmed directive in phone screen", etc.)
+ * — is prepended to the agent's system prompt as informed prior
+ * knowledge AND persisted to cv_structured.psychology_context so the
+ * panel can show what shaped the read.
  */
 export async function generatePsychologyAction(
   candidateId: string,
-  projectId: string
+  projectId: string,
+  recruiterContext?: string
 ) {
   if (!candidateId || !projectId) {
     throw new Error("Missing candidateId or projectId.");
@@ -727,10 +734,198 @@ export async function generatePsychologyAction(
     {
       projectId,
       organizationId: projectQ.data.organization_id,
+      recruiterContext,
     }
   );
 
   await rpcSetCvField(candidateId, projectId, PSYCHOLOGY_KEY, profile);
+  // Persist the context the recruiter supplied (or clear if absent)
+  // so the panel can show what shaped this read.
+  await rpcSetCvField(
+    candidateId,
+    projectId,
+    "psychology_context",
+    recruiterContext?.trim() ? recruiterContext.trim() : null
+  );
   revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
   return profile;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Recruiter overlays for the Psychology panel
+//
+// All three live on cv_structured under sibling keys (notes, flags,
+// confidence_overrides) and use the atomic JSONB RPC so a parallel
+// psychology regenerate can never overwrite them.
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Save (or clear) a recruiter annotation against a section of the
+ * candidate psychology profile. Empty / whitespace `note` clears the
+ * entry. The map is keyed by section identifier — the panel decides
+ * the keys so the storage shape doesn't dictate the UI layout.
+ */
+export async function savePsychologyAnnotationAction(
+  candidateId: string,
+  projectId: string,
+  sectionKey: string,
+  note: string
+): Promise<void> {
+  if (!candidateId || !projectId) {
+    throw new Error("Missing candidateId or projectId.");
+  }
+  const key = sectionKey.trim();
+  if (!key) throw new Error("Section key is required.");
+
+  await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
+
+  // Read-modify-write the notes map atomically via the RPC. We can't
+  // use jsonb_set with a path this dynamic from the client, so we
+  // round-trip the whole map — the map is small (≤10 keys) and
+  // contention on a single candidate is negligible.
+  const supabase = await createServerSupabaseClient();
+  const { data: row } = await supabase
+    .from("candidates")
+    .select("cv_structured")
+    .eq("id", candidateId)
+    .single<{ cv_structured: unknown }>();
+
+  const current = (row?.cv_structured ?? {}) as Record<string, unknown>;
+  const existingNotes =
+    (current.psychology_notes as
+      | Record<string, { note: string; updated_at: string }>
+      | undefined) ?? {};
+
+  const trimmedNote = note.trim();
+  let nextNotes: Record<string, { note: string; updated_at: string }>;
+  if (trimmedNote.length === 0) {
+    const { [key]: _drop, ...rest } = existingNotes;
+    void _drop;
+    nextNotes = rest;
+  } else {
+    nextNotes = {
+      ...existingNotes,
+      [key]: { note: trimmedNote, updated_at: new Date().toISOString() },
+    };
+  }
+
+  await rpcSetCvField(
+    candidateId,
+    projectId,
+    "psychology_notes",
+    Object.keys(nextNotes).length === 0 ? null : nextNotes
+  );
+  revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
+}
+
+/**
+ * Toggle a recruiter flag against a single axis of the psychology
+ * profile. Flags are a string-array of axis keys; the panel renders
+ * an amber border + "Recruiter flagged" label on each.
+ */
+export async function togglePsychologyFlagAction(
+  candidateId: string,
+  projectId: string,
+  axisKey: string
+): Promise<void> {
+  if (!candidateId || !projectId) {
+    throw new Error("Missing candidateId or projectId.");
+  }
+  const key = axisKey.trim();
+  if (!key) throw new Error("Axis key is required.");
+
+  await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
+
+  const supabase = await createServerSupabaseClient();
+  const { data: row } = await supabase
+    .from("candidates")
+    .select("cv_structured")
+    .eq("id", candidateId)
+    .single<{ cv_structured: unknown }>();
+
+  const current = (row?.cv_structured ?? {}) as Record<string, unknown>;
+  const existing = Array.isArray(current.psychology_flags)
+    ? (current.psychology_flags as unknown[]).filter(
+        (v): v is string => typeof v === "string"
+      )
+    : [];
+
+  const next = existing.includes(key)
+    ? existing.filter((k) => k !== key)
+    : [...existing, key];
+
+  await rpcSetCvField(
+    candidateId,
+    projectId,
+    "psychology_flags",
+    next.length === 0 ? null : next
+  );
+  revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
+}
+
+/**
+ * Override (or clear) the recruiter's read on a single axis's
+ * confidence. Pass `value: null` to clear. Recruiter overrides are
+ * stored separately from the AI confidence so the UI can show both.
+ */
+export async function overridePsychologyConfidenceAction(
+  candidateId: string,
+  projectId: string,
+  axisKey: string,
+  value: number | null
+): Promise<void> {
+  if (!candidateId || !projectId) {
+    throw new Error("Missing candidateId or projectId.");
+  }
+  const key = axisKey.trim();
+  if (!key) throw new Error("Axis key is required.");
+  if (value !== null) {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      throw new Error("Confidence must be a number.");
+    }
+    if (value < 0 || value > 100) {
+      throw new Error("Confidence must be between 0 and 100.");
+    }
+  }
+
+  await requireActiveUser();
+  await assertCandidateBelongsToProject(candidateId, projectId);
+
+  const supabase = await createServerSupabaseClient();
+  const { data: row } = await supabase
+    .from("candidates")
+    .select("cv_structured")
+    .eq("id", candidateId)
+    .single<{ cv_structured: unknown }>();
+
+  const current = (row?.cv_structured ?? {}) as Record<string, unknown>;
+  const existing =
+    (current.psychology_confidence_overrides as
+      | Record<string, { value: number; updated_at: string }>
+      | undefined) ?? {};
+
+  let next: Record<string, { value: number; updated_at: string }>;
+  if (value === null) {
+    const { [key]: _drop, ...rest } = existing;
+    void _drop;
+    next = rest;
+  } else {
+    next = {
+      ...existing,
+      [key]: {
+        value: Math.round(value),
+        updated_at: new Date().toISOString(),
+      },
+    };
+  }
+
+  await rpcSetCvField(
+    candidateId,
+    projectId,
+    "psychology_confidence_overrides",
+    Object.keys(next).length === 0 ? null : next
+  );
+  revalidatePath(`/projects/${projectId}/candidates/${candidateId}`);
 }

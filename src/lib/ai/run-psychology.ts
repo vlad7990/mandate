@@ -6,6 +6,7 @@ import {
   type CandidatePsychology,
 } from "./psychology-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
+import { wrapWithRecruiterContext } from "./recruiter-context";
 
 const PSYCHOLOGY_MODEL = "claude-sonnet-4-6";
 
@@ -30,6 +31,13 @@ export type PsychologyInput = {
 export type RunPsychologyContext = {
   projectId: string;
   organizationId: string | null;
+  /**
+   * Optional recruiter-supplied context to bias the agent. Prepended
+   * to the system prompt as a "Recruiter context" block; the action
+   * persists it alongside the result so the next render can show what
+   * shaped this generation.
+   */
+  recruiterContext?: string;
 };
 
 export async function runPsychology(
@@ -38,10 +46,11 @@ export async function runPsychology(
 ): Promise<CandidatePsychology> {
   const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
-  const system = await applySkillsToPrompt(PSYCHOLOGY_SYSTEM_PROMPT, {
+  const baseSystem = await applySkillsToPrompt(PSYCHOLOGY_SYSTEM_PROMPT, {
     projectId: ctx.projectId,
     organizationId: ctx.organizationId,
   });
+  const system = wrapWithRecruiterContext(baseSystem, ctx.recruiterContext);
 
   const response = await anthropic.messages.create({
     model: PSYCHOLOGY_MODEL,

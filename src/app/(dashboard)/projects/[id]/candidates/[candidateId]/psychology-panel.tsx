@@ -24,30 +24,88 @@ import {
   type RolePattern,
 } from "@/lib/ai/psychology-agent";
 import type { CultureMatch } from "@/lib/culture/culture-match";
-import { generatePsychologyAction } from "./actions";
+import type {
+  AnnotationMap,
+  ConfidenceOverrideMap,
+} from "@/lib/intelligence/overlays";
+import {
+  generatePsychologyAction,
+  overridePsychologyConfidenceAction,
+  savePsychologyAnnotationAction,
+  togglePsychologyFlagAction,
+} from "./actions";
+
+// Section keys (annotations) and axis keys (flags + confidence
+// overrides). Stable strings — they get persisted into the JSONB
+// overlays so do not rename without a data migration.
+
+const PSYCHOLOGY_SECTION_KEYS = {
+  leadership: "leadership",
+  behavioural: "behavioural",
+  cultural: "cultural",
+  culture_match: "culture_match",
+} as const;
+
+const AXIS_KEYS = {
+  leadership_style: "leadership_style",
+  risk_tolerance: "risk_tolerance",
+  change_orientation: "change_orientation",
+  role_pattern: "role_pattern",
+  collaboration_style: "collaboration_style",
+  hierarchy_preference: "hierarchy_preference",
+  pace_preference: "pace_preference",
+} as const;
+
+type AxisKey = (typeof AXIS_KEYS)[keyof typeof AXIS_KEYS];
 
 export function PsychologyPanel({
   candidateId,
   projectId,
   initial,
+  initialContext,
+  notes,
+  flags,
+  overrides,
   cultureMatch,
 }: {
   candidateId: string;
   projectId: string;
   initial: CandidatePsychology | null;
+  initialContext: string | null;
+  notes: AnnotationMap;
+  flags: string[];
+  overrides: ConfidenceOverrideMap;
   cultureMatch: CultureMatch | null;
 }) {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidatePsychology | null>(initial);
+  const [savedContext, setSavedContext] = useState<string | null>(initialContext);
+  const [regenOpen, setRegenOpen] = useState(false);
+  const [contextDraft, setContextDraft] = useState("");
   const [pending, start] = useTransition();
+
+  const flagSet = new Set(flags);
+  const flagCount = flagSet.size;
 
   const handleGenerate = () => {
     if (pending) return;
+    const ctx = contextDraft.trim();
     start(async () => {
       try {
-        const next = await generatePsychologyAction(candidateId, projectId);
+        const next = await generatePsychologyAction(
+          candidateId,
+          projectId,
+          ctx.length > 0 ? ctx : undefined
+        );
         setProfile(next);
-        toast.success("Psychology profile generated");
+        setSavedContext(ctx.length > 0 ? ctx : null);
+        setContextDraft("");
+        setRegenOpen(false);
+        toast.success(
+          ctx.length > 0
+            ? "Profile regenerated with your context"
+            : "Profile generated"
+        );
         router.refresh();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Generation failed.";
@@ -64,6 +122,11 @@ export function PsychologyPanel({
             psychology_alt
           </span>
           PSYCHOLOGY
+          {flagCount > 0 && (
+            <span className="px-1.5 py-0 border border-tertiary/60 bg-tertiary/10 text-tertiary tabular-nums">
+              🚩 {flagCount} flagged
+            </span>
+          )}
         </span>
         <div className="flex items-center gap-2">
           {profile && (
@@ -73,9 +136,11 @@ export function PsychologyPanel({
           )}
           <button
             type="button"
-            onClick={handleGenerate}
+            onClick={() => {
+              setContextDraft(savedContext ?? "");
+              setRegenOpen((o) => !o);
+            }}
             disabled={pending}
-            aria-busy={pending ? true : undefined}
             className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <span
@@ -85,12 +150,35 @@ export function PsychologyPanel({
               )}
               aria-hidden
             >
-              {pending ? "progress_activity" : profile ? "refresh" : "auto_awesome"}
+              {pending
+                ? "progress_activity"
+                : profile
+                  ? "refresh"
+                  : "auto_awesome"}
             </span>
-            {pending ? "Analysing" : profile ? "Regenerate" : "Generate Profile"}
+            {pending
+              ? "Analysing"
+              : profile
+                ? "Regenerate with Context"
+                : "Generate Profile"}
           </button>
         </div>
       </header>
+
+      {regenOpen && (
+        <RegenerateContextPanel
+          draft={contextDraft}
+          savedContext={savedContext}
+          onChange={setContextDraft}
+          onCancel={() => {
+            setRegenOpen(false);
+            setContextDraft("");
+          }}
+          onSubmit={handleGenerate}
+          pending={pending}
+          placeholder='e.g. "Confirmed directive leader in phone screen", "Has been COO at two listed banks since the CV was written"'
+        />
+      )}
 
       {!profile ? (
         <div className="px-5 py-6 text-center">
@@ -103,6 +191,23 @@ export function PsychologyPanel({
         </div>
       ) : (
         <div className="p-4 space-y-4">
+          {savedContext && (
+            <div className="bg-surface-container-low border-l-2 border-l-primary-container px-3 py-2">
+              <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5">
+                <span
+                  className="material-symbols-outlined text-[12px]"
+                  aria-hidden
+                >
+                  format_quote
+                </span>
+                Recruiter context that shaped this read
+              </span>
+              <p className="font-mono-data text-body-main text-on-surface-variant italic mt-1">
+                {savedContext}
+              </p>
+            </div>
+          )}
+
           <p className="text-on-surface text-body-main leading-relaxed">
             {profile.narrative_summary}
           </p>
@@ -120,85 +225,122 @@ export function PsychologyPanel({
             </ul>
           )}
 
-          <Section title="Leadership style">
-            <RatingChips
+          <Section
+            title="Leadership style"
+            sectionKey={PSYCHOLOGY_SECTION_KEYS.leadership}
+            candidateId={candidateId}
+            projectId={projectId}
+            annotation={notes[PSYCHOLOGY_SECTION_KEYS.leadership] ?? null}
+          >
+            <AxisRows
+              candidateId={candidateId}
+              projectId={projectId}
+              flagSet={flagSet}
+              overrides={overrides}
               rows={[
-                {
-                  label: "Style",
-                  value: LEADERSHIP_STYLE_LABELS[
+                axisRow(
+                  AXIS_KEYS.leadership_style,
+                  "Style",
+                  LEADERSHIP_STYLE_LABELS[
                     profile.leadership_style.value as LeadershipStyle
                   ],
-                  evidence: profile.leadership_style.evidence,
-                  confidence: profile.leadership_style.confidence,
-                },
-                {
-                  label: "Risk tolerance",
-                  value: RISK_TOLERANCE_LABELS[
+                  profile.leadership_style.evidence,
+                  profile.leadership_style.confidence
+                ),
+                axisRow(
+                  AXIS_KEYS.risk_tolerance,
+                  "Risk tolerance",
+                  RISK_TOLERANCE_LABELS[
                     profile.risk_tolerance.value as RiskTolerance
                   ],
-                  evidence: profile.risk_tolerance.evidence,
-                  confidence: profile.risk_tolerance.confidence,
-                },
-                {
-                  label: "Change orientation",
-                  value: CHANGE_ORIENTATION_LABELS[
+                  profile.risk_tolerance.evidence,
+                  profile.risk_tolerance.confidence
+                ),
+                axisRow(
+                  AXIS_KEYS.change_orientation,
+                  "Change orientation",
+                  CHANGE_ORIENTATION_LABELS[
                     profile.change_orientation.value as ChangeOrientation
                   ],
-                  evidence: profile.change_orientation.evidence,
-                  confidence: profile.change_orientation.confidence,
-                },
+                  profile.change_orientation.evidence,
+                  profile.change_orientation.confidence
+                ),
               ]}
             />
           </Section>
 
-          <Section title="Behavioural patterns">
+          <Section
+            title="Behavioural patterns"
+            sectionKey={PSYCHOLOGY_SECTION_KEYS.behavioural}
+            candidateId={candidateId}
+            projectId={projectId}
+            annotation={notes[PSYCHOLOGY_SECTION_KEYS.behavioural] ?? null}
+          >
             <p className="text-body-main text-on-surface-variant leading-relaxed mb-2">
               <span className="font-mono-label uppercase tracking-widest text-outline mr-1">
                 Adversity:
               </span>
               {profile.adversity_response}
             </p>
-            <RatingChips
+            <AxisRows
+              candidateId={candidateId}
+              projectId={projectId}
+              flagSet={flagSet}
+              overrides={overrides}
               rows={[
-                {
-                  label: "Role pattern",
-                  value: ROLE_PATTERN_LABELS[
+                axisRow(
+                  AXIS_KEYS.role_pattern,
+                  "Role pattern",
+                  ROLE_PATTERN_LABELS[
                     profile.role_pattern.value as RolePattern
                   ],
-                  evidence: profile.role_pattern.evidence,
-                  confidence: profile.role_pattern.confidence,
-                },
-                {
-                  label: "Collaboration",
-                  value: COLLABORATION_STYLE_LABELS[
+                  profile.role_pattern.evidence,
+                  profile.role_pattern.confidence
+                ),
+                axisRow(
+                  AXIS_KEYS.collaboration_style,
+                  "Collaboration",
+                  COLLABORATION_STYLE_LABELS[
                     profile.collaboration_style.value as CollaborationStyle
                   ],
-                  evidence: profile.collaboration_style.evidence,
-                  confidence: profile.collaboration_style.confidence,
-                },
+                  profile.collaboration_style.evidence,
+                  profile.collaboration_style.confidence
+                ),
               ]}
             />
           </Section>
 
-          <Section title="Cultural fit indicators">
-            <RatingChips
+          <Section
+            title="Cultural fit indicators"
+            sectionKey={PSYCHOLOGY_SECTION_KEYS.cultural}
+            candidateId={candidateId}
+            projectId={projectId}
+            annotation={notes[PSYCHOLOGY_SECTION_KEYS.cultural] ?? null}
+          >
+            <AxisRows
+              candidateId={candidateId}
+              projectId={projectId}
+              flagSet={flagSet}
+              overrides={overrides}
               rows={[
-                {
-                  label: "Hierarchy",
-                  value: HIERARCHY_PREFERENCE_LABELS[
+                axisRow(
+                  AXIS_KEYS.hierarchy_preference,
+                  "Hierarchy",
+                  HIERARCHY_PREFERENCE_LABELS[
                     profile.hierarchy_preference.value as HierarchyPreference
                   ],
-                  evidence: profile.hierarchy_preference.evidence,
-                  confidence: profile.hierarchy_preference.confidence,
-                },
-                {
-                  label: "Pace",
-                  value: PACE_PREFERENCE_LABELS[
+                  profile.hierarchy_preference.evidence,
+                  profile.hierarchy_preference.confidence
+                ),
+                axisRow(
+                  AXIS_KEYS.pace_preference,
+                  "Pace",
+                  PACE_PREFERENCE_LABELS[
                     profile.pace_preference.value as PacePreference
                   ],
-                  evidence: profile.pace_preference.evidence,
-                  confidence: profile.pace_preference.confidence,
-                },
+                  profile.pace_preference.evidence,
+                  profile.pace_preference.confidence
+                ),
               ]}
             />
             <div className="mt-3 space-y-1.5">
@@ -225,7 +367,15 @@ export function PsychologyPanel({
           </Section>
 
           {cultureMatch && (
-            <Section title="Culture fit (vs. company profile)">
+            <Section
+              title="Culture fit (vs. company profile)"
+              sectionKey={PSYCHOLOGY_SECTION_KEYS.culture_match}
+              candidateId={candidateId}
+              projectId={projectId}
+              annotation={
+                notes[PSYCHOLOGY_SECTION_KEYS.culture_match] ?? null
+              }
+            >
               <CultureMatchView match={cultureMatch} />
             </Section>
           )}
@@ -235,62 +385,263 @@ export function PsychologyPanel({
   );
 }
 
-function RatingChips({
+// ────────────────────────────────────────────────────────────────────────
+// Sub-components
+// ────────────────────────────────────────────────────────────────────────
+
+type AxisRowDef = {
+  key: AxisKey;
+  label: string;
+  value: string;
+  evidence: string;
+  confidence: number;
+};
+
+function axisRow(
+  key: AxisKey,
+  label: string,
+  value: string,
+  evidence: string,
+  confidence: number
+): AxisRowDef {
+  return { key, label, value, evidence, confidence };
+}
+
+function AxisRows({
+  candidateId,
+  projectId,
+  flagSet,
+  overrides,
   rows,
 }: {
-  rows: Array<{
-    label: string;
-    value: string;
-    evidence: string;
-    confidence: number;
-  }>;
+  candidateId: string;
+  projectId: string;
+  flagSet: Set<string>;
+  overrides: ConfidenceOverrideMap;
+  rows: AxisRowDef[];
 }) {
   return (
     <ul className="space-y-2">
-      {rows.map((r, i) => (
-        <li
-          key={i}
-          className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-2 items-baseline"
-        >
-          <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-            {r.label}
-          </span>
-          <div className="min-w-0">
-            <div className="font-mono-data text-body-main text-on-surface font-semibold">
-              {r.value}
-            </div>
-            <div className="font-mono-data text-body-main text-on-surface-variant leading-relaxed">
-              {r.evidence}
-            </div>
-          </div>
-          <ConfidenceBar value={r.confidence} />
-        </li>
+      {rows.map((r) => (
+        <AxisRowView
+          key={r.key}
+          candidateId={candidateId}
+          projectId={projectId}
+          row={r}
+          flagged={flagSet.has(r.key)}
+          override={overrides[r.key]?.value ?? null}
+        />
       ))}
     </ul>
   );
 }
 
-function ConfidenceBar({ value }: { value: number }) {
-  const v = Math.max(0, Math.min(100, value));
-  const tone =
-    v >= 80
-      ? "bg-secondary-fixed-dim"
-      : v >= 50
-        ? "bg-primary"
-        : "bg-tertiary";
+function AxisRowView({
+  candidateId,
+  projectId,
+  row,
+  flagged,
+  override,
+}: {
+  candidateId: string;
+  projectId: string;
+  row: AxisRowDef;
+  flagged: boolean;
+  override: number | null;
+}) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [draft, setDraft] = useState<number>(override ?? row.confidence);
+
+  const toggleFlag = () => {
+    if (pending) return;
+    start(async () => {
+      try {
+        await togglePsychologyFlagAction(candidateId, projectId, row.key);
+        toast.success(flagged ? "Flag removed" : "Flagged for review");
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Flag failed.");
+      }
+    });
+  };
+
+  const saveOverride = (value: number | null) => {
+    if (pending) return;
+    start(async () => {
+      try {
+        await overridePsychologyConfidenceAction(
+          candidateId,
+          projectId,
+          row.key,
+          value
+        );
+        toast.success(value === null ? "Override cleared" : "Confidence saved");
+        setAdjustOpen(false);
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Save failed.");
+      }
+    });
+  };
+
   return (
-    <div className="w-24">
+    <li
+      className={cn(
+        "border px-3 py-2 grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-2 items-baseline transition-colors",
+        flagged
+          ? "border-tertiary/60 bg-tertiary/5"
+          : "border-outline-variant"
+      )}
+    >
+      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+        {row.label}
+      </span>
+      <div className="min-w-0">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="font-mono-data text-body-main text-on-surface font-semibold">
+            {row.value}
+          </span>
+          {flagged && (
+            <span className="px-1.5 py-0 border border-tertiary/60 bg-tertiary/10 text-tertiary font-mono-label text-mono-label uppercase tracking-widest">
+              🚩 Recruiter flagged
+            </span>
+          )}
+        </div>
+        <div className="font-mono-data text-body-main text-on-surface-variant leading-relaxed">
+          {row.evidence}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <ConfidencePair
+          ai={row.confidence}
+          recruiter={override}
+          onAdjust={() => setAdjustOpen((o) => !o)}
+        />
+        <button
+          type="button"
+          onClick={toggleFlag}
+          disabled={pending}
+          aria-label={flagged ? "Remove flag" : "Flag this assessment"}
+          className={cn(
+            "w-7 h-7 border flex items-center justify-center transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary",
+            flagged
+              ? "border-tertiary/60 bg-tertiary/10 text-tertiary"
+              : "border-outline-variant text-outline hover:border-tertiary hover:text-tertiary"
+          )}
+        >
+          🚩
+        </button>
+      </div>
+      {adjustOpen && (
+        <div className="md:col-span-3 mt-2 bg-surface-container-low border border-outline-variant px-3 py-2 space-y-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="flex-1 min-w-[200px]">
+              <div className="flex items-baseline justify-between font-mono-label text-mono-label text-outline uppercase tracking-widest">
+                <span>Your confidence</span>
+                <span className="tabular-nums text-on-surface">
+                  {draft}/100
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={draft}
+                disabled={pending}
+                onChange={(e) => setDraft(Number(e.target.value))}
+                className="w-full accent-primary"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => saveOverride(draft)}
+              disabled={pending}
+              className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+            >
+              Save
+            </button>
+            {override !== null && (
+              <button
+                type="button"
+                onClick={() => saveOverride(null)}
+                disabled={pending}
+                className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-error hover:text-error transition-colors disabled:opacity-60"
+              >
+                Clear
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setAdjustOpen(false)}
+              className="px-3 py-1.5 border border-outline-variant text-outline hover:text-on-surface font-mono-label text-mono-label uppercase tracking-widest"
+            >
+              Close
+            </button>
+          </div>
+          <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest leading-snug">
+            AI estimate: {row.confidence}/100. Your override is stored
+            separately and shown alongside.
+          </p>
+        </div>
+      )}
+    </li>
+  );
+}
+
+function ConfidencePair({
+  ai,
+  recruiter,
+  onAdjust,
+}: {
+  ai: number;
+  recruiter: number | null;
+  onAdjust: () => void;
+}) {
+  const showBoth = recruiter !== null && recruiter !== ai;
+  const display = recruiter ?? ai;
+  return (
+    <button
+      type="button"
+      onClick={onAdjust}
+      title="Adjust confidence"
+      className="group w-32 text-left focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+    >
       <div className="flex items-baseline justify-between font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
-        <span>Conf</span>
-        <span>{v}</span>
+        <span>{showBoth ? "AI / You" : "Conf"}</span>
+        <span>
+          {showBoth ? (
+            <>
+              <span>{ai}</span>
+              <span className="text-outline-variant"> / </span>
+              <span className="text-primary">{recruiter}</span>
+            </>
+          ) : (
+            <span>{display}</span>
+          )}
+        </span>
       </div>
       <div className="h-1 bg-surface-container-high overflow-hidden">
         <span
-          className={cn("block h-full transition-[width]", tone)}
-          style={{ width: `${v}%` }}
+          className={cn(
+            "block h-full transition-[width]",
+            display >= 80
+              ? "bg-secondary-fixed-dim"
+              : display >= 50
+                ? "bg-primary"
+                : "bg-tertiary"
+          )}
+          style={{ width: `${display}%` }}
         />
       </div>
-    </div>
+      <span className="font-mono-label text-mono-label text-outline group-hover:text-primary transition-colors uppercase tracking-widest inline-flex items-center gap-1 mt-0.5">
+        <span className="material-symbols-outlined text-[10px]" aria-hidden>
+          tune
+        </span>
+        Adjust
+      </span>
+    </button>
   );
 }
 
@@ -353,18 +704,204 @@ function CultureMatchView({ match }: { match: CultureMatch }) {
 
 function Section({
   title,
+  sectionKey,
+  candidateId,
+  projectId,
+  annotation,
   children,
 }: {
   title: string;
+  sectionKey: string;
+  candidateId: string;
+  projectId: string;
+  annotation: { note: string; updated_at: string } | null;
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(annotation?.note ?? "");
+  const [pending, start] = useTransition();
+
+  const beginEdit = () => {
+    setDraft(annotation?.note ?? "");
+    setEditing(true);
+  };
+
+  const save = () => {
+    if (pending) return;
+    start(async () => {
+      try {
+        await savePsychologyAnnotationAction(
+          candidateId,
+          projectId,
+          sectionKey,
+          draft
+        );
+        toast.success(
+          draft.trim().length === 0
+            ? "Observation cleared"
+            : "Observation saved"
+        );
+        setEditing(false);
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Save failed.");
+      }
+    });
+  };
+
   return (
     <section className="space-y-2 border-t border-outline-variant/40 pt-3 first:border-t-0 first:pt-0">
-      <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
-        {title}
-      </h3>
+      <div className="flex items-baseline justify-between gap-2 flex-wrap">
+        <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
+          {title}
+        </h3>
+        {!editing && (
+          <button
+            type="button"
+            onClick={beginEdit}
+            className="font-mono-label text-mono-label text-outline uppercase tracking-widest hover:text-primary transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:underline"
+          >
+            <span className="material-symbols-outlined text-[12px]" aria-hidden>
+              {annotation ? "edit" : "add_comment"}
+            </span>
+            {annotation ? "Edit observation" : "Add observation"}
+          </button>
+        )}
+      </div>
       {children}
+      {annotation && !editing && (
+        <div className="bg-surface-container-low border-l-2 border-l-primary-container px-3 py-2">
+          <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1">
+            <span className="material-symbols-outlined text-[12px]" aria-hidden>
+              edit_note
+            </span>
+            Your observation
+          </span>
+          <p className="font-mono-data text-body-main text-on-surface-variant italic leading-relaxed mt-1">
+            {annotation.note}
+          </p>
+        </div>
+      )}
+      {editing && (
+        <div className="bg-surface-container-low border border-outline-variant px-3 py-2 space-y-2">
+          <textarea
+            value={draft}
+            disabled={pending}
+            rows={3}
+            placeholder="What does this section miss? What did you learn that the AI didn't see?"
+            onChange={(e) => setDraft(e.target.value)}
+            className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 font-mono-data text-body-main text-on-surface focus:border-primary focus:outline-none transition-colors resize-y leading-relaxed"
+          />
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              disabled={pending}
+              className="px-3 py-1 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={save}
+              disabled={pending}
+              className="px-3 py-1 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+            >
+              <span
+                className={cn(
+                  "material-symbols-outlined text-[14px]",
+                  pending && "animate-spin"
+                )}
+                aria-hidden
+              >
+                {pending ? "progress_activity" : "save"}
+              </span>
+              {pending ? "Saving" : "Save"}
+            </button>
+          </div>
+        </div>
+      )}
     </section>
+  );
+}
+
+function RegenerateContextPanel({
+  draft,
+  savedContext,
+  onChange,
+  onCancel,
+  onSubmit,
+  pending,
+  placeholder,
+}: {
+  draft: string;
+  savedContext: string | null;
+  onChange: (v: string) => void;
+  onCancel: () => void;
+  onSubmit: () => void;
+  pending: boolean;
+  placeholder: string;
+}) {
+  return (
+    <div className="border-b border-outline-variant bg-surface-container-low px-4 py-3 space-y-2">
+      <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5">
+        <span className="material-symbols-outlined text-[14px]" aria-hidden>
+          tips_and_updates
+        </span>
+        Add context for the AI (optional)
+      </div>
+      <textarea
+        value={draft}
+        rows={3}
+        disabled={pending}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 font-mono-data text-body-main text-on-surface focus:border-primary focus:outline-none transition-colors resize-y leading-relaxed"
+      />
+      <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest leading-snug">
+        Treated as informed prior knowledge — the AI must still ground every
+        reading in the underlying evidence. Saved alongside the result so you
+        always know what shaped this read.
+        {savedContext && (
+          <>
+            {" · "}
+            <span className="text-tertiary">
+              Last context: &ldquo;{savedContext.slice(0, 80)}
+              {savedContext.length > 80 ? "…" : ""}&rdquo;
+            </span>
+          </>
+        )}
+      </p>
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={pending}
+          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={pending}
+          aria-busy={pending ? true : undefined}
+          className="px-4 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <span
+            className={cn(
+              "material-symbols-outlined text-[14px]",
+              pending && "animate-spin"
+            )}
+            aria-hidden
+          >
+            {pending ? "progress_activity" : "auto_awesome"}
+          </span>
+          {pending ? "Generating" : "Run"}
+        </button>
+      </div>
+    </div>
   );
 }
 

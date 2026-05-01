@@ -343,7 +343,10 @@ export async function generateClientPsychologyAction(projectId: string) {
 // Company Culture Agent — derive culture profile
 // ────────────────────────────────────────────────────────────────────────
 
-export async function generateCompanyCultureAction(projectId: string) {
+export async function generateCompanyCultureAction(
+  projectId: string,
+  recruiterContext?: string
+) {
   if (!projectId) throw new Error("Missing projectId.");
   const auth = await requireActiveUser();
   const supabase = await createServerSupabaseClient();
@@ -395,15 +398,25 @@ export async function generateCompanyCultureAction(projectId: string) {
     {
       projectId,
       organizationId: project.organization_id,
+      recruiterContext,
     }
   );
 
-  // Merge into existing company_context.culture_profile.
+  // Merge into existing company_context.{culture_profile, culture_context}.
   const currentCompany = (project.company_context ?? {}) as Record<
     string,
     unknown
   >;
-  const nextCompany = { ...currentCompany, culture_profile: result };
+  const trimmedContext = recruiterContext?.trim() ?? "";
+  const nextCompany: Record<string, unknown> = {
+    ...currentCompany,
+    culture_profile: result,
+  };
+  if (trimmedContext.length > 0) {
+    nextCompany.culture_context = trimmedContext;
+  } else {
+    delete nextCompany.culture_context;
+  }
 
   const { error: updateErr } = await supabase
     .from("projects")
@@ -420,4 +433,135 @@ export async function generateCompanyCultureAction(projectId: string) {
 
   revalidatePath(`/projects/${projectId}`);
   return result;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Recruiter overlays for the Culture Intelligence panel
+//
+// Annotations + flags live inside company_context as sibling keys
+// (culture_notes, culture_flags). We use read-modify-write here
+// because company_context doesn't yet have an atomic single-key RPC
+// — the row is rarely contended for writes (one recruiter at a time
+// per project) so the race window is small.
+// ────────────────────────────────────────────────────────────────────────
+
+export async function saveCultureAnnotationAction(
+  projectId: string,
+  sectionKey: string,
+  note: string
+): Promise<void> {
+  if (!projectId) throw new Error("Missing projectId.");
+  const key = sectionKey.trim();
+  if (!key) throw new Error("Section key is required.");
+
+  const auth = await requireActiveUser();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: project, error } = await supabase
+    .from("projects")
+    .select("company_context, organization_id")
+    .eq("id", projectId)
+    .single<{
+      company_context: unknown;
+      organization_id: string | null;
+    }>();
+  if (error || !project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const company = (project.company_context ?? {}) as Record<string, unknown>;
+  const existingNotes =
+    (company.culture_notes as
+      | Record<string, { note: string; updated_at: string }>
+      | undefined) ?? {};
+
+  const trimmedNote = note.trim();
+  let nextNotes: Record<string, { note: string; updated_at: string }>;
+  if (trimmedNote.length === 0) {
+    const { [key]: _drop, ...rest } = existingNotes;
+    void _drop;
+    nextNotes = rest;
+  } else {
+    nextNotes = {
+      ...existingNotes,
+      [key]: { note: trimmedNote, updated_at: new Date().toISOString() },
+    };
+  }
+
+  const nextCompany: Record<string, unknown> = { ...company };
+  if (Object.keys(nextNotes).length === 0) {
+    delete nextCompany.culture_notes;
+  } else {
+    nextCompany.culture_notes = nextNotes;
+  }
+
+  const { error: updateErr } = await supabase
+    .from("projects")
+    .update({
+      company_context: nextCompany,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+  if (updateErr) {
+    throw new Error(`Failed to save annotation: ${updateErr.message}`);
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function toggleCultureFlagAction(
+  projectId: string,
+  axisKey: string
+): Promise<void> {
+  if (!projectId) throw new Error("Missing projectId.");
+  const key = axisKey.trim();
+  if (!key) throw new Error("Axis key is required.");
+
+  const auth = await requireActiveUser();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: project, error } = await supabase
+    .from("projects")
+    .select("company_context, organization_id")
+    .eq("id", projectId)
+    .single<{
+      company_context: unknown;
+      organization_id: string | null;
+    }>();
+  if (error || !project) throw new Error("Project not found.");
+  if (project.organization_id !== auth.organizationId) {
+    throw new Error("Project belongs to a different organisation.");
+  }
+
+  const company = (project.company_context ?? {}) as Record<string, unknown>;
+  const existing = Array.isArray(company.culture_flags)
+    ? (company.culture_flags as unknown[]).filter(
+        (v): v is string => typeof v === "string"
+      )
+    : [];
+
+  const next = existing.includes(key)
+    ? existing.filter((k) => k !== key)
+    : [...existing, key];
+
+  const nextCompany: Record<string, unknown> = { ...company };
+  if (next.length === 0) {
+    delete nextCompany.culture_flags;
+  } else {
+    nextCompany.culture_flags = next;
+  }
+
+  const { error: updateErr } = await supabase
+    .from("projects")
+    .update({
+      company_context: nextCompany,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+  if (updateErr) {
+    throw new Error(`Failed to toggle flag: ${updateErr.message}`);
+  }
+
+  revalidatePath(`/projects/${projectId}`);
 }

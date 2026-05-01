@@ -39,6 +39,10 @@ import { ClientIntelligencePanel } from "./client-intelligence-panel";
 import { CultureIntelligencePanel } from "./culture-intelligence-panel";
 import type { ClientPsychology } from "@/lib/ai/client-psychology-agent";
 import type { CultureProfile } from "@/lib/ai/company-culture-agent";
+import {
+  normaliseAnnotationMap,
+  normaliseFlagArray,
+} from "@/lib/intelligence/overlays";
 import { ProjectPoller } from "./project-poller";
 
 type RecalibrationSummary = {
@@ -256,6 +260,18 @@ export default async function ProjectPage({
         <CultureIntelligencePanel
           projectId={project.id}
           initial={project.company_context?.culture_profile ?? null}
+          initialContext={
+            (project.company_context as { culture_context?: string | null })
+              ?.culture_context ?? null
+          }
+          notes={normaliseAnnotationMap(
+            (project.company_context as { culture_notes?: unknown })
+              ?.culture_notes
+          )}
+          flags={normaliseFlagArray(
+            (project.company_context as { culture_flags?: unknown })
+              ?.culture_flags
+          )}
         />
       )}
 

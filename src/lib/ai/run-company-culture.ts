@@ -6,6 +6,7 @@ import {
   type CultureProfile,
 } from "./company-culture-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
+import { wrapWithRecruiterContext } from "./recruiter-context";
 
 const COMPANY_CULTURE_MODEL = "claude-sonnet-4-6";
 
@@ -23,6 +24,7 @@ export type CompanyCultureInput = {
 export type RunCompanyCultureContext = {
   projectId: string;
   organizationId: string | null;
+  recruiterContext?: string;
 };
 
 export async function runCompanyCulture(
@@ -31,10 +33,11 @@ export async function runCompanyCulture(
 ): Promise<CultureProfile> {
   const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
-  const system = await applySkillsToPrompt(COMPANY_CULTURE_SYSTEM_PROMPT, {
+  const baseSystem = await applySkillsToPrompt(COMPANY_CULTURE_SYSTEM_PROMPT, {
     projectId: ctx.projectId,
     organizationId: ctx.organizationId,
   });
+  const system = wrapWithRecruiterContext(baseSystem, ctx.recruiterContext);
 
   const response = await anthropic.messages.create({
     model: COMPANY_CULTURE_MODEL,

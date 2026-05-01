@@ -37,6 +37,11 @@ import type { PositioningResult } from "@/lib/ai/positioning-agent";
 import type { CandidatePsychology } from "@/lib/ai/psychology-agent";
 import type { CultureProfile } from "@/lib/ai/company-culture-agent";
 import { computeCultureMatch } from "@/lib/culture/culture-match";
+import {
+  normaliseAnnotationMap,
+  normaliseConfidenceOverrides,
+  normaliseFlagArray,
+} from "@/lib/intelligence/overlays";
 import { PsychologyPanel } from "./psychology-panel";
 import { RetryEvaluationButton } from "./retry-evaluation-button";
 
@@ -333,6 +338,20 @@ export default async function CandidateProfilePage({
         initial={
           ((profile as { psychology?: CandidatePsychology }).psychology) ?? null
         }
+        initialContext={
+          (profile as { psychology_context?: string | null })
+            .psychology_context ?? null
+        }
+        notes={normaliseAnnotationMap(
+          (profile as { psychology_notes?: unknown }).psychology_notes
+        )}
+        flags={normaliseFlagArray(
+          (profile as { psychology_flags?: unknown }).psychology_flags
+        )}
+        overrides={normaliseConfidenceOverrides(
+          (profile as { psychology_confidence_overrides?: unknown })
+            .psychology_confidence_overrides
+        )}
         cultureMatch={computeCultureMatch(
           (profile as { psychology?: CandidatePsychology }).psychology ?? null,
           project.company_context?.culture_profile ?? null
