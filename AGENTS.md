@@ -64,6 +64,20 @@ Output: Answers questions, suggests next actions, explains decisions
 Trigger: Scheduled + on-demand
 Output: Pipeline health, funnel conversion, stalled search alerts
 
+## Executive Intelligence Module Agents (premium)
+
+See docs/executive-intelligence.md for the module plan and guardrails.
+All output from these agents is decision support — human review and
+explicit approval are required before any artifact is used.
+
+### 15. Company Context Agent
+Trigger: Executive search created (or research retry)
+Output: Company operating context for executive due diligence — stage/scale demands, regulatory and governance environment, key stakeholders, recent events (web_search-grounded)
+
+### 16. Executive Role Architect Agent
+Trigger: Success Profile generation requested (explicit user click)
+Output: Versioned Executive Success Profile — role mission, mandate, outcomes, required capabilities/experience/scale, derailers, gaps, competency weights, interview stages. Stored with prompt/model version; approval is a human action
+
 ## Agent Communication Pattern
 All agents read from and write to Supabase.
 No direct agent-to-agent calls in MVP.

@@ -25,6 +25,12 @@ const NAV: NavItem[] = [
     badgeKey: "network",
   },
   { href: "/candidates/search", label: "AI Search", icon: "neurology" },
+  {
+    href: "/executive-intelligence",
+    label: "Exec Intel",
+    icon: "workspace_premium",
+    matchPrefix: true,
+  },
   { href: "/analytics", label: "Analytics", icon: "analytics", matchPrefix: true },
   { href: "/settings", label: "Settings", icon: "settings", matchPrefix: true },
 ];

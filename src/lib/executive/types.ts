@@ -1,0 +1,171 @@
+// Executive Hiring Intelligence — shared domain types.
+//
+// The module treats every AI artifact as decision support: humans review,
+// edit, and approve. These types carry that shape — provenance fields on
+// profiles, evidence-oriented content sections, explicit approval state.
+
+export type ExecutiveSearchStatus = "draft" | "active" | "on_hold" | "closed";
+export type ServiceTier = "standard" | "premium" | "enterprise";
+export type CompanyContextStatus = "none" | "generating" | "ready" | "failed";
+export type ProfileStatus = "draft" | "approved" | "archived";
+export type CompetencyCategory =
+  | "leadership"
+  | "functional"
+  | "operating"
+  | "governance";
+
+export type ExecutiveSearchRow = {
+  id: string;
+  organization_id: string;
+  created_by: string | null;
+  template_id: string | null;
+  status: ExecutiveSearchStatus;
+  service_tier: ServiceTier;
+  company_name: string;
+  industry: string | null;
+  business_model: string | null;
+  revenue_range: string | null;
+  employee_count: string | null;
+  funding_stage: string | null;
+  ownership_structure: string | null;
+  geographic_footprint: string | null;
+  regulatory_environment: string | null;
+  role_title: string;
+  role_family: string;
+  is_new_role: boolean | null;
+  reason_for_hire: string | null;
+  reporting_line: string | null;
+  board_exposure: string | null;
+  team_size: string | null;
+  budget_scope: string | null;
+  business_situation: string | null;
+  expected_90_day_outcomes: string | null;
+  expected_first_year_outcomes: string | null;
+  non_negotiables: string | null;
+  preferred_leadership_style: string | null;
+  company_context: Record<string, unknown>;
+  company_context_status: CompanyContextStatus;
+  company_context_error: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExecutiveCompetencyRow = {
+  id: string;
+  organization_id: string | null;
+  key: string;
+  name: string;
+  category: CompetencyCategory;
+  definition: string;
+  positive_indicators: string[];
+  negative_indicators: string[];
+};
+
+export type ExecutiveRoleTemplateRow = {
+  id: string;
+  organization_id: string | null;
+  key: string;
+  title: string;
+  summary: string;
+  role_family: string;
+  intake_defaults: Record<string, unknown>;
+  competency_weights: TemplateCompetencyWeight[];
+};
+
+export type TemplateCompetencyWeight = {
+  competency_key: string;
+  weight: number;
+  rationale: string;
+};
+
+export type SuccessProfileRow = {
+  id: string;
+  search_id: string;
+  organization_id: string;
+  version: number;
+  content_json: unknown;
+  status: ProfileStatus;
+  prompt_version: string | null;
+  model_version: string | null;
+  is_generating: boolean;
+  generation_error: string | null;
+  created_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExecutiveAuditEventType =
+  | "search_created"
+  | "search_updated"
+  | "profile_generation_requested"
+  | "profile_generated"
+  | "profile_generation_failed"
+  | "profile_edited"
+  | "profile_new_version"
+  | "profile_regenerated"
+  | "profile_approved";
+
+export type ExecutiveAuditEventRow = {
+  id: string;
+  organization_id: string;
+  search_id: string | null;
+  profile_id: string | null;
+  actor_id: string | null;
+  event_type: ExecutiveAuditEventType;
+  detail: Record<string, unknown>;
+  created_at: string;
+};
+
+export const SEARCH_STATUS_LABELS: Record<ExecutiveSearchStatus, string> = {
+  draft: "Draft",
+  active: "Active",
+  on_hold: "On Hold",
+  closed: "Closed",
+};
+
+export const SERVICE_TIER_LABELS: Record<ServiceTier, string> = {
+  standard: "Standard",
+  premium: "Premium",
+  enterprise: "Enterprise",
+};
+
+export const PROFILE_STATUS_LABELS: Record<ProfileStatus, string> = {
+  draft: "Draft — awaiting human approval",
+  approved: "Approved",
+  archived: "Archived",
+};
+
+export const COMPETENCY_CATEGORY_LABELS: Record<CompetencyCategory, string> = {
+  leadership: "Leadership",
+  functional: "Functional",
+  operating: "Operating Scale & Stage",
+  governance: "Governance & Stakeholders",
+};
+
+export const ROLE_FAMILIES = [
+  { value: "ceo", label: "CEO" },
+  { value: "cto", label: "CTO" },
+  { value: "cio", label: "CIO" },
+  { value: "cpo", label: "CPO" },
+  { value: "cdo", label: "CDO" },
+  { value: "chief_ai_officer", label: "Chief AI Officer" },
+  { value: "coo", label: "COO" },
+  { value: "cfo", label: "CFO" },
+  { value: "cro", label: "CRO" },
+  { value: "cmo", label: "CMO" },
+  { value: "ciso", label: "CISO" },
+  { value: "vp_engineering", label: "VP Engineering" },
+  { value: "vp_product", label: "VP Product" },
+  { value: "vp_sales", label: "VP Sales" },
+  { value: "transformation", label: "Head of Transformation" },
+  { value: "other", label: "Other Senior Leadership" },
+] as const;
+
+/**
+ * Shown wherever AI-generated content appears in this module. Centralized so
+ * the wording stays consistent and auditable.
+ */
+export const DECISION_SUPPORT_DISCLAIMER =
+  "AI-generated decision support. This content informs human judgment — it is not a hiring decision and must be reviewed and approved by a person.";
