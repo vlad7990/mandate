@@ -118,12 +118,14 @@ export async function createNewVersion(
 
 /**
  * Atomically promote a single version to is_final=true and demote every
- * other row for the project. Delegated to the finalize_job_spec RPC,
- * which executes a single UPDATE statement (so the partial unique index
- * on is_final is checked at statement end) and raises if the target row
- * was not actually updated — covers RLS denial, deleted rows, or a
- * mismatched project id. The previous two-step UPDATE could silently
- * leave the project with no final spec on a partial failure.
+ * other row for the project. Delegated to the finalize_job_spec RPC
+ * (migration 008), which locks the project + target rows, then demotes the
+ * old final and promotes the target in separate statements — the partial
+ * unique index on is_final is enforced per row, so a single CASE-based
+ * UPDATE could transiently see two finals and abort. Both statements share
+ * the RPC's transaction, and it raises if the target was not promoted —
+ * covers RLS denial, deleted rows, or a mismatched project id. Behavior is
+ * pinned by supabase/tests/job_spec_finalize_invariants.sql.
  */
 export async function markAsFinal(
   specId: string,

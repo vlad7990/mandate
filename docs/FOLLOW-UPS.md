@@ -13,12 +13,14 @@ current change. Remove entries as they land.
   behind a SECURITY DEFINER RPC (and drop the direct INSERT policy) before
   enterprise customers rely on the trail.
 
-## Correctness — separate follow-up
+## Resolved
 
-- **`finalize_job_spec` likely has the same partial-index approval race** that
-  was fixed in `approve_success_profile` (migration 035): it flips
-  `is_final` in a single CASE-based UPDATE against the partial unique index
-  `unique_final_spec_per_project`, which is enforced per row — promotion
-  before demotion can transiently violate the index depending on row order.
-  Apply the same demote-then-promote fix in its own migration, with an
-  invariant test mirroring `supabase/tests/executive_intelligence_invariants.sql`.
+- **`finalize_job_spec` partial-index race — false alarm, resolved 2026-07-16.**
+  Investigation showed migration `008_fix_finalize_rpc.sql` already fixed this
+  exact bug class (demote-then-promote under project + target row locks); the
+  live function matches the migration. The suspicion came from a stale
+  docstring on `markAsFinal` in `spec/actions.ts` describing the pre-008
+  implementation — now corrected. Behavior is pinned by
+  `supabase/tests/job_spec_finalize_invariants.sql` (4 checks: final-to-final
+  replacement, re-finalize, mismatched project rejection, swap-back), verified
+  against the live database. No migration was needed.
