@@ -105,7 +105,45 @@ export type ExecutiveAuditEventType =
   | "profile_edited"
   | "profile_new_version"
   | "profile_regenerated"
-  | "profile_approved";
+  | "profile_approved"
+  | "candidate_linked"
+  | "candidate_unlinked"
+  | "candidate_stage_changed";
+
+/** Due-diligence funnel position — never a hiring decision. */
+export type ExecutiveCandidateStage =
+  | "identified"
+  | "in_diligence"
+  | "advanced"
+  | "on_hold"
+  | "declined";
+
+export type ExecutiveSearchCandidateRow = {
+  id: string;
+  search_id: string;
+  organization_id: string;
+  candidate_id: string;
+  stage: ExecutiveCandidateStage;
+  added_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const EXEC_CANDIDATE_STAGES: ExecutiveCandidateStage[] = [
+  "identified",
+  "in_diligence",
+  "advanced",
+  "on_hold",
+  "declined",
+];
+
+export const EXEC_CANDIDATE_STAGE_LABELS: Record<ExecutiveCandidateStage, string> = {
+  identified: "Identified",
+  in_diligence: "In Diligence",
+  advanced: "Advanced",
+  on_hold: "On Hold",
+  declined: "Declined",
+};
 
 export type ExecutiveAuditEventRow = {
   id: string;

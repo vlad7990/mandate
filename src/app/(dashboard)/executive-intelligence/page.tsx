@@ -43,8 +43,8 @@ const MODULE_AREAS: ModuleArea[] = [
   {
     label: "Candidates",
     icon: "person_search",
-    href: null,
-    description: "Executive candidate linkage — Phase 2",
+    href: "/executive-intelligence/searches",
+    description: "Link org-pool candidates to a search's diligence funnel",
   },
   {
     label: "Interview Plans",

@@ -67,6 +67,9 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   profile_new_version: "New version created",
   profile_regenerated: "Regeneration requested",
   profile_approved: "Profile approved",
+  candidate_linked: "Candidate linked",
+  candidate_unlinked: "Candidate removed",
+  candidate_stage_changed: "Candidate stage changed",
 };
 
 export default async function ExecutiveSearchPage({
@@ -88,8 +91,12 @@ export default async function ExecutiveSearchPage({
     redirect("/executive-intelligence/searches");
   }
 
-  const [{ data: profileRows }, { data: auditRows }, { count: competencyCount }] =
-    await Promise.all([
+  const [
+    { data: profileRows },
+    { data: auditRows },
+    { count: competencyCount },
+    { count: candidateCount },
+  ] = await Promise.all([
       supabase
         .from("role_success_profiles")
         .select("id, version, status, is_generating, generation_error, updated_at")
@@ -104,6 +111,10 @@ export default async function ExecutiveSearchPage({
         .limit(10),
       supabase
         .from("executive_search_competencies")
+        .select("id", { count: "exact", head: true })
+        .eq("search_id", id),
+      supabase
+        .from("executive_search_candidates")
         .select("id", { count: "exact", head: true })
         .eq("search_id", id),
     ]);
@@ -183,6 +194,27 @@ export default async function ExecutiveSearchPage({
           >
             <span className="material-symbols-outlined text-[16px]">architecture</span>
             {latestProfile ? "Open Profile" : "Generate Profile"}
+          </Link>
+        </section>
+
+        {/* Candidates status card */}
+        <section className="bg-surface-container-low border border-outline-variant p-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest">
+              Candidates
+            </span>
+            <p className="text-body-main text-on-surface-variant max-w-xl">
+              {candidateCount
+                ? `${candidateCount} candidate${candidateCount === 1 ? "" : "s"} linked to this search from the organization pool.`
+                : "No candidates linked yet. Attach candidates from the organization pool to begin due diligence."}
+            </p>
+          </div>
+          <Link
+            href={`/executive-intelligence/searches/${search.id}/candidates`}
+            className="border border-primary-container/70 text-primary px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[16px]">person_search</span>
+            {candidateCount ? "Manage Candidates" : "Link Candidates"}
           </Link>
         </section>
 

@@ -55,12 +55,25 @@ inference, no psychological/mental-health labels, no deception claims, evidence-
 
 Sidebar gets an "Exec Intel" primary nav entry.
 
+## Phase 2 — in progress
+
+- **Candidate linkage (built).** `executive_search_candidates` (migration 036)
+  joins existing `public.candidates` rows to executive searches — no parallel
+  candidate model, per the Phase 1 decision. Each link carries a due-diligence
+  `stage` (identified → in_diligence → advanced / on_hold / declined) that is
+  workflow state, never a hiring decision. UI:
+  `/executive-intelligence/searches/[id]/candidates` (linked list + org-pool
+  picker with search); a candidates card on the search workspace. Link,
+  unlink, and stage changes all write audit events
+  (`candidate_linked` / `candidate_unlinked` / `candidate_stage_changed`).
+
 ## Phase 2+ (designed for, not built)
 
-- Executive candidate linkage (join table to existing `candidates`), Interview Plans,
-  Active Interviews (explicit-consent transcript ingestion only), Assessments, Risk Reviews,
-  Final Reports (PDF via existing `@react-pdf` layer), Executive Advisors, panel synthesis,
-  compensation benchmarking, reference checks.
+- Interview Plans (hang off `executive_search_candidates` + the approved
+  profile's stages), Active Interviews (explicit-consent transcript ingestion
+  only), Assessments, Risk Reviews, Final Reports (PDF via existing
+  `@react-pdf` layer), Executive Advisors, panel synthesis, compensation
+  benchmarking, reference checks.
 - The searches workspace and audit schema already reserve space for these: audit events take a
   `detail` JSONB, profiles carry `content_json` sections the report layer can consume, and the
   module nav surfaces the future areas as planned-but-disabled.
