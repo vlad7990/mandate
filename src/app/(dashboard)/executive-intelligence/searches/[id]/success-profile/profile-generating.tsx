@@ -10,7 +10,10 @@ import {
 import { markProfileGenerationTimedOut } from "./actions";
 
 const POLL_INTERVAL_MS = 1500;
-const TIMEOUT_MS = 90_000;
+// Client-side unstick marker. Must exceed real generation latency — profile
+// generation runs ~80s on production, close enough to the old 90s that a slow
+// run could false-trip. Kept comfortably above the server-side budget.
+const TIMEOUT_MS = 180_000;
 
 type Props = {
   searchId: string;
@@ -102,7 +105,7 @@ export function ProfileGenerating({
             into a due-diligence profile for{" "}
             <span className="text-on-surface">{roleTitle}</span> @{" "}
             <span className="text-on-surface">{companyName}</span>. This usually
-            takes 15–30 seconds.
+            takes up to two minutes.
           </p>
         </header>
 

@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { markInterviewPlanTimedOut } from "./actions";
 
 const POLL_INTERVAL_MS = 1500;
-const TIMEOUT_MS = 90_000;
+// Client-side unstick marker. Must exceed real generation latency — an 8000-token
+// plan runs ~90–100s on production, so 90s produced a false "timed out" flash
+// before the server after() callback finished. Kept comfortably above that.
+const TIMEOUT_MS = 180_000;
 
 type Props = {
   searchId: string;
@@ -86,7 +89,7 @@ export function PlanGenerating({
             Turning the approved success profile and competency weights into
             concrete stages for{" "}
             <span className="text-on-surface">{candidateName}</span>. This usually
-            takes 15–30 seconds.
+            takes up to two minutes.
           </p>
         </header>
 

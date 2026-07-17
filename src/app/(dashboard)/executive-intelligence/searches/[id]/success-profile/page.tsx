@@ -7,6 +7,11 @@ import { ProfileError } from "./profile-error";
 import { ProfileGenerating } from "./profile-generating";
 import { ProfileEditor, type ProfileVersionSummary } from "./profile-editor";
 
+// Server-action generation runs in an after() callback on this route; give it a
+// generous ceiling so generation (~80s) completes before the function is
+// reclaimed. Matches Vercel's current default; set explicitly for durability.
+export const maxDuration = 300;
+
 type SearchSummary = {
   id: string;
   role_title: string;

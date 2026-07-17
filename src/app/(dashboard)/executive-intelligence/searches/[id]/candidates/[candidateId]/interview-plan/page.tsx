@@ -8,6 +8,12 @@ import { PlanGate } from "./plan-gate";
 import { PlanGenerating } from "./plan-generating";
 import { PlanEditor, type PlanVersionSummary } from "./plan-editor";
 
+// Server-action generation runs in an after() callback on this route; give it a
+// generous ceiling so an 8000-token plan (~90–100s) completes before the function
+// is reclaimed. Matches Vercel's current default; set explicitly so it survives
+// default changes.
+export const maxDuration = 300;
+
 type Params = Promise<{ id: string; candidateId: string }>;
 
 /**
