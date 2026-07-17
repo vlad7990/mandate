@@ -67,13 +67,45 @@ Sidebar gets an "Exec Intel" primary nav entry.
   unlink, and stage changes all write audit events
   (`candidate_linked` / `candidate_unlinked` / `candidate_stage_changed`).
 
+- **Interview Plans (built — migration 037).** Per-candidate interview plans
+  (`executive_interview_plans`), keyed by (search_id, candidate_id), versioned
+  and hardened exactly like `role_success_profiles`: draft→approved→archived,
+  DB immutability trigger (`guard_executive_interview_plans` + the dedicated
+  `mandate.allow_plan_transition` flag), RPC-only approval stamped from
+  `auth.uid()`, atomic version allocation (`allocate_and_insert_interview_plan`,
+  which locks the `executive_search_candidates` link row so generation also
+  requires linkage), one-approved-per-candidate-plan invariant. The plan lives
+  in `content_json` (stages with nested questions) rather than normalized
+  stages/questions tables — the plan is authored/approved as one document, and
+  versioning JSON keeps the proven machinery intact.
+
+  Agent 17 (**Interview Architect**, `executive-interview-architect-agent.ts` +
+  `generate-executive-interview-plan.ts`) turns the APPROVED success profile,
+  the operational competency weights (`executive_search_competencies`), and
+  candidate context into concrete stages: objective, recommended interviewer
+  ROLE, duration, assigned competencies, core/follow-up/candidate-specific
+  questions, evidence to listen for, weak-answer indicators, red flags.
+  Defensive post-processing: cross-stage question de-duplication, dropping of
+  hallucinated competency keys, and **server-computed competency coverage**
+  (covered vs uncovered) against the operational weights — the agent proposes
+  assignments, the app reports coverage truthfully. Prompt forbids hire/no-hire
+  verdicts, protected-characteristic inference, psychological labels, and
+  deception-detection cues.
+
+  Gating: generation requires an approved success profile (UI shows a gate
+  state otherwise) AND a linked candidate (enforced by the allocate RPC's link
+  lock). Route:
+  `/executive-intelligence/searches/[id]/candidates/[candidateId]/interview-plan`
+  (empty → generating → error → editor with coverage panel + approval). Entry
+  point from the linked-candidate row on the candidates page. Audit events:
+  `interview_plan_generation_requested` / `_generated` / `_generation_failed` /
+  `_edited` / `_new_version` / `_regenerated` / `_approved`.
+
 ## Phase 2+ (designed for, not built)
 
-- Interview Plans (hang off `executive_search_candidates` + the approved
-  profile's stages), Active Interviews (explicit-consent transcript ingestion
-  only), Assessments, Risk Reviews, Final Reports (PDF via existing
-  `@react-pdf` layer), Executive Advisors, panel synthesis, compensation
-  benchmarking, reference checks.
+- Active Interviews (explicit-consent transcript ingestion only), Assessments,
+  Risk Reviews, Final Reports (PDF via existing `@react-pdf` layer), Executive
+  Advisors, panel synthesis, compensation benchmarking, reference checks.
 - The searches workspace and audit schema already reserve space for these: audit events take a
   `detail` JSONB, profiles carry `content_json` sections the report layer can consume, and the
   module nav surfaces the future areas as planned-but-disabled.

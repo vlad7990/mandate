@@ -108,7 +108,14 @@ export type ExecutiveAuditEventType =
   | "profile_approved"
   | "candidate_linked"
   | "candidate_unlinked"
-  | "candidate_stage_changed";
+  | "candidate_stage_changed"
+  | "interview_plan_generation_requested"
+  | "interview_plan_generated"
+  | "interview_plan_generation_failed"
+  | "interview_plan_edited"
+  | "interview_plan_new_version"
+  | "interview_plan_regenerated"
+  | "interview_plan_approved";
 
 /** Due-diligence funnel position — never a hiring decision. */
 export type ExecutiveCandidateStage =
@@ -143,6 +150,26 @@ export const EXEC_CANDIDATE_STAGE_LABELS: Record<ExecutiveCandidateStage, string
   advanced: "Advanced",
   on_hold: "On Hold",
   declined: "Declined",
+};
+
+export type InterviewPlanRow = {
+  id: string;
+  search_id: string;
+  candidate_id: string;
+  organization_id: string;
+  source_profile_id: string | null;
+  version: number;
+  content_json: unknown;
+  status: ProfileStatus;
+  prompt_version: string | null;
+  model_version: string | null;
+  is_generating: boolean;
+  generation_error: string | null;
+  created_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ExecutiveAuditEventRow = {

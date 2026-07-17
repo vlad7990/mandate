@@ -49,8 +49,8 @@ const MODULE_AREAS: ModuleArea[] = [
   {
     label: "Interview Plans",
     icon: "event_note",
-    href: null,
-    description: "Stage-by-stage evidence plans — Phase 2",
+    href: "/executive-intelligence/searches",
+    description: "Per-candidate stage-by-stage evidence plans",
   },
   {
     label: "Active Interviews",

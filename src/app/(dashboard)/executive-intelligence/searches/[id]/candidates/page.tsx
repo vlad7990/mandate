@@ -179,6 +179,13 @@ export default async function ExecutiveSearchCandidatesPage({
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
+                  <Link
+                    href={`/executive-intelligence/searches/${search.id}/candidates/${c.id}/interview-plan`}
+                    className="font-mono-label text-mono-label uppercase tracking-widest text-primary hover:brightness-110 transition-all flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">checklist</span>
+                    Interview Plan
+                  </Link>
                   <CandidateStageSelect
                     searchId={search.id}
                     candidateId={c.id}

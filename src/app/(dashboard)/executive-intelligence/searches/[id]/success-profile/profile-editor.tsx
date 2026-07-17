@@ -16,6 +16,7 @@ import {
   PROFILE_STATUS_LABELS,
   type ProfileStatus,
 } from "@/lib/executive/types";
+import { formatTimestampUtc } from "@/lib/executive/format";
 import {
   approveProfile,
   createProfileNewVersion,
@@ -210,11 +211,11 @@ export function ProfileEditor({
           </div>
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
             {promptVersion ?? "manual"} · {modelVersion ?? "human-authored"} · updated{" "}
-            {new Date(updatedAt).toLocaleString()}
+            {formatTimestampUtc(updatedAt)}
             {status === "approved" && approvedAt && (
               <>
                 {" "}
-                · approved {new Date(approvedAt).toLocaleString()}
+                · approved {formatTimestampUtc(approvedAt)}
                 {approverName ? ` by ${approverName}` : ""}
               </>
             )}

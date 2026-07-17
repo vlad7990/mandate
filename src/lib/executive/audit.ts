@@ -11,6 +11,7 @@ export type ExecutiveAuditEventInput = {
   organizationId: string;
   searchId: string | null;
   profileId?: string | null;
+  planId?: string | null;
   actorId: string | null;
   eventType: ExecutiveAuditEventType;
   detail?: Record<string, unknown>;
@@ -33,6 +34,7 @@ export async function recordExecutiveAuditEvent(
       organization_id: event.organizationId,
       search_id: event.searchId,
       profile_id: event.profileId ?? null,
+      plan_id: event.planId ?? null,
       actor_id: event.actorId,
       event_type: event.eventType,
       detail: event.detail ?? {},

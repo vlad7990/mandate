@@ -78,6 +78,10 @@ Output: Company operating context for executive due diligence — stage/scale de
 Trigger: Success Profile generation requested (explicit user click)
 Output: Versioned Executive Success Profile — role mission, mandate, outcomes, required capabilities/experience/scale, derailers, gaps, competency weights, interview stages. Stored with prompt/model version; approval is a human action
 
+### 17. Interview Architect Agent
+Trigger: Interview plan generation requested for a linked candidate (explicit user click; requires an approved Success Profile)
+Output: Versioned per-candidate interview plan — stages with objective, interviewer role, duration, assigned competencies, core/follow-up/candidate-specific questions, evidence to listen for, weak-answer indicators, red flags; plus server-computed competency coverage. No hire/no-hire verdicts. Stored with prompt/model version; approval is a human action
+
 ## Agent Communication Pattern
 All agents read from and write to Supabase.
 No direct agent-to-agent calls in MVP.
