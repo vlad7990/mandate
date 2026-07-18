@@ -60,9 +60,9 @@ const MODULE_AREAS: ModuleArea[] = [
   },
   {
     label: "Assessments",
-    icon: "grading",
-    href: null,
-    description: "Structured evidence capture — Phase 2",
+    icon: "fact_check",
+    href: "/executive-intelligence/searches",
+    description: "Per-candidate evidence scorecards scored against competency weights",
   },
   {
     label: "Risk Reviews",

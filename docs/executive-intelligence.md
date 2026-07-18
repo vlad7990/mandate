@@ -101,11 +101,52 @@ Sidebar gets an "Exec Intel" primary nav entry.
   `interview_plan_generation_requested` / `_generated` / `_generation_failed` /
   `_edited` / `_new_version` / `_regenerated` / `_approved`.
 
+- **Assessments (built — migration 038).** Per-candidate evidence capture
+  (`executive_assessments`), keyed by (search_id, candidate_id), versioned and
+  hardened exactly like interview plans: draft→approved→archived, DB immutability
+  trigger (`guard_executive_assessments` + the dedicated
+  `mandate.allow_assessment_transition` flag), RPC-only approval stamped from
+  `auth.uid()` (`approve_assessment`), atomic version allocation
+  (`allocate_and_insert_assessment`, which locks the
+  `executive_search_candidates` link row so creation also requires linkage),
+  one-approved-per-candidate invariant. The scorecard lives in `content_json`.
+
+  **Human scorecard only — there is NO AI synthesis agent.** The recruiter
+  records evidence themselves; the app never infers ratings. On creation the
+  assessment is pre-structured from the approved interview plan and the
+  operational competency weights (`executive_search_competencies`): one row per
+  competency, in weight order, with `source_stages` pre-filled from the plan's
+  stage→competency assignments. Each competency takes a **4-level evidence
+  rating** — Strong / Moderate / Limited / No evidence observed — plus a
+  free-text evidence field.
+
+  The app computes a **weighted evidence strength** server-side on every save
+  (`sum(weight × ratingScore) / sum(weight)`, ratings mapped strong=1.0 /
+  moderate=0.66 / limited=0.33 / none=0), re-stamped into `content_json` and
+  never trusted from the client. It is surfaced and labeled as **evidence
+  coverage/strength — how much of the role's weighted competencies have
+  supporting evidence recorded — explicitly NOT a score of the candidate's
+  quality and NOT a hiring recommendation.** No hire/no-hire, no
+  protected-characteristic inference, no psychological labels.
+
+  Gating: creation requires an **approved interview plan** for the candidate (UI
+  shows a gate state otherwise), which itself guarantees an approved success
+  profile, populated competency weights, and linkage. Route:
+  `/executive-intelligence/searches/[id]/candidates/[candidateId]/assessment`
+  (gate → empty → editor with the evidence-strength panel + approval; read-only
+  once approved). Entry point from the linked-candidate row on the candidates
+  page, alongside Interview Plan. Scoring/normalize logic in
+  `src/lib/executive/assessment-scoring.ts` and `src/lib/ai/executive-assessment.ts`
+  (not an agent — no model call), unit-tested; DB invariants in
+  `supabase/tests/executive_assessment_invariants.sql`. Audit events:
+  `assessment_created` / `assessment_edited` / `assessment_new_version` /
+  `assessment_approved`.
+
 ## Phase 2+ (designed for, not built)
 
-- Active Interviews (explicit-consent transcript ingestion only), Assessments,
-  Risk Reviews, Final Reports (PDF via existing `@react-pdf` layer), Executive
-  Advisors, panel synthesis, compensation benchmarking, reference checks.
+- Active Interviews (explicit-consent transcript ingestion only), Risk Reviews,
+  Final Reports (PDF via existing `@react-pdf` layer), Executive Advisors, panel
+  synthesis, compensation benchmarking, reference checks.
 - The searches workspace and audit schema already reserve space for these: audit events take a
   `detail` JSONB, profiles carry `content_json` sections the report layer can consume, and the
   module nav surfaces the future areas as planned-but-disabled.

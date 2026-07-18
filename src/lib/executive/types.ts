@@ -115,7 +115,11 @@ export type ExecutiveAuditEventType =
   | "interview_plan_edited"
   | "interview_plan_new_version"
   | "interview_plan_regenerated"
-  | "interview_plan_approved";
+  | "interview_plan_approved"
+  | "assessment_created"
+  | "assessment_edited"
+  | "assessment_new_version"
+  | "assessment_approved";
 
 /** Due-diligence funnel position — never a hiring decision. */
 export type ExecutiveCandidateStage =
@@ -177,10 +181,65 @@ export type ExecutiveAuditEventRow = {
   organization_id: string;
   search_id: string | null;
   profile_id: string | null;
+  plan_id: string | null;
+  assessment_id: string | null;
   actor_id: string | null;
   event_type: ExecutiveAuditEventType;
   detail: Record<string, unknown>;
   created_at: string;
+};
+
+// ---------------------------------------------------------------------------
+// Assessments (Phase 2c) — human-authored evidence capture, versioned exactly
+// like interview plans (draft → approved → archived). No AI provenance columns:
+// there is no agent. The evidence rollup + weighted strength are computed
+// server-side from the operational competency weights and stamped into
+// content_json on every save — never trusted from the client.
+// ---------------------------------------------------------------------------
+
+/** Evidence-oriented rating scale. Deliberately NOT a numeric grade or a
+ * judgment/psychological label — it records how much evidence was observed. */
+export type EvidenceRating = "strong" | "moderate" | "limited" | "none";
+
+export type CompetencyAssessment = {
+  competency_key: string;
+  rating: EvidenceRating;
+  evidence: string;
+  /** Which interview-plan stage(s) this evidence draws from (provenance). */
+  source_stages: string[];
+};
+
+export type EvidenceRollupEntry = {
+  competency_key: string;
+  label: string;
+  weight: number;
+  rating: EvidenceRating;
+  evidence_score: number;
+};
+
+export type AssessmentContent = {
+  overall_summary: string;
+  competency_assessments: CompetencyAssessment[];
+  /** Server-computed on every save. */
+  evidence_rollup: EvidenceRollupEntry[];
+  /** Server-computed: sum(weight * score) / sum(weight), 0..1. */
+  weighted_evidence_strength: number;
+};
+
+export type AssessmentRow = {
+  id: string;
+  search_id: string;
+  candidate_id: string;
+  organization_id: string;
+  source_plan_id: string | null;
+  version: number;
+  content_json: unknown;
+  status: ProfileStatus;
+  created_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export const SEARCH_STATUS_LABELS: Record<ExecutiveSearchStatus, string> = {
@@ -234,3 +293,26 @@ export const ROLE_FAMILIES = [
  */
 export const DECISION_SUPPORT_DISCLAIMER =
   "AI-generated decision support. This content informs human judgment — it is not a hiring decision and must be reviewed and approved by a person.";
+
+/** Evidence-scale labels. Wording is deliberately evidence-oriented. */
+export const EVIDENCE_RATING_LABELS: Record<EvidenceRating, string> = {
+  strong: "Strong evidence",
+  moderate: "Moderate evidence",
+  limited: "Limited evidence",
+  none: "No evidence observed",
+};
+
+export const EVIDENCE_RATINGS: EvidenceRating[] = [
+  "strong",
+  "moderate",
+  "limited",
+  "none",
+];
+
+/**
+ * Assessments are human-authored (no AI agent), so they carry a different
+ * disclaimer: the app scores observed evidence against the competency weights,
+ * but the record and any decision remain the human's. Never a hire/no-hire.
+ */
+export const ASSESSMENT_DISCLAIMER =
+  "Structured evidence capture for human judgment. The evidence-strength summary weights your observations against the role's competencies — it is not a score of the person, not a hiring decision, and must be reviewed and approved by a person.";
