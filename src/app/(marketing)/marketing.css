@@ -23,7 +23,20 @@
  */
 
 .marketing-root {
-  /* ────────────────────────── Palette ─────────────────────────── */
+  /* ────────────────────────── Palette ───────────────────────────
+     SURFACE THEME, not a second design system. These override the
+     semantic roles defined in globals.css :root — same vocabulary
+     (--bg, --fg, --accent, …), deliberately deeper values.
+
+     The marketing surface runs one stop darker than the app so the
+     editorial typography and section numerals have more contrast to
+     sit against. Everything the app defines and marketing does not
+     (--positive, --danger, --focus-ring, --radius) cascades in
+     unchanged.
+
+     Roles that are genuinely marketing-only — --fg-ghost, --accent-2,
+     --accent-3, the display font stack, section spacing — stay local
+     to this block. */
   --bg: #08080d;                       /* deepened from #0a0a0f */
   --bg-elev-1: #10101a;
   --bg-elev-2: #16161f;
@@ -31,13 +44,27 @@
   --line: #2a2a3a;
   --line-soft: rgba(255, 255, 255, 0.05);
   --line-strong: rgba(255, 255, 255, 0.14);
+  /* Aliased to the shared role name so marketing and app speak the
+     same vocabulary; --line* stay for marketing's hairline treatments. */
+  --border: var(--line);
+  --border-strong: var(--line-strong);
   --fg: #ececf4;
   --fg-soft: #b6b6c8;
-  --fg-muted: #6b6b7e;
+  /* --fg-muted lightened #6b6b7e → #7f7f93. The old value measured
+     3.63:1 on --bg and is used for body copy and pricing, so it failed
+     WCAG AA (4.5) everywhere. Tuned against the *elevated* surfaces too,
+     not just --bg: 5.10:1 on --bg, 4.59:1 on --bg-elev-2. */
+  --fg-muted: #7f7f93;
+  /* DECORATIVE ONLY — 1.74:1 on --bg. Never put readable content on
+     this token: giant section numerals, hairlines, disabled marks. */
   --fg-faint: #3f3f50;
   --fg-ghost: rgba(236, 236, 244, 0.025);   /* for giant section numerals */
 
   --accent: #3b82f6;
+  /* Fill for solid buttons. White on --accent is only 3.68:1; white on
+     --accent-fill is 5.17:1. Also the dashboard's accent, so filled
+     CTAs now match the authenticated product exactly. */
+  --accent-fill: #2563eb;
   --accent-bright: #60a5fa;
   --accent-soft: rgba(59, 130, 246, 0.18);
   --accent-glow: rgba(59, 130, 246, 0.45);
@@ -372,6 +399,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.625rem;
+  /* 44px floor — every CTA was landing at 33–42px, under the comfortable
+     touch target. Padding still drives size above the floor. */
+  min-height: 44px;
   padding: 0.875rem 1.375rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -409,8 +439,8 @@
 
 .m-btn--primary {
   --btn-fg: #fff;
-  --btn-bg: var(--accent);
-  --btn-line: var(--accent);
+  --btn-bg: var(--accent-fill);
+  --btn-line: var(--accent-fill);
   --btn-glow: var(--accent-glow);
 }
 
@@ -707,7 +737,10 @@
   border-color: rgba(59, 130, 246, 0.35);
 }
 
+/* Example-query chips are the fastest path into the live demo, and on
+   mobile they are the first thing a visitor taps. 40px floor. */
 .m-chip {
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -1102,7 +1135,9 @@
 }
 
 .m-sim__input::placeholder {
-  color: var(--fg-faint);
+  /* Was --fg-faint (1.74:1). These example briefs are how a visitor
+     learns what to type — that is content, not decoration. */
+  color: var(--fg-muted);
   font-style: italic;
 }
 
@@ -1123,7 +1158,9 @@
   font-size: 0.9375rem;
   font-style: italic;
   letter-spacing: 0.02em;
-  color: var(--fg-faint);
+  /* Matches the native placeholder above — the animated typing effect
+     is the primary demonstration of the product on this page. */
+  color: var(--fg-muted);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -1142,7 +1179,8 @@
 
 .m-sim__submit {
   padding-inline: 1.625rem;
-  background: var(--accent);
+  /* --accent-fill, not --accent: white on #3b82f6 is 3.68:1. */
+  background: var(--accent-fill);
   color: #fff;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
@@ -1293,6 +1331,9 @@
   display: flex;
   align-items: center;
   gap: 0.625rem;
+  /* The wordmark is the reliable "back to top / home" affordance —
+     it was a 26px target. */
+  min-height: 44px;
   color: var(--fg);
   text-decoration: none;
   flex-shrink: 0;
@@ -1327,10 +1368,62 @@
   font-family: var(--font-mono);
   font-size: 0.625rem;
   letter-spacing: 0.18em;
-  color: var(--fg-faint);
+  /* Was --fg-faint (1.74:1). "BETA" sets expectations about product
+     maturity — it has to be readable. */
+  color: var(--fg-muted);
   padding: 0.125rem 0.5rem;
   border: 1px solid var(--line);
   margin-left: 0.5rem;
+}
+
+/* ── Primary product navigation ──────────────────────────────────
+   The nav previously carried only auth buttons, so a visitor had no
+   way to reach pricing or the Executive Intelligence story except by
+   scrolling the whole page. */
+
+.m-nav__links {
+  display: none;               /* ≥900px only — see media query */
+  align-items: center;
+  gap: 0.25rem;
+  margin-inline: auto;
+}
+
+.m-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 0.875rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition:
+    color 200ms var(--ease-out),
+    border-color 200ms var(--ease-out);
+}
+
+.m-nav__link:hover {
+  color: var(--fg);
+  border-color: var(--line);
+}
+
+.m-nav__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (min-width: 900px) {
+  .m-nav__links {
+    display: flex;
+  }
+}
+
+/* Nav buttons run compact but never below the 44px touch floor. */
+.m-nav__actions .m-btn {
+  padding-inline: 1.125rem;
 }
 
 .m-nav__actions {

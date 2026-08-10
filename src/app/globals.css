@@ -27,8 +27,11 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
+  /* shadcn "accent" = hover/active surface, not the brand accent.
+     Mapped straight to the semantic hover role so the word --accent is
+     free to mean the brand accent everywhere else. */
+  --color-accent-foreground: var(--fg);
+  --color-accent: var(--surface-hover);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -47,47 +50,46 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* Mandate / Stitch design tokens — keep in sync with stitch-designs/*.html */
-  --color-surface: #11131b;
-  --color-surface-dim: #11131b;
-  --color-surface-bright: #373942;
-  --color-surface-variant: #32343d;
-  --color-surface-container-lowest: #0c0e16;
-  --color-surface-container-low: #191b23;
-  --color-surface-container: #1d1f27;
-  --color-surface-container-high: #282a32;
-  --color-surface-container-highest: #32343d;
-  --color-on-surface: #e1e2ed;
-  --color-on-surface-variant: #c3c6d7;
-  --color-on-background: #e1e2ed;
-  --color-outline: #8d90a0;
-  --color-outline-variant: #434655;
-  --color-primary-container: #2563eb;
-  --color-on-primary-container: #eeefff;
-  --color-primary-fixed: #dbe1ff;
-  --color-primary-fixed-dim: #b4c5ff;
-  --color-on-primary-fixed: #00174b;
-  --color-on-primary-fixed-variant: #003ea8;
-  --color-secondary-container: #3f465c;
-  --color-on-secondary-container: #adb4ce;
+  /* ─────────────────────────────────────────────────────────────────
+     COMPATIBILITY ALIAS LAYER — Material You names → semantic tokens.
+
+     These names are consumed by ~3,750 Tailwind utility usages across
+     112 files (bg-surface-container-low, text-on-surface, …). Renaming
+     them would be a 112-file churn with no user-visible benefit, so
+     they stay as *aliases*. Every value now resolves from the semantic
+     layer in :root — one definition per colour, no duplicates.
+
+     Do not add new colours here. New work uses the semantic tokens
+     directly (--bg, --fg, --accent, …).
+     ───────────────────────────────────────────────────────────────── */
+  --color-surface: var(--bg);
+  --color-surface-container-lowest: var(--bg-sunken);
+  --color-surface-container-low: var(--bg-elev-1);
+  --color-surface-container: var(--bg-elev-2);
+  --color-surface-container-high: var(--bg-elev-3);
+  --color-surface-container-highest: var(--bg-elev-4);
+  --color-on-surface: var(--fg);
+  --color-on-surface-variant: var(--fg-soft);
+  --color-on-background: var(--fg);
+  --color-outline: var(--fg-muted);
+  --color-outline-variant: var(--border);
+  --color-primary-container: var(--accent-fill);
+  --color-on-primary-container: var(--fg-on-accent);
+  --color-primary-fixed-dim: var(--accent);
   --color-secondary-fixed: #dae2fd;
-  --color-secondary-fixed-dim: #bec6e0;
-  --color-on-secondary-fixed: #131b2e;
-  --color-on-secondary-fixed-variant: #3f465c;
-  --color-tertiary: #b9c7e0;
+  --color-secondary-fixed-dim: var(--positive);
+  --color-tertiary: var(--info);
   --color-tertiary-container: #606e84;
   --color-on-tertiary: #233144;
   --color-on-tertiary-container: #eaf0ff;
-  --color-tertiary-fixed: #d5e3fd;
-  --color-tertiary-fixed-dim: #b9c7e0;
-  --color-on-tertiary-fixed: #0d1c2f;
-  --color-on-tertiary-fixed-variant: #3a485c;
-  --color-error-container: #93000a;
-  --color-on-error-container: #ffdad6;
-  --color-inverse-surface: #e1e2ed;
-  --color-inverse-on-surface: #2e3039;
-  --color-inverse-primary: #0053db;
-  --color-surface-tint: #b4c5ff;
+  --color-error-container: var(--danger-surface);
+  --color-on-error-container: var(--fg-on-danger);
+  /* NEW — `bg-error` / `text-error` / `border-error` are used 274 times
+     across auth, tables and settings, but --color-error was never
+     defined, so those utilities generated nothing and every error and
+     destructive affordance rendered uncoloured. This repairs all 274
+     without touching a single component. */
+  --color-error: var(--danger);
 
   --font-h1: var(--font-inter), system-ui, sans-serif;
   --font-h2: var(--font-inter), system-ui, sans-serif;
@@ -126,74 +128,129 @@
   --spacing-container-padding: 24px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   MANDATE SEMANTIC TOKEN SYSTEM — single source of truth
+
+   Every colour in the product is defined here exactly once. The
+   Material You names in @theme inline and the shadcn names in .dark
+   are both thin aliases pointing back at these roles.
+
+   Naming is by ROLE, never by brand, page, or component. A token says
+   what a value is *for*, so a surface can be re-tuned in one place.
+
+   The previous light palette that lived here was dead code: <html> is
+   hardcoded `dark` in layout.tsx and no ThemeProvider is mounted, so
+   .dark always won and none of these values ever rendered. Removed.
+   --radius survived the deletion deliberately — it was defined ONLY
+   here, never in .dark, and every --radius-* calc() depends on it.
+
+   The marketing surface (.marketing-root) overrides the background
+   ramp one stop deeper for editorial contrast. That is an intentional,
+   documented surface theme — not a second design system.
+   ═══════════════════════════════════════════════════════════════════ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* ── Elevation ramp ─────────────────────────────────────────────
+     Ascending = closer to the viewer. --bg is the page floor. */
+  --bg-sunken: #0c0e16;        /* recessed chrome — sidebar rail */
+  --bg: #11131b;               /* page background */
+  --bg-elev-1: #191b23;        /* cards, panels */
+  --bg-elev-2: #1d1f27;        /* raised card, popover */
+  --bg-elev-3: #282a32;        /* hover, active row */
+  --bg-elev-4: #32343d;        /* highest — pressed, selected */
+
+  --surface: var(--bg-elev-1);
+  --surface-hover: var(--bg-elev-3);
+
+  /* ── Text ───────────────────────────────────────────────────────
+     Descending contrast. --fg-faint is DECORATIVE ONLY; it does not
+     meet WCAG AA for body text on any surface in this ramp. */
+  --fg: #e1e2ed;
+  --fg-soft: #c3c6d7;
+  --fg-muted: #8d90a0;
+  --fg-faint: #434655;
+
+  /* ── Lines ──────────────────────────────────────────────────────── */
+  --border: #434655;
+  --border-strong: #8d90a0;
+
+  /* ── Accent ─────────────────────────────────────────────────────
+     Two roles, deliberately different values:
+       --accent      interactive text, icons, active states (on dark)
+       --accent-fill solid button/badge fill carrying WHITE text
+     --accent-fill is the darker blue because white on #3b82f6 is only
+     3.68:1, while white on #2563eb is 5.17:1. This is the same fill
+     the marketing surface uses, so CTAs match across the whole
+     product. */
+  --accent: #b4c5ff;
+  --accent-fill: #2563eb;
+  --accent-hover: #3b82f6;
+  --fg-on-accent: #eeefff;
+
+  /* ── Semantic states ────────────────────────────────────────────
+     --positive and --info keep the existing muted palette rather than
+     conventional green/amber, because the product's visual language
+     is deliberately restrained. Renaming them by role (was
+     "secondary-fixed-dim" / "tertiary") is the point: the old names
+     described a Material slot, not a meaning. */
+  --positive: #bec6e0;
+  --info: #b9c7e0;
+  --warning: #f59e0b;
+  --danger: #ffb4ab;
+  --danger-surface: #93000a;
+  --fg-on-danger: #ffdad6;
+
+  /* ── System ─────────────────────────────────────────────────────── */
+  --focus-ring: var(--accent);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* shadcn primitive names → semantic tokens.
+
+   Kept as .dark (not :root) because <html> is hardcoded `dark` and the
+   shadcn primitives expect that scope. Nothing here defines a value —
+   every entry resolves from :root above.
+
+   NOTE: shadcn's `--accent` means "subtle hover surface", NOT a brand
+   accent. It maps to --bg-elev-3 on purpose. Mandate's brand accent is
+   the semantic --accent in :root. Two different meanings, same word —
+   which is precisely why the semantic layer exists. */
 .dark {
-  /* Mandate dark palette — overrides shadcn defaults so primitives match Stitch design. */
-  --background: #11131b;
-  --foreground: #e1e2ed;
-  --card: #191b23;
-  --card-foreground: #e1e2ed;
-  --popover: #1d1f27;
-  --popover-foreground: #e1e2ed;
-  --primary: #b4c5ff;
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--bg-elev-1);
+  --card-foreground: var(--fg);
+  --popover: var(--bg-elev-2);
+  --popover-foreground: var(--fg);
+  --primary: var(--accent);
   --primary-foreground: #002a78;
-  --secondary: #bec6e0;
+  --secondary: var(--positive);
   --secondary-foreground: #283044;
-  --muted: #1d1f27;
-  --muted-foreground: #c3c6d7;
-  --accent: #282a32;
-  --accent-foreground: #e1e2ed;
-  --destructive: #ffb4ab;
-  --border: #434655;
-  --input: #434655;
-  --ring: #b4c5ff;
+  --muted: var(--bg-elev-2);
+  --muted-foreground: var(--fg-soft);
+  /* --accent / --accent-foreground are deliberately NOT declared here.
+     shadcn's "accent" means hover-surface, and because <html> is always
+     .dark, declaring it would shadow the semantic brand --accent for
+     the entire document — every accent in the product would resolve to
+     a hover grey. It is mapped once in @theme inline instead. */
+  --destructive: var(--danger);
+  /* --border is NOT redeclared: `--border: var(--border)` inside this
+     block is self-referential, which CSS treats as invalid-at-computed-
+     value-time. :root's --border already cascades in. */
+  --input: var(--border);
+  --ring: var(--focus-ring);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: #0c0e16;
-  --sidebar-foreground: #e1e2ed;
-  --sidebar-primary: #b4c5ff;
+  --sidebar: var(--bg-sunken);
+  --sidebar-foreground: var(--fg);
+  --sidebar-primary: var(--accent);
   --sidebar-primary-foreground: #002a78;
-  --sidebar-accent: #282a32;
-  --sidebar-accent-foreground: #e1e2ed;
-  --sidebar-border: #434655;
-  --sidebar-ring: #b4c5ff;
+  --sidebar-accent: var(--bg-elev-3);
+  --sidebar-accent-foreground: var(--fg);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--focus-ring);
 }
 
 @layer base {

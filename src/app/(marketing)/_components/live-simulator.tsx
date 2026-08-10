@@ -169,7 +169,7 @@ export function LiveSimulator() {
           }`}
         />
         <span>SIMULATOR</span>
-        <span style={{ marginLeft: "auto", color: "var(--fg-faint)" }}>
+        <span style={{ marginLeft: "auto", color: "var(--fg-muted)" }}>
           /api/demo
         </span>
       </div>
@@ -251,7 +251,7 @@ function SimulatorIdle() {
           fontSize: "0.6875rem",
           letterSpacing: "0.18em",
           textTransform: "uppercase",
-          color: "var(--fg-faint)",
+          color: "var(--fg-muted)",
         }}
       >
         $ awaiting_input

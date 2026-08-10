@@ -55,22 +55,29 @@ function TopNav() {
           </span>
         </Link>
 
-        <nav className="m-nav__actions" aria-label="Primary">
-          <Link
-            href="/auth/signin"
-            className="m-btn m-btn--ghost"
-            style={{ padding: "0.625rem 1rem" }}
-          >
+        <nav className="m-nav__links" aria-label="Primary">
+          <a href="#how" className="m-nav__link">
+            Platform
+          </a>
+          <a href="#intelligence" className="m-nav__link">
+            Intelligence
+          </a>
+          <a href="#simulator" className="m-nav__link">
+            Live Demo
+          </a>
+          <a href="#pricing" className="m-nav__link">
+            Pricing
+          </a>
+        </nav>
+
+        <div className="m-nav__actions">
+          <Link href="/auth/signin" className="m-btn m-btn--ghost">
             Log In
           </Link>
-          <Link
-            href="/request-access"
-            className="m-btn m-btn--primary"
-            style={{ padding: "0.625rem 1rem" }}
-          >
+          <Link href="/request-access" className="m-btn m-btn--primary">
             Request Access
           </Link>
-        </nav>
+        </div>
       </div>
     </header>
   );
@@ -717,6 +724,7 @@ function Stack() {
 function Triangulation() {
   return (
     <section
+      id="intelligence"
       className="m-section m-triangulation m-section--gap-feature-top m-section--gap-tight-bottom"
     >
       <span className="m-section__numeral" aria-hidden>
@@ -1002,8 +1010,8 @@ function Pricing() {
             className="m-lede"
             style={{ marginTop: "1rem", maxWidth: "60ch" }}
           >
-            All plans include all 14 AI agents and the full intelligence
-            stack. Save 20% with annual billing.
+            All plans include the full agent stack. Billed monthly, cancel
+            anytime — no annual lock-in.
           </p>
         </Reveal>
 
@@ -1031,7 +1039,7 @@ function Pricing() {
                       top: "-12px",
                       left: "1.5rem",
                       padding: "0.25rem 0.625rem",
-                      background: "var(--accent)",
+                      background: "var(--accent-fill)",
                       color: "#fff",
                       fontFamily: "var(--font-mono)",
                       fontSize: "0.625rem",
