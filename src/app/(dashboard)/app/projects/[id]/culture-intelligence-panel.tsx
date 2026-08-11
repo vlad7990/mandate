@@ -4,6 +4,14 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { IconCheck, IconFlag, IconRefresh, IconSpark } from "@/components/icons";
+import {
+  PANEL_BODY,
+  PANEL_BUTTON,
+  PANEL_BUTTON_QUIET,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
 import {
   CHANGE_READINESS_LABELS,
   CULTURE_RISK_APPETITE_LABELS,
@@ -91,55 +99,43 @@ export function CultureIntelligencePanel({
   };
 
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2 flex-wrap">
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            corporate_fare
-          </span>
-          CULTURE_INTELLIGENCE
+    <Panel
+      title="Culture intelligence"
+      meta={
+        <>
+          <PanelMeta>
+            {profile ? formatRelative(profile.generated_at) : "Not generated"}
+          </PanelMeta>
           {flagCount > 0 && (
-            <span className="px-1.5 py-0 border border-tertiary/60 bg-tertiary/10 text-tertiary tabular-nums">
-              🚩 {flagCount} flagged
+            /* Was a 🚩 emoji. An emoji is not an icon — it renders in the
+               system font, at the system's colour, and reads aloud as
+               "triangular flag on post". */
+            <span className="rounded-md border border-tertiary/60 bg-tertiary/10 px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary tabular-nums">
+              {flagCount} flagged
             </span>
           )}
-        </span>
-        <div className="flex items-center gap-2">
-          {profile && (
-            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-              {formatRelative(profile.generated_at)}
-            </span>
+        </>
+      }
+      action={
+        <button
+          type="button"
+          onClick={() => {
+            setContextDraft(savedContext ?? "");
+            setRegenOpen((o) => !o);
+          }}
+          disabled={pending}
+          className={PANEL_BUTTON}
+        >
+          {pending || profile ? (
+            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+          ) : (
+            <IconSpark size={14} />
           )}
-          <button
-            type="button"
-            onClick={() => {
-              setContextDraft(savedContext ?? "");
-              setRegenOpen((o) => !o);
-            }}
-            disabled={pending}
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending
-                ? "progress_activity"
-                : profile
-                  ? "refresh"
-                  : "auto_awesome"}
-            </span>
-            {pending
-              ? "Analysing"
-              : profile
-                ? "Regenerate with Context"
-                : "Analyze Culture Fit"}
-          </button>
-        </div>
-      </header>
+          {pending ? "Analysing" : profile ? "Regenerate" : "Analyse culture fit"}
+        </button>
+      }
+    >
+
 
       {regenOpen && (
         <RegenerateContextPanel
@@ -157,8 +153,8 @@ export function CultureIntelligencePanel({
       )}
 
       {!profile ? (
-        <div className="px-5 py-6 text-center">
-          <p className="text-body-main text-on-surface-variant max-w-xl mx-auto">
+        <div className={PANEL_BODY}>
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             The Culture Agent reads company context, the recruiter&rsquo;s
             onboarding answers, and feedback patterns to produce a four-axis
             culture profile (risk appetite, decision speed, leadership
@@ -167,19 +163,13 @@ export function CultureIntelligencePanel({
           </p>
         </div>
       ) : (
-        <div className="p-4 space-y-4">
+        <div className={cn(PANEL_BODY, "flex flex-col gap-4")}>
           {savedContext && (
             <div className="bg-surface-container-low border-l-2 border-l-primary-container px-3 py-2">
-              <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5">
-                <span
-                  className="material-symbols-outlined text-[12px]"
-                  aria-hidden
-                >
-                  format_quote
-                </span>
+              <span className="font-mono-label text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
                 Recruiter context that shaped this read
               </span>
-              <p className="font-mono-data text-body-main text-on-surface-variant italic mt-1">
+              <p className="mt-1 text-[13px] leading-relaxed text-on-surface-variant">
                 {savedContext}
               </p>
             </div>
@@ -287,11 +277,11 @@ export function CultureIntelligencePanel({
                       >
                         {r.severity}
                       </span>
-                      <span className="font-mono-data text-body-main text-on-surface font-semibold">
+                      <span className="text-[13px] font-semibold text-on-surface">
                         {r.label}
                       </span>
                     </div>
-                    <p className="font-mono-data text-body-main text-on-surface-variant">
+                    <p className="text-[13px] text-on-surface-variant">
                       {r.detail}
                     </p>
                   </li>
@@ -314,7 +304,7 @@ export function CultureIntelligencePanel({
           </Section>
         </div>
       )}
-    </article>
+    </Panel>
   );
 }
 
@@ -382,13 +372,13 @@ function AxisCard({
             aria-label={flagged ? "Remove flag" : "Flag this assessment"}
             title={flagged ? "Remove flag" : "Flag this assessment"}
             className={cn(
-              "w-7 h-7 border flex items-center justify-center transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary",
+              "flex h-7 w-7 items-center justify-center rounded-md border transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary",
               flagged
                 ? "border-tertiary/60 bg-tertiary/10 text-tertiary"
                 : "border-outline-variant text-outline hover:border-tertiary hover:text-tertiary"
             )}
           >
-            🚩
+            <IconFlag size={13} />
           </button>
         </div>
       </div>
@@ -396,11 +386,12 @@ function AxisCard({
         {value}
       </div>
       {flagged && (
-        <span className="px-1.5 py-0 border border-tertiary/60 bg-tertiary/10 text-tertiary font-mono-label text-mono-label uppercase tracking-widest inline-block">
-          🚩 Recruiter flagged
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-tertiary/60 bg-tertiary/10 px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary">
+          <IconFlag size={11} />
+          Recruiter flagged
         </span>
       )}
-      <p className="font-mono-data text-body-main text-on-surface-variant leading-relaxed">
+      <p className="text-[13px] leading-relaxed text-on-surface-variant">
         {evidence}
       </p>
       <div className="h-1 bg-surface-container-high overflow-hidden">
@@ -466,9 +457,6 @@ function Section({
             onClick={beginEdit}
             className="font-mono-label text-mono-label text-outline uppercase tracking-widest hover:text-primary transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:underline"
           >
-            <span className="material-symbols-outlined text-[12px]" aria-hidden>
-              {annotation ? "edit" : "add_comment"}
-            </span>
             {annotation ? "Edit observation" : "Add observation"}
           </button>
         )}
@@ -476,13 +464,10 @@ function Section({
       {children}
       {annotation && !editing && (
         <div className="bg-surface-container-low border-l-2 border-l-primary-container px-3 py-2">
-          <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1">
-            <span className="material-symbols-outlined text-[12px]" aria-hidden>
-              edit_note
-            </span>
+          <span className="font-mono-label text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
             Your observation
           </span>
-          <p className="font-mono-data text-body-main text-on-surface-variant italic leading-relaxed mt-1">
+          <p className="mt-1 text-[13px] leading-relaxed text-on-surface-variant">
             {annotation.note}
           </p>
         </div>
@@ -495,14 +480,14 @@ function Section({
             rows={3}
             placeholder="What does this section miss? What did you learn that the AI didn't see?"
             onChange={(e) => setDraft(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 font-mono-data text-body-main text-on-surface focus:border-primary focus:outline-none transition-colors resize-y leading-relaxed"
+            className="w-full resize-y rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[13px] leading-relaxed text-on-surface transition-colors focus:border-primary focus:outline-none"
           />
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => setEditing(false)}
               disabled={pending}
-              className="px-3 py-1 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
+              className={PANEL_BUTTON_QUIET}
             >
               Cancel
             </button>
@@ -510,17 +495,13 @@ function Section({
               type="button"
               onClick={save}
               disabled={pending}
-              className="px-3 py-1 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+              className={PANEL_BUTTON}
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[14px]",
-                  pending && "animate-spin"
-                )}
-                aria-hidden
-              >
-                {pending ? "progress_activity" : "save"}
-              </span>
+              {pending ? (
+                <IconRefresh size={14} className="animate-spin" />
+              ) : (
+                <IconCheck size={14} />
+              )}
               {pending ? "Saving" : "Save"}
             </button>
           </div>
@@ -549,10 +530,7 @@ function RegenerateContextPanel({
 }) {
   return (
     <div className="border-b border-outline-variant bg-surface-container-low px-4 py-3 space-y-2">
-      <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5">
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          tips_and_updates
-        </span>
+      <div className="font-mono-label text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
         Add context for the AI (optional)
       </div>
       <textarea
@@ -561,7 +539,7 @@ function RegenerateContextPanel({
         disabled={pending}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 font-mono-data text-body-main text-on-surface focus:border-primary focus:outline-none transition-colors resize-y leading-relaxed"
+        className="w-full resize-y rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[13px] leading-relaxed text-on-surface transition-colors focus:border-primary focus:outline-none"
       />
       <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest leading-snug">
         Treated as informed prior knowledge — the AI must still ground every
@@ -582,7 +560,7 @@ function RegenerateContextPanel({
           type="button"
           onClick={onCancel}
           disabled={pending}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
+          className={PANEL_BUTTON_QUIET}
         >
           Cancel
         </button>
@@ -591,17 +569,13 @@ function RegenerateContextPanel({
           onClick={onSubmit}
           disabled={pending}
           aria-busy={pending ? true : undefined}
-          className="px-4 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className={PANEL_BUTTON}
         >
-          <span
-            className={cn(
-              "material-symbols-outlined text-[14px]",
-              pending && "animate-spin"
-            )}
-            aria-hidden
-          >
-            {pending ? "progress_activity" : "auto_awesome"}
-          </span>
+          {pending ? (
+            <IconRefresh size={14} className="animate-spin" />
+          ) : (
+            <IconSpark size={14} />
+          )}
           {pending ? "Generating" : "Run"}
         </button>
       </div>

@@ -6,6 +6,21 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
+  IconArrowRight,
+  IconCheck,
+  IconClose,
+  IconRefresh,
+  IconSearch,
+  IconSpark,
+} from "@/components/icons";
+import {
+  PANEL_BODY,
+  PANEL_BUTTON,
+  PANEL_BUTTON_QUIET,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
+import {
   ARCHETYPES,
   PIPELINE_LABELS,
   PIPELINE_STAGES,
@@ -62,11 +77,9 @@ const TIER_TONE: Record<Tier, string> = {
 
 export function CandidateSearchPanel({
   projectId,
-  projectTitle,
   candidates,
 }: {
   projectId: string;
-  projectTitle: string;
   candidates: SearchCandidate[];
 }) {
   const router = useRouter();
@@ -192,36 +205,30 @@ export function CandidateSearchPanel({
   }, [filtered]);
 
   return (
-    <section className="bg-surface-container-low border border-outline-variant">
-      <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-outline-variant flex-wrap">
-        <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            person_search
+    <Panel
+      title="Find candidates"
+      meta={
+        <PanelMeta>
+          <span className="tabular-nums">
+            {filtered.length} match · {tierCounts.tier_1 + tierCounts.tier_2}{" "}
+            viable · {selected.size}/{ROLE_ANALYSIS_MAX} selected
           </span>
-          Find Candidates · {projectTitle}
-        </h3>
-        <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
-          {filtered.length} match · {tierCounts.tier_1 + tierCounts.tier_2}{" "}
-          viable · {selected.size}/{ROLE_ANALYSIS_MAX} selected
-        </span>
-      </header>
-
-      <div className="p-4 space-y-4">
+        </PanelMeta>
+      }
+    >
+      <div className={cn(PANEL_BODY, "flex flex-col gap-4")}>
         {/* Search + scope toggle */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span
-            className="material-symbols-outlined text-primary text-[20px]"
-            aria-hidden
-          >
-            search
-          </span>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search candidates for this role"
-            className="flex-1 min-w-[240px] bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface focus:border-primary focus:outline-none transition-colors"
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex min-w-[240px] flex-1 items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 transition-colors focus-within:border-primary">
+            <IconSearch size={15} className="shrink-0 text-outline" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search candidates for this role"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-on-surface placeholder:text-outline focus:outline-none"
+            />
+          </label>
           <ScopeToggle value={scopeFilter} onChange={setScopeFilter} />
         </div>
 
@@ -280,7 +287,7 @@ export function CandidateSearchPanel({
             No candidates match the current filters.
           </p>
         ) : (
-          <ul className="border border-outline-variant divide-y divide-outline-variant max-h-[480px] overflow-y-auto">
+          <ul className="max-h-[480px] divide-y divide-outline-variant overflow-y-auto rounded-md border border-outline-variant">
             {filtered.map((c) => (
               <CandidateRow
                 key={c.id}
@@ -302,7 +309,7 @@ export function CandidateSearchPanel({
           />
         )}
       </div>
-    </section>
+    </Panel>
   );
 }
 
@@ -393,10 +400,8 @@ function SelectionTray({
     <article className="bg-primary-container/10 border border-primary-container/40 px-3 py-3 space-y-2">
       <header className="flex items-center justify-between gap-2 flex-wrap">
         <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            playlist_add_check
-          </span>
-          Selected for Analysis
+          <IconCheck size={13} />
+          Selected for analysis
           <span className="text-outline tabular-nums">
             · {String(selected.length).padStart(2, "0")}/
             {ROLE_ANALYSIS_MAX}
@@ -416,18 +421,14 @@ function SelectionTray({
             onClick={onAnalyze}
             disabled={!canAnalyze || analyzing}
             aria-busy={analyzing ? true : undefined}
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className={PANEL_BUTTON}
           >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                analyzing && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {analyzing ? "progress_activity" : "auto_awesome"}
-            </span>
-            {analyzing ? "Analysing" : "Analyze Selected"}
+            {analyzing ? (
+              <IconRefresh size={14} className="animate-spin" />
+            ) : (
+              <IconSpark size={14} />
+            )}
+            {analyzing ? "Analysing" : "Analyse selected"}
           </button>
         </div>
       </header>
@@ -456,9 +457,7 @@ function SelectionTray({
               aria-label={`Remove ${c.full_name}`}
               className="text-outline hover:text-error transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-error"
             >
-              <span className="material-symbols-outlined text-[14px]" aria-hidden>
-                close
-              </span>
+              <IconClose size={14} />
             </button>
           </li>
         ))}
@@ -498,7 +497,7 @@ function CandidateRow({
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="font-mono-data text-body-main text-on-surface font-semibold truncate">
+          <span className="min-w-0 break-words text-[13px] font-semibold text-on-surface">
             {candidate.full_name}
           </span>
           {candidate.ai_tier && (
@@ -539,12 +538,12 @@ function CandidateRow({
             </span>
           )}
           {!candidate.in_project && candidate.project_title && (
-            <span className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest">
-              ↪ {candidate.project_title}
+            <span className="font-mono-label text-mono-label uppercase tracking-widest text-tertiary">
+              From {candidate.project_title}
             </span>
           )}
         </div>
-        <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest truncate">
+        <div className="min-w-0 break-words font-mono-label text-mono-label uppercase tracking-widest text-outline">
           {candidate.current_title ?? "—"}
           {candidate.current_company ? ` · ${candidate.current_company}` : ""}
           {candidate.rank != null && (
@@ -564,9 +563,7 @@ function CandidateRow({
           className="font-mono-label text-mono-label text-primary uppercase tracking-widest hover:brightness-110 transition-colors flex items-center gap-1 shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           Profile
-          <span className="material-symbols-outlined text-[12px]" aria-hidden>
-            arrow_forward
-          </span>
+          <IconArrowRight size={12} />
         </Link>
       )}
     </li>
@@ -601,10 +598,7 @@ function RoleAnalysisResultPanel({
     <article className="bg-surface-container border border-primary-container/60 p-4 space-y-4">
       <header className="flex items-center justify-between gap-2 flex-wrap">
         <h4 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            insights
-          </span>
-          Role Analysis Result
+          Role analysis result
         </h4>
         <span
           className={cn(
@@ -665,14 +659,8 @@ function RoleAnalysisResultPanel({
                     type="button"
                     onClick={() => onAddToShortlist(r.candidate_id)}
                     disabled={shortlisting}
-                    className="px-2 py-1 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1 shrink-0 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    className={cn(PANEL_BUTTON_QUIET, "shrink-0")}
                   >
-                    <span
-                      className="material-symbols-outlined text-[12px]"
-                      aria-hidden
-                    >
-                      view_kanban
-                    </span>
                     Shortlist
                   </button>
                 </li>
@@ -739,12 +727,6 @@ function RoleAnalysisResultPanel({
                   className="inline-flex items-center gap-1 px-2 py-0.5 border border-primary-container/60 bg-surface-container text-on-surface font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
                   {c?.full_name ?? id}
-                  <span
-                    className="material-symbols-outlined text-[12px]"
-                    aria-hidden
-                  >
-                    view_kanban
-                  </span>
                 </button>
               );
             })}

@@ -228,3 +228,20 @@ export function IconRefresh({ size = 15, className }: IconProps) {
     </svg>
   );
 }
+
+export function IconCheck({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="m5 12.5 4.5 4.5L19 6.5" />
+    </svg>
+  );
+}
+
+export function IconFlag({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M5 21V4" />
+      <path d="M5 4.5h11l-1.8 3.6L16 12H5z" />
+    </svg>
+  );
+}

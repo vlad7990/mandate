@@ -4,6 +4,18 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  IconCheck,
+  IconChevronDown,
+  IconRefresh,
+  IconSpark,
+} from "@/components/icons";
+import {
+  PANEL_BODY,
+  PANEL_BUTTON,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
 import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
 import { researchHiringManagerAction } from "./actions";
 
@@ -54,66 +66,52 @@ export function HMIntelligencePanel({
   };
 
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2 flex-wrap">
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            account_circle
-          </span>
-          HM_INTELLIGENCE
-          {hmName && (
-            <span className="text-outline normal-case tracking-normal font-mono-data ml-1">
-              · {hmName}
-            </span>
+    <Panel
+      title="Hiring manager intelligence"
+      meta={
+        <PanelMeta>
+          {[
+            hmName,
+            report ? `researched ${formatRelative(report.generated_at)}` : null,
+            noStakeholder ? "No hiring manager on record" : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </PanelMeta>
+      }
+      action={
+        <button
+          type="button"
+          onClick={handleResearch}
+          disabled={pending || noStakeholder}
+          title={
+            noStakeholder
+              ? "Add a hiring manager via onboarding before researching"
+              : undefined
+          }
+          className={PANEL_BUTTON}
+        >
+          {pending || report ? (
+            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+          ) : (
+            <IconSpark size={14} />
           )}
-        </span>
-        <div className="flex items-center gap-2">
-          {report && (
-            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-              Last researched {formatRelative(report.generated_at)}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={handleResearch}
-            disabled={pending || noStakeholder}
-            title={
-              noStakeholder
-                ? "Add a hiring manager via onboarding before researching"
-                : undefined
-            }
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending ? "progress_activity" : report ? "refresh" : "auto_awesome"}
-            </span>
-            {pending
-              ? "Researching"
-              : report
-                ? "Re-research HM"
-                : "Research HM"}
-          </button>
-        </div>
-      </header>
-
+          {pending ? "Researching" : report ? "Re-research" : "Research HM"}
+        </button>
+      }
+    >
       {pending && <ProgressTracker key={runId} />}
 
       {noStakeholder ? (
-        <div className="px-5 py-6 text-center">
-          <p className="text-body-main text-on-surface-variant max-w-xl mx-auto">
+        <div className={PANEL_BODY}>
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             No hiring manager captured yet. Add the HM as a stakeholder in
             the onboarding step before running this agent.
           </p>
         </div>
       ) : !report && !pending ? (
-        <div className="px-5 py-6 text-center">
-          <p className="text-body-main text-on-surface-variant max-w-xl mx-auto">
+        <div className={PANEL_BODY}>
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             Run real-time web research on{" "}
             <span className="text-on-surface font-semibold">{hmName}</span>
             {hmRole && (
@@ -160,7 +158,6 @@ export function HMIntelligencePanel({
                 title="Likely concerns"
                 items={report.likely_concerns}
                 tone="warn"
-                icon="warning"
               />
             )}
             {report.rapport_builders.length > 0 && (
@@ -168,7 +165,6 @@ export function HMIntelligencePanel({
                 title="Rapport builders"
                 items={report.rapport_builders}
                 tone="positive"
-                icon="favorite"
               />
             )}
           </div>
@@ -179,14 +175,10 @@ export function HMIntelligencePanel({
                 {report.red_lines.map((r, i) => (
                   <li
                     key={i}
-                    className="bg-error/5 border-l-2 border-l-error px-3 py-1.5 font-mono-data text-body-main text-on-surface flex items-start gap-2"
+                    className="flex items-start gap-2 rounded-md border border-error/40 bg-error/5 px-3 py-2 text-[13px] leading-relaxed text-on-surface"
                   >
-                    <span
-                      className="material-symbols-outlined text-error text-[14px] mt-0.5"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                      aria-hidden
-                    >
-                      block
+                    <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-error">
+                      Flag
                     </span>
                     <span>{r}</span>
                   </li>
@@ -204,7 +196,7 @@ export function HMIntelligencePanel({
           )}
         </div>
       ) : null}
-    </article>
+    </Panel>
   );
 }
 
@@ -234,19 +226,16 @@ function ProgressTracker() {
                     : "text-outline"
               )}
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[14px]",
-                  active && "animate-spin"
-                )}
-                aria-hidden
-              >
-                {done
-                  ? "check_circle"
-                  : active
-                    ? "progress_activity"
-                    : "circle"}
-              </span>
+              {done ? (
+                <IconCheck size={13} />
+              ) : active ? (
+                <IconRefresh size={13} className="animate-spin" />
+              ) : (
+                <span
+                  aria-hidden
+                  className="h-[7px] w-[7px] rounded-full border border-current"
+                />
+              )}
               {label}
             </li>
           );
@@ -292,7 +281,7 @@ function ChipList({
         <li
           key={i}
           className={cn(
-            "px-2 py-1 border font-mono-data text-body-main flex items-center gap-1.5",
+            "flex items-center gap-1.5 rounded-md border px-2 py-1 text-[13px]",
             cls
           )}
         >
@@ -319,12 +308,10 @@ function SignalColumn({
   title,
   items,
   tone,
-  icon,
 }: {
   title: string;
   items: string[];
   tone: "warn" | "positive";
-  icon: string;
 }) {
   const headingClass =
     tone === "warn" ? "text-tertiary" : "text-secondary-fixed-dim";
@@ -338,16 +325,13 @@ function SignalColumn({
           headingClass
         )}
       >
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          {icon}
-        </span>
         {title}
       </h4>
       <ul className="space-y-1">
         {items.map((s, i) => (
           <li
             key={i}
-            className="font-mono-data text-body-main text-on-surface-variant leading-relaxed"
+            className="text-[13px] leading-relaxed text-on-surface-variant"
           >
             · {s}
           </li>
@@ -374,9 +358,10 @@ function SourcesList({
         className="flex items-center gap-2 font-mono-label text-mono-label text-primary uppercase tracking-widest hover:text-on-surface transition-colors focus-visible:outline-none focus-visible:underline"
         aria-expanded={open}
       >
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          {open ? "expand_less" : "expand_more"}
-        </span>
+        <IconChevronDown
+          size={13}
+          className={cn("transition-transform", open && "rotate-180")}
+        />
         Sources <span className="tabular-nums">({sources.length})</span>
       </button>
       {open && (
@@ -387,7 +372,7 @@ function SourcesList({
                 href={url}
                 target="_blank"
                 rel="noreferrer"
-                className="font-mono-data text-body-main text-on-surface-variant hover:text-primary transition-colors break-all underline-offset-2 hover:underline"
+                className="break-all font-mono-data text-[12px] text-on-surface-variant underline-offset-2 transition-colors hover:text-primary hover:underline"
               >
                 {url}
               </a>

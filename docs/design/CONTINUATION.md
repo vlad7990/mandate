@@ -91,7 +91,7 @@ record why in a comment.
 | 06 App Shell | `(dashboard)/layout.tsx` + sidebar/topbar | ✅ done, deployed |
 | 07 Executive Dashboard | `/app/home` | ✅ done, deployed |
 | 09 Candidate Portfolio | `/app/candidates` | ✅ done, deployed |
-| 08 Project Detail | `/app/projects/[id]` | ✅ chrome restyled · 6 panels left |
+| 08 Project Detail | `/app/projects/[id]` | ✅ done — page + all six panels |
 | 10 Candidate Detail | `/app/projects/[id]/candidates/[candidateId]` | ⚠️ sample route only |
 | 11 EI Workspace | `/app/executive-intelligence/searches/[id]` | ✅ real page restyled |
 | 12 EI Report | `…/searches/[id]/candidates/[cid]/report` | ✅ compiles for real searches |
@@ -172,36 +172,31 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
       panels render full-width below the grid in the older idiom. Restyle
       them one at a time — they are the rest of this task.
 
-- [ ] **Restyle the remaining four client panels on Project Detail.**
-      2 of 6 done 2026-08-11: `health-suggestions-panel.tsx` and
-      `client-intelligence-panel.tsx`.
-      **The shell now exists — use it.** `src/components/projects/panel.tsx`
-      exports `Panel` / `PanelLink` / `PanelMeta` plus the
-      `PANEL_BUTTON`, `PANEL_BUTTON_QUIET` and `PANEL_BODY` class
-      constants. No `"use client"`, so both the server-rendered cards in
-      `project-view.tsx` and the client panels import the same shell.
-      Conversion recipe, per panel: replace the `<article>` + `<header>`
-      with `<Panel title meta action>`; move the generate button into
-      `action` with `PANEL_BUTTON`; swap Material Symbols ligatures for
-      `IconSpark` / `IconRefresh` (`animate-spin` while pending) and drop
-      decorative header icons entirely; body padding `PANEL_BODY`; and
-      replace `font-mono-data text-body-main` prose with
-      `text-[13px] leading-relaxed` — mono was a costume on paragraphs.
-      Remaining: `candidate-search-panel.tsx` (756 lines),
-      `culture-intelligence-panel.tsx` (621),
-      `company-intelligence-panel.tsx` (472),
-      `hm-intelligence-panel.tsx` (412).
-      **Look at the bodies, not just the shells.** Converting the shell
-      surfaced a real layout bug in the client panel that had shipped:
-      revealed-preference rows put the topic in a fixed 80px chip, so any
-      topic longer than one word printed on top of the detail text.
+- [x] **Restyle the six client panels on Project Detail.** ✅ 2026-08-11.
+      All six sit on `src/components/projects/panel.tsx` (`Panel` /
+      `PanelLink` / `PanelMeta` + `PANEL_BUTTON`, `PANEL_BUTTON_QUIET`,
+      `PANEL_BODY`). **The whole `/app/projects/[id]` page level is now
+      free of Material Symbols ligatures** — `page.tsx`,
+      `project-view.tsx` and all six panels. The candidate detail routes
+      below it are not; see the ligature task.
+      Four defects came out of looking at the bodies, not the shells:
+      a fixed 80px topic chip that printed over the detail text next to
+      it (client intelligence); `truncate` inside a flex row, whose
+      `white-space: nowrap` made the row's min-content the full
+      untruncated string and dragged the page into horizontal scroll at
+      390 (candidate search); a 🚩 emoji standing in for an icon, which
+      renders in the system font and reads aloud as "triangular flag on
+      post" (culture); and a `projectTitle` prop that only existed to
+      repeat the page's own h1.
 
 - [ ] **Restyle the real Candidate Detail** (1326 lines) to comp 10.
       Target: `sample-candidate-detail.tsx`.
-- [ ] **~425 Material Symbols ligatures** → inline SVG from
+- [ ] **356 Material Symbols ligatures** → inline SVG from
       `src/components/icons.tsx`. Each currently puts literal text like
       `folder_open` in the DOM and depends on a blocking Google webfont.
-      The shell is converted; the pages are not. Mechanical, safe,
+      The shell, the EI report and every route under
+      `/app/projects/[id]` at page level are converted; the candidate
+      detail routes and the other modules are not. Mechanical, safe,
       good filler work when context is short.
 
 ---

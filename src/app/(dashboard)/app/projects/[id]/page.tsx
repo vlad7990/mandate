@@ -30,6 +30,7 @@ import {
 import { type Tier } from "@/lib/ranking/tiers";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
+import { IconArrowRight, IconRefresh } from "@/components/icons";
 import { ProjectView, type ProjectVm, type Stage } from "./project-view";
 import {
   CandidateSearchPanel,
@@ -394,7 +395,6 @@ export default async function ProjectPage({
         {ready && (
           <CandidateSearchPanel
             projectId={project.id}
-            projectTitle={project.title}
             candidates={searchCandidates}
           />
         )}
@@ -466,16 +466,10 @@ function RecalibrationBanner({
     <Link
       href={`/app/projects/${projectId}/feedback`}
       prefetch={false}
-      className="block bg-secondary-fixed-dim/5 border border-secondary-fixed-dim/40 hover:border-secondary-fixed-dim/70 hover:bg-secondary-fixed-dim/10 transition-colors p-4 group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-fixed-dim"
+      className="group block rounded-xl border border-secondary-fixed-dim/40 bg-secondary-fixed-dim/5 p-4 transition-colors hover:border-secondary-fixed-dim/70 hover:bg-secondary-fixed-dim/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-fixed-dim"
     >
       <div className="flex items-start gap-3">
-        <span
-          className="material-symbols-outlined text-secondary-fixed-dim mt-0.5 text-[20px]"
-          style={{ fontVariationSettings: "'FILL' 1" }}
-          aria-hidden
-        >
-          refresh
-        </span>
+        <IconRefresh size={18} className="mt-0.5 shrink-0 text-secondary-fixed-dim" />
         <div className="flex-1 min-w-0">
           <div className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest tabular-nums">
             Calibration recalibrated
@@ -502,9 +496,7 @@ function RecalibrationBanner({
         </div>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform shrink-0">
           View
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            arrow_forward
-          </span>
+          <IconArrowRight size={13} />
         </span>
       </div>
     </Link>
@@ -539,17 +531,10 @@ function BuildSourcingCta({ projectId }: { projectId: string }) {
     <Link
       href={`/app/projects/${projectId}/sourcing`}
       prefetch={false}
-      className="block bg-primary-container/10 border border-primary-container/40 hover:border-primary-container hover:bg-primary-container/15 transition-colors p-4 group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="group block rounded-xl border border-primary-container/40 bg-primary-container/10 p-4 transition-colors hover:border-primary-container hover:bg-primary-container/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <span
-            className="material-symbols-outlined text-[20px] text-primary"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-            aria-hidden
-          >
-            travel_explore
-          </span>
           <div>
             <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
               Job spec is final · Next step
@@ -564,9 +549,7 @@ function BuildSourcingCta({ projectId }: { projectId: string }) {
         </div>
         <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform shrink-0">
           Open
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            arrow_forward
-          </span>
+          <IconArrowRight size={13} />
         </span>
       </div>
     </Link>

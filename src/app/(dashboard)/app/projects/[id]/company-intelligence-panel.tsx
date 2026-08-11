@@ -4,6 +4,18 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  IconCheck,
+  IconChevronDown,
+  IconRefresh,
+  IconSpark,
+} from "@/components/icons";
+import {
+  PANEL_BODY,
+  PANEL_BUTTON,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
 import type {
   CompanyIntelligenceReport,
   CultureSignals,
@@ -84,49 +96,34 @@ export function CompanyIntelligencePanel({
   };
 
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2 flex-wrap">
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            radar
-          </span>
-          COMPANY_INTELLIGENCE
-        </span>
-        <div className="flex items-center gap-2">
-          {report && (
-            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-              Last researched {formatRelative(report.generated_at)}
-            </span>
+    <Panel
+      title="Company intelligence"
+      meta={
+        <PanelMeta>
+          {report ? `researched ${formatRelative(report.generated_at)}` : "Not researched"}
+        </PanelMeta>
+      }
+      action={
+        <button
+          type="button"
+          onClick={handleResearch}
+          disabled={pending}
+          className={PANEL_BUTTON}
+        >
+          {pending || report ? (
+            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+          ) : (
+            <IconSpark size={14} />
           )}
-          <button
-            type="button"
-            onClick={handleResearch}
-            disabled={pending}
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending ? "progress_activity" : report ? "refresh" : "travel_explore"}
-            </span>
-            {pending
-              ? "Researching"
-              : report
-                ? "Re-research"
-                : "Research Company"}
-          </button>
-        </div>
-      </header>
-
+          {pending ? "Researching" : report ? "Re-research" : "Research company"}
+        </button>
+      }
+    >
       {pending && <ProgressTracker key={runId} />}
 
       {!report && !pending ? (
-        <div className="px-5 py-6 text-center">
-          <p className="text-body-main text-on-surface-variant max-w-xl mx-auto">
+        <div className={PANEL_BODY}>
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             Run real-time research on{" "}
             <span className="text-on-surface font-semibold">{companyName}</span>
             : scrapes the company website, leadership, news, and careers
@@ -137,7 +134,7 @@ export function CompanyIntelligencePanel({
           </p>
         </div>
       ) : report ? (
-        <div className="p-4 space-y-4">
+        <div className={cn(PANEL_BODY, "flex flex-col gap-4")}>
           <Section title="Executive summary">
             <p className="text-on-surface text-body-main leading-relaxed whitespace-pre-line">
               {report.executive_summary}
@@ -168,7 +165,7 @@ export function CompanyIntelligencePanel({
                 {report.transformation_priorities.map((t, i) => (
                   <li
                     key={i}
-                    className="px-2 py-1 bg-surface-container-low border border-outline-variant font-mono-data text-body-main text-on-surface"
+                    className="rounded-md border border-outline-variant bg-surface-container-low px-2 py-1 text-[13px] text-on-surface"
                   >
                     {t}
                   </li>
@@ -203,16 +200,12 @@ export function CompanyIntelligencePanel({
                 {report.red_flags.map((r, i) => (
                   <li
                     key={i}
-                    className="bg-tertiary/5 border-l-2 border-l-tertiary px-3 py-2 flex items-start gap-2"
+                    className="flex items-start gap-2 rounded-md border border-tertiary/40 bg-tertiary/5 px-3 py-2"
                   >
-                    <span
-                      className="material-symbols-outlined text-tertiary text-[14px] mt-0.5"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                      aria-hidden
-                    >
-                      warning
+                    <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary">
+                      Flag
                     </span>
-                    <p className="font-mono-data text-body-main text-on-surface leading-relaxed">
+                    <p className="text-[13px] leading-relaxed text-on-surface">
                       {r}
                     </p>
                   </li>
@@ -236,7 +229,7 @@ export function CompanyIntelligencePanel({
           )}
         </div>
       ) : null}
-    </article>
+    </Panel>
   );
 }
 
@@ -269,19 +262,16 @@ function ProgressTracker() {
                     : "text-outline"
               )}
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[14px]",
-                  active && "animate-spin"
-                )}
-                aria-hidden
-              >
-                {done
-                  ? "check_circle"
-                  : active
-                    ? "progress_activity"
-                    : "circle"}
-              </span>
+              {done ? (
+                <IconCheck size={13} />
+              ) : active ? (
+                <IconRefresh size={13} className="animate-spin" />
+              ) : (
+                <span
+                  aria-hidden
+                  className="h-[7px] w-[7px] rounded-full border border-current"
+                />
+              )}
               {step.label}
             </li>
           );
@@ -331,13 +321,13 @@ function LeadershipTable({ people }: { people: LeadershipPerson[] }) {
               key={`${p.name}-${i}`}
               className="border-t border-outline-variant/40 align-top"
             >
-              <td className="px-3 py-2 font-mono-data text-body-main text-on-surface font-semibold whitespace-nowrap">
+              <td className="whitespace-nowrap px-3 py-2 text-[13px] font-semibold text-on-surface">
                 {p.name}
               </td>
-              <td className="px-3 py-2 font-mono-data text-body-main text-on-surface-variant">
+              <td className="px-3 py-2 text-[13px] text-on-surface-variant">
                 {p.title}
               </td>
-              <td className="px-3 py-2 font-mono-data text-body-main text-on-surface leading-relaxed">
+              <td className="px-3 py-2 text-[13px] leading-relaxed text-on-surface">
                 {p.relevance_to_role}
               </td>
             </tr>
@@ -408,7 +398,7 @@ function RecentTimeline({ items }: { items: RecentContextItem[] }) {
           <div className="text-on-surface text-body-main font-semibold mt-0.5">
             {item.headline}
           </div>
-          <p className="font-mono-data text-body-main text-on-surface-variant leading-relaxed mt-0.5">
+          <p className="mt-0.5 text-[13px] leading-relaxed text-on-surface-variant">
             {item.significance}
           </p>
         </li>
@@ -434,9 +424,10 @@ function SourcesList({
         className="flex items-center gap-2 font-mono-label text-mono-label text-primary uppercase tracking-widest hover:text-on-surface transition-colors focus-visible:outline-none focus-visible:underline"
         aria-expanded={open}
       >
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          {open ? "expand_less" : "expand_more"}
-        </span>
+        <IconChevronDown
+          size={13}
+          className={cn("transition-transform", open && "rotate-180")}
+        />
         Sources <span className="tabular-nums">({sources.length})</span>
       </button>
       {open && (
@@ -447,7 +438,7 @@ function SourcesList({
                 href={url}
                 target="_blank"
                 rel="noreferrer"
-                className="font-mono-data text-body-main text-on-surface-variant hover:text-primary transition-colors break-all underline-offset-2 hover:underline focus-visible:outline-none focus-visible:underline focus-visible:text-primary"
+                className="break-all font-mono-data text-[12px] text-on-surface-variant underline-offset-2 transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-none"
               >
                 {url}
               </a>
