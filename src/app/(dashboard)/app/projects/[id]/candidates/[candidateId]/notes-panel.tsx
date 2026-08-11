@@ -10,7 +10,19 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { MastHead } from "@/components/ui/mast-head";
+import {
+  IconCheck,
+  IconChevronDown,
+  IconClose,
+  IconPlus,
+  IconRefresh,
+} from "@/components/icons";
+import {
+  PANEL_BUTTON,
+  PANEL_BUTTON_QUIET,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
 import {
   createNoteAction,
   deleteNoteAction,
@@ -95,55 +107,37 @@ export function CandidateNotesPanel({
   const pinnedCount = notes.filter((n) => n.is_pinned).length;
 
   return (
-    <section className="space-y-2">
-      <MastHead
-        tone="primary"
-        icon="edit_note"
-        label={
-          <span className="flex items-baseline gap-2">
-            <span>Candidate Notes</span>
-            <span className="text-outline tabular-nums">
-              · {String(notes.length).padStart(2, "0")}
-            </span>
-            {pinnedCount > 0 && (
-              <span className="text-secondary-fixed-dim tabular-nums">
-                · {pinnedCount} pinned
-              </span>
-            )}
+    <Panel
+      title="Notes"
+      meta={
+        <PanelMeta>
+          <span className="tabular-nums">
+            {notes.length} note{notes.length === 1 ? "" : "s"}
+            {pinnedCount > 0 ? ` · ${pinnedCount} pinned` : ""}
           </span>
-        }
-        meta={
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setCallOpen(true)}
-              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              <span
-                className="material-symbols-outlined text-[14px]"
-                aria-hidden
-              >
-                call
-              </span>
-              Start Call Notes
-            </button>
-            <button
-              type="button"
-              onClick={() => setComposing((c) => !c)}
-              className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              <span
-                className="material-symbols-outlined text-[14px]"
-                aria-hidden
-              >
-                {composing ? "close" : "add"}
-              </span>
-              {composing ? "Cancel" : "Add Note"}
-            </button>
-          </div>
-        }
-      />
-
+        </PanelMeta>
+      }
+      action={
+        <>
+          <button
+            type="button"
+            onClick={() => setCallOpen(true)}
+            className={PANEL_BUTTON_QUIET}
+          >
+            Start call notes
+          </button>
+          <button
+            type="button"
+            onClick={() => setComposing((c) => !c)}
+            className={PANEL_BUTTON}
+          >
+            {composing ? <IconClose size={14} /> : <IconPlus size={14} />}
+            {composing ? "Cancel" : "Add note"}
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-2 px-[18px] py-4">
       {composing && (
         <NoteComposer
           candidateId={candidateId}
@@ -153,14 +147,12 @@ export function CandidateNotesPanel({
       )}
 
       {sorted.length === 0 && !composing ? (
-        <div className="bg-surface-container-low border border-outline-variant px-4 py-6 text-center">
-          <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-            No notes yet for {candidateName}. Capture your first call,
-            interview, or stray observation above.
-          </p>
-        </div>
+        <p className="text-[13px] leading-relaxed text-outline">
+          No notes yet for {candidateName}. Capture your first call, interview,
+          or stray observation above.
+        </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="flex flex-col gap-2">
           {sorted.map((note) => (
             <NoteItem
               key={note.id}
@@ -171,6 +163,8 @@ export function CandidateNotesPanel({
         </ul>
       )}
 
+      </div>
+
       {callOpen && (
         <LiveCallNotesModal
           candidateId={candidateId}
@@ -179,7 +173,7 @@ export function CandidateNotesPanel({
           onClose={() => setCallOpen(false)}
         />
       )}
-    </section>
+    </Panel>
   );
 }
 
@@ -260,12 +254,6 @@ function NoteComposer({
                   : "border-outline-variant text-outline hover:text-on-surface hover:border-outline"
               )}
             >
-              <span
-                className="material-symbols-outlined text-[12px]"
-                aria-hidden
-              >
-                {meta.icon}
-              </span>
               {meta.label}
             </button>
           );
@@ -274,9 +262,6 @@ function NoteComposer({
 
       {noteType === "call" && (
         <label className="flex items-center gap-2 font-mono-label text-mono-label text-outline uppercase tracking-widest">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            timer
-          </span>
           Call duration
           <input
             type="number"
@@ -325,15 +310,7 @@ function NoteComposer({
             aria-busy={pending ? true : undefined}
             className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending ? "progress_activity" : "save"}
-            </span>
+            {pending ? <IconRefresh size={14} className="animate-spin" /> : <IconCheck size={14} />}
             {pending ? "Saving" : "Save Note"}
           </button>
         </div>
@@ -436,14 +413,7 @@ function NoteItem({
       <header className="flex items-center justify-between gap-2 px-4 py-2 border-b border-outline-variant/40 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
           {note.is_pinned && (
-            <span
-              className="material-symbols-outlined text-[14px] text-secondary-fixed-dim"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-              aria-label="Pinned"
-              title="Pinned"
-            >
-              push_pin
-            </span>
+            <span className="font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-secondary-fixed-dim" title="Pinned">Pinned</span>
           )}
           <span
             className={cn(
@@ -451,19 +421,10 @@ function NoteItem({
               meta.chipClass
             )}
           >
-            <span className="material-symbols-outlined text-[12px]" aria-hidden>
-              {meta.icon}
-            </span>
             {meta.label}
           </span>
           {note.note_type === "call" && note.call_duration_minutes != null && (
             <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
-              <span
-                className="material-symbols-outlined text-[12px] mr-0.5"
-                aria-hidden
-              >
-                timer
-              </span>
               {note.call_duration_minutes} min
             </span>
           )}
@@ -477,20 +438,17 @@ function NoteItem({
         <div className="flex items-center gap-1 shrink-0">
           <IconButton
             label={note.is_pinned ? "Unpin" : "Pin"}
-            icon="push_pin"
             onClick={handleTogglePin}
             disabled={pending}
             active={note.is_pinned}
           />
           <IconButton
             label="Edit"
-            icon="edit"
             onClick={beginEdit}
             disabled={pending}
           />
           <IconButton
             label="Delete"
-            icon="delete"
             onClick={handleDelete}
             disabled={pending}
             danger
@@ -524,15 +482,7 @@ function NoteItem({
                 disabled={pending}
                 className="px-3 py-1 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
               >
-                <span
-                  className={cn(
-                    "material-symbols-outlined text-[14px]",
-                    pending && "animate-spin"
-                  )}
-                  aria-hidden
-                >
-                  {pending ? "progress_activity" : "save"}
-                </span>
+                {pending ? <IconRefresh size={14} className="animate-spin" /> : <IconCheck size={14} />}
                 {pending ? "Saving" : "Save"}
               </button>
             </div>
@@ -546,12 +496,7 @@ function NoteItem({
                 onClick={() => setExpanded((e) => !e)}
                 className="mt-2 font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1 hover:brightness-110 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
-                <span
-                  className="material-symbols-outlined text-[12px]"
-                  aria-hidden
-                >
-                  {expanded ? "expand_less" : "expand_more"}
-                </span>
+                <IconChevronDown size={12} className={cn("transition-transform", expanded && "rotate-180")} />
                 {expanded ? "Show less" : "Show more"}
               </button>
             )}
@@ -564,14 +509,12 @@ function NoteItem({
 
 function IconButton({
   label,
-  icon,
   onClick,
   disabled,
   active,
   danger,
 }: {
   label: string;
-  icon: string;
   onClick: () => void;
   disabled?: boolean;
   active?: boolean;
@@ -593,13 +536,7 @@ function IconButton({
             : "text-outline hover:text-primary hover:border-primary"
       )}
     >
-      <span
-        className="material-symbols-outlined text-[14px]"
-        style={active ? { fontVariationSettings: "'FILL' 1" } : undefined}
-        aria-hidden
-      >
-        {icon}
-      </span>
+      
     </button>
   );
 }
@@ -740,9 +677,6 @@ function LiveCallNotesModal({
               )}
               aria-hidden
             />
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              call
-            </span>
             Live Call Notes · {candidateName}
           </h3>
           <div className="flex items-center gap-3">
@@ -758,9 +692,6 @@ function LiveCallNotesModal({
               disabled={pending}
               className="px-2 py-1 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
             >
-              <span className="material-symbols-outlined text-[14px]" aria-hidden>
-                {running ? "pause" : "play_arrow"}
-              </span>
               {running ? "Pause" : "Resume"}
             </button>
             <button
@@ -769,9 +700,6 @@ function LiveCallNotesModal({
               aria-label="Close"
               className="w-7 h-7 border border-outline-variant text-outline hover:text-error hover:border-error transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-error"
             >
-              <span className="material-symbols-outlined text-[14px]" aria-hidden>
-                close
-              </span>
             </button>
           </div>
         </header>
@@ -815,15 +743,7 @@ function LiveCallNotesModal({
               disabled={pending || content.trim().length === 0}
               className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[14px]",
-                  pending && "animate-spin"
-                )}
-                aria-hidden
-              >
-                {pending ? "progress_activity" : "stop_circle"}
-              </span>
+              {pending ? <IconRefresh size={14} className="animate-spin" /> : <IconCheck size={14} />}
               {pending ? "Saving" : "End Call & Save Notes"}
             </button>
           </div>

@@ -4,6 +4,18 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  IconCheck,
+  IconChevronDown,
+  IconRefresh,
+  IconSpark,
+} from "@/components/icons";
+import {
+  PANEL_BODY,
+  PANEL_BUTTON,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
 import type { CandidateIntelligenceReport } from "@/lib/ai/candidate-research-agent";
 import { researchCandidateAction } from "./actions";
 
@@ -51,49 +63,34 @@ export function CandidateIntelligencePanel({
   };
 
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2 flex-wrap">
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            travel_explore
-          </span>
-          CANDIDATE_INTELLIGENCE
-        </span>
-        <div className="flex items-center gap-2">
-          {report && (
-            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-              Last researched {formatRelative(report.generated_at)}
-            </span>
+    <Panel
+      title="Candidate intelligence"
+      meta={
+        <PanelMeta>
+          {report ? `researched ${formatRelative(report.generated_at)}` : "Not researched"}
+        </PanelMeta>
+      }
+      action={
+        <button
+          type="button"
+          onClick={handleResearch}
+          disabled={pending}
+          className={PANEL_BUTTON}
+        >
+          {pending || report ? (
+            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+          ) : (
+            <IconSpark size={14} />
           )}
-          <button
-            type="button"
-            onClick={handleResearch}
-            disabled={pending}
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending ? "progress_activity" : report ? "refresh" : "auto_awesome"}
-            </span>
-            {pending
-              ? "Researching"
-              : report
-                ? "Re-research"
-                : "Research Candidate"}
-          </button>
-        </div>
-      </header>
-
+          {pending ? "Researching" : report ? "Re-research" : "Research candidate"}
+        </button>
+      }
+    >
       {pending && <ProgressTracker key={runId} />}
 
       {!report && !pending ? (
-        <div className="px-5 py-6 text-center">
-          <p className="text-body-main text-on-surface-variant max-w-xl mx-auto">
+        <div className={PANEL_BODY}>
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             Run real-time web research on{" "}
             <span className="text-on-surface font-semibold">{candidateName}</span>
             : verifies identity, reads public profile + recent activity,
@@ -168,14 +165,10 @@ export function CandidateIntelligencePanel({
                 {report.risk_signals.map((s, i) => (
                   <li
                     key={i}
-                    className="bg-tertiary/5 border-l-2 border-l-tertiary px-3 py-1.5 font-mono-data text-body-main text-on-surface flex items-start gap-2"
+                    className="flex items-start gap-2 rounded-md border border-tertiary/40 bg-tertiary/5 px-3 py-2 text-[13px] leading-relaxed text-on-surface"
                   >
-                    <span
-                      className="material-symbols-outlined text-tertiary text-[14px] mt-0.5"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                      aria-hidden
-                    >
-                      warning
+                    <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary">
+                      Signal
                     </span>
                     <span>{s}</span>
                   </li>
@@ -211,7 +204,7 @@ export function CandidateIntelligencePanel({
           )}
         </div>
       ) : null}
-    </article>
+    </Panel>
   );
 }
 
@@ -241,19 +234,16 @@ function ProgressTracker() {
                     : "text-outline"
               )}
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[14px]",
-                  active && "animate-spin"
-                )}
-                aria-hidden
-              >
-                {done
-                  ? "check_circle"
-                  : active
-                    ? "progress_activity"
-                    : "circle"}
-              </span>
+              {done ? (
+                <IconCheck size={13} />
+              ) : active ? (
+                <IconRefresh size={13} className="animate-spin" />
+              ) : (
+                <span
+                  aria-hidden
+                  className="h-[7px] w-[7px] rounded-full border border-current"
+                />
+              )}
               {label}
             </li>
           );
@@ -342,9 +332,10 @@ function SourcesList({
         className="flex items-center gap-2 font-mono-label text-mono-label text-primary uppercase tracking-widest hover:text-on-surface transition-colors focus-visible:outline-none focus-visible:underline"
         aria-expanded={open}
       >
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          {open ? "expand_less" : "expand_more"}
-        </span>
+        <IconChevronDown
+          size={13}
+          className={cn("transition-transform", open && "rotate-180")}
+        />
         Sources <span className="tabular-nums">({sources.length})</span>
       </button>
       {open && (

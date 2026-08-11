@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { IconCheck, IconRefresh } from "@/components/icons";
+import { PANEL_BODY, Panel } from "@/components/projects/panel";
 import { TIER_BANDS, TIER_ORDER, type Tier } from "@/lib/ranking/tiers";
 import {
   PRESENT_DECISIONS,
@@ -125,17 +127,11 @@ export function RecruiterAssessmentPanel({
   };
 
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex justify-between items-center flex-wrap gap-2">
-        <span className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            person_search
-          </span>
-          RECRUITER_ASSESSMENT
-        </span>
-        <TierComparison aiTier={aiTier} recruiterTier={tier} />
-      </header>
-      <div className="p-4 space-y-5">
+    <Panel
+      title="Your assessment"
+      action={<TierComparison aiTier={aiTier} recruiterTier={tier} />}
+    >
+      <div className={cn(PANEL_BODY, "flex flex-col gap-5")}>
         {/* Tier selector */}
         <Field
           label="Recruiter tier"
@@ -223,9 +219,6 @@ export function RecruiterAssessmentPanel({
               disabled={pending || newStrength.trim().length === 0}
               className="px-3 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <span className="material-symbols-outlined text-[14px]" aria-hidden>
-                add
-              </span>
               Add
             </button>
           </div>
@@ -251,9 +244,6 @@ export function RecruiterAssessmentPanel({
                     aria-label={`Remove "${s}"`}
                     className="text-outline opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 hover:text-error transition-[opacity,color] disabled:opacity-30 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-error"
                   >
-                    <span className="material-symbols-outlined text-[14px]" aria-hidden>
-                      close
-                    </span>
                   </button>
                 </li>
               ))}
@@ -298,21 +288,17 @@ export function RecruiterAssessmentPanel({
               aria-busy={pending ? true : undefined}
               className="px-4 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[14px]",
-                  pending && "animate-spin"
-                )}
-                aria-hidden
-              >
-                {pending ? "progress_activity" : "save"}
-              </span>
+              {pending ? (
+                <IconRefresh size={14} className="animate-spin" />
+              ) : (
+                <IconCheck size={14} />
+              )}
               {pending ? "Saving" : dirty ? "Save Assessment" : "Saved"}
             </button>
           </div>
         </footer>
       </div>
-    </article>
+    </Panel>
   );
 
   // Local helper used by the validators above.

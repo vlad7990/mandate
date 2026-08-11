@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { PANEL_BODY, Panel, PanelMeta } from "@/components/projects/panel";
 import { MastHead } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import {
@@ -90,42 +91,24 @@ export function EvaluationReport({
   projectId: string;
 }) {
   return (
-    <article className="bg-surface-container border border-outline-variant relative overflow-hidden">
-      {/* Document accent strip — signals "deliverable", same vocabulary
-          as the shortlist submission report. */}
-      <div
-        className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary-container via-primary to-primary-container/40"
-        aria-hidden
-      />
-
-      <header className="px-5 py-4 border-b border-outline-variant flex items-start justify-between gap-3 flex-wrap">
-        <div className="space-y-1.5 min-w-0">
-          <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <span
-              className="material-symbols-outlined text-[14px]"
-              aria-hidden
-            >
-              fact_check
-            </span>
-            Executive Evaluation Report
-          </div>
-          <h2 className="font-h2 text-h2 text-on-surface tracking-tight">
-            {candidateName}
-          </h2>
-          <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
-            {evaluation.role_title} · {evaluation.company_name} · drafted{" "}
-            {evaluation.generated_at.slice(0, 10)}
-          </div>
-        </div>
+    <Panel
+      title="Evaluation report"
+      meta={
+        <PanelMeta>
+          {evaluation.role_title} · {evaluation.company_name} · drafted{" "}
+          {evaluation.generated_at.slice(0, 10)}
+        </PanelMeta>
+      }
+      action={
         <EvaluationActions
           evaluation={evaluation}
           candidateId={candidateId}
           candidateName={candidateName}
           projectId={projectId}
         />
-      </header>
-
-      <div className="px-5 py-5 space-y-6">
+      }
+    >
+      <div className={cn(PANEL_BODY, "flex flex-col gap-6")}>
         <ScoringTable rows={evaluation.scoring_table} />
 
         <ProfileSummarySection summary={evaluation.profile_summary} />
@@ -146,7 +129,7 @@ export function EvaluationReport({
 
         <PositioningSection positioning={evaluation.positioning} />
       </div>
-    </article>
+    </Panel>
   );
 }
 
@@ -453,16 +436,13 @@ function GapsSection({ gaps }: { gaps: CandidateEvaluation["gaps"] }) {
         {gaps.map((g, i) => (
           <li
             key={i}
-            className="bg-error/5 border border-error/40 border-l-2 border-l-error p-4"
+            className="rounded-md border border-error/40 bg-error/5 p-4"
           >
-            <header className="flex items-start gap-3 mb-2">
-              <span
-                className="material-symbols-outlined text-error text-[18px] mt-0.5 shrink-0"
-                aria-hidden
-              >
-                error
+            <header className="mb-2 flex items-start gap-3">
+              <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-error">
+                Gap
               </span>
-              <h4 className="font-mono-data text-body-main text-on-surface font-semibold uppercase tracking-tight leading-snug">
+              <h4 className="text-[13px] font-semibold leading-snug text-on-surface">
                 {g.headline}
               </h4>
             </header>

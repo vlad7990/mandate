@@ -4,6 +4,17 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  IconCheck,
+  IconClose,
+  IconRefresh,
+  IconSpark,
+} from "@/components/icons";
+import {
+  PANEL_BUTTON,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
 import type { TriangulationReport } from "@/lib/ai/triangulation-agent";
 import { generateTriangulationAction } from "./actions";
 
@@ -60,64 +71,34 @@ export function TriangulationPanel({
   };
 
   return (
-    <article
-      id="triangulation"
-      className="bg-surface-container border border-primary/40 overflow-hidden"
-    >
-      {/* Triangulation gets a primary-coloured top rule because this is
-          the decision-grade fusion view — we want it to feel weightier
-          than the upstream agent panels. */}
-      <div className="absolute inset-x-0 top-0 h-0.5 bg-primary" aria-hidden />
-      <header className="bg-primary-container/15 px-4 py-3 border-b border-outline-variant flex items-center justify-between gap-2 flex-wrap">
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-[16px]"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-            aria-hidden
-          >
-            change_history
-          </span>
-          TRIANGULATION
-        </span>
-        <div className="flex items-center gap-2">
-          {report && (
-            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-              Generated {formatRelative(report.generated_at)}
-            </span>
+    <Panel
+      title="Triangulation"
+      meta={
+        <PanelMeta>
+          {report ? `generated ${formatRelative(report.generated_at)}` : "Not generated"}
+        </PanelMeta>
+      }
+      action={
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={pending || !allReady}
+          title={!allReady ? `Missing: ${missing.join(", ")}` : undefined}
+          className={PANEL_BUTTON}
+        >
+          {pending || report ? (
+            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+          ) : (
+            <IconSpark size={14} />
           )}
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={pending || !allReady}
-            title={
-              !allReady
-                ? `Missing: ${missing.join(", ")}`
-                : undefined
-            }
-            className="px-4 py-2 bg-primary text-on-primary font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending
-                ? "progress_activity"
-                : report
-                  ? "refresh"
-                  : "auto_awesome"}
-            </span>
-            {pending
-              ? "Synthesising"
-              : report
-                ? "Regenerate"
-                : "Generate Triangulation Report"}
-          </button>
-        </div>
-      </header>
-
+          {pending
+            ? "Synthesising"
+            : report
+              ? "Regenerate"
+              : "Generate report"}
+        </button>
+      }
+    >
       {!allReady ? (
         <ReadinessGate
           readiness={readiness}
@@ -126,8 +107,8 @@ export function TriangulationPanel({
           hmName={hmName}
         />
       ) : !report ? (
-        <div className="px-5 py-6 text-center space-y-2">
-          <p className="text-body-main text-on-surface max-w-2xl mx-auto">
+        <div className="px-[18px] py-4">
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             All three base reports are in. Generate the triangulation
             report to fuse them into a decision-grade fit analysis with
             alignment scores, anticipated objections, and a paste-ready
@@ -295,7 +276,7 @@ export function TriangulationPanel({
           </Section>
         </div>
       )}
-    </article>
+    </Panel>
   );
 }
 
@@ -713,11 +694,21 @@ function ReadinessCard({
         </span>
         <span
           className={cn(
-            "font-mono-label text-mono-label uppercase tracking-widest tabular-nums",
+            "inline-flex items-center gap-1 font-mono-label text-mono-label uppercase tracking-widest tabular-nums",
             ready ? "text-secondary-fixed-dim" : "text-tertiary"
           )}
         >
-          {ready ? "✓ Ready" : "✗ Missing"}
+          {ready ? (
+            <>
+              <IconCheck size={11} />
+              Ready
+            </>
+          ) : (
+            <>
+              <IconClose size={11} />
+              Missing
+            </>
+          )}
         </span>
       </div>
       <div className="font-mono-data text-body-main text-on-surface truncate">

@@ -5,6 +5,19 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
+  IconCopy,
+  IconMail,
+  IconRefresh,
+  IconSpark,
+} from "@/components/icons";
+import {
+  PANEL_BODY,
+  PANEL_BUTTON,
+  PANEL_BUTTON_QUIET,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
+import {
   EMAIL_TEMPLATE_BLURBS,
   EMAIL_TEMPLATE_KEYS,
   EMAIL_TEMPLATE_LABELS,
@@ -34,12 +47,10 @@ type TabKey = "pitches" | "emails";
 export function PositioningPanel({
   candidateId,
   projectId,
-  candidateName,
   initial,
 }: {
   candidateId: string;
   projectId: string;
-  candidateName: string;
   initial: PositioningResult | null;
 }) {
   const router = useRouter();
@@ -90,44 +101,33 @@ export function PositioningPanel({
   const activeEmail = emailByKey.get(emailKey) ?? null;
 
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2 flex-wrap">
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            campaign
-          </span>
-          POSITIONING_KIT · {candidateName}
-        </span>
-        <div className="flex items-center gap-2">
-          {kit && (
-            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-              Generated {formatRelative(kit.generated_at)}
-            </span>
+    <Panel
+      title="Positioning kit"
+      meta={
+        <PanelMeta>
+          {kit ? `generated ${formatRelative(kit.generated_at)}` : "Not generated"}
+        </PanelMeta>
+      }
+      action={
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={pending}
+          aria-busy={pending ? true : undefined}
+          className={PANEL_BUTTON}
+        >
+          {pending || kit ? (
+            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+          ) : (
+            <IconSpark size={14} />
           )}
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={pending}
-            aria-busy={pending ? true : undefined}
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending ? "progress_activity" : kit ? "refresh" : "auto_awesome"}
-            </span>
-            {pending ? "Generating" : kit ? "Regenerate" : "Generate Kit"}
-          </button>
-        </div>
-      </header>
-
+          {pending ? "Generating" : kit ? "Regenerate" : "Generate kit"}
+        </button>
+      }
+    >
       {!kit ? (
-        <div className="px-5 py-8 text-center space-y-2">
-          <p className="text-body-main text-on-surface-variant max-w-xl mx-auto">
+        <div className={PANEL_BODY}>
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             The Positioning Agent reads the AI evaluation, this project&rsquo;s
             calibration, and recent client feedback, then writes three pitch
             versions (conservative / balanced / aggressive) and three client
@@ -135,7 +135,7 @@ export function PositioningPanel({
           </p>
         </div>
       ) : (
-        <div className="p-4 space-y-4">
+        <div className={cn(PANEL_BODY, "flex flex-col gap-4")}>
           {kit.positioning_summary && (
             <div className="bg-primary-container/10 border-l-2 border-l-primary-container px-3 py-2">
               <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
@@ -151,14 +151,12 @@ export function PositioningPanel({
             <TabButton
               active={tab === "pitches"}
               onClick={() => setTab("pitches")}
-              icon="forum"
             >
               Pitch Versions
             </TabButton>
             <TabButton
               active={tab === "emails"}
               onClick={() => setTab("emails")}
-              icon="outgoing_mail"
             >
               Email Templates
             </TabButton>
@@ -227,19 +225,17 @@ export function PositioningPanel({
           )}
         </div>
       )}
-    </article>
+    </Panel>
   );
 }
 
 function TabButton({
   active,
   onClick,
-  icon,
   children,
 }: {
   active: boolean;
   onClick: () => void;
-  icon: string;
   children: React.ReactNode;
 }) {
   return (
@@ -254,9 +250,6 @@ function TabButton({
       )}
     >
       <span className="inline-flex items-center gap-1.5">
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          {icon}
-        </span>
         {children}
       </span>
     </button>
@@ -298,11 +291,9 @@ function PitchView({
         <button
           type="button"
           onClick={() => onCopy(fullText, "Pitch")}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className={PANEL_BUTTON_QUIET}
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            content_copy
-          </span>
+          <IconCopy size={14} />
           Copy Pitch
         </button>
       </div>
@@ -336,21 +327,17 @@ function EmailView({
         <button
           type="button"
           onClick={() => onCopy(email.subject, "Subject")}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className={PANEL_BUTTON_QUIET}
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            content_copy
-          </span>
+          <IconCopy size={14} />
           Copy Subject
         </button>
         <button
           type="button"
           onClick={() => onCopy(email.body, "Body")}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className={PANEL_BUTTON_QUIET}
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            content_copy
-          </span>
+          <IconCopy size={14} />
           Copy Body
         </button>
         <button
@@ -359,11 +346,9 @@ function EmailView({
             const url = `mailto:?subject=${encodeURIComponent(email.subject)}&body=${encodeURIComponent(email.body)}`;
             window.location.href = url;
           }}
-          className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className={PANEL_BUTTON}
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            send
-          </span>
+          <IconMail size={14} />
           Open in Mail
         </button>
       </div>

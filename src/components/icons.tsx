@@ -245,3 +245,29 @@ export function IconFlag({ size = 14, className }: IconProps) {
     </svg>
   );
 }
+
+export function IconCopy({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+    </svg>
+  );
+}
+
+export function IconMail({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3.5 6.5 8.5 6 8.5-6" />
+    </svg>
+  );
+}
+
+export function IconPlus({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}

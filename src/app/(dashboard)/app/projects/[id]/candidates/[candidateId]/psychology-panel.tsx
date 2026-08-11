@@ -4,6 +4,12 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { IconCheck, IconFlag, IconRefresh, IconSpark } from "@/components/icons";
+import {
+  PANEL_BUTTON,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
 import {
   CHANGE_ORIENTATION_LABELS,
   COLLABORATION_STYLE_LABELS,
@@ -115,55 +121,41 @@ export function PsychologyPanel({
   };
 
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2 flex-wrap">
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            psychology_alt
-          </span>
-          PSYCHOLOGY
+    <Panel
+      title="Psychology"
+      meta={
+        <>
+          <PanelMeta>
+            {profile ? formatRelative(profile.generated_at) : "Not generated"}
+          </PanelMeta>
           {flagCount > 0 && (
-            <span className="px-1.5 py-0 border border-tertiary/60 bg-tertiary/10 text-tertiary tabular-nums">
-              🚩 {flagCount} flagged
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-tertiary/60 bg-tertiary/10 px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary tabular-nums">
+              <IconFlag size={11} />
+              {flagCount} flagged
             </span>
           )}
-        </span>
-        <div className="flex items-center gap-2">
-          {profile && (
-            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-              {formatRelative(profile.generated_at)}
-            </span>
+        </>
+      }
+      action={
+        <button
+          type="button"
+          onClick={() => {
+            setContextDraft(savedContext ?? "");
+            setRegenOpen((o) => !o);
+          }}
+          disabled={pending}
+          className={PANEL_BUTTON}
+        >
+          {pending || profile ? (
+            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+          ) : (
+            <IconSpark size={14} />
           )}
-          <button
-            type="button"
-            onClick={() => {
-              setContextDraft(savedContext ?? "");
-              setRegenOpen((o) => !o);
-            }}
-            disabled={pending}
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending
-                ? "progress_activity"
-                : profile
-                  ? "refresh"
-                  : "auto_awesome"}
-            </span>
-            {pending
-              ? "Analysing"
-              : profile
-                ? "Regenerate with Context"
-                : "Generate Profile"}
-          </button>
-        </div>
-      </header>
+          {pending ? "Analysing" : profile ? "Regenerate" : "Analyse"}
+        </button>
+      }
+    >
+
 
       {regenOpen && (
         <RegenerateContextPanel
@@ -181,8 +173,8 @@ export function PsychologyPanel({
       )}
 
       {!profile ? (
-        <div className="px-5 py-6 text-center">
-          <p className="text-body-main text-on-surface-variant max-w-xl mx-auto">
+        <div className="px-[18px] py-4">
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             The Psychology Agent reads the parsed CV, the executive evaluation,
             and any recruiter notes to produce a calibrated behavioural
             profile — leadership style, risk tolerance, change orientation,
@@ -194,15 +186,9 @@ export function PsychologyPanel({
           {savedContext && (
             <div className="bg-surface-container-low border-l-2 border-l-primary-container px-3 py-2">
               <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5">
-                <span
-                  className="material-symbols-outlined text-[12px]"
-                  aria-hidden
-                >
-                  format_quote
-                </span>
                 Recruiter context that shaped this read
               </span>
-              <p className="font-mono-data text-body-main text-on-surface-variant italic mt-1">
+              <p className="text-[13px] leading-relaxed text-on-surface-variant mt-1">
                 {savedContext}
               </p>
             </div>
@@ -381,7 +367,7 @@ export function PsychologyPanel({
           )}
         </div>
       )}
-    </article>
+    </Panel>
   );
 }
 
@@ -505,11 +491,12 @@ function AxisRowView({
           </span>
           {flagged && (
             <span className="px-1.5 py-0 border border-tertiary/60 bg-tertiary/10 text-tertiary font-mono-label text-mono-label uppercase tracking-widest">
-              🚩 Recruiter flagged
+              <IconFlag size={11} />
+          Recruiter flagged
             </span>
           )}
         </div>
-        <div className="font-mono-data text-body-main text-on-surface-variant leading-relaxed">
+        <div className="text-[13px] leading-relaxed text-on-surface-variant">
           {row.evidence}
         </div>
       </div>
@@ -531,7 +518,7 @@ function AxisRowView({
               : "border-outline-variant text-outline hover:border-tertiary hover:text-tertiary"
           )}
         >
-          🚩
+          <IconFlag size={13} />
         </button>
       </div>
       {adjustOpen && (
@@ -636,9 +623,6 @@ function ConfidencePair({
         />
       </div>
       <span className="font-mono-label text-mono-label text-outline group-hover:text-primary transition-colors uppercase tracking-widest inline-flex items-center gap-1 mt-0.5">
-        <span className="material-symbols-outlined text-[10px]" aria-hidden>
-          tune
-        </span>
         Adjust
       </span>
     </button>
@@ -762,9 +746,6 @@ function Section({
             onClick={beginEdit}
             className="font-mono-label text-mono-label text-outline uppercase tracking-widest hover:text-primary transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:underline"
           >
-            <span className="material-symbols-outlined text-[12px]" aria-hidden>
-              {annotation ? "edit" : "add_comment"}
-            </span>
             {annotation ? "Edit observation" : "Add observation"}
           </button>
         )}
@@ -773,12 +754,9 @@ function Section({
       {annotation && !editing && (
         <div className="bg-surface-container-low border-l-2 border-l-primary-container px-3 py-2">
           <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1">
-            <span className="material-symbols-outlined text-[12px]" aria-hidden>
-              edit_note
-            </span>
             Your observation
           </span>
-          <p className="font-mono-data text-body-main text-on-surface-variant italic leading-relaxed mt-1">
+          <p className="text-[13px] leading-relaxed text-on-surface-variant leading-relaxed mt-1">
             {annotation.note}
           </p>
         </div>
@@ -808,15 +786,11 @@ function Section({
               disabled={pending}
               className="px-3 py-1 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[14px]",
-                  pending && "animate-spin"
-                )}
-                aria-hidden
-              >
-                {pending ? "progress_activity" : "save"}
-              </span>
+              {pending ? (
+                <IconRefresh size={14} className="animate-spin" />
+              ) : (
+                <IconCheck size={14} />
+              )}
               {pending ? "Saving" : "Save"}
             </button>
           </div>
@@ -846,9 +820,6 @@ function RegenerateContextPanel({
   return (
     <div className="border-b border-outline-variant bg-surface-container-low px-4 py-3 space-y-2">
       <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5">
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          tips_and_updates
-        </span>
         Add context for the AI (optional)
       </div>
       <textarea
@@ -889,15 +860,11 @@ function RegenerateContextPanel({
           aria-busy={pending ? true : undefined}
           className="px-4 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span
-            className={cn(
-              "material-symbols-outlined text-[14px]",
-              pending && "animate-spin"
-            )}
-            aria-hidden
-          >
-            {pending ? "progress_activity" : "auto_awesome"}
-          </span>
+          {pending ? (
+            <IconRefresh size={14} className="animate-spin" />
+          ) : (
+            <IconSpark size={14} />
+          )}
           {pending ? "Generating" : "Run"}
         </button>
       </div>

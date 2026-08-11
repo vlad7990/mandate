@@ -92,7 +92,7 @@ record why in a comment.
 | 07 Executive Dashboard | `/app/home` | ✅ done, deployed |
 | 09 Candidate Portfolio | `/app/candidates` | ✅ done, deployed |
 | 08 Project Detail | `/app/projects/[id]` | ✅ done — page + all six panels |
-| 10 Candidate Detail | `/app/projects/[id]/candidates/[candidateId]` | ✅ tabbed shell · inner cards left |
+| 10 Candidate Detail | `/app/projects/[id]/candidates/[candidateId]` | ✅ done — tabs, cards and panels |
 | 11 EI Workspace | `/app/executive-intelligence/searches/[id]` | ✅ real page restyled |
 | 12 EI Report | `…/searches/[id]/candidates/[cid]/report` | ✅ compiles for real searches |
 
@@ -214,13 +214,15 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
       signal columns each carried a coloured 2px left rule — three
       accent bars competing inside one panel, now carried by the column
       headings.
-      **Still open:** the six client panels under this route
-      (`recruiter-assessment-panel`, `candidate-intelligence-panel`,
-      `triangulation-panel`, `evaluation-report`, `positioning-panel`,
-      `psychology-panel`, `candidate-notes-panel`) still carry the older
-      idiom. Same shell, same recipe as Project Detail's six.
+      The seven client panels followed the same day —
+      recruiter assessment, candidate intelligence, positioning,
+      evaluation report, triangulation, psychology and notes are all on
+      the shared `Panel`. **Comp 10 is complete.** The route's remaining
+      ligatures live in four leaf components only:
+      `editable-fields.tsx`, `evaluation-actions.tsx`,
+      `contact-fields.tsx` and `retry-evaluation-button.tsx`.
 
-- [ ] **342 Material Symbols ligatures** → inline SVG from
+- [ ] **298 Material Symbols ligatures** → inline SVG from
       `src/components/icons.tsx`. Each currently puts literal text like
       `folder_open` in the DOM and depends on a blocking Google webfont.
       The shell, the EI report and every route under

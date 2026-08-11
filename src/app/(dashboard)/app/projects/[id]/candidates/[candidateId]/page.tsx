@@ -479,7 +479,6 @@ export default async function CandidateProfilePage({
               <PositioningPanel
                 candidateId={candidate.id}
                 projectId={project.id}
-                candidateName={candidate.full_name}
                 initial={
                   ((profile as { positioning_kit?: PositioningResult })
                     .positioning_kit) ?? null
