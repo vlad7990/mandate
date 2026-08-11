@@ -1,6 +1,6 @@
 # Session handoff — Mandate marketing homepage
 
-**Written:** 2026-08-11 · **Repo state at handoff:** `main` @ `4fdd668`, clean, pushed to `origin`.
+**Written:** 2026-08-11 · **Repo state at handoff:** `main` @ `2f70b4d`, clean, pushed to `origin`.
 
 ---
 
@@ -10,12 +10,35 @@
 |---|---|
 | **Two clones exist** | Work in **`~/Documents/Projects/mandate`** (current). `~/Mandate Recruiting/mandate` is a STALE clone at `ce4e7a5`. The Playwright MCP is rooted at the stale one, so its **screenshots land in the wrong tree** — the browser itself is fine, only file paths are wrong. |
 | **Screenshots land at the stale clone's ROOT** | Not in its `.playwright-mcp/`. A capture named `foo.png` appears at `~/Mandate Recruiting/mandate/foo.png`. Find it there and move it before reading. |
+| 🔴 **ALWAYS use `git -C <path>`** | The Bash working directory **persists between calls**, and moving screenshots requires `cd`-ing into the stale clone. This has already caused one real incident — see §1a. Never rely on cwd for a git command: `git -C /Users/vladbreygin/Documents/Projects/mandate <cmd>`. |
 | **Reveal state corrupts measurements** | See §5. This produced two separate classes of false finding across two critiques. Read it before measuring anything in the browser. |
 | **Never mutate `<html>` className before hydration** | An inline script adding a class to `document.documentElement` triggers a React hydration mismatch. The scroll-reveal gate uses `@media (scripting: enabled)` instead — no script, no mismatch. Don't "fix" it back to a class toggle. |
 | **`tsc` false errors** | If tsc reports `" 2"`-suffixed duplicate identifiers (`cache-life.d 2.ts`), run `rm -rf .next` first. Also: after moving a route, a stale `.next/types/validator.ts` will reference the old path — same fix. |
 | **Never `rm -rf .next` while `npm run dev` is running** | It strips the manifests and every route 500s. Kill the dev server first. |
 | **Supabase auto-pauses** | Free tier, ~7 days idle. Project ref `xipyqnltkbtywxqyxupf`. Restore via MCP `restore_project`; takes minutes and reports `COMING_UP` with an empty `public` schema mid-restore — that is NOT data loss, wait for `ACTIVE_HEALTHY`. |
 | **Working rules** | In `CLAUDE.md`: never commit or push without explicit approval, conventional commits, **no attribution footer**, green gate (`npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build`) before any commit. |
+
+---
+
+## 1a. 🔴 The wrong-repo incident, and an outstanding cleanup
+
+**What happened.** A screenshot-move command ran `cd "~/Mandate Recruiting/mandate" && mv …`. The Bash tool keeps its working directory between calls, so the next `git add -A && git commit` executed **in the stale clone**, staging 162 files of Playwright debris on top of `ce4e7a5`. The push was rejected only because that branch was 7 commits behind `origin/main`. On a fast-forwardable branch it would have pushed junk to `main`.
+
+**Recovery was clean:** `git reset --mixed HEAD~1` in the stale clone returned every file to untracked without deleting anything, restoring its exact prior state. The real work was still uncommitted in the working repo and committed normally afterwards.
+
+**The rule that prevents it:** use `git -C /Users/vladbreygin/Documents/Projects/mandate <cmd>` for every git command. It removes the failure mode rather than relying on remembering to `cd` back.
+
+### Outstanding cleanup
+
+Three untracked debris files that this session's agents created in the **stale clone** still need deleting:
+
+```
+~/Mandate Recruiting/mandate/simulator-failed-state.png
+~/Mandate Recruiting/mandate/skip-link-focused.png
+~/Mandate Recruiting/mandate/sim-error-state.png
+```
+
+**Do NOT touch** `.playwright-mcp/`, `hero-1440.png`, `mandate-landing-1440.png` or `status` in that clone — those predate this work and are not ours to remove.
 
 ---
 
@@ -38,6 +61,9 @@
 Three `/impeccable critique` runs: **15/40 → 24/40 → 26/40**. Rounds 1 and 2 were closing defects. Round 3's P0 and two of its three P1s are also closed; what remains is structural (§6).
 
 ```
+2f70b4d  mobile simulator input; FAQ rebuilt on native <details>
+529a5bb  remove traffic-light scoring from the alignment diagram
+f32056b  handoff refresh
 4fdd668  illustrative simulator fixtures — the demo survives an outage
 d272602  remove three manufactured-liveness signals
 7de9799  scroll-padding-top — anchors land clear of the sticky nav
@@ -141,8 +167,8 @@ With JavaScript genuinely disabled (`javaScriptEnabled: false`), **24/24 reveal 
 ### The remaining ceiling is structural, not defect-level
 
 - **P1 — no human provenance.** Zero customers means the founder is the proof, and the founder appears once, unnamed, at ~95% scroll depth. Security claims in the FAQ have no DPA or security page behind them. **Blocked on the founders** — the block can be built in an hour, but nobody else can write the name and the track record.
-- **P2 — traffic-light scoring contradicts Principles.** Green 91 / amber 83 is the grammar of pass/caution/fail next to a named human, three sections after "no hire or no-hire verdict is produced anywhere". The "illustrative" caveat governs the score list only — the diagram with the largest number on the page (87) sits in a separate column with no caveat and states the scores as fact in its `aria-label`. Fix: drop the `TONE` mapping in `three-circle-alignment.tsx`, render all magnitudes in `var(--accent)`, move the caveat under the h2 so it governs both columns.
-- **P2 — mobile.** The Analyze button still wraps to two lines at 390 (`.m-sim__submit` has `padding-inline: 1.625rem`, no `white-space: nowrap`, no stacking rule below 420px). **7 of 8 FAQ answers remain unreachable without JS** — the text is in the DOM at `max-height: 0` but the panels cannot open. (`.m-chip` is still 40px, which is correct: the inert Stack label chips are not targets. The interactive `.m-chip--action` chips are 44px.)
+- ~~**P2 — traffic-light scoring.**~~ Closed in `529a5bb`. `TONE` deleted; one accent hue with ring opacity tracking magnitude; caveat governs both columns plus a caption under the diagram; `aria-label` leads with "Illustrative example". Also fixed the diagram's four labels, which were `#6b6b7e` — **the trap worth knowing: `--fg-muted` measures 5.10:1 on `--bg` but only 2.85:1 composited over the translucent circle fills.** They use `--fg-soft` (worst case 5.59:1); the docstring records why.
+- ~~**P2 — mobile.**~~ Closed in `2f70b4d`. Analyze button no longer wraps (`white-space: nowrap`, trimmed padding below 480px); the animated placeholder now sits in a `.m-sim__field` wrapper — an earlier "fix" clamped it to the input ROW, which includes the button, so it stopped overflowing the page and started running underneath the control. **The FAQ is rebuilt on native `<details>`/`<summary>`** — zero client JS, all 8 answers reachable without JavaScript, 0 `inert`, exclusive accordion via `name`. The chevron, which drew an ✕ in both states, is now a real chevron.
 - **Structural, needs a direction decision before code.** Sections 03→08 are five consecutive card grids with the same container, track and gap; the "Roman clause / *italic blue clause*" h2 mould is used ten times without variation; the page numbers itself 00–10 and then makes those numerals `aria-hidden`, `pointer-events: none` decoration rather than navigation. The single largest missed opportunity: the page never shows a Mandate **artifact** — no shortlist, no ranked slate, no versioned spec diff — for a product whose noun is "a slate that defends itself in the minutes".
 
 ### Token-level finding worth acting on once
@@ -161,7 +187,32 @@ Requires **two isolated sub-agents** (A: design review, B: detector + browser ev
 
 ---
 
-## 7. Broader project context
+## 7. Next: the four remaining marketing pages
+
+Import from Claude Design project `f6c4031e-c28e-450f-8ef1-353834d79b78` via the `claude_design` MCP (`https://api.anthropic.com/v1/design/mcp`, auth `/design-login`). Each selection also imports `support.js`.
+
+| Comp | Route |
+|---|---|
+| `02 Platform.dc.html` | `/platform` |
+| `03 Executive Intelligence.dc.html` | `/executive-intelligence` |
+| `04 Solutions.dc.html` | `/solutions` |
+| `05 Pricing.dc.html` | `/pricing` |
+
+**Put every page at `src/app/(marketing)/<route>/page.tsx`.** Being inside the route group is what supplies `marketing.css` and the three `next/font` variables — `/request-access` was moved there for exactly this reason after shipping in a different design system.
+
+**Do not invent a second visual language.** The homepage is the reference: the `m-*` classes and `--accent` / `--fg-soft` / `--bg-elev-*` tokens; counts and numerals derive from `_constants.ts` and are never retyped; illustrative data is labelled illustrative (`_components/simulator-fixtures.ts` is the standard); no traffic-light colour on anything describing a person; no animated numbers that are not being computed; reveal hiding stays gated on `@media (scripting: enabled)`.
+
+### ⚠️ Settle this before writing any of them
+
+The homepage nav points at **in-page anchors** — `#how` (Platform), `#intelligence` (Intelligence), `#simulator` (Live Demo), `#pricing` (Pricing). Once these routes exist that nav is wrong, and **`#pricing` collides with `/pricing`**.
+
+Decide with the founders: do the homepage sections become short teasers linking to the new pages, or stay full and duplicate them? It bears on two open critique findings — the homepage is 13,278px on mobile (~16 viewports) and runs five consecutive card grids across sections 03–08. Moving depth onto dedicated pages is the natural fix for both, but it changes the homepage, so get agreement first rather than doing it by accident.
+
+**Note:** `CLAUDE.md` states "DesignSync has no Mandate comps". That line is stale — the project above does contain them. Verify and correct it.
+
+---
+
+## 8. Broader project context
 
 Other design docs in this folder, all committed:
 
