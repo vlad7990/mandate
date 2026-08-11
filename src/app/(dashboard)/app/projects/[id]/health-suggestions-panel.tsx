@@ -4,6 +4,14 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { IconChevronRight, IconRefresh, IconSpark } from "@/components/icons";
+import {
+  PANEL_BODY,
+  PANEL_BUTTON,
+  PANEL_BUTTON_QUIET,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
 import type {
   HealthSuggestion,
   HealthSuggestionsBlob,
@@ -18,14 +26,6 @@ const PRIORITY_TONE: Record<HealthSuggestion["priority"], string> = {
   high: "border-error/60 bg-error/10 text-error",
   medium: "border-tertiary/60 bg-tertiary/10 text-tertiary",
   low: "border-outline-variant bg-surface-container-high text-on-surface-variant",
-};
-
-const CATEGORY_ICON: Record<HealthSuggestion["category"], string> = {
-  sourcing: "travel_explore",
-  calibration: "tune",
-  feedback: "rate_review",
-  outreach: "outgoing_mail",
-  other: "lightbulb",
 };
 
 export function HealthSuggestionsPanel({
@@ -123,62 +123,44 @@ export function HealthSuggestionsPanel({
   if (!ready && !blob) return null;
 
   return (
-    <article className="bg-surface-container-low border border-tertiary/30 overflow-hidden">
-      <header className="bg-tertiary/10 px-4 py-2.5 border-b border-tertiary/30 flex items-center justify-between gap-2 flex-wrap">
-        <span className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-[14px]"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-            aria-hidden
-          >
-            tips_and_updates
-          </span>
-          AI Health Suggestions
-          {visible.length > 0 && (
-            <span className="font-mono-label text-mono-label text-outline tabular-nums">
-              · {visible.length} active
-            </span>
+    <Panel
+      title="Health suggestions"
+      tone="notice"
+      meta={
+        <PanelMeta>
+          {[
+            visible.length > 0 ? `${visible.length} active` : null,
+            blob ? formatRelative(blob.generated_at) : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </PanelMeta>
+      }
+      action={
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={pending || !ready}
+          aria-busy={pending ? true : undefined}
+          title={
+            ready
+              ? undefined
+              : "Health is currently healthy — no suggestions needed."
+          }
+          className={PANEL_BUTTON}
+        >
+          {pending || blob ? (
+            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+          ) : (
+            <IconSpark size={14} />
           )}
-        </span>
-        <div className="flex items-center gap-2">
-          {blob && (
-            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-              {formatRelative(blob.generated_at)}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={pending || !ready}
-            aria-busy={pending ? true : undefined}
-            title={
-              ready
-                ? undefined
-                : "Health is currently healthy — no suggestions needed."
-            }
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending ? "progress_activity" : blob ? "refresh" : "auto_awesome"}
-            </span>
-            {pending
-              ? "Analysing"
-              : blob
-                ? "Refresh suggestions"
-                : "Get AI Suggestions"}
-          </button>
-        </div>
-      </header>
-
+          {pending ? "Analysing" : blob ? "Refresh" : "Get suggestions"}
+        </button>
+      }
+    >
       {!blob ? (
-        <div className="px-5 py-6 text-center">
-          <p className="text-body-main text-on-surface-variant max-w-2xl mx-auto">
+        <div className={PANEL_BODY}>
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             Health is currently <strong>{healthStatus.replace("_", " ")}</strong>.
             Run the agent to get 3–5 levers you can pull this week — boolean
             edits, calibration nudges, feedback follow-ups — each anchored on a
@@ -186,18 +168,18 @@ export function HealthSuggestionsPanel({
           </p>
         </div>
       ) : (
-        <div className="p-4 space-y-3">
+        <div className={cn(PANEL_BODY, "flex flex-col gap-3")}>
           {blob.summary && (
-            <p className="text-on-surface text-body-main leading-relaxed">
+            <p className="text-[13px] leading-relaxed text-on-surface">
               {blob.summary}
             </p>
           )}
           {visible.length === 0 ? (
-            <p className="font-mono-label text-mono-label text-outline italic uppercase tracking-widest text-center py-4">
+            <p className="text-[13px] leading-relaxed text-outline">
               All suggestions dismissed. Refresh to get a new set.
             </p>
           ) : (
-            <ol className="space-y-2">
+            <ol className="flex flex-col gap-2">
               {visible.map((s) => (
                 <SuggestionRow
                   key={s.id}
@@ -211,7 +193,7 @@ export function HealthSuggestionsPanel({
           )}
         </div>
       )}
-    </article>
+    </Panel>
   );
 }
 
@@ -231,20 +213,17 @@ function SuggestionRow({
     typeof suggestion.applicable_payload?.replacement === "string" &&
     (suggestion.applicable_payload.replacement as string).trim().length > 0;
   return (
-    <li className="bg-surface-container border border-outline-variant px-3 py-2.5 space-y-2">
+    <li className="flex flex-col gap-2 rounded-[10px] border border-outline-variant bg-surface-container px-3.5 py-3">
       <div className="flex items-baseline gap-2 flex-wrap">
         <span
           className={cn(
-            "px-1.5 py-0.5 border font-mono-label text-mono-label uppercase tracking-widest",
+            "rounded-md border px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em]",
             PRIORITY_TONE[suggestion.priority]
           )}
         >
           {suggestion.priority}
         </span>
-        <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-1">
-          <span className="material-symbols-outlined text-[12px]" aria-hidden>
-            {CATEGORY_ICON[suggestion.category]}
-          </span>
+        <span className="flex items-center gap-1 font-mono-label text-[10px] uppercase tracking-[0.1em] text-outline">
           {suggestion.category}
           {suggestion.applicable_slot && (
             <span className="text-on-surface-variant ml-1">
@@ -257,25 +236,23 @@ function SuggestionRow({
             </span>
           )}
         </span>
-        <span className="font-mono-data text-body-main text-on-surface font-semibold flex-1 min-w-0">
+        <span className="min-w-0 flex-1 text-[13px] font-semibold text-on-surface">
           {suggestion.action}
         </span>
       </div>
-      <p className="font-mono-data text-body-main text-on-surface-variant leading-relaxed">
+      <p className="text-[13px] leading-relaxed text-on-surface-variant">
         {suggestion.rationale}
       </p>
       {isApplyable && typeof suggestion.applicable_payload?.replacement === "string" && (
         <details className="group">
-          <summary className="font-mono-label text-mono-label text-primary uppercase tracking-widest cursor-pointer hover:brightness-110 flex items-center gap-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-            <span
-              className="material-symbols-outlined text-[12px] group-open:rotate-90 transition-transform"
-              aria-hidden
-            >
-              chevron_right
-            </span>
+          <summary className="flex cursor-pointer items-center gap-1 font-mono-label text-[11px] font-semibold uppercase tracking-[0.08em] text-primary hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+            <IconChevronRight
+              size={12}
+              className="transition-transform group-open:rotate-90"
+            />
             Preview replacement query
           </summary>
-          <pre className="bg-surface-container-lowest border border-outline-variant text-on-surface font-mono-data text-mono-data px-3 py-2 mt-2 leading-relaxed whitespace-pre-wrap break-words max-h-[240px] overflow-auto">
+          <pre className="mt-2 max-h-[240px] overflow-auto whitespace-pre-wrap break-words rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 font-mono-data text-mono-data leading-relaxed text-on-surface">
             {String(suggestion.applicable_payload.replacement)}
           </pre>
         </details>
@@ -285,7 +262,7 @@ function SuggestionRow({
           type="button"
           onClick={onDismiss}
           disabled={busy}
-          className="px-2 py-1 border border-outline-variant text-outline hover:text-error hover:border-error font-mono-label text-mono-label uppercase tracking-widest transition-colors disabled:opacity-60"
+          className={cn(PANEL_BUTTON_QUIET, "hover:border-error hover:text-error")}
         >
           Dismiss
         </button>
@@ -295,17 +272,13 @@ function SuggestionRow({
             onClick={onApply}
             disabled={busy}
             aria-busy={busy ? true : undefined}
-            className="px-3 py-1 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+            className={PANEL_BUTTON}
           >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                busy && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {busy ? "progress_activity" : "auto_fix_high"}
-            </span>
+            {busy ? (
+              <IconRefresh size={14} className="animate-spin" />
+            ) : (
+              <IconSpark size={14} />
+            )}
             Apply
           </button>
         )}

@@ -210,3 +210,21 @@ export function IconPrint({ size = 15, className }: IconProps) {
     </svg>
   );
 }
+
+export function IconSpark({ size = 15, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M12 3.2 13.7 9l5.8 1.7-5.8 1.7L12 18.2 10.3 12.4 4.5 10.7 10.3 9z" />
+      <path d="M18.5 4v3M20 5.5h-3" />
+    </svg>
+  );
+}
+
+export function IconRefresh({ size = 15, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M20 11a8 8 0 1 0-2.3 5.7" />
+      <path d="M20 4v6h-6" />
+    </svg>
+  );
+}

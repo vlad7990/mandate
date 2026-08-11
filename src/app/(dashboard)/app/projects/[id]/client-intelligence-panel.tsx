@@ -4,6 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { IconRefresh, IconSpark } from "@/components/icons";
+import {
+  PANEL_BODY,
+  PANEL_BUTTON,
+  Panel,
+  PanelMeta,
+} from "@/components/projects/panel";
 import type { ClientPsychology } from "@/lib/ai/client-psychology-agent";
 import { generateClientPsychologyAction } from "./actions";
 
@@ -37,60 +44,42 @@ export function ClientIntelligencePanel({
   };
 
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2 flex-wrap">
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            insights
-          </span>
-          CLIENT_INTELLIGENCE
-        </span>
-        <div className="flex items-center gap-2">
-          {profile && (
-            <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-              {profile.feedback_count} feedback events ·{" "}
-              {formatRelative(profile.generated_at)}
-            </span>
+    <Panel
+      title="Client intelligence"
+      meta={
+        <PanelMeta>
+          {profile
+            ? `${profile.feedback_count} feedback events · ${formatRelative(profile.generated_at)}`
+            : ready
+              ? "Not generated"
+              : `Needs ${3 - feedbackCount} more feedback row${3 - feedbackCount === 1 ? "" : "s"}`}
+        </PanelMeta>
+      }
+      action={
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={pending || !ready}
+          aria-busy={pending ? true : undefined}
+          title={
+            ready
+              ? undefined
+              : `Need ${3 - feedbackCount} more feedback rows before patterns emerge.`
+          }
+          className={PANEL_BUTTON}
+        >
+          {pending || profile ? (
+            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+          ) : (
+            <IconSpark size={14} />
           )}
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={pending || !ready}
-            aria-busy={pending ? true : undefined}
-            title={
-              ready
-                ? undefined
-                : `Need ${3 - feedbackCount} more feedback rows before patterns emerge.`
-            }
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending
-                ? "progress_activity"
-                : profile
-                  ? "refresh"
-                  : "auto_awesome"}
-            </span>
-            {pending
-              ? "Analysing"
-              : profile
-                ? "Refresh"
-                : ready
-                  ? "Generate"
-                  : `Need ${3 - feedbackCount} more`}
-          </button>
-        </div>
-      </header>
-
+          {pending ? "Analysing" : profile ? "Refresh" : "Generate"}
+        </button>
+      }
+    >
       {!profile ? (
-        <div className="px-5 py-6 text-center">
-          <p className="text-body-main text-on-surface-variant max-w-xl mx-auto">
+        <div className={PANEL_BODY}>
+          <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             The Client Psychology Agent reads the project&rsquo;s feedback
             history and HM portal reviews to surface what the hiring manager
             actually values, the gap between stated and revealed preferences,
@@ -101,8 +90,8 @@ export function ClientIntelligencePanel({
           </p>
         </div>
       ) : (
-        <div className="p-4 space-y-4">
-          <p className="text-on-surface text-body-main leading-relaxed">
+        <div className={cn(PANEL_BODY, "flex flex-col gap-4")}>
+          <p className="text-[13px] leading-relaxed text-on-surface">
             {profile.summary}
           </p>
 
@@ -131,28 +120,37 @@ export function ClientIntelligencePanel({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Section title="Revealed preferences">
-              <ul className="space-y-1.5">
+              <ul className="flex flex-col gap-3">
                 {profile.revealed_preferences.map((p, i) => (
-                  <li
-                    key={i}
-                    className="grid grid-cols-[80px_1fr_auto] gap-2 items-baseline"
-                  >
-                    <span
-                      className={cn(
-                        "px-1.5 py-0.5 border font-mono-label text-mono-label uppercase tracking-widest text-center",
-                        p.direction === "favours"
-                          ? "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
-                          : "border-error/60 bg-error/10 text-error"
-                      )}
-                    >
-                      {p.direction === "favours" ? "↑" : "↓"} {p.topic}
-                    </span>
-                    <span className="font-mono-data text-body-main text-on-surface-variant">
+                  /*
+                    Was a three-column grid with the topic inside an 80px
+                    chip: every topic longer than a word overflowed its box
+                    and printed on top of the detail text. The direction is
+                    the chip — two values, one word each — and the topic is
+                    the row's heading, which is what it reads as.
+                  */
+                  <li key={i} className="flex flex-col gap-1">
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-md border px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em]",
+                          p.direction === "favours"
+                            ? "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
+                            : "border-error/60 bg-error/10 text-error"
+                        )}
+                      >
+                        {p.direction}
+                      </span>
+                      <span className="min-w-0 flex-1 text-[13px] font-semibold text-on-surface">
+                        {p.topic}
+                      </span>
+                      <span className="shrink-0 font-mono-data text-[11px] tabular-nums text-outline">
+                        {p.confidence}%
+                      </span>
+                    </div>
+                    <p className="text-[13px] leading-relaxed text-on-surface-variant">
                       {p.detail}
-                    </span>
-                    <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
-                      {p.confidence}%
-                    </span>
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -164,16 +162,16 @@ export function ClientIntelligencePanel({
                   None detected at this confidence.
                 </p>
               ) : (
-                <ul className="space-y-1.5">
+                <ul className="flex flex-col gap-3">
                   {profile.bias_flags.map((b, i) => (
                     <li key={i} className="space-y-0.5">
                       <div className="flex items-baseline gap-2">
                         <SeverityChip severity={b.severity} />
-                        <span className="font-mono-data text-body-main text-on-surface font-semibold">
+                        <span className="text-[13px] leading-relaxed text-on-surface font-semibold">
                           {b.label}
                         </span>
                       </div>
-                      <p className="font-mono-data text-body-main text-on-surface-variant">
+                      <p className="text-[13px] leading-relaxed text-on-surface-variant">
                         {b.detail}
                       </p>
                     </li>
@@ -189,17 +187,17 @@ export function ClientIntelligencePanel({
                 No consistent reject patterns yet.
               </p>
             ) : (
-              <ul className="space-y-1.5">
+              <ul className="flex flex-col gap-3">
                 {profile.deal_breakers.map((d, i) => (
                   <li
                     key={i}
                     className="grid grid-cols-[1fr_auto] gap-2 items-baseline"
                   >
                     <div>
-                      <span className="font-mono-data text-body-main text-on-surface font-semibold">
+                      <span className="text-[13px] leading-relaxed text-on-surface font-semibold">
                         {d.pattern}
                       </span>
-                      <p className="font-mono-data text-body-main text-on-surface-variant">
+                      <p className="text-[13px] leading-relaxed text-on-surface-variant">
                         {d.detail}
                       </p>
                     </div>
@@ -221,14 +219,14 @@ export function ClientIntelligencePanel({
                 >
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <OutcomeChip outcome={p.likely_outcome} />
-                    <span className="font-mono-data text-body-main text-on-surface font-semibold">
+                    <span className="text-[13px] leading-relaxed text-on-surface font-semibold">
                       {p.scenario}
                     </span>
                     <span className="ml-auto font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
                       {p.confidence}%
                     </span>
                   </div>
-                  <p className="font-mono-data text-body-main text-on-surface-variant">
+                  <p className="text-[13px] leading-relaxed text-on-surface-variant">
                     {p.rationale}
                   </p>
                 </li>
@@ -246,7 +244,7 @@ export function ClientIntelligencePanel({
           </div>
         </div>
       )}
-    </article>
+    </Panel>
   );
 }
 

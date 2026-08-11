@@ -172,14 +172,29 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
       panels render full-width below the grid in the older idiom. Restyle
       them one at a time — they are the rest of this task.
 
-- [ ] **Restyle the six client panels on Project Detail.** They now sit
-      in `vm.panels`, full-width below the grid, and still carry the old
-      `MastHead`/bordered-box idiom: `candidate-search-panel.tsx`,
-      `client-intelligence-panel.tsx`, `hm-intelligence-panel.tsx`,
-      `company-intelligence-panel.tsx`, `culture-intelligence-panel.tsx`,
-      `health-suggestions-panel.tsx`. The `Section` shell in
-      `project-view.tsx` is the target; each is a client component with
-      its own state, so do them one at a time.
+- [ ] **Restyle the remaining four client panels on Project Detail.**
+      2 of 6 done 2026-08-11: `health-suggestions-panel.tsx` and
+      `client-intelligence-panel.tsx`.
+      **The shell now exists — use it.** `src/components/projects/panel.tsx`
+      exports `Panel` / `PanelLink` / `PanelMeta` plus the
+      `PANEL_BUTTON`, `PANEL_BUTTON_QUIET` and `PANEL_BODY` class
+      constants. No `"use client"`, so both the server-rendered cards in
+      `project-view.tsx` and the client panels import the same shell.
+      Conversion recipe, per panel: replace the `<article>` + `<header>`
+      with `<Panel title meta action>`; move the generate button into
+      `action` with `PANEL_BUTTON`; swap Material Symbols ligatures for
+      `IconSpark` / `IconRefresh` (`animate-spin` while pending) and drop
+      decorative header icons entirely; body padding `PANEL_BODY`; and
+      replace `font-mono-data text-body-main` prose with
+      `text-[13px] leading-relaxed` — mono was a costume on paragraphs.
+      Remaining: `candidate-search-panel.tsx` (756 lines),
+      `culture-intelligence-panel.tsx` (621),
+      `company-intelligence-panel.tsx` (472),
+      `hm-intelligence-panel.tsx` (412).
+      **Look at the bodies, not just the shells.** Converting the shell
+      surfaced a real layout bug in the client panel that had shipped:
+      revealed-preference rows put the topic in a fixed 80px chip, so any
+      topic longer than one word printed on top of the detail text.
 
 - [ ] **Restyle the real Candidate Detail** (1326 lines) to comp 10.
       Target: `sample-candidate-detail.tsx`.

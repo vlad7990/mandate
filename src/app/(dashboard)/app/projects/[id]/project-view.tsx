@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { LiveTick } from "@/components/ui/live-tick";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
+import { Panel, PanelLink, PanelMeta } from "@/components/projects/panel";
 import {
   AgentTiles,
   type AgentTileAction,
@@ -84,37 +85,6 @@ export type ProjectVm = {
   /** Rendered full-width below the grid: search + intelligence panels. */
   panels?: React.ReactNode;
 };
-
-function Section({
-  title,
-  meta,
-  action,
-  children,
-}: {
-  title: string;
-  meta?: React.ReactNode;
-  action?: { label: string; href: string };
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-low">
-      <div className="flex flex-wrap items-center gap-2.5 border-b border-outline-variant px-[18px] py-[15px]">
-        <h2 className="text-sm font-semibold text-on-surface">{title}</h2>
-        {meta}
-        {action && (
-          <Link
-            href={action.href}
-            prefetch={false}
-            className="ml-auto text-xs font-medium text-primary hover:underline"
-          >
-            {action.label}
-          </Link>
-        )}
-      </div>
-      {children}
-    </section>
-  );
-}
 
 function FieldList({ rows }: { rows: { label: string; value: string }[] }) {
   return (
@@ -312,21 +282,17 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
 
       <div className="mt-5 grid gap-[18px] xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex min-w-0 flex-col gap-[18px]">
-          <Section
+          <Panel
             title="Agent stack"
-            meta={
-              <span className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
-                {vm.agentMeta}
-              </span>
-            }
+            meta={<PanelMeta>{vm.agentMeta}</PanelMeta>}
           >
             <div className="p-[18px]">
               <AgentTiles states={vm.agentStates} actions={{ role_spec: vm.specAction }} />
             </div>
-          </Section>
+          </Panel>
 
           <div className="grid gap-[18px] lg:grid-cols-2">
-            <Section title="Role calibration">
+            <Panel title="Role calibration">
               <div className="flex flex-col gap-3.5 px-[18px] py-4">
                 {vm.ready ? (
                   <>
@@ -346,21 +312,21 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
                   <SkeletonRows rows={4} />
                 )}
               </div>
-            </Section>
+            </Panel>
 
-            <Section title="Company context">
+            <Panel title="Company context">
               <div className="px-[18px] py-4">
                 {vm.ready ? <FieldList rows={vm.companyFields} /> : <SkeletonRows rows={3} />}
               </div>
-            </Section>
+            </Panel>
           </div>
 
           {vm.missingInformation.length > 0 && (
-            <Section
+            <Panel
               title="Information required"
               meta={
-                <span className="ml-auto font-mono-label text-[10px] uppercase tracking-[0.08em] text-outline tabular-nums">
-                  {vm.missingInformation.length}
+                <span className="ml-auto">
+                  <PanelMeta>{vm.missingInformation.length}</PanelMeta>
                 </span>
               }
             >
@@ -377,17 +343,17 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
                   </li>
                 ))}
               </ul>
-            </Section>
+            </Panel>
           )}
         </div>
 
         <div className="flex flex-col gap-[18px]">
           {vm.weights.length > 0 && (
-            <Section
+            <Panel
               title="Calibrated bar"
               meta={
-                <span className="ml-auto font-mono-label text-[10px] uppercase tracking-[0.08em] text-outline">
-                  0–10 scale
+                <span className="ml-auto">
+                  <PanelMeta>0–10 scale</PanelMeta>
                 </span>
               }
             >
@@ -417,18 +383,18 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
                   </p>
                 )}
               </div>
-            </Section>
+            </Panel>
           )}
 
           {vm.health && (
-            <Section
+            <Panel
               title="Search health"
               meta={
                 <StatusChip tone={vm.health.statusTone} dot>
                   {vm.health.statusLabel}
                 </StatusChip>
               }
-              action={{ label: "Metrics", href: vm.health.href }}
+              action={<PanelLink href={vm.health.href}>Metrics</PanelLink>}
             >
               <div className="grid grid-cols-2 divide-x divide-y divide-outline-variant/40 border-b border-outline-variant/40">
                 {vm.health.kpis.map((k) => (
@@ -461,7 +427,7 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
                   ))}
                 </div>
               )}
-            </Section>
+            </Panel>
           )}
 
         </div>
