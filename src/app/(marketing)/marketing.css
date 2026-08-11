@@ -76,9 +76,18 @@
   --warn: #f59e0b;
 
   /* ─────────────────────── Typography ─────────────────────────── */
-  --font-display: var(--font-display), "Fraunces", Georgia, serif;
-  --font-body: var(--font-body), "Hanken Grotesk", system-ui, sans-serif;
-  --font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+  /* --font-display / --font-body / --font-mono are NOT declared here.
+     next/font already defines all three on this exact element — the
+     marketing layout puts fraunces.variable, hanken.variable and
+     jetbrains.variable on the same node as .marketing-root.
+
+     Redeclaring them as `--font-display: var(--font-display), "Fraunces"…`
+     made each property reference itself on the same element, which CSS
+     treats as invalid-at-computed-value-time. All three resolved to an
+     empty string, so Fraunces and Hanken Grotesk never rendered and the
+     entire page silently fell back to Inter inherited from <html>.
+     Removing the redeclaration is the fix; next/font supplies its own
+     fallback stack. */
 
   /* ──────────────────────── Layout ────────────────────────────── */
   --container-max: 1280px;
@@ -1415,7 +1424,17 @@
   outline-offset: 2px;
 }
 
-@media (min-width: 900px) {
+/* Nav fits in three pieces: brand + links + actions, all flex-shrink:0.
+   At the old 900px breakpoint the three needed ~1126px of container and
+   got ~1009px, so the primary "Request Access" CTA was clipped by 62px
+   across roughly 900–1125px. An ancestor's overflow-x:hidden swallowed
+   the scrollbar, so nothing reported an overflow — the conversion
+   button was simply cut off in silence.
+
+   Two changes buy the room: the decorative "System online" chip is
+   desktop-only, and the links appear only once there is genuinely space
+   for all three groups. */
+@media (min-width: 1120px) {
   .m-nav__links {
     display: flex;
   }
@@ -2167,7 +2186,10 @@
   animation: live-blink 1.4s ease-in-out infinite;
 }
 
-@media (max-width: 720px) {
+/* Widened 720 → 1279. "System online" is decorative, and the brand
+   group it sits in is flex-shrink:0 — carrying it below desktop was
+   part of what pushed the primary CTA off-screen in the 900–1125 band. */
+@media (max-width: 1279px) {
   .m-nav__live { display: none; }
 }
 
@@ -2865,4 +2887,53 @@
   .m-problem__body {
     padding-top: 0;
   }
+}
+
+/* ── Simulator error strip ───────────────────────────────────────
+   Sits above the worked example rather than replacing it, so a failed
+   run never costs the visitor the proof. */
+
+.m-sim__error {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  flex-wrap: wrap;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--warn);
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.m-sim__error-msg {
+  flex: 1;
+  min-width: 12rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.m-sim__retry {
+  min-height: 36px;
+  padding: 0 0.875rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 200ms var(--ease-out), color 200ms var(--ease-out);
+}
+
+.m-sim__retry:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.m-sim__retry:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

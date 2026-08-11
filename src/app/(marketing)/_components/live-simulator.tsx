@@ -143,12 +143,23 @@ export function LiveSimulator() {
         body: JSON.stringify({ role_input: text }),
       });
       if (!response.ok) {
+        // NEVER surface the upstream body. It previously rendered
+        // `body.error` verbatim, which put the raw provider payload in
+        // front of visitors — vendor name, request id, and at one point
+        // "Your credit balance is too low to access the Anthropic API".
+        // A prospect evaluating the product should never learn our
+        // billing status. Map to three cases the visitor can act on;
+        // the detail stays server-side.
         const body = await response.json().catch(() => null);
+        if (body?.error) {
+          console.error("[simulator] upstream failure:", body.error);
+        }
         throw new Error(
-          body?.error ||
-            (response.status === 429
-              ? "Rate limit reached — try again in an hour."
-              : `Request failed (${response.status})`)
+          response.status === 429
+            ? "You have run this a few times already — try again in an hour."
+            : response.status === 400
+              ? "That brief could not be read. Try naming a role and a company."
+              : "The simulator is briefly unavailable. The example below is real output from an earlier run."
         );
       }
       const data = (await response.json()) as DemoResult;
@@ -208,26 +219,30 @@ export function LiveSimulator() {
       </form>
 
       <div className="m-sim__body">
-        {!result && !pending && !error && <SimulatorIdle />}
-
-        {pending && <SimulatorProgress key={runId} />}
-
+        {/* The error is a strip ABOVE the worked example, not a
+            replacement for it. Previously any failure unmounted
+            SimulatorIdle, so a visitor lost both the example and the
+            chips and had no route back — the failure took the proof
+            with it. */}
         {error && (
-          <div
-            role="alert"
-            style={{
-              padding: "1rem",
-              border: "1px solid #ef4444",
-              background: "rgba(239, 68, 68, 0.06)",
-              color: "#fca5a5",
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.8125rem",
-              letterSpacing: "0.04em",
-            }}
-          >
-            ✕ {error}
+          <div role="alert" className="m-sim__error">
+            <span className="m-sim__error-msg">{error}</span>
+            <button
+              type="button"
+              className="m-sim__retry"
+              onClick={() => {
+                setError(null);
+                if (input.trim()) submit(input);
+              }}
+            >
+              Try again
+            </button>
           </div>
         )}
+
+        {!result && !pending && <SimulatorIdle onPick={setInput} />}
+
+        {pending && <SimulatorProgress key={runId} />}
 
         {result && !pending && <SimulatorResult result={result} />}
       </div>
@@ -247,7 +262,7 @@ export function LiveSimulator() {
  *
  * Labelled EXAMPLE throughout so it is never mistaken for a live run.
  */
-function SimulatorIdle() {
+function SimulatorIdle({ onPick }: { onPick: (value: string) => void }) {
   return (
     <div className="m-simout">
       <div className="m-simout__grid">
@@ -327,15 +342,14 @@ function SimulatorIdle() {
               type="button"
               className="m-chip"
               style={{ cursor: "pointer", background: "var(--bg-elev-2)" }}
+              /* Was setting .value on the DOM node and dispatching a
+                 plain Event. React owns this input, ignored the
+                 synthetic event, and re-rendered from empty state — so
+                 clicking a chip wiped the field and left submit
+                 disabled. Lift to state instead. */
               onClick={() => {
-                const sim = document.querySelector<HTMLInputElement>(
-                  ".m-sim__input"
-                );
-                if (sim) {
-                  sim.value = ex;
-                  sim.dispatchEvent(new Event("input", { bubbles: true }));
-                  sim.focus();
-                }
+                onPick(ex);
+                document.querySelector<HTMLInputElement>(".m-sim__input")?.focus();
               }}
             >
               <span className="m-chip__dot" />

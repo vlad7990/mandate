@@ -491,7 +491,7 @@ function Stack() {
       items: [
         "CV Parsing",
         "Evaluation Engine",
-        "Psychology Module",
+        "Working-Style Signals",
         "Positioning Kit",
       ],
     },
@@ -625,7 +625,7 @@ function Triangulation() {
               className="m-lede"
               style={{ marginTop: "1.25rem" }}
             >
-              Mandate cross-references candidate psychology, company
+              Mandate cross-references candidate working-style signals, company
               culture, and hiring-manager preferences to produce a
               three-way alignment score — with anticipated objections
               and prepared responses.
@@ -736,7 +736,7 @@ function Pricing() {
       cadence: "/mo",
       headline: "1 user, 3 active searches",
       points: [
-        "All 14 AI agents",
+        "All 17 AI agents",
         "Full intelligence stack",
         "30-day evaluation history",
         "Email support",
@@ -841,7 +841,12 @@ function Pricing() {
                       textTransform: "uppercase",
                     }}
                   >
-                    <span className="m-price__sparkle">Most popular</span>
+                    {/* Was "✦ Most popular ✦". The product has zero
+                        customers and the page carries no social proof by
+                        policy — an unsubstantiated popularity claim
+                        attached to the money undercut everything honest
+                        around it. Replaced with a factual differentiator. */}
+                    <span>Includes the HM Portal</span>
                   </div>
                 )}
                 <div
@@ -1031,15 +1036,15 @@ function ExecutiveIntelligence() {
 
 const PRINCIPLES = [
   {
-    title: "Decide for you",
+    title: "Never decides for you",
     body: "No hire or no-hire verdict is produced anywhere in the product. Every output is decision support, with a human accountable for the call.",
   },
   {
-    title: "Profile a person",
+    title: "Never profiles a person",
     body: "No psychological labels, no protected-characteristic inference, no deception detection, and no audio, video, facial or voice analysis.",
   },
   {
-    title: "Rewrite the record",
+    title: "Never rewrites the record",
     body: "Approved artifacts cannot be edited — corrections create a new version and archive the old one. The audit log accepts inserts only.",
   },
 ];
@@ -1159,18 +1164,24 @@ function CtaFooter() {
           >
             <Link
               href="/request-access"
-              className="m-btn m-btn--primary m-btn--breathe m-btn--gradient-border"
+              /* m-btn--gradient-border rotated an unclipped conic-gradient
+                 pseudo-element (inset:-2px, border-radius:inherit=0), so a
+                 diagonal cyan slab swept across the final CTA, its label and
+                 the secondary button — the last thing a visitor saw looked
+                 like a rendering fault. m-btn--breathe stacked a 56px pulsing
+                 glow on top, on a brief that rejects neon glow. Both removed. */
+              className="m-btn m-btn--primary"
               style={{ padding: "1rem 1.75rem", fontSize: "0.8125rem" }}
             >
               <span>Request Access</span>
               <span aria-hidden>→</span>
             </Link>
             <a
-              href="mailto:hello@mandate.ai"
+              href="mailto:hello@getmandate.io"
               className="m-btn m-btn--ghost"
               style={{ padding: "1rem 1.5rem" }}
             >
-              <span>hello@mandate.ai</span>
+              <span>hello@getmandate.io</span>
             </a>
           </div>
         </Reveal>
@@ -1218,11 +1229,11 @@ function Footer() {
               Request access
             </Link>
             <Link href="/auth/signin" className="m-footer__link">Log in</Link>
-            <a href="mailto:hello@mandate.ai" className="m-footer__link">
-              hello@mandate.ai
+            <a href="mailto:hello@getmandate.io" className="m-footer__link">
+              hello@getmandate.io
             </a>
             <a
-              href="https://www.linkedin.com"
+              href="https://www.linkedin.com/company/getmandate"
               target="_blank"
               rel="noreferrer"
               className="m-footer__link"
