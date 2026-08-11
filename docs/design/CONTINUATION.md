@@ -92,7 +92,7 @@ record why in a comment.
 | 07 Executive Dashboard | `/app/home` | ✅ done, deployed |
 | 09 Candidate Portfolio | `/app/candidates` | ✅ done, deployed |
 | 08 Project Detail | `/app/projects/[id]` | ✅ done — page + all six panels |
-| 10 Candidate Detail | `/app/projects/[id]/candidates/[candidateId]` | ⚠️ sample route only |
+| 10 Candidate Detail | `/app/projects/[id]/candidates/[candidateId]` | ✅ tabbed shell · inner cards left |
 | 11 EI Workspace | `/app/executive-intelligence/searches/[id]` | ✅ real page restyled |
 | 12 EI Report | `…/searches/[id]/candidates/[cid]/report` | ✅ compiles for real searches |
 
@@ -105,10 +105,10 @@ build, types and tests are green; nobody has looked at the pixels. This
 is the single largest risk in the project right now — the shell is
 inherited by every screen, so a mistake in it propagates.
 
-The exceptions are the EI report, the EI workspace and the Project
-Detail chrome. All were verified at 1440 and 390 — the report also under
-print emulation — by
-temporarily mounting their components on a public route with fixture
+Six screens are exceptions: the EI report, the EI workspace, Project
+Detail (page and all six panels) and the Candidate Detail shell. All
+were verified at 1440 and 390 — the report also under print emulation —
+by temporarily mounting their components on a public route with fixture
 data, screenshotting, then deleting the route and reverting
 `src/proxy.ts`. **That technique works and is the pattern for the
 remaining restyles**: render the presentation component from fixtures
@@ -189,9 +189,30 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
       post" (culture); and a `projectTitle` prop that only existed to
       repeat the page's own h1.
 
-- [ ] **Restyle the real Candidate Detail** (1326 lines) to comp 10.
-      Target: `sample-candidate-detail.tsx`.
-- [ ] **356 Material Symbols ligatures** → inline SVG from
+- [x] **Restyle the real Candidate Detail** to comp 10. ✅ 2026-08-11 —
+      **the shell is done; the inner cards are not.** The page was one
+      1336-line scroll with eleven stacked panels. It is now the comp's
+      information architecture: `candidate-view.tsx` ("use client", tab
+      state only) takes an identity block, a decision rail and five tabs
+      as slots — Overview, Evaluation, Triangulation, Positioning, Notes
+      & activity — and `page.tsx` still runs every query and renders the
+      tab contents server-side. Verified at 1440 and 390.
+      The rule from the comp that drove it: reading material is tabbed,
+      the write actions never move. Stage and feedback live in a rail
+      that is present on every tab; the fit figure sits beside them
+      rather than heading the page, because it is a reading of evidence
+      and not a verdict.
+      The old `TriangulationTabRail` — two anchor links pretending to be
+      tabs — is gone; real tabs replace it. Every Material Symbols
+      ligature on this page is gone too.
+      **Still open:** the cards inside the tabs (`SynthesisCard`,
+      `SignalsLedger`, `FitCard`, `CareerTimeline`, `EditableSignalCard`,
+      `ChipCard`, `ArchetypeStrip`, `EvaluationPendingPanel`) and the six
+      client panels under this route still carry the older idiom. Use
+      `src/components/projects/panel.tsx`, the same shell Project Detail
+      moved onto.
+
+- [ ] **342 Material Symbols ligatures** → inline SVG from
       `src/components/icons.tsx`. Each currently puts literal text like
       `folder_open` in the DOM and depends on a blocking Google webfont.
       The shell, the EI report and every route under
