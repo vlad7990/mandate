@@ -273,7 +273,7 @@ function Problem() {
       <div className="m-container">
         <div className="m-problem">
           <Reveal className="m-reveal">
-            <span className="m-eyebrow">02 / The problem</span>
+            <span className="m-eyebrow">01 / The problem</span>
             <h2 className="m-h2" style={{ marginTop: "1rem" }}>
               Executive search is judgment work performed{" "}
               <em>under bad conditions.</em>
@@ -313,7 +313,7 @@ function Simulator() {
     >
       <DataStream />
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
-        03
+        02
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
@@ -509,11 +509,11 @@ function Stack() {
   return (
     <section className="m-section m-section--gap-feature-bottom m-section--tint-warm">
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
-        05
+        04
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
-          <span className="m-eyebrow">05 / Stack</span>
+          <span className="m-eyebrow">04 / Stack</span>
           <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "24ch" }}>
             The complete <em>intelligence stack.</em>
           </h2>
@@ -599,7 +599,7 @@ function Triangulation() {
       className="m-section m-triangulation m-section--gap-feature-top m-section--gap-tight-bottom"
     >
       <span className="m-section__numeral" aria-hidden>
-        06
+        05
       </span>
       <div
         className="m-container"
@@ -614,7 +614,7 @@ function Triangulation() {
       >
         <Reveal className="m-reveal">
           <div>
-            <span className="m-eyebrow">06 / The fusion layer</span>
+            <span className="m-eyebrow">05 / The fusion layer</span>
             <h2
               className="m-h2"
               style={{ marginTop: "1rem", maxWidth: "22ch" }}
@@ -804,8 +804,12 @@ function Pricing() {
             className="m-lede"
             style={{ marginTop: "1rem", maxWidth: "60ch" }}
           >
-            All plans include the full agent stack. Billed monthly, cancel
-            anytime — no annual lock-in.
+            {/* Was "Billed monthly, cancel anytime — no annual lock-in",
+                which implied a self-serve subscription the hero explicitly
+                denies. One commercial story: approval first, then billing. */}
+            All plans include the full agent stack, billed monthly. Billing
+            begins once your workspace is approved — there is no self-serve
+            signup.
           </p>
         </Reveal>
 
@@ -994,7 +998,7 @@ function ExecutiveIntelligence() {
       className="m-section m-section--gap-tight-top m-section--tint-cool"
     >
       <span className="m-section__numeral" aria-hidden>
-        07
+        06
       </span>
       <div className="m-container">
         <div className="m-ei-grid">
@@ -1053,11 +1057,11 @@ function Principles() {
   return (
     <section className="m-section m-section--gap-tight-top">
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
-        09
+        07
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
-          <span className="m-eyebrow">09 / Guardrails</span>
+          <span className="m-eyebrow">07 / Guardrails</span>
           <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "20ch" }}>
             What the system <em>will never do.</em>
           </h2>
@@ -1150,7 +1154,14 @@ function CtaFooter() {
             className="m-lede"
             style={{ margin: "0 auto", textAlign: "center" }}
           >
-            Join the waitlist. The first 20 firms get three months free.
+            {/* Was "Join the waitlist. The first 20 firms get three months
+                free." — an unsubstantiated scarcity offer that reads as a
+                growth-hack tell to this buyer, and a third commercial story.
+                Replaced with what actually happens after the click, which is
+                the reassurance this moment was missing entirely. */}
+            Tell us the mandate you are running now. A founder reads every
+            request, and we will walk a live search through with you before
+            anything is billed.
           </p>
         </Reveal>
         <Reveal className="m-reveal">
