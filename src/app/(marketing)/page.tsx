@@ -339,11 +339,14 @@ function Problem() {
 // ────────────────────────────────────────────────────────────────────
 
 function Simulator() {
+  // The lone inline `scrollMarginTop: 2rem` that used to sit on this
+  // section is gone — 32px against a 73px nav under-corrected even on
+  // the one section that had it. `scroll-padding-top` on the scrolling
+  // element now covers every anchor on the page.
   return (
     <section
       id="simulator"
       className="m-section m-section--gap-tight-bottom"
-      style={{ scrollMarginTop: "2rem" }}
     >
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
         {SECTIONS.simulator.numeral}

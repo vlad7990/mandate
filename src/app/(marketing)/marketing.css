@@ -132,8 +132,43 @@
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  scroll-behavior: smooth;
   overflow-x: hidden;
+  /* `scroll-behavior: smooth` used to live here. It never did anything:
+     .marketing-root is not a scroll container (its content is not
+     clipped, the document scrolls), so the property applied to an
+     element that never scrolls. It now sits on the scrolling element
+     below, together with the scroll padding. */
+}
+
+/*
+ * Anchor landing offset.
+ *
+ * .m-nav is `position: sticky; top: 0` and measures 73px, so every
+ * in-page link — four in the desktop nav, five in the mobile panel,
+ * two in the footer — used to land with its target section's eyebrow
+ * fully underneath the bar. Measured before this rule: jumping to
+ * #pricing put the section top at exactly 0, i.e. all 73px hidden.
+ *
+ * `scroll-padding-top` on the scrolling element is the correct fix —
+ * it applies to every anchor jump at once, including the browser's own
+ * restore-on-refresh, rather than needing scroll-margin repeated on
+ * each target. Scoped with :has() so it cannot leak into the app
+ * shell, which has its own chrome and its own offset needs.
+ *
+ * --nav-h is declared here, on the same element, so it inherits down
+ * to .m-nav and .m-mnav__panel and the three stay locked together.
+ * The mobile panel previously hardcoded `top: 64px` against a 73px
+ * nav — a 9px gap of page showing through above the menu.
+ */
+html:has(.marketing-root) {
+  --nav-h: 73px;
+  scroll-padding-top: calc(var(--nav-h) + 1.5rem);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.marketing-root) {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Persistent terminal grid — dual gradient (radial vignette + slow drift) */
@@ -1395,6 +1430,10 @@
   position: sticky;
   top: 0;
   z-index: 50;
+  /* Locks the rendered height to the token that scroll-padding-top and
+     the mobile panel offset are computed from. Without this the three
+     drift apart silently the next time nav padding changes. */
+  min-height: var(--nav-h);
   border-bottom: 1px solid var(--line);
   background: rgba(8, 8, 13, 0.78);
   backdrop-filter: blur(14px) saturate(140%);
@@ -3085,7 +3124,9 @@
 
 .m-mnav__panel {
   position: fixed;
-  top: 64px;
+  /* Was a hardcoded 64px against a nav that measures 73px, leaving a
+     9px strip of the page visible above the menu. */
+  top: var(--nav-h);
   left: 0;
   right: 0;
   z-index: 45;
