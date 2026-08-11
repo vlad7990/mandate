@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { isSampleId } from "@/lib/sample";
+import { SampleCandidateDetail } from "@/components/sample/sample-candidate-detail";
 import {
   ARCHETYPES,
   type Archetype,
@@ -122,6 +124,14 @@ export default async function CandidateProfilePage({
   params: Promise<{ id: string; candidateId: string }>;
 }) {
   const { id, candidateId } = await params;
+
+  // Sample ids never touch the database — see the note in the mandate
+  // route. Both ids must be sample, so a real project cannot be paired
+  // with a fixture candidate or the reverse.
+  if (isSampleId(id) && isSampleId(candidateId)) {
+    return <SampleCandidateDetail projectId={id} candidateId={candidateId} />;
+  }
+
   const supabase = await createServerSupabaseClient();
 
   const { data: project, error: projectError } = await supabase

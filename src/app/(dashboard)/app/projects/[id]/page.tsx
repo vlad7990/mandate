@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { isSampleId } from "@/lib/sample";
+import { SampleProjectDetail } from "@/components/sample/sample-project-detail";
 import {
   AgentTiles,
   type AgentTileAction,
@@ -130,6 +132,15 @@ export default async function ProjectPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Sample ids never touch the database. The prefix is the whole
+  // contract — a uuid has no letters before its first hyphen, so a real
+  // project can never land here and a crafted `sample-` id can never
+  // reach a query.
+  if (isSampleId(id)) {
+    return <SampleProjectDetail id={id} />;
+  }
+
   const supabase = await createServerSupabaseClient();
 
   const { data, error } = await supabase
