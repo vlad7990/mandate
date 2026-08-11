@@ -235,33 +235,82 @@ export function LiveSimulator() {
   );
 }
 
+/**
+ * Idle state — a worked example rendered in exactly the same three
+ * columns the live result uses.
+ *
+ * The previous idle state was a prompt and a paragraph, so the payoff
+ * stayed invisible until someone typed and waited ~20s. Most visitors
+ * never got there. Showing the shape of the answer up front is what
+ * actually argues the product: structured mandate, grounded context,
+ * and a weighted model you approve before anyone is scored.
+ *
+ * Labelled EXAMPLE throughout so it is never mistaken for a live run.
+ */
 function SimulatorIdle() {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.75rem",
-        color: "var(--fg-muted)",
-      }}
-    >
-      <div
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.6875rem",
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--fg-muted)",
-        }}
-      >
-        $ awaiting_input
+    <div className="m-simout">
+      <div className="m-simout__grid">
+        <div className="m-simout__col">
+          <div className="m-simout__head">
+            <span className="m-simout__tick" aria-hidden>✓</span>
+            Structured mandate
+          </div>
+          <dl className="m-simout__fields">
+            <div><dt>Seniority</dt><dd>Director, reports to CIO</dd></div>
+            <div><dt>Function</dt><dd>IT operations, service management</dd></div>
+            <div><dt>Sector</dt><dd>Private healthcare, regulated</dd></div>
+            <div><dt>Scale signal</dt><dd>2,000–8,000 staff, multi-site</dd></div>
+          </dl>
+        </div>
+
+        <div className="m-simout__col">
+          <div className="m-simout__head">
+            <span className="m-simout__tick" aria-hidden>✓</span>
+            Context, web-grounded
+          </div>
+          <p className="m-simout__prose">
+            Sector is consolidating; uptime and clinical-system availability
+            dominate the operating agenda. Service-desk maturity and
+            out-of-hours cover are the usual failure points at this scale.
+          </p>
+          <div className="m-simout__note">14 sources consulted</div>
+        </div>
+
+        <div className="m-simout__col">
+          <div className="m-simout__head">
+            <span className="m-simout__dot" aria-hidden />
+            Draft scoring model
+          </div>
+          <div className="m-simout__bars">
+            {[
+              { label: "Multi-site service operations", pct: 26 },
+              { label: "Clinical-system availability", pct: 22 },
+              { label: "Vendor & contract control", pct: 18 },
+            ].map((d) => (
+              <div key={d.label} className="m-simout__bar">
+                <div className="m-simout__barhead">
+                  <span>{d.label}</span>
+                  <span className="m-simout__pct">{d.pct}%</span>
+                </div>
+                <div className="m-simout__track">
+                  <span style={{ width: `${d.pct}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="m-simout__foot">
+            A draft. In the product you edit and approve it before anyone is
+            scored against it.
+          </p>
+        </div>
       </div>
-      <p style={{ maxWidth: "44ch", lineHeight: 1.6 }}>
-        Drop any executive search brief above — the messier the better.
-        Mandate decomposes the role, calibrates the scoring model, and
-        drafts the first three Boolean queries while you read this
-        sentence.
-      </p>
+
+      <div className="m-simout__cta">
+        <span className="m-simout__badge">Example</span>
+        <span>Type a real mandate above to run it live.</span>
+      </div>
+
       <ul
         style={{
           display: "flex",

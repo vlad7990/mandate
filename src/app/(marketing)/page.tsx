@@ -18,14 +18,18 @@ export default function MarketingLandingPage() {
       <ScrollProgress />
       <TopNav />
       <Hero />
-      <StatsTicker />
+      {/*
+        Section count cut 13 → 11. StatsTicker duplicated the agent
+        pipeline that HowItWorks now states explicitly, and Features
+        restated Triangulation and HowItWorks in weaker form. Both
+        components are retained below but no longer rendered.
+      */}
       <Problem />
       <Simulator />
       <HowItWorks />
       <Stack />
       <Triangulation />
       <ExecutiveIntelligence />
-      <Features />
       <Principles />
       <Pricing />
       <Faq />
@@ -199,7 +203,7 @@ function HeroDataRail() {
     suffix?: string;
     text?: string;
   }> = [
-    { label: "AGENTS", to: 14 },
+    { label: "AGENTS", to: 17 },
     { label: "MODULES", to: 31 },
     { label: "DIMENSIONS", to: 5 },
     { label: "PERSPECTIVES", to: 4 },
@@ -258,175 +262,39 @@ function HeroDataRail() {
 // Stats ticker — marquee under the hero
 // ────────────────────────────────────────────────────────────────────
 
-function StatsTicker() {
-  const stats = [
-    "14 AI AGENTS",
-    "31 INTELLIGENCE MODULES",
-    "3-WAY CANDIDATE ALIGNMENT",
-    "USED BY EXECUTIVE SEARCH PROFESSIONALS",
-    "5-DIMENSION CALIBRATION",
-    "REAL-TIME WEB RESEARCH",
-    "AUTO-RECALIBRATION FROM FEEDBACK",
-  ];
-  // Duplicate the list so the marquee loop is seamless.
-  const looped = [...stats, ...stats];
-  return (
-    <div className="m-ticker" aria-hidden>
-      <div className="m-ticker__track">
-        {looped.map((s, i) => (
-          <span key={i} className="m-ticker__item">
-            <span>◇</span>
-            {s}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 // ────────────────────────────────────────────────────────────────────
 // 2. PROBLEM
 // ────────────────────────────────────────────────────────────────────
 
 function Problem() {
-  const cards: Array<{
-    statTo: number;
-    statPrefix?: string;
-    statSuffix?: string;
-    statRange?: string;
-    unit: string;
-    title: string;
-    detail: string;
-    accent: string;
-    cardClass: string;
-  }> = [
-    {
-      statTo: 5,
-      statRange: "3–5",
-      unit: "days",
-      title: "to brief a search properly",
-      detail:
-        "Every recruiter starts from scratch — fragmented intake calls, scattered notes, inconsistent calibration. The first week is gone before sourcing begins.",
-      accent: "var(--accent)",
-      cardClass: "m-card",
-    },
-    {
-      statTo: 67,
-      unit: "%",
-      title: "evaluation drift across team",
-      detail:
-        "Two recruiters look at the same CV and rank it differently. Without a shared scoring model, decisions flip with whoever ran the screen call.",
-      accent: "var(--warn)",
-      cardClass: "m-card m-card--warn",
-    },
-    {
-      statTo: 12,
-      statSuffix: "+",
-      unit: "tools",
-      title: "with feedback in every one",
-      detail:
-        "Email threads, ATS notes, Slack DMs, Zoom recordings, recruiter scribbles. The signal that matters is in the inbox, not the system.",
-      accent: "var(--critical)",
-      cardClass: "m-card m-card--danger",
-    },
-  ];
   return (
     <section className="m-section m-section--gap-tight-top m-section--tint-cool">
-      <span className="m-section__numeral" aria-hidden>
-        02
-      </span>
       <div className="m-container">
-        <Reveal className="m-reveal" as="div">
-          <span className="m-eyebrow">02 / The status quo</span>
-          <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "22ch" }}>
-            The way executive search works today is{" "}
-            <em>broken in three places.</em>
-          </h2>
-        </Reveal>
+        <div className="m-problem">
+          <Reveal className="m-reveal">
+            <span className="m-eyebrow">02 / The problem</span>
+            <h2 className="m-h2" style={{ marginTop: "1rem" }}>
+              Executive search is judgment work performed{" "}
+              <em>under bad conditions.</em>
+            </h2>
+          </Reveal>
 
-        <Reveal
-          className="m-reveal-stagger"
-          as="ul"
-          threshold={0.1}
-        >
-          <ul
-            style={{
-              listStyle: "none",
-              padding: 0,
-              marginTop: "3rem",
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "1.25rem",
-            }}
-          >
-            {cards.map((c) => (
-              <li
-                key={c.title}
-                className={c.cardClass}
-                style={{
-                  borderTop: `2px solid ${c.accent}`,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.875rem",
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: "clamp(3rem, 6vw, 5rem)",
-                    fontVariationSettings: "\"opsz\" 144",
-                    fontWeight: 360,
-                    color: c.accent,
-                    letterSpacing: "-0.035em",
-                    lineHeight: 0.92,
-                    display: "flex",
-                    alignItems: "baseline",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <span style={{ fontVariantNumeric: "tabular-nums" }}>
-                    {c.statRange ? (
-                      c.statRange
-                    ) : (
-                      <>
-                        <CountUp
-                          to={c.statTo}
-                          duration={1800}
-                        />
-                        {c.statSuffix}
-                      </>
-                    )}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "0.875rem",
-                      fontFamily: "var(--font-mono)",
-                      letterSpacing: "0.18em",
-                      textTransform: "uppercase",
-                      color: "var(--fg-muted)",
-                      fontVariationSettings: "normal",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {c.unit}
-                  </span>
-                </div>
-                <h3 className="m-h3" style={{ marginBottom: "0.125rem" }}>
-                  {c.title}
-                </h3>
-                <p
-                  style={{
-                    color: "var(--fg-soft)",
-                    fontSize: "0.9375rem",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {c.detail}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
+          <Reveal className="m-reveal" threshold={0.15}>
+            <div className="m-problem__body">
+              <p className="m-lede">
+                Dozens of CVs. A hiring manager whose stated requirements
+                drift from their revealed preferences. No consistent scoring.
+                No audit trail. Decisions get made on recency and charisma,
+                then rationalised afterwards.
+              </p>
+              <blockquote className="m-pullquote">
+                <span>From a slate you defend in the room —</span>
+                <strong>to a slate that defends itself in the minutes.</strong>
+              </blockquote>
+            </div>
+          </Reveal>
+        </div>
       </div>
     </section>
   );
@@ -519,86 +387,82 @@ function Simulator() {
 // 4. HOW IT WORKS
 // ────────────────────────────────────────────────────────────────────
 
+const HOW_STEPS = [
+  {
+    n: "01",
+    title: "Decompose",
+    body: "One line becomes a structured mandate and a grounded company picture — the estate, the history, the constraints nobody put in the brief.",
+  },
+  {
+    n: "02",
+    title: "Calibrate",
+    body: "A structured intake produces weighted dimensions, must-haves and anti-patterns. You edit them. You approve them. Only then do they count.",
+  },
+  {
+    n: "03",
+    title: "Evaluate",
+    body: "Every CV is parsed, scored against the approved model and placed in a tier — with the evidence behind each dimension shown next to the number.",
+  },
+  {
+    n: "04",
+    title: "Defend",
+    body: "The shortlist carries its trade-offs. Client feedback recalibrates the model and re-ranks the field, and the change is versioned.",
+  },
+];
+
+/** The pipeline, stated once. Calibration is highlighted because it is
+ *  the step the whole product argument turns on. */
+const PIPELINE = [
+  "Mandate", "Spec", "Calibration", "Sourcing",
+  "Evaluation", "Ranking", "Shortlist", "Feedback", "Recalibrate",
+];
+
 function HowItWorks() {
-  const steps = [
-    {
-      n: "01",
-      title: "One-line brief",
-      sub: "AI decomposes the role",
-      icon: "◑",
-    },
-    {
-      n: "02",
-      title: "Company research",
-      sub: "AI maps culture + context",
-      icon: "◐",
-    },
-    {
-      n: "03",
-      title: "Candidate evaluation",
-      sub: "AI scores 5 dimensions",
-      icon: "◓",
-    },
-    {
-      n: "04",
-      title: "Client feedback",
-      sub: "AI recalibrates automatically",
-      icon: "◒",
-    },
-    {
-      n: "05",
-      title: "Shortlist",
-      sub: "AI generates submission narrative",
-      icon: "●",
-    },
-  ];
   return (
     <section id="how" className="m-section m-section--gap-tight-top">
-      <span className="m-section__numeral" aria-hidden>
-        04
-      </span>
       <div className="m-container">
         <Reveal className="m-reveal">
-          <span className="m-eyebrow">04 / Pipeline</span>
-          <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "24ch" }}>
-            Five steps. <em>Every search runs the same shape.</em>
+          <span className="m-eyebrow">03 / How it works</span>
+          <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "20ch" }}>
+            Calibration <em>before evaluation.</em>
           </h2>
+          <p className="m-lede" style={{ marginTop: "1rem", maxWidth: "62ch" }}>
+            The bar is set and approved before the faces appear. Everything
+            downstream scores against the same model, and the model is
+            versioned.
+          </p>
         </Reveal>
 
-        <Reveal className="m-reveal-cascade m-pipeline-cascade" threshold={0.05}>
-          <div className="m-pipeline" style={{ marginTop: "3rem" }}>
-            {steps.map((s) => (
-              <div key={s.n} className="m-pipeline__step">
-                <div className="m-pipeline__num">STEP {s.n}</div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: "1.75rem",
-                    color: "var(--accent)",
-                    marginBottom: "0.5rem",
-                    lineHeight: 1,
-                  }}
-                  aria-hidden
-                >
-                  {s.icon}
-                </div>
-                <h3 className="m-h3" style={{ marginBottom: "0.375rem" }}>
-                  {s.title}
-                </h3>
-                <p
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "0.6875rem",
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    color: "var(--fg-muted)",
-                  }}
-                >
-                  {s.sub}
-                </p>
-              </div>
+        <Reveal className="m-reveal-stagger" as="ol" threshold={0.1}>
+          <ol className="m-steps">
+            {HOW_STEPS.map((s) => (
+              <li key={s.n} className="m-card m-step">
+                <span className="m-step__n" aria-hidden>{s.n}</span>
+                <h3 className="m-step__title">{s.title}</h3>
+                <p className="m-step__body">{s.body}</p>
+              </li>
             ))}
-          </div>
+          </ol>
+        </Reveal>
+
+        <Reveal className="m-reveal" threshold={0.2}>
+          <ol className="m-pipeline-row" aria-label="Search pipeline">
+            {PIPELINE.map((label, i) => (
+              <li
+                key={label}
+                className={
+                  label === "Calibration"
+                    ? "m-pipeline-row__item m-pipeline-row__item--key"
+                    : "m-pipeline-row__item"
+                }
+              >
+                {label}
+                {i < PIPELINE.length - 1 && (
+                  <span className="m-pipeline-row__arrow" aria-hidden>›</span>
+                )}
+              </li>
+            ))}
+          </ol>
         </Reveal>
       </div>
     </section>
@@ -859,100 +723,6 @@ function Triangulation() {
 // 7. FEATURE GRID
 // ────────────────────────────────────────────────────────────────────
 
-function Features() {
-  const cards = [
-    {
-      icon: "🛰",
-      name: "Company Intelligence",
-      blurb: "Live web research on the hiring company — strategy, leadership, recent moves.",
-    },
-    {
-      icon: "🧠",
-      name: "Candidate Psychology",
-      blurb: "Leadership style, risk tolerance, change orientation — calibrated from CV + notes.",
-    },
-    {
-      icon: "🎯",
-      name: "HM Psychology",
-      blurb: "Hiring-manager preference + bias detection from public footprint and feedback.",
-    },
-    {
-      icon: "◆",
-      name: "Recruiter Copilot",
-      blurb: "Always-available AI assistant scoped to the active project. Context-aware.",
-    },
-    {
-      icon: "⟲",
-      name: "Calibration Engine",
-      blurb: "Auto-recalibrates dimension weights from every feedback signal you capture.",
-    },
-    {
-      icon: "✺",
-      name: "Global Network",
-      blurb: "Cross-project talent pool — every candidate becomes a permanent searchable asset.",
-    },
-  ];
-  return (
-    <section className="m-section m-section--gap-tight-top m-section--tint-cool">
-      <span className="m-section__numeral m-section__numeral--right" aria-hidden>
-        07
-      </span>
-      <div className="m-container">
-        <Reveal className="m-reveal">
-          <span className="m-eyebrow">07 / Modules</span>
-          <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "26ch" }}>
-            Six modules that <em>change how the work feels.</em>
-          </h2>
-        </Reveal>
-
-        <Reveal className="m-reveal-stagger" as="ul" threshold={0.05}>
-          <ul
-            style={{
-              listStyle: "none",
-              padding: 0,
-              marginTop: "3rem",
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "1.25rem",
-            }}
-          >
-            {cards.map((c) => (
-              <li key={c.name} className="m-card m-feature-card">
-                <div
-                  className="m-feature-card__icon"
-                  style={{
-                    fontSize: "1.75rem",
-                    color: "var(--accent)",
-                    marginBottom: "0.875rem",
-                    lineHeight: 1,
-                  }}
-                  aria-hidden
-                >
-                  {c.icon}
-                </div>
-                <h3
-                  className="m-h3"
-                  style={{ marginBottom: "0.5rem" }}
-                >
-                  {c.name}
-                </h3>
-                <p
-                  style={{
-                    color: "var(--fg-soft)",
-                    fontSize: "0.9375rem",
-                    lineHeight: 1.55,
-                  }}
-                >
-                  {c.blurb}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
 
 // ────────────────────────────────────────────────────────────────────
 // 8. PRICING
@@ -1367,7 +1137,7 @@ function CtaFooter() {
         </Reveal>
         <Reveal className="m-reveal">
           <h2 className="m-h2" style={{ maxWidth: "20ch", margin: "0 auto" }}>
-            Ready to <em>transform your search practice?</em>
+            Set the bar <em>before you see the faces.</em>
           </h2>
         </Reveal>
         <Reveal className="m-reveal">
