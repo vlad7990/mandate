@@ -93,7 +93,7 @@ record why in a comment.
 | 09 Candidate Portfolio | `/app/candidates` | ✅ done, deployed |
 | 08 Project Detail | `/app/projects/[id]` | ⚠️ sample route only |
 | 10 Candidate Detail | `/app/projects/[id]/candidates/[candidateId]` | ⚠️ sample route only |
-| 11 EI Workspace | `/app/executive-intelligence/searches/[id]` | ⚠️ sample route only |
+| 11 EI Workspace | `/app/executive-intelligence/searches/[id]` | ✅ real page restyled |
 | 12 EI Report | `…/searches/[id]/candidates/[cid]/report` | ✅ compiles for real searches |
 
 Marketing (`/`, `/platform`, `/executive-intelligence`, `/solutions`,
@@ -105,11 +105,12 @@ build, types and tests are green; nobody has looked at the pixels. This
 is the single largest risk in the project right now — the shell is
 inherited by every screen, so a mistake in it propagates.
 
-The one exception is the EI report. It was verified at 1440 and 390, on
-screen and under print emulation, by temporarily mounting its components
-on a public route with fixture data, screenshotting, then deleting the
-route and reverting `src/proxy.ts`. **That technique works and is worth
-reusing** for any screen whose components take plain props: render them
+The exceptions are the EI report and the EI workspace. Both were
+verified at 1440 and 390 — the report also under print emulation — by
+temporarily mounting their components on a public route with fixture
+data, screenshotting, then deleting the route and reverting
+`src/proxy.ts`. **That technique works and is the pattern for the
+remaining restyles**: render the presentation component from fixtures
 outside `(dashboard)` at a throwaway path, add the path to
 `PUBLIC_PAGES`, screenshot, then remove both. Two things to know —
 `npm run dev` on :3001 did not pick up `globals.css` changes at all
@@ -138,10 +139,21 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
       **Still needs a founder pass against a real search** — the
       compilation is tested and the render is verified against fixtures,
       but no real approved chain has been through it.
-- [ ] **Restyle the real EI Workspace** (420 lines) to comp 11. Target
-      design: `src/components/sample/sample-ei-workspace.tsx`. Smallest
-      of the three real-page restyles — do this one first to establish
-      the pattern.
+- [x] **Restyle the real EI Workspace** to comp 11. ✅ 2026-08-11.
+      **This established the pattern for the other two restyles:** the
+      page splits into `page.tsx` (queries only, assembles a
+      `WorkspaceVm`) and `workspace-view.tsx` (presentation, props in).
+      That split is what makes an authenticated screen verifiable —
+      render the view from fixtures on a throwaway public route, look at
+      it, delete the route. Do the same for Project Detail and Candidate
+      Detail.
+      Departures from the comp, both recorded in the file header: the
+      comp's "Risk review" panel describes a capability that does not
+      exist, so it is not rendered; every chain count is computed from
+      the linked candidates and their plan and assessment rows. Two
+      fixes came out of looking at it — weight bars scale to the heaviest
+      competency (six weights summing to 100 read as underlines against a
+      100% track) and exactly one chain step carries the accent border.
 - [ ] **Restyle the real Project Detail** (1006 lines) to comp 08. The
       sample route at `src/components/sample/sample-project-detail.tsx`
       is the target design — this is a comparison, not a guess. Do it
