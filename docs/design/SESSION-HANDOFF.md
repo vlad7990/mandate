@@ -1,6 +1,6 @@
 # Session handoff — Mandate marketing homepage
 
-**Written:** 2026-08-11 · **Repo state at handoff:** `main` @ `cd07a2e`, clean, pushed to `origin`.
+**Written:** 2026-08-11 · **Repo state at handoff:** `main` @ `28ac072`, clean, pushed to `origin`.
 
 ---
 
@@ -8,8 +8,11 @@
 
 | Gotcha | Detail |
 |---|---|
-| **Two clones exist** | Work in **`~/Documents/Projects/mandate`** (current). `~/Mandate Recruiting/mandate` is a STALE clone at `ce4e7a5`. The Playwright MCP is rooted at the stale one, so its screenshots land in the wrong tree — the browser itself is fine, only file paths are wrong. |
-| **`tsc` false errors** | If tsc reports `" 2"`-suffixed duplicate identifiers (`cache-life.d 2.ts`), run `rm -rf .next` first. Documented in `CLAUDE.md`. |
+| **Two clones exist** | Work in **`~/Documents/Projects/mandate`** (current). `~/Mandate Recruiting/mandate` is a STALE clone at `ce4e7a5`. The Playwright MCP is rooted at the stale one, so its **screenshots land in the wrong tree** — the browser itself is fine, only file paths are wrong. |
+| **Screenshots land at the stale clone's ROOT** | Not in its `.playwright-mcp/`. A capture named `foo.png` appears at `~/Mandate Recruiting/mandate/foo.png`. Find it there and move it before reading. |
+| **Reveal state corrupts measurements** | See §5. This produced two separate classes of false finding across two critiques. Read it before measuring anything in the browser. |
+| **Never mutate `<html>` className before hydration** | An inline script adding a class to `document.documentElement` triggers a React hydration mismatch. The scroll-reveal gate uses `@media (scripting: enabled)` instead — no script, no mismatch. Don't "fix" it back to a class toggle. |
+| **`tsc` false errors** | If tsc reports `" 2"`-suffixed duplicate identifiers (`cache-life.d 2.ts`), run `rm -rf .next` first. Also: after moving a route, a stale `.next/types/validator.ts` will reference the old path — same fix. |
 | **Never `rm -rf .next` while `npm run dev` is running** | It strips the manifests and every route 500s. Kill the dev server first. |
 | **Supabase auto-pauses** | Free tier, ~7 days idle. Project ref `xipyqnltkbtywxqyxupf`. Restore via MCP `restore_project`; takes minutes and reports `COMING_UP` with an empty `public` schema mid-restore — that is NOT data loss, wait for `ACTIVE_HEALTHY`. |
 | **Working rules** | In `CLAUDE.md`: never commit or push without explicit approval, conventional commits, **no attribution footer**, green gate (`npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build`) before any commit. |
@@ -18,19 +21,21 @@
 
 ## 2. 🔴 Open item that is NOT code
 
-**Anthropic API credits are exhausted.** `POST https://getmandate.io/api/demo` returns:
+**Anthropic API credits are exhausted.** `POST /api/demo` returns a billing error.
 
-> `Your credit balance is too low to access the Anthropic API.`
-
-The live simulator is the homepage's centrepiece and the only proof a prospect can verify (the product has zero customers). It now **fails gracefully** — a plain message, the worked example stays on screen, a Try again button — but nobody sees the product actually think. **A top-up is worth more than any remaining design work.**
+The live simulator is the homepage's centrepiece and the only proof a prospect can verify (the product has zero customers). It fails cleanly — the upstream message never reaches the DOM, the worked example survives byte-identical, and the error strip now offers a route to a real run — but **nobody sees the product actually think.** A top-up is still worth more than any remaining design work.
 
 ---
 
 ## 3. What was done
 
-A dual-agent `/impeccable critique` scored the homepage **15/40** (Nielsen), 6 of 8 cognitive-load failures. Six commits closed every P0, P1 and P2:
+Two `/impeccable critique` runs. The first scored **15/40**; six commits closed it. A second scored **24/40**; three more commits closed every P0, P1 and P2 plus the highest-leverage structural finding.
 
 ```
+28ac072  accessibility cluster, pricing grid, two bugs found in passing
+c67c969  trust-ordering, two overclaims, illustrative scores
+fa6a362  no-JS visibility, SSR headline, count reconciliation, request-access, mobile CTA
+bc9a66f  session handoff doc
 cd07a2e  triangulation pills onto clear lens intersections
 c820f0b  remove decorative motion and glow (43 animations → 3, 21 glows → 0)
 1f26a4d  mobile navigation
@@ -39,44 +44,106 @@ fdaeb1d  section renumbering + single commercial story
 acd0707  homepage rebuilt on the imported Claude Design spine
 ```
 
-**The three findings that would each have ended an evaluation:**
+### The findings that would each have ended an evaluation
 
-1. **Fonts never loaded.** `.marketing-root` redeclared `--font-display/-body/-mono` in terms of themselves on the same element carrying next/font's variable classes → CSS cycle → invalid → the whole page silently rendered in Inter across every prior deploy. Fixed by deleting the redeclaration; next/font already defines them.
-2. **Simulator broken three ways** — chips poked `.value` on a React-controlled input (React wiped the field), errors printed the raw upstream payload including the billing message, and any failure unmounted the worked example.
-3. **Final CTA** rendered a rotating unclipped conic-gradient slab across itself.
+1. **Fonts never loaded** (round 1). `.marketing-root` redeclared `--font-display/-body/-mono` in terms of themselves → CSS cycle → the whole page silently rendered in Inter across every prior deploy.
+2. **The page did not exist without JavaScript** (round 2). Every `.m-reveal*` wrapper started at `opacity: 0`, cleared only by an IntersectionObserver. The static HTML shipped 48 invisible wrappers with no `<noscript>`. Crawlers, Reader mode, in-app webviews and any stalled hydration got a black rectangle.
+3. **Half the `<h1>` did not exist server-side** (round 2). `TypewriterReveal` served `text.slice(0, 0)` — an empty span whose only content was an `aria-label`, which ARIA drops on `role=generic`. Google and LinkedIn saw a headline reading *"One line in."* and nothing else.
+4. **The page contradicted its own counts** (round 2). 17 agents in the body, **14 in the meta description and OG card**, twelve modules in prose, 31 in the hero rail. On a product whose only differentiator is that its outputs reconcile.
+5. **The conversion destination was a different product** (round 2). `/request-access` rendered in Material 3 tokens with a Material Symbols icon font — craft dropped at the exact moment of commitment.
 
-**Also fixed:** primary CTA clipped 900–1125px; section numerals (were `00,02,03,03,05,06,07,09,08,09,10`); agent count 14/12/31 → 17; `hello@mandate.ai` → `hello@getmandate.io`; LinkedIn homepage link; `MOST POPULAR` on a zero-customer tier; guardrail titles now negated ("Never decides for you"); "Psychology Module" renamed (it contradicted the stated ban on psychological labels — legal exposure); three conflicting commercial stories reduced to one; mobile nav added; triangulation pills moved off the medallion.
+### Also closed
+
+Simulator failure copy no longer claims hardcoded copy is "real output from an earlier run"; primary CTA persists in the nav at every width; `<main>` + skip link; focus ring restored on the simulator input (WCAG 2.4.7); two invalid `ul > ul`; FAQ questions promoted to `<h3>` and closed panels made `inert`; scroll indicator no longer announces on every frame; simulator gained a live region; pricing grid orphan at 1152px; footer touch targets to 44px; hero rail labels off 10px.
 
 ---
 
-## 4. Known remaining issues (from the critique, unfixed)
+## 4. Known remaining issues
 
-- **Stagger wrappers are inert.** All five `.m-reveal-stagger` / `.m-reveal-scale` wrappers have exactly one child, so the 50/90/110ms delays never apply. `Reveal` only handles `div|section|ul`, so `as="ol"` silently falls back to a div.
-- **Two invalid `ul > ul` nestings** (Principles, Pricing) — created by wrapping a `<ul>` in `<Reveal as="ul">`.
-- **Dead CSS estate, now larger.** The restraint pass *disabled* rules rather than deleting them. Unused: `.m-pipeline`, `.m-pipeline-cascade`, `.m-ticker`, `.m-feature-card`, `.m-card--danger/--warn`, `.m-reveal-cascade`, `.m-display--shimmer`, plus the newly neutralised animations.
-- **No `<main>` landmark and no skip link** on a long page with ~23 links.
-- **`TypewriterReveal`** puts `aria-label` on a bare `<span>` (prohibited on `role=generic`) with no `aria-live`, so half the `<h1>` is invisible to assistive tech. It also renders `text.slice(0,0)` on the server, so first paint and crawlers see an `<h1>` reading only "One line in."
-- **Hero animation order:** `.m-hero-trust` has no entrance animation while `.m-hero-ctas` is delayed 900ms — the disclaimer renders before the offer it disclaims.
+**The prioritised list from the third critique is in §6.** This section covers what that run did not surface.
+
+**A regression worth learning from.** Commit `fa6a362` converted `"Twelve specialised modules across three intelligence layers."` into a template literal to derive the count from `MODULE_COUNT`. JSX strips whitespace containing a newline between an expression container and an adjacent text node, so it shipped rendering as **"intelligence layers.Every layer reads"** — live on production until the next commit. The green gate cannot catch this class of bug: it is neither a type error nor a lint error, only a rendering one. **When converting literal copy to an expression, put the trailing space inside the literal**, and diff the rendered text, not just the source.
+
+**Structural / content**
+- **Mobile page is 13,278px** — roughly 16 viewports. The sharpest open question from the critique: *what would the shortest version of this page look like?* Hero → simulator → Principles → CTA is four sections; 04–06 are elaboration a convinced buyer doesn't need and an unconvinced one won't read.
+- **The pricing grid's premise.** The 1152px orphan is fixed; the contradiction is not. It is still a four-across grid with four identical "Request Access" CTAs on a page that twice states there is no self-serve tier, including one tier priced "Contact sales".
+- **`AGENTS.md` is still headed "The 14 Mandate Agents"** with the 3 EI agents listed separately. That is the origin of the 14-vs-17 drift. The page now derives from `AGENT_COUNT = 17` in `src/app/(marketing)/_constants.ts`; the doc should say 17 too.
+
+**Craft / polish**
+- **Hero animation order.** `.m-hero-trust` has no entrance animation while `.m-hero-ctas` is delayed 900ms — the disclaimer renders before the offer it disclaims.
 - **FAQ chevron** renders as an ✕ when closed (reads as "dismiss", not "expand").
-- **Footer brand mark** is an empty rounded blue square with no `M`.
-- **4th pricing tier orphans** onto its own row at ~1152px.
-- **`AGENTS.md`** is headed "The 14 Mandate Agents" with the 3 EI agents listed separately — the origin of the 14-vs-17 drift.
+- **Footer brand mark** is an empty rounded blue square with no `M`. (The *nav* mark is fine.)
+- **Note badge contrast is 4.51:1** — a genuine pass, by 0.01. Any tint change breaks it. Fixing it means altering the brand accent on that label, which is a brand decision.
+- **Dead CSS estate.** The round-1 restraint pass *disabled* rules rather than deleting them. Verified unused against the TSX as of `28ac072`: `.m-ticker`, `.m-feature-card`, `.m-card--danger`, `.m-card--warn`, `.m-display--shimmer`, `.m-reveal-cascade`, and the non-`-row` `.m-pipeline` / `.m-pipeline-cascade` rules — **only the `.m-pipeline-row*` variants are actually used**, so don't delete the whole pipeline block. The two `gradient-text` rules match **zero elements** in the live DOM. Two dead component slots (`StatsTicker`, `Features`) remain as comment blocks in `page.tsx`.
 
 ---
 
-## 5. Next step
+## 5. ⚠️ Measuring the page correctly
 
-Re-run the critique. Three heuristics scored 0–1 (Consistency 0, Error recovery 0, User control 1) and all three were driven by things now fixed; the design-specificity verdict rested largely on the decorative layer that is now gone. A fresh score shows where the real ceiling is.
+**This has produced false findings in both critiques. Control for it or your evidence is wrong.**
 
+Scroll-reveal wrappers start hidden and scaled, inside `@media (scripting: enabled)`, and only settle when the IntersectionObserver adds `is-visible`:
+
+```css
+@media (scripting: enabled) {
+  .m-reveal        { opacity: 0; transform: translateY(28px); }
+  .m-reveal-scale > * { opacity: 0; transform: translateY(20px) scale(0.94); }
+}
 ```
-/impeccable critique src/app/(marketing)/page.tsx
-```
 
-It requires **two isolated sub-agents** (A: design review, B: detector + browser evidence). Start a dev server on `:3001` first. The skill's `SUBAGENT_AUTHORIZATION` directive treats invoking it as authorization to spawn them.
+Two consequences:
+
+| Measuring | Uncontrolled reading | Truth |
+|---|---|---|
+| **Contrast** | ~1.0:1 on dozens of elements — foreground composited onto background at opacity 0 | Sweep reported 34 failures; real count was 2 |
+| **Touch targets** | 41.4px on 44px controls — `44 × 0.94`, mid-transition | Settles to exactly 44px |
+
+**Before measuring contrast or geometry:** scroll the whole document, wait ~1s for the 720–800ms transitions, and assert `document.querySelectorAll('.m-reveal:not(.is-visible)').length === 0`.
+
+**The same applies to full-page screenshots.** A `fullPage` capture without scrolling first shows below-fold sections as black voids — which looks identical to the (now fixed) no-JS bug.
+
+Also worth knowing: a raw contrast sampler that reads `backgroundColor` off the nearest ancestor gets **1.0:1** on the Note badge because that background is a translucent `rgba` over the accent. Composite every translucent layer down to an opaque colour first; the real ratio is 4.51:1.
 
 ---
 
-## 6. Broader project context
+## 6. Critique trend and what the third run found
+
+**15/40 → 24/40 → 26/40.** Snapshots in `.impeccable/critique/`; read the trend with:
+
+```
+node ~/.claude/skills/impeccable/scripts/critique-storage.mjs trend "src/app/(marketing)/page.tsx" 5
+```
+
+### Verified closed (measured under the conditions that would expose each)
+
+With JavaScript genuinely disabled (`javaScriptEnabled: false`), **24/24 reveal wrappers render at opacity 1**, all 11 sections visible, 8,572 chars of body text. SSR `<h1>` is byte-identical to the hydrated one and its computed accessible name is correct. 28 headings, one `h1`, **zero skipped levels**. Zero invalid list nestings, zero single-child stagger wrappers. No pricing width leaves a tier alone on a row. All 7 collapsed FAQ panels carry `inert`. Under `prefers-reduced-motion`: 0 animations, 0 stranded wrappers. 0 console errors, no hydration mismatch. The simulator failure leaks nothing to the DOM and the worked example survives at 791 chars byte-identical.
+
+### The remaining ceiling is structural, not defect-level
+
+- **P0 — the failure copy still overclaims.** It says "Below is a worked example of **the same output**". It is not the same output; it is an unrelated hardcoded panel. 100% of visitors who engage with the simulator hit this today. The fix is pre-computed `DemoResult` fixtures (one per `TYPING_EXAMPLES` entry) so the three chips resolve locally and never break, with `/api/demo` reserved for free text.
+- **P1 — no `scroll-margin-top` anywhere.** Grep `marketing.css`: zero `scroll-margin` declarations, one inline instance on `#simulator`. With a sticky nav at ~64–72px, *every* wayfinding link lands under the bar. Also `scroll-behavior: smooth` is on `.marketing-root`, a non-scrolling div, so it does nothing. Fix with `html { scroll-padding-top: 5.5rem }` and a shared `--nav-h`.
+- **P1 — three manufactured-liveness tells survive.** The "System online" pip is a static span shown while the API is down; `SimulatorProgress` advances on a 2200ms timer decoupled from the request; the hero rail animates static architecture constants with `CountUp`. `page.tsx` already states the principle in a comment ("animating them as though they were being computed is the one thing a page arguing for auditable numbers must not do") — it was applied to the Triangulation scores and never propagated. The client `console.error` also leaks the billing message and `request_id` to devtools; the DOM is clean, the console is not.
+- **P1 — no human provenance.** Zero customers means the founder is the proof, and the founder appears once, unnamed, at ~95% scroll depth. Security claims in the FAQ have no DPA or security page behind them.
+- **P2 — traffic-light scoring contradicts Principles.** Green 91 / amber 83 is the grammar of pass/caution/fail next to a named human, three sections after "no hire or no-hire verdict is produced anywhere". The "illustrative" caveat governs the score list only — the diagram with the largest number on the page (87) sits in a separate column with no caveat and states the scores as fact in its `aria-label`.
+- **P2 — mobile.** The Analyze button wraps to two lines at 390; `.m-chip` is 40px against the 44px floor the rest of the file enforces; **7 of 8 FAQ answers are unreachable without JS** (text is in the DOM at `max-height: 0` but the panels cannot open).
+
+### Token-level finding worth acting on once
+
+`--fg-muted` (`#7f7f93`) is on **51 elements** and measures **4.47–4.59:1** depending on the panel beneath it. Three instances genuinely fail; five more pass by under 0.1. One step darker on any panel flips more of those 51 into failure. Treat it as a token decision, not five spot fixes.
+
+### Re-running it
+
+Requires **two isolated sub-agents** (A: design review, B: detector + browser evidence). Start a dev server on `:3001` first.
+
+**Orchestration note:** the Playwright MCP exposes a *single shared browser*. Running A and B concurrently against it corrupts both — B's overlay injection lands in A's screenshots. Capture the frames in the parent, hand the file paths to A, give B exclusive browser control. Both still run isolated and in parallel.
+
+**Keep A's prompt stable between runs.** Run 3 used a prompt byte-identical to run 2 apart from image paths, which is what makes 24 → 26 a real comparison rather than an artifact of a different brief. Do not tell A what was fixed; its design-specificity verdict has to be unanchored.
+
+**The overlay pollutes its own measurements.** B's first contrast sweep returned 29 failures, **17 of which were the overlay's own badges**. Kill the live server and reload clean before measuring anything.
+
+---
+
+## 7. Broader project context
 
 Other design docs in this folder, all committed:
 
@@ -85,5 +152,7 @@ Other design docs in this folder, all committed:
 - `MANDATE_SCREEN_INVENTORY.md` — 73 screens + 15 states with status and dependencies.
 
 **Blocked on business input:** the Executive Intelligence add-on price (blocks the whole billing build, spec'd in `docs/superpowers/specs/2026-08-10-billing-design.md`), and the positioning brief (blocks every marketing page beyond Home).
+
+**Two marketing claims were removed on the founder's instruction** in `c67c969` — a "three days" manual-effort comparison and "the feature no other platform has". If either was load-bearing in sales conversations, they need deliberate replacements rather than the current absence.
 
 **The 13 other Claude Design mockups** live in project `f6c4031e-c28e-450f-8ef1-353834d79b78` (read via the `DesignSync` MCP). `06 App Shell.dc.html` is the one that unblocks the other 38 app screens.

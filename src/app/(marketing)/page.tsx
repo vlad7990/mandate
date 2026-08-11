@@ -563,7 +563,11 @@ function Stack() {
             className="m-lede"
             style={{ marginTop: "1.25rem", maxWidth: "60ch" }}
           >
-            {`${MODULE_COUNT} specialised modules across three intelligence layers.`}
+            {/* The trailing space belongs INSIDE the literal. JSX strips
+                whitespace containing a newline between an expression
+                container and an adjacent text node, so without it this
+                rendered as "intelligence layers.Every layer reads". */}
+            {`${MODULE_COUNT} specialised modules across three intelligence layers. `}
             Every layer reads from the others — the system gets sharper
             the more you feed it.
           </p>
