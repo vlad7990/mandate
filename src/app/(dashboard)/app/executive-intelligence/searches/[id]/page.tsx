@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { isSampleId } from "@/lib/sample";
+import { SampleEiWorkspace } from "@/components/sample/sample-ei-workspace";
 import type { ExecutiveCompanyContext } from "@/lib/ai/executive-company-context-agent";
 import {
   DECISION_SUPPORT_DISCLAIMER,
@@ -78,6 +80,13 @@ export default async function ExecutiveSearchPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Sample ids never touch the database — see the note in the mandate
+  // route. Checked before the client is constructed.
+  if (isSampleId(id)) {
+    return <SampleEiWorkspace />;
+  }
+
   const supabase = await createServerSupabaseClient();
 
   const { data: search, error } = await supabase
