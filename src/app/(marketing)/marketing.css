@@ -1463,9 +1463,8 @@
   }
 }
 
-@media (max-width: 400px) {
-  .m-nav__wordmark { display: none; }
-}
+/* Superseded by the 360px rule at the end of this file — kept out of
+   the 400px band so the wordmark survives at iPhone 14/15/16 width. */
 
 /* ───────────────────────── Footer ───────────────────────────────── */
 
@@ -2936,4 +2935,148 @@
 .m-sim__retry:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* ── Mobile navigation ───────────────────────────────────────────
+   Below 1120px the desktop link row is hidden; this replaces it.
+   Above 1120px the whole control is removed from the layout and the
+   accessibility tree. */
+
+.m-mnav {
+  display: flex;
+  align-items: center;
+}
+
+.m-mnav__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  transition: border-color 200ms var(--ease-out);
+}
+
+.m-mnav__trigger:hover {
+  border-color: var(--line-strong);
+}
+
+.m-mnav__trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Two bars that cross into an X when open — no icon font, no extra
+   dependency, and the state is visible without relying on colour. */
+.m-mnav__bars {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 12px;
+}
+
+.m-mnav__bars span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: currentColor;
+  transition: transform 220ms var(--ease-out), top 220ms var(--ease-out);
+}
+
+.m-mnav__bars span:first-child { top: 2px; }
+.m-mnav__bars span:last-child { top: 8px; }
+
+.m-mnav__bars--open span:first-child { top: 5px; transform: rotate(45deg); }
+.m-mnav__bars--open span:last-child { top: 5px; transform: rotate(-45deg); }
+
+.m-mnav__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(8, 8, 13, 0.72);
+}
+
+.m-mnav__panel {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  max-height: calc(100dvh - 64px);
+  overflow-y: auto;
+  padding: 1rem var(--gutter) 1.5rem;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-elev-1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.m-mnav__panel[hidden] {
+  display: none;
+}
+
+.m-mnav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.m-mnav__link {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+.m-mnav__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.m-mnav__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.m-mnav__actions .m-btn {
+  flex: 1;
+  min-width: 10rem;
+}
+
+/* Desktop: the link row returns, so the disclosure is removed entirely
+   rather than merely hidden. */
+@media (min-width: 1120px) {
+  .m-mnav {
+    display: none;
+  }
+}
+
+/* The nav's own auth buttons are redundant once the panel carries them,
+   and they are what crowded the bar at small widths. */
+@media (max-width: 719px) {
+  .m-nav__actions {
+    display: none;
+  }
+}
+
+/* Was 400px, which hid the wordmark at iPhone 14/15/16 width and left
+   the brand as an unnamed blue tile. */
+@media (max-width: 360px) {
+  .m-nav__wordmark {
+    display: none;
+  }
 }

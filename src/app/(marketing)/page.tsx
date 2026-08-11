@@ -9,6 +9,7 @@ import { TerminalCursor } from "./_components/terminal-cursor";
 import { ParticleField } from "./_components/particle-field";
 import { DataStream } from "./_components/data-stream";
 import { TypewriterReveal } from "./_components/typewriter-reveal";
+import { MobileNav } from "./_components/mobile-nav";
 
 export const dynamic = "force-static";
 
@@ -84,6 +85,10 @@ function TopNav() {
             Request Access
           </Link>
         </div>
+
+        {/* Replaces the desktop link row below 1120px, where it is
+            display:none and previously had no substitute. */}
+        <MobileNav />
       </div>
     </header>
   );
