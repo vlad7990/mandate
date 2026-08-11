@@ -4,7 +4,6 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { isSampleId } from "@/lib/sample";
 import { SampleProjectDetail } from "@/components/sample/sample-project-detail";
 import {
-  AgentTiles,
   type AgentTileAction,
   type AgentTileKey,
   type AgentTileState,
@@ -30,9 +29,8 @@ import {
 } from "@/lib/metrics/types";
 import { type Tier } from "@/lib/ranking/tiers";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
-import { MastHead } from "@/components/ui/mast-head";
-import { LiveTick } from "@/components/ui/live-tick";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
+import { ProjectView, type ProjectVm, type Stage } from "./project-view";
 import {
   CandidateSearchPanel,
   type SearchCandidate,
@@ -97,6 +95,21 @@ const HEALTH_CHIP: Record<HealthStatus, ChipTone> = {
   stalled: "warn",
   at_risk: "danger",
 };
+
+/**
+ * The modules of a search, as a nav strip below the header. Labels only —
+ * they were icon + label ligatures, and the ligature put the literal string
+ * "view_kanban" in the DOM for a screen reader to read out.
+ */
+const PROJECT_MODULES: Array<{ href: (id: string) => string; label: string }> = [
+  { href: (id) => `/app/projects/${id}/candidates`, label: "Candidates" },
+  { href: (id) => `/app/projects/${id}/ranking`, label: "Rankings" },
+  { href: (id) => `/app/projects/${id}/metrics`, label: "Metrics" },
+  { href: (id) => `/app/projects/${id}/shortlist`, label: "Shortlist" },
+  { href: (id) => `/app/projects/${id}/feedback`, label: "Feedback" },
+  { href: (id) => `/app/projects/${id}/reports`, label: "Weekly Report" },
+  { href: (id) => `/app/projects/${id}/hiring-manager`, label: "HM Portal" },
+];
 
 function isAnalysisReady(row: ProjectRow): boolean {
   return Boolean(row.calibration_model?.role_title);
@@ -211,455 +224,235 @@ export default async function ProjectPage({
         ? "warn"
         : "neutral";
 
-  return (
-    <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
-      <ProjectPoller analysisReady={ready} />
+  // Stage-rail inputs. The comp draws nine fixed segments; these are the
+  // rows that can actually say whether a stage happened. Head-only counts —
+  // no rows come back.
+  const [
+    { count: queryCount },
+    { count: scoredCount },
+    { data: shortlist },
+    { count: offerCount },
+  ] = await Promise.all([
+    supabase
+      .from("boolean_queries")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", project.id),
+    supabase
+      .from("candidate_scores")
+      .select("candidate_id", { count: "exact", head: true })
+      .eq("project_id", project.id),
+    supabase
+      .from("shortlists")
+      .select("candidate_ids, submitted_at")
+      .eq("project_id", project.id)
+      .maybeSingle<{ candidate_ids: string[] | null; submitted_at: string | null }>(),
+    supabase
+      .from("candidates")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", project.id)
+      .in("pipeline_stage", ["offer", "hired"]),
+  ]);
 
-      <ProjectHero
-        ready={ready}
-        calibrated={calibrated}
-        title={project.title}
-        companyName={project.company_name}
-        oneLineInput={project.one_line_input}
-        status={projectStatus}
-        statusTone={statusTone}
-        projectId={project.id}
-      />
+  const researched = Boolean(company.industry || company.business_model);
+  const slateSize = shortlist?.candidate_ids?.length ?? 0;
+  const daysWithClient = daysSince(shortlist?.submitted_at ?? null);
 
-      {ready && <ProjectModuleNav projectId={project.id} />}
+  const stages: Stage[] = [
+    { label: "Intake", tone: ready ? "done" : "active" },
+    { label: "Research", tone: researched ? "done" : ready ? "active" : "todo" },
+    {
+      label: spec.hasFinal ? "Spec final" : spec.hasAny ? "Spec draft" : "Spec",
+      tone: spec.hasFinal ? "done" : spec.hasAny || spec.isGenerating ? "active" : "todo",
+    },
+    { label: "Calibrated", tone: calibrated ? "done" : ready ? "active" : "todo" },
+    { label: "Sourced", tone: (queryCount ?? 0) > 0 ? "done" : "todo" },
+    {
+      label: (scoredCount ?? 0) > 0 ? `${scoredCount} evaluated` : "Evaluated",
+      tone: (scoredCount ?? 0) > 0 ? "done" : "todo",
+      grow: 1.2,
+    },
+    {
+      label: slateSize > 0 ? `Shortlist ${slateSize}` : "Shortlist",
+      tone: slateSize > 0 ? "done" : "todo",
+    },
+    {
+      // A slate sitting with the client is the thing that stalls a search,
+      // so it says how long. Five days is the threshold the health module
+      // already treats as stale — not a number invented for the rail.
+      label:
+        daysWithClient === null
+          ? "With client"
+          : `With client · ${daysWithClient} day${daysWithClient === 1 ? "" : "s"}`,
+      tone:
+        daysWithClient === null ? "todo" : daysWithClient >= 5 ? "risk" : "done",
+      grow: daysWithClient === null ? 1 : 1.4,
+    },
+    {
+      label: (offerCount ?? 0) > 0 ? `${offerCount} at offer` : "Offer",
+      tone: (offerCount ?? 0) > 0 ? "done" : "todo",
+    },
+  ];
 
-      {project.recalibration_summary?.summary && (
-        <RecalibrationBanner
-          projectId={project.id}
-          summary={project.recalibration_summary}
-        />
-      )}
+  const weights = calibration.dimension_weights;
+  const stakeholder = primaryStakeholder(project.onboarding_responses);
 
-      {health && (
-        <WeeklyHealthCard projectId={project.id} health={health} />
-      )}
-
-      {health && (
-        <HealthSuggestionsPanel
-          projectId={project.id}
-          initial={project.health_suggestions}
-          healthStatus={health.status}
-        />
-      )}
-
-      <section className="space-y-3">
-        <MastHead
-          tone="primary"
-          icon="robot_2"
-          label="Agent Stack"
-          meta={
-            !ready ? (
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                Live analysis in progress
-              </span>
-            ) : (
-              <span className="tabular-nums">
-                4/4 agents · {calibrated ? "calibrated" : "calibration pending"}
-              </span>
-            )
-          }
-        />
-        <AgentTiles
-          states={tileStates(project, spec)}
-          actions={{ role_spec: specAction }}
-        />
+  const vm: ProjectVm = {
+    projectId: project.id,
+    title: project.title,
+    companyName: project.company_name,
+    oneLineInput: project.one_line_input,
+    statusLabel: projectStatus,
+    statusTone,
+    ready,
+    calibrated,
+    stages,
+    agentStates: tileStates(project, spec),
+    specAction,
+    // Four agents run on this surface. The comp badges seventeen.
+    agentMeta: ready
+      ? `4 agents · ${calibrated ? "calibrated" : "calibration pending"}`
+      : "Live analysis in progress",
+    modules: ready
+      ? PROJECT_MODULES.map((m) => ({ href: m.href(project.id), label: m.label }))
+      : [],
+    roleFields: [
+      { label: "Title", value: calibration.role_title ?? "—" },
+      { label: "Seniority", value: calibration.role_structure?.seniority ?? "—" },
+      { label: "Function", value: calibration.role_structure?.function ?? "—" },
+    ],
+    companyFields: [
+      { label: "Name", value: company.company_name ?? project.company_name },
+      { label: "Industry", value: company.industry ?? "—" },
+      { label: "Business model", value: company.business_model ?? "—" },
+    ],
+    inferredScope: calibration.inferred_scope ?? null,
+    weights: weights
+      ? DIMENSION_KEYS.map((k: DimensionKey) => ({
+          key: k,
+          label: k,
+          value: Math.max(0, Math.min(10, weights[k] ?? 0)),
+        }))
+      : [],
+    weightsRationale: calibration.weights_rationale ?? null,
+    health: health
+      ? {
+          statusLabel: HEALTH_LABELS[health.status],
+          statusTone: HEALTH_CHIP[health.status],
+          href: `/app/projects/${project.id}/metrics`,
+          kpis: [
+            {
+              label: "Sourced",
+              value: String(health.candidatesThisWeek).padStart(2, "0"),
+              unit: "this week",
+            },
+            {
+              label: "Feedback",
+              value: String(health.feedbackThisWeek).padStart(2, "0"),
+              unit: "this week",
+            },
+            {
+              label: "Rank Δ",
+              value: String(health.rankingChangesThisWeek).padStart(2, "0"),
+              unit: "changes 7d",
+            },
+            {
+              label: "Last activity",
+              value: health.lastActivityAt ? formatRelative(health.lastActivityAt) : "—",
+              unit: `${health.totalCandidates} total`,
+            },
+          ],
+          alerts: health.alerts.map((a: HealthAlert) => ({
+            label: a.label,
+            critical: a.severity === "critical",
+          })),
+        }
+      : null,
+    missingInformation:
+      ready && Array.isArray(calibration.missing_information)
+        ? calibration.missing_information
+        : [],
+    banners: (
+      <>
+        {project.recalibration_summary?.summary && (
+          <RecalibrationBanner
+            projectId={project.id}
+            summary={project.recalibration_summary}
+          />
+        )}
         {spec.hasFinal && <BuildSourcingCta projectId={project.id} />}
-      </section>
+      </>
+    ),
+    panels: (
+      <>
+        {health && (
+          <HealthSuggestionsPanel
+            projectId={project.id}
+            initial={project.health_suggestions}
+            healthStatus={health.status}
+          />
+        )}
+        {ready && (
+          <CandidateSearchPanel
+            projectId={project.id}
+            projectTitle={project.title}
+            candidates={searchCandidates}
+          />
+        )}
+        {ready && (
+          <ClientIntelligencePanel
+            projectId={project.id}
+            initial={project.client_psychology}
+            feedbackCount={feedbackCount ?? 0}
+          />
+        )}
+        {ready && (
+          <HMIntelligencePanel
+            projectId={project.id}
+            hmName={stakeholder?.name ?? null}
+            hmRole={stakeholder?.role ?? null}
+            initial={project.company_context?.hm_intelligence ?? null}
+          />
+        )}
+        {ready && (
+          <CompanyIntelligencePanel
+            projectId={project.id}
+            companyName={project.company_name}
+            initial={project.company_context?.intelligence_report ?? null}
+          />
+        )}
+        {ready && (
+          <CultureIntelligencePanel
+            projectId={project.id}
+            initial={project.company_context?.culture_profile ?? null}
+            initialContext={
+              (project.company_context as { culture_context?: string | null })
+                ?.culture_context ?? null
+            }
+            notes={normaliseAnnotationMap(
+              (project.company_context as { culture_notes?: unknown })?.culture_notes
+            )}
+            flags={normaliseFlagArray(
+              (project.company_context as { culture_flags?: unknown })?.culture_flags
+            )}
+          />
+        )}
+      </>
+    ),
+  };
 
-      {ready && (
-        <CandidateSearchPanel
-          projectId={project.id}
-          projectTitle={project.title}
-          candidates={searchCandidates}
-        />
-      )}
-
-      {ready && (
-        <ClientIntelligencePanel
-          projectId={project.id}
-          initial={project.client_psychology}
-          feedbackCount={feedbackCount ?? 0}
-        />
-      )}
-
-      {ready && (
-        <HMIntelligencePanel
-          projectId={project.id}
-          hmName={primaryStakeholder(project.onboarding_responses)?.name ?? null}
-          hmRole={primaryStakeholder(project.onboarding_responses)?.role ?? null}
-          initial={project.company_context?.hm_intelligence ?? null}
-        />
-      )}
-
-      {ready && (
-        <CompanyIntelligencePanel
-          projectId={project.id}
-          companyName={project.company_name}
-          initial={project.company_context?.intelligence_report ?? null}
-        />
-      )}
-
-      {ready && (
-        <CultureIntelligencePanel
-          projectId={project.id}
-          initial={project.company_context?.culture_profile ?? null}
-          initialContext={
-            (project.company_context as { culture_context?: string | null })
-              ?.culture_context ?? null
-          }
-          notes={normaliseAnnotationMap(
-            (project.company_context as { culture_notes?: unknown })
-              ?.culture_notes
-          )}
-          flags={normaliseFlagArray(
-            (project.company_context as { culture_flags?: unknown })
-              ?.culture_flags
-          )}
-        />
-      )}
-
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <RoleSummaryCard ready={ready} calibration={calibration} />
-        <CompanySummaryCard ready={ready} company={company} />
-      </section>
-
-      {calibrated && <DimensionWeightsCard calibration={calibration} />}
-
-      {ready && Array.isArray(calibration.missing_information) && calibration.missing_information.length > 0 && (
-        <section className="bg-tertiary-container/10 border border-tertiary/30 px-4 py-3 space-y-3">
-          <h3 className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest flex items-center gap-2">
-            <span
-              className="material-symbols-outlined text-[14px]"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-              aria-hidden
-            >
-              psychology
-            </span>
-            Information Required ·{" "}
-            <span className="tabular-nums">
-              {String(calibration.missing_information.length).padStart(2, "0")}
-            </span>
-          </h3>
-          <ul className="space-y-1.5 list-disc list-inside text-on-tertiary-container text-body-main">
-            {calibration.missing_information.map((item, i) => (
-              <li key={i}>{item}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
+  return (
+    <>
+      <ProjectPoller analysisReady={ready} />
+      <ProjectView vm={vm} />
+    </>
   );
 }
 
-/**
- * The first stakeholder captured in onboarding is treated as the
- * primary hiring manager. Returns null when nothing was captured —
- * the HM panel renders an empty state in that case.
- */
 function primaryStakeholder(
   onboarding: { stakeholders?: Stakeholder[] } | null
 ): Stakeholder | null {
   const list = onboarding?.stakeholders ?? [];
   return list.find((s) => s && typeof s.name === "string" && s.name.trim()) ?? null;
-}
-
-function ProjectHero({
-  ready,
-  calibrated,
-  title,
-  companyName,
-  oneLineInput,
-  status,
-  statusTone,
-  projectId,
-}: {
-  ready: boolean;
-  calibrated: boolean;
-  title: string;
-  companyName: string;
-  oneLineInput: string;
-  status: string;
-  statusTone: ChipTone;
-  projectId: string;
-}) {
-  return (
-    <header className="space-y-3">
-      <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-2 flex-wrap">
-        <Link
-          href="/app/home"
-          prefetch={false}
-          className="hover:text-on-surface transition-colors focus-visible:outline-none focus-visible:text-primary focus-visible:underline focus-visible:underline-offset-2"
-        >
-          Mandate
-        </Link>
-        <span className="text-outline-variant" aria-hidden>
-          /
-        </span>
-        <span className="text-primary">Project</span>
-      </div>
-
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="space-y-2 min-w-0 flex-1">
-          {ready ? (
-            <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
-              {title}
-            </h1>
-          ) : (
-            <div
-              className="h-9 w-72 bg-surface-container-high animate-pulse"
-              role="status"
-              aria-label="Loading mandate title"
-            />
-          )}
-          <div className="flex items-center gap-3 flex-wrap font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
-            <StatusChip tone={statusTone} dot pulse={status === "active"}>
-              {status}
-            </StatusChip>
-            {ready ? (
-              <span className="text-on-surface-variant">{companyName}</span>
-            ) : (
-              <div
-                className="h-3 w-32 bg-surface-container-high animate-pulse inline-block align-middle"
-                role="status"
-                aria-label="Loading company"
-              />
-            )}
-            <span className="text-outline-variant" aria-hidden>
-              ·
-            </span>
-            <span className="text-outline truncate max-w-[40ch]">
-              {oneLineInput}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <LiveTick nowOnServer label="Snapshot" />
-          {ready && (
-            <Link
-              href={`/app/projects/${projectId}/onboarding`}
-              prefetch={false}
-              className={
-                calibrated
-                  ? "px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  : "px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              }
-            >
-              <span
-                className="material-symbols-outlined text-[14px]"
-                aria-hidden
-              >
-                tune
-              </span>
-              {calibrated ? "Re-run Calibration" : "Start Onboarding"}
-            </Link>
-          )}
-          {ready && (
-            <Link
-              href={`/app/projects/${projectId}/hiring-manager`}
-              prefetch={false}
-              className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              <span
-                className="material-symbols-outlined text-[14px]"
-                aria-hidden
-              >
-                share
-              </span>
-              Share with HM
-            </Link>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function RoleSummaryCard({
-  ready,
-  calibration,
-}: {
-  ready: boolean;
-  calibration: Partial<CalibrationModel>;
-}) {
-  return (
-    <article className="bg-surface-container-low border border-outline-variant">
-      <header className="px-4 py-2.5 border-b border-outline-variant bg-surface-container">
-        <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-[14px]"
-            aria-hidden
-          >
-            badge
-          </span>
-          Role Calibration
-        </h3>
-      </header>
-      <div className="p-4">
-        {ready ? (
-          <dl className="space-y-2.5">
-            <Field label="Title" value={calibration.role_title} />
-            <Field label="Seniority" value={calibration.role_structure?.seniority} />
-            <Field label="Function" value={calibration.role_structure?.function} />
-            <FieldBlock label="Inferred Scope" value={calibration.inferred_scope} />
-          </dl>
-        ) : (
-          <SkeletonRows rows={4} />
-        )}
-      </div>
-    </article>
-  );
-}
-
-function CompanySummaryCard({
-  ready,
-  company,
-}: {
-  ready: boolean;
-  company: Partial<CompanyContext>;
-}) {
-  return (
-    <article className="bg-surface-container-low border border-outline-variant">
-      <header className="px-4 py-2.5 border-b border-outline-variant bg-surface-container">
-        <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-[14px]"
-            aria-hidden
-          >
-            domain
-          </span>
-          Company Context
-        </h3>
-      </header>
-      <div className="p-4">
-        {ready ? (
-          <dl className="space-y-2.5">
-            <Field label="Name" value={company.company_name} />
-            <Field label="Industry" value={company.industry} />
-            <Field label="Business Model" value={company.business_model} />
-          </dl>
-        ) : (
-          <SkeletonRows rows={3} />
-        )}
-      </div>
-    </article>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string | undefined }) {
-  return (
-    <div className="grid grid-cols-[7rem_1fr] items-baseline gap-3">
-      <dt className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-        {label}
-      </dt>
-      <dd className="font-mono-data text-body-main text-on-surface text-right truncate">
-        {value ?? "—"}
-      </dd>
-    </div>
-  );
-}
-
-function FieldBlock({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | undefined;
-}) {
-  return (
-    <div className="space-y-1.5 pt-2.5 border-t border-outline-variant/40">
-      <dt className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-        {label}
-      </dt>
-      <dd className="text-on-surface text-body-main leading-relaxed">
-        {value ?? "—"}
-      </dd>
-    </div>
-  );
-}
-
-function SkeletonRows({ rows }: { rows: number }) {
-  return (
-    <div className="space-y-3" role="status" aria-label="Loading content">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="space-y-1.5">
-          <div className="h-3 w-20 bg-surface-container-high animate-pulse" />
-          <div
-            className="h-4 bg-surface-container-high animate-pulse"
-            style={{ width: `${50 + ((i * 17) % 40)}%` }}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function DimensionWeightsCard({
-  calibration,
-}: {
-  calibration: Partial<CalibrationModel>;
-}) {
-  const weights = calibration.dimension_weights;
-  if (!weights) return null;
-  return (
-    <section className="bg-surface-container-low border border-outline-variant">
-      <header className="px-4 py-2.5 border-b border-outline-variant bg-surface-container flex items-center justify-between gap-2 flex-wrap">
-        <h3 className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-[14px]"
-            aria-hidden
-          >
-            tune
-          </span>
-          Calibration Weights
-        </h3>
-        <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider tabular-nums">
-          0–10 scale · multi-dimension
-        </span>
-      </header>
-      <div className="p-4 grid grid-cols-2 md:grid-cols-5 gap-4">
-        {DIMENSION_KEYS.map((k: DimensionKey) => {
-          const v = Math.max(0, Math.min(10, weights[k] ?? 0));
-          return (
-            <div key={k} className="space-y-2">
-              <div className="flex items-baseline justify-between">
-                <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-                  {k}
-                </span>
-                <span className="font-h2 text-h2 text-primary tabular-nums leading-none">
-                  {v}
-                </span>
-              </div>
-              <div
-                className="h-1.5 bg-surface-container-highest overflow-hidden"
-                role="meter"
-                aria-valuemin={0}
-                aria-valuemax={10}
-                aria-valuenow={v}
-                aria-label={`${k} weight`}
-              >
-                <div
-                  className="h-full bg-primary-container"
-                  style={{ width: `${(v / 10) * 100}%` }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      {calibration.weights_rationale && (
-        <p className="px-4 pb-4 text-body-main text-on-surface-variant border-t border-outline-variant/40 pt-4">
-          {calibration.weights_rationale}
-        </p>
-      )}
-    </section>
-  );
 }
 
 function RecalibrationBanner({
@@ -718,6 +511,16 @@ function RecalibrationBanner({
   );
 }
 
+/** Whole days since an instant, or null when there is no instant. Kept out
+ * of the component body: "now" is impure, and the lint rule is right that a
+ * render should not read the clock inline. */
+function daysSince(iso: string | null): number | null {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.floor((Date.now() - t) / 86_400_000);
+}
+
 function formatRelative(iso: string): string {
   const t = new Date(iso).getTime();
   const diffMs = Date.now() - t;
@@ -767,173 +570,6 @@ function BuildSourcingCta({ projectId }: { projectId: string }) {
         </span>
       </div>
     </Link>
-  );
-}
-
-function WeeklyHealthCard({
-  projectId,
-  health,
-}: {
-  projectId: string;
-  health: ProjectHealthSummary;
-}) {
-  return (
-    <Link
-      href={`/app/projects/${projectId}/metrics`}
-      prefetch={false}
-      className="block bg-surface-container-low border border-outline-variant hover:border-primary transition-colors group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-    >
-      <header className="px-4 py-2.5 border-b border-outline-variant bg-surface-container flex items-center justify-between gap-2 flex-wrap">
-        <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-[14px]"
-            aria-hidden
-          >
-            monitor_heart
-          </span>
-          This Week
-        </h3>
-        <div className="flex items-center gap-2">
-          <StatusChip
-            tone={HEALTH_CHIP[health.status]}
-            dot
-            pulse={health.status === "at_risk"}
-          >
-            {HEALTH_LABELS[health.status]}
-          </StatusChip>
-          <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 group-hover:translate-x-0.5 transition-transform">
-            Open metrics
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              arrow_forward
-            </span>
-          </span>
-        </div>
-      </header>
-      <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-outline-variant/40">
-        <WeeklyKpi
-          label="Sourced"
-          value={String(health.candidatesThisWeek).padStart(2, "0")}
-          unit="this week"
-        />
-        <WeeklyKpi
-          label="Feedback"
-          value={String(health.feedbackThisWeek).padStart(2, "0")}
-          unit="this week"
-        />
-        <WeeklyKpi
-          label="Rank Δ"
-          value={String(health.rankingChangesThisWeek).padStart(2, "0")}
-          unit="changes 7d"
-        />
-        <WeeklyKpi
-          label="Last activity"
-          value={
-            health.lastActivityAt
-              ? formatRelative(health.lastActivityAt)
-              : "—"
-          }
-          unit={`${health.totalCandidates} total`}
-        />
-      </div>
-      {health.alerts.length > 0 && (
-        <div className="px-4 py-2.5 border-t border-outline-variant/40 flex flex-wrap gap-1.5">
-          {health.alerts.map((alert) => (
-            <HealthAlertChip key={alert.code} alert={alert} />
-          ))}
-        </div>
-      )}
-    </Link>
-  );
-}
-
-function WeeklyKpi({
-  label,
-  value,
-  unit,
-}: {
-  label: string;
-  value: string;
-  unit: string;
-}) {
-  return (
-    <div className="px-4 py-3 space-y-1">
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest block">
-        {label}
-      </span>
-      <span className="font-h2 text-h2 text-on-surface tabular-nums leading-none block">
-        {value}
-      </span>
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest block">
-        {unit}
-      </span>
-    </div>
-  );
-}
-
-function HealthAlertChip({ alert }: { alert: HealthAlert }) {
-  return (
-    <StatusChip
-      tone={alert.severity === "critical" ? "danger" : "warn"}
-      intensity="soft"
-    >
-      <span className="sr-only">
-        {alert.severity === "critical" ? "Critical: " : "Warning: "}
-      </span>
-      {alert.label}
-    </StatusChip>
-  );
-}
-
-/**
- * Module nav strip that lives below the project header. The header used to
- * carry six CTA buttons and a primary action; that crowded the hero info.
- * Splitting nav into its own strip lets each link breathe and signals
- * "modules of the search" rather than "buttons attached to the title".
- *
- * Server component — no client interactivity. Active-state highlighting
- * happens at the route level (each module has its own page) so this strip
- * is purely outbound.
- */
-const PROJECT_MODULES: Array<{
-  href: (id: string) => string;
-  label: string;
-  icon: string;
-}> = [
-  { href: (id) => `/app/projects/${id}/candidates`, label: "Candidates", icon: "groups" },
-  { href: (id) => `/app/projects/${id}/ranking`, label: "Rankings", icon: "leaderboard" },
-  { href: (id) => `/app/projects/${id}/metrics`, label: "Metrics", icon: "analytics" },
-  { href: (id) => `/app/projects/${id}/shortlist`, label: "Shortlist", icon: "view_kanban" },
-  { href: (id) => `/app/projects/${id}/feedback`, label: "Feedback", icon: "rate_review" },
-  { href: (id) => `/app/projects/${id}/reports`, label: "Weekly Report", icon: "summarize" },
-  { href: (id) => `/app/projects/${id}/hiring-manager`, label: "HM Portal", icon: "share" },
-];
-
-function ProjectModuleNav({ projectId }: { projectId: string }) {
-  return (
-    <nav
-      aria-label="Project modules"
-      className="bg-surface-container-low border border-outline-variant"
-    >
-      <ul className="flex divide-x divide-outline-variant overflow-x-auto">
-        {PROJECT_MODULES.map((mod) => (
-          <li key={mod.label} className="flex-1 min-w-[120px]">
-            <Link
-              href={mod.href(projectId)}
-              prefetch={false}
-              className="flex items-center justify-center gap-2 px-4 py-3 font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest hover:text-primary hover:bg-surface-container transition-colors focus-visible:outline-none focus-visible:bg-surface-container focus-visible:text-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
-            >
-              <span
-                className="material-symbols-outlined text-[14px]"
-                aria-hidden
-              >
-                {mod.icon}
-              </span>
-              {mod.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
   );
 }
 

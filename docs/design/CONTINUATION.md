@@ -4,9 +4,9 @@
 context reset without re-deriving anything. Paste the block in §1 into a
 fresh session and it will pick up exactly where the last one stopped.
 
-**Updated:** 2026-08-11 · `main` @ `eb60bc8`, **two commits ahead of
-`origin/main` and not pushed** — the EI report compiler and the EI
-workspace restyle. Production does not reflect them yet.
+**Updated:** 2026-08-11 · `main` @ `0d94879`, pushed. Plus uncommitted
+work on Project Detail (page chrome restyled to comp 08) awaiting
+approval to commit.
 
 ---
 
@@ -91,7 +91,7 @@ record why in a comment.
 | 06 App Shell | `(dashboard)/layout.tsx` + sidebar/topbar | ✅ done, deployed |
 | 07 Executive Dashboard | `/app/home` | ✅ done, deployed |
 | 09 Candidate Portfolio | `/app/candidates` | ✅ done, deployed |
-| 08 Project Detail | `/app/projects/[id]` | ⚠️ sample route only |
+| 08 Project Detail | `/app/projects/[id]` | ✅ chrome restyled · 6 panels left |
 | 10 Candidate Detail | `/app/projects/[id]/candidates/[candidateId]` | ⚠️ sample route only |
 | 11 EI Workspace | `/app/executive-intelligence/searches/[id]` | ✅ real page restyled |
 | 12 EI Report | `…/searches/[id]/candidates/[cid]/report` | ✅ compiles for real searches |
@@ -105,8 +105,9 @@ build, types and tests are green; nobody has looked at the pixels. This
 is the single largest risk in the project right now — the shell is
 inherited by every screen, so a mistake in it propagates.
 
-The exceptions are the EI report and the EI workspace. Both were
-verified at 1440 and 390 — the report also under print emulation — by
+The exceptions are the EI report, the EI workspace and the Project
+Detail chrome. All were verified at 1440 and 390 — the report also under
+print emulation — by
 temporarily mounting their components on a public route with fixture
 data, screenshotting, then deleting the route and reverting
 `src/proxy.ts`. **That technique works and is the pattern for the
@@ -154,44 +155,32 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
       fixes came out of looking at it — weight bars scale to the heaviest
       competency (six weights summing to 100 read as underlines against a
       100% track) and exactly one chain step carries the accent border.
-- [ ] **Restyle the real Project Detail** (1017 lines) to comp 08.
-      Target: `src/components/sample/sample-project-detail.tsx`.
-      **Scoped 2026-08-11 — read this before starting; it is not the
-      same shape of job as the EI workspace.**
+- [x] **Restyle the real Project Detail** to comp 08. ✅ 2026-08-11 —
+      **page chrome done; the six client panels are not.** `page.tsx`
+      dropped from 1017 to 245 lines and now only queries and assembles a
+      `ProjectVm`; `project-view.tsx` owns the pixels. Verified at 1440
+      and 390 from fixtures.
+      The stage rail is real: nine segments computed from `job_specs`,
+      `boolean_queries`, `candidate_scores`, `shortlists.submitted_at`
+      and pipeline stages. Three fixes came from looking at it — the
+      header actions were `shrink-0` and pushed the page into horizontal
+      scroll at 390; nine rail segments truncate to two letters each at
+      that width, so narrow screens get the current stage in words and a
+      position instead; and "Information required" moved to the left
+      column, which balanced the two columns.
+      **Still open:** `CandidateSearchPanel` and the four intelligence
+      panels render full-width below the grid in the older idiom. Restyle
+      them one at a time — they are the rest of this task.
 
-      *What the page actually is.* A single vertical stack of full-width
-      sections: hero, module nav, recalibration banner, weekly health
-      card, `HealthSuggestionsPanel`, agent stack (`AgentTiles` +
-      `BuildSourcingCta`), `CandidateSearchPanel`, and four intelligence
-      panels (`ClientIntelligencePanel`, `HMIntelligencePanel`,
-      `CompanyIntelligencePanel`, `CultureIntelligencePanel`), then role
-      and company summary cards, `DimensionWeightsCard`, and a
-      missing-information list. Everything from the hero down to the
-      summary cards is defined inside `page.tsx`; the six panels are
-      separate client components with their own idiom.
+- [ ] **Restyle the six client panels on Project Detail.** They now sit
+      in `vm.panels`, full-width below the grid, and still carry the old
+      `MastHead`/bordered-box idiom: `candidate-search-panel.tsx`,
+      `client-intelligence-panel.tsx`, `hm-intelligence-panel.tsx`,
+      `company-intelligence-panel.tsx`, `culture-intelligence-panel.tsx`,
+      `health-suggestions-panel.tsx`. The `Section` shell in
+      `project-view.tsx` is the target; each is a client component with
+      its own state, so do them one at a time.
 
-      *Why it is not a straight port.* Comp 08 is a two-column grid
-      (agent stack + context + candidates left; calibrated bar,
-      must-haves, search health right). The four intelligence panels and
-      `CandidateSearchPanel` are large interactive client components — a
-      two-column layout has nowhere to put them, and restyling them is a
-      second job. Plan for: page chrome and the server-rendered cards
-      move into the comp's language and grid; the client panels stay
-      full-width below it and get restyled after, one at a time.
-
-      *The stage rail needs data that is not queried yet.* The comp's
-      rail (Intake → Research → Spec → Calibrated → Sourced → evaluated →
-      Shortlist → with client → Offer) is fixtures. `page.tsx` currently
-      knows `ready`, `calibrated`, the `job_specs` summary, health, and
-      the feedback count. Sourced / evaluated / shortlist / offer need
-      counts from `boolean_queries`, `candidate_scores`, and whatever
-      backs `/shortlist`. Check the live schema before drawing that rail
-      — do not fabricate a stage the data cannot support.
-
-      *Follow the pattern.* Split into `page.tsx` (queries → view model)
-      and `project-view.tsx` (props in), the way the EI workspace and the
-      EI report are split. That is what makes it verifiable from
-      fixtures without a session.
 - [ ] **Restyle the real Candidate Detail** (1326 lines) to comp 10.
       Target: `sample-candidate-detail.tsx`.
 - [ ] **~425 Material Symbols ligatures** → inline SVG from
