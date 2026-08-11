@@ -4,8 +4,9 @@
 context reset without re-deriving anything. Paste the block in §1 into a
 fresh session and it will pick up exactly where the last one stopped.
 
-**Updated:** 2026-08-11 · `main` @ `5a8d480` pushed; one commit of EI
-sample work on top.
+**Updated:** 2026-08-11 · `main` @ `8328dda` committed; one further
+commit of EI report work on top. All seven app comps now have their
+design rendered somewhere.
 
 ---
 
@@ -71,7 +72,7 @@ record why in a comment.
 | 08 Project Detail | `/app/projects/[id]` | ⚠️ sample route only |
 | 10 Candidate Detail | `/app/projects/[id]/candidates/[candidateId]` | ⚠️ sample route only |
 | 11 EI Workspace | `/app/executive-intelligence/searches/[id]` | ⚠️ sample route only |
-| 12 EI Report | new route | ❌ not started |
+| 12 EI Report | `…/searches/[id]/candidates/[cid]/report` | ⚠️ sample route only |
 
 Marketing (`/`, `/platform`, `/executive-intelligence`, `/solutions`,
 `/pricing`) is complete and live.
@@ -86,9 +87,12 @@ screen, so a mistake in it propagates.
 
 ## 4. Task list, in order
 
-- [ ] **12 EI Report** — new route, comp not yet read. Compiled only
-      from approved artifacts, with a section dedicated to where the
-      evidence is thin.
+- [ ] **Compile the EI report for real searches.** The route exists and
+      the sample renders in full; a real search gets a gate that names
+      what is missing. Needs the approved success profile, interview plan
+      and assessment joined, with coverage recomputed server-side. This
+      document goes to a client — verify it against a real search before
+      trusting it.
 - [ ] **Restyle the real EI Workspace** (420 lines) to comp 11. Target
       design: `src/components/sample/sample-ei-workspace.tsx`. Smallest
       of the three real-page restyles — do this one first to establish
