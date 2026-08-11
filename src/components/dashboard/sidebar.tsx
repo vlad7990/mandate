@@ -3,40 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { NAV, isNavItemActive } from "./nav-model";
 import { UserMenu } from "./user-menu";
-
-type NavItem = {
-  href: string;
-  label: string;
-  icon: string;
-  /** Treat any path that starts with this as active. */
-  matchPrefix?: boolean;
-  /** Optional badge count rendered below the label. */
-  badgeKey?: "network";
-};
-
-/** The Projects entry lands on /app/home but owns /app/projects/* too. */
-const PROJECTS_HREF = "/app/home";
-
-const NAV: NavItem[] = [
-  { href: PROJECTS_HREF, label: "Projects", icon: "folder_open" },
-  { href: "/app/candidates", label: "Candidates", icon: "groups" },
-  {
-    href: "/app/candidates/network",
-    label: "Network",
-    icon: "hub",
-    badgeKey: "network",
-  },
-  { href: "/app/candidates/search", label: "AI Search", icon: "neurology" },
-  {
-    href: "/app/executive-intelligence",
-    label: "Exec Intel",
-    icon: "workspace_premium",
-    matchPrefix: true,
-  },
-  { href: "/app/analytics", label: "Analytics", icon: "analytics", matchPrefix: true },
-  { href: "/app/settings", label: "Settings", icon: "settings", matchPrefix: true },
-];
 
 type SidebarProps = {
   user: {
@@ -70,19 +38,7 @@ export function Sidebar({ user, badges }: SidebarProps) {
 
       <div className="flex flex-col gap-2 flex-1 w-full items-center">
         {NAV.map((item) => {
-          // The first branch used to test `item.href === "/"`, which no
-          // NAV item has — so it never ran, and browsing a project left
-          // every nav item unlit. The Projects entry points at /app/home
-          // but owns the /app/projects/* tree, so it claims both.
-          const owns =
-            item.href === PROJECTS_HREF
-              ? pathname === PROJECTS_HREF ||
-                pathname === "/app/projects" ||
-                pathname.startsWith("/app/projects/")
-              : item.matchPrefix
-                ? pathname === item.href || pathname.startsWith(item.href + "/")
-                : pathname === item.href;
-          const active = owns;
+          const active = isNavItemActive(item, pathname);
 
           return (
             <Link
