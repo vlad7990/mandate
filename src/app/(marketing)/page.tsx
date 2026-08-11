@@ -6,8 +6,6 @@ import { ThreeCircleAlignment } from "./_components/three-circle-alignment";
 import { CountUp } from "./_components/count-up";
 import { ScrollProgress } from "./_components/scroll-progress";
 import { TerminalCursor } from "./_components/terminal-cursor";
-import { ParticleField } from "./_components/particle-field";
-import { DataStream } from "./_components/data-stream";
 import { TypewriterReveal } from "./_components/typewriter-reveal";
 import { MobileNav } from "./_components/mobile-nav";
 
@@ -104,9 +102,6 @@ function Hero() {
       className="m-hero m-section m-section--gap-tight-bottom"
       style={{ position: "relative" }}
     >
-      <div className="m-hero-glow" aria-hidden />
-      <div className="m-hero-scan" aria-hidden />
-      <ParticleField />
       <span className="m-section__numeral" aria-hidden>
         00
       </span>
@@ -316,7 +311,6 @@ function Simulator() {
       className="m-section m-section--gap-tight-bottom"
       style={{ scrollMarginTop: "2rem" }}
     >
-      <DataStream />
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
         02
       </span>
@@ -1132,8 +1126,6 @@ function CtaFooter() {
       <span className="m-section__numeral" aria-hidden>
         10
       </span>
-      <div className="m-cta-bg" aria-hidden />
-      <div className="m-hero-glow" aria-hidden style={{ opacity: 0.5 }} />
       <div
         className="m-container"
         style={{

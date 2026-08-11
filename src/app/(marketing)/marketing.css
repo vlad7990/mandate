@@ -3080,3 +3080,108 @@
     display: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESTRAINT PASS
+
+   The file header commits to "no neon glow, no decorative clutter",
+   then shipped 20 infinite animations and 18 zero-offset glows. A
+   critique measured ~43 concurrently running animations on the live
+   page — particles, a matrix rain, radar pings, sparkles, a rotating
+   conic gradient, pulsing buttons. Nothing ever held still, and it is
+   what made the surface read as generic AI-SaaS rather than the
+   executive instrument the positioning claims.
+
+   This block ends the decorative motion. It is appended last so it
+   wins on cascade order without hunting every original declaration.
+
+   KEPT deliberately: the simulator caret and typewriter cursor (they
+   signal a live system), the reveal-on-scroll transitions (finite,
+   they aid comprehension), and the status dot (small, one property).
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Kill the decorative loops ───────────────────────────────────── */
+
+.m-radar__ring,
+.m-radar__sweep,
+.m-price--featured,
+.m-tri-rotor,
+.m-tri-circle,
+.m-sim__bar-fill > span,
+.m-card--danger,
+.m-card--warn,
+.m-stream,
+.m-particles,
+.m-ticker__track,
+.m-btn--breathe,
+.m-btn--gradient-border,
+.m-btn--gradient-border::before,
+.m-display--shimmer {
+  animation: none !important;
+}
+
+/* The persistent grid stays as brand texture, but it stops drifting —
+   an 80s loop nothing can perceive is still a compositing cost. */
+.marketing-grid {
+  animation: none !important;
+}
+
+/* ── Kill the zero-offset glows ──────────────────────────────────── */
+
+/* Buttons keep hover feedback through border and transform, not a
+   36px halo. */
+.m-btn:hover {
+  box-shadow: none;
+}
+
+.m-particles__dot--v1,
+.m-particles__dot--v2,
+.m-particles__dot--v3,
+.m-stat-rail__value,
+.m-typewriter-cursor,
+.m-nav__live-dot,
+.m-hero-kicker-dot {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Featured pricing tier: an accent border is enough to mark it. The
+   60px blur + colored glow was the loudest object in the section. */
+.m-price--featured {
+  box-shadow: none !important;
+}
+
+/* ── Soften the thin-border + wide-shadow pattern ────────────────
+   1px border with a 24px blur on every card is the single most
+   recognisable "generated dark SaaS" tell. Cards keep their border and
+   surface; the halo goes. */
+
+.m-card,
+.m-price,
+.m-sim,
+.m-card--shimmer {
+  box-shadow: none;
+}
+
+/* ── Remove the decorative gradients ─────────────────────────────── */
+
+.m-hero-glow,
+.m-hero-scan,
+.m-cta-bg {
+  display: none !important;
+}
+
+/* Stragglers the class-based selectors above missed: the radar rings
+   are `circle` children inside the SVG, and tri-pulse rides .m-tri-svg
+   itself. Both are ambient decoration on a diagram that should be
+   readable and still. */
+.m-tri-radar circle,
+.m-tri-svg {
+  animation: none !important;
+}
+
+/* Last zero-offset glow on the page. The dot still reads as live via
+   its colour and the blink; it does not need a halo. */
+.m-sim__live-dot {
+  box-shadow: none !important;
+}
