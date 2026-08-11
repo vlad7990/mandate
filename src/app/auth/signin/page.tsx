@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { signInAction } from "./actions";
+import {
+  IconArrowRight,
+  IconAtSign,
+  IconLock,
+  IconNetwork,
+} from "@/components/icons";
 
 type SearchParams = Promise<{
   error?: string;
@@ -70,9 +76,10 @@ export default async function SignInPage({
                 Email Address
               </label>
               <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">
-                  alternate_email
-                </span>
+                <IconAtSign
+                  size={16}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                />
                 <input
                   id="email"
                   name="email"
@@ -102,9 +109,10 @@ export default async function SignInPage({
                 </span>
               </div>
               <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">
-                  lock
-                </span>
+                <IconLock
+                  size={16}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                />
                 <input
                   id="password"
                   name="password"
@@ -122,9 +130,7 @@ export default async function SignInPage({
               className="w-full bg-primary-container text-on-primary-container py-3 rounded hover:brightness-110 active:scale-[0.98] transition-all flex justify-center items-center gap-2 group font-h2 text-body-main"
             >
               Sign In
-              <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
-                arrow_forward
-              </span>
+              <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
             </button>
           </form>
 
@@ -143,7 +149,7 @@ export default async function SignInPage({
             className="w-full bg-surface-container-lowest border border-outline-variant text-on-surface py-3 rounded transition-colors flex justify-center items-center gap-2 group opacity-60 cursor-not-allowed font-body-main"
             title="Enterprise SSO is coming soon."
           >
-            <span className="material-symbols-outlined text-primary text-[20px]">hub</span>
+            <IconNetwork size={17} className="text-primary" />
             Continue with Enterprise SSO
           </button>
 
@@ -175,7 +181,6 @@ export default async function SignInPage({
           </span>
           <span className="opacity-30">|</span>
           <span className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]">terminal</span>
             V2.4.0-STABLE
           </span>
         </div>

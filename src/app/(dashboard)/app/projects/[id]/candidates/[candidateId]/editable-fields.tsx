@@ -11,6 +11,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
+  IconClose,
+  IconPencil,
+  IconPlus,
+} from "@/components/icons";
+import {
   ARCHETYPES,
   type Archetype,
 } from "@/lib/ai/cv-parsing";
@@ -167,12 +172,10 @@ export function EditableText({
       >
         {value || placeholder || "—"}
       </span>
-      <span
-        className="material-symbols-outlined text-[12px] text-outline opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity shrink-0"
-        aria-hidden
-      >
-        edit
-      </span>
+      <IconPencil
+        size={12}
+        className="shrink-0 text-outline opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+      />
     </button>
   );
 }
@@ -310,12 +313,10 @@ export function EditableNumber({
       >
         {value != null ? `${value}${unit ?? ""}` : placeholder ?? "—"}
       </span>
-      <span
-        className="material-symbols-outlined text-[12px] text-outline opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity shrink-0"
-        aria-hidden
-      >
-        edit
-      </span>
+      <IconPencil
+        size={12}
+        className="shrink-0 text-outline opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+      />
     </button>
   );
 }
@@ -486,12 +487,10 @@ export function EditableTextarea({
             </span>
           )}
         </div>
-        <span
-          className="material-symbols-outlined text-[14px] text-outline opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity shrink-0 mt-1"
-          aria-hidden
-        >
-          edit
-        </span>
+        <IconPencil
+        size={12}
+        className="shrink-0 text-outline opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 mt-1"
+      />
       </div>
     </button>
   );
@@ -661,9 +660,7 @@ export function EditableList({
               aria-label={`Remove "${item}"`}
               className="text-outline opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 hover:text-error transition-[opacity,color] disabled:opacity-30 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-error"
             >
-              <span className="material-symbols-outlined text-[14px]" aria-hidden>
-                close
-              </span>
+              <IconClose size={12} />
             </button>
           )}
         </li>
@@ -693,9 +690,7 @@ export function EditableList({
             disabled={pending}
             className="font-mono-label text-mono-label text-primary uppercase tracking-widest hover:brightness-110 transition-colors flex items-center gap-1 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span className="material-symbols-outlined text-[12px]" aria-hidden>
-              add
-            </span>
+            <IconPlus size={12} />
             {addLabel}
           </button>
         </li>

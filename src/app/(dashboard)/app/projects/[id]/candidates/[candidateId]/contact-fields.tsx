@@ -9,6 +9,11 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  IconPencil,
+  IconPlus,
+  IconRefresh,
+} from "@/components/icons";
 import { updateCandidateContact, type ContactField } from "./actions";
 
 // Inline-editable contact rail. Each chip is its own controlled block so
@@ -19,7 +24,6 @@ type ContactFieldDef = {
   key: ContactField;
   label: string;
   /** Material symbol icon for the label / display chip. */
-  icon: string;
   /** Type of input control to render in edit mode. */
   inputType: "url" | "email" | "tel" | "text";
   /** Placeholder text shown in the empty state and edit input. */
@@ -35,7 +39,6 @@ const FIELDS: ContactFieldDef[] = [
   {
     key: "email",
     label: "Email",
-    icon: "mail",
     inputType: "email",
     placeholder: "name@company.com",
     linkable: true,
@@ -43,7 +46,6 @@ const FIELDS: ContactFieldDef[] = [
   {
     key: "phone",
     label: "Phone",
-    icon: "call",
     inputType: "tel",
     placeholder: "+44 20 0000 0000",
     linkable: true,
@@ -51,7 +53,6 @@ const FIELDS: ContactFieldDef[] = [
   {
     key: "location",
     label: "Location",
-    icon: "place",
     inputType: "text",
     placeholder: "London, UK",
     linkable: false,
@@ -59,7 +60,6 @@ const FIELDS: ContactFieldDef[] = [
   {
     key: "linkedin_url",
     label: "LinkedIn",
-    icon: "link",
     inputType: "url",
     placeholder: "linkedin.com/in/jane",
     linkable: true,
@@ -67,7 +67,6 @@ const FIELDS: ContactFieldDef[] = [
   {
     key: "twitter_url",
     label: "X / Twitter",
-    icon: "alternate_email",
     inputType: "url",
     placeholder: "x.com/jane",
     linkable: true,
@@ -75,7 +74,6 @@ const FIELDS: ContactFieldDef[] = [
   {
     key: "github_url",
     label: "GitHub",
-    icon: "code",
     inputType: "url",
     placeholder: "github.com/jane",
     linkable: true,
@@ -83,7 +81,6 @@ const FIELDS: ContactFieldDef[] = [
   {
     key: "website_url",
     label: "Website",
-    icon: "public",
     inputType: "url",
     placeholder: "jane.dev",
     linkable: true,
@@ -202,12 +199,7 @@ function ContactChip({
           pending ? "border-tertiary" : "border-primary"
         )}
       >
-        <span
-          className="material-symbols-outlined text-primary text-[12px]"
-          aria-hidden
-        >
-          {def.icon}
-        </span>
+        
         <input
           ref={inputRef}
           type={def.inputType}
@@ -221,12 +213,7 @@ function ContactChip({
           className="bg-transparent border-none outline-none text-on-surface min-w-[12ch] max-w-[36ch] font-mono-label text-mono-label uppercase tracking-wider placeholder:text-outline placeholder:normal-case placeholder:tracking-normal"
         />
         {pending && (
-          <span
-            className="material-symbols-outlined text-tertiary text-[12px] animate-spin"
-            aria-hidden
-          >
-            progress_activity
-          </span>
+          <IconRefresh size={12} className="animate-spin text-tertiary" />
         )}
       </span>
     );
@@ -241,9 +228,7 @@ function ContactChip({
         onClick={beginEdit}
         className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-dashed border-outline-variant bg-transparent font-mono-label text-mono-label uppercase tracking-wider text-outline hover:border-primary hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
       >
-        <span className="material-symbols-outlined text-[12px]" aria-hidden>
-          add
-        </span>
+        <IconPlus size={12} />
         {def.label}
       </button>
     );
@@ -255,12 +240,7 @@ function ContactChip({
   // edit-icon click from working without preventDefault gymnastics.
   const displayContent = (
     <span className="inline-flex items-center gap-1.5">
-      <span
-        className="material-symbols-outlined text-[12px] text-on-surface-variant group-hover:text-primary transition-colors"
-        aria-hidden
-      >
-        {def.icon}
-      </span>
+      
       <span className="text-on-surface-variant group-hover:text-primary transition-colors truncate max-w-[28ch]">
         {displayLabel(def, value)}
       </span>
@@ -291,9 +271,7 @@ function ContactChip({
         aria-label={`Edit ${def.label}`}
         className="px-1.5 border-l border-outline-variant text-outline opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 hover:text-primary hover:bg-surface-container-low transition-[opacity,color,background] focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
       >
-        <span className="material-symbols-outlined text-[12px]" aria-hidden>
-          edit
-        </span>
+        <IconPencil size={12} />
       </button>
     </span>
   );

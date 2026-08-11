@@ -271,3 +271,48 @@ export function IconPlus({ size = 14, className }: IconProps) {
     </svg>
   );
 }
+
+export function IconPencil({ size = 13, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M4 20h4l10-10a2.1 2.1 0 0 0-3-3L5 17z" />
+      <path d="m14.5 6.5 3 3" />
+    </svg>
+  );
+}
+
+export function IconDownload({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M12 4v11" />
+      <path d="m7.5 11 4.5 4.5 4.5-4.5" />
+      <path d="M5 20h14" />
+    </svg>
+  );
+}
+
+export function IconAtSign({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M16 8v5a3 3 0 0 0 5 2.2A9 9 0 1 0 17.5 20" />
+    </svg>
+  );
+}
+
+export function IconLock({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <rect x="4" y="10" width="16" height="10" rx="2" />
+      <path d="M8 10V7.5a4 4 0 0 1 8 0V10" />
+    </svg>
+  );
+}
+
+export function IconShield({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M12 3 5 6v5.5c0 4.2 2.9 7.6 7 9.5 4.1-1.9 7-5.3 7-9.5V6z" />
+    </svg>
+  );
+}

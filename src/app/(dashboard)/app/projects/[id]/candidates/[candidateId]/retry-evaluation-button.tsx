@@ -4,6 +4,9 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  IconRefresh,
+} from "@/components/icons";
 import { regenerateEvaluationAction } from "./actions";
 
 // Manual retry trigger for the executive evaluation. Lives on the
@@ -50,15 +53,7 @@ export function RetryEvaluationButton({
           : "border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary"
       )}
     >
-      <span
-        className={cn(
-          "material-symbols-outlined text-[14px]",
-          pending && "animate-spin"
-        )}
-        aria-hidden
-      >
-        {pending ? "progress_activity" : "refresh"}
-      </span>
+      <IconRefresh size={14} className={cn(pending && "animate-spin")} />
       {pending ? "Retrying" : "Retry Evaluation"}
     </button>
   );

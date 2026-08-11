@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { signUpAction } from "./actions";
+import {
+  IconArrowRight,
+  IconAtSign,
+  IconLock,
+  IconShield,
+} from "@/components/icons";
 
 type SearchParams = Promise<{ error?: string }>;
 
@@ -21,7 +27,6 @@ export default async function SignUpPage({
           Mandate
         </Link>
         <div className="flex items-center gap-2 px-2 py-1 bg-surface-container rounded border border-outline-variant">
-          <span className="material-symbols-outlined text-[16px] text-primary">dark_mode</span>
           <span className="text-mono-label font-mono-label uppercase text-on-surface-variant">
             System Mode
           </span>
@@ -33,12 +38,7 @@ export default async function SignUpPage({
           <div className="absolute inset-0 terminal-grid opacity-20" />
           <div className="relative z-10 space-y-gutter">
             <div className="inline-flex items-center px-2 py-1 bg-primary/10 border border-primary/20 rounded">
-              <span
-                className="material-symbols-outlined text-primary text-[14px] mr-2"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                verified_user
-              </span>
+              <IconShield size={13} className="mr-2 text-primary" />
               <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
                 Executive Intelligence
               </span>
@@ -131,9 +131,10 @@ export default async function SignUpPage({
                   Organization Email
                 </label>
                 <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">
-                    alternate_email
-                  </span>
+                  <IconAtSign
+                    size={16}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                  />
                   <input
                     id="email"
                     name="email"
@@ -154,9 +155,10 @@ export default async function SignUpPage({
                   Access Key (min 8 characters)
                 </label>
                 <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">
-                    lock
-                  </span>
+                  <IconLock
+                    size={16}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                  />
                   <input
                     id="password"
                     name="password"
@@ -176,28 +178,16 @@ export default async function SignUpPage({
                   className="w-full bg-primary-container hover:brightness-110 text-on-primary-container py-4 transition-all flex justify-center items-center gap-2 group font-h2 text-body-main rounded"
                 >
                   Initialize Onboarding
-                  <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
-                    arrow_forward
-                  </span>
+                  <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                 </button>
                 <div className="flex items-center justify-center gap-4 text-mono-label font-mono-label text-outline uppercase">
                   <span className="flex items-center gap-1">
-                    <span
-                      className="material-symbols-outlined text-[14px]"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      lock
-                    </span>
+                    <IconLock size={13} />
                     SOC2 Type II Certified
                   </span>
                   <span className="w-1 h-1 bg-outline-variant rounded-full" />
                   <span className="flex items-center gap-1">
-                    <span
-                      className="material-symbols-outlined text-[14px]"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      shield
-                    </span>
+                    <IconShield size={13} />
                     End-to-End Encrypted
                   </span>
                 </div>
