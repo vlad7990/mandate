@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { NAV, PROJECTS_HREF, isNavItemActive, type NavItem } from "./nav-model";
+import {
+  NAV,
+  NAV_GROUPS,
+  PROJECTS_HREF,
+  isNavItemActive,
+  navItemsInGroup,
+  type NavItem,
+} from "./nav-model";
 
 /** Labels of every nav item that lights up for a path. */
 function activeLabels(pathname: string): string[] {
@@ -13,56 +20,62 @@ const item = (label: string): NavItem => {
 };
 
 describe("isNavItemActive", () => {
-  it("lights Projects on the dashboard home", () => {
-    expect(activeLabels(PROJECTS_HREF)).toEqual(["Projects"]);
+  it("lights Portfolio on the dashboard home, and only there", () => {
+    expect(activeLabels(PROJECTS_HREF)).toEqual(["Portfolio"]);
   });
 
-  // The regression this module exists for: the old inline rule tested
-  // `item.href === "/"`, which never matched, so opening a project left
-  // the whole sidebar dark.
-  it("keeps Projects lit while browsing a project", () => {
-    expect(activeLabels("/app/projects")).toEqual(["Projects"]);
-    expect(activeLabels("/app/projects/abc123")).toEqual(["Projects"]);
-    expect(activeLabels("/app/projects/abc123/ranking")).toEqual(["Projects"]);
+  // Portfolio and Mandates are separate destinations in the rail, so the
+  // project tree belongs to Mandates. Before the rail was grouped these
+  // were one item and the distinction did not exist.
+  it("lights Mandates across the project tree", () => {
+    expect(activeLabels("/app/projects")).toEqual(["Mandates"]);
+    expect(activeLabels("/app/projects/abc123")).toEqual(["Mandates"]);
+    expect(activeLabels("/app/projects/abc123/ranking")).toEqual(["Mandates"]);
     expect(activeLabels("/app/projects/abc123/candidates/xyz")).toEqual([
-      "Projects",
+      "Mandates",
     ]);
   });
 
-  it("distinguishes the three candidate destinations", () => {
+  it("distinguishes the candidate destinations", () => {
     expect(activeLabels("/app/candidates")).toEqual(["Candidates"]);
     expect(activeLabels("/app/candidates/network")).toEqual(["Network"]);
-    expect(activeLabels("/app/candidates/search")).toEqual(["AI Search"]);
   });
 
-  it("keeps Exec Intel lit through its whole tree", () => {
-    expect(activeLabels("/app/executive-intelligence")).toEqual(["Exec Intel"]);
-    expect(activeLabels("/app/executive-intelligence/searches")).toEqual([
-      "Exec Intel",
+  it("lights Executive Intelligence for its own page only", () => {
+    expect(activeLabels("/app/executive-intelligence")).toEqual([
+      "Executive Intelligence",
     ]);
-    expect(
-      activeLabels("/app/executive-intelligence/searches/abc/success-profile")
-    ).toEqual(["Exec Intel"]);
+    expect(activeLabels("/app/executive-intelligence/competencies")).toEqual([
+      "Competencies",
+    ]);
+    expect(activeLabels("/app/executive-intelligence/templates")).toEqual([
+      "Role templates",
+    ]);
   });
 
-  it("keeps Settings lit through its whole tree", () => {
+  // Skills studio lives under /app/settings/skills, so a naive prefix
+  // rule on Settings would light both entries at once.
+  it("does not light Settings and Skills studio together", () => {
     expect(activeLabels("/app/settings")).toEqual(["Settings"]);
-    expect(activeLabels("/app/settings/skills/new")).toEqual(["Settings"]);
+    expect(activeLabels("/app/settings/skills")).toEqual(["Skills studio"]);
+    expect(activeLabels("/app/settings/skills/new")).toEqual(["Skills studio"]);
   });
 
   it("never lights two sections at once", () => {
     const paths = [
       "/app/home",
+      "/app/projects",
       "/app/projects/abc123",
       "/app/candidates",
       "/app/candidates/network",
-      "/app/candidates/search",
-      "/app/executive-intelligence/searches/abc",
       "/app/analytics",
-      "/app/settings/skills",
+      "/app/executive-intelligence",
+      "/app/executive-intelligence/competencies",
+      "/app/settings",
+      "/app/settings/skills/new",
     ];
     for (const p of paths) {
-      expect(activeLabels(p), `two sections active on ${p}`).toHaveLength(1);
+      expect(activeLabels(p), `expected exactly one active on ${p}`).toHaveLength(1);
     }
   });
 
@@ -72,24 +85,46 @@ describe("isNavItemActive", () => {
     expect(isNavItemActive(item("Analytics"), "/app/analytics-archive")).toBe(
       false
     );
-    expect(
-      isNavItemActive(item("Exec Intel"), "/app/executive-intelligence-beta")
-    ).toBe(false);
-    expect(isNavItemActive(item("Projects"), "/app/projects-archive")).toBe(
+    expect(isNavItemActive(item("Mandates"), "/app/projects-archive")).toBe(
+      false
+    );
+    expect(isNavItemActive(item("Skills studio"), "/app/settings/skillset")).toBe(
       false
     );
   });
 
-  it("lights nothing on a path outside the dashboard", () => {
+  it("lights nothing outside the dashboard", () => {
     expect(activeLabels("/pricing")).toEqual([]);
     expect(activeLabels("/executive-intelligence")).toEqual([]);
     expect(activeLabels("/auth/signin")).toEqual([]);
   });
 
   // The pre-/app URLs still exist as redirects; if one ever reaches the
-  // sidebar un-redirected, it should not silently look correct.
+  // sidebar un-redirected it should not silently look correct.
   it("does not light up for the old un-prefixed paths", () => {
     expect(activeLabels("/home")).toEqual([]);
     expect(activeLabels("/projects/abc123")).toEqual([]);
+  });
+});
+
+describe("nav grouping", () => {
+  it("assigns every item to a declared group", () => {
+    const declared = new Set(NAV_GROUPS.map((g) => g.key));
+    for (const i of NAV) {
+      expect(declared.has(i.group), `${i.label} has unknown group`).toBe(true);
+    }
+  });
+
+  it("leaves no group empty", () => {
+    for (const g of NAV_GROUPS) {
+      expect(navItemsInGroup(g.key).length, `${g.label} is empty`).toBeGreaterThan(0);
+    }
+  });
+
+  // A duplicate destination in a rail is a navigation bug: two rows that
+  // look different and go to the same place.
+  it("has no duplicate destinations", () => {
+    const hrefs = NAV.map((i) => i.href);
+    expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 });

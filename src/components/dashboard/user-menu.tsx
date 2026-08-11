@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { IconSelector, IconSettings } from "@/components/icons";
 
 type UserMenuProps = {
   displayName: string;
@@ -24,6 +24,15 @@ function getInitials(name: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+/**
+ * The identity block pinned to the foot of the rail.
+ *
+ * On the expanded rail it names the person and their role, because
+ * "which account am I in" is a question a bare 32px avatar cannot
+ * answer — and on a product where approvals are recorded against an
+ * identity, it is a question worth answering on every screen. On the
+ * icon rail it collapses back to the avatar alone.
+ */
 export function UserMenu({ displayName, email, role }: UserMenuProps) {
   const initials = getInitials(displayName);
 
@@ -32,57 +41,82 @@ export function UserMenu({ displayName, email, role }: UserMenuProps) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Open user menu"
-          className="w-8 h-8 rounded-full border border-outline-variant overflow-hidden focus:outline-none focus:ring-1 focus:ring-primary-container hover:border-primary-container transition-colors"
+          aria-label={`Account menu — ${displayName}`}
+          className="flex w-full min-h-11 items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary md:justify-center xl:justify-start"
         >
-          <Avatar className="w-full h-full rounded-full">
-            <AvatarFallback className="bg-surface-container-high text-on-surface text-mono-label font-mono-label uppercase">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        side="right"
-        align="end"
-        sideOffset={8}
-        className="w-56 bg-surface-container border border-outline-variant text-on-surface"
-      >
-        <DropdownMenuLabel className="px-3 py-2">
-          <div className="flex flex-col gap-1">
-            <span className="text-on-surface text-body-main">{displayName}</span>
-            <span className="text-outline text-mono-label font-mono-label uppercase truncate">
+          <span
+            aria-hidden
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-outline-variant bg-surface-container-high font-mono-label text-[11px] font-semibold text-on-surface-variant"
+          >
+            {initials}
+          </span>
+
+          <span className="min-w-0 flex-1 md:hidden xl:block">
+            <span className="block truncate text-xs font-medium text-on-surface">
+              {displayName}
+            </span>
+            <span className="block truncate text-[11px] text-outline">
+              {role ? `${role} · ` : ""}
               {email}
             </span>
-            {role && (
-              <span className="text-primary text-mono-label font-mono-label uppercase tracking-wider mt-1">
-                ROLE: {role}
-              </span>
-            )}
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-outline-variant" />
-        <DropdownMenuItem asChild>
-          <Link
-            href="/app/settings"
-            className="cursor-pointer font-mono-label text-mono-label uppercase tracking-widest"
-          >
-            <span className="material-symbols-outlined text-[16px] mr-2 text-outline">
-              settings
+          </span>
+
+          <IconSelector
+            size={16}
+            className="shrink-0 text-outline md:hidden xl:block"
+          />
+        </button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        side="top"
+        align="start"
+        sideOffset={8}
+        className="w-60 border border-outline-variant bg-surface-container text-on-surface"
+      >
+        <DropdownMenuLabel className="px-3 py-2">
+          <span className="block text-sm text-on-surface">{displayName}</span>
+          <span className="mt-0.5 block truncate text-xs text-outline">
+            {email}
+          </span>
+          {role && (
+            <span className="mt-1.5 block font-mono-label text-mono-label uppercase tracking-wider text-primary">
+              {role}
             </span>
-            SETTINGS
+          )}
+        </DropdownMenuLabel>
+
+        <DropdownMenuSeparator className="bg-outline-variant" />
+
+        <DropdownMenuItem asChild>
+          <Link href="/app/settings" className="cursor-pointer gap-2 text-sm">
+            <IconSettings size={16} className="text-outline" />
+            Settings
           </Link>
         </DropdownMenuItem>
+
         <DropdownMenuSeparator className="bg-outline-variant" />
+
         <form action="/auth/signout" method="post">
           <button
             type="submit"
-            className="w-full flex items-center px-3 py-1.5 text-error hover:bg-error-container/30 rounded-sm cursor-pointer transition-colors font-mono-label text-mono-label uppercase tracking-widest focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-error"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm text-error transition-colors hover:bg-error-container/30 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-error"
           >
-            <span className="material-symbols-outlined text-[16px] mr-2">
-              logout
-            </span>
-            SIGN_OUT
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+              <path d="M10 17l-5-5 5-5M5 12h11" />
+            </svg>
+            Sign out
           </button>
         </form>
       </DropdownMenuContent>
