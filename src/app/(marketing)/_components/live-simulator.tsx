@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  ILLUSTRATIVE_NOTICE,
+  ILLUSTRATIVE_RUNS,
+  nearestRun,
+  type DemoResult,
+} from "./simulator-fixtures";
 
 const TYPING_EXAMPLES = [
   "Head of IT Operations for RBC Capital Markets",
@@ -77,22 +83,9 @@ function useTypingPlaceholder(
   return text;
 }
 
-type DemoResult = {
-  role_title: string;
-  company_name: string;
-  seniority: string;
-  function: string;
-  inferred_scope: string;
-  missing_information: string[];
-  calibration_weights: {
-    technical: number;
-    domain: number;
-    leadership: number;
-    regulatory: number;
-    transformation: number;
-  };
-  boolean_queries: string[];
-};
+/* DemoResult now lives in ./simulator-fixtures alongside the
+   illustrative runs that satisfy it, so the fixtures cannot drift out
+   of shape with what the API returns without TypeScript noticing. */
 
 const DIMENSIONS: Array<{
   key: keyof DemoResult["calibration_weights"];
@@ -115,6 +108,31 @@ export function LiveSimulator() {
   const [result, setResult] = useState<DemoResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
+  /* Which brief the on-screen result illustrates, when it came from a
+     fixture rather than the API. null means the result is a live run. */
+  const [illustrating, setIllustrating] = useState<string | null>(null);
+
+  /* Renders an illustrative run with no network call at all. The three
+     example chips use this: the zero-typing path into the product's
+     argument now works regardless of upstream availability, which is
+     the path most visitors take. */
+  const showIllustrative = (brief: string) => {
+    const run = nearestRun(brief);
+    setInput(brief);
+    setError(null);
+    setResult(run.result);
+    setIllustrating(run.brief);
+  };
+
+  /* Returns to the idle example so a visitor can run a second brief.
+     Previously nothing ever cleared `result`, so the first run was
+     also the last. */
+  const reset = () => {
+    setResult(null);
+    setIllustrating(null);
+    setError(null);
+    setInput("");
+  };
 
   // Typewriter only runs when the input is empty, unfocused, and we're
   // not mid-request — anything else and the cursor would compete with
@@ -129,43 +147,62 @@ export function LiveSimulator() {
     setPending(true);
     setError(null);
     setResult(null);
+    setIllustrating(null);
     try {
       const response = await fetch("/api/demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role_input: text }),
       });
-      if (!response.ok) {
-        // NEVER surface the upstream body. It previously rendered
-        // `body.error` verbatim, which put the raw provider payload in
-        // front of visitors — vendor name, request id, and at one point
-        // "Your credit balance is too low to access the Anthropic API".
-        // A prospect evaluating the product should never learn our
-        // billing status. Map to three cases the visitor can act on;
-        // the detail stays server-side.
-        // Status code only. This previously logged `body.error` — the
-        // full upstream payload — to the browser console, so the DOM was
-        // clean but anyone with devtools open could read our billing
-        // state and a provider request_id. The server already has the
-        // detail; the client does not need it.
-        await response.json().catch(() => null);
-        console.error(`[simulator] request failed (${response.status})`);
-        throw new Error(
-          response.status === 429
-            ? "You have run this a few times already — try again in an hour."
-            : response.status === 400
-              ? "That brief could not be read. Try naming a role and a company."
-              // Previously claimed the example below was "real output from
-              // an earlier run". It is not — it is written copy. Asserting
-              // a false provenance on the page that sells auditability is
-              // the one error this brand cannot afford. Say what is true.
-              : "The live simulator is offline right now. Below is a worked example of the same output — we'll run your actual mandate with you instead."
-        );
+
+      if (response.ok) {
+        setResult((await response.json()) as DemoResult);
+        return;
       }
-      const data = (await response.json()) as DemoResult;
-      setResult(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+
+      // NEVER surface the upstream body. It previously rendered
+      // `body.error` verbatim, which put the raw provider payload in
+      // front of visitors — vendor name, request id, and at one point
+      // "Your credit balance is too low to access the Anthropic API".
+      // A prospect evaluating the product should never learn our
+      // billing status. The console gets the status code only, for the
+      // same reason: the DOM was clean while devtools was not.
+      await response.json().catch(() => null);
+      console.error(`[simulator] request failed (${response.status})`);
+
+      if (response.status === 429) {
+        setError("You have run this a few times already — try again in an hour.");
+        return;
+      }
+      if (response.status === 400) {
+        setError("That brief could not be read. Try naming a role and a company.");
+        return;
+      }
+
+      // Anything else is our problem, not the visitor's. An outage
+      // should not cost them the argument: render the illustrative run
+      // closest to the brief they actually typed, clearly labelled,
+      // rather than leaving a generic panel on screen and calling it
+      // their output.
+      //
+      // The wording here has been wrong twice — it claimed the panel
+      // below was "real output from an earlier run" (it was written
+      // copy), then "a worked example of the same output" (it was an
+      // unrelated healthcare brief). It now states what renders.
+      setError(
+        "The live simulator is offline right now. Below is an illustrative run for a comparable mandate — we'll run your actual brief with you instead."
+      );
+      const run = nearestRun(text);
+      setResult(run.result);
+      setIllustrating(run.brief);
+    } catch {
+      // Network-level failure — the request never resolved.
+      setError(
+        "We could not reach the simulator. Below is an illustrative run for a comparable mandate — we'll run your actual brief with you instead."
+      );
+      const run = nearestRun(text);
+      setResult(run.result);
+      setIllustrating(run.brief);
     } finally {
       setPending(false);
     }
@@ -265,16 +302,47 @@ export function LiveSimulator() {
         <p className="m-sr-only" role="status" aria-live="polite">
           {pending
             ? "Analysing the mandate. This takes about thirty seconds."
-            : result
-              ? "Analysis complete. Structured mandate, company context and draft scoring model are shown below."
-              : ""}
+            : illustrating
+              ? `Showing an illustrative run for ${illustrating}. ${ILLUSTRATIVE_NOTICE}`
+              : result
+                ? "Analysis complete. Structured mandate, company context and draft scoring model are shown below."
+                : ""}
         </p>
 
-        {!result && !pending && <SimulatorIdle onPick={setInput} />}
+        {!result && !pending && <SimulatorIdle onPick={showIllustrative} />}
 
         {pending && <SimulatorProgress key={runId} />}
 
-        {result && !pending && <SimulatorResult result={result} />}
+        {result && !pending && (
+          <>
+            {illustrating && (
+              <div className="m-sim__illus">
+                <span className="m-sim__illus-badge">Illustrative</span>
+                <p className="m-sim__illus-body">
+                  <strong>{illustrating}</strong> — {ILLUSTRATIVE_NOTICE}
+                </p>
+                <button
+                  type="button"
+                  className="m-sim__retry"
+                  onClick={reset}
+                >
+                  Start over
+                </button>
+              </div>
+            )}
+            <SimulatorResult result={result} />
+            {!illustrating && (
+              <button
+                type="button"
+                className="m-sim__retry"
+                style={{ justifySelf: "start" }}
+                onClick={reset}
+              >
+                Run another mandate
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -353,7 +421,10 @@ function SimulatorIdle({ onPick }: { onPick: (value: string) => void }) {
 
       <div className="m-simout__cta">
         <span className="m-simout__badge">Example</span>
-        <span>Type a real mandate above to run it live.</span>
+        <span>
+          Type a real mandate above to run it live, or open an
+          illustrative run:
+        </span>
       </div>
 
       <ul
@@ -366,24 +437,27 @@ function SimulatorIdle({ onPick }: { onPick: (value: string) => void }) {
           padding: 0,
         }}
       >
-        {TYPING_EXAMPLES.slice(1).map((ex) => (
-          <li key={ex}>
+        {ILLUSTRATIVE_RUNS.slice(1).map((run) => (
+          <li key={run.brief}>
             <button
               type="button"
-              className="m-chip"
-              style={{ cursor: "pointer", background: "var(--bg-elev-2)" }}
-              /* Was setting .value on the DOM node and dispatching a
-                 plain Event. React owns this input, ignored the
-                 synthetic event, and re-rendered from empty state — so
-                 clicking a chip wiped the field and left submit
-                 disabled. Lift to state instead. */
-              onClick={() => {
-                onPick(ex);
-                document.querySelector<HTMLInputElement>(".m-sim__input")?.focus();
-              }}
+              className="m-chip m-chip--action"
+              /* Resolves from a local fixture — no network call, so this
+                 path works whether or not the upstream API is up. It is
+                 also the path most visitors take, being the only
+                 zero-typing route into the product's argument.
+
+                 (Historically this set .value on the DOM node and
+                 dispatched a plain Event. React owns this input, ignored
+                 the synthetic event, and re-rendered from empty state,
+                 so clicking a chip wiped the field and left submit
+                 disabled. State, not DOM.) */
+              onClick={() => onPick(run.brief)}
+              aria-label={`Show an illustrative run for: ${run.brief}`}
             >
               <span className="m-chip__dot" />
-              {ex}
+              {run.brief}
+              <span aria-hidden>→</span>
             </button>
           </li>
         ))}
