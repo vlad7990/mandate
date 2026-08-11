@@ -94,13 +94,6 @@ type DemoResult = {
   boolean_queries: string[];
 };
 
-const PROGRESS_STEPS = [
-  "Reading brief",
-  "Researching company",
-  "Calibrating model",
-  "Generating queries",
-] as const;
-
 const DIMENSIONS: Array<{
   key: keyof DemoResult["calibration_weights"];
   label: string;
@@ -150,10 +143,13 @@ export function LiveSimulator() {
         // A prospect evaluating the product should never learn our
         // billing status. Map to three cases the visitor can act on;
         // the detail stays server-side.
-        const body = await response.json().catch(() => null);
-        if (body?.error) {
-          console.error("[simulator] upstream failure:", body.error);
-        }
+        // Status code only. This previously logged `body.error` — the
+        // full upstream payload — to the browser console, so the DOM was
+        // clean but anyone with devtools open could read our billing
+        // state and a provider request_id. The server already has the
+        // detail; the client does not need it.
+        await response.json().catch(() => null);
+        console.error(`[simulator] request failed (${response.status})`);
         throw new Error(
           response.status === 429
             ? "You have run this a few times already — try again in an hour."
@@ -397,33 +393,46 @@ function SimulatorIdle({ onPick }: { onPick: (value: string) => void }) {
 }
 
 
+/**
+ * In-flight state.
+ *
+ * This used to render four named steps — "Reading brief", "Researching
+ * company", "Calibrating model", "Generating queries" — advanced by a
+ * fixed 2200ms interval with no connection to the request. It reported
+ * work that was not observed, on a page whose argument is that its
+ * output is auditable. A visitor with devtools open could watch the
+ * steps tick while the network panel showed a single pending call, or
+ * one that had already failed.
+ *
+ * An elapsed counter is the honest version: it is a real measurement of
+ * a real thing. Restore the named steps only if the route streams
+ * genuine server events for them.
+ *
+ * `aria-hidden` because the parent already owns a `role="status"`
+ * region announcing the analysing state — a ticking clock in a live
+ * region would announce every second.
+ */
 function SimulatorProgress() {
-  // Lazy initializer keeps the step at 0 on mount; subsequent steps
-  // come from the interval callback only — no synchronous setState
-  // in the effect body.
-  const [stepIdx, setStepIdx] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setStepIdx((i) => Math.min(i + 1, PROGRESS_STEPS.length - 1));
-    }, 2200);
+    const interval = window.setInterval(() => setElapsed((s) => s + 1), 1000);
     return () => window.clearInterval(interval);
   }, []);
+
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  const ss = String(elapsed % 60).padStart(2, "0");
+
   return (
-    <div className="m-sim__progress" role="status" aria-live="polite">
-      {PROGRESS_STEPS.map((label, i) => (
-        <div
-          key={label}
-          className={`m-sim__progress-step ${
-            i < stepIdx
-              ? "m-sim__progress-step--done"
-              : i === stepIdx
-                ? "m-sim__progress-step--active"
-                : "m-sim__progress-step--pending"
-          }`}
-        >
-          {label}
-        </div>
-      ))}
+    <div className="m-sim__progress" aria-hidden>
+      <span className="m-sim__progress-dot" />
+      <span className="m-sim__progress-label">Analysing</span>
+      <span className="m-sim__progress-time">
+        {mm}:{ss}
+      </span>
+      <span className="m-sim__progress-track">
+        <span />
+      </span>
     </div>
   );
 }

@@ -1329,59 +1329,64 @@ html:has(.marketing-root) {
   min-height: 460px;
 }
 
+/*
+ * In-flight state. Replaces four named steps that advanced on a fixed
+ * 2200ms interval unrelated to the request — reported work that was
+ * never observed. An elapsed counter and an indeterminate track say
+ * exactly what is true: something is running, and this is how long it
+ * has been running.
+ */
 .m-sim__progress {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.75rem;
-}
-
-.m-sim__progress-step {
   display: flex;
   align-items: center;
   gap: 0.625rem;
+  margin-bottom: 1.75rem;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--fg-muted);
-  opacity: 0;
-  transform: translateY(6px);
-  animation: progress-step-in 380ms var(--ease-out) forwards;
-  transition: color 220ms var(--ease-out);
 }
 
-.m-sim__progress-step:nth-child(1) { animation-delay: 0ms; }
-.m-sim__progress-step:nth-child(2) { animation-delay: 90ms; }
-.m-sim__progress-step:nth-child(3) { animation-delay: 180ms; }
-.m-sim__progress-step:nth-child(4) { animation-delay: 270ms; }
-
-@keyframes progress-step-in {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.m-sim__progress-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  background: var(--accent);
+  animation: live-blink 1.4s steps(1, end) infinite;
 }
 
-.m-sim__progress-step--active {
+.m-sim__progress-label {
   color: var(--accent);
 }
 
-.m-sim__progress-step--done {
-  color: var(--success);
+.m-sim__progress-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
 }
 
-.m-sim__progress-step::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  border: 1px solid currentColor;
-  background: currentColor;
-  flex-shrink: 0;
+.m-sim__progress-track {
+  flex: 1;
+  height: 2px;
+  min-width: 3rem;
+  background: var(--bg-elev-3);
+  overflow: hidden;
 }
 
-.m-sim__progress-step--pending::before {
-  background: transparent;
+/* Indeterminate: a travelling segment, because the duration genuinely
+   is not known ahead of time. Never a percentage — a percentage would
+   be the same lie in a different shape. */
+.m-sim__progress-track > span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--accent);
+  animation: sim-indeterminate 1.5s var(--ease-out) infinite;
+}
+
+@keyframes sim-indeterminate {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(350%); }
 }
 
 .m-sim__bar-fill {
@@ -1621,7 +1626,7 @@ html:has(.marketing-root) {
   .m-reveal-cascade > *,
   .m-reveal-scale > *,
   .m-hero-enter > *,
-  .m-sim__progress-step,
+  .m-sim__progress-track > span,
   .m-sim__row {
     opacity: 1 !important;
     transform: none !important;
@@ -2274,35 +2279,9 @@ html:has(.marketing-root) {
   50.01%, 100% { opacity: 0; }
 }
 
-/* ───── Nav LIVE indicator ───────────────────────────────────── */
-
-.m-nav__live {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
-  margin-left: 0.5rem;
-}
-
-.m-nav__live-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--success);
-  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
-  animation: live-blink 1.4s ease-in-out infinite;
-}
-
-/* Widened 720 → 1279. "System online" is decorative, and the brand
-   group it sits in is flex-shrink:0 — carrying it below desktop was
-   part of what pushed the primary CTA off-screen in the 900–1125 band. */
-@media (max-width: 1279px) {
-  .m-nav__live { display: none; }
-}
+/* The "System online" pip and its dot lived here. Removed with the
+   markup: it was a static claim that could never go false, shown while
+   /api/demo was returning 502s. */
 
 /* ───── Reduced motion + mobile additions for new layer ──────── */
 
@@ -2325,7 +2304,7 @@ html:has(.marketing-root) {
   .m-price__sparkle::after,
   .m-cta-bg,
   .m-btn--gradient-border::before,
-  .m-nav__live-dot {
+  .m-sim__progress-dot {
     animation: none !important;
   }
   .m-display--shimmer {
@@ -3210,11 +3189,6 @@ html:has(.marketing-root) {
     letter-spacing: 0.1em;
     white-space: nowrap;
   }
-  /* The status pip is the first thing to go when space is tight — it is
-     decorative, the CTA is not. */
-  .m-nav__live {
-    display: none;
-  }
 }
 
 /* Below 480px the wordmark yields to the M lettermark so the CTA and
@@ -3290,7 +3264,6 @@ html:has(.marketing-root) {
 .m-particles__dot--v3,
 .m-stat-rail__value,
 .m-typewriter-cursor,
-.m-nav__live-dot,
 .m-hero-kicker-dot {
   box-shadow: none !important;
   text-shadow: none !important;

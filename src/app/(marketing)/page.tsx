@@ -3,7 +3,6 @@ import { Reveal } from "./_components/reveal";
 import { LiveSimulator } from "./_components/live-simulator";
 import { FaqAccordion } from "./_components/faq-accordion";
 import { ThreeCircleAlignment } from "./_components/three-circle-alignment";
-import { CountUp } from "./_components/count-up";
 import { ScrollProgress } from "./_components/scroll-progress";
 import { TerminalCursor } from "./_components/terminal-cursor";
 import { TypewriterReveal } from "./_components/typewriter-reveal";
@@ -79,10 +78,13 @@ function TopNav() {
           <span aria-hidden className="m-nav__beta">
             BETA
           </span>
-          <span className="m-nav__live" aria-hidden>
-            <span className="m-nav__live-dot" />
-            System online
-          </span>
+          {/* A "System online" pip with a pulsing dot used to sit here.
+              It was a static span — it checked nothing, and it was
+              displayed to sighted users while /api/demo was returning
+              502s. A health claim that cannot go false is not a status
+              indicator, it is decoration wearing a status indicator's
+              clothes. Restore it only wired to a real health endpoint,
+              where a degraded state is allowed to show. */}
         </Link>
 
         <nav className="m-nav__links" aria-label="Primary">
@@ -274,15 +276,15 @@ function HeroDataRail() {
           >
             {it.label}
           </span>
-          {it.to !== undefined ? (
-            <CountUp
-              to={it.to}
-              duration={1600}
-              className="m-stat-rail__value"
-            />
-          ) : (
-            <span className="m-stat-rail__value">{it.text}</span>
-          )}
+          {/* These four were animated up from zero with <CountUp>, which
+              rendered fixed architecture facts as live meters. Two of
+              the six cells (INTELLIGENCE, CALIBRATION) always sat still,
+              and the mixed treatment is what exposed the other four as
+              theatre. Same principle already applied to the Triangulation
+              scores; it belongs here too. */}
+          <span className="m-stat-rail__value">
+            {it.to !== undefined ? it.to : it.text}
+          </span>
         </div>
       ))}
     </div>
