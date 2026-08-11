@@ -10,6 +10,12 @@ import {
 import { usePathname, useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
+  IconArrowRight,
+  IconClose,
+  IconCopilot,
+  IconRefresh,
+} from "@/components/icons";
+import {
   SUGGESTIONS,
   suggestionContextForPath,
   type CopilotMessage,
@@ -48,13 +54,7 @@ export function CopilotPanel() {
           open && "ring-2 ring-on-primary/30"
         )}
       >
-        <span
-          className="material-symbols-outlined text-[18px]"
-          style={{ fontVariationSettings: "'FILL' 1" }}
-          aria-hidden
-        >
-          {open ? "close" : "smart_toy"}
-        </span>
+        {open ? <IconClose size={17} /> : <IconCopilot size={17} />}
         <span className="font-mono-label text-mono-label uppercase tracking-widest">
           {open ? "Close" : "Copilot"}
         </span>
@@ -260,14 +260,8 @@ function CopilotChat({
       <header className="bg-surface-container-high px-4 py-3 border-b border-outline-variant flex items-center justify-between gap-2">
         <div className="space-y-0.5 min-w-0">
           <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <span
-              className="material-symbols-outlined text-[14px]"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-              aria-hidden
-            >
-              smart_toy
-            </span>
-            COPILOT
+            <IconCopilot size={13} />
+            Copilot
           </div>
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest truncate">
             Project · {projectId.slice(0, 8)}
@@ -283,9 +277,7 @@ function CopilotChat({
             title="Clear conversation"
             className="w-7 h-7 border border-outline-variant text-outline hover:text-on-surface hover:border-outline flex items-center justify-center transition-colors disabled:opacity-60"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              delete_sweep
-            </span>
+            <IconClose size={14} />
           </button>
           <button
             type="button"
@@ -337,12 +329,7 @@ function CopilotChat({
         )}
         {streaming && streamingDraft.length === 0 && (
           <div className="flex items-center gap-2 text-outline">
-            <span
-              className="material-symbols-outlined text-[14px] animate-spin"
-              aria-hidden
-            >
-              progress_activity
-            </span>
+            <IconRefresh size={14} className="animate-spin" />
             <span className="font-mono-label text-mono-label uppercase tracking-widest">
               Thinking
             </span>
@@ -374,9 +361,7 @@ function CopilotChat({
           aria-label="Send"
           className="px-3 py-2 bg-primary text-on-primary border border-primary hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[18px]" aria-hidden>
-            send
-          </span>
+          <IconArrowRight size={17} />
         </button>
       </form>
     </aside>

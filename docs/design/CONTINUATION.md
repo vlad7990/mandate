@@ -222,13 +222,14 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
       `editable-fields.tsx`, `evaluation-actions.tsx`,
       `contact-fields.tsx` and `retry-evaluation-button.tsx`.
 
-- [ ] **265 Material Symbols ligatures** → inline SVG from
+- [ ] **260 Material Symbols ligatures** → inline SVG from
       `src/components/icons.tsx`. Each currently puts literal text like
       `folder_open` in the DOM and depends on a blocking Google webfont.
       Recipe: match the ligature to an existing icon, drop it entirely
       when the label beside it already says the same thing, and delete
       the now-unused `icon` props the components carried.
-      Fully converted so far: the app shell, the EI report, every route
+      Fully converted so far: the app shell (including the copilot
+      panel, which rides on every screen), the EI report, every route
       under `/app/projects/[id]` at page level, **the whole candidate
       detail route** (page, view, seven panels and four leaf components)
       and **both auth pages**. What remains is the other project modules
