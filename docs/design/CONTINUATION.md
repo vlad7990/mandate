@@ -4,9 +4,9 @@
 context reset without re-deriving anything. Paste the block in §1 into a
 fresh session and it will pick up exactly where the last one stopped.
 
-**Updated:** 2026-08-11 · `main` @ `b634b21`, plus uncommitted work
-compiling the EI report for real searches (awaiting approval to
-commit). All seven app comps now have their design rendered somewhere.
+**Updated:** 2026-08-11 · `main` @ `eb60bc8`, **two commits ahead of
+`origin/main` and not pushed** — the EI report compiler and the EI
+workspace restyle. Production does not reflect them yet.
 
 ---
 
@@ -154,10 +154,44 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
       fixes came out of looking at it — weight bars scale to the heaviest
       competency (six weights summing to 100 read as underlines against a
       100% track) and exactly one chain step carries the accent border.
-- [ ] **Restyle the real Project Detail** (1006 lines) to comp 08. The
-      sample route at `src/components/sample/sample-project-detail.tsx`
-      is the target design — this is a comparison, not a guess. Do it
-      incrementally; the page carries live server actions.
+- [ ] **Restyle the real Project Detail** (1017 lines) to comp 08.
+      Target: `src/components/sample/sample-project-detail.tsx`.
+      **Scoped 2026-08-11 — read this before starting; it is not the
+      same shape of job as the EI workspace.**
+
+      *What the page actually is.* A single vertical stack of full-width
+      sections: hero, module nav, recalibration banner, weekly health
+      card, `HealthSuggestionsPanel`, agent stack (`AgentTiles` +
+      `BuildSourcingCta`), `CandidateSearchPanel`, and four intelligence
+      panels (`ClientIntelligencePanel`, `HMIntelligencePanel`,
+      `CompanyIntelligencePanel`, `CultureIntelligencePanel`), then role
+      and company summary cards, `DimensionWeightsCard`, and a
+      missing-information list. Everything from the hero down to the
+      summary cards is defined inside `page.tsx`; the six panels are
+      separate client components with their own idiom.
+
+      *Why it is not a straight port.* Comp 08 is a two-column grid
+      (agent stack + context + candidates left; calibrated bar,
+      must-haves, search health right). The four intelligence panels and
+      `CandidateSearchPanel` are large interactive client components — a
+      two-column layout has nowhere to put them, and restyling them is a
+      second job. Plan for: page chrome and the server-rendered cards
+      move into the comp's language and grid; the client panels stay
+      full-width below it and get restyled after, one at a time.
+
+      *The stage rail needs data that is not queried yet.* The comp's
+      rail (Intake → Research → Spec → Calibrated → Sourced → evaluated →
+      Shortlist → with client → Offer) is fixtures. `page.tsx` currently
+      knows `ready`, `calibrated`, the `job_specs` summary, health, and
+      the feedback count. Sourced / evaluated / shortlist / offer need
+      counts from `boolean_queries`, `candidate_scores`, and whatever
+      backs `/shortlist`. Check the live schema before drawing that rail
+      — do not fabricate a stage the data cannot support.
+
+      *Follow the pattern.* Split into `page.tsx` (queries → view model)
+      and `project-view.tsx` (props in), the way the EI workspace and the
+      EI report are split. That is what makes it verifiable from
+      fixtures without a session.
 - [ ] **Restyle the real Candidate Detail** (1326 lines) to comp 10.
       Target: `sample-candidate-detail.tsx`.
 - [ ] **~425 Material Symbols ligatures** → inline SVG from
