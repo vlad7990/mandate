@@ -112,18 +112,18 @@ export function ThreeCircleAlignment({
       {/* Pairwise score pills on overlap edges */}
       <g>
         <rect
-          x="200"
-          y="220"
+          x="131"
+          y="166"
           width="48"
           height="22"
           rx="2"
-          fill="#0a0a0f"
+          fill="var(--bg)"
           stroke={ccTone}
           strokeWidth="1.2"
         />
         <text
-          x="224"
-          y="235"
+          x="155"
+          y="181"
           textAnchor="middle"
           fill="#ececf4"
           style={{
@@ -137,18 +137,18 @@ export function ThreeCircleAlignment({
       </g>
       <g>
         <rect
-          x="292"
-          y="220"
+          x="361"
+          y="166"
           width="48"
           height="22"
           rx="2"
-          fill="#0a0a0f"
+          fill="var(--bg)"
           stroke={chTone}
           strokeWidth="1.2"
         />
         <text
-          x="316"
-          y="235"
+          x="385"
+          y="181"
           textAnchor="middle"
           fill="#ececf4"
           style={{
@@ -166,7 +166,7 @@ export function ThreeCircleAlignment({
         cx="270"
         cy="245"
         r="48"
-        fill="#0a0a0f"
+        fill="var(--bg)"
         stroke={overallTone}
         strokeWidth="2"
       />
