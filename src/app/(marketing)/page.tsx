@@ -690,21 +690,16 @@ function Triangulation() {
               and prepared responses.
             </p>
 
-            {/* Say what these numbers are. Unlabelled score bars beneath
-                a claim about defensible scoring read as evidence, and a
-                search principal will correctly identify them as a
-                mockup — which discredits the claim they sit under. */}
-            <p
-              style={{
-                marginTop: "2rem",
-                marginBottom: "0.75rem",
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.6875rem",
-                letterSpacing: "0.16em",
-                textTransform: "uppercase",
-                color: "var(--fg-muted)",
-              }}
-            >
+            {/* Say what these numbers are, and say it where it governs
+                BOTH columns. Sitting immediately above the score list,
+                this caveat left the diagram in the adjacent column —
+                which carries the largest number on the page — reading
+                as unqualified evidence. Unlabelled scores beneath a
+                claim about defensible scoring are exactly what a search
+                principal identifies as a mockup, which discredits the
+                claim they sit under. A second caption sits under the
+                diagram for the stacked mobile order. */}
+            <p className="m-illus-note">
               Illustrative shape of the output — not live data
             </p>
             <ul
@@ -715,10 +710,17 @@ function Triangulation() {
                 gap: "0.625rem",
               }}
             >
+              {/* One hue. These were #22c55e / #f59e0b / accent — a
+                  green/amber traffic light, which is the grammar of
+                  pass/caution/fail. An amber bar beside "Candidate ↔ HM"
+                  is a caution flag on a named person, three sections
+                  after the page states it never issues a verdict.
+                  Magnitude is carried by bar length, which is what
+                  magnitude is for. */}
               {[
-                { k: "Candidate ↔ Company", v: 91, c: "#22c55e" },
-                { k: "Candidate ↔ HM", v: 83, c: "#f59e0b" },
-                { k: "Overall alignment", v: 87, c: "var(--accent)" },
+                { k: "Candidate ↔ Company", v: 91 },
+                { k: "Candidate ↔ HM", v: 83 },
+                { k: "Overall alignment", v: 87 },
               ].map((s) => (
                 <li
                   key={s.k}
@@ -748,7 +750,7 @@ function Triangulation() {
                       fontFamily: "var(--font-mono)",
                       fontSize: "1.5rem",
                       fontWeight: 600,
-                      color: s.c,
+                      color: "var(--accent)",
                       letterSpacing: "0.02em",
                       fontVariantNumeric: "tabular-nums",
                     }}
@@ -774,7 +776,7 @@ function Triangulation() {
                         position: "absolute",
                         inset: 0,
                         width: `${s.v}%`,
-                        background: s.c,
+                        background: "var(--accent)",
                       }}
                     />
                   </span>
@@ -793,6 +795,13 @@ function Triangulation() {
             candidateCompany={91}
             candidateHm={83}
           />
+          {/* On mobile the columns stack, so the caveat in the text
+              column is separated from this diagram by the entire score
+              list. The diagram holds the biggest number on the page and
+              must carry its own label. */}
+          <p className="m-illus-note m-illus-note--center">
+            Illustrative example — not live data
+          </p>
         </Reveal>
       </div>
     </section>

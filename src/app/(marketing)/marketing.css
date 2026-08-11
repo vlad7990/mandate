@@ -3661,3 +3661,22 @@ html:has(.marketing-root) {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* Illustrative-data caption. Used wherever sample numbers appear, so
+   the label travels with the numbers instead of being written inline
+   once and forgotten in the next column. */
+.m-illus-note {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.m-illus-note--center {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  text-align: center;
+}

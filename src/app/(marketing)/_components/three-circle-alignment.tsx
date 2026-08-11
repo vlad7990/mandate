@@ -1,19 +1,40 @@
 /**
- * Decorative three-circle alignment diagram for the marketing page.
+ * Illustrative three-circle alignment diagram for the marketing page.
  * Visually echoes the in-app TriangulationPanel SVG but rendered at
- * marketing scale with sample scores. Pure SVG, no client JS.
+ * marketing scale with illustrative scores. Pure SVG, no client JS.
+ *
+ * NO TRAFFIC LIGHTS. This used to map scores through green / amber /
+ * red — ≥70 good, ≥45 warn, below that risk — and apply the result to
+ * the medallion stroke and both pairwise pills. Green/amber/red is the
+ * universal grammar of pass / caution / fail, so an amber ring beside a
+ * named person is a verdict on that person, rendered three sections
+ * after the page states that "no hire or no-hire verdict is produced
+ * anywhere in the product". The colour was doing evaluative work the
+ * copy explicitly disclaims, and a search principal reading in order
+ * catches it.
+ *
+ * Alignment is a MAGNITUDE. It is now expressed as one accent hue whose
+ * ring opacity tracks the score, so a lower number reads as "less", not
+ * as "bad". If a future design needs to flag a genuine risk, that has
+ * to be a stated, human-authored judgement — not a colour ramp applied
+ * to a number.
+ *
+ * LABEL COLOUR: the four small uppercase labels use `--fg-soft`, NOT
+ * `--fg-muted`. They sit on top of the translucent circle fills, and a
+ * ratio measured against the page background is misleading there —
+ * `--fg-muted` reads 5.10:1 on `--bg` but only 2.85:1 once composited
+ * over the cyan fill. `--fg-soft` clears 4.5:1 against every fill in
+ * this diagram (worst case 5.59:1). Do not "tidy" these back to the
+ * muted token without re-measuring against the composited backdrop.
+ * (They were `#6b6b7e` hardcoded, which failed everywhere.)
  */
 
-const TONE = {
-  good: "#22c55e",
-  warn: "#f59e0b",
-  risk: "#ef4444",
-} as const;
-
-function tone(score: number) {
-  if (score >= 70) return TONE.good;
-  if (score >= 45) return TONE.warn;
-  return TONE.risk;
+/** Ring emphasis for a 0–100 magnitude. Opacity only — never hue. */
+function ringOpacity(score: number): number {
+  const clamped = Math.max(0, Math.min(100, score));
+  // 0 → 0.35, 100 → 1.0. Keeps a low score visible rather than fading
+  // it toward "wrong".
+  return +(0.35 + (clamped / 100) * 0.65).toFixed(3);
 }
 
 export function ThreeCircleAlignment({
@@ -31,15 +52,18 @@ export function ThreeCircleAlignment({
   candidateCompany?: number;
   candidateHm?: number;
 }) {
-  const overallTone = tone(overall);
-  const ccTone = tone(candidateCompany);
-  const chTone = tone(candidateHm);
+  const overallRing = ringOpacity(overall);
+  const ccRing = ringOpacity(candidateCompany);
+  const chRing = ringOpacity(candidateHm);
 
   return (
     <svg
       viewBox="0 0 540 460"
       role="img"
-      aria-label={`Alignment diagram. Overall ${overall}, candidate↔company ${candidateCompany}, candidate↔HM ${candidateHm}.`}
+      /* "Illustrative example" leads, because the visual caveat sits in
+         the adjacent column and a screen-reader user may never reach
+         it — the label previously stated the scores as plain fact. */
+      aria-label={`Illustrative example of an alignment diagram, not live data. Overall ${overall}, candidate to company ${candidateCompany}, candidate to hiring manager ${candidateHm}.`}
       className="m-tri-svg w-full h-auto max-w-[540px] mx-auto block"
     >
       {/* Atmospheric backdrop circles */}
@@ -118,7 +142,8 @@ export function ThreeCircleAlignment({
           height="22"
           rx="2"
           fill="var(--bg)"
-          stroke={ccTone}
+          stroke="var(--accent)"
+          strokeOpacity={ccRing}
           strokeWidth="1.2"
         />
         <text
@@ -143,7 +168,8 @@ export function ThreeCircleAlignment({
           height="22"
           rx="2"
           fill="var(--bg)"
-          stroke={chTone}
+          stroke="var(--accent)"
+          strokeOpacity={chRing}
           strokeWidth="1.2"
         />
         <text
@@ -167,7 +193,8 @@ export function ThreeCircleAlignment({
         cy="245"
         r="48"
         fill="var(--bg)"
-        stroke={overallTone}
+        stroke="var(--accent)"
+        strokeOpacity={overallRing}
         strokeWidth="2"
       />
       <text
@@ -188,7 +215,7 @@ export function ThreeCircleAlignment({
         x="270"
         y="272"
         textAnchor="middle"
-        fill="#6b6b7e"
+        fill="var(--fg-soft)"
         style={{
           fontFamily: "var(--font-mono)",
           fontSize: 9,
@@ -204,7 +231,7 @@ export function ThreeCircleAlignment({
         x="270"
         y="34"
         textAnchor="middle"
-        fill="#6b6b7e"
+        fill="var(--fg-soft)"
         style={{
           fontFamily: "var(--font-mono)",
           fontSize: 10,
@@ -233,7 +260,7 @@ export function ThreeCircleAlignment({
         x="60"
         y="438"
         textAnchor="start"
-        fill="#6b6b7e"
+        fill="var(--fg-soft)"
         style={{
           fontFamily: "var(--font-mono)",
           fontSize: 10,
@@ -262,7 +289,7 @@ export function ThreeCircleAlignment({
         x="480"
         y="438"
         textAnchor="end"
-        fill="#6b6b7e"
+        fill="var(--fg-soft)"
         style={{
           fontFamily: "var(--font-mono)",
           fontSize: 10,
