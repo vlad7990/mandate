@@ -19,6 +19,7 @@ import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { LiveTick } from "@/components/ui/live-tick";
 import { IconInfo, IconRefresh } from "@/components/icons";
 import { CandidateView } from "./candidate-view";
+import { PANEL_BODY, Panel, PanelMeta } from "@/components/projects/panel";
 import { StatusChip } from "@/components/ui/status-chip";
 import { ensureCandidateEvaluation } from "@/lib/ai/generate-evaluation";
 import { type Tier } from "@/lib/ranking/tiers";
@@ -748,37 +749,28 @@ function ArchetypeStrip({
 }) {
   if (!archetype && !fitSummary) return null;
   return (
-    <article className="bg-surface-container-low border border-outline-variant p-4 flex items-start gap-4">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-            Archetype
-          </span>
-          {archetype ? (
-            <span
-              className={cn(
-                "font-h2 text-h2 uppercase tracking-tight",
-                ARCHETYPE_TEXT[archetype]
-              )}
-            >
-              {archetype}
-            </span>
-          ) : (
-            <span className="font-h2 text-h2 text-outline">— Awaiting parse —</span>
-          )}
-        </div>
+    <Panel
+      title="Archetype"
+      meta={
+        <PanelMeta>
+          {archetype ?? "Awaiting parse"} · decision support, not a
+          recommendation
+        </PanelMeta>
+      }
+    >
+      <div className={cn(PANEL_BODY, "flex flex-col gap-2.5")}>
         {archetype && (
-          <p className="text-body-main text-on-surface-variant mt-1 leading-snug">
+          <p className={cn("text-[13px] leading-relaxed", ARCHETYPE_TEXT[archetype])}>
             {ARCHETYPE_BLURBS[archetype]}
           </p>
         )}
         {fitSummary && (
-          <p className="text-body-main text-on-surface mt-2 pt-2 border-t border-outline-variant/40 leading-relaxed">
+          <p className="max-w-[76ch] text-sm leading-relaxed text-on-surface">
             {fitSummary}
           </p>
         )}
       </div>
-    </article>
+    </Panel>
   );
 }
 
@@ -792,16 +784,15 @@ function SynthesisCard({
   summary: string | undefined;
 }) {
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex justify-between items-center">
-        <span className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-          AI_CORE_SYNTHESIS
-        </span>
+    <Panel
+      title="Synthesis"
+      meta={
         <StatusChip tone={summary ? "secondary" : "neutral"} intensity="soft">
           {summary ? "Parsed" : "Pending"}
         </StatusChip>
-      </header>
-      <div className="p-4 text-on-surface text-body-main leading-relaxed font-mono-data">
+      }
+    >
+      <div className={cn(PANEL_BODY, "max-w-[76ch] text-sm leading-relaxed text-on-surface")}>
         <EditableTextarea
           candidateId={candidateId}
           projectId={projectId}
@@ -812,7 +803,7 @@ function SynthesisCard({
           emptyState={<>Synthesis will appear once the CV is parsed. Click to write one manually.</>}
         />
       </div>
-    </article>
+    </Panel>
   );
 }
 
@@ -829,13 +820,12 @@ function SignalsLedger({
   development: string[] | undefined;
   risks: string[] | undefined;
 }) {
-  // Three signal columns rendered as a single bordered ledger with
-  // vertical dividers — denser and more terminal than three separate
-  // cards. Each column carries a tonal left rule so the recruiter's eye
-  // can find the signal type without re-reading the heading.
+  // Three signal columns in one ledger rather than three cards. The tone
+  // lives in the column heading now: a 2px coloured left rule on each column
+  // was three accent bars competing across a single panel.
   return (
-    <article className="bg-surface-container-low border border-outline-variant overflow-hidden">
-      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-outline-variant/60">
+    <Panel title="Signals">
+      <div className="grid grid-cols-1 divide-y divide-outline-variant/60 md:grid-cols-3 md:divide-x md:divide-y-0">
         <SignalColumn
           candidateId={candidateId}
           projectId={projectId}
@@ -864,7 +854,7 @@ function SignalsLedger({
           items={risks ?? []}
         />
       </div>
-    </article>
+    </Panel>
   );
 }
 
@@ -891,17 +881,11 @@ function SignalColumn({
       : tone === "warn"
         ? "text-tertiary"
         : "text-error";
-  const ruleClass =
-    tone === "secondary"
-      ? "border-l-secondary-fixed-dim"
-      : tone === "warn"
-        ? "border-l-tertiary"
-        : "border-l-error";
   return (
-    <div className={cn("p-4 border-l-2", ruleClass)}>
+    <div className="p-[18px]">
       <h4
         className={cn(
-          "font-mono-label text-mono-label uppercase tracking-widest mb-3 flex items-center gap-2 tabular-nums",
+          "mb-3 flex items-center gap-2 font-mono-label text-[10px] font-bold uppercase tracking-[0.12em] tabular-nums",
           headingClass
         )}
       >
@@ -939,18 +923,17 @@ function FitCard({
   const dims = Object.keys(FIT_DIMENSION_LABELS) as Array<keyof FitDimensions>;
 
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2">
-        <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          Multi-dimensional Fit
-        </span>
-        {fitPct != null && (
-          <span className="font-mono-label text-mono-label uppercase tracking-widest tabular-nums text-on-surface-variant">
-            <span className="text-primary">{fitPct}%</span> overall
-          </span>
-        )}
-      </header>
-      <div className="p-4 space-y-4">
+    <Panel
+      title="Fit by dimension"
+      meta={
+        fitPct != null ? (
+          <PanelMeta>
+            <span className="tabular-nums">{fitPct}% overall</span>
+          </PanelMeta>
+        ) : undefined
+      }
+    >
+      <div className={cn(PANEL_BODY, "flex flex-col gap-4")}>
         {dims.map((dim) => {
           const score = clamp10(dimensions?.[dim]);
           const weight = clamp10(weights?.[dim]);
@@ -1015,15 +998,11 @@ function FitCard({
         })}
       </div>
       {fitSummary && (
-        <div className="px-4 pb-4">
-          <div className="border-l-2 border-secondary-fixed-dim/60 bg-secondary-fixed-dim/5 px-3 py-2">
-            <p className="font-mono-data text-body-main text-secondary-fixed-dim leading-snug">
-              {fitSummary}
-            </p>
-          </div>
-        </div>
+        <p className="border-t border-outline-variant/60 px-[18px] py-3.5 text-[13px] leading-relaxed text-on-surface-variant">
+          {fitSummary}
+        </p>
       )}
-    </article>
+    </Panel>
   );
 }
 
@@ -1041,11 +1020,8 @@ function EditableSignalCard({
   value: string | null;
 }) {
   return (
-    <article className="bg-surface-container-low border border-outline-variant">
-      <header className="px-4 py-2 border-b border-outline-variant/60 bg-surface-container">
-        <h3 className="text-sm font-semibold text-on-surface">{title}</h3>
-      </header>
-      <div className="px-4 py-3 text-body-main text-on-surface-variant">
+    <Panel title={title}>
+      <div className={cn(PANEL_BODY, "text-[13px] leading-relaxed text-on-surface-variant")}>
         <EditableText
           candidateId={candidateId}
           projectId={projectId}
@@ -1055,7 +1031,7 @@ function EditableSignalCard({
           ariaLabel={title.toLowerCase()}
         />
       </div>
-    </article>
+    </Panel>
   );
 }
 
@@ -1067,22 +1043,25 @@ function ChipCard({
   items: string[];
 }) {
   return (
-    <article className="bg-surface-container-low border border-outline-variant">
-      <header className="px-4 py-2 border-b border-outline-variant/60 bg-surface-container flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-on-surface">{title}</h3>
-        <span className="font-mono-label text-mono-label text-outline tabular-nums">
-          {String(items.length).padStart(2, "0")}
-        </span>
-      </header>
-      <div className="px-4 py-3">
+    <Panel
+      title={title}
+      meta={
+        <PanelMeta>
+          <span className="tabular-nums">{items.length}</span>
+        </PanelMeta>
+      }
+    >
+      <div className={PANEL_BODY}>
         {items.length === 0 ? (
-          <p className="text-body-main text-outline italic">—</p>
+          <p className="text-[13px] leading-relaxed text-outline">
+            Nothing recorded yet.
+          </p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {items.map((item, i) => (
               <span
                 key={i}
-                className="px-2 py-0.5 border border-outline-variant bg-surface-container font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider"
+                className="rounded-md border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] uppercase tracking-[0.08em] text-on-surface-variant"
               >
                 {item}
               </span>
@@ -1090,7 +1069,7 @@ function ChipCard({
           </div>
         )}
       </div>
-    </article>
+    </Panel>
   );
 }
 
@@ -1101,22 +1080,22 @@ function CareerTimeline({
 }) {
   const list = roles ?? [];
   return (
-    <article className="bg-surface-container border border-outline-variant overflow-hidden">
-      <header className="bg-surface-container-high px-4 py-2.5 border-b border-outline-variant flex items-center justify-between gap-2">
-        <span className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-          Career Progression Map
-        </span>
-        <span className="font-mono-label text-mono-label text-outline tabular-nums">
-          {String(list.length).padStart(2, "0")} role
-          {list.length === 1 ? "" : "s"}
-        </span>
-      </header>
+    <Panel
+      title="Career"
+      meta={
+        <PanelMeta>
+          <span className="tabular-nums">
+            {list.length} role{list.length === 1 ? "" : "s"}
+          </span>
+        </PanelMeta>
+      }
+    >
       {list.length === 0 ? (
-        <div className="p-5 text-body-main text-outline italic">
+        <p className={cn(PANEL_BODY, "text-[13px] leading-relaxed text-outline")}>
           Career history will populate here once the CV is parsed.
-        </div>
+        </p>
       ) : (
-        <ol className="p-5 space-y-5">
+        <ol className="flex flex-col gap-5 p-[18px]">
           {list.map((role, i) => (
             <li key={i} className="grid grid-cols-[8.5rem_1fr] gap-4 items-start">
               <div className="text-right pt-0.5">
@@ -1129,14 +1108,14 @@ function CareerTimeline({
               </div>
               <div className="flex items-start gap-3 min-w-0">
                 <div
-                  className="w-2 h-2 mt-2 bg-secondary-fixed-dim ring-1 ring-secondary-fixed-dim/40 ring-offset-2 ring-offset-surface-container shrink-0"
+                  className="mt-2 h-2 w-2 shrink-0 rounded-full bg-secondary-fixed-dim ring-1 ring-secondary-fixed-dim/40 ring-offset-2 ring-offset-surface-container-low"
                   aria-hidden
                 />
-                <div className="bg-surface-container-high border border-outline-variant px-3 py-2 flex-1 min-w-0">
-                  <div className="font-mono-data text-mono-data text-secondary-fixed-dim uppercase tracking-wider">
+                <div className="min-w-0 flex-1 rounded-md border border-outline-variant bg-surface-container px-3 py-2">
+                  <div className="text-[13px] font-semibold text-on-surface">
                     {role.title}
                   </div>
-                  <p className="text-body-main text-on-surface-variant mt-1 leading-snug">
+                  <p className="mt-1 text-[13px] leading-relaxed text-on-surface-variant">
                     {role.summary}
                   </p>
                 </div>
@@ -1145,7 +1124,7 @@ function CareerTimeline({
           ))}
         </ol>
       )}
-    </article>
+    </Panel>
   );
 }
 
@@ -1218,38 +1197,29 @@ function EvaluationPendingPanel({
   projectId: string;
 }) {
   return (
-    <article className="bg-surface-container border border-outline-variant relative overflow-hidden">
-      <div
-        className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary-container/30 via-primary/30 to-primary-container/10"
-        aria-hidden
-      />
-      <div className="px-5 py-4 flex items-start gap-3 flex-wrap">
+    <Panel
+      title="Evaluation report"
+      meta={
+        <PanelMeta>{processing ? "Pending" : "Generation failed"}</PanelMeta>
+      }
+    >
+      <div className={cn(PANEL_BODY, "flex flex-wrap items-start gap-3")}>
         {processing ? (
           <IconRefresh size={18} className="mt-0.5 animate-spin text-primary" />
         ) : (
           <IconInfo size={18} className="mt-0.5 text-tertiary" />
         )}
-        <div className="flex-1 min-w-0 space-y-1.5">
-          <div
-            className={cn(
-              "font-mono-label text-mono-label uppercase tracking-widest",
-              processing ? "text-primary" : "text-tertiary"
-            )}
-          >
-            {processing
-              ? "Executive Evaluation Report — Pending"
-              : "Executive Evaluation Report — Generation Failed"}
-          </div>
+        <div className="min-w-0 flex-1 space-y-1.5">
           {processing ? (
-            <p className="text-body-main text-on-surface-variant leading-relaxed">
+            <p className="text-[13px] leading-relaxed text-on-surface-variant">
               The CV is still being parsed. Once parsing completes, the
               evaluation agent will run automatically and the report will
               appear here on the next visit.
             </p>
           ) : (
-            <p className="text-body-main text-on-surface-variant leading-relaxed">
+            <p className="text-[13px] leading-relaxed text-on-surface-variant">
               The evaluation agent could not produce a report on the last
-              attempt. Click <span className="text-on-surface font-semibold">Retry Evaluation</span>{" "}
+              attempt. Click <span className="font-semibold text-on-surface">Retry evaluation</span>{" "}
               to clear the cache and regenerate. Generation is idempotent —
               a successful retry replaces the cached failure.
             </p>
@@ -1262,7 +1232,7 @@ function EvaluationPendingPanel({
           />
         )}
       </div>
-    </article>
+    </Panel>
   );
 }
 

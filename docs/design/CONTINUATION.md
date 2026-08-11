@@ -205,12 +205,20 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
       The old `TriangulationTabRail` — two anchor links pretending to be
       tabs — is gone; real tabs replace it. Every Material Symbols
       ligature on this page is gone too.
-      **Still open:** the cards inside the tabs (`SynthesisCard`,
-      `SignalsLedger`, `FitCard`, `CareerTimeline`, `EditableSignalCard`,
-      `ChipCard`, `ArchetypeStrip`, `EvaluationPendingPanel`) and the six
-      client panels under this route still carry the older idiom. Use
-      `src/components/projects/panel.tsx`, the same shell Project Detail
-      moved onto.
+      The cards inside the tabs followed on the same day: every one of
+      them — archetype, synthesis, signals, fit, career, domain/scale,
+      chips, evaluation-pending — is on the shared `Panel` shell, and
+      `page.tsx` has no `<article>` shells and no ligatures left. Two
+      more fixes from looking: the career-timeline marker was a 2px
+      square with a ring offset and read as a checkbox, and the three
+      signal columns each carried a coloured 2px left rule — three
+      accent bars competing inside one panel, now carried by the column
+      headings.
+      **Still open:** the six client panels under this route
+      (`recruiter-assessment-panel`, `candidate-intelligence-panel`,
+      `triangulation-panel`, `evaluation-report`, `positioning-panel`,
+      `psychology-panel`, `candidate-notes-panel`) still carry the older
+      idiom. Same shell, same recipe as Project Detail's six.
 
 - [ ] **342 Material Symbols ligatures** → inline SVG from
       `src/components/icons.tsx`. Each currently puts literal text like
