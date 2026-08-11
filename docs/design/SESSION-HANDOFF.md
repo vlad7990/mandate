@@ -1,6 +1,6 @@
-# Session handoff — Mandate marketing homepage
+# Session handoff — Mandate marketing surface
 
-**Written:** 2026-08-11 · **Repo state at handoff:** `main` @ `2f70b4d`, clean, pushed to `origin`.
+**Written:** 2026-08-11 · **Updated:** 2026-08-11 (four product pages) · **Repo state at handoff:** `main` @ `8502bab` plus uncommitted work for the four pages.
 
 ---
 
@@ -28,17 +28,11 @@
 
 **The rule that prevents it:** use `git -C /Users/vladbreygin/Documents/Projects/mandate <cmd>` for every git command. It removes the failure mode rather than relying on remembering to `cd` back.
 
-### Outstanding cleanup
+### Outstanding cleanup — ✅ done 2026-08-11
 
-Three untracked debris files that this session's agents created in the **stale clone** still need deleting:
+The three debris files (`simulator-failed-state.png`, `skip-link-focused.png`, `sim-error-state.png`) were deleted from the stale clone. `.playwright-mcp/`, `hero-1440.png`, `mandate-landing-1440.png` and `status` were left alone, as instructed.
 
-```
-~/Mandate Recruiting/mandate/simulator-failed-state.png
-~/Mandate Recruiting/mandate/skip-link-focused.png
-~/Mandate Recruiting/mandate/sim-error-state.png
-```
-
-**Do NOT touch** `.playwright-mcp/`, `hero-1440.png`, `mandate-landing-1440.png` or `status` in that clone — those predate this work and are not ours to remove.
+**Still true, and still the rule:** the Playwright MCP writes screenshots to the stale clone's root. This session moved each capture to the session scratchpad immediately after taking it, and never `cd`-ed into that clone — every git command used `git -C /Users/vladbreygin/Documents/Projects/mandate`.
 
 ---
 
@@ -187,28 +181,70 @@ Requires **two isolated sub-agents** (A: design review, B: detector + browser ev
 
 ---
 
-## 7. Next: the four remaining marketing pages
+## 7. The four remaining marketing pages — ✅ built 2026-08-11
 
-Import from Claude Design project `f6c4031e-c28e-450f-8ef1-353834d79b78` via the `claude_design` MCP (`https://api.anthropic.com/v1/design/mcp`, auth `/design-login`). Each selection also imports `support.js`.
+Imported from Claude Design project `f6c4031e-c28e-450f-8ef1-353834d79b78` via `DesignSync`.
 
-| Comp | Route |
+| Comp | Route as built |
 |---|---|
 | `02 Platform.dc.html` | `/platform` |
-| `03 Executive Intelligence.dc.html` | `/executive-intelligence` |
+| `03 Executive Intelligence.dc.html` | **`/intelligence`** — see below |
 | `04 Solutions.dc.html` | `/solutions` |
 | `05 Pricing.dc.html` | `/pricing` |
+
+### 🔴 `/executive-intelligence` was already taken
+
+That path is the **authenticated EI workspace** — `(dashboard)/executive-intelligence` with `searches/[id]`, success profiles, interview plans, assessments and a competency library beneath it. Route groups do not add a URL segment, so a marketing page there is a hard `next build` error ("two parallel pages resolve to the same path"), not a soft collision.
+
+The marketing page is at **`/intelligence`**. The nav label still reads "Executive Intelligence". Moving a live product area to free the better URL was not worth it; if that trade is ever wanted, the dashboard area has to move first and `/executive-intelligence` needs a redirect.
+
+**Every unlisted route redirects to sign-in.** `src/proxy.ts` `PUBLIC_PAGES` gates this — the four new routes are listed there explicitly. A new marketing route that is not added to that set 302s to `/auth/signin` and looks, from the outside, like it was never deployed.
+
+### Decisions settled with the founder before building
+
+| Question | Decision |
+|---|---|
+| Homepage vs new pages | **Homepage untouched.** Sections 04–08 stay full; the nav simply stopped addressing them. Content is duplicated between `/` and the new pages by choice. |
+| Nav | Platform · Executive Intelligence · Solutions · Pricing · Live demo. **No `/security`** — the comps show it, but nothing evidences those claims yet (§6). |
+| Starter tier | **Shipped wording wins**: 1 user, 3 active searches. The comp's "unlimited mandates" was wrong and was corrected. |
+
+### What the comps got wrong, and what was done instead
+
+The comps are art direction, not truth. Three concrete corrections:
+
+- **The Platform agent grid did not reconcile.** It invented `Client Psychology`, `Skills` and `Triangulation` (none are agents), omitted real ones, and badged its `EVALUATE` column **6** above a list of **4** — headers summing to 17, rows summing to 15. Rebuilt from `AGENTS.md` into `_data/agents.ts`; the grouping is the comp's, the roster and every count are derived from the array.
+- **The Pricing comp contradicted the homepage** on Starter. Both surfaces now render from `_data/pricing.ts`.
+- **The Boolean panel drew `Copy` and `Version history` buttons.** Rendering dead controls on a marketing page spends exactly the credibility that section is trying to earn. They are `<li>`s now — a legend, offering no click.
+
+### Reconciliation guards added
+
+`_nav-links.ts` (nav + mobile panel + footer), `_data/agents.ts` (`AGENT_COUNT = AGENTS.length`), `_data/pricing.ts` (tiers + matrix + billing FAQ), and a shared `PriceTierCard`. The homepage and `/pricing` cannot quote different numbers because they read the same module.
+
+### Two defects found in passing
+
+- **Layout metadata was leaking.** The route-group layout carried the homepage's `title`, `description`, `canonical: "/"` and OG card. Layout metadata is inherited, so `/request-access` was already declaring itself canonical to `/`, and all four new pages would have too. Page metadata now lives on each page; the layout exports none. `/request-access` also had a doubled title suffix (`"Request Access · Mandate"` under a `"%s · Mandate"` template) and is now `noindex`.
+- **The root layout still said "14 intelligent agents".** Only the marketing layout had been corrected, so every non-marketing route still shipped the wrong count. Now derived from `AGENT_COUNT`.
+
+### The nav breakpoint, and why it moved to 1240px
+
+A fifth destination pushed the row to 1123px of content, which needs a 1203px viewport once gutters are paid. At the old 1120px breakpoint nothing reported an overflow — **`.m-nav__link` had no `white-space`, so "Executive Intelligence" and "Live demo" wrapped to two 11px lines that still fit inside the 40px `min-height`.** The box never grew, `scrollWidth` never exceeded `clientWidth`, and every geometric check passed while the nav visibly rendered as two ragged rows. `white-space: nowrap` makes that failure measurable; the breakpoint is set from the measurement. **Both media queries (`.m-nav__links` show, `.m-mnav` hide) must stay on the same value** or some width gets no navigation at all.
+
+Worth generalising: **a passing geometry assertion is not a passing render.** The screenshot caught this; three separate numeric checks did not.
 
 **Put every page at `src/app/(marketing)/<route>/page.tsx`.** Being inside the route group is what supplies `marketing.css` and the three `next/font` variables — `/request-access` was moved there for exactly this reason after shipping in a different design system.
 
 **Do not invent a second visual language.** The homepage is the reference: the `m-*` classes and `--accent` / `--fg-soft` / `--bg-elev-*` tokens; counts and numerals derive from `_constants.ts` and are never retyped; illustrative data is labelled illustrative (`_components/simulator-fixtures.ts` is the standard); no traffic-light colour on anything describing a person; no animated numbers that are not being computed; reveal hiding stays gated on `@media (scripting: enabled)`.
 
-### ⚠️ Settle this before writing any of them
+### What this leaves open
 
-The homepage nav points at **in-page anchors** — `#how` (Platform), `#intelligence` (Intelligence), `#simulator` (Live Demo), `#pricing` (Pricing). Once these routes exist that nav is wrong, and **`#pricing` collides with `/pricing`**.
+The IA decision (homepage untouched) was made deliberately and with the trade-offs stated, but it does not close the two structural findings in §6 — it defers them:
 
-Decide with the founders: do the homepage sections become short teasers linking to the new pages, or stay full and duplicate them? It bears on two open critique findings — the homepage is 13,278px on mobile (~16 viewports) and runs five consecutive card grids across sections 03–08. Moving depth onto dedicated pages is the natural fix for both, but it changes the homepage, so get agreement first rather than doing it by accident.
+- **The homepage is still ~13,500px** (~16 viewports on mobile). `/platform` is 7.3, `/intelligence` 6.3, `/pricing` 6.0, `/solutions` 4.8.
+- **Sections 04–08 now duplicate content** that also has a dedicated page. Nothing renders stale — both surfaces read the same modules — but a crawler sees the same pitch twice and a reader who follows the nav sees it twice too.
 
-**Note:** `CLAUDE.md` states "DesignSync has no Mandate comps". That line is stale — the project above does contain them. Verify and correct it.
+If that becomes a problem, the fix is the option that was not taken: collapse homepage 04–08 to teasers that link out. It is a smaller job now than it was before this session, because the depth already exists on its own pages.
+
+**`CLAUDE.md` corrected** — it claimed DesignSync had no Mandate comps. It has 14.
 
 ---
 
@@ -220,7 +256,14 @@ Other design docs in this folder, all committed:
 - `MANDATE_DESIGN_HANDOFF.md` — full product/design dossier, 750 lines.
 - `MANDATE_SCREEN_INVENTORY.md` — 73 screens + 15 states with status and dependencies.
 
-**Blocked on business input:** the Executive Intelligence add-on price (blocks the whole billing build, spec'd in `docs/superpowers/specs/2026-08-10-billing-design.md`), and the positioning brief (blocks every marketing page beyond Home).
+**Blocked on business input:** the Executive Intelligence add-on price (blocks the whole billing build, spec'd in `docs/superpowers/specs/2026-08-10-billing-design.md`), and the positioning brief.
+
+**Two claims now published that nothing backs yet.** Both came from the comps, both are on `/pricing`, and both are commercial promises rather than descriptions of built behaviour:
+
+1. *"Agent runs are not metered."* Coherent with flat pricing and the per-tier search caps, but billing is not built — Stripe is still on the pre-launch checklist. If metering ever appears, this line has to go first.
+2. *"Access is removed; your records are retained and remain readable."* A retention commitment with no policy page, no DPA and no stated period behind it — the same category as the FAQ's security claims in §6.
+
+Neither is dishonest, but neither has been signed off. They are in `_data/pricing.ts` (`BILLING_FAQ`) and change in one place.
 
 **Two marketing claims were removed on the founder's instruction** in `c67c969` — a "three days" manual-effort comparison and "the feature no other platform has". If either was load-bearing in sales conversations, they need deliberate replacements rather than the current absence.
 

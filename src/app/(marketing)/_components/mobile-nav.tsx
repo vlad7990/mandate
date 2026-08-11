@@ -2,15 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { NAV_LINKS, type NavKey } from "../_nav-links";
 
 /**
  * Mobile navigation for the marketing surface.
  *
- * Below 1120px the desktop link row is display:none, and until now
- * nothing replaced it — on a ~13,000px page that left no way to reach
- * pricing or the demo except scrolling the whole thing. This is the
- * replacement: a disclosure button and a panel carrying the same four
- * destinations plus both auth actions.
+ * Below the desktop breakpoint the link row is display:none, and until
+ * this existed nothing replaced it — on a ~13,000px page that left no
+ * way to reach pricing or the demo except scrolling the whole thing.
+ * This is the replacement: a disclosure button and a panel carrying the
+ * same destinations as the desktop row plus both auth actions.
+ *
+ * The destinations come from `_nav-links.ts`. They were hand-typed here
+ * once and had already drifted from the desktop row by one entry.
  *
  * Behaviour worth keeping if this is refactored:
  * - Escape closes and returns focus to the trigger
@@ -20,15 +24,7 @@ import Link from "next/link";
  * - any link click closes, so anchor jumps land on a clean page
  */
 
-const LINKS = [
-  { href: "#how", label: "Platform" },
-  { href: "#intelligence", label: "Intelligence" },
-  { href: "#simulator", label: "Live Demo" },
-  { href: "#executive-intelligence", label: "Executive Intelligence" },
-  { href: "#pricing", label: "Pricing" },
-];
-
-export function MobileNav() {
+export function MobileNav({ active }: { active?: NavKey }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -96,15 +92,16 @@ export function MobileNav() {
       >
         <nav aria-label="Primary mobile">
           <ul className="m-mnav__list">
-            {LINKS.map((l) => (
-              <li key={l.href}>
-                <a
+            {NAV_LINKS.map((l) => (
+              <li key={l.key}>
+                <Link
                   href={l.href}
                   className="m-mnav__link"
+                  aria-current={l.key === active ? "page" : undefined}
                   onClick={() => setOpen(false)}
                 >
                   {l.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

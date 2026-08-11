@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { AGENT_COUNT } from "./(marketing)/_constants";
 import "./globals.css";
 
 const inter = Inter({
@@ -20,8 +21,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 const SITE_TITLE = "Mandate — AI Executive Search Operating System";
+// Derived, never retyped. This string said "14 intelligent agents"
+// while the product had 17 — the same drift `_constants.ts` was written
+// to end. It was only ever corrected on the marketing layout, which
+// overrode it for `/` and left every other route still claiming 14.
 const SITE_DESCRIPTION =
-  "The AI Operating System for Executive Search. From one-line brief to shortlist submission with 14 intelligent agents.";
+  `The AI Operating System for Executive Search. From one-line brief to shortlist submission with ${AGENT_COUNT} intelligent agents.`;
 
 export const metadata: Metadata = {
   // metadataBase is the resolution origin for every relative URL in

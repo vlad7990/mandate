@@ -66,9 +66,20 @@ Explain a choice only when it materially affects the implementation.
 
 ### Design work
 
-**This repo is the design source of truth.** `DesignSync` has no Mandate comps —
-checked 2026-08-10; its only project (*VN & MN Product Group Design System*) covers the
-VN&MN website and Stratum, and building Mandate UI from it would import the wrong brand.
+**This repo is the design source of truth for anything already built.**
+
+`DesignSync` *does* have Mandate comps — corrected 2026-08-11. Project
+`f6c4031e-c28e-450f-8ef1-353834d79b78` holds 14 `.dc.html` comps: `01 Home` through
+`05 Pricing` (marketing), `06 App Shell` and `07`–`12` (product screens), plus two
+mobile sheets. The earlier note said otherwise because it had only looked at the
+*VN & MN Product Group Design System* project, which covers the VN&MN website and
+Stratum and would import the wrong brand.
+
+Treat the comps as **art direction, not truth**. They are mockups and they do not
+reconcile with the product: the Platform comp invented three agents that do not exist
+and badged a column "6" above a list of four; the Pricing comp contradicted the shipped
+Starter tier. Take the layout and the voice; take counts, prices, agent names and
+limits from `_constants.ts`, `_data/agents.ts` and `_data/pricing.ts`.
 
 Preserve the established language: the Bloomberg-terminal `m-*` class system, the
 `--accent` / `--fg-soft` token set, and the existing primitives — `MastHead`,

@@ -11,8 +11,17 @@
  * reconcile is a category refutation, not a typo. Derive, never retype.
  */
 
-/** Specialist agents in the system. Mirrors AGENTS.md. */
-export const AGENT_COUNT = 17;
+import { AGENTS } from "./_data/agents";
+
+/**
+ * Specialist agents in the system.
+ *
+ * Derived from the roster in `_data/agents.ts` rather than typed, so
+ * the number in the hero rail, the meta description, the OG card and
+ * the Platform page's phase map cannot disagree with the list of names
+ * the Platform page actually renders.
+ */
+export const AGENT_COUNT = AGENTS.length;
 
 /** Specialised modules across the three intelligence layers. */
 export const MODULE_COUNT = 12;

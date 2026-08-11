@@ -1172,6 +1172,88 @@ details[open] > .m-faq__btn .m-faq__icon {
   text-transform: uppercase;
   color: var(--fg-muted);
   vertical-align: baseline;
+  margin-left: 0.25rem;
+}
+
+/* ── Tier card internals ─────────────────────────────────────────
+   Extracted from inline styles in page.tsx when the card became a
+   shared component. Same rendering; one definition. */
+
+.m-price__badge {
+  position: absolute;
+  top: -12px;
+  left: 1.5rem;
+  padding: 0.25rem 0.625rem;
+  background: var(--accent-fill);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.m-price__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.m-price__name {
+  color: var(--accent);
+}
+
+.m-price__headline {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.m-price__points {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.625rem;
+  flex: 1;
+}
+
+.m-price__points li {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  color: var(--fg-soft);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.m-price__points svg {
+  color: var(--accent);
+  flex: none;
+  /* Optical, not geometric: aligns the tick's crossbar with the
+     x-height of the first line rather than its box with the line box. */
+  margin-top: 0.28em;
+}
+
+.m-price__cta {
+  width: 100%;
+}
+
+.m-price__foot {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--fg-muted);
+  margin-top: -0.5rem;
+}
+
+/* The homepage grid is a summary; the comparison table lives on
+   /pricing. Says so, rather than leaving the visitor to guess whether
+   these four cards are the whole commercial story. */
+.m-price-grid__foot {
+  margin-top: 2.5rem;
+  font-size: 0.9375rem;
+  color: var(--fg-muted);
 }
 
 /* ─────────────────────── Live simulator ───────────────────────── */
@@ -1533,6 +1615,14 @@ details[open] > .m-faq__btn .m-faq__icon {
   align-items: center;
   min-height: 40px;
   padding: 0 0.875rem;
+  /* Without this, an over-narrow nav wraps "Executive Intelligence"
+     onto two 11px lines which still fit inside the 40px min-height —
+     so the box never grows, scrollWidth never exceeds clientWidth, and
+     every geometric overflow check passes while the nav visibly reads
+     as two ragged rows. Forcing one line makes the failure measurable
+     instead of silent, which is the only reason the breakpoint below
+     could be set from evidence. */
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.16em;
@@ -1555,6 +1645,16 @@ details[open] > .m-faq__btn .m-faq__icon {
   outline-offset: 2px;
 }
 
+/* Current page. Hung off aria-current rather than a separate class so
+   the visual state and the announced state cannot disagree — there is
+   one source of truth and a screen reader reads the same fact the
+   sighted user sees. */
+.m-nav__link[aria-current="page"] {
+  color: var(--fg);
+  border-color: var(--line);
+  background: var(--bg-elev-1);
+}
+
 /* Nav fits in three pieces: brand + links + actions, all flex-shrink:0.
    At the old 900px breakpoint the three needed ~1126px of container and
    got ~1009px, so the primary "Request Access" CTA was clipped by 62px
@@ -1565,7 +1665,20 @@ details[open] > .m-faq__btn .m-faq__icon {
    Two changes buy the room: the decorative "System online" chip is
    desktop-only, and the links appear only once there is genuinely space
    for all three groups. */
-@media (min-width: 1120px) {
+/* Desktop link row appears only where all five destinations fit on one
+   line beside the brand and both auth buttons.
+
+   Measured, not guessed: brand 187px + links 626px + actions 278px +
+   two 16px gaps = 1123px of content, which needs a 1203px viewport
+   once the 40px gutters are paid. 1240px carries ~37px of headroom.
+   Raised from 1120px when a fifth destination was added — at 1120 the
+   row still "fit" only because two labels silently wrapped to two
+   lines inside a 40px box.
+
+   MUST stay in lockstep with the .m-mnav query below: one shows the
+   desktop row, the other hides the mobile trigger, and a gap between
+   them leaves a width with no navigation at all. */
+@media (min-width: 1240px) {
   .m-nav__links {
     display: flex;
   }
@@ -2604,11 +2717,21 @@ details[open] > .m-faq__btn .m-faq__icon {
   gap: 0.75rem;
 }
 
+/* Carried no glyph, so the site signed off with an empty blue chip
+   beside the wordmark while the nav mark two thousand pixels up had an
+   M in it. */
 .m-footer__mark {
   width: 22px;
   height: 22px;
   border: 1.5px solid var(--accent);
   border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
 }
 
 .m-footer__wordmark {
@@ -3161,6 +3284,14 @@ details[open] > .m-faq__btn .m-faq__icon {
   outline-offset: -2px;
 }
 
+/* Marks the current page with a rule rather than a colour change — at
+   this size a tint alone is not a reliable signal, and colour is never
+   the only carrier. */
+.m-mnav__link[aria-current="page"] {
+  box-shadow: inset 2px 0 0 var(--accent);
+  padding-left: 0.75rem;
+}
+
 .m-mnav__actions {
   display: flex;
   gap: 0.75rem;
@@ -3174,7 +3305,8 @@ details[open] > .m-faq__btn .m-faq__icon {
 
 /* Desktop: the link row returns, so the disclosure is removed entirely
    rather than merely hidden. */
-@media (min-width: 1120px) {
+/* Paired with the .m-nav__links query above — same breakpoint, always. */
+@media (min-width: 1240px) {
   .m-mnav {
     display: none;
   }
@@ -3703,4 +3835,915 @@ details[open] > .m-faq__btn .m-faq__icon {
     padding-inline: 0.875rem;
     letter-spacing: 0.12em;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PRODUCT PAGES — /platform, /executive-intelligence, /solutions,
+   /pricing.
+
+   An extension of the homepage system, not a second one: same tokens,
+   same type ramp, same card and hairline treatments. What is new here
+   are the four layout primitives the homepage never needed — a phase
+   map, a comparison table, a detailed chain, and a coverage readout.
+
+   One rule worth stating because it is easy to get wrong. `--fg-muted`
+   measures 5.10:1 on `--bg` but only 4.47–4.59:1 on the elevated panel
+   surfaces, so it fails AA inside a card. Below, `--fg-muted` appears
+   only on the page background; anything readable inside a panel uses
+   `--fg-soft` (5.59:1 worst case).
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Page hero ──────────────────────────────────────────────────── */
+
+.m-page-hero {
+  padding-top: calc(var(--space-section-tight) / 2 + 2rem);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Page-scale display. The homepage keeps the 8rem monumental setting;
+   repeating it here would give the site five equally loud front doors. */
+.m-display--page {
+  font-size: clamp(2.5rem, 6vw, 4.25rem);
+  line-height: 1.04;
+  max-width: 20ch;
+  margin-top: 1.25rem;
+}
+
+.m-page-hero__lede {
+  margin-top: 1.5rem;
+  max-width: 68ch;
+}
+
+.m-page-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+/* ── Section head ───────────────────────────────────────────────── */
+
+.m-sechead {
+  max-width: 44rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-bottom: 3rem;
+}
+
+.m-sechead__body {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--fg-muted);
+  max-width: 62ch;
+}
+
+/* Two-column argument: prose on one side, evidence on the other. */
+.m-split {
+  display: grid;
+  gap: 3rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .m-split {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+}
+
+/* ── Closing CTA ────────────────────────────────────────────────── */
+
+.m-page-cta {
+  border-top: 1px solid var(--line);
+}
+
+.m-page-cta__heading {
+  max-width: 18ch;
+}
+
+.m-page-cta__body {
+  margin-top: 1.25rem;
+  max-width: 56ch;
+}
+
+.m-page-cta__btn {
+  margin-top: 2rem;
+}
+
+/* ── Platform: the agent phase map ──────────────────────────────── */
+
+.m-phase-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  /* The phases genuinely hold 6, 2, 4 and 4 agents. Stretching all four
+     cards to the tallest left Calibrate as a mostly empty box, which
+     reads as missing content rather than as a short phase. Each card is
+     now its own height; the ragged baseline is the honest shape of the
+     pipeline. */
+  align-items: start;
+}
+
+@media (min-width: 640px) {
+  .m-phase-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1080px) {
+  .m-phase-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.m-phase {
+  background: var(--bg-elev-1);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-card);
+}
+
+.m-phase__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.m-phase__label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+}
+
+/* Rendered from the array length, never typed. The comp badged this
+   column "6" above a list of four. */
+.m-phase__count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--fg-soft);
+}
+
+.m-phase__caption {
+  padding: 0.875rem 1.25rem 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--fg-soft);
+}
+
+.m-phase__list {
+  list-style: none;
+  margin: 0;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.m-agent__name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.4;
+}
+
+.m-agent__out {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--fg-soft);
+}
+
+/* Marks the three Executive Intelligence agents. Without it the grid
+   reads as a list of what every plan includes, and three of the
+   seventeen are an enterprise add-on. */
+.m-agent__addon {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+  border: 1px solid var(--accent-soft);
+  padding: 0.125rem 0.375rem;
+  white-space: nowrap;
+}
+
+/* The Copilot serves no single phase, so it gets a rail of its own
+   rather than being filed under whichever column had room. */
+.m-agent-always {
+  margin-top: 1.25rem;
+  background: var(--bg-elev-1);
+  border: 1px solid var(--line);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.25rem;
+  box-shadow: var(--shadow-card);
+}
+
+.m-agent-always__label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+}
+
+/* ── Platform: product surfaces ─────────────────────────────────── */
+
+.m-surfaces {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+@media (min-width: 860px) {
+  .m-surfaces { grid-template-columns: repeat(3, 1fr); }
+}
+
+.m-surface__frame {
+  border: 1px solid var(--line);
+  background: var(--bg-elev-1);
+  height: 250px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.m-surface__chrome {
+  height: 32px;
+  flex: none;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-inline: 0.75rem;
+}
+
+.m-surface__chrome span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.m-surface__body {
+  flex: 1;
+  padding: 0.875rem;
+  min-height: 0;
+}
+
+.m-surface__title {
+  margin-top: 1rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.m-surface__desc {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--fg-soft);
+}
+
+/* Miniature UI inside a surface frame. Illustrative, and captioned as
+   such wherever it carries a number or a name. */
+.m-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+  font-size: 0.6875rem;
+}
+
+.m-mini__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 1fr;
+  gap: 0.625rem;
+  height: 100%;
+}
+
+.m-mini__tile {
+  border: 1px solid var(--line);
+  background: var(--bg-elev-2);
+  padding: 0.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.m-mini__tile--active {
+  border-color: var(--accent);
+}
+
+.m-mini__state {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--fg-soft);
+}
+
+.m-mini__tile--active .m-mini__state { color: var(--accent-bright); }
+
+.m-mini__name {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--fg-soft);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.m-mini__tile--active .m-mini__name { color: var(--fg); }
+
+.m-mini__track {
+  height: 3px;
+  background: var(--bg-elev-3);
+  margin-top: auto;
+}
+
+.m-mini__track > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.m-mini__row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  min-width: 0;
+}
+
+.m-mini__row--lead { background: var(--bg-elev-2); }
+
+.m-mini__rank {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--fg-soft);
+}
+
+.m-mini__row--lead .m-mini__rank { color: var(--accent-bright); }
+
+.m-mini__who {
+  flex: 1;
+  font-size: 0.6875rem;
+  color: var(--fg-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m-mini__row--lead .m-mini__who { color: var(--fg); }
+
+.m-mini__score {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--fg-soft);
+}
+
+.m-mini__row--lead .m-mini__score { color: var(--accent-bright); }
+
+.m-mini__rule {
+  height: 1px;
+  background: var(--line);
+  margin-block: 0.125rem;
+}
+
+.m-mini__tier {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--fg-soft);
+}
+
+.m-mini__quote {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.m-mini__pairs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4375rem;
+}
+
+.m-mini__pair {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.625rem;
+  line-height: 1.5;
+  color: var(--fg-soft);
+}
+
+.m-mini__pair > span:first-child {
+  width: 3.75rem;
+  flex: none;
+  color: var(--fg);
+}
+
+.m-mini__send {
+  margin-top: auto;
+  height: 28px;
+  background: var(--accent-fill);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+/* ── Platform: Boolean postures ─────────────────────────────────── */
+
+.m-postures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.m-posture {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.4375rem 0.625rem;
+  border: 1px solid transparent;
+  color: var(--fg-soft);
+}
+
+.m-posture--on {
+  background: var(--bg-elev-3);
+  border-color: var(--line);
+  color: var(--fg);
+}
+
+.m-query {
+  margin-top: 0.875rem;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.75;
+  color: var(--fg-soft);
+  overflow-wrap: anywhere;
+}
+
+/* ── Comparison tables ──────────────────────────────────────────── */
+
+/* Wide tables scroll inside their own container. `.m-section` clips
+   overflow, so without this the columns are simply cut off on a phone
+   with no way to reach them. */
+.m-table__wrap {
+  border: 1px solid var(--line);
+  background: var(--bg-elev-1);
+  overflow-x: auto;
+  box-shadow: var(--shadow-card);
+}
+
+.m-table {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+}
+
+.m-table th,
+.m-table td {
+  text-align: left;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+}
+
+.m-table thead th {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.m-table tbody tr:last-child th,
+.m-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.m-table tbody th {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.m-table td {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--fg-soft);
+}
+
+.m-table--center td,
+.m-table--center thead th:not(:first-child) {
+  text-align: center;
+}
+
+.m-table--center tbody th { width: 40%; }
+
+/* Included / not included. The icon never carries the meaning alone —
+   every cell also has text, visually hidden where the column header
+   already supplies the context. */
+.m-table__yes { color: var(--accent-bright); }
+.m-table__no { color: var(--fg-muted); }
+
+/* ── Executive Intelligence: the gated chain ────────────────────── */
+
+.m-chainrows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.m-chainrow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1.5rem;
+  align-items: start;
+  padding: 1.5rem 1.625rem;
+  border: 1px solid var(--line);
+  background: var(--bg-elev-1);
+}
+
+@media (min-width: 900px) {
+  .m-chainrow {
+    grid-template-columns: 2.75rem 15rem 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* The one step with no AI on it. Marked with a border, a label and a
+   position — never with colour alone. */
+.m-chainrow--human { border-color: var(--accent); }
+
+.m-chainrow__n {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  line-height: 1.2;
+  color: var(--accent-bright);
+}
+
+.m-chainrow__id { min-width: 0; }
+
+.m-chainrow__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.3;
+}
+
+.m-chainrow__meta {
+  margin-top: 0.375rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--fg-soft);
+}
+
+.m-chainrow__meta--flag {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+}
+
+.m-chainrow__body {
+  grid-column: 1 / -1;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--fg-soft);
+}
+
+@media (min-width: 900px) {
+  .m-chainrow__body { grid-column: 3; }
+}
+
+/* ── Executive Intelligence: evidence coverage ──────────────────── */
+
+.m-cover {
+  border: 1px solid var(--line);
+  background: var(--bg-elev-1);
+  padding: 1.625rem;
+  box-shadow: var(--shadow-card);
+}
+
+.m-cover__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.m-cover__pct {
+  font-family: var(--font-display);
+  font-size: 1.875rem;
+  line-height: 1;
+  color: var(--fg);
+}
+
+.m-cover__of {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--fg-soft);
+}
+
+.m-cover__list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6875rem;
+}
+
+.m-cover__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.m-cover__name {
+  flex: 1;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--fg-soft);
+  min-width: 0;
+}
+
+.m-cover__track {
+  width: 7.5rem;
+  flex: none;
+  height: 6px;
+  background: var(--bg-elev-3);
+}
+
+/* One hue at two weights. Never a red-to-green ramp: this measures
+   whether the interviews covered the ground, not how good the person
+   is, and a traffic light would state the opposite. */
+.m-cover__track > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.m-cover__track--soft > span { background: var(--fg-muted); }
+
+.m-cover__level {
+  width: 4.5rem;
+  flex: none;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--fg-soft);
+}
+
+.m-cover__foot {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--fg-soft);
+}
+
+/* On a phone the fixed 120px track and 72px level left the competency
+   name 88px, so every one of them wrapped to two lines. The name is the
+   content; the track is the decoration. Give the space back. */
+@media (max-width: 560px) {
+  .m-cover__track { width: 4rem; }
+  .m-cover__level { width: 4rem; font-size: 0.6875rem; }
+  .m-cover__row { gap: 0.5rem; }
+}
+
+/* ── Solutions: segment cards ───────────────────────────────────── */
+
+.m-segments {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+@media (min-width: 900px) {
+  .m-segments { grid-template-columns: repeat(3, 1fr); }
+}
+
+.m-segment {
+  border: 1px solid var(--line);
+  background: var(--bg-elev-1);
+  padding: 1.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--shadow-card);
+  transition:
+    border-color 240ms var(--ease-out),
+    transform 280ms var(--ease-out),
+    box-shadow 320ms var(--ease-out);
+}
+
+.m-segment:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.m-segment--featured { border-color: var(--accent); }
+
+.m-segment__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-variation-settings: "opsz" 60, "SOFT" 0;
+  font-size: 1.625rem;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+
+.m-segment__body {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--fg-soft);
+}
+
+.m-segment__points {
+  list-style: none;
+  margin: 0;
+  padding: 1.125rem 0 0;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8125rem;
+}
+
+.m-segment__points li {
+  display: flex;
+  gap: 0.6875rem;
+  align-items: flex-start;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--fg-soft);
+}
+
+.m-segment__points svg {
+  color: var(--accent);
+  flex: none;
+  margin-top: 0.28em;
+}
+
+.m-segment__foot {
+  margin-top: auto;
+  padding-top: 1.125rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.m-segment__from {
+  font-size: 0.8125rem;
+  color: var(--fg-soft);
+}
+
+.m-segment__price {
+  margin-top: 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  line-height: 1.3;
+  color: var(--fg);
+}
+
+.m-segment__price small {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--fg-soft);
+}
+
+/* ── Pricing: billing questions ─────────────────────────────────── */
+
+/* Native <details>, matching the homepage FAQ rebuild — no client JS,
+   every answer reachable and findable in-page without JavaScript. */
+.m-bfaq {
+  border-top: 1px solid var(--line);
+}
+
+.m-bfaq__item {
+  border-bottom: 1px solid var(--line);
+}
+
+.m-bfaq__q {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1.375rem 0;
+  min-height: 44px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+  list-style: none;
+  transition: color 200ms var(--ease-out);
+}
+
+.m-bfaq__q::-webkit-details-marker { display: none; }
+
+.m-bfaq__q:hover { color: var(--accent-bright); }
+
+.m-bfaq__q:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.m-bfaq__chev {
+  margin-left: auto;
+  flex: none;
+  color: var(--fg-soft);
+  transition: transform 240ms var(--ease-out);
+}
+
+.m-bfaq__item[open] .m-bfaq__chev { transform: rotate(180deg); }
+
+.m-bfaq__a {
+  padding-bottom: 1.375rem;
+  max-width: 72ch;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--fg-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-bfaq__chev { transition: none; }
+}
+
+/* Two-up guarantee cards. Not `.m-ei-grid`, which is the homepage's
+   asymmetric text-plus-chain layout and collapses at a different
+   breakpoint for a different reason. */
+.m-guarantees {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+@media (min-width: 780px) {
+  .m-guarantees { grid-template-columns: repeat(2, 1fr); }
+}
+
+.m-guarantee__body {
+  margin-top: 0.75rem;
+  color: var(--fg-soft);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+/* Matrix cells. The icon is centred in the column; the accompanying
+   word is read by a screen reader, so meaning never rests on a shape
+   or a colour alone. */
+.m-table__yes,
+.m-table__no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

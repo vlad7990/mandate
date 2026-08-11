@@ -1,6 +1,4 @@
-import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
-import { AGENT_COUNT } from "./_constants";
 import "./marketing.css";
 
 const fraunces = Fraunces({
@@ -24,44 +22,21 @@ const jetbrains = JetBrains_Mono({
   variable: "--font-mono",
 });
 
-const PAGE_TITLE = "Mandate — AI Executive Search Operating System";
-const PAGE_DESCRIPTION =
-  `The AI Operating System for Executive Search. From a one-line brief to a defensible shortlist with ${AGENT_COUNT} specialist agents.`;
-
-export const metadata: Metadata = {
-  // Override the root template ("%s · Mandate") with an absolute title
-  // so the marketing landing renders the full marketing string in the
-  // browser tab + share previews. metadataBase is inherited from the
-  // root layout — relative URLs below resolve against
-  // https://getmandate.io.
-  title: { absolute: PAGE_TITLE },
-  description: PAGE_DESCRIPTION,
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    title: PAGE_TITLE,
-    description: PAGE_DESCRIPTION,
-    url: "/",
-    siteName: "Mandate",
-    type: "website",
-    images: [
-      {
-        url: "/og.png",
-        width: 1200,
-        height: 630,
-        alt: PAGE_TITLE,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: PAGE_TITLE,
-    description: PAGE_DESCRIPTION,
-    images: ["/og.png"],
-  },
-};
-
+/*
+ * This layout deliberately exports NO metadata.
+ *
+ * It used to carry the homepage's title, description, canonical `/` and
+ * OG card. Layout metadata is inherited by every route beneath it, so
+ * `/request-access` was already emitting `<link rel="canonical" href="…/">`
+ * and the homepage's OG card — and the four product pages added next
+ * would each have done the same. Four routes all declaring themselves
+ * canonical to `/` is how a site tells a crawler none of them exist.
+ *
+ * Page-specific metadata now lives on each page. This file owns only
+ * what is genuinely shared: the three display fonts and the surface
+ * chrome. Whatever a page does not declare falls through to the root
+ * layout, which is where `metadataBase` and the title template live.
+ */
 export default function MarketingLayout({
   children,
 }: {

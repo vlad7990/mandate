@@ -6,7 +6,13 @@
 - Agents are stateless — full context passed on each call
 - Memory layer: Supabase (persistent state between sessions)
 
-## The 14 Mandate Agents
+## The 17 Mandate Agents
+
+14 core agents plus the 3 Executive Intelligence agents below. This
+heading said "14" while the document listed 17, which is where the
+14-vs-17 drift on the marketing surface originated. The count is now
+derived in code from `src/app/(marketing)/_data/agents.ts`, whose roster
+mirrors this file — add an agent in both places.
 
 ### 1. Intake Agent
 Trigger: One-line role input

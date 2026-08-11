@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { SiteNav } from "./_components/site-nav";
+import { SiteFooter } from "./_components/site-footer";
 import { Reveal } from "./_components/reveal";
 import { LiveSimulator } from "./_components/live-simulator";
 import { FaqAccordion } from "./_components/faq-accordion";
@@ -6,7 +9,8 @@ import { ThreeCircleAlignment } from "./_components/three-circle-alignment";
 import { ScrollProgress } from "./_components/scroll-progress";
 import { TerminalCursor } from "./_components/terminal-cursor";
 import { TypewriterReveal } from "./_components/typewriter-reveal";
-import { MobileNav } from "./_components/mobile-nav";
+import { PriceTierCard } from "./_components/price-tier-card";
+import { TIERS } from "./_data/pricing";
 import {
   AGENT_COUNT,
   DIMENSION_COUNT,
@@ -18,17 +22,40 @@ import {
 
 export const dynamic = "force-static";
 
+const PAGE_TITLE = "Mandate — AI Executive Search Operating System";
+const PAGE_DESCRIPTION =
+  `The AI Operating System for Executive Search. From a one-line brief to a defensible shortlist with ${AGENT_COUNT} specialist agents.`;
+
+// Moved here from the route-group layout, where it was being inherited
+// by every sibling route. `title.absolute` opts out of the root's
+// "%s · Mandate" template so the landing page renders the full string.
+export const metadata: Metadata = {
+  title: { absolute: PAGE_TITLE },
+  description: PAGE_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: "/",
+    siteName: "Mandate",
+    type: "website",
+    images: [
+      { url: "/og.png", width: 1200, height: 630, alt: PAGE_TITLE },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    images: ["/og.png"],
+  },
+};
+
 export default function MarketingLandingPage() {
   return (
     <>
-      {/* First focusable element on the page. Without it, a keyboard or
-          screen-reader user had no route past the nav on a document
-          this long, and there was no <main> landmark to jump to. */}
-      <a href="#main" className="m-skip">
-        Skip to content
-      </a>
+      <SiteNav active="home" />
       <ScrollProgress />
-      <TopNav />
       <main id="main">
         <Hero />
         {/*
@@ -57,65 +84,8 @@ export default function MarketingLandingPage() {
         <Faq />
         <CtaFooter />
       </main>
-      <Footer />
+      <SiteFooter />
     </>
-  );
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Top nav — minimal, monospace wordmark + two links
-// ────────────────────────────────────────────────────────────────────
-
-function TopNav() {
-  return (
-    <header className="m-nav">
-      <div className="m-container m-nav__inner">
-        <Link href="/" className="m-nav__brand" aria-label="Mandate home">
-          <span aria-hidden className="m-nav__mark">
-            M
-          </span>
-          <span className="m-nav__wordmark">Mandate</span>
-          <span aria-hidden className="m-nav__beta">
-            BETA
-          </span>
-          {/* A "System online" pip with a pulsing dot used to sit here.
-              It was a static span — it checked nothing, and it was
-              displayed to sighted users while /api/demo was returning
-              502s. A health claim that cannot go false is not a status
-              indicator, it is decoration wearing a status indicator's
-              clothes. Restore it only wired to a real health endpoint,
-              where a degraded state is allowed to show. */}
-        </Link>
-
-        <nav className="m-nav__links" aria-label="Primary">
-          <a href="#how" className="m-nav__link">
-            Platform
-          </a>
-          <a href="#intelligence" className="m-nav__link">
-            Intelligence
-          </a>
-          <a href="#simulator" className="m-nav__link">
-            Live Demo
-          </a>
-          <a href="#pricing" className="m-nav__link">
-            Pricing
-          </a>
-        </nav>
-
-        <div className="m-nav__actions">
-          <Link href="/auth/signin" className="m-btn m-btn--ghost">
-            Log In
-          </Link>
-          <Link href="/request-access" className="m-btn m-btn--primary">
-            Request Access
-          </Link>
-        </div>
-
-        {/* Replaces the desktop link row below 1120px, where it is
-            display:none and previously had no substitute. */}
-        <MobileNav />
-      </div>
-    </header>
   );
 }
 
@@ -818,66 +788,6 @@ function Triangulation() {
 // ────────────────────────────────────────────────────────────────────
 
 function Pricing() {
-  const tiers = [
-    {
-      name: "Starter",
-      price: "399",
-      cadence: "/mo",
-      headline: "1 user, 3 active searches",
-      points: [
-        `All ${AGENT_COUNT} AI agents`,
-        "Full intelligence stack",
-        "30-day evaluation history",
-        "Email support",
-      ],
-      featured: false,
-    },
-    {
-      name: "Growth",
-      price: "999",
-      cadence: "/mo",
-      headline: "5 users, 10 active searches",
-      points: [
-        "Everything in Starter",
-        "Hiring Manager Portal",
-        "Triangulation reports",
-        "Calibration history + restore",
-        "Priority support",
-      ],
-      featured: true,
-    },
-    {
-      name: "Agency",
-      price: "1,899",
-      cadence: "/mo",
-      headline: "Unlimited users + searches",
-      points: [
-        "Everything in Growth",
-        "Global Executive Network",
-        "Custom skills + agents",
-        "Dedicated success partner",
-        "SLA + onboarding workshop",
-      ],
-      featured: false,
-    },
-    {
-      // Priced on enquiry rather than listed. EI carries a materially
-      // different cost profile per search, and the number is not set.
-      name: "Executive Intelligence",
-      price: null,
-      priceLabel: "Contact sales",
-      cadence: "",
-      headline: "Add-on to any plan",
-      points: [
-        "Gated diligence chain",
-        "Versioned success profiles",
-        "Per-candidate interview plans",
-        "Immutable approved records",
-        "Append-only audit trail",
-      ],
-      featured: false,
-    },
-  ];
   return (
     <section id="pricing" className="m-section m-section--gap-tight-bottom">
       <span className="m-section__numeral" aria-hidden>
@@ -908,116 +818,19 @@ function Pricing() {
             orphaning alone onto row two around 1152px: auto-fit at
             minmax(280px) yielded 3 columns there, so the track count is
             now explicit per breakpoint via .m-price-grid. */}
-        <Reveal
-          className="m-reveal-scale m-price-grid"
-          as="ul"
-          threshold={0.1}
-        >
-            {tiers.map((t) => (
-              <li
-                key={t.name}
-                className={`m-price ${t.featured ? "m-price--featured" : ""}`}
-              >
-                {t.featured && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "-12px",
-                      left: "1.5rem",
-                      padding: "0.25rem 0.625rem",
-                      background: "var(--accent-fill)",
-                      color: "#fff",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "0.625rem",
-                      letterSpacing: "0.18em",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {/* Was "✦ Most popular ✦". The product has zero
-                        customers and the page carries no social proof by
-                        policy — an unsubstantiated popularity claim
-                        attached to the money undercut everything honest
-                        around it. Replaced with a factual differentiator. */}
-                    <span>Includes the HM Portal</span>
-                  </div>
-                )}
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.25rem",
-                  }}
-                >
-                  <span className="m-mono--label" style={{ color: "var(--accent)" }}>
-                    {t.name}
-                  </span>
-                  <div className="m-price__amount">
-                    {t.price ? (
-                      <>
-                        <sup>$</sup>
-                        {t.price}
-                        <sub style={{ marginLeft: "0.25rem" }}>{t.cadence}</sub>
-                      </>
-                    ) : (
-                      <span className="m-price__enquiry">{t.priceLabel}</span>
-                    )}
-                  </div>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "0.75rem",
-                      letterSpacing: "0.14em",
-                      textTransform: "uppercase",
-                      color: "var(--fg-muted)",
-                    }}
-                  >
-                    {t.headline}
-                  </p>
-                </div>
-                <ul
-                  style={{
-                    listStyle: "none",
-                    padding: 0,
-                    display: "grid",
-                    gap: "0.625rem",
-                    flex: 1,
-                  }}
-                >
-                  {t.points.map((p) => (
-                    <li
-                      key={p}
-                      style={{
-                        display: "flex",
-                        gap: "0.625rem",
-                        alignItems: "flex-start",
-                        color: "var(--fg-soft)",
-                        fontSize: "0.9375rem",
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: "var(--accent)",
-                          fontFamily: "var(--font-mono)",
-                          marginTop: 1,
-                        }}
-                        aria-hidden
-                      >
-                        ✓
-                      </span>
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/request-access"
-                  className={`m-btn ${t.featured ? "m-btn--primary" : "m-btn--ghost"}`}
-                  style={{ width: "100%" }}
-                >
-                  Request Access
-                </Link>
-              </li>
-            ))}
+        <Reveal className="m-reveal-scale m-price-grid" as="ul" threshold={0.1}>
+          {TIERS.map((t) => (
+            <PriceTierCard key={t.id} tier={t} />
+          ))}
         </Reveal>
+
+        <p className="m-price-grid__foot">
+          Full plan comparison, including what changes between tiers, is on{" "}
+          <Link href="/pricing" className="m-link m-link--accent">
+            the pricing page
+          </Link>
+          .
+        </p>
       </div>
     </section>
   );
@@ -1296,66 +1109,5 @@ function CtaFooter() {
         </Reveal>
       </div>
     </section>
-  );
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Footer
-// ────────────────────────────────────────────────────────────────────
-
-function Footer() {
-  return (
-    <footer className="m-footer">
-      <div className="m-container">
-        {/*
-          The imported design has Product / Company / Legal columns
-          pointing at eleven separate pages. Only the on-page anchors
-          and the auth routes exist today, so the structure is kept but
-          every link resolves — no 404s shipped to look fuller.
-        */}
-        <div className="m-footer__cols">
-          <div className="m-footer__brand">
-            <div className="m-footer__mark" aria-hidden />
-            <span className="m-footer__wordmark">Mandate</span>
-            <p className="m-footer__blurb">
-              An AI operating system for executive search.
-            </p>
-          </div>
-
-          <nav className="m-footer__col" aria-label="Product">
-            <h3 className="m-footer__heading">Product</h3>
-            <a href="#how" className="m-footer__link">Platform</a>
-            <a href="#executive-intelligence" className="m-footer__link">
-              Executive Intelligence
-            </a>
-            <a href="#simulator" className="m-footer__link">Live demo</a>
-            <a href="#pricing" className="m-footer__link">Pricing</a>
-          </nav>
-
-          <nav className="m-footer__col" aria-label="Access">
-            <h3 className="m-footer__heading">Access</h3>
-            <Link href="/request-access" className="m-footer__link">
-              Request access
-            </Link>
-            <Link href="/auth/signin" className="m-footer__link">Log in</Link>
-            <a href="mailto:hello@getmandate.io" className="m-footer__link">
-              hello@getmandate.io
-            </a>
-            <a
-              href="https://www.linkedin.com/company/getmandate"
-              target="_blank"
-              rel="noreferrer"
-              className="m-footer__link"
-            >
-              LinkedIn
-            </a>
-          </nav>
-        </div>
-
-        <div className="m-footer__base">
-          <span>© 2026 Mandate · Closed Beta</span>
-        </div>
-      </div>
-    </footer>
   );
 }

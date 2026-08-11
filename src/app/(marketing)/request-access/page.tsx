@@ -1,10 +1,20 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { RequestAccessForm } from "./request-access-form";
 
-export const metadata = {
-  title: "Request Access · Mandate",
+export const metadata: Metadata = {
+  // "Request Access · Mandate" here rendered as "Request Access · Mandate
+  // · Mandate" — the root layout applies a "%s · Mandate" template, and
+  // the suffix was being typed in as well.
+  title: "Request Access",
   description:
     "Apply for access to Mandate, the AI-driven executive search platform.",
+  // Was inherited as "/" from the route-group layout, so this page told
+  // crawlers its canonical URL was the homepage.
+  alternates: { canonical: "/request-access" },
+  // A form page has nothing to gain from being indexed and something to
+  // lose from ranking above the pages that explain the product.
+  robots: { index: false, follow: true },
 };
 
 /**

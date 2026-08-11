@@ -9,8 +9,17 @@ const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/api/demo"];
 // Public-facing pages that unauthenticated users SHOULD see. We still
 // run the session refresh on these so authenticated visitors can be
 // bounced to their dashboard, but we never force a sign-in redirect.
+// Kept explicit rather than derived from the marketing nav: this is an
+// authentication boundary, and it should be readable in one place
+// without following an import. If you add a marketing route, add it
+// here too — anything not listed redirects to sign-in, which is the
+// safe default but silently hides a new public page.
 const PUBLIC_PAGES = new Set([
   "/",
+  "/platform",
+  "/intelligence",
+  "/solutions",
+  "/pricing",
   "/request-access",
   "/auth/signin",
   "/auth/signup",
