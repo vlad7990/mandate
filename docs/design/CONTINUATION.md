@@ -12,25 +12,47 @@ design rendered somewhere.
 
 ## 1. The prompt to paste after `/clear`
 
+Copy everything between the fences.
+
 ```
 Continue the Mandate app redesign.
 
-Working directory: ~/Documents/Projects/mandate (NOT ~/Mandate Recruiting/mandate).
+Working directory: ~/Documents/Projects/mandate
+NOT ~/Mandate Recruiting/mandate — that is a stale clone and committing
+there has already caused one real incident. Use
+`git -C /Users/vladbreygin/Documents/Projects/mandate <cmd>` for every
+git command; the Bash cwd persists between calls.
 
-Read docs/design/CONTINUATION.md first — it is the current state and the
-task list. Then read CLAUDE.md for working rules and
-docs/design/SESSION-HANDOFF.md §1 and §5 for environment gotchas and the
-measurement protocol.
+Read these first, in order:
+1. docs/design/CONTINUATION.md — current state and the ordered task list
+2. CLAUDE.md — working rules
+3. docs/design/SESSION-HANDOFF.md §1 and §5 — environment traps and the
+   browser measurement protocol
 
-Pick up the first unchecked item in §4. Work through as many as the
-context allows. When you reach ~20% remaining context, stop adding new
-work, update §3 and §4 of this file with what changed, and say so.
+Then pick up the first unchecked item in CONTINUATION.md §4 and work
+through as many as your context allows.
 
-Use /impeccable for UI work. Green gate before any commit:
-npm test && npx tsc --noEmit && npm run lint && npm run build.
+Rules for the session:
+- Load the `impeccable` skill before any UI work.
+- Green gate before proposing any commit:
+  npm test && npx tsc --noEmit && npm run lint && npm run build
+- Do NOT commit or push without my explicit approval. Propose the
+  message first. This rule is unchanged and applies even when working
+  autonomously.
+- The comps are art direction, not truth. Counts, prices, agent names
+  and limits come from the code and the live schema, never from a comp.
+  Where a comp's label outruns the data, use the honest label and say so
+  in a comment.
+- Sample data is shown only in empty workspaces, always labelled, and is
+  never written to the database.
 
-Do not commit or push without explicit approval — propose the message
-first. This rule is unchanged.
+When you reach ~20% remaining context: stop starting new work, update
+CONTINUATION.md §3 and §4 with what changed, and tell me where you got
+to. Do not begin a screen you cannot finish.
+
+Note: there may be unpushed commits on main. Check with
+`git -C /Users/vladbreygin/Documents/Projects/mandate status -sb` before
+assuming production reflects the code.
 ```
 
 ---
