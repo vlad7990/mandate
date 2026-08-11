@@ -2296,3 +2296,268 @@
     display: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   HOMEPAGE — imported design sections
+   Translated from the Claude Design mockup (fixed 1440 canvas, inline
+   hex) onto the semantic token layer and made fluid. No raw colours.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Hero trust line ─────────────────────────────────────────────── */
+
+.m-hero-trust {
+  margin: 0 auto;
+  max-width: 46ch;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+
+/* ── Executive Intelligence — gated chain ────────────────────────── */
+
+.m-ei-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+}
+
+.m-chain {
+  list-style: none;
+  margin: 0;
+  padding: clamp(1.25rem, 2vw, 1.625rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-elev-1);
+}
+
+.m-chain__step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg-elev-2);
+}
+
+/* The current step is the only one that carries the accent border —
+   it is where the human is being asked to act. */
+.m-chain__step--current {
+  border-color: var(--accent-fill);
+}
+
+/* Locked steps stay flat: no fill, muted text. They are a promise of
+   what unlocks, not a control. */
+.m-chain__step--locked {
+  background: transparent;
+}
+
+.m-chain__mark {
+  flex-shrink: 0;
+  width: 1.125rem;
+  font-size: 0.8125rem;
+  line-height: 1;
+  text-align: center;
+  color: var(--accent);
+}
+
+.m-chain__step--locked .m-chain__mark {
+  color: var(--fg-muted);
+}
+
+.m-chain__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.m-chain__step--locked .m-chain__label {
+  color: var(--fg-muted);
+}
+
+.m-chain__meta {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.m-chain__step--current .m-chain__meta {
+  color: var(--accent);
+}
+
+/* ── Principles — what the system will never do ──────────────────── */
+
+.m-principles {
+  list-style: none;
+  padding: 0;
+  margin: 2.5rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.m-principle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: clamp(1.25rem, 2vw, 1.5rem);
+}
+
+.m-principle__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.m-principle__body {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--fg-soft);
+  text-wrap: pretty;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .m-ei-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  /* The chain meta drops under the label rather than being squeezed
+     against it — at this width the two collide otherwise. */
+  .m-chain__step {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+  .m-chain__meta {
+    margin-left: 1.875rem;
+    width: 100%;
+  }
+}
+
+/* Enquiry-priced tier (Executive Intelligence). Sits in the same
+   optical slot as a dollar amount so the pricing row stays aligned,
+   but at a size that does not pretend to be a number. */
+.m-price__enquiry {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.4vw, 1.875rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+
+.m-footer__cols {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: clamp(2rem, 5vw, 4rem);
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.m-footer__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.m-footer__mark {
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+}
+
+.m-footer__wordmark {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.m-footer__blurb {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+
+.m-footer__col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6875rem;
+}
+
+.m-footer__heading {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.m-footer__link {
+  /* 40px row keeps footer links comfortably tappable without forcing
+     the visual gaps a 44px block would introduce in a text column. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  font-size: 0.875rem;
+  color: var(--fg-soft);
+  text-decoration: none;
+  transition: color 200ms var(--ease-out);
+}
+
+.m-footer__link:hover {
+  color: var(--fg);
+}
+
+.m-footer__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.m-footer__base {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+@media (max-width: 760px) {
+  .m-footer__cols {
+    grid-template-columns: 1fr 1fr;
+  }
+  .m-footer__brand {
+    grid-column: 1 / -1;
+  }
+}

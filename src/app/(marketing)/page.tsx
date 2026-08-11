@@ -24,7 +24,9 @@ export default function MarketingLandingPage() {
       <HowItWorks />
       <Stack />
       <Triangulation />
+      <ExecutiveIntelligence />
       <Features />
+      <Principles />
       <Pricing />
       <Faq />
       <CtaFooter />
@@ -122,15 +124,15 @@ function Hero() {
           style={{ justifySelf: "center" }}
         >
           <span className="m-hero-kicker-dot" aria-hidden />
-          14_AGENTS · 31_MODULES · ONE_OPERATING_SYSTEM
+          17_SPECIALIST_AGENTS · ONE_ACCOUNTABLE_HUMAN
         </span>
 
         <h1 className="m-display">
-          <span className="m-hero-headline-1">Executive Search.</span>
+          <span className="m-hero-headline-1">One line in.</span>
           <br />
           <em>
             <TypewriterReveal
-              text="Reinvented."
+              text="A defensible shortlist out."
               delay={700}
               speed={80}
               cursorDuration={2000}
@@ -147,9 +149,9 @@ function Hero() {
             color: "var(--fg-muted)",
           }}
         >
-          The AI Operating System that takes you from one-line brief to
-          shortlist submission — with 14 intelligent agents working in
-          parallel, calibrating to your judgment as the search unfolds.
+          Type the mandate. Mandate decomposes it, researches the company,
+          drafts the role specification and builds the scoring model — then
+          you approve the bar before a single candidate is scored against it.
         </p>
 
         <div
@@ -169,10 +171,15 @@ function Hero() {
             <span aria-hidden>→</span>
           </Link>
           <a href="#simulator" className="m-btn m-btn--ghost">
-            <span>See It In Action</span>
+            <span>Run the live simulator</span>
             <span aria-hidden>↓</span>
           </a>
         </div>
+
+        <p className="m-hero-trust">
+          Access is granted by approval, not by credit card. No trial, no
+          self-serve tier.
+        </p>
 
         <div className="m-hero-stats">
           <HeroDataRail />
@@ -994,6 +1001,23 @@ function Pricing() {
       ],
       featured: false,
     },
+    {
+      // Priced on enquiry rather than listed. EI carries a materially
+      // different cost profile per search, and the number is not set.
+      name: "Executive Intelligence",
+      price: null,
+      priceLabel: "Contact sales",
+      cadence: "",
+      headline: "Add-on to any plan",
+      points: [
+        "Gated diligence chain",
+        "Versioned success profiles",
+        "Per-candidate interview plans",
+        "Immutable approved records",
+        "Append-only audit trail",
+      ],
+      featured: false,
+    },
   ];
   return (
     <section id="pricing" className="m-section m-section--gap-tight-bottom">
@@ -1061,9 +1085,15 @@ function Pricing() {
                     {t.name}
                   </span>
                   <div className="m-price__amount">
-                    <sup>$</sup>
-                    {t.price}
-                    <sub style={{ marginLeft: "0.25rem" }}>{t.cadence}</sub>
+                    {t.price ? (
+                      <>
+                        <sup>$</sup>
+                        {t.price}
+                        <sub style={{ marginLeft: "0.25rem" }}>{t.cadence}</sub>
+                      </>
+                    ) : (
+                      <span className="m-price__enquiry">{t.priceLabel}</span>
+                    )}
                   </div>
                   <p
                     style={{
@@ -1141,30 +1171,141 @@ const FAQ_ITEMS = [
     a: "LinkedIn Recruiter is a sourcing surface — find people. Mandate is the operating system around it: intake, calibration, evaluation, feedback interpretation, shortlist generation, submission narratives. The Boolean queries we generate run inside LinkedIn; we don't replace it.",
   },
   {
+    q: "Does it source candidates for me?",
+    a: "No. It writes the LinkedIn, X-Ray and ATS queries — exact, broad, adjacent and competitor — and you run them. Candidates enter by CV upload. We would rather say that plainly than imply a funnel that does not exist.",
+  },
+  {
+    q: "Who is accountable for a decision?",
+    a: "You are. Generation never becomes operational truth — competency weights only take effect when a human approves the profile, and the approving identity is derived from the session, not supplied by the client.",
+  },
+  {
     q: "Does it replace my judgment as a recruiter?",
-    a: "No — and we're explicit about it. Every AI assessment ships with a confidence score, a recruiter-flag affordance, and an override layer. The system is calibrated to make your judgment more visible and consistent across a search, not to replace it.",
+    a: "No, and the product is built to prevent it. Nothing produces a hire or no-hire verdict. Every output is decision support, every artifact is reviewed and approved by a person, and the approval is recorded with who did it and when.",
   },
   {
-    q: "How long does onboarding take?",
-    a: "First search live in 30 minutes. We import your existing candidate data on Growth + Agency plans. The Calibration Engine adapts to your tier-1/tier-2 patterns within ~10 candidate evaluations, so the system feels native by week two.",
+    q: "Can I correct an approved record?",
+    a: "You create a new version. The previous one is archived and remains readable. Nothing is overwritten — the database rejects the edit regardless of role, including ours.",
   },
   {
-    q: "Can I use it for contingency and retained search?",
-    a: "Yes. The HM Portal and shortlist narrative work especially well for retained mandates where the relationship matters. Contingency teams use the Boolean engine + ranking + global network most heavily.",
+    q: "Why is there no free trial?",
+    a: "Access is granted by approval. Every workspace holds real candidate data under real obligations, and we would rather have the conversation first.",
   },
   {
     q: "Does it work for in-house talent teams?",
-    a: "Yes. In-house teams use it for confidential / executive hires where the same rigour applies. Pricing for in-house is the same — search seats are search seats.",
-  },
-  {
-    q: "What happens to my data if I cancel?",
-    a: "You get a full export of every project, candidate, score, and feedback history as JSON + CSV. Active data is removed within 30 days; backups roll off within 90 days per our standard retention policy.",
-  },
-  {
-    q: "Can I try it before committing?",
-    a: "Yes — the simulator above is unauthenticated and uses the production Intake Agent. For a full hands-on, request access and we'll set you up with a 14-day evaluation on a sample search.",
+    a: "Yes. In-house teams use it for confidential and executive hires where the same rigour applies. The pricing is the same — a seat is a seat.",
   },
 ];
+
+// ────────────────────────────────────────────────────────────────────
+// EXECUTIVE INTELLIGENCE — the gated chain
+// ────────────────────────────────────────────────────────────────────
+
+/** Each link in the chain. `state` drives the visual treatment. */
+const EI_CHAIN: Array<{
+  label: string;
+  meta: string;
+  state: "approved" | "current" | "locked";
+}> = [
+  { label: "Success profile", meta: "Approved · v3", state: "approved" },
+  { label: "Interview plan", meta: "Approved · v2", state: "approved" },
+  { label: "Assessment", meta: "Human-authored", state: "current" },
+  { label: "Report", meta: "Unlocks on approval", state: "locked" },
+];
+
+function ExecutiveIntelligence() {
+  return (
+    <section
+      id="executive-intelligence"
+      className="m-section m-section--gap-tight-top m-section--tint-cool"
+    >
+      <span className="m-section__numeral" aria-hidden>
+        07
+      </span>
+      <div className="m-container">
+        <div className="m-ei-grid">
+          <Reveal className="m-reveal">
+            <span className="m-eyebrow">Executive Intelligence · Add-on</span>
+            <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "18ch" }}>
+              Due diligence that <em>survives the board minute.</em>
+            </h2>
+            <p className="m-lede" style={{ marginTop: "1.25rem", maxWidth: "58ch" }}>
+              A gated chain — success profile, interview plan, assessment —
+              where each step requires human approval of the last. Approved
+              records are immutable at the database layer. The audit trail is
+              append-only. The assessment has no AI in it at all.
+            </p>
+          </Reveal>
+
+          <Reveal className="m-reveal-scale" threshold={0.15}>
+            <ul className="m-chain" aria-label="Executive Intelligence approval chain">
+              {EI_CHAIN.map((step) => (
+                <li key={step.label} className={`m-chain__step m-chain__step--${step.state}`}>
+                  <span className="m-chain__mark" aria-hidden>
+                    {step.state === "locked" ? "○" : step.state === "current" ? "●" : "✓"}
+                  </span>
+                  <span className="m-chain__label">{step.label}</span>
+                  <span className="m-chain__meta">{step.meta}</span>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// PRINCIPLES — what the system will never do
+// ────────────────────────────────────────────────────────────────────
+
+const PRINCIPLES = [
+  {
+    title: "Decide for you",
+    body: "No hire or no-hire verdict is produced anywhere in the product. Every output is decision support, with a human accountable for the call.",
+  },
+  {
+    title: "Profile a person",
+    body: "No psychological labels, no protected-characteristic inference, no deception detection, and no audio, video, facial or voice analysis.",
+  },
+  {
+    title: "Rewrite the record",
+    body: "Approved artifacts cannot be edited — corrections create a new version and archive the old one. The audit log accepts inserts only.",
+  },
+];
+
+function Principles() {
+  return (
+    <section className="m-section m-section--gap-tight-top">
+      <span className="m-section__numeral m-section__numeral--right" aria-hidden>
+        09
+      </span>
+      <div className="m-container">
+        <Reveal className="m-reveal">
+          <span className="m-eyebrow">09 / Guardrails</span>
+          <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "20ch" }}>
+            What the system <em>will never do.</em>
+          </h2>
+          <p className="m-lede" style={{ marginTop: "1rem", maxWidth: "62ch" }}>
+            These are enforced in the prompts, the application and the
+            database — not stated as intentions.
+          </p>
+        </Reveal>
+
+        <Reveal className="m-reveal-stagger" as="ul" threshold={0.1}>
+          <ul className="m-principles">
+            {PRINCIPLES.map((p) => (
+              <li key={p.title} className="m-card m-principle">
+                <h3 className="m-principle__title">{p.title}</h3>
+                <p className="m-principle__body">{p.body}</p>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
 
 function Faq() {
   return (
@@ -1275,37 +1416,54 @@ function CtaFooter() {
 function Footer() {
   return (
     <footer className="m-footer">
-      <div
-        className="m-container"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "1rem",
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.6875rem",
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
-        }}
-      >
-        <span>© 2026 Mandate · Closed Beta</span>
-        <div style={{ display: "flex", gap: "1.25rem" }}>
-          <a
-            href="https://www.linkedin.com"
-            target="_blank"
-            rel="noreferrer"
-            className="m-link"
-            aria-label="LinkedIn"
-          >
-            LinkedIn
-          </a>
-          <a href="mailto:hello@mandate.ai" className="m-link">
-            hello@mandate.ai
-          </a>
-          <Link href="/auth/signin" className="m-link">
-            Sign in
-          </Link>
+      <div className="m-container">
+        {/*
+          The imported design has Product / Company / Legal columns
+          pointing at eleven separate pages. Only the on-page anchors
+          and the auth routes exist today, so the structure is kept but
+          every link resolves — no 404s shipped to look fuller.
+        */}
+        <div className="m-footer__cols">
+          <div className="m-footer__brand">
+            <div className="m-footer__mark" aria-hidden />
+            <span className="m-footer__wordmark">Mandate</span>
+            <p className="m-footer__blurb">
+              An AI operating system for executive search.
+            </p>
+          </div>
+
+          <nav className="m-footer__col" aria-label="Product">
+            <h2 className="m-footer__heading">Product</h2>
+            <a href="#how" className="m-footer__link">Platform</a>
+            <a href="#executive-intelligence" className="m-footer__link">
+              Executive Intelligence
+            </a>
+            <a href="#simulator" className="m-footer__link">Live demo</a>
+            <a href="#pricing" className="m-footer__link">Pricing</a>
+          </nav>
+
+          <nav className="m-footer__col" aria-label="Access">
+            <h2 className="m-footer__heading">Access</h2>
+            <Link href="/request-access" className="m-footer__link">
+              Request access
+            </Link>
+            <Link href="/auth/signin" className="m-footer__link">Log in</Link>
+            <a href="mailto:hello@mandate.ai" className="m-footer__link">
+              hello@mandate.ai
+            </a>
+            <a
+              href="https://www.linkedin.com"
+              target="_blank"
+              rel="noreferrer"
+              className="m-footer__link"
+            >
+              LinkedIn
+            </a>
+          </nav>
+        </div>
+
+        <div className="m-footer__base">
+          <span>© 2026 Mandate · Closed Beta</span>
         </div>
       </div>
     </footer>
