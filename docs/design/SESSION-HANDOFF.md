@@ -1,6 +1,6 @@
 # Session handoff — Mandate marketing homepage
 
-**Written:** 2026-08-11 · **Repo state at handoff:** `main` @ `28ac072`, clean, pushed to `origin`.
+**Written:** 2026-08-11 · **Repo state at handoff:** `main` @ `4fdd668`, clean, pushed to `origin`.
 
 ---
 
@@ -19,19 +19,29 @@
 
 ---
 
-## 2. 🔴 Open item that is NOT code
+## 2. Open item that is NOT code
 
 **Anthropic API credits are exhausted.** `POST /api/demo` returns a billing error.
 
-The live simulator is the homepage's centrepiece and the only proof a prospect can verify (the product has zero customers). It fails cleanly — the upstream message never reaches the DOM, the worked example survives byte-identical, and the error strip now offers a route to a real run — but **nobody sees the product actually think.** A top-up is still worth more than any remaining design work.
+**This is no longer a page problem.** As of `4fdd668` the simulator does not depend on the billing state: the three example chips resolve from committed fixtures with no network call, and a free-text brief that fails falls back to the closest fixture in the full result view behind an `ILLUSTRATIVE` banner. A visitor today gets a complete structured mandate — decomposition, inferred scope, five weighted dimensions — with nothing that can fail.
+
+**It is still a product problem, and the honest limit is worth stating.** The fixtures are hand-written, labelled as such, and are therefore a demonstration of the output's *shape*, not evidence the model produces it. A search principal reading closely will notice the page's strongest proof is authored rather than generated. Only real runs fix that. When credits are restored:
+
+1. Regenerate `src/app/(marketing)/_components/simulator-fixtures.ts` from the real pipeline, keeping the file shape.
+2. Change `ILLUSTRATIVE_NOTICE` and the banner wording to say the run was **captured**, with a date.
+3. Do **not** relabel hand-written content as captured output without regenerating it. The file's header comment says this too; it is the whole point of the file.
 
 ---
 
 ## 3. What was done
 
-Two `/impeccable critique` runs. The first scored **15/40**; six commits closed it. A second scored **24/40**; three more commits closed every P0, P1 and P2 plus the highest-leverage structural finding.
+Three `/impeccable critique` runs: **15/40 → 24/40 → 26/40**. Rounds 1 and 2 were closing defects. Round 3's P0 and two of its three P1s are also closed; what remains is structural (§6).
 
 ```
+4fdd668  illustrative simulator fixtures — the demo survives an outage
+d272602  remove three manufactured-liveness signals
+7de9799  scroll-padding-top — anchors land clear of the sticky nav
+05cdb63  handoff doc + the "intelligence layers.Every" space regression
 28ac072  accessibility cluster, pricing grid, two bugs found in passing
 c67c969  trust-ordering, two overclaims, illustrative scores
 fa6a362  no-JS visibility, SSR headline, count reconciliation, request-access, mobile CTA
@@ -52,15 +62,19 @@ acd0707  homepage rebuilt on the imported Claude Design spine
 4. **The page contradicted its own counts** (round 2). 17 agents in the body, **14 in the meta description and OG card**, twelve modules in prose, 31 in the hero rail. On a product whose only differentiator is that its outputs reconcile.
 5. **The conversion destination was a different product** (round 2). `/request-access` rendered in Material 3 tokens with a Material Symbols icon font — craft dropped at the exact moment of commitment.
 
+6. **The page performed liveness while selling auditability** (round 3). A static "System online" pip shown while the API returned 502s; four progress steps advancing on a 2200ms timer decoupled from the request; the hero rail animating fixed architecture constants like meters. The codebase already argued against exactly this in a comment and had never propagated it.
+
 ### Also closed
 
-Simulator failure copy no longer claims hardcoded copy is "real output from an earlier run"; primary CTA persists in the nav at every width; `<main>` + skip link; focus ring restored on the simulator input (WCAG 2.4.7); two invalid `ul > ul`; FAQ questions promoted to `<h3>` and closed panels made `inert`; scroll indicator no longer announces on every frame; simulator gained a live region; pricing grid orphan at 1152px; footer touch targets to 44px; hero rail labels off 10px.
+Simulator failure copy no longer claims hardcoded copy is "real output from an earlier run"; primary CTA persists in the nav at every width; `<main>` + skip link; focus ring restored on the simulator input (WCAG 2.4.7); two invalid `ul > ul`; FAQ questions promoted to `<h3>` and closed panels made `inert`; scroll indicator no longer announces on every frame; simulator gained a live region; pricing grid orphan at 1152px; footer touch targets to 44px; hero rail labels off 10px; every in-page anchor lands clear of the sticky nav; the simulator can be reset and run a second time; the example chips are 44px targets that read as controls; the client console no longer logs the billing message or a provider `request_id`.
 
 ---
 
 ## 4. Known remaining issues
 
 **The prioritised list from the third critique is in §6.** This section covers what that run did not surface.
+
+**Two mistakes worth not repeating.** A JSX comment placed beside the root element inside `return ( … )` is a parse error — `{/* … */}` and `<section>` become two children with no fragment. I did this twice in one session; put the comment *above* the `return` instead. And: the green gate cannot catch a rendering defect. Both times something shipped wrong this session, tsc/lint/tests/build were all green.
 
 **A regression worth learning from.** Commit `fa6a362` converted `"Twelve specialised modules across three intelligence layers."` into a template literal to derive the count from `MODULE_COUNT`. JSX strips whitespace containing a newline between an expression container and an adjacent text node, so it shipped rendering as **"intelligence layers.Every layer reads"** — live on production until the next commit. The green gate cannot catch this class of bug: it is neither a type error nor a lint error, only a rendering one. **When converting literal copy to an expression, put the trailing space inside the literal**, and diff the rendered text, not just the source.
 
@@ -74,13 +88,13 @@ Simulator failure copy no longer claims hardcoded copy is "real output from an e
 - **FAQ chevron** renders as an ✕ when closed (reads as "dismiss", not "expand").
 - **Footer brand mark** is an empty rounded blue square with no `M`. (The *nav* mark is fine.)
 - **Note badge contrast is 4.51:1** — a genuine pass, by 0.01. Any tint change breaks it. Fixing it means altering the brand accent on that label, which is a brand decision.
-- **Dead CSS estate.** The round-1 restraint pass *disabled* rules rather than deleting them. Verified unused against the TSX as of `28ac072`: `.m-ticker`, `.m-feature-card`, `.m-card--danger`, `.m-card--warn`, `.m-display--shimmer`, `.m-reveal-cascade`, and the non-`-row` `.m-pipeline` / `.m-pipeline-cascade` rules — **only the `.m-pipeline-row*` variants are actually used**, so don't delete the whole pipeline block. The two `gradient-text` rules match **zero elements** in the live DOM. Two dead component slots (`StatsTicker`, `Features`) remain as comment blocks in `page.tsx`.
+- **Dead CSS estate.** The round-1 restraint pass *disabled* rules rather than deleting them. Re-verified against the TSX at `4fdd668`: `.m-ticker`, `.m-feature-card`, `.m-card--danger`, `.m-card--warn`, `.m-display--shimmer`, `.m-reveal-cascade`, and the non-`-row` `.m-pipeline` / `.m-pipeline-cascade` rules are all unused — **but only the `.m-pipeline-row*` variants are actually used**, so don't delete the whole pipeline block. The two `gradient-text` rules match **zero elements** in the live DOM. Two dead component slots (`StatsTicker`, `Features`) remain as comment blocks in `page.tsx`. (`count-up.tsx` and the `.m-nav__live` rules were deleted in `d272602` and are already gone.)
 
 ---
 
 ## 5. ⚠️ Measuring the page correctly
 
-**This has produced false findings in both critiques. Control for it or your evidence is wrong.**
+**This has produced false findings in every critique so far. Control for it or your evidence is wrong.**
 
 Scroll-reveal wrappers start hidden and scaled, inside `@media (scripting: enabled)`, and only settle when the IntersectionObserver adds `is-visible`:
 
@@ -118,14 +132,18 @@ node ~/.claude/skills/impeccable/scripts/critique-storage.mjs trend "src/app/(ma
 
 With JavaScript genuinely disabled (`javaScriptEnabled: false`), **24/24 reveal wrappers render at opacity 1**, all 11 sections visible, 8,572 chars of body text. SSR `<h1>` is byte-identical to the hydrated one and its computed accessible name is correct. 28 headings, one `h1`, **zero skipped levels**. Zero invalid list nestings, zero single-child stagger wrappers. No pricing width leaves a tier alone on a row. All 7 collapsed FAQ panels carry `inert`. Under `prefers-reduced-motion`: 0 animations, 0 stranded wrappers. 0 console errors, no hydration mismatch. The simulator failure leaks nothing to the DOM and the worked example survives at 791 chars byte-identical.
 
+### Closed since the run (`7de9799`, `d272602`, `4fdd668`)
+
+- ~~**P0 — the failure copy overclaims.**~~ Four hand-written `DemoResult` fixtures now back the simulator. Chips resolve locally with **zero network calls** (verified by instrumenting `window.fetch`); a failed free-text brief falls back to the nearest fixture in the full result view behind an `ILLUSTRATIVE` banner. See §2 for what to do when credits return.
+- ~~**P1 — no `scroll-margin-top`.**~~ `scroll-padding-top: calc(var(--nav-h) + 1.5rem)` on `html:has(.marketing-root)`. Anchors landed at 0px against a 73px nav; they now land at 97px. Scoped with `:has()` so it cannot leak into the app shell — verified on `/auth/signin`, where it resolves to `auto`.
+- ~~**P1 — three manufactured-liveness tells.**~~ Pip deleted, progress steps replaced with a real elapsed counter and an indeterminate track, hero rail rendered statically, `count-up.tsx` removed, console logs the status code only.
+
 ### The remaining ceiling is structural, not defect-level
 
-- **P0 — the failure copy still overclaims.** It says "Below is a worked example of **the same output**". It is not the same output; it is an unrelated hardcoded panel. 100% of visitors who engage with the simulator hit this today. The fix is pre-computed `DemoResult` fixtures (one per `TYPING_EXAMPLES` entry) so the three chips resolve locally and never break, with `/api/demo` reserved for free text.
-- **P1 — no `scroll-margin-top` anywhere.** Grep `marketing.css`: zero `scroll-margin` declarations, one inline instance on `#simulator`. With a sticky nav at ~64–72px, *every* wayfinding link lands under the bar. Also `scroll-behavior: smooth` is on `.marketing-root`, a non-scrolling div, so it does nothing. Fix with `html { scroll-padding-top: 5.5rem }` and a shared `--nav-h`.
-- **P1 — three manufactured-liveness tells survive.** The "System online" pip is a static span shown while the API is down; `SimulatorProgress` advances on a 2200ms timer decoupled from the request; the hero rail animates static architecture constants with `CountUp`. `page.tsx` already states the principle in a comment ("animating them as though they were being computed is the one thing a page arguing for auditable numbers must not do") — it was applied to the Triangulation scores and never propagated. The client `console.error` also leaks the billing message and `request_id` to devtools; the DOM is clean, the console is not.
-- **P1 — no human provenance.** Zero customers means the founder is the proof, and the founder appears once, unnamed, at ~95% scroll depth. Security claims in the FAQ have no DPA or security page behind them.
-- **P2 — traffic-light scoring contradicts Principles.** Green 91 / amber 83 is the grammar of pass/caution/fail next to a named human, three sections after "no hire or no-hire verdict is produced anywhere". The "illustrative" caveat governs the score list only — the diagram with the largest number on the page (87) sits in a separate column with no caveat and states the scores as fact in its `aria-label`.
-- **P2 — mobile.** The Analyze button wraps to two lines at 390; `.m-chip` is 40px against the 44px floor the rest of the file enforces; **7 of 8 FAQ answers are unreachable without JS** (text is in the DOM at `max-height: 0` but the panels cannot open).
+- **P1 — no human provenance.** Zero customers means the founder is the proof, and the founder appears once, unnamed, at ~95% scroll depth. Security claims in the FAQ have no DPA or security page behind them. **Blocked on the founders** — the block can be built in an hour, but nobody else can write the name and the track record.
+- **P2 — traffic-light scoring contradicts Principles.** Green 91 / amber 83 is the grammar of pass/caution/fail next to a named human, three sections after "no hire or no-hire verdict is produced anywhere". The "illustrative" caveat governs the score list only — the diagram with the largest number on the page (87) sits in a separate column with no caveat and states the scores as fact in its `aria-label`. Fix: drop the `TONE` mapping in `three-circle-alignment.tsx`, render all magnitudes in `var(--accent)`, move the caveat under the h2 so it governs both columns.
+- **P2 — mobile.** The Analyze button still wraps to two lines at 390 (`.m-sim__submit` has `padding-inline: 1.625rem`, no `white-space: nowrap`, no stacking rule below 420px). **7 of 8 FAQ answers remain unreachable without JS** — the text is in the DOM at `max-height: 0` but the panels cannot open. (`.m-chip` is still 40px, which is correct: the inert Stack label chips are not targets. The interactive `.m-chip--action` chips are 44px.)
+- **Structural, needs a direction decision before code.** Sections 03→08 are five consecutive card grids with the same container, track and gap; the "Roman clause / *italic blue clause*" h2 mould is used ten times without variation; the page numbers itself 00–10 and then makes those numerals `aria-hidden`, `pointer-events: none` decoration rather than navigation. The single largest missed opportunity: the page never shows a Mandate **artifact** — no shortlist, no ranked slate, no versioned spec diff — for a product whose noun is "a slate that defends itself in the minutes".
 
 ### Token-level finding worth acting on once
 
