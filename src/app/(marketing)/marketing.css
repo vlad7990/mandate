@@ -1051,49 +1051,41 @@ html:has(.marketing-root) {
   letter-spacing: inherit;
 }
 
+/*
+ * Chevron. The previous icon drew two 12px bars meeting at the centre,
+ * which read as an ✕ when closed — "dismiss", not "expand" — and then
+ * rotated 180° to an identical ✕. This is a single corner rotated to
+ * point down when closed and up when open: unambiguous in both states.
+ */
 .m-faq__icon {
-  width: 22px;
-  height: 22px;
+  width: 9px;
+  height: 9px;
   flex-shrink: 0;
-  position: relative;
-  transition: transform 320ms var(--ease-out);
+  margin-right: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 240ms var(--ease-out);
 }
 
-.m-faq__icon::before,
-.m-faq__icon::after {
-  content: "";
-  position: absolute;
-  width: 12px;
-  height: 1.5px;
-  background: currentColor;
-  top: 50%;
-  transition: transform 320ms var(--ease-out);
+details[open] > .m-faq__btn .m-faq__icon {
+  transform: rotate(-135deg);
 }
 
-.m-faq__icon::before {
-  left: 2px;
-  transform: translateY(-50%) rotate(45deg);
-  transform-origin: right center;
+/* Native <details> hides closed content itself, so the old
+   `max-height: 0` panel wrapper is gone along with its eight
+   `transition: max-height` layout-thrash warnings. */
+.m-faq__btn {
+  list-style: none;
 }
 
-.m-faq__icon::after {
-  right: 2px;
-  transform: translateY(-50%) rotate(-45deg);
-  transform-origin: left center;
+.m-faq__btn::-webkit-details-marker {
+  display: none;
 }
 
-.m-faq__btn[aria-expanded="true"] .m-faq__icon {
-  transform: rotate(180deg);
-}
-
-.m-faq__panel {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 360ms var(--ease-out);
-}
-
-.m-faq__panel[data-open="true"] {
-  max-height: 480px;
+.m-faq__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .m-faq__panel-inner {
@@ -1265,9 +1257,26 @@ html:has(.marketing-root) {
   color: transparent;
 }
 
+/* The field wraps input + animated placeholder so the overlay is
+   positioned against the input's box. Anchored to .m-sim__input-row it
+   was clamped to the row width, which includes the submit button, so
+   the typed text ran on underneath it. */
+.m-sim__field {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.m-sim__field .m-sim__input {
+  width: 100%;
+  min-width: 0;
+}
+
 .m-sim__placeholder {
   position: absolute;
   left: 1.625rem;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
@@ -1303,6 +1312,11 @@ html:has(.marketing-root) {
   font-size: 0.6875rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+  /* The page's primary proof control broke its own label across two
+     lines at 390px — 26px of inline padding against a 114px button in
+     a nowrap flex row. It must never wrap. */
+  white-space: nowrap;
+  flex-shrink: 0;
   border: 0;
   cursor: pointer;
   transition:
@@ -3570,7 +3584,6 @@ html:has(.marketing-root) {
 /* The animated placeholder overflowed its container by 46px at 390,
    clipping the text mid-word. */
 .m-sim__placeholder {
-  max-width: calc(100% - 1.5rem);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3679,4 +3692,15 @@ html:has(.marketing-root) {
   margin-top: 0.5rem;
   margin-bottom: 0;
   text-align: center;
+}
+
+/* At phone widths the simulator's label + button no longer fit side by
+   side without the button eating the input. Trim the padding and drop
+   the tracking so "Analyze →" stays on one line and the field keeps
+   usable width. */
+@media (max-width: 479px) {
+  .m-sim__submit {
+    padding-inline: 0.875rem;
+    letter-spacing: 0.12em;
+  }
 }

@@ -1,61 +1,55 @@
-"use client";
-
-import { useState } from "react";
-
 export type FaqItem = {
   q: string;
   a: string;
 };
 
+/**
+ * FAQ disclosure, built on native <details>/<summary>.
+ *
+ * This was a client component driving `aria-expanded`, `aria-controls`,
+ * `inert` and a `max-height` transition from React state. It worked
+ * with JavaScript and not at all without it: the server-rendered HTML
+ * shipped one open panel and seven carrying `inert`, so a no-JS
+ * visitor, a crawler, or anyone whose hydration stalled could read
+ * exactly one of eight answers and had no way to open the rest. The
+ * text was in the DOM the whole time, sitting at `max-height: 0`.
+ *
+ * Native <details> fixes the category rather than the instance:
+ *
+ * - Works with zero JavaScript. This component no longer ships any.
+ * - Keyboard and screen-reader behaviour come from the platform, so
+ *   there is no expanded/inert state left to fall out of sync.
+ * - `name` makes the group exclusive — one open at a time — natively.
+ *   Browsers without it simply allow several open, which is a fine
+ *   degradation rather than a broken control.
+ *
+ * The question stays an <h3> inside the <summary> so the eight
+ * questions remain in the document outline; assistive tech announces
+ * them as heading + disclosure.
+ *
+ * No open/close animation: <details> hides its content with
+ * `display: none`, so a height transition would need `interpolate-size`
+ * and buy very little. Dropping it also removes eight
+ * `transition: max-height` layout-thrash warnings.
+ */
 export function FaqAccordion({ items }: { items: FaqItem[] }) {
-  const [openIdx, setOpenIdx] = useState<number | null>(0);
-
   return (
-    <div role="list" className="m-faq">
-      {items.map((item, i) => {
-        const open = i === openIdx;
-        return (
-          <div key={i} className="m-faq__item" role="listitem">
-            {/*
-              The question is a heading, not a bare button. Eight
-              questions were previously absent from the document outline
-              entirely, so heading navigation skipped the whole section.
-            */}
-            <h3 className="m-faq__q">
-              <button
-                type="button"
-                id={`faq-btn-${i}`}
-                className="m-faq__btn"
-                aria-expanded={open}
-                aria-controls={`faq-panel-${i}`}
-                onClick={() => setOpenIdx(open ? null : i)}
-              >
-                <span>{item.q}</span>
-                <span className="m-faq__icon" aria-hidden />
-              </button>
-            </h3>
-            {/*
-              `inert` removes a closed panel from the accessibility tree
-              and from the tab order. Collapsed panels were only visually
-              hidden (max-height: 0; overflow: hidden) while remaining
-              display:block and visibility:visible, so a screen reader
-              read all eight answers regardless of aria-expanded. `inert`
-              is used rather than `hidden` because it does not set
-              display:none and so preserves the height transition.
-            */}
-            <div
-              id={`faq-panel-${i}`}
-              className="m-faq__panel"
-              data-open={open}
-              role="region"
-              aria-labelledby={`faq-btn-${i}`}
-              inert={!open}
-            >
-              <div className="m-faq__panel-inner">{item.a}</div>
-            </div>
-          </div>
-        );
-      })}
+    <div className="m-faq">
+      {items.map((item, i) => (
+        <details
+          key={item.q}
+          className="m-faq__item"
+          name="mandate-faq"
+          // Opening the first is a deliberate hint that these expand.
+          open={i === 0}
+        >
+          <summary className="m-faq__btn">
+            <h3 className="m-faq__q">{item.q}</h3>
+            <span className="m-faq__icon" aria-hidden />
+          </summary>
+          <div className="m-faq__panel-inner">{item.a}</div>
+        </details>
+      ))}
     </div>
   );
 }

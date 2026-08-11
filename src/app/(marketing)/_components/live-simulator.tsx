@@ -229,23 +229,29 @@ export function LiveSimulator() {
           void submit(input);
         }}
       >
-        <input
-          className={`m-sim__input ${
-            showTyping ? "m-sim__input--typing" : ""
-          }`}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder="e.g. Head of IT Operations for RBC Capital Markets"
-          aria-label="Role to analyse"
-          disabled={pending}
-        />
-        {showTyping && (
-          <span className="m-sim__placeholder" aria-hidden>
-            {typedPlaceholder}
-          </span>
-        )}
+        {/* The animated placeholder is absolutely positioned, so it
+            needs a containing block that is the FIELD, not the whole
+            row — anchored to the row it ran on underneath the Analyze
+            button. */}
+        <span className="m-sim__field">
+          <input
+            className={`m-sim__input ${
+              showTyping ? "m-sim__input--typing" : ""
+            }`}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder="e.g. Head of IT Operations for RBC Capital Markets"
+            aria-label="Role to analyse"
+            disabled={pending}
+          />
+          {showTyping && (
+            <span className="m-sim__placeholder" aria-hidden>
+              {typedPlaceholder}
+            </span>
+          )}
+        </span>
         <button
           type="submit"
           className="m-sim__submit"
