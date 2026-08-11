@@ -1,11 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { isFounderEmail } from "@/lib/auth/founders";
+import { safeNextPath } from "@/lib/routes";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
+  // Was `searchParams.get("next") ?? "/"` used raw in `${origin}${next}`.
+  // A `next` of `//evil.com` yields `https://host//evil.com`, which the
+  // browser resolves as protocol-relative — an open redirect off the
+  // origin, reachable by anyone who can get a victim to complete a real
+  // sign-in from a crafted link.
+  const next = safeNextPath(searchParams.get("next"));
   const errorDescription = searchParams.get("error_description");
 
   if (errorDescription) {

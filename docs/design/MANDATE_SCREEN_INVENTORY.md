@@ -15,7 +15,7 @@
 |---|---|---|---|---|---|---|---|---|---|---|
 | P-01 | Home | `/` | PUB | P0 | EXISTING | ✓ | ✓ | ✓ | Batch 1 | Single long-scroll. Live simulator is the strongest proof asset. 0 contrast failures |
 | P-02 | Platform | `/platform` | PUB | P1 | MISSING | ✓ | ✓ | ✓ | P-01, positioning | How the 17-agent pipeline works |
-| P-03 | Executive Intelligence | `/executive-intelligence` | PUB | P1 | MISSING | ✓ | ✓ | ✓ | positioning | Sells the premium module + add-on |
+| P-03 | Executive Intelligence | `/app/executive-intelligence` | PUB | P1 | MISSING | ✓ | ✓ | ✓ | positioning | Sells the premium module + add-on |
 | P-04 | Pricing (standalone) | `/pricing` | PUB | P1 | MISSING | ✓ | ✓ | ✓ | EI price | Currently only an anchor on Home |
 | P-05 | Security | `/security` | PUB | P1 | MISSING | ✓ | ✓ | ✓ | **business input** | Architecture only. No certifications |
 | P-06 | Solutions | `/solutions` | PUB | P2 | MISSING | ✓ | ✓ | ✓ | positioning | Firms vs in-house |
@@ -46,8 +46,8 @@
 | ID | Screen | Route | Persona | Pri | Status | Desktop | Tablet | Mobile | Dependencies | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | S-00 | **App shell** | all | all | **P0** | EXISTING | ✓ | ✓ | ✓ | Batch 1 | **Blocks all 38 screens.** 8px labels; 4 dead controls; hardcoded 80px margin; no mobile nav; silent clipping |
-| S-01 | Dashboard | `/home` | REC ADM | P0 | EXISTING | ✓ | ✓ | ✓ | S-00 | Needs KPIs, priorities, risk, activity, next-action |
-| S-02 | Analytics | `/analytics` | REC ADM | P1 | EXISTING | ✓ | ✓ | ✓ | S-00 | Portfolio metrics + charts |
+| S-01 | Dashboard | `/app/home` | REC ADM | P0 | EXISTING | ✓ | ✓ | ✓ | S-00 | Needs KPIs, priorities, risk, activity, next-action |
+| S-02 | Analytics | `/app/analytics` | REC ADM | P1 | EXISTING | ✓ | ✓ | ✓ | S-00 | Portfolio metrics + charts |
 
 ---
 
@@ -55,14 +55,14 @@
 
 | ID | Screen | Route | Persona | Pri | Status | Desktop | Tablet | Mobile | Dependencies | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| S-03 | New mandate | `/projects/new` | REC | P0 | EXISTING | ✓ | ✓ | ✓ | S-00 | One-line input, optimistic create |
-| S-04 | Project workspace | `/projects/[id]` | REC | **P0** | EXISTING | ✓ | ✓ | ✓ | S-03 | **Signature agent tiles.** No `h1`; 3/5 buttons disabled |
+| S-03 | New mandate | `/app/projects/new` | REC | P0 | EXISTING | ✓ | ✓ | ✓ | S-00 | One-line input, optimistic create |
+| S-04 | Project workspace | `/app/projects/[id]` | REC | **P0** | EXISTING | ✓ | ✓ | ✓ | S-03 | **Signature agent tiles.** No `h1`; 3/5 buttons disabled |
 | S-05 | Onboarding wizard | `.../onboarding` | REC | P0 | EXISTING | ✓ | ✓ | ✓ | S-04 | 5 steps: Origin → Must-Haves → Anti-Patterns → Stakeholders → Priorities |
 | S-06 | Job spec editor | `.../spec` | REC | P0 | EXISTING | ✓ | ✓ | — | S-05 | Versioned + diff panel. 1,227 lines |
 | S-07 | Sourcing queries | `.../sourcing` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-06 | LinkedIn/X-Ray/ATS × exact/broad/adjacent/competitor + versions |
-| S-08 | Candidate list (project) | `.../candidates` | REC | P0 | EXISTING | ✓ | ✓ | ✓ | S-04 | |
-| S-09 | CV upload | `.../candidates/new` | REC | P0 | EXISTING | ✓ | ✓ | ✓ | S-08 | PDF/DOCX. Async parse + polling |
-| S-10 | **Candidate detail** | `.../candidates/[id]` | REC | **P0** | EXISTING | ✓ | ✓ | ✓ | S-09 | **Worst screen.** 39 buttons; outline `H1→H4×7→H3×4`; 32 clipped on mobile. Needs restructure |
+| S-08 | Candidate list (project) | `.../app/candidates` | REC | P0 | EXISTING | ✓ | ✓ | ✓ | S-04 | |
+| S-09 | CV upload | `.../app/candidates/new` | REC | P0 | EXISTING | ✓ | ✓ | ✓ | S-08 | PDF/DOCX. Async parse + polling |
+| S-10 | **Candidate detail** | `.../app/candidates/[id]` | REC | **P0** | EXISTING | ✓ | ✓ | ✓ | S-09 | **Worst screen.** 39 buttons; outline `H1→H4×7→H3×4`; 32 clipped on mobile. Needs restructure |
 | S-11 | Ranking leaderboard | `.../ranking` | REC | P0 | EXISTING | ✓ | ✓ | ✓ | S-10 | Tiers 1–4, rank history. Good empty state |
 | S-12 | Head-to-head compare | `.../ranking/compare` | REC | P1 | EXISTING | ✓ | ✓ | — | S-11 | |
 | S-13 | Comparison table | `.../comparison` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-11 | **Densest surface.** Frozen column + mobile switcher required |
@@ -79,9 +79,9 @@
 
 | ID | Screen | Route | Persona | Pri | Status | Desktop | Tablet | Mobile | Dependencies | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| S-20 | Candidate portfolio | `/candidates` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-00 | Across all mandates. Clean single-`h1` |
-| S-21 | Global Executive Network | `/candidates/network` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-20 | **Person-deduped** — distinct mental model, needs distinct treatment |
-| S-22 | AI candidate search | `/candidates/search` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-20 | Natural-language query |
+| S-20 | Candidate portfolio | `/app/candidates` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-00 | Across all mandates. Clean single-`h1` |
+| S-21 | Global Executive Network | `/app/candidates/network` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-20 | **Person-deduped** — distinct mental model, needs distinct treatment |
+| S-22 | AI candidate search | `/app/candidates/search` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-20 | Natural-language query |
 
 ---
 
@@ -89,12 +89,12 @@
 
 | ID | Screen | Route | Persona | Pri | Status | Desktop | Tablet | Mobile | Dependencies | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| S-23 | EI overview | `/executive-intelligence` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-00 | Module map. Good copy |
+| S-23 | EI overview | `/app/executive-intelligence` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-00 | Module map. Good copy |
 | S-24 | Searches list | `.../searches` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-23 | |
 | S-25 | Executive intake | `.../searches/new` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-24 | 22 fields across 3 groups + service tier |
 | S-26 | **Search workspace** | `.../searches/[id]` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-25 | **Best screen in product.** Use its empty-state copy as the standard |
 | S-27 | Success profile | `.../success-profile` | REC | P1 | EXISTING | ✓ | ✓ | — | S-26 | 15 sections. Approve → weights become operational. **Immutable when approved** |
-| S-28 | Link candidates | `.../candidates` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-27 | From org pool. 5 diligence stages |
+| S-28 | Link candidates | `.../app/candidates` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-27 | From org pool. 5 diligence stages |
 | S-29 | Interview plan | `.../[cid]/interview-plan` | REC | P1 | EXISTING | ✓ | ✓ | — | S-28 | Server-computed coverage. **Immutable when approved** |
 | S-30 | Assessment | `.../[cid]/assessment` | REC | P1 | EXISTING | ✓ | ✓ | ✓ | S-29 | **No AI.** 4-level evidence. Strength ≠ candidate score |
 | S-31 | Role templates | `.../templates` | REC | P2 | EXISTING | ✓ | ✓ | — | S-23 | 8 seeded |
@@ -109,13 +109,13 @@
 
 | ID | Screen | Route | Persona | Pri | Status | Desktop | Tablet | Mobile | Dependencies | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| S-36 | Workspace settings | `/settings` | ADM | P0 | EXISTING | ✓ | ✓ | ✓ | S-00 | **0 inputs — read-only.** Copy bug: "as a admin" |
-| S-37 | Skills studio | `/settings/skills` | REC ADM | P1 | EXISTING | ✓ | ✓ | — | S-36 | Custom evaluation lenses |
+| S-36 | Workspace settings | `/app/settings` | ADM | P0 | EXISTING | ✓ | ✓ | ✓ | S-00 | **0 inputs — read-only.** Copy bug: "as a admin" |
+| S-37 | Skills studio | `/app/settings/skills` | REC ADM | P1 | EXISTING | ✓ | ✓ | — | S-36 | Custom evaluation lenses |
 | S-38 | Skill editor | `.../skills/[id]`, `/new` | REC ADM | P1 | EXISTING | ✓ | ✓ | — | S-37 | Trigger conditions + instructions |
-| S-39 | Waitlist triage | `/settings/waitlist` | FND | P1 | EXISTING | ✓ | ✓ | ✓ | S-36 | Founder-only. Needs no-permission state |
-| S-40 | **Members / Team** | `/settings/members` | ADM | P0 | **MISSING** | ✓ | ✓ | ✓ | multi-tenancy | No members, invites, or role UI exists. Blocks multi-user |
-| S-41 | **Profile / Account** | `/settings/profile` | all | P0 | **MISSING** | ✓ | ✓ | ✓ | — | No way to change own name/email/password |
-| S-42 | Notification prefs | `/settings/notifications` | all | P2 | MISSING | ✓ | ✓ | ✓ | notif model | Icon is decorative today |
+| S-39 | Waitlist triage | `/app/settings/waitlist` | FND | P1 | EXISTING | ✓ | ✓ | ✓ | S-36 | Founder-only. Needs no-permission state |
+| S-40 | **Members / Team** | `/app/settings/members` | ADM | P0 | **MISSING** | ✓ | ✓ | ✓ | multi-tenancy | No members, invites, or role UI exists. Blocks multi-user |
+| S-41 | **Profile / Account** | `/app/settings/profile` | all | P0 | **MISSING** | ✓ | ✓ | ✓ | — | No way to change own name/email/password |
+| S-42 | Notification prefs | `/app/settings/notifications` | all | P2 | MISSING | ✓ | ✓ | ✓ | notif model | Icon is decorative today |
 
 ---
 
@@ -123,9 +123,9 @@
 
 | ID | Screen | Route | Persona | Pri | Status | Desktop | Tablet | Mobile | Dependencies | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| S-43 | Billing overview | `/settings/billing` | ADM | P1 | PLANNED | ✓ | ✓ | ✓ | Stripe | Plan, status, renewal, EI add-on |
-| S-44 | Subscribe wall | `/settings/billing` | ADM | P1 | PLANNED | ✓ | ✓ | ✓ | S-43 | No subscription state |
-| S-45 | Activating | `/settings/billing?success` | ADM | P1 | PLANNED | ✓ | ✓ | ✓ | S-43 | Polls; **grants nothing on redirect** |
+| S-43 | Billing overview | `/app/settings/billing` | ADM | P1 | PLANNED | ✓ | ✓ | ✓ | Stripe | Plan, status, renewal, EI add-on |
+| S-44 | Subscribe wall | `/app/settings/billing` | ADM | P1 | PLANNED | ✓ | ✓ | ✓ | S-43 | No subscription state |
+| S-45 | Activating | `/app/settings/billing?success` | ADM | P1 | PLANNED | ✓ | ✓ | ✓ | S-43 | Polls; **grants nothing on redirect** |
 | S-46 | Past-due banner | global | ADM | P1 | PLANNED | ✓ | ✓ | ✓ | S-43 | Grace window |
 | S-47 | Canceled / read-only | global | all | P1 | PLANNED | ✓ | ✓ | ✓ | S-43 | Data retained, access removed |
 | S-48 | Gated feature state | ×5 features | REC | P1 | PLANNED | ✓ | ✓ | ✓ | S-43 | HM portal · Triangulation · Calibration history · Network · Skills |

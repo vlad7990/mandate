@@ -124,7 +124,7 @@ Read-only participant (analyst, coordinator, partner reviewing a colleague's sea
 Three founder emails are hardcoded in a database function. Founders auto-provision into the `Mandate HQ` workspace as `admin`/`active`; everyone else lands `pending` with no organisation and must be approved.
 
 - **Exclusive tasks:** approve waitlist requests, approve pending users
-- **Screens:** `/settings/waitlist`
+- **Screens:** `/app/settings/waitlist`
 - **Note:** "founder" is a boolean flag plus an email allowlist, *not* a role value. Any UI implying a founder tier must reflect that.
 
 ## 2.6 Assessor / Interviewer *(inferred — no role value)*
@@ -163,14 +163,14 @@ Platform · Executive Intelligence · Pricing (standalone) · Security · Trust 
 ## 3.2 Authenticated application — actual route hierarchy
 
 ```
-/home                                   Portfolio command (dashboard)
+/app/home                                   Portfolio command (dashboard)
 
-/projects/new                           Create mandate (one-line input)
-/projects/[id]                          Project workspace — agent tiles + intelligence panels
+/app/projects/new                           Create mandate (one-line input)
+/app/projects/[id]                          Project workspace — agent tiles + intelligence panels
   /onboarding                           Calibration intake wizard
   /spec                                 Job spec editor (versioned) + diff panel
   /sourcing                             Boolean/X-Ray/ATS queries + version history
-  /candidates                           Candidate list for the mandate
+  /app/candidates                           Candidate list for the mandate
     /new                                CV upload
     /[candidateId]                      Candidate detail (largest screen in product)
   /ranking                              Leaderboard + tiers
@@ -183,23 +183,23 @@ Platform · Executive Intelligence · Pricing (standalone) · Security · Trust 
   /reports                              Weekly report generation
   /metrics                              Search health
 
-/candidates                             Candidate portfolio (all mandates)
+/app/candidates                             Candidate portfolio (all mandates)
   /network                              Global Executive Network (person-deduped)
   /search                               Natural-language candidate search
 
-/executive-intelligence                 EI module overview / map
+/app/executive-intelligence                 EI module overview / map
   /searches                             Executive searches list
     /new                                Executive intake
     /[id]                               Search workspace
       /success-profile                  Generate → edit → approve
-      /candidates                       Link candidates from org pool
+      /app/candidates                       Link candidates from org pool
         /[candidateId]/interview-plan   Generate → edit → approve
         /[candidateId]/assessment       Human scorecard → approve
   /templates                            Role templates
   /competencies                         Competency library
 
-/analytics                              Portfolio analytics
-/settings                               Workspace settings (read-only today)
+/app/analytics                              Portfolio analytics
+/app/settings                               Workspace settings (read-only today)
   /skills                               Skills studio (custom evaluation lenses)
     /new · /[skillId]
   /waitlist                             Access requests (founder-only)
@@ -228,7 +228,7 @@ The full checklist lives in `MANDATE_SCREEN_INVENTORY.md`. This section gives th
 
 ---
 
-### S-01 · Dashboard — `/home` — *recruiter, admin*
+### S-01 · Dashboard — `/app/home` — *recruiter, admin*
 
 - **Purpose:** answer "what needs me today" in under five seconds
 - **Primary action:** open the mandate that needs attention · **Secondary:** new mandate
@@ -238,7 +238,7 @@ The full checklist lives in `MANDATE_SCREEN_INVENTORY.md`. This section gives th
 - **Components:** KPI tiles, project cards, activity feed, priority list
 - **Responsive:** KPI row 4→2→1; project cards → stacked list
 
-### S-04 · Project Workspace — `/projects/[id]` — *recruiter*
+### S-04 · Project Workspace — `/app/projects/[id]` — *recruiter*
 
 The hub of the whole product.
 
@@ -249,7 +249,7 @@ The hub of the whole product.
 - **States:** analysis-in-progress (polling), generation-failed, awaiting-calibration gate
 - **Responsive:** agent tiles 4-up → 2-up → 1-up; panels stack
 
-### S-08 · Candidate Detail — `/projects/[id]/candidates/[candidateId]` — *recruiter*
+### S-08 · Candidate Detail — `/app/projects/[id]/app/candidates/[candidateId]` — *recruiter*
 
 Largest and most overloaded screen: **1,326 lines, 39 buttons, 6 disabled.**
 
@@ -258,22 +258,22 @@ Largest and most overloaded screen: **1,326 lines, 39 buttons, 6 disabled.**
 - **Mobile — worst screen in the product:** 32 elements clipped, worst extending to `right: 604px` on a 390px viewport; 36 of 43 interactive elements under 40px
 - **Design imperative:** needs tabs or progressive disclosure. 39 buttons on one page is not a hierarchy.
 
-### S-10 · Ranking Leaderboard — `/projects/[id]/ranking` — *recruiter*
+### S-10 · Ranking Leaderboard — `/app/projects/[id]/ranking` — *recruiter*
 
 - **Shows:** ranked candidates, multi-dimension scores, tier bands (`tier_1`…`tier_4`), rank movement history
 - **Empty state (good, exists):** *"Nothing to rank yet · 00 RANKED · 04 PENDING PARSE"* — states the count *and* the reason
 - **Actions:** Feedback · Refresh Scores · Compare · Full Comparison · Build Shortlist
 - **Responsive:** the leaderboard is a dense table — needs a card-per-candidate mobile form, not a squeezed table
 
-### S-13 · Shortlist Builder — `/projects/[id]/shortlist`
+### S-13 · Shortlist Builder — `/app/projects/[id]/shortlist`
 
 Select a slate (top 3/5/custom), generate a trade-off report. Drag/select interaction, side-by-side trade-offs, export.
 
-### S-14 · Comparison Table — `/projects/[id]/comparison`
+### S-14 · Comparison Table — `/app/projects/[id]/comparison`
 
 Master table, all candidates × all dimensions. **The densest surface in the product** — the primary test of the table system. Needs frozen first column, horizontal scroll with visible affordance, and a genuine mobile strategy (one candidate at a time with a switcher).
 
-### S-20 · EI Search Workspace — `/executive-intelligence/searches/[id]`
+### S-20 · EI Search Workspace — `/app/executive-intelligence/searches/[id]`
 
 **The best-executed screen in the product today.** Its empty states explain the mechanism rather than announcing absence:
 
@@ -311,12 +311,12 @@ The only client-facing surface. Shows the slate and collects structured feedback
 **Rules:** no internal state, no billing state, no other mandates. If the org loses entitlement (once billing ships) it must return a neutral *"link unavailable"* — **never** a billing message, which would leak the customer's payment status to their client.
 **Mobile-first.** Assume a phone.
 
-### S-33 · Settings — `/settings`
+### S-33 · Settings — `/app/settings`
 
 Today: `WORKSPACE SETTINGS`, org name/slug/created, role display. **Zero inputs.** Copy bug: *"You're viewing this workspace as a admin."*
 **Needs:** editable org profile, members, roles, billing entry, danger zone.
 
-### S-36 · Waitlist — `/settings/waitlist` — *founder only*
+### S-36 · Waitlist — `/app/settings/waitlist` — *founder only*
 
 Access-request triage: approve/reject. Needs a genuine no-permission state for non-founders.
 
@@ -332,7 +332,7 @@ Marketing home → Request Access (waitlist form)
    → Sign up → account created `pending`, no organisation
    → /auth/pending  ("waiting for approval")
    → founder approves → status `active`, organisation attached
-   → /home  (empty portfolio)
+   → /app/home  (empty portfolio)
    → New mandate → onboarding wizard → first candidates
 ```
 
@@ -416,7 +416,7 @@ Spec complete (`docs/superpowers/specs/2026-08-10-billing-design.md`). Decisions
 - Five features gated: HM Portal · Triangulation · Calibration history · Global Network · Custom skills
 
 ```
-/settings/billing → Subscribe → Stripe Checkout → return
+/app/settings/billing → Subscribe → Stripe Checkout → return
    → "Activating…" (polls; grants nothing on redirect)
    → webhook confirms → entitlements written
 Manage → Stripe Customer Portal (plan change, cancel, payment method, invoices)
@@ -585,7 +585,7 @@ Currently **two systems**: Material Symbols webfont (427 usages / 101 files, ren
 - Visible focus ring on every interactive element
 - Disabled controls are not focusable — never the only route to information
 
-**Current measured state:** marketing **0 failures** at 1440/1024/390. App shell still fails: 3 on `/home`, 7 on project detail; `//` and `·` separators at **1.84:1**.
+**Current measured state:** marketing **0 failures** at 1440/1024/390. App shell still fails: 3 on `/app/home`, 7 on project detail; `//` and `·` separators at **1.84:1**.
 
 ## Breakpoints
 **Desktop 1440+ · Tablet ~1024 · Mobile ~390.**
@@ -616,7 +616,7 @@ Currently **two systems**: Material Symbols webfont (427 usages / 101 files, ren
 
 **The five-second test.** Within five seconds of landing, a recruiter must know: *what needs me, what changed, what is at risk, what to do next.*
 
-### Recruiter dashboard (`/home`) — primary
+### Recruiter dashboard (`/app/home`) — primary
 - **KPIs:** active mandates · candidates awaiting review · shortlists pending client feedback · at-risk searches
 - **Priorities:** "3 candidates parsed and unreviewed on RBC" · "Shortlist sent 6 days ago, no HM response"
 - **Risk:** stalled searches (Search Health Agent already computes this — surface it)

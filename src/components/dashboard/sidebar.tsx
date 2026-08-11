@@ -15,24 +15,27 @@ type NavItem = {
   badgeKey?: "network";
 };
 
+/** The Projects entry lands on /app/home but owns /app/projects/* too. */
+const PROJECTS_HREF = "/app/home";
+
 const NAV: NavItem[] = [
-  { href: "/home", label: "Projects", icon: "folder_open" },
-  { href: "/candidates", label: "Candidates", icon: "groups" },
+  { href: PROJECTS_HREF, label: "Projects", icon: "folder_open" },
+  { href: "/app/candidates", label: "Candidates", icon: "groups" },
   {
-    href: "/candidates/network",
+    href: "/app/candidates/network",
     label: "Network",
     icon: "hub",
     badgeKey: "network",
   },
-  { href: "/candidates/search", label: "AI Search", icon: "neurology" },
+  { href: "/app/candidates/search", label: "AI Search", icon: "neurology" },
   {
-    href: "/executive-intelligence",
+    href: "/app/executive-intelligence",
     label: "Exec Intel",
     icon: "workspace_premium",
     matchPrefix: true,
   },
-  { href: "/analytics", label: "Analytics", icon: "analytics", matchPrefix: true },
-  { href: "/settings", label: "Settings", icon: "settings", matchPrefix: true },
+  { href: "/app/analytics", label: "Analytics", icon: "analytics", matchPrefix: true },
+  { href: "/app/settings", label: "Settings", icon: "settings", matchPrefix: true },
 ];
 
 type SidebarProps = {
@@ -55,7 +58,7 @@ export function Sidebar({ user, badges }: SidebarProps) {
       className="fixed left-0 top-0 h-full w-20 border-r border-outline-variant bg-surface-container-lowest flex flex-col items-center py-4 z-50"
     >
       <Link
-        href="/home"
+        href="/app/home"
         aria-label="Mandate home"
         className="mb-8 flex flex-col items-center gap-1"
       >
@@ -67,11 +70,19 @@ export function Sidebar({ user, badges }: SidebarProps) {
 
       <div className="flex flex-col gap-2 flex-1 w-full items-center">
         {NAV.map((item) => {
-          const active = item.href === "/"
-            ? pathname === "/" || pathname.startsWith("/projects")
-            : item.matchPrefix
-              ? pathname === item.href || pathname.startsWith(item.href + "/")
-              : pathname === item.href;
+          // The first branch used to test `item.href === "/"`, which no
+          // NAV item has — so it never ran, and browsing a project left
+          // every nav item unlit. The Projects entry points at /app/home
+          // but owns the /app/projects/* tree, so it claims both.
+          const owns =
+            item.href === PROJECTS_HREF
+              ? pathname === PROJECTS_HREF ||
+                pathname === "/app/projects" ||
+                pathname.startsWith("/app/projects/")
+              : item.matchPrefix
+                ? pathname === item.href || pathname.startsWith(item.href + "/")
+                : pathname === item.href;
+          const active = owns;
 
           return (
             <Link

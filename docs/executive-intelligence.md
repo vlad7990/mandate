@@ -49,7 +49,7 @@ inference, no psychological/mental-health labels, no deception claims, evidence-
 
 ### Routes
 
-`/executive-intelligence` (module overview) · `/searches` (list) · `/searches/new` (intake) ·
+`/app/executive-intelligence` (module overview) · `/searches` (list) · `/searches/new` (intake) ·
 `/searches/[id]` (workspace) · `/searches/[id]/success-profile` (generate → edit → approve) ·
 `/templates` · `/competencies`
 
@@ -62,7 +62,7 @@ Sidebar gets an "Exec Intel" primary nav entry.
   candidate model, per the Phase 1 decision. Each link carries a due-diligence
   `stage` (identified → in_diligence → advanced / on_hold / declined) that is
   workflow state, never a hiring decision. UI:
-  `/executive-intelligence/searches/[id]/candidates` (linked list + org-pool
+  `/app/executive-intelligence/searches/[id]/app/candidates` (linked list + org-pool
   picker with search); a candidates card on the search workspace. Link,
   unlink, and stage changes all write audit events
   (`candidate_linked` / `candidate_unlinked` / `candidate_stage_changed`).
@@ -95,7 +95,7 @@ Sidebar gets an "Exec Intel" primary nav entry.
   Gating: generation requires an approved success profile (UI shows a gate
   state otherwise) AND a linked candidate (enforced by the allocate RPC's link
   lock). Route:
-  `/executive-intelligence/searches/[id]/candidates/[candidateId]/interview-plan`
+  `/app/executive-intelligence/searches/[id]/app/candidates/[candidateId]/interview-plan`
   (empty → generating → error → editor with coverage panel + approval). Entry
   point from the linked-candidate row on the candidates page. Audit events:
   `interview_plan_generation_requested` / `_generated` / `_generation_failed` /
@@ -132,7 +132,7 @@ Sidebar gets an "Exec Intel" primary nav entry.
   Gating: creation requires an **approved interview plan** for the candidate (UI
   shows a gate state otherwise), which itself guarantees an approved success
   profile, populated competency weights, and linkage. Route:
-  `/executive-intelligence/searches/[id]/candidates/[candidateId]/assessment`
+  `/app/executive-intelligence/searches/[id]/app/candidates/[candidateId]/assessment`
   (gate → empty → editor with the evidence-strength panel + approval; read-only
   once approved). Entry point from the linked-candidate row on the candidates
   page, alongside Interview Plan. Scoring/normalize logic in

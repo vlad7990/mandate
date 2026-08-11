@@ -57,6 +57,11 @@ export default async function SignInPage({
           )}
 
           <form action={signInAction} className="space-y-6">
+            {/* The proxy puts the originally requested path here as
+                `?next=`. Without this field the action never saw it, so
+                following a deep link and signing in always dumped you on
+                the dashboard root. The action validates it before use. */}
+            {sp.next && <input type="hidden" name="next" value={sp.next} />}
             <div className="space-y-2">
               <label
                 htmlFor="email"

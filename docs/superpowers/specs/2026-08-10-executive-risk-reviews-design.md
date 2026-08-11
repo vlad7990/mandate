@@ -152,7 +152,7 @@ Add nullable `risk_review_id uuid -> executive_risk_reviews ON DELETE SET NULL` 
 
 ## Routes / UI
 
-`/executive-intelligence/searches/[id]/candidates/[candidateId]/risk-review`
+`/app/executive-intelligence/searches/[id]/app/candidates/[candidateId]/risk-review`
 - `page.tsx` — state routing gate → empty → generating → error → editor (mirrors the
   interview-plan page, since it's AI-assisted). `export const maxDuration = 300`. Timestamps via
   `formatTimestampUtc`.

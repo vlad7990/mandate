@@ -117,7 +117,7 @@ Add nullable `assessment_id uuid -> executive_assessments ON DELETE SET NULL` to
 
 ## Routes / UI
 
-`/executive-intelligence/searches/[id]/candidates/[candidateId]/assessment`
+`/app/executive-intelligence/searches/[id]/app/candidates/[candidateId]/assessment`
 - `page.tsx` — state routing: gate (no approved plan) → empty (no assessment yet) → editor.
   No `maxDuration` (no AI). Timestamps via `formatTimestampUtc`.
 - `assessment-gate.tsx` — shown when no approved interview plan exists (links to plan).

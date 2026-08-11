@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/session";
+import { DASHBOARD_HOME } from "@/lib/routes";
 
 // Hard-public — skip session refresh entirely. Used for endpoints that
 // must work for unauthenticated visitors with no cookie round-trip
@@ -17,7 +18,7 @@ const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/api/demo"];
 const PUBLIC_PAGES = new Set([
   "/",
   "/platform",
-  "/intelligence",
+  "/executive-intelligence",
   "/solutions",
   "/pricing",
   "/request-access",
@@ -27,8 +28,8 @@ const PUBLIC_PAGES = new Set([
   "/auth/pending",
 ]);
 
-// Pages an authenticated user should never see — they bounce to /home.
-// Marketing landing + raw auth pages count.
+// Pages an authenticated user should never see — they bounce to the
+// dashboard. Marketing landing + raw auth pages count.
 const AUTH_BOUNCE_TARGETS = new Set([
   "/",
   "/auth/signin",
@@ -61,7 +62,7 @@ async function handle(request: NextRequest) {
   // to the dashboard so they don't get stuck on the public surface.
   if (user && AUTH_BOUNCE_TARGETS.has(pathname)) {
     const home = request.nextUrl.clone();
-    home.pathname = "/home";
+    home.pathname = DASHBOARD_HOME;
     home.search = "";
     return NextResponse.redirect(home);
   }

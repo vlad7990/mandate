@@ -3,7 +3,7 @@ import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import {
   HM_RATINGS,
   type HmRating,
-} from "@/app/(dashboard)/projects/[id]/hiring-manager/feedback-constants";
+} from "@/app/(dashboard)/app/projects/[id]/hiring-manager/feedback-constants";
 import { interpretFeedback } from "@/lib/ai/interpret-feedback";
 import { applyRecalibration } from "@/lib/recalibration/recalibrate";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";

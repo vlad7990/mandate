@@ -2,10 +2,17 @@
 
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { safeNextPath } from "@/lib/routes";
 
 export async function signInAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  // The proxy puts the requested path on the sign-in URL as `?next=`,
+  // and the page forwards it through this hidden field. It used to be
+  // dropped here — every sign-in landed on the dashboard root, so a
+  // bookmarked deep link survived the redirect chain only to be
+  // discarded at the last hop. Validated, never used raw.
+  const next = safeNextPath(String(formData.get("next") ?? ""));
 
   if (!email || !password) {
     redirect(`/auth/signin?error=${encodeURIComponent("Email and password are required.")}`);
@@ -38,5 +45,5 @@ export async function signInAction(formData: FormData) {
     redirect("/auth/pending");
   }
 
-  redirect("/");
+  redirect(next);
 }

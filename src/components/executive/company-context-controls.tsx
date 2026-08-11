@@ -3,7 +3,7 @@
 import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { regenerateCompanyContextAction } from "@/app/(dashboard)/executive-intelligence/searches/new/actions";
+import { regenerateCompanyContextAction } from "@/app/(dashboard)/app/executive-intelligence/searches/new/actions";
 
 const POLL_INTERVAL_MS = 2500;
 

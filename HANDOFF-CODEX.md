@@ -45,24 +45,24 @@ Source layout: `src/app` (routes), `src/lib` (domain logic), `src/components` (~
 **Recruiter dashboard** (authenticated)
 | Route | Purpose |
 |---|---|
-| `/home` | Dashboard home |
-| `/analytics` | Cross-project search analytics |
-| `/candidates`, `/candidates/search`, `/candidates/network` | Global candidate pool, search, network graph |
-| `/projects/new` | Create search project (one-line role intake) |
-| `/projects/[id]` | Project workspace hub (company/client/HM intelligence panels) |
-| `/projects/[id]/onboarding` | Dynamic calibration questionnaire |
-| `/projects/[id]/spec` | AI-generated job spec, versioned + editable |
-| `/projects/[id]/sourcing` | Boolean / X-Ray query generation |
-| `/projects/[id]/candidates`, `.../candidates/new`, `.../candidates/[candidateId]` | Candidate list, CV upload (PDF/DOCX), candidate detail + evaluation |
-| `/projects/[id]/ranking`, `.../ranking/compare` | Scored leaderboard, head-to-head comparison |
-| `/projects/[id]/calibration-history` | Scoring model version history |
-| `/projects/[id]/feedback` | Recruiter/HM feedback → recalibration |
-| `/projects/[id]/shortlist` | Slate builder (top 3/5/custom) |
-| `/projects/[id]/comparison` | Candidate comparison master table |
-| `/projects/[id]/metrics` | Search health metrics |
-| `/projects/[id]/reports` | PDF report generation/export |
-| `/projects/[id]/hiring-manager` | HM portal management + share-link generation |
-| `/settings`, `/settings/skills[...]`, `/settings/waitlist` | Profile, skill-injection management, waitlist admin (founder-only) |
+| `/app/home` | Dashboard home |
+| `/app/analytics` | Cross-project search analytics |
+| `/app/candidates`, `/app/candidates/search`, `/app/candidates/network` | Global candidate pool, search, network graph |
+| `/app/projects/new` | Create search project (one-line role intake) |
+| `/app/projects/[id]` | Project workspace hub (company/client/HM intelligence panels) |
+| `/app/projects/[id]/onboarding` | Dynamic calibration questionnaire |
+| `/app/projects/[id]/spec` | AI-generated job spec, versioned + editable |
+| `/app/projects/[id]/sourcing` | Boolean / X-Ray query generation |
+| `/app/projects/[id]/app/candidates`, `.../app/candidates/new`, `.../app/candidates/[candidateId]` | Candidate list, CV upload (PDF/DOCX), candidate detail + evaluation |
+| `/app/projects/[id]/ranking`, `.../ranking/compare` | Scored leaderboard, head-to-head comparison |
+| `/app/projects/[id]/calibration-history` | Scoring model version history |
+| `/app/projects/[id]/feedback` | Recruiter/HM feedback → recalibration |
+| `/app/projects/[id]/shortlist` | Slate builder (top 3/5/custom) |
+| `/app/projects/[id]/comparison` | Candidate comparison master table |
+| `/app/projects/[id]/metrics` | Search health metrics |
+| `/app/projects/[id]/reports` | PDF report generation/export |
+| `/app/projects/[id]/hiring-manager` | HM portal management + share-link generation |
+| `/app/settings`, `/app/settings/skills[...]`, `/app/settings/waitlist` | Profile, skill-injection management, waitlist admin (founder-only) |
 
 ### API routes
 
@@ -84,7 +84,7 @@ Most mutations are Next.js **server actions** colocated with pages, not API rout
   - `019–021` candidate contact/notes, structured CV atomicity; `022` recruiter assessment
   - `023` HM portal; `024` project reports; `025` HM feedback type; `026` client psychology
   - `027` health suggestions; `028` rank change history; `029` calibration history; `030` waitlist; `031` advisor sweep (perf/security fixes)
-- **Auth model:** Supabase Auth (email). `handle_new_auth_user()` trigger auto-creates a `users` row with role/status. Founder allowlist (three emails) hardcoded in `src/lib/auth/founders.ts` and replicated in DB (migration 002) — founders auto-promote to admin; everyone else lands in waitlist status and sits at `/auth/pending` until approved via `/settings/waitlist`.
+- **Auth model:** Supabase Auth (email). `handle_new_auth_user()` trigger auto-creates a `users` row with role/status. Founder allowlist (three emails) hardcoded in `src/lib/auth/founders.ts` and replicated in DB (migration 002) — founders auto-promote to admin; everyone else lands in waitlist status and sits at `/auth/pending` until approved via `/app/settings/waitlist`.
 - **RLS:** enabled across tables — founder-only policies for admin surfaces, user-self access for own data, token-scoped access for HM portal. Migrations 003/004/031 addressed recursion and advisor findings. CLAUDE.md still flags reviewing policies on pre-existing tables.
 - **Storage:** CV files (PDF/DOCX) in Supabase Storage (migration 014).
 
@@ -152,7 +152,7 @@ Agents are stateless; orchestration is in the app layer (server actions); all st
 | **Rate limiting on request-access** | Missing. Only `/api/demo` has rate limiting, and it's **in-memory** (resets per instance — inadequate on Vercel Fluid Compute) | `src/app/request-access/request-access-form.tsx` (server action), reference implementation in `src/app/api/demo/route.ts`; durable store undecided (Upstash Redis / Vercel Marketplace equivalent) |
 | **Service role key rotation** | Operational task, no code change unless key is inlined anywhere (it isn't — read via `process.env.SUPABASE_SERVICE_ROLE_KEY`) | Rotate in Supabase dashboard → update Vercel env + local `.env.local`. Audit usages: `grep -rn SUPABASE_SERVICE_ROLE_KEY src/` |
 | **Sentry / error monitoring** | Nothing installed | `next.config.ts` (currently empty), add `instrumentation.ts` / `@sentry/nextjs` wizard output, plus a `global-error.tsx` if absent |
-| **Resend / transactional email** | Stub only — `src/lib/waitlist/notify.ts` calls Resend but no API key wired; no emails for HM invites or feedback notifications | `src/lib/waitlist/notify.ts`; add sends for HM portal share links (`src/app/(dashboard)/projects/[id]/hiring-manager/`) and waitlist approval (`/settings/waitlist` actions) |
+| **Resend / transactional email** | Stub only — `src/lib/waitlist/notify.ts` calls Resend but no API key wired; no emails for HM invites or feedback notifications | `src/lib/waitlist/notify.ts`; add sends for HM portal share links (`src/app/(dashboard)/app/projects/[id]/hiring-manager/`) and waitlist approval (`/app/settings/waitlist` actions) |
 | **Tests** | **Zero test files, no test runner installed, no `test` script.** Biggest gap. | Everything. Suggested start: Vitest unit tests for `scoring-math.ts`, `scoring-engine.ts`, `recalibrate.ts`, `cv-parsing` pure functions; Playwright E2E for auth → project creation → CV upload → ranking → shortlist → HM portal loop |
 | **Stripe billing** | No code at all (post-launch per checklist) | Greenfield |
 
@@ -213,11 +213,11 @@ All checks run 2026-07-15 on `main` @ `ce4e7a5`:
 There are **no seed scripts or fixtures** (`supabase/seed*` and `scripts/` don't exist). No shared demo credentials exist. Bootstrap test data manually:
 
 1. **Test recruiter (founder path):** add a test email to the allowlist in `src/lib/auth/founders.ts` **and** the founders logic from `supabase/migrations/002_auth_status_and_founders.sql` (both must match), then sign up at `/auth/signup` — founder emails auto-promote to admin.
-2. **Test recruiter (waitlist path):** sign up with any email → lands on `/auth/pending` → approve it from `/settings/waitlist` while logged in as a founder. This also exercises the waitlist flow.
+2. **Test recruiter (waitlist path):** sign up with any email → lands on `/auth/pending` → approve it from `/app/settings/waitlist` while logged in as a founder. This also exercises the waitlist flow.
 3. **Waitlist entries:** submit `/request-access` a few times with test emails.
-4. **Project:** `/projects/new` → enter a one-line role (e.g., "VP Engineering for a Series B fintech in London") → complete the onboarding questionnaire → finalize spec + calibration. Requires a valid `ANTHROPIC_API_KEY`; each full project setup makes multiple Claude calls.
-5. **Candidates:** upload PDF or DOCX CVs at `/projects/[id]/candidates/new` (mammoth handles DOCX). Use synthetic CVs — checklist calls for 8–10 to exercise ranking properly.
-6. **HM token:** from `/projects/[id]/hiring-manager`, generate a share link — the emitted `/hm/[token]` URL works unauthenticated in an incognito window; submit feedback there to exercise `/hm/[token]/api/submit` and the feedback → recalibration loop.
+4. **Project:** `/app/projects/new` → enter a one-line role (e.g., "VP Engineering for a Series B fintech in London") → complete the onboarding questionnaire → finalize spec + calibration. Requires a valid `ANTHROPIC_API_KEY`; each full project setup makes multiple Claude calls.
+5. **Candidates:** upload PDF or DOCX CVs at `/app/projects/[id]/app/candidates/new` (mammoth handles DOCX). Use synthetic CVs — checklist calls for 8–10 to exercise ranking properly.
+6. **HM token:** from `/app/projects/[id]/hiring-manager`, generate a share link — the emitted `/hm/[token]` URL works unauthenticated in an incognito window; submit feedback there to exercise `/hm/[token]/api/submit` and the feedback → recalibration loop.
 7. **Local env:** copy env var names from §5 into `.env.local` (no `.env.example` exists — creating one would be a good first contribution).
 
 ---

@@ -6,7 +6,7 @@ import {
   buildPortalCandidate,
   type PortalCandidate,
   type PortalProgress,
-} from "@/app/(dashboard)/projects/[id]/hiring-manager/portal-content";
+} from "@/app/(dashboard)/app/projects/[id]/hiring-manager/portal-content";
 
 // Public hiring-manager portal. The route accepts a uuid token in the
 // URL, verifies it via the SECURITY DEFINER `verify_hm_token` RPC, and

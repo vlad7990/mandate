@@ -188,17 +188,37 @@ Imported from Claude Design project `f6c4031e-c28e-450f-8ef1-353834d79b78` via `
 | Comp | Route as built |
 |---|---|
 | `02 Platform.dc.html` | `/platform` |
-| `03 Executive Intelligence.dc.html` | **`/intelligence`** — see below |
+| `03 Executive Intelligence.dc.html` | `/executive-intelligence` — see below |
 | `04 Solutions.dc.html` | `/solutions` |
 | `05 Pricing.dc.html` | `/pricing` |
 
-### 🔴 `/executive-intelligence` was already taken
+### 🔴 The whole product moved behind `/app`
 
-That path is the **authenticated EI workspace** — `(dashboard)/executive-intelligence` with `searches/[id]`, success profiles, interview plans, assessments and a competency library beneath it. Route groups do not add a URL segment, so a marketing page there is a hard `next build` error ("two parallel pages resolve to the same path"), not a soft collision.
+`/executive-intelligence` was taken by the authenticated EI workspace, so the marketing page shipped at `/intelligence` first. On the founder's instruction the dashboard was then relocated and marketing took the plain noun.
 
-The marketing page is at **`/intelligence`**. The nav label still reads "Executive Intelligence". Moving a live product area to free the better URL was not worth it; if that trade is ever wanted, the dashboard area has to move first and `/executive-intelligence` needs a redirect.
+**Every authenticated route now lives under `/app`** — `/app/home`, `/app/projects/[id]/…`, `/app/executive-intelligence/…`. This was not only about one URL: all six product trees sat at the root in the same space as marketing, so `/candidates` and `/analytics` were the next two collisions waiting. The two namespaces can no longer touch.
 
-**Every unlisted route redirects to sign-in.** `src/proxy.ts` `PUBLIC_PAGES` gates this — the four new routes are listed there explicitly. A new marketing route that is not added to that set 302s to `/auth/signin` and looks, from the outside, like it was never deployed.
+```
+PRODUCT                          MARKETING
+/app/home                        /
+/app/projects/[id]/…             /platform
+/app/candidates/…                /solutions
+/app/analytics                   /pricing
+/app/settings/…                  /executive-intelligence
+/app/executive-intelligence/…    /request-access
+```
+
+Old URLs are kept alive by `redirects()` in `next.config.ts`. **The one trap:** the `/executive-intelligence` entry uses `:path+` (one *or more* segments), not the `:path*` the others use — because the bare path is now the marketing page, and `:path*` would swallow it and send every reader to a sign-in wall. Do not "tidy" that inconsistency.
+
+**Every unlisted route redirects to sign-in.** `src/proxy.ts` `PUBLIC_PAGES` gates this. A new marketing route that is not added to that set 302s to `/auth/signin` and looks, from the outside, like it was never deployed.
+
+### 🔒 Open redirect found and fixed while moving the auth flow
+
+`/auth/callback` did `NextResponse.redirect(`${origin}${next}`)` with `next` straight from the query string. `next=//evil.com` produces `https://host//evil.com`, which the browser resolves as **protocol-relative** — off-origin. It needs a valid auth code to reach, so it is a phishing chain rather than a drive-by: craft a sign-in link carrying the hostile `next`, let the victim authenticate for real, land them on a lookalike with a live session behind them.
+
+`safeNextPath()` in `src/lib/routes.ts` now validates it — same-origin absolute paths only, rejecting `//`, `/\`, absolute URLs, and control characters that could split the redirect header. 8 unit tests in `routes.test.ts` pin the vectors. **Never interpolate a `next` parameter into a redirect without it.**
+
+The same fix closed a live bug: `signInAction` ended with an unconditional `redirect("/")` and the sign-in form never carried `next` at all, so the proxy would preserve your destination through the redirect chain and then password sign-in discarded it. Deep links now survive end to end.
 
 ### Decisions settled with the founder before building
 
@@ -239,7 +259,7 @@ Worth generalising: **a passing geometry assertion is not a passing render.** Th
 
 The IA decision (homepage untouched) was made deliberately and with the trade-offs stated, but it does not close the two structural findings in §6 — it defers them:
 
-- **The homepage is still ~13,500px** (~16 viewports on mobile). `/platform` is 7.3, `/intelligence` 6.3, `/pricing` 6.0, `/solutions` 4.8.
+- **The homepage is still ~13,500px** (~16 viewports on mobile). `/platform` is 7.3, `/executive-intelligence` 6.3, `/pricing` 6.0, `/solutions` 4.8.
 - **Sections 04–08 now duplicate content** that also has a dedicated page. Nothing renders stale — both surfaces read the same modules — but a crawler sees the same pitch twice and a reader who follows the nav sees it twice too.
 
 If that becomes a problem, the fix is the option that was not taken: collapse homepage 04–08 to teasers that link out. It is a smaller job now than it was before this session, because the depth already exists on its own pages.

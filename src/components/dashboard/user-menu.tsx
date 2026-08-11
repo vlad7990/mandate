@@ -64,7 +64,7 @@ export function UserMenu({ displayName, email, role }: UserMenuProps) {
         <DropdownMenuSeparator className="bg-outline-variant" />
         <DropdownMenuItem asChild>
           <Link
-            href="/settings"
+            href="/app/settings"
             className="cursor-pointer font-mono-label text-mono-label uppercase tracking-widest"
           >
             <span className="material-symbols-outlined text-[16px] mr-2 text-outline">

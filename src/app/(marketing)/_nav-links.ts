@@ -17,7 +17,7 @@
 export type NavKey =
   | "home"
   | "platform"
-  | "intelligence"
+  | "executive-intelligence"
   | "solutions"
   | "pricing";
 
@@ -29,16 +29,13 @@ export type NavLink = {
 
 export const NAV_LINKS: readonly NavLink[] = [
   { key: "platform", href: "/platform", label: "Platform" },
-  // NOT `/executive-intelligence`. That path is the authenticated
-  // Executive Intelligence workspace — `(dashboard)/executive-intelligence`
-  // with searches, success profiles, interview plans, assessments and a
-  // competency library beneath it. Next resolves route groups to the
-  // same URL space, so a marketing page there is a hard build error, and
-  // relocating a live product area to free up a marketing URL is the
-  // wrong trade. The label still reads "Executive Intelligence".
+  // This path was briefly `/intelligence`, because the authenticated
+  // Executive Intelligence workspace occupied `/executive-intelligence`
+  // and route groups share one URL space. The whole dashboard has since
+  // moved behind `/app`, so marketing owns the plain noun again.
   {
-    key: "intelligence",
-    href: "/intelligence",
+    key: "executive-intelligence",
+    href: "/executive-intelligence",
     label: "Executive Intelligence",
   },
   { key: "solutions", href: "/solutions", label: "Solutions" },
