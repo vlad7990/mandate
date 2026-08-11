@@ -200,3 +200,13 @@ export function IconArrowRight({ size = 16, className }: IconProps) {
     </svg>
   );
 }
+
+export function IconPrint({ size = 15, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M7 8V3h10v5" />
+      <path d="M7 18H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" />
+      <path d="M7 14h10v7H7z" />
+    </svg>
+  );
+}

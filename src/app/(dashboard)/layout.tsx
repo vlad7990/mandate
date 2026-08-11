@@ -53,15 +53,24 @@ export default async function DashboardLayout({
 
   return (
     <BreadcrumbProvider>
-      <div className="flex h-screen overflow-hidden bg-background font-body-main text-on-background">
-        <Sidebar
-          user={{
-            displayName,
-            email,
-            role: profile?.role ?? null,
-          }}
-          badges={{ network: networkCount, mandates: mandateCount ?? 0 }}
-        />
+      {/*
+        `print:` overrides throughout: the shell is chrome, not document.
+        The Executive Intelligence report prints as itself, and a
+        `h-screen overflow-hidden` shell would otherwise clip it to a
+        single page. `display: contents` wrappers keep the flex layout
+        identical on screen while giving print something to hide.
+      */}
+      <div className="flex h-screen overflow-hidden bg-background font-body-main text-on-background print:block print:h-auto print:overflow-visible">
+        <div className="contents print:hidden">
+          <Sidebar
+            user={{
+              displayName,
+              email,
+              role: profile?.role ?? null,
+            }}
+            badges={{ network: networkCount, mandates: mandateCount ?? 0 }}
+          />
+        </div>
 
         {/*
           `min-w-0` matters: without it a wide table inside the content
@@ -74,13 +83,17 @@ export default async function DashboardLayout({
           at two of the three sizes. The shell is flex; nothing needs to
           know the rail's width.
         */}
-        <main className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-          <Topbar />
-          <div className="flex-1 overflow-auto">{children}</div>
+        <main className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden print:block print:h-auto print:overflow-visible">
+          <div className="contents print:hidden">
+            <Topbar />
+          </div>
+          <div className="flex-1 overflow-auto print:overflow-visible">{children}</div>
         </main>
 
-        <Toaster richColors position="top-right" />
-        <CopilotPanel />
+        <div className="contents print:hidden">
+          <Toaster richColors position="top-right" />
+          <CopilotPanel />
+        </div>
       </div>
     </BreadcrumbProvider>
   );

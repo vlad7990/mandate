@@ -299,3 +299,58 @@
     font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   PRINT — the Executive Intelligence report.
+
+   The report is the one screen in this product that leaves the
+   building, and the comp's rule is that it prints as itself: the
+   document column IS the print layout, so exporting changes the paper
+   and nothing else.
+
+   Two things have to be true for that. The app shell is chrome, not
+   document — it is hidden by `print:hidden` in the dashboard layout.
+   And the product is a dark terminal: browsers drop background colours
+   when printing but keep the foreground, so a dark document would print
+   as near-white text on white paper. Rebinding the semantic tokens
+   inside `.m-report-doc` — and only inside it — turns the document to
+   ink on paper without touching a single utility class.
+   ───────────────────────────────────────────────────────────────── */
+@media print {
+  .m-report-doc {
+    --bg: #ffffff;
+    --bg-sunken: #ffffff;
+    --bg-elev-1: #ffffff;
+    --bg-elev-2: #ffffff;
+    --bg-elev-3: #e6e7ea;
+    --bg-elev-4: #e6e7ea;
+    --fg: #14161c;
+    --fg-soft: #33363f;
+    --fg-muted: #5b5f6d;
+    --border: #c6c9d2;
+    /* On paper the coverage bar is ink, not accent blue — the blue was
+       chosen against a near-black ground and is illegible on white.
+
+       `--primary` is set as well as `--accent`. It is declared on `.dark`
+       as `--primary: var(--accent)`, and CSS substitutes a var() at the
+       element that *declares* it — so that indirection resolved to the
+       dark accent long before it inherits down here. Rebinding --accent
+       alone leaves every `bg-primary` still printing blue. */
+    --accent: #14161c;
+    --accent-fill: #e6e7ea;
+    --primary: #14161c;
+  }
+
+  /* Bars are the one place where the fill IS the information, so they
+     opt back into printed backgrounds. */
+  .m-report-bar,
+  .m-report-bar > * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* A competency and its evidence should not be split across a page. */
+  .m-report-keep {
+    break-inside: avoid;
+  }
+}

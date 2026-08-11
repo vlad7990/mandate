@@ -4,9 +4,9 @@
 context reset without re-deriving anything. Paste the block in §1 into a
 fresh session and it will pick up exactly where the last one stopped.
 
-**Updated:** 2026-08-11 · `main` @ `8328dda` committed; one further
-commit of EI report work on top. All seven app comps now have their
-design rendered somewhere.
+**Updated:** 2026-08-11 · `main` @ `b634b21`, plus uncommitted work
+compiling the EI report for real searches (awaiting approval to
+commit). All seven app comps now have their design rendered somewhere.
 
 ---
 
@@ -94,27 +94,50 @@ record why in a comment.
 | 08 Project Detail | `/app/projects/[id]` | ⚠️ sample route only |
 | 10 Candidate Detail | `/app/projects/[id]/candidates/[candidateId]` | ⚠️ sample route only |
 | 11 EI Workspace | `/app/executive-intelligence/searches/[id]` | ⚠️ sample route only |
-| 12 EI Report | `…/searches/[id]/candidates/[cid]/report` | ⚠️ sample route only |
+| 12 EI Report | `…/searches/[id]/candidates/[cid]/report` | ✅ compiles for real searches |
 
 Marketing (`/`, `/platform`, `/executive-intelligence`, `/solutions`,
 `/pricing`) is complete and live.
 
-**Nothing in the app has been visually verified.** Every authenticated
-screen is behind a login the agent does not have. The build, types and
-tests are green; nobody has looked at the pixels. This is the single
-largest risk in the project right now — the shell is inherited by every
-screen, so a mistake in it propagates.
+**Almost nothing in the app has been visually verified.** Every
+authenticated screen is behind a login the agent does not have. The
+build, types and tests are green; nobody has looked at the pixels. This
+is the single largest risk in the project right now — the shell is
+inherited by every screen, so a mistake in it propagates.
+
+The one exception is the EI report. It was verified at 1440 and 390, on
+screen and under print emulation, by temporarily mounting its components
+on a public route with fixture data, screenshotting, then deleting the
+route and reverting `src/proxy.ts`. **That technique works and is worth
+reusing** for any screen whose components take plain props: render them
+outside `(dashboard)` at a throwaway path, add the path to
+`PUBLIC_PAGES`, screenshot, then remove both. Two things to know —
+`npm run dev` on :3001 did not pick up `globals.css` changes at all
+(stale CSS chunk, unchanged hash), so anything touching global CSS has
+to be checked against `npm run build && npx next start`; and deleting
+the throwaway route leaves a stale `.next/types/validator.ts` that fails
+`tsc` until the next build.
 
 ---
 
 ## 4. Task list, in order
 
-- [ ] **Compile the EI report for real searches.** The route exists and
-      the sample renders in full; a real search gets a gate that names
-      what is missing. Needs the approved success profile, interview plan
-      and assessment joined, with coverage recomputed server-side. This
-      document goes to a client — verify it against a real search before
-      trusting it.
+- [x] **Compile the EI report for real searches.** ✅ 2026-08-11.
+      `src/lib/executive/report.ts` compiles the document from the three
+      approved records (success profile, interview plan, human-authored
+      assessment) joined to the search's current competency weights;
+      coverage is recomputed there and a stored rollup is never trusted
+      for display. Where the weights have moved since the assessment was
+      approved the document says so rather than resolving it silently.
+      Section 04 is assembled from the same rollup, so the gaps cannot
+      fall out of the document. 13 unit tests in `report.test.ts`.
+      Without all three approvals the page shows a gate naming the
+      outstanding record. Print is real: `.m-report-doc` rebinds the dark
+      theme to ink on paper and the shell hides itself
+      (`@media print` at the end of `globals.css`).
+      **Still needs a founder pass against a real search** — the
+      compilation is tested and the render is verified against fixtures,
+      but no real approved chain has been through it.
 - [ ] **Restyle the real EI Workspace** (420 lines) to comp 11. Target
       design: `src/components/sample/sample-ei-workspace.tsx`. Smallest
       of the three real-page restyles — do this one first to establish
@@ -154,6 +177,17 @@ screen, so a mistake in it propagates.
   an adjacent expression. Put the trailing space inside the literal.
 - **New marketing routes must be added to `PUBLIC_PAGES` in
   `src/proxy.ts`** or they 302 to sign-in and look undeployed.
+- **`npm run dev` served a stale `globals.css`** — the CSS chunk hash
+  never changed after an edit and a new `@media print` block simply was
+  not in the served stylesheet, while the same block was present in the
+  production build. Verify anything touching global CSS against
+  `npm run build && npx next start`, not the dev server.
+- **Rebinding `--accent` does not repaint `bg-primary`.** `.dark`
+  declares `--primary: var(--accent)`, and CSS substitutes a `var()` at
+  the element that *declares* it — so the indirection resolves to the
+  dark accent at `:root` and inherits down as a fixed colour. A scoped
+  theme override has to set both. The `@theme inline` aliases
+  (`--color-on-surface` → `var(--fg)`) do not have this problem.
 - **`redirects()` in `next.config.ts`**: the `/executive-intelligence`
   entry uses `:path+` not `:path*` on purpose — the bare path is the
   marketing page. Do not "tidy" that asymmetry.

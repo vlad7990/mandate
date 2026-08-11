@@ -233,19 +233,35 @@ export function AssessmentEditor({
         </header>
 
         {!isDraft && (
-          <div className="border border-outline-variant bg-surface-container px-4 py-3 flex items-center justify-between gap-4">
+          <div className="border border-outline-variant bg-surface-container px-4 py-3 flex flex-wrap items-center justify-between gap-4">
             <p className="text-body-main text-on-surface-variant">
               This version is {status} and immutable. Create a new version to make
               changes.
             </p>
-            <button
-              type="button"
-              onClick={handleNewVersion}
-              disabled={isPending}
-              className="shrink-0 px-4 py-2 border border-primary-container/70 text-primary font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container-low transition-colors disabled:opacity-60"
-            >
-              New Version From This
-            </button>
+            <div className="flex shrink-0 flex-wrap items-center gap-3">
+              {/*
+                The approved assessment is the last of the three records the
+                report compiles from, so this is where the recruiter is when
+                the document becomes available. Shown on approval only — from a
+                draft it would lead straight to the gate.
+              */}
+              {status === "approved" && (
+                <Link
+                  href={`/app/executive-intelligence/searches/${searchId}/candidates/${candidateId}/report`}
+                  className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all"
+                >
+                  Open Report
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={handleNewVersion}
+                disabled={isPending}
+                className="px-4 py-2 border border-primary-container/70 text-primary font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container-low transition-colors disabled:opacity-60"
+              >
+                New Version From This
+              </button>
+            </div>
           </div>
         )}
 
