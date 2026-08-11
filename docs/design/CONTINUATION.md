@@ -4,9 +4,11 @@
 context reset without re-deriving anything. Paste the block in §1 into a
 fresh session and it will pick up exactly where the last one stopped.
 
-**Updated:** 2026-08-11 · `main` @ `0d94879`, pushed. Plus uncommitted
-work on Project Detail (page chrome restyled to comp 08) awaiting
-approval to commit.
+**Updated:** 2026-08-11 · `main` @ `2835366`, pushed. Working tree
+clean, in sync with `origin/main`.
+
+**All seven app comps are now on their real routes.** What is left is
+one mechanical item (§4) and two things only the founder can do (§6).
 
 ---
 
@@ -99,128 +101,78 @@ record why in a comment.
 Marketing (`/`, `/platform`, `/executive-intelligence`, `/solutions`,
 `/pricing`) is complete and live.
 
-**Almost nothing in the app has been visually verified.** Every
-authenticated screen is behind a login the agent does not have. The
-build, types and tests are green; nobody has looked at the pixels. This
-is the single largest risk in the project right now — the shell is
-inherited by every screen, so a mistake in it propagates.
+### What shipped on 2026-08-11
 
-Six screens are exceptions: the EI report, the EI workspace, Project
-Detail (page and all six panels) and the Candidate Detail shell. All
-were verified at 1440 and 390 — the report also under print emulation —
-by temporarily mounting their components on a public route with fixture
-data, screenshotting, then deleting the route and reverting
-`src/proxy.ts`. **That technique works and is the pattern for the
-remaining restyles**: render the presentation component from fixtures
-outside `(dashboard)` at a throwaway path, add the path to
-`PUBLIC_PAGES`, screenshot, then remove both. Two things to know —
-`npm run dev` on :3001 did not pick up `globals.css` changes at all
-(stale CSS chunk, unchanged hash), so anything touching global CSS has
-to be checked against `npm run build && npx next start`; and deleting
-the throwaway route leaves a stale `.next/types/validator.ts` that fails
-`tsc` until the next build.
+Eleven commits, `b634b21..2835366`, all pushed:
+
+| Commit | What |
+|---|---|
+| `31d35b3` | EI report compiles from three approved records |
+| `eb60bc8` | EI workspace restyled to comp 11 |
+| `eb967b3` | Project Detail page chrome to comp 08 |
+| `7527178` | Shared `Panel` shell + first two Project Detail panels |
+| `6f40454` | Remaining four Project Detail panels |
+| `4707a12` | Candidate dossier → five tabs + decision rail |
+| `de22ed2` | Candidate dossier's cards onto the shell |
+| `b643d44` | Candidate route's seven client panels onto the shell |
+| `709a77d` | Ligatures out of the candidate route and both auth pages |
+| `2835366` | Ligatures out of the copilot panel |
+
+Two pieces of shared infrastructure came out of it and both are worth
+knowing about before touching any screen:
+
+- **`src/components/projects/panel.tsx`** — `Panel` / `PanelLink` /
+  `PanelMeta`, plus `PANEL_BUTTON`, `PANEL_BUTTON_QUIET` and
+  `PANEL_BODY`. No `"use client"`, so a server-rendered card and a
+  stateful agent panel render from the same shell. Every panel on
+  Project Detail and Candidate Detail is on it. Put new ones on it too.
+- **The view/page split.** Each restyled screen is `page.tsx` (queries
+  only, assembles a view model) plus a `*-view.tsx` that takes props.
+  That is what makes an authenticated screen verifiable at all — see
+  below.
+
+### Visual verification: what has been seen, and what has not
+
+**No authenticated screen has been seen behind a login.** The agent has
+no session. Twelve screens have been verified another way: mount the
+presentation component on a throwaway public route with fixture data,
+add the path to `PUBLIC_PAGES` in `src/proxy.ts`, screenshot at 1440 and
+390, then delete the route and `git checkout -- src/proxy.ts`.
+
+That technique works and found nine real defects this session. **Use it
+for every screen you restyle.** Three things about it:
+
+- `npm run dev` on :3001 did **not** pick up `globals.css` changes at
+  all — stale CSS chunk, unchanged hash. Anything touching global CSS
+  has to be checked against `npm run build && npx next start`.
+- Deleting the throwaway route leaves a stale `.next/types/validator.ts`
+  that fails `tsc` until the next build. Run the build, then `tsc`.
+- It proves the components render. It does **not** prove the dashboard
+  shell behaves around them, which is why §6 still asks for a sign-in.
+
+The defects it caught, as a list of what to look for:
+
+1. `truncate` inside a flex row sets `white-space: nowrap`, so the row's
+   min-content becomes the full untruncated string — one candidate list
+   forced the whole page to 621px inside a 375px viewport.
+2. A fixed-width chip (`80px`) printing on top of the text beside it.
+3. `bg-primary` still printing blue after a scoped theme override,
+   because `.dark` declares `--primary: var(--accent)` and CSS
+   substitutes a `var()` at the element that *declares* it.
+4. Header actions marked `shrink-0` pushing the page into horizontal
+   scroll at 390.
+5. Nine stage-rail segments truncating to two letters each at 390.
+6. Emoji and ✓/✗ standing in for icons, in four separate places.
+7. Coloured 2px left borders as a panel's whole visual treatment, in
+   five places.
+8. A 2px square with a ring offset reading as a checkbox.
+9. Three accent borders competing in one chain, pointing nowhere.
 
 ---
 
 ## 4. Task list, in order
 
-- [x] **Compile the EI report for real searches.** ✅ 2026-08-11.
-      `src/lib/executive/report.ts` compiles the document from the three
-      approved records (success profile, interview plan, human-authored
-      assessment) joined to the search's current competency weights;
-      coverage is recomputed there and a stored rollup is never trusted
-      for display. Where the weights have moved since the assessment was
-      approved the document says so rather than resolving it silently.
-      Section 04 is assembled from the same rollup, so the gaps cannot
-      fall out of the document. 13 unit tests in `report.test.ts`.
-      Without all three approvals the page shows a gate naming the
-      outstanding record. Print is real: `.m-report-doc` rebinds the dark
-      theme to ink on paper and the shell hides itself
-      (`@media print` at the end of `globals.css`).
-      **Still needs a founder pass against a real search** — the
-      compilation is tested and the render is verified against fixtures,
-      but no real approved chain has been through it.
-- [x] **Restyle the real EI Workspace** to comp 11. ✅ 2026-08-11.
-      **This established the pattern for the other two restyles:** the
-      page splits into `page.tsx` (queries only, assembles a
-      `WorkspaceVm`) and `workspace-view.tsx` (presentation, props in).
-      That split is what makes an authenticated screen verifiable —
-      render the view from fixtures on a throwaway public route, look at
-      it, delete the route. Do the same for Project Detail and Candidate
-      Detail.
-      Departures from the comp, both recorded in the file header: the
-      comp's "Risk review" panel describes a capability that does not
-      exist, so it is not rendered; every chain count is computed from
-      the linked candidates and their plan and assessment rows. Two
-      fixes came out of looking at it — weight bars scale to the heaviest
-      competency (six weights summing to 100 read as underlines against a
-      100% track) and exactly one chain step carries the accent border.
-- [x] **Restyle the real Project Detail** to comp 08. ✅ 2026-08-11 —
-      **page chrome done; the six client panels are not.** `page.tsx`
-      dropped from 1017 to 245 lines and now only queries and assembles a
-      `ProjectVm`; `project-view.tsx` owns the pixels. Verified at 1440
-      and 390 from fixtures.
-      The stage rail is real: nine segments computed from `job_specs`,
-      `boolean_queries`, `candidate_scores`, `shortlists.submitted_at`
-      and pipeline stages. Three fixes came from looking at it — the
-      header actions were `shrink-0` and pushed the page into horizontal
-      scroll at 390; nine rail segments truncate to two letters each at
-      that width, so narrow screens get the current stage in words and a
-      position instead; and "Information required" moved to the left
-      column, which balanced the two columns.
-      **Still open:** `CandidateSearchPanel` and the four intelligence
-      panels render full-width below the grid in the older idiom. Restyle
-      them one at a time — they are the rest of this task.
-
-- [x] **Restyle the six client panels on Project Detail.** ✅ 2026-08-11.
-      All six sit on `src/components/projects/panel.tsx` (`Panel` /
-      `PanelLink` / `PanelMeta` + `PANEL_BUTTON`, `PANEL_BUTTON_QUIET`,
-      `PANEL_BODY`). **The whole `/app/projects/[id]` page level is now
-      free of Material Symbols ligatures** — `page.tsx`,
-      `project-view.tsx` and all six panels. The candidate detail routes
-      below it are not; see the ligature task.
-      Four defects came out of looking at the bodies, not the shells:
-      a fixed 80px topic chip that printed over the detail text next to
-      it (client intelligence); `truncate` inside a flex row, whose
-      `white-space: nowrap` made the row's min-content the full
-      untruncated string and dragged the page into horizontal scroll at
-      390 (candidate search); a 🚩 emoji standing in for an icon, which
-      renders in the system font and reads aloud as "triangular flag on
-      post" (culture); and a `projectTitle` prop that only existed to
-      repeat the page's own h1.
-
-- [x] **Restyle the real Candidate Detail** to comp 10. ✅ 2026-08-11 —
-      **the shell is done; the inner cards are not.** The page was one
-      1336-line scroll with eleven stacked panels. It is now the comp's
-      information architecture: `candidate-view.tsx` ("use client", tab
-      state only) takes an identity block, a decision rail and five tabs
-      as slots — Overview, Evaluation, Triangulation, Positioning, Notes
-      & activity — and `page.tsx` still runs every query and renders the
-      tab contents server-side. Verified at 1440 and 390.
-      The rule from the comp that drove it: reading material is tabbed,
-      the write actions never move. Stage and feedback live in a rail
-      that is present on every tab; the fit figure sits beside them
-      rather than heading the page, because it is a reading of evidence
-      and not a verdict.
-      The old `TriangulationTabRail` — two anchor links pretending to be
-      tabs — is gone; real tabs replace it. Every Material Symbols
-      ligature on this page is gone too.
-      The cards inside the tabs followed on the same day: every one of
-      them — archetype, synthesis, signals, fit, career, domain/scale,
-      chips, evaluation-pending — is on the shared `Panel` shell, and
-      `page.tsx` has no `<article>` shells and no ligatures left. Two
-      more fixes from looking: the career-timeline marker was a 2px
-      square with a ring offset and read as a checkbox, and the three
-      signal columns each carried a coloured 2px left rule — three
-      accent bars competing inside one panel, now carried by the column
-      headings.
-      The seven client panels followed the same day —
-      recruiter assessment, candidate intelligence, positioning,
-      evaluation report, triangulation, psychology and notes are all on
-      the shared `Panel`. **Comp 10 is complete.** The route's remaining
-      ligatures live in four leaf components only:
-      `editable-fields.tsx`, `evaluation-actions.tsx`,
-      `contact-fields.tsx` and `retry-evaluation-button.tsx`.
+### Open
 
 - [ ] **260 Material Symbols ligatures** → inline SVG from
       `src/components/icons.tsx`. Each currently puts literal text like
@@ -237,8 +189,28 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
       comparison export (10), report actions (9), feedback (8), ranking
       (7) and a long tail. `src/components/icons.tsx` now carries 31
       drawn icons; most ligatures map to one that already exists.
-      Mechanical, safe,
-      good filler work when context is short.
+      Mechanical and safe — good work when context is short, and the one
+      remaining item on this list.
+
+### Done 2026-08-11 — details in §3
+
+- [x] EI report compiles from approved records (`31d35b3`). Coverage is
+      recomputed in `src/lib/executive/report.ts`, never read from the
+      rollup stored on the assessment; weight drift since approval is
+      stated in the document rather than resolved silently; section 04
+      is assembled from the same rollup so the gaps cannot fall out.
+      13 unit tests in `report.test.ts`. **Needs a founder pass against
+      a real search — see §6.**
+- [x] EI workspace restyled to comp 11 (`eb60bc8`). Comp's "Risk review"
+      panel is deliberately absent: it describes a capability that does
+      not exist.
+- [x] Project Detail — page chrome and all six client panels
+      (`eb967b3`, `7527178`, `6f40454`). Stage rail is computed from
+      `job_specs`, `boolean_queries`, `candidate_scores`,
+      `shortlists.submitted_at` and pipeline stages.
+- [x] Candidate Detail — five tabs, decision rail, cards and all seven
+      client panels (`4707a12`, `de22ed2`, `b643d44`). Reading material
+      is tabbed; stage and feedback never move.
 
 ---
 
@@ -282,8 +254,18 @@ the throwaway route leaves a stale `.next/types/validator.ts` that fails
 
 ## 6. Open items that need the founder, not an agent
 
-- **Visual review of the app.** Sign in and look at `/app/home` and
-  `/app/projects/sample-larkspur`.
+The first two block trusting the work; the rest block launch.
+
+- 🔴 **Walk one real search end to end and read the compiled EI report.**
+  Profile → interview plan → assessment, all three approved, then open
+  `…/candidates/[cid]/report`. The compiler is unit-tested and the
+  render is verified against fixtures, but no real approved chain has
+  been through it and **this document goes to a client**.
+- 🔴 **Sign in and look at the app.** Twelve screens are verified from
+  fixtures at 1440 and 390; none has been seen inside the real
+  dashboard shell, with real data, behind a login. Start at `/app/home`,
+  `/app/projects/sample-larkspur`, then a real mandate and a real
+  candidate. This is the largest untested surface in the project.
 - **`redirect(next)` in `signInAction`** — the last hop of the deep-link
   flow. Verified by unit test, never executed; needs a real account.
 - **Two unbacked claims live on `/pricing`** — "agent runs are not
