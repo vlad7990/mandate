@@ -36,11 +36,14 @@ export function ScrollProgress() {
 
   return (
     <div
-      role="progressbar"
-      aria-valuenow={Math.round(pct * 100)}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-label="Page scroll progress"
+      /*
+        Was role="progressbar" with a live aria-valuenow, which made a
+        screen reader announce a changing value on essentially every
+        scroll frame. Scroll position is already conveyed by the browser
+        and the content itself; this bar is purely decorative, so it is
+        removed from the accessibility tree entirely.
+      */
+      aria-hidden
       style={{
         position: "fixed",
         top: 0,

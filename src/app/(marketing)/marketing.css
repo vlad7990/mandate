@@ -626,9 +626,13 @@
   transform: translateY(0) scale(1);
 }
 
+/* Four delays, not three — the pricing grid has four tiers and the
+   Executive Intelligence chain has four steps. With only three defined,
+   the last item of each arrived with no delay at all. */
 .m-reveal-scale.is-visible > *:nth-child(1) { transition-delay: 0ms; }
 .m-reveal-scale.is-visible > *:nth-child(2) { transition-delay: 90ms; }
 .m-reveal-scale.is-visible > *:nth-child(3) { transition-delay: 180ms; }
+.m-reveal-scale.is-visible > *:nth-child(4) { transition-delay: 270ms; }
 
 /*
  * Visually hidden, still announced. Used to give the animated hero
@@ -1002,6 +1006,16 @@
 }
 
 /* Chevron icon — rotates smoothly on open */
+/* The question is wrapped in an <h3> so it appears in the document
+   outline. The heading is purely semantic here — it must not bring its
+   own type scale or margins to the accordion row. */
+.m-faq__q {
+  margin: 0;
+  font: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+
 .m-faq__icon {
   width: 22px;
   height: 22px;
@@ -3147,7 +3161,9 @@
     display: none;
   }
   .m-nav__actions .m-btn--primary {
-    min-height: 36px;
+    /* 44px, not 36 — this is the only always-visible CTA on mobile, so
+       it has to be a full-size touch target. */
+    min-height: 44px;
     padding: 0 0.75rem;
     font-size: 0.625rem;
     letter-spacing: 0.1em;
@@ -3462,4 +3478,94 @@
   max-width: 32rem;
   color: var(--fg-muted);
   line-height: 1.65;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACCESSIBILITY + LAYOUT PASS
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Pricing grid — was inline `auto-fit, minmax(280px, 1fr)`, which
+   resolved to 3 columns around 1152px and orphaned the 4th tier alone
+   on row two, 438px below the others. Track count is now explicit at
+   each step: 1 → 2 → 4. There is no width at which one tier sits
+   alone. */
+.m-price-grid {
+  list-style: none;
+  padding: 0;
+  margin-top: 3rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+@media (min-width: 640px) {
+  .m-price-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1180px) {
+  .m-price-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Skip link — first focusable element on a page this long. Off-screen
+   until focused, then pinned top-left above everything. */
+.m-skip {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 200;
+  padding: 0.75rem 1rem;
+  background: var(--bg-elev-1);
+  border: 1px solid var(--accent);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: top 160ms var(--ease-out);
+}
+
+.m-skip:focus-visible {
+  top: 0.5rem;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The simulator input had `outline: 0` with only a container-level glow
+   on .m-sim:focus-within — so with the input and the Analyze button in
+   one shell, a keyboard user could not tell which held focus. This is a
+   real WCAG 2.4.7 failure on the page's primary control. */
+.m-sim__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+/* Footer links were 156x40 — 4px under the 44px minimum target. */
+.m-footer__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* The animated placeholder overflowed its container by 46px at 390,
+   clipping the text mid-word. */
+.m-sim__placeholder {
+  max-width: calc(100% - 1.5rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --fg-muted lands at 4.47:1 on the blue-tinted panel and 4.24:1 on the
+   Note callout — both under 4.5:1. These two surfaces get a lifted
+   muted tone rather than dropping the token everywhere. */
+.m-section--tint-cool .m-lede,
+.m-note {
+  --fg-muted: #8e8ea3;
 }

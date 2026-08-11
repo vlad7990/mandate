@@ -22,34 +22,42 @@ export const dynamic = "force-static";
 export default function MarketingLandingPage() {
   return (
     <>
+      {/* First focusable element on the page. Without it, a keyboard or
+          screen-reader user had no route past the nav on a document
+          this long, and there was no <main> landmark to jump to. */}
+      <a href="#main" className="m-skip">
+        Skip to content
+      </a>
       <ScrollProgress />
       <TopNav />
-      <Hero />
-      {/*
-        Section count cut 13 → 11. StatsTicker duplicated the agent
-        pipeline that HowItWorks now states explicitly, and Features
-        restated Triangulation and HowItWorks in weaker form. Both
-        components are retained below but no longer rendered.
-      */}
-      <Problem />
-      <Simulator />
-      {/*
-        Principles moved up from position 07. The sections that spend
-        credibility (a quantified manual-effort claim, an absolute
-        competitive claim, sample scores animated like live readouts)
-        were all being read BEFORE the sections that earn it — so by the
-        time a search principal reached "what the system will never do",
-        they had already discounted the page. Guardrails now land while
-        the simulator output is still on screen.
-      */}
-      <Principles />
-      <HowItWorks />
-      <Stack />
-      <Triangulation />
-      <ExecutiveIntelligence />
-      <Pricing />
-      <Faq />
-      <CtaFooter />
+      <main id="main">
+        <Hero />
+        {/*
+          Section count cut 13 → 11. StatsTicker duplicated the agent
+          pipeline that HowItWorks now states explicitly, and Features
+          restated Triangulation and HowItWorks in weaker form. Both
+          components are retained below but no longer rendered.
+        */}
+        <Problem />
+        <Simulator />
+        {/*
+          Principles moved up from position 07. The sections that spend
+          credibility (a quantified manual-effort claim, an absolute
+          competitive claim, sample scores animated like live readouts)
+          were all being read BEFORE the sections that earn it — so by
+          the time a search principal reached "what the system will
+          never do", they had already discounted the page. Guardrails
+          now land while the simulator output is still on screen.
+        */}
+        <Principles />
+        <HowItWorks />
+        <Stack />
+        <Triangulation />
+        <ExecutiveIntelligence />
+        <Pricing />
+        <Faq />
+        <CtaFooter />
+      </main>
       <Footer />
     </>
   );
@@ -255,7 +263,11 @@ function HeroDataRail() {
           <span
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: "0.625rem",
+              // 0.625rem = 10px, below the legibility floor for
+              // functional text. At 0.2em tracking these labels are the
+              // smallest type on the page and they carry the data's
+              // meaning, so they cannot be texture.
+              fontSize: "0.6875rem",
               letterSpacing: "0.2em",
               color: "var(--fg-muted)",
             }}
@@ -462,16 +474,17 @@ function HowItWorks() {
           </p>
         </Reveal>
 
-        <Reveal className="m-reveal-stagger" as="ol" threshold={0.1}>
-          <ol className="m-steps">
-            {HOW_STEPS.map((s) => (
-              <li key={s.n} className="m-card m-step">
-                <span className="m-step__n" aria-hidden>{s.n}</span>
-                <h3 className="m-step__title">{s.title}</h3>
-                <p className="m-step__body">{s.body}</p>
-              </li>
-            ))}
-          </ol>
+        {/* Reveal IS the <ol> — it used to wrap one, which made the
+            stagger target a single child so the 50ms per-item delays
+            never fired. */}
+        <Reveal className="m-reveal-stagger m-steps" as="ol" threshold={0.1}>
+          {HOW_STEPS.map((s) => (
+            <li key={s.n} className="m-card m-step">
+              <span className="m-step__n" aria-hidden>{s.n}</span>
+              <h3 className="m-step__title">{s.title}</h3>
+              <p className="m-step__body">{s.body}</p>
+            </li>
+          ))}
         </Reveal>
 
         <Reveal className="m-reveal" threshold={0.2}>
@@ -556,15 +569,19 @@ function Stack() {
           </p>
         </Reveal>
 
-        <Reveal className="m-reveal-stagger" as="div" threshold={0.1}>
-          <div
-            style={{
-              marginTop: "3rem",
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: "1.5rem",
-            }}
-          >
+        {/* Grid on the Reveal itself, so the stagger's per-child delays
+            reach the three cards rather than a single wrapper div. */}
+        <Reveal
+          className="m-reveal-stagger"
+          as="div"
+          threshold={0.1}
+          style={{
+            marginTop: "3rem",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: "1.5rem",
+          }}
+        >
             {cols.map((col) => (
               <div key={col.title} className="m-card m-card--shimmer">
                 <div
@@ -610,7 +627,6 @@ function Stack() {
                 </ul>
               </div>
             ))}
-          </div>
         </Reveal>
       </div>
     </section>
@@ -868,18 +884,17 @@ function Pricing() {
           </p>
         </Reveal>
 
-        <Reveal className="m-reveal-scale" as="ul" threshold={0.1}>
-          <ul
-            style={{
-              listStyle: "none",
-              padding: 0,
-              marginTop: "3rem",
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "1.25rem",
-              alignItems: "stretch",
-            }}
-          >
+        {/* The grid lives on the Reveal itself. Wrapping a styled <ul>
+            in <Reveal as="ul"> produced invalid ul > ul and left the
+            scale-stagger with one child. Also fixes the 4th tier
+            orphaning alone onto row two around 1152px: auto-fit at
+            minmax(280px) yielded 3 columns there, so the track count is
+            now explicit per breakpoint via .m-price-grid. */}
+        <Reveal
+          className="m-reveal-scale m-price-grid"
+          as="ul"
+          threshold={0.1}
+        >
             {tiers.map((t) => (
               <li
                 key={t.name}
@@ -984,7 +999,6 @@ function Pricing() {
                 </Link>
               </li>
             ))}
-          </ul>
         </Reveal>
       </div>
     </section>
@@ -1070,18 +1084,25 @@ function ExecutiveIntelligence() {
             </p>
           </Reveal>
 
-          <Reveal className="m-reveal-scale" threshold={0.15}>
-            <ul className="m-chain" aria-label="Executive Intelligence approval chain">
-              {EI_CHAIN.map((step) => (
-                <li key={step.label} className={`m-chain__step m-chain__step--${step.state}`}>
-                  <span className="m-chain__mark" aria-hidden>
-                    {step.state === "locked" ? "○" : step.state === "current" ? "●" : "✓"}
-                  </span>
-                  <span className="m-chain__label">{step.label}</span>
-                  <span className="m-chain__meta">{step.meta}</span>
-                </li>
-              ))}
-            </ul>
+          {/* The chain IS the reveal target — the four steps stagger in
+              sequence, which is the whole point of a chain that gates on
+              approval. Wrapping the <ul> gave the scale-stagger one
+              child, so all four appeared at once. */}
+          <Reveal
+            className="m-reveal-scale m-chain"
+            as="ul"
+            threshold={0.15}
+            aria-label="Executive Intelligence approval chain"
+          >
+            {EI_CHAIN.map((step) => (
+              <li key={step.label} className={`m-chain__step m-chain__step--${step.state}`}>
+                <span className="m-chain__mark" aria-hidden>
+                  {step.state === "locked" ? "○" : step.state === "current" ? "●" : "✓"}
+                </span>
+                <span className="m-chain__label">{step.label}</span>
+                <span className="m-chain__meta">{step.meta}</span>
+              </li>
+            ))}
           </Reveal>
         </div>
       </div>
@@ -1130,15 +1151,17 @@ function Principles() {
           </p>
         </Reveal>
 
-        <Reveal className="m-reveal-stagger" as="ul" threshold={0.1}>
-          <ul className="m-principles">
-            {PRINCIPLES.map((p) => (
-              <li key={p.title} className="m-card m-principle">
-                <h3 className="m-principle__title">{p.title}</h3>
-                <p className="m-principle__body">{p.body}</p>
-              </li>
-            ))}
-          </ul>
+        <Reveal
+          className="m-reveal-stagger m-principles"
+          as="ul"
+          threshold={0.1}
+        >
+          {PRINCIPLES.map((p) => (
+            <li key={p.title} className="m-card m-principle">
+              <h3 className="m-principle__title">{p.title}</h3>
+              <p className="m-principle__body">{p.body}</p>
+            </li>
+          ))}
         </Reveal>
       </div>
     </section>
@@ -1282,7 +1305,7 @@ function Footer() {
           </div>
 
           <nav className="m-footer__col" aria-label="Product">
-            <h2 className="m-footer__heading">Product</h2>
+            <h3 className="m-footer__heading">Product</h3>
             <a href="#how" className="m-footer__link">Platform</a>
             <a href="#executive-intelligence" className="m-footer__link">
               Executive Intelligence
@@ -1292,7 +1315,7 @@ function Footer() {
           </nav>
 
           <nav className="m-footer__col" aria-label="Access">
-            <h2 className="m-footer__heading">Access</h2>
+            <h3 className="m-footer__heading">Access</h3>
             <Link href="/request-access" className="m-footer__link">
               Request access
             </Link>

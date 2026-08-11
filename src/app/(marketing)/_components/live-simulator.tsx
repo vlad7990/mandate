@@ -257,6 +257,23 @@ export function LiveSimulator() {
           </div>
         )}
 
+        {/*
+          A persistent, empty-on-mount live region. The simulator's whole
+          loading/success path was previously silent to assistive tech —
+          there was no aria-live or role=status anywhere on the page, so
+          a screen-reader user pressed Analyze and received no indication
+          that anything was happening or had finished. The region exists
+          before the text does, which is what makes the announcement
+          fire reliably.
+        */}
+        <p className="m-sr-only" role="status" aria-live="polite">
+          {pending
+            ? "Analysing the mandate. This takes about thirty seconds."
+            : result
+              ? "Analysis complete. Structured mandate, company context and draft scoring model are shown below."
+              : ""}
+        </p>
+
         {!result && !pending && <SimulatorIdle onPick={setInput} />}
 
         {pending && <SimulatorProgress key={runId} />}
