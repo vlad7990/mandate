@@ -34,14 +34,18 @@ export const SECTIONS = {
   hero: { numeral: "00", label: "Mandate" },
   problem: { numeral: "01", label: "The problem" },
   simulator: { numeral: "02", label: "Live" },
-  howItWorks: { numeral: "03", label: "How it works" },
-  stack: { numeral: "04", label: "Stack" },
-  triangulation: { numeral: "05", label: "The fusion layer" },
+  // Guardrails sit directly after the proof, not seven sections later.
+  // The buyer's real question is "does this replace my judgment?" — it
+  // has to be answered while they are still looking at the output, not
+  // after ~7,000px of capability claims they have already discounted.
+  principles: { numeral: "03", label: "Guardrails" },
+  howItWorks: { numeral: "04", label: "How it works" },
+  stack: { numeral: "05", label: "Stack" },
+  triangulation: { numeral: "06", label: "The fusion layer" },
   executiveIntelligence: {
-    numeral: "06",
+    numeral: "07",
     label: "Executive Intelligence · Add-on",
   },
-  principles: { numeral: "07", label: "Guardrails" },
   pricing: { numeral: "08", label: "Pricing" },
   faq: { numeral: "09", label: "Questions" },
   cta: { numeral: "10", label: "Get started" },

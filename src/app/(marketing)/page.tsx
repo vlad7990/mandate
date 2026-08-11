@@ -33,11 +33,20 @@ export default function MarketingLandingPage() {
       */}
       <Problem />
       <Simulator />
+      {/*
+        Principles moved up from position 07. The sections that spend
+        credibility (a quantified manual-effort claim, an absolute
+        competitive claim, sample scores animated like live readouts)
+        were all being read BEFORE the sections that earn it — so by the
+        time a search principal reached "what the system will never do",
+        they had already discounted the page. Guardrails now land while
+        the simulator output is still on screen.
+      */}
+      <Principles />
       <HowItWorks />
       <Stack />
       <Triangulation />
       <ExecutiveIntelligence />
-      <Principles />
       <Pricing />
       <Faq />
       <CtaFooter />
@@ -386,8 +395,13 @@ function Simulator() {
             >
               Note
             </span>
-            This is what Mandate does in 30 seconds. Manually, the same
-            decomposition takes a senior recruiter three days.
+            {/* Dropped "Manually, the same decomposition takes a senior
+                recruiter three days." The buyer IS that recruiter and
+                knows the real figure, so an inflated one discredited
+                every claim after it — and it was the page's first
+                quantified statement, in its most authoritative-looking
+                container. 30 seconds is verifiable and stands alone. */}
+            This is what Mandate does in 30 seconds.
           </p>
         </Reveal>
       </div>
@@ -524,7 +538,7 @@ function Stack() {
   return (
     <section className="m-section m-section--gap-feature-bottom m-section--tint-warm">
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
-        04
+        {SECTIONS.stack.numeral}
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
@@ -614,7 +628,7 @@ function Triangulation() {
       className="m-section m-triangulation m-section--gap-feature-top m-section--gap-tight-bottom"
     >
       <span className="m-section__numeral" aria-hidden>
-        05
+        {SECTIONS.triangulation.numeral}
       </span>
       <div
         className="m-container"
@@ -634,7 +648,12 @@ function Triangulation() {
               className="m-h2"
               style={{ marginTop: "1rem", maxWidth: "22ch" }}
             >
-              The feature <em>no other platform has.</em>
+              {/* Was "The feature no other platform has." — an absolute,
+                  undated, unscoped competitive claim from a product
+                  wearing a BETA chip. Describing the capability is
+                  stronger with a skeptic and cannot be falsified by a
+                  competitor's release note. */}
+              Three-way alignment, <em>scored and evidenced.</em>
             </h2>
             <p
               className="m-lede"
@@ -646,11 +665,27 @@ function Triangulation() {
               and prepared responses.
             </p>
 
+            {/* Say what these numbers are. Unlabelled score bars beneath
+                a claim about defensible scoring read as evidence, and a
+                search principal will correctly identify them as a
+                mockup — which discredits the claim they sit under. */}
+            <p
+              style={{
+                marginTop: "2rem",
+                marginBottom: "0.75rem",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.6875rem",
+                letterSpacing: "0.16em",
+                textTransform: "uppercase",
+                color: "var(--fg-muted)",
+              }}
+            >
+              Illustrative shape of the output — not live data
+            </p>
             <ul
               style={{
                 listStyle: "none",
                 padding: 0,
-                marginTop: "2rem",
                 display: "grid",
                 gap: "0.625rem",
               }}
@@ -693,7 +728,12 @@ function Triangulation() {
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    <CountUp to={s.v} duration={1800} />
+                    {/* Was <CountUp>, which ticked these up like a live
+                        telemetry readout. They are illustrative values,
+                        and animating them as though they were being
+                        computed is the one thing a page arguing for
+                        auditable numbers must not do. */}
+                    {s.v}
                   </span>
                   <span
                     style={{
@@ -807,7 +847,7 @@ function Pricing() {
   return (
     <section id="pricing" className="m-section m-section--gap-tight-bottom">
       <span className="m-section__numeral" aria-hidden>
-        08
+        {SECTIONS.pricing.numeral}
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
@@ -1013,7 +1053,7 @@ function ExecutiveIntelligence() {
       className="m-section m-section--gap-tight-top m-section--tint-cool"
     >
       <span className="m-section__numeral" aria-hidden>
-        06
+        {SECTIONS.executiveIntelligence.numeral}
       </span>
       <div className="m-container">
         <div className="m-ei-grid">
@@ -1069,10 +1109,14 @@ const PRINCIPLES = [
 ];
 
 function Principles() {
+  // gap-tight-bottom pairs with HowItWorks' gap-tight-top below — the
+  // modifiers are applied in pairs, upper --bottom + lower --top. The
+  // numeral flips left so the move does not leave three right-aligned
+  // watermarks in a row.
   return (
-    <section className="m-section m-section--gap-tight-top">
-      <span className="m-section__numeral m-section__numeral--right" aria-hidden>
-        07
+    <section className="m-section m-section--gap-tight-top m-section--gap-tight-bottom">
+      <span className="m-section__numeral" aria-hidden>
+        {SECTIONS.principles.numeral}
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
@@ -1105,7 +1149,7 @@ function Faq() {
   return (
     <section className="m-section m-section--gap-tight-top m-section--gap-feature-bottom">
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
-        09
+        {SECTIONS.faq.numeral}
       </span>
       <div className="m-container" style={{ maxWidth: 880 }}>
         <Reveal className="m-reveal">
@@ -1140,7 +1184,7 @@ function CtaFooter() {
       }}
     >
       <span className="m-section__numeral" aria-hidden>
-        10
+        {SECTIONS.cta.numeral}
       </span>
       <div
         className="m-container"
