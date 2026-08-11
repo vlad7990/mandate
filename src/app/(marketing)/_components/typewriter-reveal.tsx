@@ -1,6 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
+
+/**
+ * useLayoutEffect on the client, useEffect on the server — React warns
+ * about the former during SSR. We need the layout variant so the typing
+ * start state is applied BEFORE the browser paints, otherwise the
+ * server-rendered full string would flash and then restart.
+ */
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /**
  * Typewriter that types `text` character-by-character once the
@@ -8,6 +17,15 @@ import { useEffect, useState } from "react";
  * for `cursorDuration` ms before the cursor itself disappears.
  *
  * Reduced-motion: snaps straight to the full text, no cursor.
+ *
+ * SSR: renders the COMPLETE string. This component carries half the
+ * <h1>, and it previously served `text.slice(0, 0)` — an empty span
+ * whose only content was an `aria-label` — so every crawler, social
+ * scraper and no-JS reader received a headline reading "One line in."
+ * and nothing else. The full text is now in the static HTML, the
+ * typing start state is applied in a layout effect (before paint, so
+ * there is no flash), and the accessible name comes from a real
+ * visually-hidden node rather than a prohibited label on role=generic.
  *
  * Pattern detail: every state mutation runs inside a setTimeout
  * (either the typing tick, the phase transition, or the deferred
@@ -29,10 +47,22 @@ export function TypewriterReveal({
   /** Cursor blink window (ms) AFTER the last character is typed. */
   cursorDuration?: number;
 }) {
-  const [visible, setVisible] = useState(0);
-  type Phase = "hidden" | "typing" | "cursor" | "done";
-  const [phase, setPhase] = useState<Phase>("hidden");
+  // Start FULL, not empty — this is what the server renders and what
+  // a no-JS client keeps. The layout effect below rewinds it to 0
+  // before the first paint when animation is actually possible.
+  const [visible, setVisible] = useState(text.length);
+  type Phase = "static" | "hidden" | "typing" | "cursor" | "done";
+  const [phase, setPhase] = useState<Phase>("static");
   const [reduced, setReduced] = useState(false);
+
+  // Rewind to the typing start state before paint. Runs client-only, so
+  // the static HTML and the pre-hydration DOM both keep the full string.
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    setVisible(0);
+    setPhase("hidden");
+  }, []);
 
   // Detect reduced-motion — deferred so the setState lands outside
   // the synchronous effect body.
@@ -54,6 +84,10 @@ export function TypewriterReveal({
       }, 0);
       return () => window.clearTimeout(t);
     }
+
+    // Server / no-JS / pre-paint: the full string is already rendered
+    // and there is nothing to animate.
+    if (phase === "static") return;
 
     if (phase === "hidden") {
       const t = window.setTimeout(() => setPhase("typing"), delay);
@@ -78,7 +112,13 @@ export function TypewriterReveal({
 
   return (
     <span style={{ display: "inline" }}>
-      <span aria-label={text}>{text.slice(0, visible)}</span>
+      {/*
+        One stable accessible name for the whole clause, present from
+        the first byte of HTML and never partial — assistive tech reads
+        this, not the character-by-character node beside it.
+      */}
+      <span className="m-sr-only">{text}</span>
+      <span aria-hidden="true">{text.slice(0, visible)}</span>
       {(phase === "typing" || phase === "cursor") && (
         <span className="m-typewriter-cursor" aria-hidden>
           ▌

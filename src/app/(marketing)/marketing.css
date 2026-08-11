@@ -514,13 +514,39 @@
  *                             (used for pricing tiers)
  */
 
+/*
+ * Reveal is OPT-IN, not opt-out.
+ *
+ * These wrappers used to start at `opacity: 0` unconditionally and were
+ * only ever made visible by an IntersectionObserver, so the static HTML
+ * shipped a page whose entire body was invisible to no-JS clients,
+ * crawlers, Reader mode and in-app webviews.
+ *
+ * The hidden start state now lives inside `@media (scripting: enabled)`,
+ * which is exactly what that media feature is for: it matches only when
+ * the client can actually run the script that undoes it. No JS means the
+ * rules never apply and the page renders fully visible with no
+ * animation. A browser too old to know the feature also skips the block,
+ * which fails in the same safe direction.
+ *
+ * Deliberately NOT done with a class toggled by an inline script — that
+ * mutates <html> before hydration and React flags it as a mismatch.
+ *
+ * Never make `opacity: 0` the unconditional default on server-rendered
+ * content.
+ */
 .m-reveal {
-  opacity: 0;
-  transform: translateY(28px);
   transition:
     opacity 800ms var(--ease-out),
     transform 800ms var(--ease-out);
   will-change: opacity, transform;
+}
+
+@media (scripting: enabled) {
+  .m-reveal {
+    opacity: 0;
+    transform: translateY(28px);
+  }
 }
 
 .m-reveal.is-visible {
@@ -529,11 +555,16 @@
 }
 
 .m-reveal-stagger > * {
-  opacity: 0;
-  transform: translateY(24px);
   transition:
     opacity 700ms var(--ease-out),
     transform 700ms var(--ease-out);
+}
+
+@media (scripting: enabled) {
+  .m-reveal-stagger > * {
+    opacity: 0;
+    transform: translateY(24px);
+  }
 }
 
 .m-reveal-stagger.is-visible > * {
@@ -552,11 +583,16 @@
 
 /* Cascade — left-to-right pipeline reveal */
 .m-reveal-cascade > * {
-  opacity: 0;
-  transform: translateX(-28px);
   transition:
     opacity 700ms var(--ease-out),
     transform 700ms var(--ease-out);
+}
+
+@media (scripting: enabled) {
+  .m-reveal-cascade > * {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
 }
 
 .m-reveal-cascade.is-visible > * {
@@ -573,11 +609,16 @@
 
 /* Scale-up — pricing tiers entrance */
 .m-reveal-scale > * {
-  opacity: 0;
-  transform: translateY(20px) scale(0.94);
   transition:
     opacity 720ms var(--ease-out),
     transform 720ms var(--ease-out);
+}
+
+@media (scripting: enabled) {
+  .m-reveal-scale > * {
+    opacity: 0;
+    transform: translateY(20px) scale(0.94);
+  }
 }
 
 .m-reveal-scale.is-visible > * {
@@ -588,6 +629,24 @@
 .m-reveal-scale.is-visible > *:nth-child(1) { transition-delay: 0ms; }
 .m-reveal-scale.is-visible > *:nth-child(2) { transition-delay: 90ms; }
 .m-reveal-scale.is-visible > *:nth-child(3) { transition-delay: 180ms; }
+
+/*
+ * Visually hidden, still announced. Used to give the animated hero
+ * headline one stable accessible name instead of an `aria-label` on a
+ * bare <span> — ARIA prohibits naming role=generic, so that label was
+ * being dropped outright and half the <h1> was invisible to AT.
+ */
+.m-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* ───────────────────── Hero-specific atmosphere ──────────────────── */
 
@@ -2913,6 +2972,14 @@
 }
 
 .m-sim__retry {
+  /* Shared by the retry <button> and the "book a live run" <a>, so it
+     has to normalise both — an anchor brings its own underline and
+     baseline alignment. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  text-decoration: none;
   min-height: 36px;
   padding: 0 0.875rem;
   border: 1px solid var(--line-strong);
@@ -3065,21 +3132,48 @@
   }
 }
 
-/* The nav's own auth buttons are redundant once the panel carries them,
-   and they are what crowded the bar at small widths. */
+/* Log In is redundant once the panel carries it — but Request Access is
+   not. Hiding the whole actions group left a page ~16 viewports tall
+   with NO visible call to action below 719px: the visitor could convert
+   only in the hero or by opening the menu and scrolling past seven
+   items. The primary CTA now stays in the sticky bar at every width and
+   is compacted to fit beside the wordmark. */
 @media (max-width: 719px) {
   .m-nav__actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .m-nav__actions .m-btn--ghost {
+    display: none;
+  }
+  .m-nav__actions .m-btn--primary {
+    min-height: 36px;
+    padding: 0 0.75rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  /* The status pip is the first thing to go when space is tight — it is
+     decorative, the CTA is not. */
+  .m-nav__live {
     display: none;
   }
 }
 
-/* Was 400px, which hid the wordmark at iPhone 14/15/16 width and left
-   the brand as an unnamed blue tile. */
-@media (max-width: 360px) {
-  .m-nav__wordmark {
+/* Below 480px the wordmark yields to the M lettermark so the CTA and
+   the hamburger both keep full-size targets. The brand stays named by
+   the link's aria-label. */
+@media (max-width: 479px) {
+  .m-nav__wordmark,
+  .m-nav__beta {
     display: none;
   }
 }
+
+/* (The former 360px wordmark rule is subsumed by the 479px block above,
+   which trades the wordmark for the M lettermark to make room for the
+   primary CTA. The brand link keeps its aria-label, so it is never an
+   unnamed tile.) */
 
 /* ═══════════════════════════════════════════════════════════════════
    RESTRAINT PASS
@@ -3184,4 +3278,188 @@
    its colour and the blink; it does not need a halo. */
 .m-sim__live-dot {
   box-shadow: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   REQUEST ACCESS
+
+   The conversion destination. It previously rendered in Material 3
+   tokens with a Material Symbols icon font — a visibly different
+   product from the page that sends every visitor here, dropped at the
+   exact moment of commitment. Same tokens, same fonts, same primitives
+   as the landing page now.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.m-access {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 3rem 1.25rem;
+}
+
+.m-access__shell {
+  width: 100%;
+  max-width: 40rem;
+  border: 1px solid var(--line);
+  background: var(--bg-elev-1);
+}
+
+.m-access__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.m-access__brand,
+.m-access__signin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--fg);
+  transition: color 200ms var(--ease-out);
+}
+
+.m-access__signin {
+  color: var(--fg-muted);
+}
+
+.m-access__brand:hover,
+.m-access__signin:hover {
+  color: var(--accent);
+}
+
+.m-access__brand:focus-visible,
+.m-access__signin:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.m-access__body {
+  padding: 1.75rem 1.25rem 2rem;
+}
+
+.m-access__lede {
+  margin: 0.875rem 0 1.75rem;
+  color: var(--fg-muted);
+  line-height: 1.65;
+}
+
+/* ─────────────────────────── Form primitives ─────────────────────── */
+
+.m-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.m-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem;
+}
+
+.m-field {
+  display: grid;
+  gap: 0.4375rem;
+}
+
+.m-field__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.m-field__req {
+  margin-left: 0.25rem;
+  color: var(--accent);
+}
+
+.m-field__control {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.625rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  transition:
+    border-color 200ms var(--ease-out),
+    box-shadow 200ms var(--ease-out);
+}
+
+.m-field__control--area {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.m-field__control:hover {
+  border-color: var(--line-strong);
+}
+
+/* A real, self-contained focus ring on the control itself — not a glow
+   on an ancestor. Container-level focus styling makes it impossible to
+   tell which control inside the shell actually has focus. */
+.m-field__control:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.m-form__submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
+.m-form__note {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+/* ───────────────────────────── Success ───────────────────────────── */
+
+.m-access__done {
+  display: grid;
+  gap: 0.625rem;
+  justify-items: center;
+  text-align: center;
+  padding: 2rem 1.25rem;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.m-access__done-mark {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 1.125rem;
+}
+
+.m-access__done p {
+  margin: 0;
+  max-width: 32rem;
+  color: var(--fg-muted);
+  line-height: 1.65;
 }

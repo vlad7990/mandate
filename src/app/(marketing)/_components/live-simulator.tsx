@@ -159,7 +159,11 @@ export function LiveSimulator() {
             ? "You have run this a few times already — try again in an hour."
             : response.status === 400
               ? "That brief could not be read. Try naming a role and a company."
-              : "The simulator is briefly unavailable. The example below is real output from an earlier run."
+              // Previously claimed the example below was "real output from
+              // an earlier run". It is not — it is written copy. Asserting
+              // a false provenance on the page that sells auditability is
+              // the one error this brand cannot afford. Say what is true.
+              : "The live simulator is offline right now. Below is a worked example of the same output — we'll run your actual mandate with you instead."
         );
       }
       const data = (await response.json()) as DemoResult;
@@ -237,6 +241,19 @@ export function LiveSimulator() {
             >
               Try again
             </button>
+            {/* A failure needs an exit, not just a repeat. Retrying an
+                outage returns the identical error; this is the route
+                that still gets the visitor a real run. */}
+            <a
+              className="m-sim__retry"
+              href={`mailto:hello@getmandate.io?subject=${encodeURIComponent(
+                "Live run request"
+              )}&body=${encodeURIComponent(
+                `I'd like to see Mandate run this mandate:\n\n${input.trim()}\n`
+              )}`}
+            >
+              Book a live run →
+            </a>
           </div>
         )}
 

@@ -8,6 +8,14 @@ import { ScrollProgress } from "./_components/scroll-progress";
 import { TerminalCursor } from "./_components/terminal-cursor";
 import { TypewriterReveal } from "./_components/typewriter-reveal";
 import { MobileNav } from "./_components/mobile-nav";
+import {
+  AGENT_COUNT,
+  DIMENSION_COUNT,
+  MODULE_COUNT,
+  PERSPECTIVE_COUNT,
+  SECTIONS,
+  eyebrow,
+} from "./_constants";
 
 export const dynamic = "force-static";
 
@@ -103,7 +111,7 @@ function Hero() {
       style={{ position: "relative" }}
     >
       <span className="m-section__numeral" aria-hidden>
-        00
+        {SECTIONS.hero.numeral}
       </span>
       {/*
         Drop the auto-stagger m-hero-enter wrapper and instead use
@@ -128,7 +136,7 @@ function Hero() {
           style={{ justifySelf: "center" }}
         >
           <span className="m-hero-kicker-dot" aria-hidden />
-          17_SPECIALIST_AGENTS · ONE_ACCOUNTABLE_HUMAN
+          {`${AGENT_COUNT}_SPECIALIST_AGENTS · ONE_ACCOUNTABLE_HUMAN`}
         </span>
 
         <h1 className="m-display">
@@ -203,10 +211,12 @@ function HeroDataRail() {
     suffix?: string;
     text?: string;
   }> = [
-    { label: "AGENTS", to: 17 },
-    { label: "MODULES", to: 31 },
-    { label: "DIMENSIONS", to: 5 },
-    { label: "PERSPECTIVES", to: 4 },
+    { label: "AGENTS", to: AGENT_COUNT },
+    // Was a hardcoded 31 against prose that says twelve — the rail now
+    // reads from the same constant as the Stack section.
+    { label: "MODULES", to: MODULE_COUNT },
+    { label: "DIMENSIONS", to: DIMENSION_COUNT },
+    { label: "PERSPECTIVES", to: PERSPECTIVE_COUNT },
     { label: "INTELLIGENCE", text: "3-WAY" },
     { label: "CALIBRATION", text: "AUTO" },
   ];
@@ -270,10 +280,13 @@ function HeroDataRail() {
 function Problem() {
   return (
     <section className="m-section m-section--gap-tight-top m-section--tint-cool">
+      <span className="m-section__numeral m-section__numeral--right" aria-hidden>
+        {SECTIONS.problem.numeral}
+      </span>
       <div className="m-container">
         <div className="m-problem">
           <Reveal className="m-reveal">
-            <span className="m-eyebrow">01 / The problem</span>
+            <span className="m-eyebrow">{eyebrow(SECTIONS.problem)}</span>
             <h2 className="m-h2" style={{ marginTop: "1rem" }}>
               Executive search is judgment work performed{" "}
               <em>under bad conditions.</em>
@@ -312,7 +325,7 @@ function Simulator() {
       style={{ scrollMarginTop: "2rem" }}
     >
       <span className="m-section__numeral m-section__numeral--right" aria-hidden>
-        02
+        {SECTIONS.simulator.numeral}
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
@@ -322,7 +335,7 @@ function Simulator() {
               <span>LIVE DEMO</span>
             </span>
             <span aria-hidden>·</span>
-            03 / Live
+            {eyebrow(SECTIONS.simulator)}
           </span>
           <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "20ch" }}>
             Type any role.{" "}
@@ -419,9 +432,12 @@ const PIPELINE = [
 function HowItWorks() {
   return (
     <section id="how" className="m-section m-section--gap-tight-top">
+      <span className="m-section__numeral" aria-hidden>
+        {SECTIONS.howItWorks.numeral}
+      </span>
       <div className="m-container">
         <Reveal className="m-reveal">
-          <span className="m-eyebrow">03 / How it works</span>
+          <span className="m-eyebrow">{eyebrow(SECTIONS.howItWorks)}</span>
           <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "20ch" }}>
             Calibration <em>before evaluation.</em>
           </h2>
@@ -512,7 +528,7 @@ function Stack() {
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
-          <span className="m-eyebrow">04 / Stack</span>
+          <span className="m-eyebrow">{eyebrow(SECTIONS.stack)}</span>
           <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "24ch" }}>
             The complete <em>intelligence stack.</em>
           </h2>
@@ -520,7 +536,7 @@ function Stack() {
             className="m-lede"
             style={{ marginTop: "1.25rem", maxWidth: "60ch" }}
           >
-            Twelve specialised modules across three intelligence layers.
+            {`${MODULE_COUNT} specialised modules across three intelligence layers.`}
             Every layer reads from the others — the system gets sharper
             the more you feed it.
           </p>
@@ -613,7 +629,7 @@ function Triangulation() {
       >
         <Reveal className="m-reveal">
           <div>
-            <span className="m-eyebrow">05 / The fusion layer</span>
+            <span className="m-eyebrow">{eyebrow(SECTIONS.triangulation)}</span>
             <h2
               className="m-h2"
               style={{ marginTop: "1rem", maxWidth: "22ch" }}
@@ -735,7 +751,7 @@ function Pricing() {
       cadence: "/mo",
       headline: "1 user, 3 active searches",
       points: [
-        "All 17 AI agents",
+        `All ${AGENT_COUNT} AI agents`,
         "Full intelligence stack",
         "30-day evaluation history",
         "Email support",
@@ -795,7 +811,7 @@ function Pricing() {
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
-          <span className="m-eyebrow">08 / Pricing</span>
+          <span className="m-eyebrow">{eyebrow(SECTIONS.pricing)}</span>
           <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "22ch" }}>
             Pricing that <em>scales with the practice.</em>
           </h2>
@@ -1002,7 +1018,7 @@ function ExecutiveIntelligence() {
       <div className="m-container">
         <div className="m-ei-grid">
           <Reveal className="m-reveal">
-            <span className="m-eyebrow">Executive Intelligence · Add-on</span>
+            <span className="m-eyebrow">{eyebrow(SECTIONS.executiveIntelligence)}</span>
             <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "18ch" }}>
               Due diligence that <em>survives the board minute.</em>
             </h2>
@@ -1060,7 +1076,7 @@ function Principles() {
       </span>
       <div className="m-container">
         <Reveal className="m-reveal">
-          <span className="m-eyebrow">07 / Guardrails</span>
+          <span className="m-eyebrow">{eyebrow(SECTIONS.principles)}</span>
           <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "20ch" }}>
             What the system <em>will never do.</em>
           </h2>
@@ -1093,7 +1109,7 @@ function Faq() {
       </span>
       <div className="m-container" style={{ maxWidth: 880 }}>
         <Reveal className="m-reveal">
-          <span className="m-eyebrow">09 / Questions</span>
+          <span className="m-eyebrow">{eyebrow(SECTIONS.faq)}</span>
           <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "22ch" }}>
             Common <em>questions.</em>
           </h2>
@@ -1139,7 +1155,7 @@ function CtaFooter() {
         }}
       >
         <Reveal className="m-reveal">
-          <span className="m-eyebrow">10 / Get started</span>
+          <span className="m-eyebrow">{eyebrow(SECTIONS.cta)}</span>
         </Reveal>
         <Reveal className="m-reveal">
           <h2 className="m-h2" style={{ maxWidth: "20ch", margin: "0 auto" }}>
@@ -1157,8 +1173,8 @@ function CtaFooter() {
                 Replaced with what actually happens after the click, which is
                 the reassurance this moment was missing entirely. */}
             Tell us the mandate you are running now. A founder reads every
-            request, and we will walk a live search through with you before
-            anything is billed.
+            request and replies within 48 hours, and we will walk a live
+            search through with you before anything is billed.
           </p>
         </Reveal>
         <Reveal className="m-reveal">

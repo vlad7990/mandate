@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import { AGENT_COUNT } from "./_constants";
 import "./marketing.css";
 
 const fraunces = Fraunces({
@@ -25,7 +26,7 @@ const jetbrains = JetBrains_Mono({
 
 const PAGE_TITLE = "Mandate — AI Executive Search Operating System";
 const PAGE_DESCRIPTION =
-  "The AI Operating System for Executive Search. From one-line brief to shortlist submission with 14 intelligent agents.";
+  `The AI Operating System for Executive Search. From a one-line brief to a defensible shortlist with ${AGENT_COUNT} specialist agents.`;
 
 export const metadata: Metadata = {
   // Override the root template ("%s · Mandate") with an absolute title
