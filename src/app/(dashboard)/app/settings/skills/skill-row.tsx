@@ -6,6 +6,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { deleteSkillAction, toggleSkillActiveAction } from "./actions";
+import {
+  IconPause,
+  IconPencil,
+  IconPlay,
+  IconTrash,
+} from "@/components/icons";
 
 export type SkillRowData = {
   id: string;
@@ -111,9 +117,11 @@ export function SkillRow({ skill }: { skill: SkillRowData }) {
             aria-busy={togglePending ? true : undefined}
             className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              {skill.is_active ? "pause" : "play_arrow"}
-            </span>
+            {skill.is_active ? (
+              <IconPause size={14} />
+            ) : (
+              <IconPlay size={14} />
+            )}
             {skill.is_active ? "Pause" : "Activate"}
           </button>
           <Link
@@ -121,9 +129,7 @@ export function SkillRow({ skill }: { skill: SkillRowData }) {
             prefetch={false}
             className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              edit
-            </span>
+            <IconPencil size={14} />
             Edit
           </Link>
           <button
@@ -133,9 +139,7 @@ export function SkillRow({ skill }: { skill: SkillRowData }) {
             aria-busy={deletePending ? true : undefined}
             className="px-3 py-1.5 border border-outline-variant text-outline hover:border-error hover:text-error transition-colors font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              delete
-            </span>
+            <IconTrash size={14} />
             Delete
           </button>
         </div>

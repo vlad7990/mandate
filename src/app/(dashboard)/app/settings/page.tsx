@@ -17,6 +17,14 @@ import {
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { cn } from "@/lib/utils";
 import { UserStatusActions } from "./user-actions";
+import {
+  IconBlock,
+  IconBuilding,
+  IconClock,
+  IconGroup,
+  IconIntelligence,
+  IconShield,
+} from "@/components/icons";
 
 type OrgRow = {
   id: string;
@@ -119,9 +127,7 @@ export default async function SettingsPage() {
             prefetch={false}
             className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              neurology
-            </span>
+            <IconIntelligence size={14} />
             Skills Studio
           </Link>
         </nav>
@@ -142,7 +148,7 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]">domain</span>
+            <IconBuilding size={14} />
             Organisation
           </CardTitle>
         </CardHeader>
@@ -170,7 +176,7 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]">verified_user</span>
+            <IconShield size={14} />
             Founders ({founders.length})
           </CardTitle>
         </CardHeader>
@@ -216,7 +222,7 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]">pending</span>
+            <IconClock size={14} />
             Pending users ({pending.length})
           </CardTitle>
         </CardHeader>
@@ -270,7 +276,7 @@ export default async function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-              <span className="material-symbols-outlined text-[14px]">groups</span>
+              <IconGroup size={14} />
               Active members ({activeMembers.length})
             </CardTitle>
           </CardHeader>
@@ -324,7 +330,7 @@ export default async function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="font-mono-label text-mono-label text-error uppercase tracking-widest flex items-center gap-2">
-              <span className="material-symbols-outlined text-[14px]">block</span>
+              <IconBlock size={14} />
               Suspended ({suspended.length})
             </CardTitle>
           </CardHeader>

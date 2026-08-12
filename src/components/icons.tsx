@@ -402,6 +402,52 @@ export function IconCommit({ size = 14, className }: IconProps) {
 // These four carry information the label beside them does not, so they
 // survive where the decorative ligatures were deleted.
 
+export function IconClock({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7v5.3l3.4 2" />
+    </svg>
+  );
+}
+
+export function IconCode({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="m8 8-4.5 4L8 16" />
+      <path d="m16 8 4.5 4L16 16" />
+      <path d="m13.5 5-3 14" />
+    </svg>
+  );
+}
+
+export function IconPause({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M9.5 5v14M14.5 5v14" />
+    </svg>
+  );
+}
+
+export function IconPlay({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M7.5 4.8 19 12 7.5 19.2z" />
+    </svg>
+  );
+}
+
+export function IconTrash({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M4 6.5h16" />
+      <path d="M9 6.5V4h6v2.5" />
+      <path d="M6 6.5 6.9 20a1 1 0 0 0 1 1h8.2a1 1 0 0 0 1-1L18 6.5" />
+      <path d="M10 11v5.5M14 11v5.5" />
+    </svg>
+  );
+}
+
 /** Crosshair — what a search is aimed at. */
 export function IconTarget({ size = 14, className }: IconProps) {
   return (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { approveUserAction, rejectUserAction } from "./actions";
+import { IconCheck, IconClose, IconRefresh } from "@/components/icons";
 
 type Props = {
   userId: string;
@@ -43,7 +44,7 @@ export function UserStatusActions({ userId, fullName }: Props) {
         aria-busy={isPending ? true : undefined}
         className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-error hover:text-error transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        <span className="material-symbols-outlined text-[14px]">close</span>
+        <IconClose size={14} />
         Reject
       </button>
       <button
@@ -55,14 +56,11 @@ export function UserStatusActions({ userId, fullName }: Props) {
           "px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
         )}
       >
-        <span
-          className={cn(
-            "material-symbols-outlined text-[14px]",
-            isPending && "animate-spin"
-          )}
-        >
-          {isPending ? "progress_activity" : "check"}
-        </span>
+        {isPending ? (
+          <IconRefresh size={14} className="animate-spin" />
+        ) : (
+          <IconCheck size={14} />
+        )}
         Approve
       </button>
     </div>

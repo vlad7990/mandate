@@ -5,6 +5,14 @@ import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createSkillAction, updateSkillAction } from "./actions";
+import {
+  IconArrowLeft,
+  IconCheckCircle,
+  IconCircle,
+  IconCode,
+  IconRefresh,
+  IconSave,
+} from "@/components/icons";
 
 export type SkillType = "role_skill" | "client_skill" | "search_skill";
 
@@ -27,28 +35,24 @@ const TYPE_OPTIONS: Array<{
   value: SkillType;
   label: string;
   blurb: string;
-  icon: string;
 }> = [
   {
     value: "search_skill",
     label: "Search Skill",
     blurb:
       "Org-wide rule. Applies to every project's agents — calibration, sourcing, evaluation, comparison.",
-    icon: "search",
   },
   {
     value: "client_skill",
     label: "Client Skill",
     blurb:
       "Org-wide rule that captures a recurring client preference. Same scope as a search skill.",
-    icon: "domain",
   },
   {
     value: "role_skill",
     label: "Role Skill",
     blurb:
       "Targets one specific project. Only injected when an agent runs for that role.",
-    icon: "psychology",
   },
 ];
 
@@ -195,15 +199,11 @@ export function SkillForm({
                       className="sr-only"
                     />
                     <div className="flex items-baseline gap-1.5">
-                      <span
-                        className={cn(
-                          "material-symbols-outlined text-[16px]",
-                          checked ? "text-primary" : "text-outline"
-                        )}
-                        aria-hidden
-                      >
-                        {opt.icon}
-                      </span>
+                      {checked ? (
+                        <IconCheckCircle size={16} className="text-primary" />
+                      ) : (
+                        <IconCircle size={16} className="text-outline" />
+                      )}
                       <span
                         className={cn(
                           "font-mono-label text-mono-label uppercase tracking-widest",
@@ -292,9 +292,7 @@ export function SkillForm({
         {/* Preview rail */}
         <aside className="space-y-3 lg:sticky lg:top-6 self-start">
           <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              code_blocks
-            </span>
+            <IconCode size={14} />
             Preview · Injected Prompt
           </div>
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest leading-snug">
@@ -319,9 +317,7 @@ export function SkillForm({
           prefetch={false}
           className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            arrow_back
-          </span>
+          <IconArrowLeft size={14} />
           Cancel
         </Link>
         <button
@@ -330,15 +326,11 @@ export function SkillForm({
           aria-busy={isPending ? true : undefined}
           className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span
-            className={cn(
-              "material-symbols-outlined text-[14px]",
-              isPending && "animate-spin"
-            )}
-            aria-hidden
-          >
-            {isPending ? "progress_activity" : "save"}
-          </span>
+          {isPending ? (
+            <IconRefresh size={14} className="animate-spin" />
+          ) : (
+            <IconSave size={14} />
+          )}
           {isPending
             ? "Saving"
             : initial.id

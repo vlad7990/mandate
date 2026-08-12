@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { MastHead, type MastTone } from "@/components/ui/mast-head";
 import { SkillRow, type SkillRowData } from "./skill-row";
+import { IconIntelligence, IconPlus } from "@/components/icons";
 
 type SkillType = "role_skill" | "client_skill" | "search_skill";
 
@@ -129,9 +130,7 @@ export default async function SkillsStudioPage() {
           prefetch={false}
           className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            add
-          </span>
+          <IconPlus size={14} />
           New Skill
         </Link>
       </header>
@@ -143,17 +142,14 @@ export default async function SkillsStudioPage() {
         />
         <div className="relative px-5 py-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-on-surface">
           <PrincipleBlock
-            icon="bolt"
             title="What is a skill?"
             body="A reusable instruction block recruiters write once and the AI applies whenever its trigger conditions match."
           />
           <PrincipleBlock
-            icon="hub"
             title="Where does it run?"
             body="Six agents: CV parsing, candidate evaluation, job spec, sourcing, feedback interpretation, and side-by-side comparison."
           />
           <PrincipleBlock
-            icon="layers"
             title="Precedence"
             body="Role > Client > Search. The most specific active skill wins when two collide on the same input."
           />
@@ -206,20 +202,15 @@ export default async function SkillsStudioPage() {
 }
 
 function PrincipleBlock({
-  icon,
   title,
   body,
 }: {
-  icon: string;
   title: string;
   body: string;
 }) {
   return (
     <div className="space-y-1">
-      <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5">
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          {icon}
-        </span>
+      <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
         {title}
       </div>
       <p className="text-body-main text-on-surface-variant leading-relaxed">
@@ -237,13 +228,7 @@ function EmptyState() {
         aria-hidden
       />
       <div className="relative w-16 h-16 border border-primary-container/40 bg-primary-container/10 flex items-center justify-center">
-        <span
-          className="material-symbols-outlined text-[28px] text-primary"
-          style={{ fontVariationSettings: "'FILL' 1" }}
-          aria-hidden
-        >
-          neurology
-        </span>
+        <IconIntelligence size={28} className="text-primary" />
       </div>
       <div className="relative space-y-2 max-w-md">
         <h2 className="font-h2 text-h2 text-on-surface">No skills yet</h2>
@@ -258,9 +243,7 @@ function EmptyState() {
         prefetch={false}
         className="relative px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
-        <span className="material-symbols-outlined text-[16px]" aria-hidden>
-          add
-        </span>
+        <IconPlus size={16} />
         Create First Skill
       </Link>
     </div>

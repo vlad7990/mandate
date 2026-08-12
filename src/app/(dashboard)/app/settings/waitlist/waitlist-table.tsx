@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { IconCheck } from "@/components/icons";
 import {
   approveWaitlistRequestAction,
   rejectWaitlistRequestAction,
@@ -229,9 +230,7 @@ function RequestCard({ row }: { row: WaitlistRow }) {
             disabled={pending}
             className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              check
-            </span>
+            <IconCheck size={14} />
             Approve
           </button>
         </footer>
