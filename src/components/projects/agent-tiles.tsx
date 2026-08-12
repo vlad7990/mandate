@@ -87,13 +87,20 @@ export function AgentTiles({ states, actions }: AgentTilesProps) {
               STATE_TONE[state]
             )}
           >
-            {state === "active" && (
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary animate-pulse" />
-            )}
             {/* The tile's glyph is gone: it printed a ligature next to
                 agent.shortLabel two lines below, which already names the
-                agent. The state label keeps the row. */}
-            <div className="flex items-center justify-end mb-3">
+                agent. The state label keeps the row.
+
+                The live dot is inline rather than `absolute top-2 right-2`.
+                Pinned to the corner it sat hard against the top-right of
+                the state label — the label's content box ends exactly where
+                the dot's begins, so "ACTIVE" and the dot collided at every
+                width. Inline, the flex gap keeps them apart and the pair
+                reads as one unit. Same idiom as StatusChip's `dot`. */}
+            <div className="flex items-center justify-end gap-1.5 mb-3">
+              {state === "active" && (
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
+              )}
               <span className="font-mono-label text-mono-label uppercase tracking-wider">
                 {STATE_LABEL[state]}
               </span>
