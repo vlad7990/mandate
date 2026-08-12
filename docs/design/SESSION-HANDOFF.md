@@ -8,9 +8,9 @@
 
 | Gotcha | Detail |
 |---|---|
-| **Two clones exist** | Work in **`~/Documents/Projects/mandate`** (current). `~/Mandate Recruiting/mandate` is a STALE clone at `ce4e7a5`. The Playwright MCP is rooted at the stale one, so its **screenshots land in the wrong tree** — the browser itself is fine, only file paths are wrong. |
+| **Two clones exist** | Work in **`~/Projects/mandate`** (current). `~/Mandate Recruiting/mandate` is a STALE clone at `ce4e7a5`. The Playwright MCP is rooted at the stale one, so its **screenshots land in the wrong tree** — the browser itself is fine, only file paths are wrong. |
 | **Screenshots land at the stale clone's ROOT** | Not in its `.playwright-mcp/`. A capture named `foo.png` appears at `~/Mandate Recruiting/mandate/foo.png`. Find it there and move it before reading. |
-| 🔴 **ALWAYS use `git -C <path>`** | The Bash working directory **persists between calls**, and moving screenshots requires `cd`-ing into the stale clone. This has already caused one real incident — see §1a. Never rely on cwd for a git command: `git -C /Users/vladbreygin/Documents/Projects/mandate <cmd>`. |
+| 🔴 **ALWAYS use `git -C <path>`** | The Bash working directory **persists between calls**, and moving screenshots requires `cd`-ing into the stale clone. This has already caused one real incident — see §1a. Never rely on cwd for a git command: `git -C /Users/vladbreygin/Projects/mandate <cmd>`. |
 | **Reveal state corrupts measurements** | See §5. This produced two separate classes of false finding across two critiques. Read it before measuring anything in the browser. |
 | **Never mutate `<html>` className before hydration** | An inline script adding a class to `document.documentElement` triggers a React hydration mismatch. The scroll-reveal gate uses `@media (scripting: enabled)` instead — no script, no mismatch. Don't "fix" it back to a class toggle. |
 | **`tsc` false errors** | If tsc reports `" 2"`-suffixed duplicate identifiers (`cache-life.d 2.ts`), run `rm -rf .next` first. Also: after moving a route, a stale `.next/types/validator.ts` will reference the old path — same fix. |
@@ -26,13 +26,13 @@
 
 **Recovery was clean:** `git reset --mixed HEAD~1` in the stale clone returned every file to untracked without deleting anything, restoring its exact prior state. The real work was still uncommitted in the working repo and committed normally afterwards.
 
-**The rule that prevents it:** use `git -C /Users/vladbreygin/Documents/Projects/mandate <cmd>` for every git command. It removes the failure mode rather than relying on remembering to `cd` back.
+**The rule that prevents it:** use `git -C /Users/vladbreygin/Projects/mandate <cmd>` for every git command. It removes the failure mode rather than relying on remembering to `cd` back.
 
 ### Outstanding cleanup — ✅ done 2026-08-11
 
 The three debris files (`simulator-failed-state.png`, `skip-link-focused.png`, `sim-error-state.png`) were deleted from the stale clone. `.playwright-mcp/`, `hero-1440.png`, `mandate-landing-1440.png` and `status` were left alone, as instructed.
 
-**Still true, and still the rule:** the Playwright MCP writes screenshots to the stale clone's root. This session moved each capture to the session scratchpad immediately after taking it, and never `cd`-ed into that clone — every git command used `git -C /Users/vladbreygin/Documents/Projects/mandate`.
+**Still true, and still the rule:** the Playwright MCP writes screenshots to the stale clone's root. This session moved each capture to the session scratchpad immediately after taking it, and never `cd`-ed into that clone — every git command used `git -C /Users/vladbreygin/Projects/mandate`.
 
 ---
 

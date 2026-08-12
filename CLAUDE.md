@@ -53,7 +53,7 @@ edit, and approve every artifact. This binds every agent and every surface.
 | Repo | `github.com/vlad7990/mandate` |
 | Production | `getmandate.io` (Vercel team `vn-mn-product-group`) |
 | Supabase project ref | `xipyqnltkbtywxqyxupf` |
-| Working clone | `~/Documents/Projects/mandate` |
+| Working clone | `~/Projects/mandate` |
 
 ## TOOLCHAIN
 

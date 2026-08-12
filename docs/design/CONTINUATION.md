@@ -21,10 +21,10 @@ Copy everything between the fences.
 ```
 Continue the Mandate app redesign.
 
-Working directory: ~/Documents/Projects/mandate
+Working directory: ~/Projects/mandate
 NOT ~/Mandate Recruiting/mandate — that is a stale clone and committing
 there has already caused one real incident. Use
-`git -C /Users/vladbreygin/Documents/Projects/mandate <cmd>` for every
+`git -C /Users/vladbreygin/Projects/mandate <cmd>` for every
 git command; the Bash cwd persists between calls.
 
 Read these first, in order:
@@ -55,7 +55,7 @@ CONTINUATION.md §3 and §4 with what changed, and tell me where you got
 to. Do not begin a screen you cannot finish.
 
 Note: there may be unpushed commits on main. Check with
-`git -C /Users/vladbreygin/Documents/Projects/mandate status -sb` before
+`git -C /Users/vladbreygin/Projects/mandate status -sb` before
 assuming production reflects the code.
 ```
 
@@ -321,7 +321,7 @@ The defects it caught, as a list of what to look for:
 
 ## 5. Traps that have already cost time
 
-- **`git -C /Users/vladbreygin/Documents/Projects/mandate <cmd>` always.**
+- **`git -C /Users/vladbreygin/Projects/mandate <cmd>` always.**
   The Bash cwd persists between calls and a stale second clone exists.
   This caused a real wrong-repo commit once.
 - **Playwright screenshots land in the stale clone's root**, not this
@@ -351,21 +351,24 @@ The defects it caught, as a list of what to look for:
   dark accent at `:root` and inherits down as a fixed colour. A scoped
   theme override has to set both. The `@theme inline` aliases
   (`--color-on-surface` → `var(--fg)`) do not have this problem.
-- 🔴 **The working clone lives in iCloud Drive (`~/Documents`), and
-  iCloud silently evicts file contents.** Symptom: directory listings
-  work, file *reads* hang with `Operation timed out`, and
-  `npm run build` dies on `node_modules/.bin/next`. It hit mid-session on
-  2026-08-12 and made six source files unreadable. Diagnose with
-  `brctl status` (look for `needs-sync-up` / unclean items) — there will
-  be **no** disk0 I/O errors, because the hardware is fine.
-  - Source is never at risk if the tree is clean and pushed; read the
-    files from GitHub instead: `gh api "repos/vlad7990/mandate/contents/<url-encoded-path>?ref=main" --jq .content | base64 -d`.
-  - `node_modules` comes back corrupted (symlinks flattened to regular
-    files, truncated `package.json` → `ERR_INVALID_PACKAGE_CONFIG`). Fix
-    is `rm -rf node_modules && npm ci`. The first build after that may
-    fail with spurious Turbopack resolution errors; run it again.
-  - **The real fix is to move the clone out of iCloud Drive.** This will
-    keep recurring until someone does.
+- **The working clone was moved out of iCloud Drive on 2026-08-12** —
+  it is now `~/Projects/mandate`, alongside the other repos at the home
+  root. It used to live in `~/Documents/Projects/mandate`, which macOS
+  syncs, and iCloud silently evicted file contents mid-session: directory
+  listings kept working while file *reads* hung with
+  `Operation timed out`, six source files became unreadable, and
+  `npm run build` died on `node_modules/.bin/next`. There were **no**
+  disk0 I/O errors — the hardware was fine. If anything like it recurs,
+  `brctl status` showing `needs-sync-up` / unclean items is the tell.
+  - Source was never at risk because the tree was clean and pushed. The
+    workaround, if ever needed again, is to read files from GitHub:
+    `gh api "repos/vlad7990/mandate/contents/<url-encoded-path>?ref=main" --jq .content | base64 -d`
+  - `node_modules` came back corrupted (symlinks flattened to regular
+    files, truncated `package.json` → `ERR_INVALID_PACKAGE_CONFIG`); the
+    fix was `rm -rf node_modules && npm ci`, and the first build after
+    that failed with spurious Turbopack resolution errors before
+    succeeding on a re-run.
+  - **Do not put this repo back under `~/Documents` or `~/Desktop`.**
 - **A `_`-prefixed folder under `src/app/` is not a route.** Next.js
   treats it as a private folder. The throwaway verification route has to
   be named something like `iconsheet-tmp`, not `__iconsheet`, or it 404s
