@@ -21,6 +21,7 @@ import {
   IconPencil,
   IconRefresh,
   IconSave,
+  IconSearch,
   IconTarget,
   type IconProps,
 } from "@/components/icons";
@@ -73,33 +74,17 @@ export function SourcingEditor({
     SLOTS.find((s) => s.key === linkedinTab) ?? SLOTS[0];
 
   return (
-    <div className="min-h-full bg-surface text-on-surface">
-      <div className="max-w-7xl mx-auto px-8 py-10 space-y-6">
-        {/* breadcrumb */}
-        <div className="flex items-center gap-3 font-mono-label text-mono-label uppercase tracking-widest text-outline">
-          <Link
-            href={`/app/projects/${projectId}`}
-            prefetch={false}
-            className="hover:text-on-surface transition-colors flex items-center gap-1.5"
-          >
-            <IconArrowLeft size={14} />
-            Mandate
-          </Link>
-          <span className="text-outline-variant">/</span>
-          <span className="text-on-surface-variant">{roleTitle}</span>
-          <span className="text-outline-variant">/</span>
-          <span className="text-primary">Sourcing Intel</span>
-        </div>
-
-        {/* header — Stitch "BOOLEAN SEARCH GEN" eyebrow */}
-        <header className="flex justify-between items-end">
-          <div>
-            <h2 className="font-h1 text-h1 text-primary">BOOLEAN SEARCH GEN</h2>
-            <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest mt-1">
-              Automated string synthesis engine
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
+    <div className="text-on-surface">
+      <div className="max-w-7xl mx-auto px-8 pb-10 space-y-6">
+        {/* The page breadcrumb and title now live on the route, above the tab
+            bar, so they stay put as the recruiter moves between tabs. What is
+            left here is this tab's own section header. */}
+        <header className="flex justify-between items-end gap-4 flex-wrap">
+          <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
+            <IconSearch size={14} />
+            BOOLEAN_SEARCH_GEN · automated string synthesis
+          </h2>
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="bg-secondary-fixed-dim/10 border border-secondary-fixed-dim/30 text-secondary-fixed-dim font-mono-label text-mono-label uppercase tracking-wider px-2 py-1">
               OPTIMIZATION: ACTIVE
             </span>
