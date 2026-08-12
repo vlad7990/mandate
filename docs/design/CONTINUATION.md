@@ -4,13 +4,13 @@
 context reset without re-deriving anything. Paste the block in §1 into a
 fresh session and it will pick up exactly where the last one stopped.
 
-**Updated:** 2026-08-12 · `main` has five unpushed commits
-(`b73e916..HEAD`). Working tree clean. **The ligature sweep is finished**
-— §4 has no open items left.
+**Updated:** 2026-08-12 · `main` @ `1153fd8`, pushed and deployed.
+Working tree clean. The ligature sweep is finished; the next item is
+**EI Phase 2d — Risk Reviews**, which has an approved spec (§4).
 
 **All seven app comps are on their real routes and the Material Symbols
-sweep is done.** Everything left in this document needs the founder, not
-an agent — see §6.
+sweep is done.** Next build is EI Phase 2d (§4). The founder items in §6
+still stand and still gate trusting the app.
 
 ---
 
@@ -144,7 +144,8 @@ webfont `<link>` in `layout.tsx`, no `.material-symbols-outlined` rule in
 months — `google-font-display` and `no-page-custom-font` — were that
 `<link>`, and they cleared when it went.
 
-Five commits, `b73e916..HEAD`, **not yet pushed**:
+Six commits, `b73e916..1153fd8`, **pushed and deployed** (Vercel
+`dpl_CVF9Pp…` + the follow-up, both Ready on getmandate.io):
 
 | Commit | Module | Sites |
 |---|---|---|
@@ -152,7 +153,8 @@ Five commits, `b73e916..HEAD`, **not yet pushed**:
 | `39790ac` | Sourcing | 17 |
 | `2812684` | Settings | 20 |
 | `c484fbd` | Remaining project routes | 18 |
-| *(head)* | Executive Intelligence, candidates, analytics, webfont removal | 79 |
+| `3d2bad1` | Executive Intelligence, candidates, analytics, webfont removal | 79 |
+| `1153fd8` | Fix: agent-tile live dot collided with the state label | — |
 
 `src/components/icons.tsx` carries **72** drawn icons, up from 31. Every
 new glyph was rendered on a throwaway `/iconsheet-tmp` route at 32/16/12px
@@ -230,13 +232,70 @@ The defects it caught, as a list of what to look for:
 
 ### Open
 
-*(Nothing open. The ligature sweep was the last item; see §3a.)*
+- [ ] **EI Phase 2d — Risk Reviews.** Execute
+      `docs/superpowers/specs/2026-08-10-executive-risk-reviews-design.md`
+      as written. It is approved, complete, and reserves **migration 039**
+      (`executive_risk_reviews`). Read it first; do not re-derive it.
+
+      Build order, each step green-gated:
+
+      1. **Deterministic core** — `src/lib/executive/risk-signals.ts`:
+         `computeRiskSignals(profile, assessment, weights)` and
+         `computeSeveritySummary(signals)`. Pure, no DB, no AI. Plus
+         `risk-signals.test.ts` per the spec's Tests section. **Start
+         here** — it is the load-bearing part, it is verifiable with
+         `npm test` alone, and it needs neither a login nor a browser.
+      2. **Migration 039** — table, indexes, RLS `org_risk_reviews_only`,
+         `allocate_and_insert_risk_review`, `approve_risk_review`,
+         `guard_executive_risk_reviews()` + trigger, and the
+         `risk_review_id` column on `executive_audit_events`. Mirror
+         migration 037 exactly. Apply via MCP **and** write the numbered
+         file — both, per CLAUDE.md.
+      3. **Agent 18** — `executive-risk-synthesis-agent.ts` +
+         `generate-executive-risk-review.ts`, mirroring the interview-plan
+         orchestrator's terminal-state discipline. The agent words the
+         signals; it cannot invent or re-severitize them — post-processing
+         drops unknown ids and overwrites severity/category.
+      4. **Routes** — six files under
+         `…/candidates/[candidateId]/risk-review/` mirroring the
+         interview-plan route (gate → empty → generating → error →
+         editor), plus `actions.ts`. Entry point on the linked-candidate
+         row next to Assessment, and enable the module-map tile.
+
+      Two things the spec is emphatic about and that bind every step: the
+      severity summary is **diligence exposure, never a candidate score or
+      a recommendation**, and severities are app-computed, never the AI's.
 
 ### Done 2026-08-12
 
 - [x] **All 260 Material Symbols ligatures converted to inline SVG**, and
-      the webfont `<link>` and CSS rule removed with them. Five commits,
-      `b73e916..HEAD`, unpushed. Details and the API changes in §3a.
+      the webfont `<link>` and CSS rule removed with them. Six commits,
+      `b73e916..1153fd8`, pushed and deployed. Details in §3a.
+- [x] **Audited 16 founder screenshots of the pre-redesign app** for
+      anything the redesign dropped. **Nothing meaningful is missing.**
+      Every panel in them maps to current code — the candidate dossier's
+      sections into its five tabs, and all twelve Project Detail sections
+      (including Role Calibration, Company Context, Calibration Weights
+      and Information Required) are present.
+
+      Exactly three things were removed, all from the top bar, all
+      deliberate and all documented in `topbar.tsx`: the `COMMAND_LINE`
+      and `EXPORT_RECAP` buttons (both `disabled`, "coming soon", did
+      nothing) and the notification bell (no notifications table, no
+      producer — a permanently-lit unread dot). **Do not restore these.**
+      A dead control that looks live is the same defect as unlabelled
+      sample data.
+
+      Also confirmed: **the Client Intelligence panel is already fully
+      built** — `projects/[id]/client-intelligence-panel.tsx` (323 lines),
+      `src/lib/ai/client-psychology-agent.ts`, and
+      `generateClientPsychologyAction`, gated at `feedbackCount >= 3` and
+      wired into the project page. It has simply never been run. It needs
+      a click and real feedback, not code.
+
+      The founder reviewed the decorative-icon changes from the sweep and
+      **decided against restoring any of them**, including the agent-tile
+      and ranking-perspective glyphs.
 
 ### Done 2026-08-11 — details in §3
 
@@ -292,6 +351,21 @@ The defects it caught, as a list of what to look for:
   dark accent at `:root` and inherits down as a fixed colour. A scoped
   theme override has to set both. The `@theme inline` aliases
   (`--color-on-surface` → `var(--fg)`) do not have this problem.
+- 🔴 **The working clone lives in iCloud Drive (`~/Documents`), and
+  iCloud silently evicts file contents.** Symptom: directory listings
+  work, file *reads* hang with `Operation timed out`, and
+  `npm run build` dies on `node_modules/.bin/next`. It hit mid-session on
+  2026-08-12 and made six source files unreadable. Diagnose with
+  `brctl status` (look for `needs-sync-up` / unclean items) — there will
+  be **no** disk0 I/O errors, because the hardware is fine.
+  - Source is never at risk if the tree is clean and pushed; read the
+    files from GitHub instead: `gh api "repos/vlad7990/mandate/contents/<url-encoded-path>?ref=main" --jq .content | base64 -d`.
+  - `node_modules` comes back corrupted (symlinks flattened to regular
+    files, truncated `package.json` → `ERR_INVALID_PACKAGE_CONFIG`). Fix
+    is `rm -rf node_modules && npm ci`. The first build after that may
+    fail with spurious Turbopack resolution errors; run it again.
+  - **The real fix is to move the clone out of iCloud Drive.** This will
+    keep recurring until someone does.
 - **A `_`-prefixed folder under `src/app/` is not a route.** Next.js
   treats it as a private folder. The throwaway verification route has to
   be named something like `iconsheet-tmp`, not `__iconsheet`, or it 404s
