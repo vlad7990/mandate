@@ -43,6 +43,13 @@ export type ParsedImportRow = {
   email: string | null;
   /** Every column as supplied, for audit and for re-mapping later. */
   raw: Record<string, string>;
+  /**
+   * 1-based line number in the supplied text, header included — the number the
+   * recruiter sees in their spreadsheet. Skipped and capped rows mean the
+   * position in `rows` is NOT the position in the file, and provenance has to
+   * point at the file.
+   */
+  source_line: number;
 };
 
 export type ParseResult = {
@@ -169,6 +176,16 @@ function nullable(v: string): string | null {
 }
 
 /**
+ * Recruiter overrides for the auto-detected column mapping, as header indices.
+ * `null` clears a field the aliases matched wrongly.
+ *
+ * This has to be applied during parsing rather than fixed up afterwards: a row
+ * whose name column was mis-detected is SKIPPED, and a skipped row is gone —
+ * remapping the output cannot recover a row that was never emitted.
+ */
+export type MappingOverrides = Partial<Record<ImportField, number | null>>;
+
+/**
  * Parse a pasted block or CSV export into staged rows.
  *
  * The first non-empty line is treated as a header. A row with no usable name is
@@ -176,11 +193,16 @@ function nullable(v: string): string | null {
  * row exists to be reviewed by a human, and there is nothing to review in a
  * nameless one.
  */
-export function parseImport(text: string): ParseResult {
+export function parseImport(
+  text: string,
+  overrides?: MappingOverrides
+): ParseResult {
+  // Blank lines are ignored but must not shift the numbering: `source_line` is
+  // the line the recruiter will count to in their own file.
   const lines = text
     .split(/\r\n|\r|\n/)
-    .map((l) => l.trimEnd())
-    .filter((l) => l.trim().length > 0);
+    .map((raw, i) => ({ text: raw.trimEnd(), line: i + 1 }))
+    .filter((l) => l.text.trim().length > 0);
 
   if (lines.length === 0) {
     return {
@@ -192,9 +214,29 @@ export function parseImport(text: string): ParseResult {
     };
   }
 
-  const delimiter = detectDelimiter(lines[0]);
-  const headers = splitDelimitedLine(lines[0], delimiter);
+  const delimiter = detectDelimiter(lines[0].text);
+  const headers = splitDelimitedLine(lines[0].text, delimiter);
   const mapping = buildMapping(headers);
+
+  // An explicit full_name choice replaces the derived first+last pairing;
+  // leaving __last_name in place would append a surname column the recruiter
+  // did not ask for.
+  if (overrides) {
+    for (const [field, idx] of Object.entries(overrides) as Array<
+      [ImportField, number | null | undefined]
+    >) {
+      if (idx === undefined) continue;
+      if (idx === null || idx < 0 || idx >= headers.length) {
+        delete mapping[field];
+      } else {
+        mapping[field] = idx;
+      }
+      if (field === "full_name") {
+        delete (mapping as Record<string, number | undefined>).__last_name;
+      }
+    }
+  }
+
   const lastNameIdx = (mapping as Record<string, number>).__last_name;
 
   const body = lines.slice(1);
@@ -204,8 +246,8 @@ export function parseImport(text: string): ParseResult {
   const rows: ParsedImportRow[] = [];
   let skippedUnnamed = 0;
 
-  for (const line of capped) {
-    const cells = splitDelimitedLine(line, delimiter);
+  for (const entry of capped) {
+    const cells = splitDelimitedLine(entry.text, delimiter);
 
     const raw: Record<string, string> = {};
     headers.forEach((h, i) => {
@@ -230,6 +272,7 @@ export function parseImport(text: string): ParseResult {
       profile_url: nullable(cell(cells, mapping.profile_url)),
       email: nullable(cell(cells, mapping.email)),
       raw,
+      source_line: entry.line,
     });
   }
 

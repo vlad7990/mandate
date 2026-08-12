@@ -112,6 +112,68 @@ describe("parseImport", () => {
     );
     expect(result.rows[0].current_company).toBeNull();
   });
+
+  test("reports the line number in the source file, not the position in rows", () => {
+    // Line 3 has no name and is skipped, so the last row is at index 1 but on
+    // line 4. Provenance has to point at the file the recruiter still has.
+    const result = parseImport(
+      ["Name,Company", "Dana Reed,Northwind", ",Orphan Co", "Sam Vale,Acme"].join(
+        "\n"
+      )
+    );
+    expect(result.rows.map((r) => r.source_line)).toEqual([2, 4]);
+  });
+
+  test("blank lines do not shift the line numbering", () => {
+    const result = parseImport(
+      ["Name,Company", "", "Dana Reed,Northwind"].join("\n")
+    );
+    expect(result.rows[0].source_line).toBe(3);
+  });
+});
+
+describe("parseImport column mapping overrides", () => {
+  // Header aliases cannot cover every export. The override has to be applied
+  // during parsing rather than fixed up afterwards, because a row whose name
+  // column was mis-detected is SKIPPED — and a skipped row cannot be recovered
+  // by remapping the output.
+  test("recovers rows the auto-mapping skipped for want of a name column", () => {
+    const text = ["Contact,Employer", "Dana Reed,Northwind"].join("\n");
+
+    const auto = parseImport(text);
+    expect(auto.rows).toHaveLength(0);
+    expect(auto.skippedUnnamed).toBe(1);
+
+    const mapped = parseImport(text, { full_name: 0, current_company: 1 });
+    expect(mapped.rows).toHaveLength(1);
+    expect(mapped.rows[0].full_name).toBe("Dana Reed");
+    expect(mapped.rows[0].current_company).toBe("Northwind");
+    expect(mapped.skippedUnnamed).toBe(0);
+  });
+
+  test("an explicit name column replaces the derived first+last pairing", () => {
+    const result = parseImport(
+      ["First Name,Last Name,Display", "Dana,Reed,D. Reed"].join("\n"),
+      { full_name: 2 }
+    );
+    expect(result.rows[0].full_name).toBe("D. Reed");
+  });
+
+  test("null clears a field the aliases matched wrongly", () => {
+    const result = parseImport(
+      ["Name,Location", "Dana Reed,Berlin"].join("\n"),
+      { location: null }
+    );
+    expect(result.rows[0].location).toBeNull();
+    expect(result.rows[0].raw).toEqual({ Name: "Dana Reed", Location: "Berlin" });
+  });
+
+  test("an out-of-range index clears the field rather than reading garbage", () => {
+    const result = parseImport(["Name,Company", "Dana Reed,Northwind"].join("\n"), {
+      current_company: 9,
+    });
+    expect(result.rows[0].current_company).toBeNull();
+  });
 });
 
 function row(overrides: Partial<ParsedImportRow> = {}): ParsedImportRow {
@@ -123,6 +185,7 @@ function row(overrides: Partial<ParsedImportRow> = {}): ParsedImportRow {
     profile_url: null,
     email: null,
     raw: {},
+    source_line: 2,
     ...overrides,
   };
 }
