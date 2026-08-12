@@ -250,28 +250,23 @@ export async function loadNetworkOverview(): Promise<NetworkOverview> {
 }
 
 /**
- * Quick count of distinct people in the org's network. Used by the
- * sidebar badge. Cheaper than `loadNetworkOverview()` when we just
- * need the number.
+ * Count of distinct people in the org's network, for the sidebar badge.
+ *
+ * Runs in the dashboard layout, so it executes on every authenticated
+ * route — which is why it must not scale with the candidate pool. It
+ * used to select five columns for every visible candidate row and dedupe
+ * them here; now `count_network_people()` (migration 040) applies the
+ * same identity rule in Postgres and returns one integer.
+ *
+ * That function is a transcription of `identityKey` below — email, else
+ * linkedin, else name|company. The two must change together or the badge
+ * stops matching the Network page.
  */
 export async function countNetworkPeople(): Promise<number> {
   const supabase = await createServerSupabaseClient();
-  const { data } = await supabase
-    .from("candidates")
-    .select("id, full_name, email, linkedin_url, current_company");
-  if (!data) return 0;
-  type Row = {
-    id: string;
-    full_name: string;
-    email: string | null;
-    linkedin_url: string | null;
-    current_company: string | null;
-  };
-  const keys = new Set<string>();
-  for (const r of data as Row[]) {
-    keys.add(identityKey(r));
-  }
-  return keys.size;
+  const { data, error } = await supabase.rpc("count_network_people");
+  if (error || typeof data !== "number") return 0;
+  return data;
 }
 
 function identityKey(row: {
