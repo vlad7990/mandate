@@ -6,6 +6,7 @@ import {
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import { TIER_ORDER, type Tier } from "@/lib/ranking/tiers";
+import { identityKey } from "@/lib/candidate-identity";
 
 // Aggregator for the Global Executive Network view.
 //
@@ -269,24 +270,9 @@ export async function countNetworkPeople(): Promise<number> {
   return data;
 }
 
-function identityKey(row: {
-  full_name: string;
-  email: string | null;
-  linkedin_url: string | null;
-  current_company: string | null;
-}): string {
-  if (row.email && row.email.trim().length > 0) {
-    return `email:${row.email.trim().toLowerCase()}`;
-  }
-  if (row.linkedin_url && row.linkedin_url.trim().length > 0) {
-    return `linkedin:${row.linkedin_url
-      .trim()
-      .toLowerCase()
-      .replace(/\/$/, "")}`;
-  }
-  // Fallback: name|company lowercased. Imperfect but stable.
-  return `name:${row.full_name.trim().toLowerCase()}|${(row.current_company ?? "").trim().toLowerCase()}`;
-}
+// identityKey moved to @/lib/candidate-identity — it now has three consumers
+// (this page, the sidebar badge, sourcing import dedupe) and one of them is
+// SQL (migration 040), so it needed a single home.
 
 function bestTier(tiers: Array<Tier | null>): Tier | null {
   let best: Tier | null = null;
