@@ -4,6 +4,13 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  IconCheck,
+  IconCheckCircle,
+  IconCircle,
+  IconCompare,
+  IconRefresh,
+} from "@/components/icons";
 
 export type PickerCandidate = {
   id: string;
@@ -79,7 +86,7 @@ export function ComparisonPicker({
     <div className="bg-surface-container-low border border-outline-variant p-5 space-y-4">
       <div className="flex items-baseline justify-between gap-2 flex-wrap">
         <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">checklist</span>
+          <IconCheck size={14} />
           Pick 2–3 candidates
         </h2>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
@@ -122,19 +129,11 @@ export function ComparisonPicker({
                       {c.overall.toFixed(1)}
                     </span>
                   )}
-                  <span
-                    className={cn(
-                      "material-symbols-outlined text-[16px]",
-                      isSelected ? "text-primary" : "text-outline"
-                    )}
-                    style={
-                      isSelected
-                        ? { fontVariationSettings: "'FILL' 1" }
-                        : undefined
-                    }
-                  >
-                    {isSelected ? "check_circle" : "radio_button_unchecked"}
-                  </span>
+                  {isSelected ? (
+                    <IconCheckCircle size={16} className="text-primary" />
+                  ) : (
+                    <IconCircle size={16} className="text-outline" />
+                  )}
                 </div>
               </button>
             </li>
@@ -149,14 +148,11 @@ export function ComparisonPicker({
           aria-busy={isPending ? true : undefined}
           className="px-6 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <span
-            className={cn(
-              "material-symbols-outlined text-[14px]",
-              isPending && "animate-spin"
-            )}
-          >
-            {isPending ? "progress_activity" : "compare_arrows"}
-          </span>
+          {isPending ? (
+            <IconRefresh size={14} className="animate-spin" />
+          ) : (
+            <IconCompare size={14} />
+          )}
           {isPending ? "Loading" : "Run Comparison"}
         </button>
       </div>

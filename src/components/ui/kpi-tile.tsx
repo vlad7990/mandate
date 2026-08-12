@@ -1,5 +1,11 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import {
+  IconTrendDown,
+  IconTrendFlat,
+  IconTrendUp,
+  type IconProps,
+} from "@/components/icons";
 
 // Bloomberg-style instrument tile: a tiny uppercase label, a large
 // tabular-nums value, a thin unit line beneath. Optional left edge
@@ -46,10 +52,13 @@ const DELTA_TONE: Record<NonNullable<KpiDelta["tone"]> | KpiDeltaDirection, stri
   neutral: "text-outline",
 };
 
-const DELTA_ICON: Record<KpiDeltaDirection, string> = {
-  up: "trending_up",
-  down: "trending_down",
-  flat: "trending_flat",
+const DELTA_ICON: Record<
+  KpiDeltaDirection,
+  (props: IconProps) => React.ReactElement
+> = {
+  up: IconTrendUp,
+  down: IconTrendDown,
+  flat: IconTrendFlat,
 };
 
 export function KpiTile({
@@ -70,6 +79,7 @@ export function KpiTile({
   const deltaTone = delta?.tone
     ? DELTA_TONE[delta.tone]
     : DELTA_TONE[delta?.direction ?? "flat"];
+  const DeltaIcon = DELTA_ICON[delta?.direction ?? "flat"];
 
   return (
     <div
@@ -94,12 +104,7 @@ export function KpiTile({
             )}
             aria-label={`Change: ${delta.label}`}
           >
-            <span
-              className="material-symbols-outlined text-[12px]"
-              aria-hidden
-            >
-              {DELTA_ICON[delta.direction]}
-            </span>
+            <DeltaIcon size={12} />
             {delta.label}
           </span>
         )}

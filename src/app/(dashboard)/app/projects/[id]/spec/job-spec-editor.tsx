@@ -22,6 +22,23 @@ import {
   saveDraft,
 } from "./actions";
 import type { SpecVersionSummary } from "./page";
+import {
+  IconAlert,
+  IconArrowLeft,
+  IconBuilding,
+  IconClose,
+  IconCommit,
+  IconDiff,
+  IconFlag,
+  IconHistory,
+  IconPencil,
+  IconPlus,
+  IconRefresh,
+  IconSave,
+  IconSpark,
+  IconVerified,
+  type IconProps,
+} from "@/components/icons";
 
 type Props = {
   projectId: string;
@@ -217,7 +234,7 @@ export function JobSpecEditor({
             href={`/app/projects/${projectId}`}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Mandate
           </Link>
           <span className="text-outline-variant">/</span>
@@ -297,7 +314,7 @@ export function JobSpecEditor({
               tone="ghost"
               onClick={handleRegenerate}
               busy={isRegenerating}
-              icon="auto_awesome"
+              icon={IconSpark}
               disabled={busy}
             >
               {isRegenerating ? "Regenerating" : "Re-run AI"}
@@ -306,7 +323,7 @@ export function JobSpecEditor({
               tone="ghost"
               onClick={handleSaveDraft}
               busy={isSaving}
-              icon="save"
+              icon={IconSave}
               disabled={busy || currentIsFinal}
             >
               {isSaving ? "Saving" : "Save Draft"}
@@ -315,7 +332,7 @@ export function JobSpecEditor({
               tone="ghost"
               onClick={handleNewVersion}
               busy={isVersioning}
-              icon="commit"
+              icon={IconCommit}
               disabled={busy}
             >
               {isVersioning ? "Snapshotting" : "New Version"}
@@ -324,7 +341,7 @@ export function JobSpecEditor({
               tone="primary"
               onClick={() => setConfirmFinalOpen(true)}
               busy={isFinalizing}
-              icon="verified"
+              icon={IconVerified}
               disabled={busy || currentIsFinal}
             >
               {currentIsFinal ? "Already Final" : "Mark as Final"}
@@ -379,7 +396,7 @@ export function JobSpecEditor({
             href={`/app/projects/${projectId}`}
             className="flex items-center gap-2 text-outline font-mono-label text-mono-label uppercase tracking-widest hover:text-on-surface transition-colors"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Return to Mandate
           </Link>
           <div className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
@@ -474,9 +491,7 @@ function ActiveGenerationBanner({
       data-spec-id={specId}
       className="flex items-center gap-3 px-4 py-3 border border-primary-container/50 bg-primary-container/10"
     >
-      <span className="material-symbols-outlined text-[18px] text-primary animate-spin">
-        progress_activity
-      </span>
+      <IconRefresh size={18} className="text-primary animate-spin" />
       <div className="flex-1 min-w-0">
         <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
           AI compiling V{String(version).padStart(2, "0")}
@@ -546,12 +561,7 @@ function FailedGenerationBanner({
       data-spec-id={specId}
       className="flex items-start gap-3 px-4 py-3 border border-error/40 bg-error-container/10"
     >
-      <span
-        className="material-symbols-outlined text-[18px] text-error mt-0.5"
-        style={{ fontVariationSettings: "'FILL' 1" }}
-      >
-        error
-      </span>
+      <IconAlert size={18} className="text-error mt-0.5 shrink-0" />
       <div className="flex-1 min-w-0 space-y-1">
         <div className="font-mono-label text-mono-label text-error uppercase tracking-widest">
           V{String(version).padStart(2, "0")} generation failed
@@ -568,14 +578,7 @@ function FailedGenerationBanner({
           aria-busy={isRetrying ? true : undefined}
           className="px-3 py-1.5 border border-error/40 text-error font-mono-label text-mono-label uppercase tracking-widest hover:bg-error-container/20 transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <span
-            className={cn(
-              "material-symbols-outlined text-[14px]",
-              isRetrying && "animate-spin"
-            )}
-          >
-            {isRetrying ? "progress_activity" : "refresh"}
-          </span>
+          <IconRefresh size={14} className={cn(isRetrying && "animate-spin")} />
           {isRetrying ? "Retrying" : "Retry"}
         </button>
         <button
@@ -584,7 +587,7 @@ function FailedGenerationBanner({
           aria-label="Dismiss failed generation banner"
           className="p-1.5 text-outline hover:text-on-surface transition-colors"
         >
-          <span className="material-symbols-outlined text-[14px]">close</span>
+          <IconClose size={14} />
         </button>
       </div>
     </div>
@@ -620,14 +623,14 @@ function ActionButton({
   tone,
   onClick,
   busy,
-  icon,
+  icon: Icon,
   disabled,
   children,
 }: {
   tone: "ghost" | "primary";
   onClick: () => void;
   busy?: boolean;
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   disabled?: boolean;
   children: React.ReactNode;
 }) {
@@ -645,14 +648,11 @@ function ActionButton({
       aria-busy={busy ? true : undefined}
       className={cn(base, palette)}
     >
-      <span
-        className={cn(
-          "material-symbols-outlined text-[14px]",
-          busy && "animate-spin"
-        )}
-      >
-        {busy ? "progress_activity" : icon}
-      </span>
+      {busy ? (
+        <IconRefresh size={14} className="animate-spin" />
+      ) : (
+        <Icon size={14} />
+      )}
       {children}
     </button>
   );
@@ -700,12 +700,6 @@ function SectionCard({
               "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
             )}
           >
-            <span
-              className="material-symbols-outlined text-[12px]"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              {def.icon}
-            </span>
             # {def.short}
           </span>
           <span className="text-on-surface text-body-main font-semibold">
@@ -732,9 +726,7 @@ function SectionCard({
               onClick={() => setExpanded((e) => !e)}
               className="font-mono-label text-mono-label text-outline uppercase tracking-widest hover:text-primary transition-colors flex items-center gap-1"
             >
-              <span className="material-symbols-outlined text-[14px]">
-                {expanded ? "close" : "edit"}
-              </span>
+              {expanded ? <IconClose size={14} /> : <IconPencil size={13} />}
               {expanded ? "Done" : "Edit"}
             </button>
           )}
@@ -853,7 +845,7 @@ function ListField({
                 className="px-3 border border-outline-variant text-outline hover:text-destructive hover:border-destructive transition-colors"
                 aria-label={`Remove entry ${i + 1}`}
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <IconClose size={16} />
               </button>
             )}
           </div>
@@ -868,7 +860,7 @@ function ListField({
               onClick={() => onChange([...values, ""])}
               className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 hover:brightness-110 transition-colors"
             >
-              <span className="material-symbols-outlined text-[14px]">add</span>
+              <IconPlus size={14} />
               Append entry
             </button>
           )}
@@ -919,7 +911,7 @@ function DiffSummaryCard({
     return (
       <div className="bg-surface-container border border-outline-variant p-5 space-y-2">
         <h3 className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">flag</span>
+          <IconFlag size={14} />
           Diff vs Final
         </h3>
         <p className="text-body-main text-outline">
@@ -934,12 +926,7 @@ function DiffSummaryCard({
     return (
       <div className="bg-secondary-fixed-dim/5 border border-secondary-fixed-dim/30 p-5 space-y-2">
         <h3 className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-[14px]"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            verified
-          </span>
+          <IconVerified size={14} />
           Final Version
         </h3>
         <p className="text-body-main text-on-surface-variant">
@@ -954,7 +941,7 @@ function DiffSummaryCard({
     <div className="bg-surface-container border border-outline-variant p-5 space-y-3">
       <header className="flex items-center justify-between">
         <h3 className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">difference</span>
+          <IconDiff size={14} />
           Diff vs FINAL_V{String(finalVersion).padStart(2, "0")}
         </h3>
         <span
@@ -1024,7 +1011,7 @@ function CompanyContextCard({
   return (
     <div className="bg-surface-container-low border border-outline-variant p-5 space-y-3">
       <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-        <span className="material-symbols-outlined text-[14px]">domain</span>
+        <IconBuilding size={14} />
         Org Context
       </h3>
       <div className="space-y-2 text-body-main">
@@ -1070,7 +1057,7 @@ function HistoryView({
     <div className="bg-surface-container-low border border-outline-variant p-4 space-y-2">
       <header className="flex items-center justify-between">
         <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">history</span>
+          <IconHistory size={14} />
           Version History
         </h3>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
@@ -1168,12 +1155,7 @@ function FinalizeConfirm({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-secondary-fixed-dim"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            verified
-          </span>
+          <IconVerified size={20} className="text-secondary-fixed-dim" />
           <h2 className="font-h2 text-h2">Mark as Final?</h2>
         </div>
         <div className="space-y-3 text-body-main text-on-surface-variant">
@@ -1204,7 +1186,7 @@ function FinalizeConfirm({
             onClick={onConfirm}
             className="px-4 py-2 bg-secondary-fixed-dim/20 border border-secondary-fixed-dim/40 text-secondary-fixed-dim font-mono-label text-mono-label uppercase tracking-widest hover:bg-secondary-fixed-dim/30 transition-colors flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[14px]">verified</span>
+            <IconVerified size={14} />
             Confirm Finalise
           </button>
         </div>

@@ -5,6 +5,11 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { TIER_BANDS, type Tier } from "@/lib/ranking/tiers";
 import type { ComparisonRow } from "@/lib/comparison/comparison-export";
+import {
+  IconArrowDown,
+  IconArrowUp,
+  IconSelector,
+} from "@/components/icons";
 
 type SortKey =
   | "rank"
@@ -221,18 +226,11 @@ function SortIndicator({
 }) {
   if (!active) {
     return (
-      <span
-        className="material-symbols-outlined text-[12px] opacity-40"
-        aria-hidden
-      >
-        unfold_more
-      </span>
+      <IconSelector size={12} className="opacity-40" />
     );
   }
   return (
-    <span className="material-symbols-outlined text-[12px]" aria-hidden>
-      {direction === "asc" ? "arrow_upward" : "arrow_downward"}
-    </span>
+    direction === "asc" ? <IconArrowUp size={12} /> : <IconArrowDown size={12} />
   );
 }
 

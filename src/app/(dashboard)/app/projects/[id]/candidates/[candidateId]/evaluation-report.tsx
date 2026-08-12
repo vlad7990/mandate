@@ -4,6 +4,14 @@ import { PANEL_BODY, Panel, PanelMeta } from "@/components/projects/panel";
 import { MastHead } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import {
+  IconArrowDown,
+  IconArrowUp,
+  IconBlock,
+  IconCheck,
+  IconTrendFlat,
+  IconVerified,
+} from "@/components/icons";
+import {
   ALIGNMENT_LIGHT_LABELS,
   RECOMMENDATION_LABELS,
   VERDICT_TIER_LABELS,
@@ -142,7 +150,6 @@ function ScoringTable({ rows }: { rows: DimensionRow[] }) {
     <section className="space-y-2">
       <MastHead
         tone="primary"
-        icon="grid_view"
         label="Scoring Table"
         meta={
           <span className="tabular-nums">
@@ -262,7 +269,7 @@ function ProfileSummarySection({
 }) {
   return (
     <section className="space-y-2">
-      <MastHead tone="neutral" icon="person" label="Profile Summary" />
+      <MastHead tone="neutral" label="Profile Summary" />
       <div className="bg-surface-container-low border border-outline-variant px-4 py-4 space-y-3">
         <p className="text-body-main text-on-surface leading-relaxed">
           {summary.executive_summary}
@@ -304,7 +311,6 @@ function AlignmentTestSection({
               ? "tertiary"
               : "error"
         }
-        icon="rule"
         label="Critical Role Alignment Test"
         meta={
           <span className="flex items-center gap-1.5">
@@ -375,7 +381,6 @@ function StrengthsSection({
     <section className="space-y-2">
       <MastHead
         tone="secondary"
-        icon="trending_up"
         label="Strengths"
         meta={
           <span className="tabular-nums">
@@ -424,7 +429,6 @@ function GapsSection({ gaps }: { gaps: CandidateEvaluation["gaps"] }) {
     <section className="space-y-2">
       <MastHead
         tone="error"
-        icon="report"
         label="Critical Gaps"
         meta={
           <span className="tabular-nums">
@@ -478,7 +482,6 @@ function ComparisonSection({
     <section className="space-y-2">
       <MastHead
         tone="primary"
-        icon="compare_arrows"
         label="Direct Comparison"
         meta={
           <span className="tabular-nums">
@@ -534,20 +537,20 @@ function DirectionChip({
 }) {
   if (direction === "ahead") {
     return (
-      <StatusChip tone="secondary" icon="arrow_upward" intensity="filled">
+      <StatusChip tone="secondary" icon={IconArrowUp} intensity="filled">
         Ahead
       </StatusChip>
     );
   }
   if (direction === "behind") {
     return (
-      <StatusChip tone="danger" icon="arrow_downward" intensity="filled">
+      <StatusChip tone="danger" icon={IconArrowDown} intensity="filled">
         Behind
       </StatusChip>
     );
   }
   return (
-    <StatusChip tone="neutral" icon="drag_handle" intensity="filled">
+    <StatusChip tone="neutral" icon={IconTrendFlat} intensity="filled">
       Even
     </StatusChip>
   );
@@ -577,7 +580,7 @@ function FinalVerdictSection({
 }) {
   return (
     <section className="space-y-2">
-      <MastHead tone="primary" icon="gavel" label="Final Verdict" />
+      <MastHead tone="primary" label="Final Verdict" />
       <div className="bg-surface-container-low border border-outline-variant">
         <div className="px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-outline-variant/40">
           <div className="space-y-2">
@@ -608,10 +611,10 @@ function FinalVerdictSection({
                 intensity={RECOMMENDATION_INTENSITY[recommendation]}
                 icon={
                   recommendation === "primary"
-                    ? "verified"
+                    ? IconVerified
                     : recommendation === "secondary"
-                      ? "thumb_up"
-                      : "block"
+                      ? IconCheck
+                      : IconBlock
                 }
               >
                 {RECOMMENDATION_LABELS[recommendation]}
@@ -645,7 +648,6 @@ function PositioningSection({
     <section className="space-y-2">
       <MastHead
         tone="secondary"
-        icon="record_voice_over"
         label="How to Position"
         meta="Recruiter-ready language"
       />

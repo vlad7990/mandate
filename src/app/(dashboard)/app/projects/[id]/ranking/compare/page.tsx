@@ -14,6 +14,11 @@ import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import { TIER_BANDS, type Tier } from "@/lib/ranking/scoring-engine";
 import { cn } from "@/lib/utils";
 import { ComparisonPicker, type PickerCandidate } from "./picker";
+import {
+  IconArrowLeft,
+  IconCompare,
+  IconIntelligence,
+} from "@/components/icons";
 
 type ProjectRow = {
   id: string;
@@ -190,7 +195,7 @@ export default async function ComparisonPage({
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Ranking
           </Link>
           <span className="text-outline-variant">/</span>
@@ -264,7 +269,7 @@ function ComparisonGrid({
     <article className="bg-surface-container border border-outline-variant p-4">
       <header className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="font-h2 text-h2 text-primary uppercase tracking-tight flex items-center gap-2">
-          <span className="material-symbols-outlined">compare_arrows</span>
+          <IconCompare size={20} />
           Strategic Benchmarking
         </h2>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
@@ -491,7 +496,7 @@ function TradeoffPanel({
     <article className="bg-surface-container border border-outline-variant p-5 space-y-4">
       <header className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="font-h2 text-h2 text-primary uppercase tracking-tight flex items-center gap-2">
-          <span className="material-symbols-outlined">psychology</span>
+          <IconIntelligence size={20} />
           AI Trade-off Analysis
         </h2>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">

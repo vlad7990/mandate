@@ -7,6 +7,7 @@ import {
   type JobSpecSections,
   type SectionKey,
 } from "@/lib/ai/job-spec-analysis";
+import { IconArrowRight, IconDiff } from "@/components/icons";
 
 // Visual diff comparison panel rendered below the spec editor. Lets
 // the recruiter pick any two versions, see the section-by-section
@@ -67,9 +68,7 @@ export function SpecDiffPanel({
     <section className="bg-surface-container-low border border-outline-variant p-4 space-y-4">
       <header className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            difference
-          </span>
+          <IconDiff size={14} />
           Version Diff
         </h3>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
@@ -186,13 +185,7 @@ function SectionsDiffView({
         return (
           <li key={def.key}>
             <div className="flex items-baseline justify-between gap-2 flex-wrap">
-              <h4 className="font-mono-label text-mono-label text-on-surface uppercase tracking-widest flex items-center gap-2">
-                <span
-                  className="material-symbols-outlined text-[14px] text-outline"
-                  aria-hidden
-                >
-                  {def.icon}
-                </span>
+              <h4 className="font-mono-label text-mono-label text-on-surface uppercase tracking-widest">
                 {def.label}
               </h4>
               <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
@@ -364,9 +357,7 @@ function DivergenceCallout({
         className="font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-colors flex items-center gap-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         Compare current vs final
-        <span className="material-symbols-outlined text-[12px]" aria-hidden>
-          arrow_forward
-        </span>
+        <IconArrowRight size={12} />
       </button>
     </div>
   );

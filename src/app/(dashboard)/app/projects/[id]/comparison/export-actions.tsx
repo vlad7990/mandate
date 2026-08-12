@@ -2,7 +2,16 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import {
+  IconClose,
+  IconCopy,
+  IconDocument,
+  IconDownload,
+  IconMail,
+  IconPrint,
+  IconRefresh,
+  IconSend,
+} from "@/components/icons";
 import {
   comparisonToEmail,
   comparisonToHtml,
@@ -86,9 +95,7 @@ export function ComparisonExportActions(props: Props) {
           onClick={handleDownloadMarkdown}
           className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            description
-          </span>
+          <IconDocument size={14} />
           Download Markdown
         </button>
         <button
@@ -96,9 +103,7 @@ export function ComparisonExportActions(props: Props) {
           onClick={handleDownloadHtml}
           className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            print
-          </span>
+          <IconPrint size={14} />
           Download HTML
         </button>
         <button
@@ -108,15 +113,11 @@ export function ComparisonExportActions(props: Props) {
           aria-busy={pdfPending ? true : undefined}
           className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span
-            className={cn(
-              "material-symbols-outlined text-[14px]",
-              pdfPending && "animate-spin"
-            )}
-            aria-hidden
-          >
-            {pdfPending ? "progress_activity" : "picture_as_pdf"}
-          </span>
+          {pdfPending ? (
+            <IconRefresh size={14} className="animate-spin" />
+          ) : (
+            <IconDownload size={14} />
+          )}
           {pdfPending ? "Building" : "Download PDF"}
         </button>
         <button
@@ -124,9 +125,7 @@ export function ComparisonExportActions(props: Props) {
           onClick={() => setEmailOpen(true)}
           className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            outgoing_mail
-          </span>
+          <IconMail size={14} />
           Draft Client Email
         </button>
       </div>
@@ -196,9 +195,7 @@ function EmailDraftDialog({
             id="comparison-email-title"
             className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              outgoing_mail
-            </span>
+            <IconMail size={14} />
             Draft Client Email · Comparative Slate
           </h3>
           <button
@@ -207,9 +204,7 @@ function EmailDraftDialog({
             aria-label="Close email draft"
             className="w-7 h-7 border border-outline-variant text-outline hover:text-error hover:border-error transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-error"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              close
-            </span>
+            <IconClose size={14} />
           </button>
         </header>
 
@@ -227,12 +222,7 @@ function EmailDraftDialog({
                 onClick={handleCopySubject}
                 className="font-mono-label text-mono-label text-primary uppercase tracking-widest hover:brightness-110 transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-2"
               >
-                <span
-                  className="material-symbols-outlined text-[12px]"
-                  aria-hidden
-                >
-                  content_copy
-                </span>
+                <IconCopy size={12} />
                 Copy
               </button>
             </div>
@@ -258,12 +248,7 @@ function EmailDraftDialog({
                 onClick={handleCopyBody}
                 className="font-mono-label text-mono-label text-primary uppercase tracking-widest hover:brightness-110 transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-2"
               >
-                <span
-                  className="material-symbols-outlined text-[12px]"
-                  aria-hidden
-                >
-                  content_copy
-                </span>
+                <IconCopy size={12} />
                 Copy
               </button>
             </div>
@@ -287,12 +272,7 @@ function EmailDraftDialog({
               onClick={handleCopyAll}
               className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <span
-                className="material-symbols-outlined text-[14px]"
-                aria-hidden
-              >
-                content_copy
-              </span>
+              <IconCopy size={14} />
               Copy Both
             </button>
             <button
@@ -300,12 +280,7 @@ function EmailDraftDialog({
               onClick={handleMailto}
               className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <span
-                className="material-symbols-outlined text-[14px]"
-                aria-hidden
-              >
-                send
-              </span>
+              <IconSend size={14} />
               Open in Mail
             </button>
           </div>

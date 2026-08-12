@@ -230,7 +230,6 @@ export default async function PortfolioAnalyticsPage() {
         <section className="space-y-2">
           <MastHead
             tone="tertiary"
-            icon="notification_important"
             label="Searches Needing Attention"
             meta={
               <span className="tabular-nums">

@@ -6,6 +6,12 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TIER_BANDS, type Tier } from "@/lib/ranking/tiers";
 import {
+  IconArrowDown,
+  IconArrowUp,
+  IconRefresh,
+  IconSend,
+} from "@/components/icons";
+import {
   HM_RATINGS,
   HM_RATING_LABELS,
   type HmRating,
@@ -268,15 +274,11 @@ export function HmFeedbackForm({
               aria-busy={pending ? true : undefined}
               className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[14px]",
-                  pending && "animate-spin"
-                )}
-                aria-hidden
-              >
-                {pending ? "progress_activity" : "send"}
-              </span>
+              {pending ? (
+                <IconRefresh size={14} className="animate-spin" />
+              ) : (
+                <IconSend size={14} />
+              )}
               {pending ? "Submitting" : "Submit Feedback"}
             </button>
           </footer>
@@ -303,9 +305,11 @@ function ReorderButton({
       aria-label={`Move ${direction}`}
       className="w-7 h-7 border border-outline-variant text-outline hover:text-primary hover:border-primary transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
     >
-      <span className="material-symbols-outlined text-[14px]" aria-hidden>
-        {direction === "up" ? "arrow_upward" : "arrow_downward"}
-      </span>
+      {direction === "up" ? (
+        <IconArrowUp size={14} />
+      ) : (
+        <IconArrowDown size={14} />
+      )}
     </button>
   );
 }

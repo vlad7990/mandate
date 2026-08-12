@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { RankChangeReason } from "./rank-change-types";
+import {
+  IconAnalytics,
+  IconArrowDown,
+  IconArrowUp,
+  IconMinus,
+} from "@/components/icons";
 
 type Movement =
   | { kind: "new" }
@@ -77,33 +83,24 @@ export function RankMovementButton({
       >
         {movement.kind === "new" && (
           <>
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              fiber_new
-            </span>
             NEW
           </>
         )}
         {movement.kind === "same" && (
           <>
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              remove
-            </span>
+            <IconMinus size={14} />
             FLAT
           </>
         )}
         {movement.kind === "up" && (
           <>
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              arrow_upward
-            </span>
+            <IconArrowUp size={14} />
             +{movement.delta}
           </>
         )}
         {movement.kind === "down" && (
           <>
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              arrow_downward
-            </span>
+            <IconArrowDown size={14} />
             −{movement.delta}
           </>
         )}
@@ -159,9 +156,7 @@ function ExplanationModal({
             id="rank-change-title"
             className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              query_stats
-            </span>
+            <IconAnalytics size={14} />
             RANK_CHANGE_EXPLAINED
           </h2>
           <button

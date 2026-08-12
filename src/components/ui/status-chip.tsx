@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import type { IconProps } from "@/components/icons";
 
 // Tonal status chip with optional leading dot. Standardises the ad-hoc
 // pattern that was reimplemented across pipeline stages, project
@@ -68,7 +69,7 @@ export function StatusChip({
   intensity = "filled",
   dot = false,
   pulse = false,
-  icon,
+  icon: Icon,
   className,
 }: {
   children: React.ReactNode;
@@ -78,8 +79,8 @@ export function StatusChip({
   dot?: boolean;
   /** Animate the dot (only valid when `dot` is true). */
   pulse?: boolean;
-  /** Material Symbols icon name; takes precedence over the dot. */
-  icon?: string;
+  /** Leading glyph; takes precedence over the dot. */
+  icon?: (props: IconProps) => React.ReactElement;
   className?: string;
 }) {
   return (
@@ -90,10 +91,8 @@ export function StatusChip({
         className
       )}
     >
-      {icon ? (
-        <span className="material-symbols-outlined text-[12px]" aria-hidden>
-          {icon}
-        </span>
+      {Icon ? (
+        <Icon size={12} className="shrink-0" />
       ) : dot ? (
         <span
           className={cn(

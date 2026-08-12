@@ -3,13 +3,22 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import type { WeeklyReport } from "@/lib/ai/weekly-report-agent";
 import {
   weeklyReportToEmail,
   weeklyReportToMarkdown,
 } from "@/lib/reports/weekly-report-export";
 import { generateWeeklyReportAction } from "./actions";
+import {
+  IconClose,
+  IconCopy,
+  IconDocument,
+  IconDownload,
+  IconMail,
+  IconRefresh,
+  IconSend,
+  IconSpark,
+} from "@/components/icons";
 
 export function GenerateReportButton({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -35,15 +44,11 @@ export function GenerateReportButton({ projectId }: { projectId: string }) {
       aria-busy={pending ? true : undefined}
       className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <span
-        className={cn(
-          "material-symbols-outlined text-[14px]",
-          pending && "animate-spin"
-        )}
-        aria-hidden
-      >
-        {pending ? "progress_activity" : "auto_awesome"}
-      </span>
+      {pending ? (
+        <IconRefresh size={14} className="animate-spin" />
+      ) : (
+        <IconSpark size={14} />
+      )}
       {pending ? "Generating" : "Generate Weekly Report"}
     </button>
   );
@@ -118,9 +123,7 @@ export function ReportExportActions(props: ReportExportProps) {
           onClick={handleCopy}
           className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            content_copy
-          </span>
+          <IconCopy size={14} />
           Copy Markdown
         </button>
         <button
@@ -128,9 +131,7 @@ export function ReportExportActions(props: ReportExportProps) {
           onClick={handleMarkdown}
           className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            description
-          </span>
+          <IconDocument size={14} />
           Download .md
         </button>
         <button
@@ -139,15 +140,11 @@ export function ReportExportActions(props: ReportExportProps) {
           disabled={pdfPending}
           className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span
-            className={cn(
-              "material-symbols-outlined text-[14px]",
-              pdfPending && "animate-spin"
-            )}
-            aria-hidden
-          >
-            {pdfPending ? "progress_activity" : "picture_as_pdf"}
-          </span>
+          {pdfPending ? (
+            <IconRefresh size={14} className="animate-spin" />
+          ) : (
+            <IconDownload size={14} />
+          )}
           {pdfPending ? "Building" : "Download PDF"}
         </button>
         <button
@@ -155,9 +152,7 @@ export function ReportExportActions(props: ReportExportProps) {
           onClick={() => setEmailOpen(true)}
           className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            outgoing_mail
-          </span>
+          <IconMail size={14} />
           Draft Client Email
         </button>
       </div>
@@ -214,9 +209,7 @@ function EmailDraftDialog({
             id="report-email-title"
             className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              outgoing_mail
-            </span>
+            <IconMail size={14} />
             Draft Client Email · Weekly Report
           </h3>
           <button
@@ -225,9 +218,7 @@ function EmailDraftDialog({
             aria-label="Close"
             className="w-7 h-7 border border-outline-variant text-outline hover:text-error hover:border-error transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-error"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              close
-            </span>
+            <IconClose size={14} />
           </button>
         </header>
         <div className="px-5 py-4 space-y-3 overflow-auto">
@@ -260,9 +251,7 @@ function EmailDraftDialog({
             onClick={() => copy(`Subject: ${subject}\n\n${body}`, "Subject + body")}
             className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              content_copy
-            </span>
+            <IconCopy size={14} />
             Copy Both
           </button>
           <button
@@ -270,9 +259,7 @@ function EmailDraftDialog({
             onClick={mailto}
             className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              send
-            </span>
+            <IconSend size={14} />
             Open in Mail
           </button>
         </footer>

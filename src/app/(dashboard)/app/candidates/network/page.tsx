@@ -47,7 +47,6 @@ export default async function NetworkPage() {
       <section className="space-y-2">
         <MastHead
           tone="primary"
-          icon="hub"
           label={
             <span className="flex items-baseline gap-2">
               <span>Talent Pool</span>

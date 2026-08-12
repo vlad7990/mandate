@@ -5,6 +5,7 @@ import { type CandidateProfile, type FitDimensions } from "@/lib/ai/cv-parsing";
 import { type CandidateEvaluation } from "@/lib/ai/candidate-evaluation";
 import { type RecruiterAssessment } from "@/lib/recruiter-assessment";
 import { HmFeedbackForm, type HmFeedbackCandidate } from "./feedback-form";
+import { IconChevronRight } from "@/components/icons";
 
 // Shared client-facing portal content. Used by:
 //   - /projects/[id]/hiring-manager (founder preview, with share-link
@@ -299,12 +300,10 @@ function CandidateCard({ candidate }: { candidate: PortalCandidate }) {
       {candidate.verdict_narrative && (
         <details className="group border-t border-outline-variant/40 pt-2">
           <summary className="font-mono-label text-mono-label text-primary uppercase tracking-widest cursor-pointer hover:brightness-110 inline-flex items-center gap-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-            <span
-              className="material-symbols-outlined text-[14px] group-open:rotate-90 transition-transform"
-              aria-hidden
-            >
-              chevron_right
-            </span>
+            <IconChevronRight
+              size={14}
+              className="group-open:rotate-90 transition-transform"
+            />
             View full assessment
           </summary>
           <p className="text-body-main text-on-surface-variant leading-relaxed mt-2">

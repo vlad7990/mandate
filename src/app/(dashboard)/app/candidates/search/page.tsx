@@ -16,6 +16,7 @@ import type {
   CandidateSearchResult,
 } from "@/lib/ai/candidate-search";
 import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { IconMandates } from "@/components/icons";
 import { MastHead } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { cn } from "@/lib/utils";
@@ -419,7 +420,6 @@ function SearchResults({
         <section className="space-y-2">
           <MastHead
             tone="primary"
-            icon="auto_awesome"
             label={
               <span className="flex items-baseline gap-2">
                 <span>Ranked Matches</span>
@@ -498,7 +498,7 @@ function SearchResults({
                             <StatusChip
                               tone="neutral"
                               intensity="soft"
-                              icon="folder_open"
+                              icon={IconMandates}
                             >
                               {projectTitle}
                             </StatusChip>

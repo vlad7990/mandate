@@ -19,7 +19,6 @@ export type SectionDef = {
   key: SectionKey;
   label: string;
   short: string;
-  icon: string;
   type: SectionType;
   blurb: string;
   /** For list-type sections, target/minimum/maximum item counts. */
@@ -32,7 +31,6 @@ export const SECTION_DEFS: SectionDef[] = [
     key: "role_overview",
     label: "Role Overview",
     short: "OVERVIEW",
-    icon: "description",
     type: "paragraphs",
     blurb: "2–3 paragraphs describing the role, its strategic context, and its scope.",
   },
@@ -40,7 +38,6 @@ export const SECTION_DEFS: SectionDef[] = [
     key: "key_responsibilities",
     label: "Key Responsibilities",
     short: "RESPONSIBILITIES",
-    icon: "task_alt",
     type: "list",
     blurb: "6–8 concrete responsibilities the operator owns end-to-end.",
     minItems: 6,
@@ -50,7 +47,6 @@ export const SECTION_DEFS: SectionDef[] = [
     key: "required_experience",
     label: "Required Experience",
     short: "EXPERIENCE",
-    icon: "work_history",
     type: "list",
     blurb: "5–6 must-have qualifications drawn directly from the recruiter's onboarding answers.",
     minItems: 5,
@@ -60,7 +56,6 @@ export const SECTION_DEFS: SectionDef[] = [
     key: "leadership_culture_fit",
     label: "Leadership & Culture Fit",
     short: "LEADERSHIP",
-    icon: "groups",
     type: "list",
     blurb: "3–4 traits and ways-of-working signals the panel will probe for.",
     minItems: 3,
@@ -70,7 +65,6 @@ export const SECTION_DEFS: SectionDef[] = [
     key: "success_metrics",
     label: "What Success Looks Like",
     short: "SUCCESS",
-    icon: "trending_up",
     type: "list",
     blurb: "3–4 measurable outcomes that define a successful first 12–18 months.",
     minItems: 3,

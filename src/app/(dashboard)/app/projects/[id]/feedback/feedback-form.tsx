@@ -10,6 +10,7 @@ import {
   type FeedbackType,
 } from "@/lib/ai/feedback-analysis";
 import { submitFeedbackAction } from "./actions";
+import { IconPencil, IconRefresh, IconSend } from "@/components/icons";
 
 export type CandidateOption = {
   id: string;
@@ -76,7 +77,7 @@ export function FeedbackForm({
     >
       <header className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">rate_review</span>
+          <IconPencil size={14} />
           Submit Feedback
         </h2>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
@@ -166,14 +167,11 @@ export function FeedbackForm({
           aria-busy={isPending ? true : undefined}
           className="px-6 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <span
-            className={cn(
-              "material-symbols-outlined text-[14px]",
-              isPending && "animate-spin"
-            )}
-          >
-            {isPending ? "progress_activity" : "send"}
-          </span>
+          {isPending ? (
+            <IconRefresh size={14} className="animate-spin" />
+          ) : (
+            <IconSend size={14} />
+          )}
           {isPending ? "Interpreting" : "Submit + Sync"}
         </button>
       </div>

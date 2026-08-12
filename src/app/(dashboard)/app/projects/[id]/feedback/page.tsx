@@ -10,6 +10,20 @@ import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import { MastHead } from "@/components/ui/mast-head";
 import { cn } from "@/lib/utils";
 import { FeedbackForm, type CandidateOption } from "./feedback-form";
+import {
+  IconAlert,
+  IconArrowLeft,
+  IconCheck,
+  IconDocument,
+  IconGroup,
+  IconIntelligence,
+  IconLeaderboard,
+  IconPencil,
+  IconRefresh,
+  IconTrendUp,
+  IconTune,
+  type IconProps,
+} from "@/components/icons";
 
 type ProjectRow = {
   id: string;
@@ -149,7 +163,7 @@ export default async function FeedbackPage({
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Mandate
           </Link>
           <span className="text-outline-variant">/</span>
@@ -183,7 +197,7 @@ export default async function FeedbackPage({
               prefetch={false}
               className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-[14px]">leaderboard</span>
+              <IconLeaderboard size={14} />
               View Rankings
             </Link>
           </div>
@@ -198,7 +212,6 @@ export default async function FeedbackPage({
         <section className="space-y-3">
           <MastHead
             tone="primary"
-            icon="history"
             label="Active Review Logs"
             meta={`${feedback.length} ${feedback.length === 1 ? "entry" : "entries"}`}
           />
@@ -258,24 +271,25 @@ function FeedbackEntry({
   // without the chips becoming louder than the body content.
   const ftypeStyles: Record<
     FeedbackType,
-    { className: string; icon: string }
+    { className: string; icon: (props: IconProps) => React.ReactElement }
   > = {
     hiring_manager: {
       className:
         "bg-primary-container/15 border-primary-container/60 text-primary",
-      icon: "supervisor_account",
+      icon: IconGroup,
     },
     interview_outcome: {
       className: "bg-tertiary/10 border-tertiary/60 text-tertiary",
-      icon: "event_note",
+      icon: IconDocument,
     },
     recruiter_note: {
       className: "bg-surface-container-high border-outline text-on-surface-variant",
-      icon: "edit_note",
+      icon: IconPencil,
     },
   };
   const ftypeStyle =
     ftypeStyles[ftype] ?? ftypeStyles.recruiter_note;
+  const FtypeIcon = ftypeStyle.icon;
 
   return (
     <li
@@ -299,9 +313,7 @@ function FeedbackEntry({
               ftypeStyle.className
             )}
           >
-            <span className="material-symbols-outlined text-[12px]">
-              {ftypeStyle.icon}
-            </span>
+            <FtypeIcon size={12} />
             {ftypeLabel}
           </span>
           {candidate ? (
@@ -315,7 +327,7 @@ function FeedbackEntry({
           )}
           {recalibrated && (
             <span className="px-2 py-0.5 border border-secondary-fixed-dim/40 bg-secondary-fixed-dim/10 text-secondary-fixed-dim font-mono-label text-mono-label uppercase tracking-wider flex items-center gap-1">
-              <span className="material-symbols-outlined text-[12px]">refresh</span>
+              <IconRefresh size={12} />
               Recalibration triggered
             </span>
           )}
@@ -334,9 +346,7 @@ function FeedbackEntry({
       {interpreted.summary && (
         <div className="border-t border-outline-variant/40 pt-3 space-y-3">
           <div className="flex items-start gap-2">
-            <span className="material-symbols-outlined text-primary text-[14px] mt-0.5">
-              psychology
-            </span>
+            <IconIntelligence size={14} className="text-primary mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
                 AI synthesis
@@ -351,19 +361,19 @@ function FeedbackEntry({
             <InterpretCard
               tone="primary"
               title="Preference shifts"
-              icon="trending_up"
+              icon={IconTrendUp}
               items={interpreted.preference_changes ?? []}
             />
             <InterpretCard
               tone="error"
               title="Bias patterns"
-              icon="report"
+              icon={IconAlert}
               items={interpreted.bias_patterns ?? []}
             />
             <InterpretCard
               tone="tertiary"
               title="Contradictions"
-              icon="rule"
+              icon={IconCheck}
               items={interpreted.contradictions ?? []}
             />
           </div>
@@ -385,9 +395,7 @@ function FeedbackEntry({
       )}
       {!interpreted.summary && !interpreted.error && (
         <div className="font-mono-label text-mono-label text-outline uppercase tracking-wider flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[12px] animate-spin">
-            progress_activity
-          </span>
+          <IconRefresh size={12} className="animate-spin" />
           Awaiting AI interpretation
         </div>
       )}
@@ -398,12 +406,12 @@ function FeedbackEntry({
 function InterpretCard({
   tone,
   title,
-  icon,
+  icon: Icon,
   items,
 }: {
   tone: "primary" | "error" | "tertiary";
   title: string;
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   items: string[];
 }) {
   const palette =
@@ -425,7 +433,7 @@ function InterpretCard({
           palette.split(" ")[1]
         )}
       >
-        <span className="material-symbols-outlined text-[12px]">{icon}</span>
+        <Icon size={12} />
         {title}
       </h4>
       {items.length === 0 ? (
@@ -464,7 +472,7 @@ function WeightAdjustmentsCard({
     >
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h4 className="font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[12px]">tune</span>
+          <IconTune size={12} />
           Weight adjustments
         </h4>
         <span

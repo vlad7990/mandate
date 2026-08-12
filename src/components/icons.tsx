@@ -15,8 +15,9 @@
  * comps), `currentColor`, and no text content to leak. Paths are taken
  * from the design comps rather than approximated.
  *
- * 425 ligature usages remain across the page-level components. Convert
- * them opportunistically; the shell is done.
+ * Ligature usages remain across the page-level components. Convert them
+ * module by module; the shell, the candidate route, the auth pages and
+ * the spec module are done.
  */
 
 export type IconProps = {
@@ -313,6 +314,302 @@ export function IconShield({ size = 16, className }: IconProps) {
   return (
     <svg {...svg(size, className)}>
       <path d="M12 3 5 6v5.5c0 4.2 2.9 7.6 7 9.5 4.1-1.9 7-5.3 7-9.5V6z" />
+    </svg>
+  );
+}
+
+export function IconArrowLeft({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M20 12H5" />
+      <path d="m11 6-6 6 6 6" />
+    </svg>
+  );
+}
+
+/** Terminal failure. Deliberately a triangle, so it never reads as IconInfo. */
+export function IconAlert({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M12 3.8 21.2 19.6H2.8z" />
+      <path d="M12 10v4M12 17h.01" />
+    </svg>
+  );
+}
+
+/** Rosette-and-check — the "approved / final" mark. */
+export function IconVerified({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="m12 2.8 2.1 2 2.9-.3.3 2.9 2 2.1-2 2.1-.3 2.9-2.9-.3-2.1 2-2.1-2-2.9.3-.3-2.9-2-2.1 2-2.1.3-2.9 2.9.3z" />
+      <path d="m9.2 9.6 2.2 2.2 3.6-4" />
+    </svg>
+  );
+}
+
+/** Two overlapping sheets — a diff between two versions. */
+export function IconDiff({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M8 3h12a1 1 0 0 1 1 1v12" />
+      <rect x="3" y="8" width="13" height="13" rx="1" />
+    </svg>
+  );
+}
+
+export function IconBuilding({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M3 21h18" />
+      <path d="M4 21V10h7" />
+      <path d="M11 21V4h9v17" />
+      <path d="M14.5 8h1.5M14.5 12h1.5M14.5 16h1.5M7 14h1M7 17.5h1" />
+    </svg>
+  );
+}
+
+export function IconHistory({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M4 12a8 8 0 1 0 2.4-5.7L3 9.5" />
+      <path d="M3 4.5V10h5.5" />
+      <path d="M12 8v4.3l3 1.8" />
+    </svg>
+  );
+}
+
+export function IconSave({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M4 5a2 2 0 0 1 2-2h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+      <path d="M8 3v5h6" />
+      <path d="M8 21v-6h8v6" />
+    </svg>
+  );
+}
+
+/** A node on a line — one committed version in a chain. */
+export function IconCommit({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M3 12h5.8M15.2 12H21" />
+    </svg>
+  );
+}
+
+// ── Movement ────────────────────────────────────────────────────────
+// These four carry information the label beside them does not, so they
+// survive where the decorative ligatures were deleted.
+
+/** A plain dash — no movement. Pairs with IconArrowUp / IconArrowDown. */
+export function IconMinus({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M6 12h12" />
+    </svg>
+  );
+}
+
+/** Vertical swap — a reordering, as against IconCompare's horizontal one. */
+export function IconSwapVert({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M8 20V5" />
+      <path d="m4 9 4-4 4 4" />
+      <path d="M16 4v15" />
+      <path d="m12 15 4 4 4-4" />
+    </svg>
+  );
+}
+
+export function IconUpload({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M12 16V5" />
+      <path d="m7.5 9.5 4.5-4.5 4.5 4.5" />
+      <path d="M5 20h14" />
+    </svg>
+  );
+}
+
+export function IconCircle({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="12" cy="12" r="8.5" />
+    </svg>
+  );
+}
+
+export function IconCheckCircle({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m8.2 12.2 2.6 2.6 5-5.6" />
+    </svg>
+  );
+}
+
+/** Sliders — adjusting weights, not the gear of IconSettings. */
+export function IconTune({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M4 7h8M17 7h3" />
+      <circle cx="14.5" cy="7" r="2.5" />
+      <path d="M4 17h3M12 17h8" />
+      <circle cx="9.5" cy="17" r="2.5" />
+    </svg>
+  );
+}
+
+export function IconShare({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="18" cy="5" r="2.6" />
+      <circle cx="6" cy="12" r="2.6" />
+      <circle cx="18" cy="19" r="2.6" />
+      <path d="m8.3 10.7 7.4-4.3M8.3 13.3l7.4 4.3" />
+    </svg>
+  );
+}
+
+export function IconLink({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M9.5 14.5a4.5 4.5 0 0 0 6.4 0l2.6-2.6a4.5 4.5 0 0 0-6.4-6.4l-1.4 1.4" />
+      <path d="M14.5 9.5a4.5 4.5 0 0 0-6.4 0l-2.6 2.6a4.5 4.5 0 0 0 6.4 6.4l1.4-1.4" />
+    </svg>
+  );
+}
+
+/** Ranked bars — a leaderboard, as against IconAnalytics' trend line. */
+export function IconLeaderboard({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M3 21h18" />
+      <rect x="4" y="12" width="4.5" height="6" />
+      <rect x="9.8" y="6" width="4.5" height="12" />
+      <rect x="15.5" y="9" width="4.5" height="9" />
+    </svg>
+  );
+}
+
+export function IconGlobe({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3.3 9.5h17.4M3.3 14.5h17.4" />
+      <path d="M12 3c-2.4 2.4-3.6 5.4-3.6 9s1.2 6.6 3.6 9c2.4-2.4 3.6-5.4 3.6-9s-1.2-6.6-3.6-9z" />
+    </svg>
+  );
+}
+
+export function IconTrendUp({ size = 12, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="m3 17 6-6 4 4 8-8" />
+      <path d="M15 7h6v6" />
+    </svg>
+  );
+}
+
+export function IconTrendDown({ size = 12, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="m3 7 6 6 4-4 8 8" />
+      <path d="M15 17h6v-6" />
+    </svg>
+  );
+}
+
+export function IconTrendFlat({ size = 12, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M3 12h14" />
+      <path d="m16 8 4 4-4 4" />
+    </svg>
+  );
+}
+
+/** Two opposing arrows — one thing measured against another. */
+export function IconCompare({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M3 9h18" />
+      <path d="m17 5 4 4-4 4" />
+      <path d="M21 17H3" />
+      <path d="m7 13-4 4 4 4" />
+    </svg>
+  );
+}
+
+export function IconArrowUp({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M12 19V5" />
+      <path d="m6 11 6-6 6 6" />
+    </svg>
+  );
+}
+
+export function IconArrowDown({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M12 5v14" />
+      <path d="m6 13 6 6 6-6" />
+    </svg>
+  );
+}
+
+export function IconSend({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M21 3 10.5 13.5" />
+      <path d="M21 3 14.5 21l-4-7.5L3 9.5z" />
+    </svg>
+  );
+}
+
+export function IconFingerprint({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M4 9.4A9 9 0 0 1 19.4 7.8" />
+      <path d="M6.5 12a5.5 5.5 0 0 1 11 0v2.5a13 13 0 0 1-.5 3.4" />
+      <path d="M9.3 12a2.7 2.7 0 0 1 5.4 0v2.6a10 10 0 0 1-.7 3.5" />
+      <path d="M12 10.6a1.4 1.4 0 0 1 1.4 1.4v3" />
+      <path d="M9.4 19.4A12 12 0 0 0 10 15.2V12" />
+    </svg>
+  );
+}
+
+/** Circle-and-slash — an exclusion, not a failure. */
+export function IconBlock({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m6 6 12 12" />
+    </svg>
+  );
+}
+
+/** Two figures — a panel or group, as against IconCandidates' single one. */
+export function IconGroup({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="9" cy="8.5" r="3" />
+      <path d="M3 19.5c0-3 2.7-4.8 6-4.8s6 1.8 6 4.8" />
+      <path d="M16 5.8a3 3 0 0 1 0 5.5" />
+      <path d="M17.6 14.8c2 .7 3.4 2.2 3.4 4.4" />
+    </svg>
+  );
+}
+
+export function IconDocument({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M13 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9z" />
+      <path d="M13 3v6h6" />
+      <path d="M8.5 13.5h7M8.5 17h5" />
     </svg>
   );
 }

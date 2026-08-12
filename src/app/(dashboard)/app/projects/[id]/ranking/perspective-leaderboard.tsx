@@ -24,6 +24,12 @@ import {
 } from "@/lib/recruiter-assessment";
 import { RankMovementButton } from "./rank-movement-button";
 import type { RankChangeReason } from "./rank-change-types";
+import {
+  IconArrowDown,
+  IconArrowUp,
+  IconMinus,
+  IconSwapVert,
+} from "@/components/icons";
 
 // ────────────────────────────────────────────────────────────────────────
 // Types
@@ -71,7 +77,6 @@ type Perspective = {
   label: string;
   short: string;
   description: string;
-  icon: string;
 };
 
 const PERSPECTIVES: Perspective[] = [
@@ -80,28 +85,24 @@ const PERSPECTIVES: Perspective[] = [
     label: "Calibrated",
     short: "CALIBRATED",
     description: "The project's saved weighted model.",
-    icon: "tune",
   },
   {
     key: "technical_first",
     label: "Technical-First",
     short: "TECHNICAL",
     description: "Technical and domain depth maxed.",
-    icon: "build",
   },
   {
     key: "low_risk",
     label: "Low-Risk",
     short: "LOW_RISK",
     description: "Regulatory + leadership maxed; gaps penalised.",
-    icon: "shield",
   },
   {
     key: "transformation",
     label: "Transformation",
     short: "XFORM",
     description: "Transformation and leadership maxed.",
-    icon: "autorenew",
   },
 ];
 
@@ -373,9 +374,6 @@ function PerspectiveTabs({
                   : "bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
               )}
             >
-              <span className="material-symbols-outlined text-[14px]" aria-hidden>
-                {p.icon}
-              </span>
               {p.short}
             </button>
           );
@@ -408,9 +406,7 @@ function MoversBanner({
   return (
     <div className="bg-secondary-fixed-dim/5 border border-secondary-fixed-dim/40 px-4 py-3 space-y-2">
       <div className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest flex items-center gap-2">
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          swap_vert
-        </span>
+        <IconSwapVert size={14} />
         Significant moves under {label} lens
       </div>
       <ul className="space-y-1">
@@ -627,9 +623,7 @@ function PerspectiveDeltaChip({
   if (calibratedRank === perspectiveRank) {
     return (
       <span className={cn(base, "text-outline")} title="Same as calibrated rank">
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          remove
-        </span>
+        <IconMinus size={14} />
         FLAT
       </span>
     );
@@ -641,18 +635,14 @@ function PerspectiveDeltaChip({
         className={cn(base, "text-secondary-fixed-dim")}
         title={`Up ${delta} vs. calibrated`}
       >
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          arrow_upward
-        </span>
+        <IconArrowUp size={14} />
         +{delta}
       </span>
     );
   }
   return (
     <span className={cn(base, "text-error")} title={`Down ${-delta} vs. calibrated`}>
-      <span className="material-symbols-outlined text-[14px]" aria-hidden>
-        arrow_downward
-      </span>
+      <IconArrowDown size={14} />
       −{-delta}
     </span>
   );

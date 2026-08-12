@@ -17,6 +17,15 @@ import {
   type LeaderboardEntry,
 } from "./perspective-leaderboard";
 import type { RankChangeReason } from "./rank-change-types";
+import {
+  IconAnalytics,
+  IconCompare,
+  IconLeaderboard,
+  IconPencil,
+  IconRefresh,
+  IconSkills,
+  IconUpload,
+} from "@/components/icons";
 
 type ProjectRow = {
   id: string;
@@ -200,9 +209,7 @@ export default async function RankingPage({
             prefetch={false}
             className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              rate_review
-            </span>
+            <IconPencil size={14} />
             Feedback
           </Link>
           <RefreshScoresButton projectId={project.id} />
@@ -211,9 +218,7 @@ export default async function RankingPage({
             prefetch={false}
             className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              compare_arrows
-            </span>
+            <IconCompare size={14} />
             Compare
           </Link>
           <Link
@@ -221,9 +226,7 @@ export default async function RankingPage({
             prefetch={false}
             className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              insights
-            </span>
+            <IconAnalytics size={14} />
             Full Comparison
           </Link>
           <Link
@@ -231,9 +234,7 @@ export default async function RankingPage({
             prefetch={false}
             className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              view_kanban
-            </span>
+            <IconSkills size={14} />
             Build Shortlist
           </Link>
         </div>
@@ -292,13 +293,7 @@ function EmptyState({
         aria-hidden
       />
       <div className="relative w-16 h-16 border border-primary-container/40 bg-primary-container/10 flex items-center justify-center">
-        <span
-          className="material-symbols-outlined text-[28px] text-primary"
-          style={{ fontVariationSettings: "'FILL' 1" }}
-          aria-hidden
-        >
-          leaderboard
-        </span>
+        <IconLeaderboard size={28} className="text-primary" />
       </div>
       <div className="relative space-y-2 max-w-md">
         <h2 className="font-h2 text-h2 text-on-surface">Nothing to rank yet</h2>
@@ -315,9 +310,7 @@ function EmptyState({
         prefetch={false}
         className="relative px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
-        <span className="material-symbols-outlined text-[16px]" aria-hidden>
-          upload_file
-        </span>
+        <IconUpload size={16} />
         Add Candidate
       </Link>
     </div>
@@ -336,7 +329,6 @@ function UnscoredSection({
     <section className="space-y-2">
       <MastHead
         tone="neutral"
-        icon="hourglass_empty"
         label="Pending Parse"
         meta={
           <span className="tabular-nums">
@@ -353,12 +345,7 @@ function UnscoredSection({
               prefetch={false}
               className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-high transition-colors focus-visible:outline-none focus-visible:bg-surface-container-high focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
             >
-              <span
-                className="material-symbols-outlined text-[16px] text-outline animate-spin"
-                aria-hidden
-              >
-                {c.cv_processing ? "progress_activity" : "hourglass_empty"}
-              </span>
+              <IconRefresh size={16} className="text-outline animate-spin" />
               <div className="flex-1 min-w-0">
                 <div className="text-on-surface text-body-main truncate">
                   {c.full_name}

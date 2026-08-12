@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { requestRegenerate } from "./actions";
+import { IconAlert, IconArrowLeft, IconRefresh } from "@/components/icons";
 
 type Props = {
   projectId: string;
@@ -56,7 +57,7 @@ export function JobSpecError({
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Mandate
           </Link>
           <span className="text-outline-variant">/</span>
@@ -69,12 +70,7 @@ export function JobSpecError({
 
         <div className="bg-surface-container-low border border-error/40 p-12 flex flex-col items-center text-center space-y-6">
           <div className="w-16 h-16 rounded-full bg-error-container/20 border border-error/40 flex items-center justify-center">
-            <span
-              className="material-symbols-outlined text-[28px] text-error"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              error
-            </span>
+            <IconAlert size={28} className="text-error" />
           </div>
 
           <div className="space-y-2 max-w-md">
@@ -104,13 +100,10 @@ export function JobSpecError({
             aria-busy={isPending ? true : undefined}
             className="px-8 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <span
-              className={`material-symbols-outlined text-[16px] ${
-                isPending ? "animate-spin" : ""
-              }`}
-            >
-              {isPending ? "progress_activity" : "refresh"}
-            </span>
+            <IconRefresh
+              size={16}
+              className={isPending ? "animate-spin" : undefined}
+            />
             {isPending ? "Retrying" : "Retry Generation"}
           </button>
         </div>

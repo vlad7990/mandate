@@ -4,6 +4,7 @@ import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { MastHead } from "@/components/ui/mast-head";
 import { LiveTick } from "@/components/ui/live-tick";
 import type { WeeklyReport } from "@/lib/ai/weekly-report-agent";
+import { IconChevronDown, IconDocument } from "@/components/icons";
 import {
   GenerateReportButton,
   ReportExportActions,
@@ -106,13 +107,7 @@ export default async function WeeklyReportsPage({
             aria-hidden
           />
           <div className="relative w-16 h-16 border border-primary-container/40 bg-primary-container/10 flex items-center justify-center">
-            <span
-              className="material-symbols-outlined text-[28px] text-primary"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-              aria-hidden
-            >
-              summarize
-            </span>
+            <IconDocument size={28} className="text-primary" />
           </div>
           <p className="text-body-main text-on-surface-variant max-w-md relative">
             The agent will pull this week&rsquo;s sourced candidates, pipeline
@@ -127,7 +122,6 @@ export default async function WeeklyReportsPage({
         <section className="space-y-2">
           <MastHead
             tone="neutral"
-            icon="archive"
             label={
               <span className="flex items-baseline gap-2">
                 <span>Archive</span>
@@ -154,12 +148,10 @@ export default async function WeeklyReportsPage({
                         <LiveTick iso={r.generated_at} label="" pulse={false} />
                       </div>
                     </div>
-                    <span
-                      className="material-symbols-outlined text-outline group-open:rotate-180 transition-transform"
-                      aria-hidden
-                    >
-                      expand_more
-                    </span>
+                    <IconChevronDown
+                      size={20}
+                      className="text-outline group-open:rotate-180 transition-transform"
+                    />
                   </summary>
                   <div className="mt-3 pt-3 border-t border-outline-variant/40 space-y-3">
                     <ReportExportActions

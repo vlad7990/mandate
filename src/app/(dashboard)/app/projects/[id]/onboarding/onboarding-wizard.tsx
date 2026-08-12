@@ -24,12 +24,27 @@ import {
   type Stakeholder,
 } from "@/lib/ai/onboarding-analysis";
 import { submitOnboarding } from "./actions";
+import {
+  IconAnalytics,
+  IconArrowLeft,
+  IconArrowRight,
+  IconBlock,
+  IconClose,
+  IconFingerprint,
+  IconGroup,
+  IconIntelligence,
+  IconNetwork,
+  IconPlus,
+  IconRefresh,
+  IconShield,
+  type IconProps,
+} from "@/components/icons";
 
 type StepDef = {
   id: 1 | 2 | 3 | 4 | 5;
   key: "origin" | "must_haves" | "anti_patterns" | "stakeholders" | "priorities";
   label: string;
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   eyebrow: string;
   title: string;
   blurb: string;
@@ -40,7 +55,7 @@ const STEPS: StepDef[] = [
     id: 1,
     key: "origin",
     label: "Origin",
-    icon: "fingerprint",
+    icon: IconFingerprint,
     eyebrow: "Calibration Step 01",
     title: "Mandate Origin",
     blurb:
@@ -50,7 +65,7 @@ const STEPS: StepDef[] = [
     id: 2,
     key: "must_haves",
     label: "Must-Haves",
-    icon: "psychology",
+    icon: IconIntelligence,
     eyebrow: "Calibration Step 02",
     title: "Non-Negotiables",
     blurb: `${MUST_HAVES_MIN}–${MUST_HAVES_MAX} requirements that a candidate must satisfy. These become hard filters in the ranking model.`,
@@ -59,7 +74,7 @@ const STEPS: StepDef[] = [
     id: 3,
     key: "anti_patterns",
     label: "Anti-Patterns",
-    icon: "block",
+    icon: IconBlock,
     eyebrow: "Calibration Step 03",
     title: "Deal-Breakers",
     blurb:
@@ -69,7 +84,7 @@ const STEPS: StepDef[] = [
     id: 4,
     key: "stakeholders",
     label: "Stakeholders",
-    icon: "groups",
+    icon: IconGroup,
     eyebrow: "Calibration Step 04",
     title: "Interview Panel & Focus",
     blurb:
@@ -79,7 +94,7 @@ const STEPS: StepDef[] = [
     id: 5,
     key: "priorities",
     label: "Priorities",
-    icon: "analytics",
+    icon: IconAnalytics,
     eyebrow: "Calibration Step 05",
     title: "Role Priority Signals",
     blurb:
@@ -163,7 +178,7 @@ export function OnboardingWizard({
             onClick={() => router.push(`/app/projects/${projectId}`)}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Mandate
           </button>
           <span className="text-outline-variant">/</span>
@@ -186,6 +201,7 @@ export function OnboardingWizard({
             {STEPS.map((s) => {
               const state =
                 s.id === step ? "active" : s.id < step ? "done" : "queued";
+              const StepIcon = s.icon;
               return (
                 <button
                   key={s.id}
@@ -204,16 +220,7 @@ export function OnboardingWizard({
                       "border-outline-variant/40 text-outline opacity-70 cursor-not-allowed"
                   )}
                 >
-                  <span
-                    className="material-symbols-outlined text-[16px]"
-                    style={
-                      state === "active"
-                        ? { fontVariationSettings: "'FILL' 1" }
-                        : undefined
-                    }
-                  >
-                    {s.icon}
-                  </span>
+                  <StepIcon size={16} className="shrink-0" />
                   <span className="truncate">{s.label}</span>
                   <span className="ml-auto font-mono-label text-[9px]">
                     {String(s.id).padStart(2, "0")}
@@ -307,7 +314,7 @@ export function OnboardingWizard({
                 onClick={() => router.push(`/app/projects/${projectId}`)}
                 className="flex items-center gap-2 text-outline font-mono-label text-mono-label uppercase tracking-widest hover:text-on-surface transition-colors"
               >
-                <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+                <IconArrowLeft size={14} />
                 Abort Sequence
               </button>
               <div className="flex gap-3">
@@ -328,7 +335,7 @@ export function OnboardingWizard({
                     className="px-8 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
                   >
                     Initiate Step {String(step + 1).padStart(2, "0")}
-                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                    <IconArrowRight size={14} />
                   </button>
                 ) : (
                   <button
@@ -340,16 +347,11 @@ export function OnboardingWizard({
                   >
                     {isPending ? (
                       <>
-                        <span className="material-symbols-outlined text-[14px] animate-spin">
-                          progress_activity
-                        </span>
+                        <IconRefresh size={14} className="animate-spin" />
                         Compiling Calibration
                       </>
                     ) : (
-                      <>
-                        Compile Calibration Model
-                        <span className="material-symbols-outlined text-[14px]">memory</span>
-                      </>
+                      "Compile Calibration Model"
                     )}
                   </button>
                 )}
@@ -462,7 +464,7 @@ function StepRepeater({
                 className="px-3 border border-outline-variant text-outline hover:text-destructive hover:border-destructive transition-colors"
                 aria-label={`Remove ${label.toLowerCase()} ${i + 1}`}
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <IconClose size={16} />
               </button>
             )}
           </div>
@@ -478,7 +480,7 @@ function StepRepeater({
             onClick={() => onChange([...values, ""])}
             className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 hover:brightness-110 transition-colors"
           >
-            <span className="material-symbols-outlined text-[14px]">add</span>
+            <IconPlus size={14} />
             Append entry
           </button>
         )}
@@ -524,7 +526,7 @@ function StepStakeholders({
                   className="text-outline hover:text-destructive transition-colors"
                   aria-label={`Remove stakeholder ${i + 1}`}
                 >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  <IconClose size={16} />
                 </button>
               )}
             </div>
@@ -577,7 +579,7 @@ function StepStakeholders({
           }
           className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 hover:brightness-110 transition-colors"
         >
-          <span className="material-symbols-outlined text-[14px]">add</span>
+          <IconPlus size={14} />
           Append stakeholder
         </button>
       )}
@@ -660,7 +662,7 @@ function StepPrioritySignals({
                   className="px-3 border border-outline-variant text-outline hover:text-destructive hover:border-destructive transition-colors"
                   aria-label={`Remove priority signal ${i + 1}`}
                 >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  <IconClose size={16} />
                 </button>
               )}
             </div>
@@ -698,7 +700,7 @@ function StepPrioritySignals({
             onClick={append}
             className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1.5 hover:brightness-110 transition-colors"
           >
-            <span className="material-symbols-outlined text-[14px]">add</span>
+            <IconPlus size={14} />
             Add Priority Signal
           </button>
         )}
@@ -718,12 +720,7 @@ function AiTuningPanel({ step }: { step: number }) {
     <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
       <div className="bg-surface-container border border-outline-variant p-5 relative overflow-hidden">
         <div className="absolute top-3 right-3 opacity-20">
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: "40px" }}
-          >
-            hub
-          </span>
+          <IconNetwork size={40} />
         </div>
         <h3 className="font-mono-label text-mono-label text-secondary-fixed uppercase tracking-widest mb-4">
           AI Tuning Logic
@@ -760,12 +757,7 @@ function AiTuningPanel({ step }: { step: number }) {
         </div>
       </div>
       <div className="border border-outline-variant p-4 flex items-start gap-3">
-        <span
-          className="material-symbols-outlined text-primary"
-          style={{ fontVariationSettings: "'FILL' 1", fontSize: "20px" }}
-        >
-          verified
-        </span>
+        <IconShield size={20} className="text-primary shrink-0" />
         <div>
           <div className="font-mono-label text-mono-label text-on-surface uppercase tracking-wider">
             Encryption Active

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { IconArrowRight } from "@/components/icons";
 
 export type AgentTileState = "idle" | "active" | "complete" | "queued";
 
@@ -13,7 +14,6 @@ type AgentTileDef = {
   key: AgentTileKey;
   name: string;
   shortLabel: string;
-  icon: string;
   description: string;
 };
 
@@ -30,28 +30,24 @@ export const AGENT_TILES: AgentTileDef[] = [
     key: "intake",
     name: "Intake Agent",
     shortLabel: "INTAKE",
-    icon: "input",
     description: "Decomposes role into structured fields.",
   },
   {
     key: "company_research",
     name: "Company Research",
     shortLabel: "RESEARCH",
-    icon: "travel_explore",
     description: "Maps industry, business model, org context.",
   },
   {
     key: "role_spec",
     name: "Role Spec",
     shortLabel: "SPEC",
-    icon: "description",
     description: "Generates the recruiter-editable job spec.",
   },
   {
     key: "calibration",
     name: "Calibration",
     shortLabel: "CALIBRATE",
-    icon: "tune",
     description: "Builds the multi-dimension scoring model.",
   },
 ];
@@ -94,17 +90,10 @@ export function AgentTiles({ states, actions }: AgentTilesProps) {
             {state === "active" && (
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary animate-pulse" />
             )}
-            <div className="flex items-center justify-between mb-3">
-              <span
-                className="material-symbols-outlined text-xl"
-                style={
-                  state === "active" || state === "complete"
-                    ? { fontVariationSettings: "'FILL' 1" }
-                    : undefined
-                }
-              >
-                {agent.icon}
-              </span>
+            {/* The tile's glyph is gone: it printed a ligature next to
+                agent.shortLabel two lines below, which already names the
+                agent. The state label keeps the row. */}
+            <div className="flex items-center justify-end mb-3">
               <span className="font-mono-label text-mono-label uppercase tracking-wider">
                 {STATE_LABEL[state]}
               </span>
@@ -156,7 +145,7 @@ function TileAction({ action }: { action: AgentTileAction }) {
       className="mt-3 pt-3 border-t border-current/20 px-3 py-2 -mx-1 font-mono-label text-mono-label uppercase tracking-widest text-current hover:bg-current/5 transition-colors flex items-center justify-between gap-2"
     >
       {action.label}
-      <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+      <IconArrowRight size={14} />
     </Link>
   );
 }

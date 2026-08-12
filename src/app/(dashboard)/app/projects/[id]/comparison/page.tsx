@@ -21,6 +21,13 @@ import { MastHead, type MastTone } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { MasterScoringTable } from "./master-table";
 import { ComparisonExportActions } from "./export-actions";
+import {
+  IconAnalytics,
+  IconGlobe,
+  IconIntelligence,
+  IconLeaderboard,
+  type IconProps,
+} from "@/components/icons";
 
 type ProjectRow = {
   id: string;
@@ -207,7 +214,6 @@ export default async function ComparisonDashboardPage({
 
           <Section
             tone="primary"
-            icon="table_chart"
             label="Master Scoring Table"
             meta={
               <span className="tabular-nums">
@@ -221,7 +227,6 @@ export default async function ComparisonDashboardPage({
 
           <Section
             tone="secondary"
-            icon="layers"
             label="Tiered Market View"
             meta={
               <span className="tabular-nums">
@@ -251,7 +256,6 @@ export default async function ComparisonDashboardPage({
 
           <Section
             tone="primary"
-            icon="recommend"
             label="Recommended Slate"
             meta={
               <span className="tabular-nums">
@@ -294,20 +298,18 @@ export default async function ComparisonDashboardPage({
 
 function Section({
   tone,
-  icon,
   label,
   meta,
   children,
 }: {
   tone: MastTone;
-  icon: string;
   label: string;
   meta?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <section className="space-y-2">
-      <MastHead tone={tone} icon={icon} label={label} meta={meta} />
+      <MastHead tone={tone} label={label} meta={meta} />
       {children}
     </section>
   );
@@ -671,13 +673,13 @@ function RealityPanel({
     <article className="grid grid-cols-1 lg:grid-cols-2 gap-3">
       <PanelBlock
         label="Market Reality"
-        icon="public"
+        icon={IconGlobe}
         tone="primary"
         body={reality}
       />
       <PanelBlock
         label="Final Partner Take"
-        icon="psychology"
+        icon={IconIntelligence}
         tone="secondary"
         body={partner}
       />
@@ -687,12 +689,12 @@ function RealityPanel({
 
 function PanelBlock({
   label,
-  icon,
+  icon: Icon,
   tone,
   body,
 }: {
   label: string;
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   tone: "primary" | "secondary";
   body: string;
 }) {
@@ -709,9 +711,7 @@ function PanelBlock({
           tone === "primary" ? "text-primary" : "text-secondary-fixed-dim"
         )}
       >
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          {icon}
-        </span>
+        <Icon size={14} />
         {label}
       </header>
       <p className="font-mono-data text-body-main text-on-surface leading-relaxed">
@@ -735,13 +735,7 @@ function EmptyState({
         aria-hidden
       />
       <div className="relative w-16 h-16 border border-primary-container/40 bg-primary-container/10 flex items-center justify-center">
-        <span
-          className="material-symbols-outlined text-[28px] text-primary"
-          style={{ fontVariationSettings: "'FILL' 1" }}
-          aria-hidden
-        >
-          insights
-        </span>
+        <IconAnalytics size={28} className="text-primary" />
       </div>
       <div className="relative space-y-2 max-w-md">
         <h2 className="font-h2 text-h2 text-on-surface">
@@ -758,9 +752,7 @@ function EmptyState({
         prefetch={false}
         className="relative px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
-        <span className="material-symbols-outlined text-[16px]" aria-hidden>
-          leaderboard
-        </span>
+        <IconLeaderboard size={16} />
         Go to Ranking
       </Link>
     </div>

@@ -29,13 +29,11 @@ const RULE_TONES: Record<MastTone, string> = {
 
 export function MastHead({
   tone = "primary",
-  icon,
   label,
   meta,
   className,
 }: {
   tone?: MastTone;
-  icon?: string;
   label: React.ReactNode;
   meta?: React.ReactNode;
   className?: string;
@@ -48,9 +46,6 @@ export function MastHead({
           CHIP_TONES[tone]
         )}
       >
-        {icon && (
-          <span className="material-symbols-outlined text-[14px]">{icon}</span>
-        )}
         {label}
       </span>
       <div className={cn("flex-1 h-px", RULE_TONES[tone])} />

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { generateHmTokenAction, revokeHmTokenAction } from "./actions";
+import { IconLink, IconRefresh, IconShare } from "@/components/icons";
 
 export type HmTokenRow = {
   id: string;
@@ -80,9 +81,7 @@ export function ShareLinkCard({
     <section className="bg-surface-container border border-outline-variant">
       <header className="px-4 py-3 border-b border-outline-variant flex items-center justify-between gap-2 flex-wrap">
         <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            share
-          </span>
+          <IconShare size={14} />
           Share with Hiring Manager
         </h2>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
@@ -112,15 +111,11 @@ export function ShareLinkCard({
             aria-busy={pending ? true : undefined}
             className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending ? "progress_activity" : "add_link"}
-            </span>
+            {pending ? (
+              <IconRefresh size={14} className="animate-spin" />
+            ) : (
+              <IconLink size={14} />
+            )}
             {pending ? "Minting" : "Generate Link"}
           </button>
         </div>

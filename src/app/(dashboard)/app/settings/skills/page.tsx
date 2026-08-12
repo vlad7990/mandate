@@ -26,26 +26,23 @@ type ProjectLite = {
 
 const SKILL_TYPE_META: Record<
   SkillType,
-  { label: string; tone: MastTone; icon: string; blurb: string }
+  { label: string; tone: MastTone; blurb: string }
 > = {
   search_skill: {
     label: "Search Skills",
     tone: "primary",
-    icon: "search",
     blurb:
       "Apply to every search the org runs — calibration, evaluation, sourcing, comparison, and feedback.",
   },
   client_skill: {
     label: "Client Skills",
     tone: "secondary",
-    icon: "domain",
     blurb:
       "Org-wide rules captured from a client's recurring preferences. Same scope as search skills today; the type tags intent.",
   },
   role_skill: {
     label: "Role Skills",
     tone: "tertiary",
-    icon: "psychology",
     blurb:
       "Targeted at one project. Only fires when an agent is invoked for that specific role.",
   },
@@ -174,7 +171,6 @@ export default async function SkillsStudioPage() {
               <section key={type} className="space-y-2">
                 <MastHead
                   tone={meta.tone}
-                  icon={meta.icon}
                   label={
                     <span className="flex items-baseline gap-2">
                       <span>{meta.label}</span>

@@ -4,8 +4,9 @@
 context reset without re-deriving anything. Paste the block in §1 into a
 fresh session and it will pick up exactly where the last one stopped.
 
-**Updated:** 2026-08-11 · `main` @ `2835366`, pushed. Working tree
-clean, in sync with `origin/main`.
+**Updated:** 2026-08-12 · `main` @ `2835366`, pushed. **Working tree is
+NOT clean** — 35 modified files from the ligature sweep are staged for a
+commit the founder has not yet approved. See §3a.
 
 **All seven app comps are now on their real routes.** What is left is
 one mechanical item (§4) and two things only the founder can do (§6).
@@ -131,6 +132,56 @@ knowing about before touching any screen:
   That is what makes an authenticated screen verifiable at all — see
   below.
 
+### 3a. Uncommitted: the ligature sweep, 2026-08-12
+
+**126 of 260 ligatures converted. 134 remain. Nothing is committed.**
+The green gate passes on the working tree as it stands: `npm test` (66),
+`npx tsc --noEmit`, `npm run lint` (2 pre-existing warnings, both the
+Material Symbols `<link>` in `layout.tsx` — they clear when the last
+ligature goes), `npm run build`.
+
+Modules converted, in the order they were done:
+
+| Module | Files | Sites |
+|---|---|---|
+| Spec | editor, empty, error, generating, diff panel | 29 |
+| Onboarding | `onboarding-wizard.tsx` | 14 |
+| Shortlist | `shortlist-builder.tsx` | 12 |
+| Shared primitives | `MastHead`, `StatusChip`, `KpiTile`, `TierComparison`, `agent-tiles` + every call site | ~30 |
+| Comparison | export-actions, master-table, page | 15 |
+| Reports | report-actions-client, page | 11 |
+| Feedback + HM | feedback page/form, HM form, portal, share-link | 15 |
+| Ranking | page, leaderboard, movement, refresh, compare page + picker | 24 |
+
+`src/components/icons.tsx` now carries **60** drawn icons, up from 31.
+All 29 new ones were rendered on a throwaway `/iconsheet-tmp` route at
+32/16/12px and read correctly at every size; the route and the
+`PUBLIC_PAGES` entry were deleted afterwards.
+
+**Three deletions worth knowing about, because they changed component
+APIs rather than swapping a glyph:**
+
+- **`MastHead` lost its `icon` prop entirely.** In all 21 call sites the
+  glyph sat immediately beside an explicit uppercase label in the same
+  chip — "Profile Summary" next to a person, "Final Verdict" next to a
+  gavel. The label was already the whole message. Removing the prop also
+  deleted `SKILL_TYPE_META.icon` and the `icon` pass-through on the local
+  `Section` wrapper in `comparison/page.tsx`.
+- **`StatusChip.icon` is now a component**, not a ligature string:
+  `icon?: (props: IconProps) => React.ReactElement`. Its glyphs carry
+  direction (ahead / behind / even), so they stayed.
+- **`SectionDef.icon`, `AgentTileDef.icon` and `Perspective.icon` are
+  gone** from `job-spec-analysis.ts`, `agent-tiles.tsx` and
+  `perspective-leaderboard.tsx` — each printed a glyph next to
+  `# OVERVIEW`, `INTAKE`, `CALIBRATED` and so on.
+
+Two glyph choices deviate from a literal translation, both commented at
+the site: `TierComparison` now draws one `IconCompare` for both the
+agree and disagree states (the two ligatures drew nearly the same thing;
+disagreement is carried by the tertiary colour), and the onboarding
+"Encryption Active" notice uses `IconShield` rather than the approval
+rosette `verified` printed.
+
 ### Visual verification: what has been seen, and what has not
 
 **No authenticated screen has been seen behind a login.** The agent has
@@ -174,23 +225,41 @@ The defects it caught, as a list of what to look for:
 
 ### Open
 
-- [ ] **260 Material Symbols ligatures** → inline SVG from
+- [ ] **134 Material Symbols ligatures left** → inline SVG from
       `src/components/icons.tsx`. Each currently puts literal text like
       `folder_open` in the DOM and depends on a blocking Google webfont.
-      Recipe: match the ligature to an existing icon, drop it entirely
-      when the label beside it already says the same thing, and delete
-      the now-unused `icon` props the components carried.
-      Fully converted so far: the app shell (including the copilot
-      panel, which rides on every screen), the EI report, every route
-      under `/app/projects/[id]` at page level, **the whole candidate
-      detail route** (page, view, seven panels and four leaf components)
-      and **both auth pages**. What remains is the other project modules
-      — spec editor (18), onboarding wizard (14), shortlist builder (12),
-      comparison export (10), report actions (9), feedback (8), ranking
-      (7) and a long tail. `src/components/icons.tsx` now carries 31
-      drawn icons; most ligatures map to one that already exists.
-      Mechanical and safe — good work when context is short, and the one
-      remaining item on this list.
+      Recipe unchanged: match the ligature to an existing icon, drop it
+      entirely when the label beside it already says the same thing, and
+      delete the now-unused `icon` props the components carried. With 60
+      drawn icons in place, nearly every remaining ligature maps to one
+      that already exists.
+
+      Already done: app shell + copilot panel, EI report, every
+      `/app/projects/[id]` route at page level, the candidate detail
+      route, both auth pages (all committed) — plus spec, onboarding,
+      shortlist, shared primitives, comparison, reports, feedback + HM
+      and ranking (**uncommitted, see §3a**).
+
+      What is left, largest first:
+
+      | Module | Sites |
+      |---|---|
+      | EI success-profile (editor 8, error 3, empty 3, generating 2) | 16 |
+      | EI interview-plan (editor 6, gate 3, error 3, empty 3, generating 1) | 16 |
+      | Settings (page 6, skills page 4, skill-form 4, skill-row 3, user-actions 2, waitlist 1) | 20 |
+      | Sourcing (editor 6, strategy 5, empty 3, version-history 3) | 17 |
+      | Projects misc (candidates page 6, upload-form 4, metrics 4, new 3, restore-button 1) | 18 |
+      | Candidates top-level (search 5, add-to-search 4, network-table 2) | 11 |
+      | EI assessment (editor 4, gate 3, empty 3) | 10 |
+      | EI index pages (searches 3, page 3, new 2+2, templates 2, link-controls 2, competencies 1) | 15 |
+      | Long tail (analytics 3, hm/[token] 1, auth/pending 1, company-context-controls 1) | 6 |
+
+      **The last two steps, once the count reaches zero:** delete the
+      Material Symbols `<link>` in `src/app/layout.tsx` (line ~101 — it
+      is the sole cause of the two standing lint warnings) and drop the
+      `.material-symbols-outlined` rule in `src/app/globals.css`. Do not
+      do either before the count is zero; the remaining ligatures would
+      render as raw words.
 
 ### Done 2026-08-11 — details in §3
 
@@ -246,6 +315,10 @@ The defects it caught, as a list of what to look for:
   dark accent at `:root` and inherits down as a fixed colour. A scoped
   theme override has to set both. The `@theme inline` aliases
   (`--color-on-surface` → `var(--fg)`) do not have this problem.
+- **A `_`-prefixed folder under `src/app/` is not a route.** Next.js
+  treats it as a private folder. The throwaway verification route has to
+  be named something like `iconsheet-tmp`, not `__iconsheet`, or it 404s
+  after a clean build and looks like a proxy problem.
 - **`redirects()` in `next.config.ts`**: the `/executive-intelligence`
   entry uses `:path+` not `:path*` on purpose — the bare path is the
   marketing page. Do not "tidy" that asymmetry.

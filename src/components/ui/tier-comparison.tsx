@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { TIER_BANDS, type Tier } from "@/lib/ranking/tiers";
+import { IconCompare } from "@/components/icons";
 
 // Compact "AI tier vs Recruiter tier" widget used on the candidate
 // profile hero, ranking page rows, shortlist builder, and the project
@@ -33,15 +34,13 @@ export function TierComparison({
       title={disagree ? "AI and recruiter disagree" : "AI vs recruiter tier"}
     >
       <TierBadge label="AI" tier={aiTier} compact={compact} />
-      <span
-        className={cn(
-          "material-symbols-outlined text-[14px]",
-          disagree ? "text-tertiary" : "text-outline"
-        )}
-        aria-hidden
-      >
-        {disagree ? "swap_horiz" : "compare_arrows"}
-      </span>
+      {/* One glyph for both states. `swap_horiz` and `compare_arrows`
+          drew nearly the same thing; disagreement is already carried by
+          the tertiary colour and the title attribute. */}
+      <IconCompare
+        size={14}
+        className={disagree ? "text-tertiary" : "text-outline"}
+      />
       <TierBadge label="REC" tier={recruiterTier} compact={compact} />
     </div>
   );

@@ -11,6 +11,19 @@ import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { TierComparison } from "@/components/ui/tier-comparison";
 import type { Tier } from "@/lib/ranking/tiers";
 import {
+  IconArrowDown,
+  IconArrowRight,
+  IconArrowUp,
+  IconClose,
+  IconCopy,
+  IconDocument,
+  IconPlus,
+  IconRefresh,
+  IconSave,
+  IconSend,
+  IconSpark,
+} from "@/components/icons";
+import {
   type Archetype,
   type FitDimensions,
   type PipelineStage,
@@ -283,15 +296,11 @@ export function ShortlistBuilder({
               aria-busy={reportPending ? true : undefined}
               className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[14px]",
-                  reportPending && "animate-spin"
-                )}
-                aria-hidden
-              >
-                {reportPending ? "progress_activity" : "auto_awesome"}
-              </span>
+              {reportPending ? (
+                <IconRefresh size={14} className="animate-spin" />
+              ) : (
+                <IconSpark size={14} />
+              )}
               {reportPending ? "Generating" : report ? "Regenerate Report" : "Generate Report"}
             </button>
             <button
@@ -303,15 +312,11 @@ export function ShortlistBuilder({
               aria-busy={submitPending ? true : undefined}
               className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[14px]",
-                  submitPending && "animate-spin"
-                )}
-                aria-hidden
-              >
-                {submitPending ? "progress_activity" : "send"}
-              </span>
+              {submitPending ? (
+                <IconRefresh size={14} className="animate-spin" />
+              ) : (
+                <IconSend size={14} />
+              )}
               {submitPending
                 ? "Submitting"
                 : submittedAt
@@ -427,7 +432,6 @@ export function ShortlistBuilder({
             <div className="bg-surface-container-low border border-outline-variant p-4 flex flex-col gap-3 min-h-[400px]">
               <MastHead
                 tone="secondary"
-                icon="view_kanban"
                 label={
                   <span className="flex items-baseline gap-2 tabular-nums">
                     Final Shortlist
@@ -483,7 +487,6 @@ export function ShortlistBuilder({
             <div className="bg-surface-container border border-outline-variant p-4 mt-3 space-y-3">
               <MastHead
                 tone="primary"
-                icon="edit_note"
                 label="Submission Narrative"
                 meta={`${wordCount} words`}
               />
@@ -511,14 +514,11 @@ export function ShortlistBuilder({
                     aria-busy={narrativePending ? true : undefined}
                     className="font-mono-label text-mono-label text-primary uppercase tracking-widest hover:brightness-110 transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <span
-                      className={cn(
-                        "material-symbols-outlined text-[14px]",
-                        narrativePending && "animate-spin"
-                      )}
-                    >
-                      {narrativePending ? "progress_activity" : "save"}
-                    </span>
+                    {narrativePending ? (
+                      <IconRefresh size={14} className="animate-spin" />
+                    ) : (
+                      <IconSave size={14} />
+                    )}
                     {narrativePending ? "Saving" : "Save Draft"}
                   </button>
                 </div>
@@ -624,9 +624,7 @@ function PoolCard({
           </div>
           <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
             Add
-            <span className="material-symbols-outlined text-[12px]" aria-hidden>
-              add
-            </span>
+            <IconPlus size={12} />
           </span>
         </div>
       </button>
@@ -641,9 +639,7 @@ function EmptySlot({ index }: { index: number }) {
       role="presentation"
     >
       <div className="w-12 h-12 border border-outline-variant flex items-center justify-center mb-4">
-        <span className="material-symbols-outlined text-outline" aria-hidden>
-          add
-        </span>
+        <IconPlus size={20} className="text-outline" />
       </div>
       <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
         Assign Candidate
@@ -704,9 +700,7 @@ function SlateCard({
                 aria-label={`Move ${candidate.full_name} up`}
                 className="w-7 h-7 text-outline hover:text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
               >
-                <span className="material-symbols-outlined text-[14px]" aria-hidden>
-                  arrow_upward
-                </span>
+                <IconArrowUp size={14} />
               </button>
               <button
                 type="button"
@@ -715,9 +709,7 @@ function SlateCard({
                 aria-label={`Move ${candidate.full_name} down`}
                 className="w-7 h-7 text-outline hover:text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
               >
-                <span className="material-symbols-outlined text-[14px]" aria-hidden>
-                  arrow_downward
-                </span>
+                <IconArrowDown size={14} />
               </button>
               <button
                 type="button"
@@ -726,9 +718,7 @@ function SlateCard({
                 aria-label={`Remove ${candidate.full_name} from slate`}
                 className="w-7 h-7 text-outline hover:text-error hover:bg-error/10 transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-error"
               >
-                <span className="material-symbols-outlined text-[14px]" aria-hidden>
-                  close
-                </span>
+                <IconClose size={14} />
               </button>
             </div>
           </div>
@@ -824,9 +814,7 @@ function SlateCard({
           className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-1 hover:brightness-110 transition-colors focus-visible:outline-none focus-visible:underline"
         >
           View profile
-          <span className="material-symbols-outlined text-[12px]" aria-hidden>
-            arrow_forward
-          </span>
+          <IconArrowRight size={12} />
         </Link>
       </div>
     </article>
@@ -854,7 +842,7 @@ function ReportPreview({
       <header className="px-6 pt-6 pb-4 border-b border-outline-variant/60 flex items-start justify-between gap-3 flex-wrap">
         <div className="space-y-2 min-w-0">
           <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]">description</span>
+            <IconDocument size={14} />
             Submission Document
           </div>
           <h2 className="font-h1 text-h1 text-on-surface tracking-tight">
@@ -869,7 +857,7 @@ function ReportPreview({
           onClick={onCopy}
           className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shrink-0"
         >
-          <span className="material-symbols-outlined text-[14px]">content_copy</span>
+          <IconCopy size={14} />
           Copy Report
         </button>
       </header>
@@ -890,7 +878,6 @@ function ReportPreview({
           <MastHead
             tone="neutral"
             label="Slate rationale"
-            icon="layers"
           />
           <p className="text-body-main text-on-surface-variant leading-relaxed">
             {report.slate_rationale}
@@ -900,7 +887,6 @@ function ReportPreview({
         <section className="space-y-3">
           <MastHead
             tone="primary"
-            icon="groups"
             label="Candidate briefs"
             meta={`${report.candidates.length} brief${report.candidates.length === 1 ? "" : "s"}`}
           />
@@ -915,7 +901,6 @@ function ReportPreview({
           <section className="space-y-3">
             <MastHead
               tone="tertiary"
-              icon="alt_route"
               label="Scenarios"
               meta={`${report.scenarios.length} trade-off${report.scenarios.length === 1 ? "" : "s"}`}
             />
@@ -938,12 +923,10 @@ function ReportPreview({
         )}
 
         <section className="bg-secondary-fixed-dim/5 border border-secondary-fixed-dim/40 px-4 py-3 flex items-start gap-3">
-          <span
-            className="material-symbols-outlined text-[18px] text-secondary-fixed-dim mt-0.5"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            arrow_forward
-          </span>
+          <IconArrowRight
+            size={18}
+            className="text-secondary-fixed-dim mt-0.5 shrink-0"
+          />
           <div className="min-w-0">
             <div className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest">
               Recommended next step
