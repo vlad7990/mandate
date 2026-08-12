@@ -17,6 +17,17 @@ import {
 } from "@/lib/executive/types";
 import { formatTimestampUtc } from "@/lib/executive/format";
 import {
+  IconArrowLeft,
+  IconBalance,
+  IconBlock,
+  IconCheckCircle,
+  IconIntelligence,
+  IconPlus,
+  IconSave,
+  IconVerified,
+  type IconProps,
+} from "@/components/icons";
+import {
   approveInterviewPlan,
   createInterviewPlanNewVersion,
   requestInterviewPlanGeneration,
@@ -162,7 +173,7 @@ export function PlanEditor({
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Candidates
           </Link>
           <span className="text-outline-variant">/</span>
@@ -203,9 +214,7 @@ export function PlanEditor({
             )}
           </p>
           <div className="border border-outline-variant bg-surface-container-lowest px-4 py-2.5 flex items-start gap-2">
-            <span className="material-symbols-outlined text-[16px] text-primary mt-0.5">
-              balance
-            </span>
+            <IconBalance size={16} className="text-primary mt-0.5 shrink-0" />
             <p className="text-body-main text-on-surface-variant">
               {DECISION_SUPPORT_DISCLAIMER} This plan structures how to gather
               evidence; it does not evaluate the candidate or recommend a decision.
@@ -344,10 +353,7 @@ export function PlanEditor({
 
                 {STAGE_LIST_FIELDS.map((f) => (
                   <label key={f.key} className="block space-y-1">
-                    <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[13px]">
-                        {f.icon}
-                      </span>
+                    <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
                       {f.label}
                     </span>
                     <textarea
@@ -385,13 +391,13 @@ export function PlanEditor({
               {isDraft && (
                 <>
                   <RailButton
-                    icon="save"
+                    icon={IconSave}
                     label={isDirty ? "Save Draft *" : "Save Draft"}
                     onClick={handleSave}
                     disabled={isPending || !isDirty}
                   />
                   <RailButton
-                    icon="verified_user"
+                    icon={IconVerified}
                     label="Approve Version"
                     onClick={handleApprove}
                     disabled={isPending}
@@ -400,13 +406,13 @@ export function PlanEditor({
                 </>
               )}
               <RailButton
-                icon="library_add"
+                icon={IconPlus}
                 label="Snapshot New Version"
                 onClick={handleNewVersion}
                 disabled={isPending}
               />
               <RailButton
-                icon="neurology"
+                icon={IconIntelligence}
                 label="Regenerate (AI)"
                 onClick={handleRegenerate}
                 disabled={isPending || activeGeneration != null}
@@ -421,9 +427,10 @@ export function PlanEditor({
               <div className="space-y-1">
                 {covered.map((c) => (
                   <div key={c.competency_key} className="flex items-start gap-1.5">
-                    <span className="material-symbols-outlined text-[15px] text-primary mt-0.5">
-                      check_circle
-                    </span>
+                    <IconCheckCircle
+                      size={15}
+                      className="text-primary mt-0.5 shrink-0"
+                    />
                     <div className="min-w-0">
                       <p className="text-body-main text-on-surface truncate">
                         {c.competency_name}
@@ -443,9 +450,7 @@ export function PlanEditor({
                   </span>
                   {uncovered.map((c) => (
                     <div key={c.competency_key} className="flex items-start gap-1.5">
-                      <span className="material-symbols-outlined text-[15px] text-error mt-0.5">
-                        cancel
-                      </span>
+                      <IconBlock size={15} className="text-error mt-0.5 shrink-0" />
                       <p className="text-body-main text-on-surface-variant">
                         {c.competency_name}{" "}
                         <span className="text-outline">(w{c.weight})</span>
@@ -505,13 +510,13 @@ export function PlanEditor({
 }
 
 function RailButton({
-  icon,
+  icon: Icon,
   label,
   onClick,
   disabled,
   emphasis = false,
 }: {
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   label: string;
   onClick: () => void;
   disabled: boolean;
@@ -528,7 +533,7 @@ function RailButton({
           : "border border-outline-variant text-on-surface-variant hover:bg-surface-container"
       }`}
     >
-      <span className="material-symbols-outlined text-[16px]">{icon}</span>
+      <Icon size={16} />
       {label}
     </button>
   );

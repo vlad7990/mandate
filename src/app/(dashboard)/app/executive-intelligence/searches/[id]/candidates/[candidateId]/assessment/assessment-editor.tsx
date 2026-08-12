@@ -21,6 +21,14 @@ import {
 } from "@/lib/executive/assessment-scoring";
 import { formatTimestampUtc } from "@/lib/executive/format";
 import {
+  IconArrowLeft,
+  IconBalance,
+  IconPlus,
+  IconSave,
+  IconVerified,
+  type IconProps,
+} from "@/components/icons";
+import {
   approveAssessment,
   createAssessmentNewVersion,
   saveAssessmentDraft,
@@ -183,7 +191,7 @@ export function AssessmentEditor({
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Candidates
           </Link>
           <span className="text-outline-variant">/</span>
@@ -223,9 +231,7 @@ export function AssessmentEditor({
             )}
           </p>
           <div className="border border-outline-variant bg-surface-container-lowest px-4 py-2.5 flex items-start gap-2">
-            <span className="material-symbols-outlined text-[16px] text-primary mt-0.5">
-              balance
-            </span>
+            <IconBalance size={16} className="text-primary mt-0.5 shrink-0" />
             <p className="text-body-main text-on-surface-variant">
               {ASSESSMENT_DISCLAIMER}
             </p>
@@ -350,7 +356,6 @@ export function AssessmentEditor({
 
                   <label className="block space-y-1">
                     <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[13px]">notes</span>
                       Observed Evidence
                     </span>
                     <textarea
@@ -382,13 +387,13 @@ export function AssessmentEditor({
               {isDraft && (
                 <>
                   <RailButton
-                    icon="save"
+                    icon={IconSave}
                     label={isDirty ? "Save Draft *" : "Save Draft"}
                     onClick={handleSave}
                     disabled={isPending || !isDirty}
                   />
                   <RailButton
-                    icon="verified_user"
+                    icon={IconVerified}
                     label="Approve Version"
                     onClick={handleApprove}
                     disabled={isPending}
@@ -397,7 +402,7 @@ export function AssessmentEditor({
                 </>
               )}
               <RailButton
-                icon="library_add"
+                icon={IconPlus}
                 label="Snapshot New Version"
                 onClick={handleNewVersion}
                 disabled={isPending}
@@ -483,13 +488,13 @@ export function AssessmentEditor({
 }
 
 function RailButton({
-  icon,
+  icon: Icon,
   label,
   onClick,
   disabled,
   emphasis = false,
 }: {
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   label: string;
   onClick: () => void;
   disabled: boolean;
@@ -506,7 +511,7 @@ function RailButton({
           : "border border-outline-variant text-on-surface-variant hover:bg-surface-container"
       }`}
     >
-      <span className="material-symbols-outlined text-[16px]">{icon}</span>
+      <Icon size={16} />
       {label}
     </button>
   );

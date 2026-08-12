@@ -19,6 +19,15 @@ import { KpiTile } from "@/components/ui/kpi-tile";
 import { LiveTick } from "@/components/ui/live-tick";
 import { MastHead } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
+import {
+  IconAnalytics,
+  IconChevronRight,
+  IconFilter,
+  IconTrendDown,
+  IconTrendFlat,
+  IconTrendUp,
+  type IconProps,
+} from "@/components/icons";
 
 type CandidateLite = {
   pipeline_stage: string | null;
@@ -172,7 +181,7 @@ export default async function PortfolioAnalyticsPage() {
 
       <ChartCard
         title="Candidates by Pipeline Stage"
-        icon="filter_alt"
+        icon={IconFilter}
         subtitle={`${candidates.length} total`}
       >
         <MandateHorizontalBarChart data={pipelineData} className="h-[320px]" />
@@ -181,7 +190,7 @@ export default async function PortfolioAnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartCard
           title="Projects by Health Status"
-          icon="monitor_heart"
+          icon={IconAnalytics}
           subtitle={`${metrics.totalProjects} mandate${metrics.totalProjects === 1 ? "" : "s"}`}
         >
           <MandateHorizontalBarChart data={healthData} className="h-[200px]" />
@@ -189,7 +198,7 @@ export default async function PortfolioAnalyticsPage() {
 
         <ChartCard
           title="Weekly Velocity"
-          icon="trending_up"
+          icon={IconTrendUp}
           subtitle="last 8 weeks · candidates added per week"
           headerExtra={
             <span
@@ -202,16 +211,13 @@ export default async function PortfolioAnalyticsPage() {
                     : "text-outline")
               }
             >
-              <span
-                className="material-symbols-outlined text-[12px]"
-                aria-hidden
-              >
-                {weeklyDelta > 0
-                  ? "trending_up"
-                  : weeklyDelta < 0
-                    ? "trending_down"
-                    : "trending_flat"}
-              </span>
+              {weeklyDelta > 0 ? (
+                <IconTrendUp size={12} />
+              ) : weeklyDelta < 0 ? (
+                <IconTrendDown size={12} />
+              ) : (
+                <IconTrendFlat size={12} />
+              )}
               {weeklyDelta > 0 ? "+" : ""}
               {weeklyDelta} vs prev
             </span>
@@ -264,12 +270,10 @@ export default async function PortfolioAnalyticsPage() {
                     {String(row.alerts.length).padStart(2, "0")} alert
                     {row.alerts.length === 1 ? "" : "s"}
                   </span>
-                  <span
-                    className="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors shrink-0"
-                    aria-hidden
-                  >
-                    chevron_right
-                  </span>
+                  <IconChevronRight
+                    size={18}
+                    className="text-outline group-hover:text-primary transition-colors shrink-0"
+                  />
                 </Link>
               </li>
             ))}
@@ -304,13 +308,13 @@ function bucketByWeek(
 
 function ChartCard({
   title,
-  icon,
+  icon: Icon,
   subtitle,
   headerExtra,
   children,
 }: {
   title: string;
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   subtitle?: string;
   headerExtra?: React.ReactNode;
   children: React.ReactNode;
@@ -319,9 +323,7 @@ function ChartCard({
     <article className="bg-surface-container-low border border-outline-variant">
       <header className="px-4 py-2.5 border-b border-outline-variant bg-surface-container flex items-center justify-between gap-3 flex-wrap">
         <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            {icon}
-          </span>
+          <Icon size={14} />
           {title}
         </h2>
         <div className="flex items-center gap-3">

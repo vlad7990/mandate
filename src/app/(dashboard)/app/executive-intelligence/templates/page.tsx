@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import type { ExecutiveRoleTemplateRow } from "@/lib/executive/types";
+import {
+  IconArrowLeft,
+  IconArrowRight,
+} from "@/components/icons";
 
 type TemplateListRow = Pick<
   ExecutiveRoleTemplateRow,
@@ -25,7 +29,7 @@ export default async function ExecutiveTemplatesPage() {
             href="/app/executive-intelligence"
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Executive Intelligence
           </Link>
           <span className="text-outline-variant">/</span>
@@ -82,7 +86,7 @@ export default async function ExecutiveTemplatesPage() {
                     className="bg-primary-container text-on-primary-container px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5"
                   >
                     Use Template
-                    <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
+                    <IconArrowRight size={15} />
                   </Link>
                 </div>
               </div>

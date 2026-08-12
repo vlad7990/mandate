@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import {
+  IconClock,
+} from "@/components/icons";
 
 export default async function PendingPage() {
   const supabase = await createServerSupabaseClient();
@@ -65,12 +68,7 @@ export default async function PendingPage() {
           <div className="absolute -top-px left-0 w-full h-px bg-gradient-to-r from-transparent via-tertiary to-transparent opacity-50" />
 
           <div className="inline-flex items-center px-2 py-1 bg-tertiary/10 border border-tertiary/20 rounded mb-6">
-            <span
-              className="material-symbols-outlined text-tertiary text-[14px] mr-2"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              hourglass_top
-            </span>
+            <IconClock size={14} className="text-tertiary mr-2 inline-block" />
             <span className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest">
               Provisioning In Review
             </span>

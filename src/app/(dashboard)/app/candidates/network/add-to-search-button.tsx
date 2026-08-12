@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { addPersonToProjectAction } from "./actions";
+import {
+  IconArrowRight,
+  IconClose,
+  IconRefresh,
+  IconUserPlus,
+} from "@/components/icons";
 import type {
   NetworkPerson,
   NetworkProject,
@@ -39,9 +45,7 @@ export function AddToSearchButton({
             : "border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary"
         )}
       >
-        <span className="material-symbols-outlined text-[14px]" aria-hidden>
-          person_add
-        </span>
+        <IconUserPlus size={14} />
         Add to Search
       </button>
       {open && (
@@ -128,9 +132,7 @@ function AddToSearchModal({
             id="add-to-search-title"
             className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              person_add
-            </span>
+            <IconUserPlus size={14} />
             Add {person.full_name} to Search
           </h3>
           <button
@@ -139,9 +141,7 @@ function AddToSearchModal({
             aria-label="Close"
             className="w-7 h-7 border border-outline-variant text-outline hover:text-error hover:border-error transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-error"
           >
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              close
-            </span>
+            <IconClose size={14} />
           </button>
         </header>
 
@@ -185,15 +185,14 @@ function AddToSearchModal({
                       {p.company_name}
                     </div>
                   </div>
-                  <span
-                    className={cn(
-                      "material-symbols-outlined text-primary text-[18px] shrink-0",
-                      pending && "animate-spin"
-                    )}
-                    aria-hidden
-                  >
-                    {pending ? "progress_activity" : "arrow_forward"}
-                  </span>
+                  {pending ? (
+                    <IconRefresh
+                      size={18}
+                      className="text-primary shrink-0 animate-spin"
+                    />
+                  ) : (
+                    <IconArrowRight size={18} className="text-primary shrink-0" />
+                  )}
                 </button>
               </li>
             ))

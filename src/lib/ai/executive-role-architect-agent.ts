@@ -71,65 +71,54 @@ export const EMPTY_SUCCESS_PROFILE: SuccessProfileContent = {
 
 /** Editor metadata: label + rendering shape per section, in display order. */
 export const PROFILE_TEXT_SECTIONS = [
-  { key: "role_mission", label: "Role Mission", icon: "flag" },
-  { key: "strategic_mandate", label: "Strategic Mandate", icon: "target" },
+  { key: "role_mission", label: "Role Mission" },
+  { key: "strategic_mandate", label: "Strategic Mandate" },
   {
     key: "required_scale_of_responsibility",
     label: "Required Scale of Responsibility",
-    icon: "monitoring",
   },
   {
     key: "required_transformation_experience",
     label: "Required Transformation Experience",
-    icon: "cyclone",
   },
   {
     key: "stakeholder_and_board_requirements",
     label: "Stakeholder & Board Requirements",
-    icon: "diversity_3",
   },
 ] as const satisfies ReadonlyArray<{
   key: keyof SuccessProfileContent;
   label: string;
-  icon: string;
 }>;
 
 export const PROFILE_LIST_SECTIONS = [
   {
     key: "first_year_priorities",
     label: "First-Year Priorities",
-    icon: "calendar_month",
   },
   {
     key: "required_leadership_capabilities",
     label: "Required Leadership Capabilities",
-    icon: "supervisor_account",
   },
   {
     key: "required_functional_capabilities",
     label: "Required Functional Capabilities",
-    icon: "construction",
   },
   {
     key: "required_operating_experience",
     label: "Required Operating Experience",
-    icon: "factory",
   },
   {
     key: "potential_derailers",
     label: "Potential Derailers",
-    icon: "warning",
   },
-  { key: "acceptable_gaps", label: "Acceptable Gaps", icon: "check_circle" },
+  { key: "acceptable_gaps", label: "Acceptable Gaps" },
   {
     key: "non_negotiable_gaps",
     label: "Non-Negotiable Gaps",
-    icon: "block",
   },
 ] as const satisfies ReadonlyArray<{
   key: keyof SuccessProfileContent;
   label: string;
-  icon: string;
 }>;
 
 function asString(v: unknown): string {

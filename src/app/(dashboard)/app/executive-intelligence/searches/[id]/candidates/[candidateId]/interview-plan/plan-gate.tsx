@@ -1,4 +1,9 @@
 import Link from "next/link";
+import {
+  IconArrowLeft,
+  IconLock,
+  IconTarget,
+} from "@/components/icons";
 
 /**
  * Shown when an interview plan can't be generated yet because the search has
@@ -20,7 +25,7 @@ export function PlanGate({
             href={`/app/executive-intelligence/searches/${searchId}/candidates`}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Candidates
           </Link>
           <span className="text-outline-variant">/</span>
@@ -31,9 +36,7 @@ export function PlanGate({
 
         <div className="bg-surface-container-low border border-outline-variant p-12 flex flex-col items-center text-center space-y-6">
           <div className="w-16 h-16 rounded-full bg-surface-container-highest/40 border border-outline-variant flex items-center justify-center">
-            <span className="material-symbols-outlined text-[28px] text-outline">
-              lock
-            </span>
+            <IconLock size={28} className="text-outline" />
           </div>
           <div className="space-y-2 max-w-md">
             <h1 className="font-h1 text-h1">Approve a Success Profile first</h1>
@@ -49,7 +52,7 @@ export function PlanGate({
             href={`/app/executive-intelligence/searches/${searchId}/success-profile`}
             className="px-8 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[16px]">architecture</span>
+            <IconTarget size={16} />
             Go to Success Profile
           </Link>
         </div>

@@ -58,24 +58,21 @@ export const STAGE_TEXT_FIELDS = [
 }>;
 
 export const STAGE_LIST_FIELDS = [
-  { key: "core_questions", label: "Core Questions", icon: "quiz" },
-  { key: "follow_up_questions", label: "Follow-Up Questions", icon: "forum" },
+  { key: "core_questions", label: "Core Questions" },
+  { key: "follow_up_questions", label: "Follow-Up Questions" },
   {
     key: "candidate_specific_questions",
     label: "Candidate-Specific Validation",
-    icon: "person_check",
   },
-  { key: "evidence_to_listen_for", label: "Evidence to Listen For", icon: "hearing" },
+  { key: "evidence_to_listen_for", label: "Evidence to Listen For" },
   {
     key: "weak_answer_indicators",
     label: "Weak-Answer Indicators",
-    icon: "trending_down",
   },
-  { key: "red_flags", label: "Red Flags", icon: "flag" },
+  { key: "red_flags", label: "Red Flags" },
 ] as const satisfies ReadonlyArray<{
   key: keyof InterviewStage;
   label: string;
-  icon: string;
 }>;
 
 function asString(v: unknown): string {

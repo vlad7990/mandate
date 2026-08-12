@@ -16,7 +16,13 @@ import type {
   CandidateSearchResult,
 } from "@/lib/ai/candidate-search";
 import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
-import { IconMandates } from "@/components/icons";
+import {
+  IconChevronRight,
+  IconFilter,
+  IconIntelligence,
+  IconMandates,
+  IconSearch,
+} from "@/components/icons";
 import { MastHead } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { cn } from "@/lib/utils";
@@ -249,12 +255,7 @@ function SearchForm({
       className="space-y-3 bg-surface-container-low border border-outline-variant p-4"
     >
       <div className="flex items-center gap-2">
-        <span
-          className="material-symbols-outlined text-primary text-[20px]"
-          aria-hidden
-        >
-          search
-        </span>
+        <IconSearch size={20} className="text-primary shrink-0" />
         <input
           name="q"
           type="search"
@@ -267,9 +268,7 @@ function SearchForm({
           type="submit"
           className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            bolt
-          </span>
+          <IconSearch size={14} />
           Search
         </button>
       </div>
@@ -383,9 +382,7 @@ function SearchResults({
         />
         <div className="relative p-4 space-y-3">
           <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px]" aria-hidden>
-              filter_alt
-            </span>
+            <IconFilter size={14} />
             Parsed Criteria
           </div>
           <p className="text-body-main text-on-surface">
@@ -520,12 +517,10 @@ function SearchResults({
                           {m.reasoning}
                         </p>
                       </div>
-                      <span
-                        className="material-symbols-outlined text-outline self-center shrink-0"
-                        aria-hidden
-                      >
-                        chevron_right
-                      </span>
+                      <IconChevronRight
+                        size={20}
+                        className="text-outline self-center shrink-0"
+                      />
                     </div>
                   </Link>
                 </li>
@@ -587,13 +582,7 @@ function EmptyState() {
   return (
     <div className="bg-surface-container-low border border-outline-variant px-8 py-12 text-center space-y-4">
       <div className="w-14 h-14 mx-auto border border-primary-container/40 bg-primary-container/10 flex items-center justify-center">
-        <span
-          className="material-symbols-outlined text-[24px] text-primary"
-          style={{ fontVariationSettings: "'FILL' 1" }}
-          aria-hidden
-        >
-          neurology
-        </span>
+        <IconIntelligence size={24} className="text-primary" />
       </div>
       <p className="text-body-main text-on-surface-variant max-w-md mx-auto">
         Try a query like &ldquo;Tier 1 transformation leaders with M&amp;A

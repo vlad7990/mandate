@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { markInterviewPlanTimedOut } from "./actions";
+import {
+  IconArrowLeft,
+} from "@/components/icons";
 
 const POLL_INTERVAL_MS = 1500;
 // Client-side unstick marker. Must exceed real generation latency — an 8000-token
@@ -64,7 +67,7 @@ export function PlanGenerating({
             href={`/app/executive-intelligence/searches/${searchId}/candidates`}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Candidates
           </Link>
           <span className="text-outline-variant">/</span>

@@ -4,6 +4,9 @@ import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { regenerateCompanyContextAction } from "@/app/(dashboard)/app/executive-intelligence/searches/new/actions";
+import {
+  IconRefresh,
+} from "@/components/icons";
 
 const POLL_INTERVAL_MS = 2500;
 
@@ -56,11 +59,10 @@ export function RegenerateContextButton({
       aria-busy={isPending ? true : undefined}
       className="px-4 py-2 border border-primary-container/70 text-primary font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container-low transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      <span
-        className={`material-symbols-outlined text-[16px] ${isPending ? "animate-spin" : ""}`}
-      >
-        {isPending ? "progress_activity" : "refresh"}
-      </span>
+      <IconRefresh
+        size={16}
+        className={isPending ? "animate-spin" : undefined}
+      />
       {isPending ? "Restarting" : label}
     </button>
   );

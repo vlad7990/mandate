@@ -1,6 +1,21 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
+  IconChecklist,
+  IconCopy,
+  IconDocument,
+  IconNetwork,
+  IconFactCheck,
+  IconGroup,
+  IconLeaderboard,
+  IconPlus,
+  IconSearch,
+  IconSettings,
+  IconShield,
+  IconTarget,
+  type IconProps,
+} from "@/components/icons";
+import {
   DECISION_SUPPORT_DISCLAIMER,
   SEARCH_STATUS_LABELS,
   type ExecutiveSearchRow,
@@ -8,7 +23,7 @@ import {
 
 type ModuleArea = {
   label: string;
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   href: string | null;
   description: string;
 };
@@ -18,73 +33,73 @@ type ModuleArea = {
 const MODULE_AREAS: ModuleArea[] = [
   {
     label: "Executive Searches",
-    icon: "workspace_premium",
+    icon: IconLeaderboard,
     href: "/app/executive-intelligence/searches",
     description: "Due-diligence engagements per executive role",
   },
   {
     label: "Role Success Profiles",
-    icon: "architecture",
+    icon: IconTarget,
     href: "/app/executive-intelligence/searches",
     description: "AI-drafted, human-approved success definitions",
   },
   {
     label: "Templates",
-    icon: "content_copy",
+    icon: IconCopy,
     href: "/app/executive-intelligence/templates",
     description: "Curated intake presets for common mandates",
   },
   {
     label: "Competency Library",
-    icon: "menu_book",
+    icon: IconDocument,
     href: "/app/executive-intelligence/competencies",
     description: "Evidence-based competencies behind every weight",
   },
   {
     label: "Candidates",
-    icon: "person_search",
+    icon: IconSearch,
     href: "/app/executive-intelligence/searches",
     description: "Link org-pool candidates to a search's diligence funnel",
   },
   {
     label: "Interview Plans",
-    icon: "event_note",
+    icon: IconChecklist,
     href: "/app/executive-intelligence/searches",
     description: "Per-candidate stage-by-stage evidence plans",
   },
   {
     label: "Active Interviews",
-    icon: "forum",
+    icon: IconGroup,
     href: null,
     description: "Consent-based interview support — Phase 2",
   },
   {
     label: "Assessments",
-    icon: "fact_check",
+    icon: IconFactCheck,
     href: "/app/executive-intelligence/searches",
     description: "Per-candidate evidence scorecards scored against competency weights",
   },
   {
     label: "Risk Reviews",
-    icon: "policy",
+    icon: IconShield,
     href: null,
     description: "Pre-decision risk synthesis — Phase 2",
   },
   {
     label: "Final Reports",
-    icon: "description",
+    icon: IconDocument,
     href: null,
     description: "Board-ready due-diligence reports — Phase 2",
   },
   {
     label: "Executive Advisors",
-    icon: "diversity_3",
+    icon: IconNetwork,
     href: null,
     description: "Advisor network — Phase 2",
   },
   {
     label: "Settings",
-    icon: "settings",
+    icon: IconSettings,
     href: null,
     description: "Module configuration — Phase 2",
   },
@@ -176,7 +191,7 @@ export default async function ExecutiveIntelligencePage() {
             href="/app/executive-intelligence/searches/new"
             className="bg-primary-container text-on-primary-container px-6 py-3 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
+            <IconPlus size={18} />
             New Executive Search
           </Link>
           <Link
@@ -224,9 +239,7 @@ export default async function ExecutiveIntelligencePage() {
                   href={area.href}
                   className="bg-surface-container-low border border-outline-variant p-5 space-y-2 hover:border-primary-container/70 hover:bg-surface-container transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[22px] text-primary">
-                    {area.icon}
-                  </span>
+                  <area.icon size={22} className="text-primary" />
                   <p className="text-headline-md text-on-surface font-body-main">{area.label}</p>
                   <p className="text-body-main text-on-surface-variant">{area.description}</p>
                 </Link>
@@ -236,9 +249,7 @@ export default async function ExecutiveIntelligencePage() {
                   className="bg-surface-container-lowest border border-outline-variant/50 p-5 space-y-2 opacity-60"
                   aria-disabled
                 >
-                  <span className="material-symbols-outlined text-[22px] text-outline">
-                    {area.icon}
-                  </span>
+                  <area.icon size={22} className="text-outline" />
                   <p className="text-headline-md text-on-surface-variant font-body-main">
                     {area.label}
                   </p>

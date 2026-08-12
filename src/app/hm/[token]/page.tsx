@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import {
+  IconLock,
+} from "@/components/icons";
+import {
   PortalContent,
   buildPortalCandidate,
   type PortalCandidate,
@@ -216,12 +219,7 @@ function PortalAccessDenied({
   return (
     <div className="bg-surface-container border border-outline-variant px-6 py-12 text-center space-y-3 mx-auto max-w-md">
       <div className="w-14 h-14 mx-auto border border-error/40 bg-error/10 flex items-center justify-center">
-        <span
-          className="material-symbols-outlined text-[24px] text-error"
-          aria-hidden
-        >
-          lock
-        </span>
+        <IconLock size={24} className="text-error" />
       </div>
       <h2 className="font-h2 text-h2 text-on-surface">Access denied</h2>
       <p className="text-body-main text-on-surface-variant leading-relaxed">

@@ -2,6 +2,10 @@ import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import type { ExecutiveRoleTemplateRow } from "@/lib/executive/types";
 import { NewExecutiveSearchForm } from "./new-executive-search-form";
+import {
+  IconArrowLeft,
+  IconCopy,
+} from "@/components/icons";
 
 type SearchParams = Promise<{ error?: string; template?: string }>;
 
@@ -46,7 +50,7 @@ export default async function NewExecutiveSearchPage({
             href="/app/executive-intelligence/searches"
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Executive Searches
           </Link>
           <span className="text-outline-variant">/</span>
@@ -62,9 +66,7 @@ export default async function NewExecutiveSearchPage({
           </p>
           {template && (
             <div className="inline-flex items-center gap-2 border border-primary-container/70 bg-surface-container-lowest px-3 py-1.5">
-              <span className="material-symbols-outlined text-[16px] text-primary">
-                content_copy
-              </span>
+              <IconCopy size={16} className="text-primary" />
               <span className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
                 Prefilled from template: {template.title}
               </span>

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
+  IconArrowLeft,
+} from "@/components/icons";
+import {
   COMPETENCY_CATEGORY_LABELS,
   type CompetencyCategory,
   type ExecutiveCompetencyRow,
@@ -39,7 +42,7 @@ export default async function ExecutiveCompetenciesPage() {
             href="/app/executive-intelligence"
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Executive Intelligence
           </Link>
           <span className="text-outline-variant">/</span>

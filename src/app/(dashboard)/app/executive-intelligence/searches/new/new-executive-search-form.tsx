@@ -3,6 +3,10 @@
 import { useFormStatus } from "react-dom";
 import { createExecutiveSearchAction } from "./actions";
 import { ROLE_FAMILIES } from "@/lib/executive/types";
+import {
+  IconArrowRight,
+  IconRefresh,
+} from "@/components/icons";
 
 type Defaults = Record<string, unknown>;
 
@@ -112,15 +116,13 @@ function SubmitButton() {
     >
       {pending ? (
         <>
-          <span className="material-symbols-outlined text-[18px] animate-spin">
-            progress_activity
-          </span>
+          <IconRefresh size={18} className="animate-spin" />
           Initializing Search
         </>
       ) : (
         <>
           Create Executive Search
-          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+          <IconArrowRight size={18} />
         </>
       )}
     </button>

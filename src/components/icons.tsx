@@ -15,9 +15,9 @@
  * comps), `currentColor`, and no text content to leak. Paths are taken
  * from the design comps rather than approximated.
  *
- * Ligature usages remain across the page-level components. Convert them
- * module by module; the shell, the candidate route, the auth pages and
- * the spec module are done.
+ * The sweep is finished: no Material Symbols ligature, webfont <link>
+ * or `.material-symbols-outlined` rule survives anywhere in the app.
+ * Add icons here rather than reaching for a font.
  */
 
 export type IconProps = {
@@ -401,6 +401,60 @@ export function IconCommit({ size = 14, className }: IconProps) {
 // ── Movement ────────────────────────────────────────────────────────
 // These four carry information the label beside them does not, so they
 // survive where the decorative ligatures were deleted.
+
+/** Ticked lines — an interview plan, as against IconSkills' plain list. */
+export function IconChecklist({ size = 15, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="m3 6.5 2 2 3.5-3.5" />
+      <path d="m3 16.5 2 2 3.5-3.5" />
+      <path d="M12 7h9M12 17h9" />
+    </svg>
+  );
+}
+
+/** A document that has been checked — an assessment. */
+export function IconFactCheck({ size = 15, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M13 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9z" />
+      <path d="M13 3v6h6" />
+      <path d="m8.5 15.5 2 2 4-4.5" />
+    </svg>
+  );
+}
+
+export function IconUserPlus({ size = 15, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="10" cy="8" r="3.2" />
+      <path d="M3.5 20c0-3.3 2.9-5.3 6.5-5.3 1 0 2 .16 2.9.46" />
+      <path d="M18 14v6M15 17h6" />
+    </svg>
+  );
+}
+
+export function IconUserMinus({ size = 15, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="10" cy="8" r="3.2" />
+      <path d="M3.5 20c0-3.3 2.9-5.3 6.5-5.3 1 0 2 .16 2.9.46" />
+      <path d="M15 17h6" />
+    </svg>
+  );
+}
+
+/** Scales — the decision-support disclaimer's glyph. Weighing, not judging. */
+export function IconBalance({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M12 4v16M7 20h10" />
+      <path d="M4 8h16" />
+      <path d="M4 8 1.8 13.5a2.6 2.6 0 0 0 4.4 0z" />
+      <path d="M20 8l2.2 5.5a2.6 2.6 0 0 1-4.4 0z" />
+    </svg>
+  );
+}
 
 export function IconFilter({ size = 14, className }: IconProps) {
   return (

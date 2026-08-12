@@ -4,12 +4,13 @@
 context reset without re-deriving anything. Paste the block in §1 into a
 fresh session and it will pick up exactly where the last one stopped.
 
-**Updated:** 2026-08-12 · `main` @ `2835366`, pushed. **Working tree is
-NOT clean** — 35 modified files from the ligature sweep are staged for a
-commit the founder has not yet approved. See §3a.
+**Updated:** 2026-08-12 · `main` has five unpushed commits
+(`b73e916..HEAD`). Working tree clean. **The ligature sweep is finished**
+— §4 has no open items left.
 
-**All seven app comps are now on their real routes.** What is left is
-one mechanical item (§4) and two things only the founder can do (§6).
+**All seven app comps are on their real routes and the Material Symbols
+sweep is done.** Everything left in this document needs the founder, not
+an agent — see §6.
 
 ---
 
@@ -132,55 +133,59 @@ knowing about before touching any screen:
   That is what makes an authenticated screen verifiable at all — see
   below.
 
-### 3a. Uncommitted: the ligature sweep, 2026-08-12
+### 3a. The Material Symbols sweep — finished 2026-08-12
 
-**126 of 260 ligatures converted. 134 remain. Nothing is committed.**
-The green gate passes on the working tree as it stands: `npm test` (66),
-`npx tsc --noEmit`, `npm run lint` (2 pre-existing warnings, both the
-Material Symbols `<link>` in `layout.tsx` — they clear when the last
-ligature goes), `npm run build`.
+**All 260 ligatures are gone.** No `material-symbols-outlined` span, no
+webfont `<link>` in `layout.tsx`, no `.material-symbols-outlined` rule in
+`globals.css`. The only two mentions left in the tree are prose in the
+`icons.tsx` header explaining what was removed.
 
-Modules converted, in the order they were done:
+`npm run lint` now reports **zero warnings**. The two that stood for
+months — `google-font-display` and `no-page-custom-font` — were that
+`<link>`, and they cleared when it went.
 
-| Module | Files | Sites |
+Five commits, `b73e916..HEAD`, **not yet pushed**:
+
+| Commit | Module | Sites |
 |---|---|---|
-| Spec | editor, empty, error, generating, diff panel | 29 |
-| Onboarding | `onboarding-wizard.tsx` | 14 |
-| Shortlist | `shortlist-builder.tsx` | 12 |
-| Shared primitives | `MastHead`, `StatusChip`, `KpiTile`, `TierComparison`, `agent-tiles` + every call site | ~30 |
-| Comparison | export-actions, master-table, page | 15 |
-| Reports | report-actions-client, page | 11 |
-| Feedback + HM | feedback page/form, HM form, portal, share-link | 15 |
-| Ranking | page, leaderboard, movement, refresh, compare page + picker | 24 |
+| `b73e916` | Spec, onboarding, shortlist, shared primitives, comparison, reports, feedback + HM, ranking | 126 |
+| `39790ac` | Sourcing | 17 |
+| `2812684` | Settings | 20 |
+| `c484fbd` | Remaining project routes | 18 |
+| *(head)* | Executive Intelligence, candidates, analytics, webfont removal | 79 |
 
-`src/components/icons.tsx` now carries **60** drawn icons, up from 31.
-All 29 new ones were rendered on a throwaway `/iconsheet-tmp` route at
-32/16/12px and read correctly at every size; the route and the
-`PUBLIC_PAGES` entry were deleted afterwards.
+`src/components/icons.tsx` carries **72** drawn icons, up from 31. Every
+new glyph was rendered on a throwaway `/iconsheet-tmp` route at 32/16/12px
+and read correctly at each size before use; the route and its
+`PUBLIC_PAGES` entry were deleted each time. The final build was served
+with `next start` and `/auth/signin` screenshotted to confirm nothing
+renders as a raw ligature word now the font is gone.
 
-**Three deletions worth knowing about, because they changed component
-APIs rather than swapping a glyph:**
+**Component APIs that changed, not just glyphs:**
 
-- **`MastHead` lost its `icon` prop entirely.** In all 21 call sites the
-  glyph sat immediately beside an explicit uppercase label in the same
-  chip — "Profile Summary" next to a person, "Final Verdict" next to a
-  gavel. The label was already the whole message. Removing the prop also
-  deleted `SKILL_TYPE_META.icon` and the `icon` pass-through on the local
-  `Section` wrapper in `comparison/page.tsx`.
-- **`StatusChip.icon` is now a component**, not a ligature string:
-  `icon?: (props: IconProps) => React.ReactElement`. Its glyphs carry
-  direction (ahead / behind / even), so they stayed.
-- **`SectionDef.icon`, `AgentTileDef.icon` and `Perspective.icon` are
-  gone** from `job-spec-analysis.ts`, `agent-tiles.tsx` and
-  `perspective-leaderboard.tsx` — each printed a glyph next to
-  `# OVERVIEW`, `INTAKE`, `CALIBRATED` and so on.
+- **`MastHead` lost its `icon` prop.** In all 21 call sites the glyph sat
+  beside an explicit uppercase label inside the same chip.
+- **`StatusChip.icon` is a component**, not a ligature string:
+  `icon?: (props: IconProps) => React.ReactElement`.
+- **Seven `icon: string` fields were deleted outright** —
+  `SectionDef` (`job-spec-analysis.ts`), `AgentTileDef`, `Perspective`,
+  `SlotDef` (`sourcing-analysis.ts`), the section defs in
+  `executive-role-architect-agent.ts` and
+  `executive-interview-architect-agent.ts`, and `PrincipleBlock`. Each
+  printed a glyph next to text that already named the thing.
 
-Two glyph choices deviate from a literal translation, both commented at
-the site: `TierComparison` now draws one `IconCompare` for both the
-agree and disagree states (the two ligatures drew nearly the same thing;
-disagreement is carried by the tertiary colour), and the onboarding
-"Encryption Active" notice uses `IconShield` rather than the approval
-rosette `verified` printed.
+**Two places where the sweep fixed something rather than translating it:**
+
+- The **skill-type radio group** now draws `IconCheckCircle` /
+  `IconCircle`. Its `<input>` is `sr-only`, so a recoloured type glyph
+  had been the entire selected affordance.
+- **"Encryption Active"** (onboarding) and **"Org-scoped storage"**
+  (CV upload) draw `IconShield`. Both printed `verified` — an approval
+  rosette on a statement about RLS.
+
+`TierComparison` draws one `IconCompare` for both agree and disagree;
+`swap_horiz` and `compare_arrows` drew nearly the same thing and the
+tertiary colour already carries the disagreement.
 
 ### Visual verification: what has been seen, and what has not
 
@@ -225,41 +230,13 @@ The defects it caught, as a list of what to look for:
 
 ### Open
 
-- [ ] **134 Material Symbols ligatures left** → inline SVG from
-      `src/components/icons.tsx`. Each currently puts literal text like
-      `folder_open` in the DOM and depends on a blocking Google webfont.
-      Recipe unchanged: match the ligature to an existing icon, drop it
-      entirely when the label beside it already says the same thing, and
-      delete the now-unused `icon` props the components carried. With 60
-      drawn icons in place, nearly every remaining ligature maps to one
-      that already exists.
+*(Nothing open. The ligature sweep was the last item; see §3a.)*
 
-      Already done: app shell + copilot panel, EI report, every
-      `/app/projects/[id]` route at page level, the candidate detail
-      route, both auth pages (all committed) — plus spec, onboarding,
-      shortlist, shared primitives, comparison, reports, feedback + HM
-      and ranking (**uncommitted, see §3a**).
+### Done 2026-08-12
 
-      What is left, largest first:
-
-      | Module | Sites |
-      |---|---|
-      | EI success-profile (editor 8, error 3, empty 3, generating 2) | 16 |
-      | EI interview-plan (editor 6, gate 3, error 3, empty 3, generating 1) | 16 |
-      | Settings (page 6, skills page 4, skill-form 4, skill-row 3, user-actions 2, waitlist 1) | 20 |
-      | Sourcing (editor 6, strategy 5, empty 3, version-history 3) | 17 |
-      | Projects misc (candidates page 6, upload-form 4, metrics 4, new 3, restore-button 1) | 18 |
-      | Candidates top-level (search 5, add-to-search 4, network-table 2) | 11 |
-      | EI assessment (editor 4, gate 3, empty 3) | 10 |
-      | EI index pages (searches 3, page 3, new 2+2, templates 2, link-controls 2, competencies 1) | 15 |
-      | Long tail (analytics 3, hm/[token] 1, auth/pending 1, company-context-controls 1) | 6 |
-
-      **The last two steps, once the count reaches zero:** delete the
-      Material Symbols `<link>` in `src/app/layout.tsx` (line ~101 — it
-      is the sole cause of the two standing lint warnings) and drop the
-      `.material-symbols-outlined` rule in `src/app/globals.css`. Do not
-      do either before the count is zero; the remaining ligatures would
-      render as raw words.
+- [x] **All 260 Material Symbols ligatures converted to inline SVG**, and
+      the webfont `<link>` and CSS rule removed with them. Five commits,
+      `b73e916..HEAD`, unpushed. Details and the API changes in §3a.
 
 ### Done 2026-08-11 — details in §3
 

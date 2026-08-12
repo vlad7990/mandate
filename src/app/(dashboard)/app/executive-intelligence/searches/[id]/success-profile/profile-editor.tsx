@@ -18,6 +18,16 @@ import {
 } from "@/lib/executive/types";
 import { formatTimestampUtc } from "@/lib/executive/format";
 import {
+  IconArrowLeft,
+  IconBalance,
+  IconClose,
+  IconIntelligence,
+  IconPlus,
+  IconSave,
+  IconVerified,
+  type IconProps,
+} from "@/components/icons";
+import {
   approveProfile,
   createProfileNewVersion,
   requestProfileGeneration,
@@ -57,23 +67,15 @@ const smallInputClass =
   "bg-surface-container-lowest border border-outline-variant px-2 py-1.5 text-body-main text-on-surface outline-none focus:border-primary transition-colors disabled:opacity-60 disabled:cursor-not-allowed";
 
 function SectionShell({
-  icon,
   label,
   children,
 }: {
-  icon: string;
   label: string;
   children: React.ReactNode;
 }) {
   return (
     <section className="bg-surface-container-low border border-outline-variant p-5 space-y-3">
-      <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest flex items-center gap-2">
-        <span
-          className="material-symbols-outlined text-[14px]"
-          style={{ fontVariationSettings: "'FILL' 1" }}
-        >
-          {icon}
-        </span>
+      <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest">
         # {label}
       </span>
       {children}
@@ -181,7 +183,7 @@ export function ProfileEditor({
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Search Workspace
           </Link>
           <span className="text-outline-variant">/</span>
@@ -221,9 +223,7 @@ export function ProfileEditor({
             )}
           </p>
           <div className="border border-outline-variant bg-surface-container-lowest px-4 py-2.5 flex items-start gap-2">
-            <span className="material-symbols-outlined text-[16px] text-primary mt-0.5">
-              balance
-            </span>
+            <IconBalance size={16} className="text-primary mt-0.5 shrink-0" />
             <p className="text-body-main text-on-surface-variant">
               {DECISION_SUPPORT_DISCLAIMER}
             </p>
@@ -271,7 +271,7 @@ export function ProfileEditor({
           <div className="space-y-4">
             {/* Mission + mandate + paragraph sections */}
             {PROFILE_TEXT_SECTIONS.map((s) => (
-              <SectionShell key={s.key} icon={s.icon} label={s.label}>
+              <SectionShell key={s.key} label={s.label}>
                 <textarea
                   value={content[s.key] as string}
                   onChange={(e) => update(s.key, e.target.value as never)}
@@ -284,7 +284,7 @@ export function ProfileEditor({
             ))}
 
             {/* Critical business outcomes — structured rows */}
-            <SectionShell icon="verified" label="Critical Business Outcomes">
+            <SectionShell label="Critical Business Outcomes">
               <div className="space-y-3">
                 {content.critical_business_outcomes.map((o, i) => (
                   <div
@@ -352,7 +352,7 @@ export function ProfileEditor({
                         }
                         className="text-outline hover:text-error transition-colors pt-2"
                       >
-                        <span className="material-symbols-outlined text-[18px]">close</span>
+                        <IconClose size={18} />
                       </button>
                     )}
                   </div>
@@ -377,7 +377,7 @@ export function ProfileEditor({
 
             {/* String-list sections, one item per line */}
             {PROFILE_LIST_SECTIONS.map((s) => (
-              <SectionShell key={s.key} icon={s.icon} label={s.label}>
+              <SectionShell key={s.key} label={s.label}>
                 <textarea
                   value={(content[s.key] as string[]).join("\n")}
                   onChange={(e) =>
@@ -405,7 +405,7 @@ export function ProfileEditor({
             ))}
 
             {/* Competency weights — transparent scoring table */}
-            <SectionShell icon="tune" label="Recommended Competency Weights">
+            <SectionShell label="Recommended Competency Weights">
               <p className="text-body-main text-on-surface-variant">
                 Transparent weighting with rationale — every weight is editable and
                 traces to the competency library.
@@ -478,7 +478,7 @@ export function ProfileEditor({
                         }
                         className="text-outline hover:text-error transition-colors pt-2"
                       >
-                        <span className="material-symbols-outlined text-[18px]">close</span>
+                        <IconClose size={18} />
                       </button>
                     )}
                   </div>
@@ -492,7 +492,7 @@ export function ProfileEditor({
             </SectionShell>
 
             {/* Interview stages */}
-            <SectionShell icon="stairs" label="Recommended Interview Stages">
+            <SectionShell label="Recommended Interview Stages">
               <div className="space-y-3">
                 {content.recommended_interview_stages.map((st, i) => (
                   <div
@@ -558,7 +558,7 @@ export function ProfileEditor({
                         }
                         className="text-outline hover:text-error transition-colors pt-2"
                       >
-                        <span className="material-symbols-outlined text-[18px]">close</span>
+                        <IconClose size={18} />
                       </button>
                     )}
                   </div>
@@ -591,13 +591,13 @@ export function ProfileEditor({
               {isDraft && (
                 <>
                   <RailButton
-                    icon="save"
+                    icon={IconSave}
                     label={isDirty ? "Save Draft *" : "Save Draft"}
                     onClick={handleSave}
                     disabled={isPending || !isDirty}
                   />
                   <RailButton
-                    icon="verified_user"
+                    icon={IconVerified}
                     label="Approve Version"
                     onClick={handleApprove}
                     disabled={isPending}
@@ -606,13 +606,13 @@ export function ProfileEditor({
                 </>
               )}
               <RailButton
-                icon="library_add"
+                icon={IconPlus}
                 label="Snapshot New Version"
                 onClick={handleNewVersion}
                 disabled={isPending}
               />
               <RailButton
-                icon="neurology"
+                icon={IconIntelligence}
                 label="Regenerate (AI)"
                 onClick={handleRegenerate}
                 disabled={isPending || activeGeneration != null}
@@ -669,20 +669,20 @@ function AddRowButton({ label, onClick }: { label: string; onClick: () => void }
       onClick={onClick}
       className="flex items-center gap-1.5 font-mono-label text-mono-label uppercase tracking-widest text-primary hover:brightness-110 transition-all"
     >
-      <span className="material-symbols-outlined text-[16px]">add</span>
+      <IconPlus size={16} />
       {label}
     </button>
   );
 }
 
 function RailButton({
-  icon,
+  icon: Icon,
   label,
   onClick,
   disabled,
   emphasis = false,
 }: {
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   label: string;
   onClick: () => void;
   disabled: boolean;
@@ -699,7 +699,7 @@ function RailButton({
           : "border border-outline-variant text-on-surface-variant hover:bg-surface-container"
       }`}
     >
-      <span className="material-symbols-outlined text-[16px]">{icon}</span>
+      <Icon size={16} />
       {label}
     </button>
   );

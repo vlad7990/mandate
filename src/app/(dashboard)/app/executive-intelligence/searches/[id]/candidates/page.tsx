@@ -2,6 +2,11 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
+  IconArrowLeft,
+  IconChecklist,
+  IconFactCheck,
+} from "@/components/icons";
+import {
   EXEC_CANDIDATE_STAGE_LABELS,
   type ExecutiveCandidateStage,
 } from "@/lib/executive/types";
@@ -101,7 +106,7 @@ export default async function ExecutiveSearchCandidatesPage({
             href={`/app/executive-intelligence/searches/${search.id}`}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Search Workspace
           </Link>
           <span className="text-outline-variant">/</span>
@@ -183,14 +188,14 @@ export default async function ExecutiveSearchCandidatesPage({
                     href={`/app/executive-intelligence/searches/${search.id}/candidates/${c.id}/interview-plan`}
                     className="font-mono-label text-mono-label uppercase tracking-widest text-primary hover:brightness-110 transition-all flex items-center gap-1.5"
                   >
-                    <span className="material-symbols-outlined text-[15px]">checklist</span>
+                    <IconChecklist size={15} />
                     Interview Plan
                   </Link>
                   <Link
                     href={`/app/executive-intelligence/searches/${search.id}/candidates/${c.id}/assessment`}
                     className="font-mono-label text-mono-label uppercase tracking-widest text-primary hover:brightness-110 transition-all flex items-center gap-1.5"
                   >
-                    <span className="material-symbols-outlined text-[15px]">fact_check</span>
+                    <IconFactCheck size={15} />
                     Assessment
                   </Link>
                   <CandidateStageSelect

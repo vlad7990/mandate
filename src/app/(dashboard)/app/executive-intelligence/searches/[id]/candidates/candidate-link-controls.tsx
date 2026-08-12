@@ -4,6 +4,11 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
+  IconRefresh,
+  IconUserMinus,
+  IconUserPlus,
+} from "@/components/icons";
+import {
   EXEC_CANDIDATE_STAGES,
   EXEC_CANDIDATE_STAGE_LABELS,
   type ExecutiveCandidateStage,
@@ -58,11 +63,11 @@ export function LinkCandidateButton({
       }
       className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      <span
-        className={`material-symbols-outlined text-[15px] ${isPending ? "animate-spin" : ""}`}
-      >
-        {isPending ? "progress_activity" : "person_add"}
-      </span>
+      {isPending ? (
+        <IconRefresh size={15} className="animate-spin" />
+      ) : (
+        <IconUserPlus size={15} />
+      )}
       Link
     </button>
   );
@@ -134,11 +139,11 @@ export function UnlinkCandidateButton({
       onClick={handleClick}
       className="text-outline hover:text-error transition-colors disabled:opacity-60"
     >
-      <span
-        className={`material-symbols-outlined text-[18px] ${isPending ? "animate-spin" : ""}`}
-      >
-        {isPending ? "progress_activity" : "person_remove"}
-      </span>
+      {isPending ? (
+        <IconRefresh size={18} className="animate-spin" />
+      ) : (
+        <IconUserMinus size={18} />
+      )}
     </button>
   );
 }

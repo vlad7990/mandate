@@ -8,6 +8,7 @@ import {
   PROFILE_TEXT_SECTIONS,
 } from "@/lib/ai/executive-role-architect-agent";
 import { markProfileGenerationTimedOut } from "./actions";
+import { IconArrowLeft } from "@/components/icons";
 
 const POLL_INTERVAL_MS = 1500;
 // Client-side unstick marker. Must exceed real generation latency — profile
@@ -79,7 +80,7 @@ export function ProfileGenerating({
             href={`/app/executive-intelligence/searches/${searchId}`}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Search Workspace
           </Link>
           <span className="text-outline-variant">/</span>
@@ -116,13 +117,7 @@ export function ProfileGenerating({
               className="bg-surface-container-low border border-outline-variant p-5 space-y-3"
             >
               <div className="flex items-center justify-between">
-                <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest flex items-center gap-2">
-                  <span
-                    className="material-symbols-outlined text-[14px]"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    {s.icon}
-                  </span>
+                <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest">
                   # {s.label}
                 </span>
                 <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">

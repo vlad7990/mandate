@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
+  IconArrowLeft,
+  IconLeaderboard,
+  IconPlus,
+} from "@/components/icons";
+import {
   SEARCH_STATUS_LABELS,
   SERVICE_TIER_LABELS,
   type ExecutiveSearchRow,
@@ -37,7 +42,7 @@ export default async function ExecutiveSearchesPage() {
             href="/app/executive-intelligence"
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Executive Intelligence
           </Link>
           <span className="text-outline-variant">/</span>
@@ -55,7 +60,7 @@ export default async function ExecutiveSearchesPage() {
             href="/app/executive-intelligence/searches/new"
             className="bg-primary-container text-on-primary-container px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[16px]">add</span>
+            <IconPlus size={16} />
             New Search
           </Link>
         </header>
@@ -68,9 +73,7 @@ export default async function ExecutiveSearchesPage() {
 
         {!error && searches.length === 0 && (
           <div className="bg-surface-container-low border border-outline-variant p-12 flex flex-col items-center text-center space-y-4">
-            <span className="material-symbols-outlined text-[32px] text-outline">
-              workspace_premium
-            </span>
+            <IconLeaderboard size={32} className="text-outline" />
             <div className="space-y-1 max-w-md">
               <h2 className="font-h3 text-h3 text-on-surface">No executive searches yet</h2>
               <p className="text-body-main text-on-surface-variant">

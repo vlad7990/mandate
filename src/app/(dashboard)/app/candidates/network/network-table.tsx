@@ -16,6 +16,11 @@ import type {
   NetworkProject,
 } from "@/lib/network/network-aggregator";
 import { AddToSearchButton } from "./add-to-search-button";
+import {
+  IconArrowDown,
+  IconArrowUp,
+  IconSearch,
+} from "@/components/icons";
 
 type SortKey = "best_score" | "average_score" | "last_active" | "name";
 type SortDir = "asc" | "desc";
@@ -121,12 +126,7 @@ export function NetworkTable({
     <div className="space-y-3">
       <div className="bg-surface-container-low border border-outline-variant p-4 space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <span
-            className="material-symbols-outlined text-primary text-[20px]"
-            aria-hidden
-          >
-            search
-          </span>
+          <IconSearch size={20} className="text-primary shrink-0" />
           <input
             type="search"
             value={query}
@@ -275,9 +275,11 @@ function SortControls({
         aria-label={`Toggle sort direction (currently ${sortDir})`}
         className="w-8 h-8 border border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary flex items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
       >
-        <span className="material-symbols-outlined text-[16px]" aria-hidden>
-          {sortDir === "asc" ? "arrow_upward" : "arrow_downward"}
-        </span>
+        {sortDir === "asc" ? (
+          <IconArrowUp size={16} />
+        ) : (
+          <IconArrowDown size={16} />
+        )}
       </button>
     </div>
   );
