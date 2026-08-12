@@ -59,6 +59,39 @@ Promotion must write: a `candidates` row with `source_kind='sourced'` +
 `source_platform` + `source_url` + `sourced_at`, a `sourcing_run_candidates`
 link, and stamp `run.imported_count`.
 
+### Promotion must be atomic — this needs a new RPC
+
+Those three writes cannot be done from the client. PostgREST has no
+client-side transaction, so a promote that inserts the candidate, then the
+link, then the counter can fail halfway and leave a candidate with no
+attribution — invisible, and it silently corrupts every conversion number
+later. **Write a `promote_sourcing_results(...)` RPC that does all three in
+one transaction**, validate it rolled-back, then apply. Keep it SECURITY
+INVOKER so RLS still scopes it.
+
+None of these partial states may be reachable:
+- candidate created but no `sourcing_run_candidates` link
+- link created but `imported_count` not updated
+- staged row marked promoted although the candidate insert failed
+
+### Do NOT auto-populate `subject_notified_at`
+
+Promotion sets `source_kind`, `source_platform`, `source_url` and
+`sourced_at`. It must leave `subject_notified_at` NULL. Notification is a
+real-world act; writing the timestamp on promote would falsely record that a
+GDPR Art. 14 obligation had been discharged.
+
+### Two mismatches to resolve before building
+
+1. The review table wants a fourth class, "invalid" (missing required
+   fields). `parseImport` does not emit one — it **skips** unnamed rows and
+   reports `skippedUnnamed`. Either surface that count as a separate
+   "skipped" summary line (preferred — no core change), or extend the core.
+   Do not invent a row type the parser cannot produce.
+2. A "Notes" column has nowhere to go: `sourcing_run_results` has no such
+   field. Unmapped columns already land in `raw` — leave it there rather
+   than adding a column for this pass.
+
 ## Hard constraints (enforced in the DB — violating these throws)
 
 - Runs are created as `draft` **only**, via the RPC. Direct insert of a
@@ -74,6 +107,38 @@ link, and stamp `run.imported_count`.
 - A name-only dedupe match is `ambiguous`, **not** `duplicate`. The recruiter
   resolves it — do not auto-merge.
 - Candidate erasure already purges staged rows via trigger. Do not duplicate.
+
+## Lineage UI language
+
+The schema branches rather than supersedes, and the UI has to say so. A later
+version does **not** replace an earlier one — each executed run is an
+independent historical measurement, and v1's yield is the baseline v2 is
+judged against. Avoid "Current version", "Superseded", "Replaced",
+"Archived", and any styling that greys out earlier runs. Show them as
+siblings in a lineage, all equally readable.
+
+## Import provenance (show before promoting)
+
+Source type (paste or CSV), filename where there is one, upload timestamp,
+and the row number each staged row came from. The goal is that a recruiter
+looking at a sourced candidate six months later can trace where the record
+originated. Do not persist uploaded files — the staged rows plus `raw` are
+the record.
+
+## Required end-to-end attribution test
+
+Beyond the unit tests, prove this scenario:
+
+```
+Run A executed -> candidate imported
+Run B executed -> SAME candidate imported again
+candidate advances to hired
+```
+
+Assert: exactly one candidate exists; both run links exist; attribution
+credits **Run A**; Run B stays linked (multi-touch is visible); attribution
+is read from the view, never stored; and reversing the insert order does not
+change the answer.
 
 ## House conventions
 
@@ -114,6 +179,28 @@ link, and stamp `run.imported_count`.
   reports evidence and coverage instead (see `ASSESSMENT_DISCLAIMER` and the
   risk-review severity framing).
 - **Screenshot/OCR import excluded.** Paste and CSV only.
+
+## Definition of done
+
+Green gate before committing: `npm test`, `npx tsc --noEmit`,
+`npm run lint`, `npm run build`.
+
+Functionally: draft runs can be created; runs execute only via the RPC;
+paste and CSV import both work with column mapping; duplicates are linked
+rather than re-created; ambiguous rows require an explicit recruiter choice
+(link / create new / skip) and are never auto-merged; promotion is atomic and
+persists provenance; `imported_count` is correct; the origin chip renders and
+links back to its run; lineage renders without supersede language;
+executed-run immutability holds; attribution credits first touch.
+
+Report at the end: routes/components/actions added, tests added, full test +
+typecheck + lint + build results, migration verification, and any deviation
+from the spec.
+
+**On the decisions in this file:** they are settled and should not be
+relitigated for preference. But if implementation shows one is *wrong* — not
+merely inconvenient — say so and stop, rather than working around it. That is
+how the LinkedIn-credentials problem was caught.
 
 ## Backlog after this task
 
