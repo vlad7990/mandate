@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import {
   EMPTY_SOURCING_QUERIES,
   slotForDbRow,
@@ -15,6 +17,7 @@ import {
   type SlotVersions,
 } from "./version-history";
 import { SourcingStrategy } from "./sourcing-strategy";
+import { SourcingRunsPanel } from "./runs-panel";
 
 type ProjectRow = {
   id: string;
@@ -167,6 +170,17 @@ export default async function SourcingPage({
         calibration={project.calibration_model ?? {}}
         companyContext={project.company_context ?? {}}
       />
+      {/* Runs sit directly under the editor: they are what closes the loop
+          between a strategy and what it actually produced. */}
+      <Suspense
+        fallback={
+          <div className="max-w-7xl mx-auto px-6 pb-10">
+            <SkeletonCard />
+          </div>
+        }
+      >
+        <SourcingRunsPanel projectId={project.id} />
+      </Suspense>
       <SourcingStrategy projectId={project.id} />
       <div className="max-w-7xl mx-auto px-6 pb-10">
         <SourcingVersionHistory
