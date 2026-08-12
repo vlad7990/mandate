@@ -7,6 +7,14 @@ import {
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import { cn } from "@/lib/utils";
+import {
+  IconArrowLeft,
+  IconChevronRight,
+  IconGroup,
+  IconPlus,
+  IconRefresh,
+  IconUpload,
+} from "@/components/icons";
 
 type ProjectRow = {
   id: string;
@@ -90,7 +98,7 @@ export default async function CandidatesPage({
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Mandate
           </Link>
           <span className="text-outline-variant">/</span>
@@ -112,7 +120,7 @@ export default async function CandidatesPage({
             prefetch={false}
             className="px-6 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[16px]">add</span>
+            <IconPlus size={16} />
             Add Candidate
           </Link>
         </header>
@@ -135,12 +143,7 @@ function EmptyState({ projectId }: { projectId: string }) {
   return (
     <div className="bg-surface-container-low border border-outline-variant p-12 flex flex-col items-center text-center space-y-6">
       <div className="w-16 h-16 rounded-full bg-primary-container/10 border border-primary-container/40 flex items-center justify-center">
-        <span
-          className="material-symbols-outlined text-[28px] text-primary"
-          style={{ fontVariationSettings: "'FILL' 1" }}
-        >
-          group_add
-        </span>
+        <IconGroup size={28} className="text-primary" />
       </div>
       <div className="space-y-2 max-w-md">
         <h2 className="font-h2 text-h2">No candidates yet</h2>
@@ -154,7 +157,7 @@ function EmptyState({ projectId }: { projectId: string }) {
         prefetch={false}
         className="px-6 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
       >
-        <span className="material-symbols-outlined text-[16px]">upload_file</span>
+        <IconUpload size={16} />
         Add Candidate
       </Link>
     </div>
@@ -189,9 +192,7 @@ function CandidateRow({
             </span>
             {candidate.cv_processing && (
               <span className="font-mono-label text-mono-label text-primary uppercase tracking-wider flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[12px] animate-spin">
-                  progress_activity
-                </span>
+                <IconRefresh size={12} className="animate-spin" />
                 Parsing
               </span>
             )}
@@ -229,9 +230,10 @@ function CandidateRow({
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider hidden lg:inline">
           {formatRelative(candidate.updated_at)}
         </span>
-        <span className="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">
-          chevron_right
-        </span>
+        <IconChevronRight
+          size={18}
+          className="text-outline group-hover:text-primary transition-colors"
+        />
       </Link>
     </li>
   );

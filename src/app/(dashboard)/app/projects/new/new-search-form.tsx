@@ -2,6 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import { createProjectAction } from "./actions";
+import { IconArrowRight, IconRefresh } from "@/components/icons";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -14,15 +15,13 @@ function SubmitButton() {
     >
       {pending ? (
         <>
-          <span className="material-symbols-outlined text-[18px] animate-spin">
-            progress_activity
-          </span>
+          <IconRefresh size={18} className="animate-spin" />
           Initializing
         </>
       ) : (
         <>
           Initialize Search
-          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+          <IconArrowRight size={18} />
         </>
       )}
     </button>

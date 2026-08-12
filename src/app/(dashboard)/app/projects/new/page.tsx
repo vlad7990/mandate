@@ -1,5 +1,6 @@
 import { AgentTiles, AGENT_TILES, type AgentTileState } from "@/components/projects/agent-tiles";
 import { NewSearchForm } from "./new-search-form";
+import { IconCopilot } from "@/components/icons";
 
 type SearchParams = Promise<{ error?: string; q?: string }>;
 
@@ -45,7 +46,7 @@ export default async function NewProjectPage({
         <section className="space-y-3 pt-4">
           <div className="flex items-center justify-between">
             <h2 className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-2">
-              <span className="material-symbols-outlined text-[14px]">robot_2</span>
+              <IconCopilot size={14} />
               Agent Stack — Stand-by
             </h2>
             <span className="font-mono-label text-mono-label text-outline">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { restoreCalibrationSnapshotAction } from "./actions";
+import { IconHistory, IconRefresh } from "@/components/icons";
 
 export function RestoreCalibrationButton({
   projectId,
@@ -47,15 +48,11 @@ export function RestoreCalibrationButton({
           pending && "opacity-60"
         )}
       >
-        <span
-          className={cn(
-            "material-symbols-outlined text-[14px]",
-            pending && "animate-spin"
-          )}
-          aria-hidden
-        >
-          {pending ? "progress_activity" : "history"}
-        </span>
+        {pending ? (
+          <IconRefresh size={14} className="animate-spin" />
+        ) : (
+          <IconHistory size={14} />
+        )}
         {pending ? "Restoring" : "Restore this version"}
       </button>
     </div>

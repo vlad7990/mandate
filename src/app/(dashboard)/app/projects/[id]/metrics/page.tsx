@@ -19,6 +19,12 @@ import {
 import { cn } from "@/lib/utils";
 import type { HealthSuggestionsBlob } from "@/lib/ai/search-health-agent";
 import { HealthSuggestionsPanel } from "../health-suggestions-panel";
+import {
+  IconAlert,
+  IconArrowLeft,
+  IconFilter,
+  IconShare,
+} from "@/components/icons";
 
 type ProjectRow = {
   id: string;
@@ -74,7 +80,7 @@ export default async function ProjectMetricsPage({
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Mandate
           </Link>
           <span className="text-outline-variant">/</span>
@@ -149,7 +155,7 @@ export default async function ProjectMetricsPage({
         {health.alerts.length > 0 && (
           <section className="space-y-2">
             <h2 className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-2">
-              <span className="material-symbols-outlined text-[14px]">notification_important</span>
+              <IconAlert size={14} />
               Health alerts · {health.alerts.length}
             </h2>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -261,7 +267,7 @@ function FunnelSection({
     <section className="bg-surface-container-low border border-outline-variant p-5 space-y-4">
       <header className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">filter_alt</span>
+          <IconFilter size={14} />
           Pipeline Funnel
         </h2>
         <div className="flex items-center gap-3 font-mono-label text-mono-label text-outline uppercase tracking-wider">
@@ -378,7 +384,7 @@ function SourceSection({
   return (
     <section className="bg-surface-container-low border border-outline-variant p-5 space-y-3">
       <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-        <span className="material-symbols-outlined text-[14px]">share</span>
+        <IconShare size={14} />
         Source Performance
       </h2>
       <MandateHorizontalBarChart

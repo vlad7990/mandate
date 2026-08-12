@@ -11,6 +11,14 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { uploadAndParseCv } from "../actions";
+import {
+  IconArrowLeft,
+  IconDocument,
+  IconRefresh,
+  IconShield,
+  IconSpark,
+  IconUpload,
+} from "@/components/icons";
 
 const ACCEPTED_EXTENSIONS = ".pdf,.docx";
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -102,7 +110,7 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Candidates
           </Link>
           <span className="text-outline-variant">/</span>
@@ -142,15 +150,17 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
             )}
           >
             <div className="flex flex-col items-center gap-4 text-center">
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[40px] transition-colors",
-                  file ? "text-primary" : "text-outline"
-                )}
-                style={file ? { fontVariationSettings: "'FILL' 1" } : undefined}
-              >
-                {file ? "draft" : "upload_file"}
-              </span>
+              {file ? (
+                <IconDocument
+                  size={40}
+                  className="text-primary transition-colors"
+                />
+              ) : (
+                <IconUpload
+                  size={40}
+                  className="text-outline transition-colors"
+                />
+              )}
               {file ? (
                 <div className="space-y-2">
                   <div className="font-mono-data text-body-main text-on-surface break-all">
@@ -208,26 +218,18 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
               aria-busy={isPending ? true : undefined}
               className="px-8 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[16px]",
-                  isPending && "animate-spin"
-                )}
-              >
-                {isPending ? "progress_activity" : "auto_awesome"}
-              </span>
+              {isPending ? (
+                <IconRefresh size={16} className="animate-spin" />
+              ) : (
+                <IconSpark size={16} />
+              )}
               {isPending ? "Parsing CV…" : "Upload & Parse"}
             </button>
           </div>
         </form>
 
         <div className="bg-surface-container-low border border-outline-variant p-4 flex items-start gap-3">
-          <span
-            className="material-symbols-outlined text-primary mt-0.5"
-            style={{ fontVariationSettings: "'FILL' 1", fontSize: "18px" }}
-          >
-            verified
-          </span>
+          <IconShield size={18} className="text-primary mt-0.5 shrink-0" />
           <div>
             <div className="font-mono-label text-mono-label text-on-surface uppercase tracking-wider">
               Org-scoped storage

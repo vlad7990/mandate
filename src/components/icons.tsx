@@ -402,6 +402,14 @@ export function IconCommit({ size = 14, className }: IconProps) {
 // These four carry information the label beside them does not, so they
 // survive where the decorative ligatures were deleted.
 
+export function IconFilter({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M3.5 5h17l-6.6 7.6V19l-3.8 2v-8.4z" />
+    </svg>
+  );
+}
+
 export function IconClock({ size = 14, className }: IconProps) {
   return (
     <svg {...svg(size, className)}>
