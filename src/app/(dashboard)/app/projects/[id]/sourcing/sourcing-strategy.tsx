@@ -8,6 +8,16 @@ import type { TargetCompaniesReport } from "@/lib/ai/target-companies-agent";
 import { ARCHETYPES, type Archetype } from "@/lib/ai/cv-parsing";
 import { SLOTS, type SlotKey } from "@/lib/ai/sourcing-analysis";
 import {
+  IconBuilding,
+  IconCopy,
+  IconNetwork,
+  IconPlus,
+  IconRefresh,
+  IconSpark,
+  IconTarget,
+  type IconProps,
+} from "@/components/icons";
+import {
   appendCompaniesToBooleanAction,
   generateTargetCompaniesAction,
 } from "./actions";
@@ -85,26 +95,20 @@ export function SourcingStrategy({ projectId }: { projectId: string }) {
     <section className="max-w-7xl mx-auto px-6 pb-10 space-y-3">
       <header className="flex items-baseline justify-between gap-2 flex-wrap">
         <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-[14px]"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-            aria-hidden
-          >
-            track_changes
-          </span>
+          <IconTarget size={14} />
           SOURCING_STRATEGY
         </h2>
         <nav aria-label="Sourcing strategy view" className="flex border border-outline-variant">
           <TabButton
             active={tab === "companies"}
             onClick={() => setTab("companies")}
-            icon="location_city"
+            icon={IconBuilding}
             label="Target Companies"
           />
           <TabButton
             active={tab === "archetypes"}
             onClick={() => setTab("archetypes")}
-            icon="hub"
+            icon={IconNetwork}
             label="Archetype Targeting"
           />
         </nav>
@@ -122,12 +126,12 @@ export function SourcingStrategy({ projectId }: { projectId: string }) {
 function TabButton({
   active,
   onClick,
-  icon,
+  icon: Icon,
   label,
 }: {
   active: boolean;
   onClick: () => void;
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   label: string;
 }) {
   return (
@@ -142,9 +146,7 @@ function TabButton({
           : "bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
       )}
     >
-      <span className="material-symbols-outlined text-[14px]" aria-hidden>
-        {icon}
-      </span>
+      <Icon size={14} />
       {label}
     </button>
   );
@@ -199,15 +201,13 @@ function TargetCompaniesPanel({ projectId }: { projectId: string }) {
             disabled={pending}
             className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span
-              className={cn(
-                "material-symbols-outlined text-[14px]",
-                pending && "animate-spin"
-              )}
-              aria-hidden
-            >
-              {pending ? "progress_activity" : report ? "refresh" : "auto_awesome"}
-            </span>
+            {pending ? (
+              <IconRefresh size={14} className="animate-spin" />
+            ) : report ? (
+              <IconRefresh size={14} />
+            ) : (
+              <IconSpark size={14} />
+            )}
             {pending
               ? "Generating"
               : report
@@ -307,9 +307,7 @@ function AppendCompanyButton({
         disabled={pending}
         className="px-2 py-1 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60"
       >
-        <span className="material-symbols-outlined text-[12px]" aria-hidden>
-          add
-        </span>
+        <IconPlus size={12} />
         Add to Boolean
       </button>
       {open && (
@@ -370,9 +368,7 @@ function ArchetypePanel({ projectId: _projectId }: { projectId: string }) {
                 }}
                 className="px-2 py-1 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[12px]" aria-hidden>
-                  content_copy
-                </span>
+                <IconCopy size={12} />
                 Copy seed
               </button>
             </div>

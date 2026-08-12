@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { SLOTS, type SlotKey } from "@/lib/ai/sourcing-analysis";
 import { restoreQueryVersionAction } from "./actions";
+import { IconHistory, IconRefresh } from "@/components/icons";
 
 // Per-slot version history with side-by-side diff, term-level
 // add/remove highlighting, restore-to-version, basic analytics
@@ -41,9 +42,7 @@ export function SourcingVersionHistory({
     <section className="bg-surface-container-low border border-outline-variant p-4 space-y-3">
       <header className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]" aria-hidden>
-            history
-          </span>
+          <IconHistory size={14} />
           Version History
         </h3>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
@@ -113,12 +112,6 @@ function SlotHistory({
     <li className="bg-surface-container border border-outline-variant">
       <header className="flex items-center justify-between gap-2 px-3 py-2 border-b border-outline-variant flex-wrap">
         <div className="flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-[14px] text-primary"
-            aria-hidden
-          >
-            {slotMeta?.icon ?? "filter_alt"}
-          </span>
           <span className="font-mono-label text-mono-label text-on-surface uppercase tracking-widest">
             {slotMeta?.label ?? state.slot}
           </span>
@@ -239,9 +232,7 @@ function VersionPane({
             disabled={pending}
             className="px-2 py-1 border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary font-mono-label text-mono-label uppercase tracking-widest transition-colors disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
           >
-            <span className="material-symbols-outlined text-[12px] mr-1" aria-hidden>
-              restart_alt
-            </span>
+            <IconRefresh size={12} className="mr-1" />
             Restore this version
           </button>
         )}

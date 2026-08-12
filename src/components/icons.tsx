@@ -402,6 +402,17 @@ export function IconCommit({ size = 14, className }: IconProps) {
 // These four carry information the label beside them does not, so they
 // survive where the decorative ligatures were deleted.
 
+/** Crosshair — what a search is aimed at. */
+export function IconTarget({ size = 14, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 12h.01" />
+    </svg>
+  );
+}
+
 /** A plain dash — no movement. Pairs with IconArrowUp / IconArrowDown. */
 export function IconMinus({ size = 14, className }: IconProps) {
   return (

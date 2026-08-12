@@ -30,7 +30,6 @@ export type SlotDef = {
   short: string;
   /** Long human label ("Exact match", "Google X-Ray", …). */
   label: string;
-  icon: string;
   blurb: string;
 };
 
@@ -42,7 +41,6 @@ export const SLOTS: SlotDef[] = [
     group: "linkedin",
     short: "EXACT",
     label: "Exact Match",
-    icon: "target",
     blurb:
       "Tight title + skill match for the on-target candidate profile. Highest precision, lowest recall.",
   },
@@ -53,7 +51,6 @@ export const SLOTS: SlotDef[] = [
     group: "linkedin",
     short: "BROAD",
     label: "Broad",
-    icon: "filter_alt",
     blurb:
       "Loosened title constraints with adjacent skill keywords. Pulls in candidates one step away from the ideal profile.",
   },
@@ -64,7 +61,6 @@ export const SLOTS: SlotDef[] = [
     group: "linkedin",
     short: "ADJACENT",
     label: "Adjacent",
-    icon: "alt_route",
     blurb:
       "Adjacent functions or industries — operators with transferable skills who could grow into the role.",
   },
@@ -75,7 +71,6 @@ export const SLOTS: SlotDef[] = [
     group: "linkedin",
     short: "COMPETITOR",
     label: "Competitor",
-    icon: "domain",
     blurb:
       "Direct-competitor employers in this market. Use for warm outreach and reference checks.",
   },
@@ -86,7 +81,6 @@ export const SLOTS: SlotDef[] = [
     group: "google_xray",
     short: "XRAY_GOOGLE",
     label: "Google X-Ray",
-    icon: "travel_explore",
     blurb:
       "site:linkedin.com/in operator with title and skill clauses. Surfaces public profiles outside InMail credit limits.",
   },
@@ -97,7 +91,6 @@ export const SLOTS: SlotDef[] = [
     group: "ats",
     short: "ATS_LOCAL",
     label: "ATS Search",
-    icon: "database",
     blurb:
       "Greenhouse / Workday / Ashby query syntax for re-engaging silver-medal candidates already in your ATS.",
   },

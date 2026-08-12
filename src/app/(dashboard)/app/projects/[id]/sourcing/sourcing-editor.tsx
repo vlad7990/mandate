@@ -14,6 +14,16 @@ import {
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
 import { regenerateOneAction, saveQueryEditAction } from "./actions";
 import type { SlotState } from "./page";
+import {
+  IconArrowLeft,
+  IconCopy,
+  IconHistory,
+  IconPencil,
+  IconRefresh,
+  IconSave,
+  IconTarget,
+  type IconProps,
+} from "@/components/icons";
 
 type Props = {
   projectId: string;
@@ -72,7 +82,7 @@ export function SourcingEditor({
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Mandate
           </Link>
           <span className="text-outline-variant">/</span>
@@ -106,7 +116,6 @@ export function SourcingEditor({
               header={{
                 eyebrow: "LINKEDIN_STR",
                 title: "LinkedIn Boolean",
-                icon: "link",
               }}
             >
               <div className="flex flex-wrap gap-1 mb-4">
@@ -157,7 +166,6 @@ export function SourcingEditor({
                     header={{
                       eyebrow: slot.short,
                       title: slot.label,
-                      icon: slot.icon,
                     }}
                   >
                     <SlotEditor
@@ -191,7 +199,7 @@ export function SourcingEditor({
             prefetch={false}
             className="flex items-center gap-2 text-outline font-mono-label text-mono-label uppercase tracking-widest hover:text-on-surface transition-colors"
           >
-            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            <IconArrowLeft size={14} />
             Return to Mandate
           </Link>
           <div className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
@@ -217,19 +225,13 @@ function SlotCard({
   header,
   children,
 }: {
-  header: { eyebrow: string; title: string; icon: string };
+  header: { eyebrow: string; title: string };
   children: React.ReactNode;
 }) {
   return (
     <article className="bg-surface-container-low border border-outline-variant p-5 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-[16px] text-secondary-fixed-dim"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            {header.icon}
-          </span>
           <span className="font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-widest">
             # {header.eyebrow}
           </span>
@@ -353,7 +355,7 @@ function SlotEditor({
         <div className="flex gap-2 flex-wrap">
           <ActionButton
             tone="ghost"
-            icon="content_copy"
+            icon={IconCopy}
             onClick={handleCopy}
             disabled={!value.trim()}
           >
@@ -361,7 +363,7 @@ function SlotEditor({
           </ActionButton>
           <ActionButton
             tone="ghost"
-            icon="save"
+            icon={IconSave}
             onClick={handleSave}
             busy={isSaving}
             disabled={!dirty || empty}
@@ -370,7 +372,7 @@ function SlotEditor({
           </ActionButton>
           <ActionButton
             tone="ghost"
-            icon="forum"
+            icon={IconPencil}
             onClick={() => setFeedbackOpen((o) => !o)}
             disabled={empty}
           >
@@ -378,7 +380,7 @@ function SlotEditor({
           </ActionButton>
           <ActionButton
             tone="primary"
-            icon="refresh"
+            icon={IconRefresh}
             onClick={handleRegenerate}
             busy={isRegenerating}
             disabled={empty}
@@ -414,14 +416,14 @@ function SlotEditor({
 
 function ActionButton({
   tone,
-  icon,
+  icon: Icon,
   onClick,
   busy,
   disabled,
   children,
 }: {
   tone: "ghost" | "primary";
-  icon: string;
+  icon: (props: IconProps) => React.ReactElement;
   onClick: () => void;
   busy?: boolean;
   disabled?: boolean;
@@ -441,14 +443,11 @@ function ActionButton({
       aria-busy={busy ? true : undefined}
       className={cn(base, palette)}
     >
-      <span
-        className={cn(
-          "material-symbols-outlined text-[14px]",
-          busy && "animate-spin"
-        )}
-      >
-        {busy ? "progress_activity" : icon}
-      </span>
+      {busy ? (
+        <IconRefresh size={14} className="animate-spin" />
+      ) : (
+        <Icon size={14} />
+      )}
       {children}
     </button>
   );
@@ -468,7 +467,7 @@ function ContextCard({
   return (
     <div className="bg-surface-container-low border border-outline-variant p-5 space-y-3">
       <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-        <span className="material-symbols-outlined text-[14px]">target</span>
+        <IconTarget size={14} />
         Search Anchor
       </h3>
       <div className="space-y-2 text-body-main">
@@ -512,7 +511,7 @@ function HistoryCard({
     <div className="bg-surface-container-low border border-outline-variant p-5 space-y-3">
       <header className="flex items-center justify-between">
         <h3 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px]">history</span>
+          <IconHistory size={14} />
           Historical Queries
         </h3>
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
