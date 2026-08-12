@@ -88,12 +88,12 @@ export default async function ImportResultsPage({
       <div className="max-w-7xl mx-auto px-8 py-10 space-y-6">
         <div className="flex items-center gap-3 font-mono-label text-mono-label uppercase tracking-widest text-outline flex-wrap">
           <Link
-            href={`/app/projects/${project.id}/sourcing`}
+            href={`/app/projects/${project.id}/sourcing?tab=runs`}
             prefetch={false}
             className="hover:text-on-surface transition-colors flex items-center gap-1.5"
           >
             <IconArrowLeft size={14} />
-            Sourcing
+            Runs
           </Link>
           <span className="text-outline-variant">/</span>
           <span className="text-on-surface-variant">{project.title}</span>

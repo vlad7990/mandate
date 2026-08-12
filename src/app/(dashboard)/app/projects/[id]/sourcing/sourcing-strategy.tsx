@@ -8,14 +8,11 @@ import type { TargetCompaniesReport } from "@/lib/ai/target-companies-agent";
 import { ARCHETYPES, type Archetype } from "@/lib/ai/cv-parsing";
 import { SLOTS, type SlotKey } from "@/lib/ai/sourcing-analysis";
 import {
-  IconBuilding,
   IconCopy,
   IconNetwork,
   IconPlus,
   IconRefresh,
   IconSpark,
-  IconTarget,
-  type IconProps,
 } from "@/components/icons";
 import {
   appendCompaniesToBooleanAction,
@@ -89,70 +86,12 @@ const POOL_TONE: Record<"small" | "medium" | "large", string> = {
   large: "text-secondary-fixed-dim",
 };
 
-export function SourcingStrategy({ projectId }: { projectId: string }) {
-  const [tab, setTab] = useState<"companies" | "archetypes">("companies");
-  return (
-    <section className="max-w-7xl mx-auto px-6 pb-10 space-y-3">
-      <header className="flex items-baseline justify-between gap-2 flex-wrap">
-        <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-          <IconTarget size={14} />
-          SOURCING_STRATEGY
-        </h2>
-        <nav aria-label="Sourcing strategy view" className="flex border border-outline-variant">
-          <TabButton
-            active={tab === "companies"}
-            onClick={() => setTab("companies")}
-            icon={IconBuilding}
-            label="Target Companies"
-          />
-          <TabButton
-            active={tab === "archetypes"}
-            onClick={() => setTab("archetypes")}
-            icon={IconNetwork}
-            label="Archetype Targeting"
-          />
-        </nav>
-      </header>
+// Target Companies and Archetype Targeting used to sit behind a local toggle
+// inside a SourcingStrategy wrapper. They are now two of the sourcing page's
+// top-level tabs, so each panel stands on its own — one tab bar on the page,
+// not a tab bar inside a tab.
 
-      {tab === "companies" ? (
-        <TargetCompaniesPanel projectId={projectId} />
-      ) : (
-        <ArchetypePanel projectId={projectId} />
-      )}
-    </section>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  icon: Icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: (props: IconProps) => React.ReactElement;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        "px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary",
-        active
-          ? "bg-primary-container text-on-primary-container"
-          : "bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
-      )}
-    >
-      <Icon size={14} />
-      {label}
-    </button>
-  );
-}
-
-function TargetCompaniesPanel({ projectId }: { projectId: string }) {
+export function TargetCompaniesPanel({ projectId }: { projectId: string }) {
   const [report, setReport] = useState<TargetCompaniesReport | null>(null);
   const [pending, start] = useTransition();
   const [archetypeHint, setArchetypeHint] = useState<Archetype | "">("");
@@ -335,10 +274,15 @@ function AppendCompanyButton({
   );
 }
 
-function ArchetypePanel({ projectId: _projectId }: { projectId: string }) {
+export function ArchetypePanel({ projectId: _projectId }: { projectId: string }) {
   void _projectId;
   return (
-    <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <section className="space-y-3">
+      <h2 className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
+        <IconNetwork size={14} />
+        ARCHETYPE_TARGETING · where each profile actually comes from
+      </h2>
+      <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {ARCHETYPES.map((a) => {
         const blurb = ARCHETYPE_BLURBS[a];
         return (
@@ -372,10 +316,11 @@ function ArchetypePanel({ projectId: _projectId }: { projectId: string }) {
                 Copy seed
               </button>
             </div>
-          </li>
-        );
-      })}
-    </ul>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

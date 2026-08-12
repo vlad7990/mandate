@@ -1,7 +1,9 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SkeletonCard } from "@/components/ui/skeleton";
+import { IconArrowLeft } from "@/components/icons";
 import {
   EMPTY_SOURCING_QUERIES,
   slotForDbRow,
@@ -16,8 +18,9 @@ import {
   SourcingVersionHistory,
   type SlotVersions,
 } from "./version-history";
-import { SourcingStrategy } from "./sourcing-strategy";
+import { ArchetypePanel, TargetCompaniesPanel } from "./sourcing-strategy";
 import { SourcingRunsPanel } from "./runs-panel";
+import { resolveSourcingTab, SourcingTabs } from "./sourcing-tabs";
 
 type ProjectRow = {
   id: string;
@@ -55,10 +58,13 @@ export type QueryHistoryEntry = {
 
 export default async function SourcingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
+  const tab = resolveSourcingTab((await searchParams).tab);
   const supabase = await createServerSupabaseClient();
 
   const { data: project, error: projectError } = await supabase
@@ -155,40 +161,91 @@ export default async function SourcingPage({
   // Per-version performance — count candidates created while each
   // version was the active one. A version is "active" from its
   // updated_at until the next version's updated_at (or now). The
-  // spec calls this "candidates found while using V2".
-  const slotVersions = await buildSlotVersions(supabase, id, slotStates);
+  // spec calls this "candidates found while using V2". Only the Queries tab
+  // renders it, so only that tab pays for it.
+  const slotVersions =
+    tab === "queries"
+      ? await buildSlotVersions(supabase, id, slotStates)
+      : [];
+
+  const { count: runCount } = await supabase
+    .from("sourcing_runs")
+    .select("id", { count: "exact", head: true })
+    .eq("project_id", id);
 
   return (
-    <>
-      <SourcingEditor
-        projectId={project.id}
-        roleTitle={project.title}
-        companyName={project.company_name}
-        finalSpecVersion={finalSpec.version}
-        slotStates={slotStates}
-        initialQueries={queries}
-        calibration={project.calibration_model ?? {}}
-        companyContext={project.company_context ?? {}}
-      />
-      {/* Runs sit directly under the editor: they are what closes the loop
-          between a strategy and what it actually produced. */}
-      <Suspense
-        fallback={
-          <div className="max-w-7xl mx-auto px-6 pb-10">
-            <SkeletonCard />
-          </div>
-        }
-      >
-        <SourcingRunsPanel projectId={project.id} />
-      </Suspense>
-      <SourcingStrategy projectId={project.id} />
-      <div className="max-w-7xl mx-auto px-6 pb-10">
-        <SourcingVersionHistory
-          projectId={project.id}
-          slots={slotVersions}
-        />
+    <div className="min-h-full bg-surface text-on-surface">
+      <div className="max-w-7xl mx-auto px-8 pt-10 space-y-6">
+        <div className="flex items-center gap-3 font-mono-label text-mono-label uppercase tracking-widest text-outline">
+          <Link
+            href={`/app/projects/${project.id}`}
+            prefetch={false}
+            className="hover:text-on-surface transition-colors flex items-center gap-1.5"
+          >
+            <IconArrowLeft size={14} />
+            Mandate
+          </Link>
+          <span className="text-outline-variant">/</span>
+          <span className="text-on-surface-variant">{project.title}</span>
+          <span className="text-outline-variant">/</span>
+          <span className="text-primary">Sourcing Intel</span>
+        </div>
+
+        <header>
+          <h1 className="font-h1 text-h1 text-primary">SOURCING INTEL</h1>
+          <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest mt-1">
+            {project.company_name} · anchored on final_v
+            {String(finalSpec.version).padStart(2, "0")}
+          </p>
+        </header>
       </div>
-    </>
+
+      <SourcingTabs projectId={project.id} active={tab} runCount={runCount ?? 0} />
+
+      {tab === "queries" && (
+        <>
+          <SourcingEditor
+            projectId={project.id}
+            roleTitle={project.title}
+            companyName={project.company_name}
+            finalSpecVersion={finalSpec.version}
+            slotStates={slotStates}
+            initialQueries={queries}
+            calibration={project.calibration_model ?? {}}
+            companyContext={project.company_context ?? {}}
+          />
+          <div className="max-w-7xl mx-auto px-6 pb-10">
+            <SourcingVersionHistory projectId={project.id} slots={slotVersions} />
+          </div>
+        </>
+      )}
+
+      {/* Runs close the loop between a strategy and what it actually produced,
+          so they get their own address rather than living below the fold. */}
+      {tab === "runs" && (
+        <Suspense
+          fallback={
+            <div className="max-w-7xl mx-auto px-6 pb-10">
+              <SkeletonCard />
+            </div>
+          }
+        >
+          <SourcingRunsPanel projectId={project.id} />
+        </Suspense>
+      )}
+
+      {tab === "companies" && (
+        <div className="max-w-7xl mx-auto px-6 pb-10">
+          <TargetCompaniesPanel projectId={project.id} />
+        </div>
+      )}
+
+      {tab === "archetypes" && (
+        <div className="max-w-7xl mx-auto px-6 pb-10">
+          <ArchetypePanel projectId={project.id} />
+        </div>
+      )}
+    </div>
   );
 }
 
