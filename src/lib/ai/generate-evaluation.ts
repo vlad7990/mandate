@@ -143,6 +143,57 @@ export async function generateCandidateEvaluation(
  * profile uninterrupted; a manual regenerate button can re-trigger the
  * call later.
  */
+/**
+ * Cache-only lookup. Never calls the agent.
+ *
+ * `ensureCandidateEvaluation` below generates on a miss, which is right
+ * for an action but wrong for a page render: a miss costs four queries
+ * plus a ~90s Sonnet call, and the candidate dossier awaited it before
+ * returning any HTML. With no loading boundary that was a blank screen
+ * for the length of a generation.
+ *
+ * The page now reads through this and, on `pending`, schedules the
+ * generation in `after()` so the response flushes first.
+ */
+export type EvaluationReadState =
+  | { status: "ready"; evaluation: CandidateEvaluation }
+  /** Eligible, not generated yet — caller should schedule generation. */
+  | { status: "pending" }
+  /** Cannot be generated: CV still parsing, or no profile to evaluate. */
+  | { status: "unavailable" };
+
+export async function readCandidateEvaluation(
+  candidateId: string,
+  projectId: string
+): Promise<EvaluationReadState> {
+  const supabase = await createServerSupabaseClient();
+
+  const { data: candidate, error } = await supabase
+    .from("candidates")
+    .select("id, project_id, cv_structured, cv_processing")
+    .eq("id", candidateId)
+    .single<{
+      id: string;
+      project_id: string;
+      cv_structured: unknown;
+      cv_processing: boolean;
+    }>();
+
+  if (error || !candidate) return { status: "unavailable" };
+  if (candidate.project_id !== projectId) return { status: "unavailable" };
+  if (candidate.cv_processing) return { status: "unavailable" };
+
+  const cvStructured = (candidate.cv_structured ?? {}) as CvStructuredWithEvaluation;
+  const profile = cvStructured as Partial<CandidateProfile>;
+  if (!profile.fit_dimensions || !profile.summary) return { status: "unavailable" };
+
+  const existing = cvStructured[EVALUATION_KEY];
+  if (existing && existing.schema_version === 1) {
+    return { status: "ready", evaluation: existing };
+  }
+  return { status: "pending" };
+}
+
 export async function ensureCandidateEvaluation(
   candidateId: string,
   projectId: string
