@@ -30,9 +30,13 @@ Font.registerHyphenationCallback((word) => [word]);
 //
 // Safe: accented Latin, — – … « » · † ‡ ‰ € £ © ® ° ± × ÷ ¼ ½ ¾ and curly
 // quotes. Not safe: arrows, geometric shapes, check marks, most maths, and
-// emoji. AI-generated prose is the standing risk here, since nothing stops a
-// model emitting "→" or "✓" mid-sentence; anything new that reaches a PDF
-// wants a look at the rendered output, not just the JSX.
+// emoji.
+//
+// Text the documents do not write themselves — anything model-generated or
+// lifted off a CV — is put through `sanitizeForPdf` at each document's entry.
+// See glyphs.ts, which also records what that cannot do: it maps a character
+// onto one the font has, so a name in a non-Latin script still needs a font
+// with the coverage.
 export const PDF_COLORS = {
   ink: "#0b1020",
   inkSoft: "#1f2937",

@@ -12,6 +12,7 @@ import {
   type CoverageState,
 } from "@/lib/comparison/evidence-index";
 import type { DimensionKey } from "@/lib/ai/onboarding-analysis";
+import { sanitizeForPdf } from "./glyphs";
 import {
   PDF_CALLOUT_MIN_PRESENCE,
   PDF_COLORS,
@@ -145,19 +146,16 @@ const STATE_COLOR: Record<CoverageState, string> = {
 
 const TIER_ORDER: Tier[] = ["tier_1", "tier_2", "tier_3", "tier_4"];
 
-export function ComparisonPdfDocument({
-  rows,
-  weights,
-  insight,
-  context,
-  grid,
-}: {
+export function ComparisonPdfDocument(props: {
   rows: ComparisonRow[];
   weights: DimensionWeights | null;
   insight: MarketInsight;
   context: ComparisonContext;
   grid?: ComparisonGrid | null;
 }) {
+  // Verdict narratives and evidence summaries are model-written, and names
+  // are whatever a CV carried. See glyphs.ts.
+  const { rows, weights, insight, context, grid } = sanitizeForPdf(props);
   const primary = rows.slice(0, Math.min(4, rows.length));
   const backup = rows.slice(primary.length, primary.length + 3);
   const viable = insight.tier_counts.tier_1 + insight.tier_counts.tier_2;

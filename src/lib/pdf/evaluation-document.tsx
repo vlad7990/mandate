@@ -6,6 +6,7 @@ import {
   type CandidateEvaluation,
 } from "@/lib/ai/candidate-evaluation";
 import { type DimensionKey } from "@/lib/ai/onboarding-analysis";
+import { sanitizeForPdf } from "./glyphs";
 import {
   PDF_CALLOUT_MIN_PRESENCE,
   PDF_COLORS,
@@ -34,13 +35,12 @@ export type EvaluationPdfMeta = {
   candidate_company: string | null;
 };
 
-export function EvaluationPdfDocument({
-  evaluation,
-  meta,
-}: {
+export function EvaluationPdfDocument(props: {
   evaluation: CandidateEvaluation;
   meta: EvaluationPdfMeta;
 }) {
+  // Almost every string below is model-written. See glyphs.ts.
+  const { evaluation, meta } = sanitizeForPdf(props);
   const verdictTier = evaluation.final_verdict.tier;
 
   return (

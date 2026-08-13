@@ -1,5 +1,6 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import type { WeeklyReport } from "@/lib/ai/weekly-report-agent";
+import { sanitizeForPdf } from "./glyphs";
 import { PDF_CALLOUT_MIN_PRESENCE, PDF_COLORS, PDF_STYLES } from "./styles";
 
 export type WeeklyReportPdfMeta = {
@@ -8,13 +9,13 @@ export type WeeklyReportPdfMeta = {
   generated_at: string;
 };
 
-export function WeeklyReportPdfDocument({
-  report,
-  meta,
-}: {
+export function WeeklyReportPdfDocument(props: {
   report: WeeklyReport;
   meta: WeeklyReportPdfMeta;
 }) {
+  // The summary, insights and commentary are all model-written. See glyphs.ts.
+  const { report, meta } = sanitizeForPdf(props);
+
   return (
     <Document
       title={`Mandate · Weekly Report · ${meta.project_title}`}
@@ -93,7 +94,8 @@ export function WeeklyReportPdfDocument({
               // set, whose WinAnsi encoding has no arrows. An arrow here
               // printed as a right single quote — "Screened ’ Client
               // interview" — because react-pdf substitutes silently rather
-              // than failing. See the note on GLYPH safety in styles.ts.
+              // than failing. sanitizeForPdf would now catch it; the literal
+              // is correct at source anyway. See glyphs.ts.
               <BulletRow
                 key={i}
                 text={`${m.name} · ${m.from_stage} » ${m.to_stage}`}
