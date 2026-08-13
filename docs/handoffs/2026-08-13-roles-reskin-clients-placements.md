@@ -1,4 +1,4 @@
-# Continuation — roles, the terminal re-skin, the client entity, and placements
+# Continuation — roles, the re-skin, clients, placements, and the trail
 
 **Date:** 2026-08-13
 **Supersedes:** `2026-08-13-platform-features.md` entirely. Both open
@@ -10,13 +10,14 @@ Work in `/Users/vladbreygin/Projects/mandate`. Supabase project
 — always `cd` first or use `git -C`.
 
 `main` is clean, pushed, and deployed to `getmandate.io`.
-Migrations `046`–`052` applied; schema and code are in step. 505 tests
-(was 389), tsc / lint / build green. **Next migration is 053.**
+Migrations `046`–`053` applied; schema and code are in step. 523 tests
+(was 389), tsc / lint / build green. **Next migration is 054.**
 
-Seven commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
+Eight commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
 terminal re-skin, `567d0f5` and `2e482df` responsive repair, `a288eb8` the
 client entity, `460bb8c` the placement and fee record, `09acbac` the five
-bugs the browser found plus sample data for the revenue screen.
+bugs the browser found plus sample data for the revenue screen, `aa213c4`
+the activity trail.
 
 ---
 
@@ -367,6 +368,92 @@ signed off"), so they are the obvious next increment on the client entity.
 
 ---
 
+## 5b. The activity trail
+
+Migration `053`. Who changed what, and the answer to the hole §10 named:
+before this, nothing recorded who changed a fee.
+
+### Why it is a new table, not more columns on the EI trail
+
+`executive_audit_events` (032/034/037) covers Executive Intelligence. Two
+reasons it could not simply grow, and the second decided it:
+
+**Shape.** It carries one nullable FK per entity and one CHECK listing every
+event type in the module — fine for a bounded module, not for the product.
+
+**Visibility.** It is readable by every active member. An audit event about a
+fee *contains the fee*: the amount, the rate, the old value and the new one.
+Money events in an org-readable table would have handed a viewer the revenue
+book one migration after `fees:read` closed that door. Each row here carries
+the tier that may read it, and RLS enforces it with the same predicates the
+fee tables use — including the own-placement exception, so a credited
+researcher sees the fee history of their own placement and nobody else's.
+
+### Three things it does better than 032/034, on purpose
+
+1. **No INSERT policy at all.** 034 had to patch `actor_id = auth.uid()` onto
+   the EI trail to stop one user forging another's entry — but a signed-in
+   user can still POST an arbitrary `executive_audit_events` row from a
+   browser console and invent history under their own name. Here the only
+   write paths are SECURITY DEFINER, and `authenticated` cannot insert,
+   update or delete. Proven by doing all three as a real role.
+2. **Triggers, not application code.** The EI trail is written where somebody
+   remembered to call `recordExecutiveAuditEvent`, and never for a change made
+   by a hand-run statement during a fix. These rows are written by the
+   database on the change itself.
+3. **`actor_label` snapshots the name.** `actor_id` is ON DELETE SET NULL, so
+   without it a departed colleague's row going away would turn every entry
+   they ever made into "unknown".
+
+### What it covers, and the noise it designs out
+
+Placements, placement fees, the fee ledger, fee terms, and the role model
+(`role`, `status`, `is_founder` — the AFTER half of 046's BEFORE guard: an
+attempt is refused, a change is remembered).
+
+Two deliberate silences, because a trail that records non-events is one
+nobody scrolls: expanding a retainer into three instalments writes **one**
+event rather than four, and an edit that changes nothing commercial — a
+notes-only change to fee terms, a `updated_at` touch — writes none.
+
+### Things worth knowing before changing it
+
+- **The wording is not stored.** `detail` holds the facts (before/after
+  values, amounts, currencies, reasons); the sentence is derived in
+  `src/lib/activity/describe.ts`, so a phrase can improve without rewriting
+  history and an old row still reads under a new build.
+- **`/app/activity` is not capability-gated**, deliberately. Every role has a
+  trail to read, just a different one, and hiding the screen from a
+  researcher would hide the history of their own placements from them. The
+  group filter is built from what the reader can actually see.
+- **Search matches `actor_label`**, not a join to `users` — so "what did this
+  person do" still finds the work of somebody who has left.
+- **Two event types are in the vocabulary but not written.**
+  `report_exported` is not, because the only honest place to write it is
+  where the PDF is actually produced and that is client-side; logging it at
+  generation would record an export that never happened. `hm_portal_opened`
+  *cannot* be written by the current RPC at all — the portal is the token
+  path with no session, so `auth.uid()` and `current_user_org_id()` are both
+  null and the function returns without writing. It needs its own definer
+  entry point taking the portal token, along the lines of `verify_hm_token`.
+- **Retention is still undecided**, and is now more pressing than it was.
+  What *is* decided is that erasing a subject erases its events — the FKs
+  cascade, matching 044's position that erasing a candidate erases the
+  notification evidence. If that changes, it changes in both places.
+
+### One advisor warning, deliberate
+
+`record_activity_event` is SECURITY DEFINER and executable by
+`authenticated`, so the linter flags it exactly as it flags
+`current_user_role()`. It has to be — it is the application's only write path
+into a table `authenticated` cannot insert into. What it can do is bounded:
+it refuses any event type outside the three intent events, stamps the actor
+from `auth.uid()` rather than taking it as a parameter, and derives the org
+itself. Every other function in 053 has EXECUTE revoked from `authenticated`,
+which is why none of them appear in the advisor output.
+
+---
+
 ## 6. Verification — what is proven, and the recipe
 
 **RLS was tested by impersonation, not by reading policy text.** Under
@@ -490,9 +577,8 @@ The priority list from the original review is now **done**, apart from items
 - **Invoicing**, if the founder decides the accounting boundary should move.
   Everything needed is already on `placement_fee_lines`: an instalment knows
   what it is worth, when it was earned and when it is due.
-- **An activity/audit trail for core recruiting.** More pressing now that
-  money is in the schema — `executive_audit_events` still covers only the EI
-  module, so nothing records who changed a fee.
+- ~~An activity/audit trail for core recruiting~~ — `aa213c4`, migration
+  `053`. See §5b, and the two event types it leaves unwritten.
 
 Smaller, added by this session:
 
@@ -511,12 +597,16 @@ Smaller, added by this session:
   readers announce `GLOBAL_EXECUTIVE_NETWORK` underscores and all. The rest
   of the product uppercases in CSS. Worth reconciling.
 
-Still absent and worth a decision at some point: activity/audit trail for
-core recruiting (`executive_audit_events` covers only the EI module),
-interview scheduling, tasks a human can create, tags, saved views, retention
-and right-to-erasure, DEI reporting. Nothing is scheduled at all — no
-`vercel.json`, no cron, no `pg_cron` — so `AGENTS.md`'s agent 14 ("Scheduled
-+ on-demand") has no scheduled path and weekly reports are manual only.
+Still absent and worth a decision at some point: interview scheduling, tasks
+a human can create, tags, saved views, retention and right-to-erasure, DEI
+reporting. (The activity/audit trail landed in `053` — see §5b.)
+
+Nothing is scheduled at all — no `vercel.json`, no cron, no `pg_cron` — so
+`AGENTS.md`'s agent 14 ("Scheduled + on-demand") has no scheduled path and
+weekly reports are manual only. Two things now depend on that gap rather than
+merely wanting it: the guarantee-expiry instalment trigger in `050` has to be
+marked earned by hand, and `guaranteeState()` derives from dates precisely
+because nothing runs to update a stored status.
 
 ---
 
@@ -587,6 +677,8 @@ Making it DEFINER would turn a helper into a hole.
   never a blank. A blank reads as "no fee recorded", and a recruiter chasing
   an unrecorded fee has to be able to tell those two apart.
 
-**Nothing yet records who changed a fee.** The audit gap in §8 was a nice-to-
-have while the schema held no money. It is now the most obvious hole in this
-area, and it is the reason to do the activity trail before invoicing.
+**Who changed a fee is now recorded** — that gap is closed by `053` (§5b),
+and fee events inherit exactly the visibility rule described above, including
+the own-placement exception. It was worth doing before invoicing rather than
+after: an invoicing feature built on an unaudited fee table would have needed
+the trail retrofitted underneath it.
