@@ -16,6 +16,11 @@ import {
 
 export type SkillType = "role_skill" | "client_skill" | "search_skill";
 
+export type SkillFormClient = {
+  id: string;
+  name: string;
+};
+
 export type SkillFormProject = {
   id: string;
   title: string;
@@ -29,6 +34,7 @@ export type SkillFormInitial = {
   trigger_conditions: string;
   instructions: string;
   applies_to_project_id: string | null;
+  applies_to_client_id: string | null;
 };
 
 const TYPE_OPTIONS: Array<{
@@ -59,9 +65,11 @@ const TYPE_OPTIONS: Array<{
 export function SkillForm({
   initial,
   projects,
+  clients,
 }: {
   initial: SkillFormInitial;
   projects: SkillFormProject[];
+  clients: SkillFormClient[];
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -75,15 +83,23 @@ export function SkillForm({
   const [projectId, setProjectId] = useState<string>(
     initial.applies_to_project_id ?? ""
   );
+  const [clientId, setClientId] = useState<string>(
+    initial.applies_to_client_id ?? ""
+  );
 
   // role_skill needs a project; the other types must clear it. The
   // server action enforces this too — we mirror it client-side so the
   // recruiter doesn't get a server error after typing.
   const projectRequired = skillType === "role_skill";
+  // Optional, unlike the project: a client skill with no client is the
+  // org-wide rule every client skill was before migration 049, and narrowing
+  // is a choice rather than a requirement.
+  const clientOptional = skillType === "client_skill";
 
   const handleTypeChange = (next: SkillType) => {
     setSkillType(next);
     if (next !== "role_skill") setProjectId("");
+    if (next !== "client_skill") setClientId("");
   };
 
   const previewSystemPrompt = useMemo(
@@ -108,6 +124,7 @@ export function SkillForm({
     formData.set("trigger_conditions", triggerConditions.trim());
     formData.set("instructions", instructions.trim());
     formData.set("applies_to_project_id", projectId);
+    formData.set("applies_to_client_id", clientId);
 
     startTransition(async () => {
       try {
@@ -247,6 +264,35 @@ export function SkillForm({
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.title}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </Field>
+          )}
+
+          {clientOptional && (
+            <Field
+              label="Client"
+              id="skill-client"
+              hint="Leave blank to apply to every client. Pick one to narrow the rule to that client's mandates."
+            >
+              {clients.length === 0 ? (
+                <p className="border border-outline-variant px-3 py-2 text-body-main text-outline">
+                  No clients yet. A client is created when a mandate resolves
+                  its company; until then this skill applies org-wide.
+                </p>
+              ) : (
+                <select
+                  id="skill-client"
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface focus:border-primary focus:outline-none transition-colors"
+                >
+                  <option value="">— Every client (org-wide) —</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
                     </option>
                   ))}
                 </select>

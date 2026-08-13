@@ -21,6 +21,12 @@ export default async function NewSkillPage() {
     redirect("/app/settings");
   }
 
+  const { data: clientRows } = await supabase
+    .from("clients")
+    .select("id, name")
+    .order("name");
+  const clients = (clientRows ?? []) as Array<{ id: string; name: string }>;
+
   const { data: projects } = await supabase
     .from("projects")
     .select("id, title")
@@ -45,6 +51,7 @@ export default async function NewSkillPage() {
       </header>
 
       <SkillForm
+        clients={clients}
         initial={{
           id: null,
           name: "",
@@ -53,6 +60,7 @@ export default async function NewSkillPage() {
           trigger_conditions: "",
           instructions: "",
           applies_to_project_id: null,
+    applies_to_client_id: null,
         }}
         projects={(projects ?? []) as SkillFormProject[]}
       />

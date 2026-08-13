@@ -52,6 +52,8 @@ export type ProjectVm = {
   projectId: string;
   title: string;
   companyName: string;
+  /** Null until the role-analysis agent resolves the company (049). */
+  clientId: string | null;
   oneLineInput: string;
   statusLabel: string;
   statusTone: ChipTone;
@@ -159,7 +161,22 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
             </StatusChip>
           </div>
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-outline">
-            <span className="text-on-surface-variant">{vm.companyName}</span>
+            {/*
+              Linked when the mandate has a resolved client, plain text when
+              it does not — a mandate still analysing its one-line input has
+              a company_name of "Analyzing…" and no client to point at.
+            */}
+            {vm.clientId ? (
+              <Link
+                href={`/app/clients/${vm.clientId}`}
+                prefetch={false}
+                className="text-on-surface-variant underline decoration-outline-variant underline-offset-2 transition-colors hover:text-primary hover:decoration-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                {vm.companyName}
+              </Link>
+            ) : (
+              <span className="text-on-surface-variant">{vm.companyName}</span>
+            )}
             <span aria-hidden className="text-outline-variant">
               /
             </span>

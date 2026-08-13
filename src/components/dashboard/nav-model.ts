@@ -28,6 +28,7 @@ export type NavItem = {
     | "mandates"
     | "candidates"
     | "network"
+    | "clients"
     | "intelligence"
     | "skills"
     | "settings";
@@ -79,6 +80,7 @@ export const NAV: readonly NavItem[] = [
     matchPrefix: true,
   },
 
+  { href: "/app/clients", label: "Clients", icon: "clients", group: "search" },
   {
     href: "/app/projects",
     label: "Mandates",

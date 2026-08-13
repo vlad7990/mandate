@@ -7,6 +7,8 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { runAndStoreExecutiveCompanyContext } from "@/lib/ai/run-executive-company-context";
 import { recordExecutiveAuditEvent } from "@/lib/executive/audit";
 import { can, parseRole } from "@/lib/auth/roles";
+import { resolveClientId } from "@/lib/clients/resolve-client";
+import { seedClientProfileFromIntake } from "@/lib/clients/seed-profile";
 import { requireActionContext } from "@/lib/auth/access";
 import type {
   ExecutiveRoleTemplateRow,
@@ -88,11 +90,22 @@ export async function createExecutiveSearchAction(formData: FormData) {
       null;
   }
 
+  // The EI intake captures the whole company profile — industry through
+  // regulatory environment — so it is the richest source the product has for
+  // a client record. Resolve the client first, then seed anything it does
+  // not know yet from this intake (049 lifted these columns from here).
+  const clientId = await resolveClientId(supabase, {
+    organizationId: profile.organization_id,
+    companyName: companyName,
+    createdBy: user.id,
+  });
+
   const { data: inserted, error: insertError } = await supabase
     .from("executive_searches")
     .insert({
       organization_id: profile.organization_id,
       created_by: user.id,
+      client_id: clientId,
       template_id: template?.id ?? null,
       status: "active",
       service_tier: serviceTier,
@@ -173,6 +186,22 @@ export async function createExecutiveSearchAction(formData: FormData) {
         );
       }
     }
+  }
+
+  // `coalesce`-style seeding, in the app rather than in SQL: only fill the
+  // fields the client is still missing, so a later search cannot overwrite a
+  // profile someone has since corrected by hand.
+  if (clientId) {
+    await seedClientProfileFromIntake(supabase, clientId, {
+      industry: optionalField(formData, "industry"),
+      business_model: optionalField(formData, "business_model"),
+      revenue_range: optionalField(formData, "revenue_range"),
+      employee_count: optionalField(formData, "employee_count"),
+      funding_stage: optionalField(formData, "funding_stage"),
+      ownership_structure: optionalField(formData, "ownership_structure"),
+      geographic_footprint: optionalField(formData, "geographic_footprint"),
+      regulatory_environment: optionalField(formData, "regulatory_environment"),
+    });
   }
 
   await recordExecutiveAuditEvent(supabase, {

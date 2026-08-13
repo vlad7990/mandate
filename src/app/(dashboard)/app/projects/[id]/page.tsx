@@ -68,6 +68,7 @@ type ProjectRow = {
   id: string;
   title: string;
   company_name: string;
+  client_id: string | null;
   one_line_input: string;
   status: string | null;
   created_at: string | null;
@@ -160,7 +161,7 @@ export default async function ProjectPage({
   const { data, error } = await supabase
     .from("projects")
     .select(
-      "id, title, company_name, one_line_input, status, created_at, calibration_model, company_context, recalibration_summary, client_psychology, health_suggestions, onboarding_responses"
+      "id, title, company_name, client_id, one_line_input, status, created_at, calibration_model, company_context, recalibration_summary, client_psychology, health_suggestions, onboarding_responses"
     )
     .eq("id", id)
     .single();
@@ -301,6 +302,7 @@ export default async function ProjectPage({
     projectId: project.id,
     title: project.title,
     companyName: project.company_name,
+    clientId: project.client_id ?? null,
     oneLineInput: project.one_line_input,
     statusLabel: projectStatus,
     statusTone,

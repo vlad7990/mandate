@@ -15,6 +15,7 @@ import {
 import { type Role } from "@/lib/auth/roles";
 import {
   IconAnalytics,
+  IconBuilding,
   IconCandidates,
   IconClose,
   IconIntelligence,
@@ -58,6 +59,7 @@ const ICONS: Record<
   analytics: IconAnalytics,
   mandates: IconMandates,
   candidates: IconCandidates,
+  clients: IconBuilding,
   network: IconNetwork,
   intelligence: IconIntelligence,
   skills: IconSkills,

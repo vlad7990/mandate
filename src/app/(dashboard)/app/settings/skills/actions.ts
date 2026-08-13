@@ -24,6 +24,7 @@ type SkillFormInput = {
   trigger_conditions: string;
   instructions: string;
   applies_to_project_id: string | null;
+  applies_to_client_id: string | null;
 };
 
 function parseSkillForm(formData: FormData): SkillFormInput {
@@ -36,6 +37,8 @@ function parseSkillForm(formData: FormData): SkillFormInput {
   const instructions = String(formData.get("instructions") ?? "").trim();
   const projectIdRaw = String(formData.get("applies_to_project_id") ?? "").trim();
   const applies_to_project_id = projectIdRaw === "" ? null : projectIdRaw;
+  const clientIdRaw = String(formData.get("applies_to_client_id") ?? "").trim();
+  const applies_to_client_id = clientIdRaw === "" ? null : clientIdRaw;
 
   if (!name) throw new Error("Name is required.");
   if (!instructions) throw new Error("Instructions are required.");
@@ -50,6 +53,14 @@ function parseSkillForm(formData: FormData): SkillFormInput {
       "Only role skills can target a specific project. Switch the type or clear the project."
     );
   }
+  // A client skill with no client stays org-wide, which is what every client
+  // skill written before migration 049 is — so this is permitted, not an
+  // error. Only the reverse is rejected.
+  if (skill_type !== "client_skill" && applies_to_client_id) {
+    throw new Error(
+      "Only client skills can target a specific client. Switch the type or clear the client."
+    );
+  }
 
   return {
     name,
@@ -58,6 +69,7 @@ function parseSkillForm(formData: FormData): SkillFormInput {
     trigger_conditions,
     instructions,
     applies_to_project_id,
+    applies_to_client_id,
   };
 }
 
@@ -103,6 +115,7 @@ export async function updateSkillAction(
       trigger_conditions: input.trigger_conditions,
       instructions: input.instructions,
       applies_to_project_id: input.applies_to_project_id,
+      applies_to_client_id: input.applies_to_client_id,
       updated_at: new Date().toISOString(),
     })
     .eq("id", skillId);

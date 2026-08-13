@@ -3,6 +3,10 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getAnthropic } from "@/lib/anthropic";
 import {
+  promoteCompanyContextToClient,
+  resolveClientId,
+} from "@/lib/clients/resolve-client";
+import {
   ROLE_ANALYSIS_SCHEMA,
   ROLE_ANALYSIS_SYSTEM_PROMPT,
   splitAnalysis,
@@ -58,13 +62,33 @@ export async function analyzeAndStoreRole(
   const { calibration_model, company_context } = splitAnalysis(parsed);
 
   const supabase = await createReadOnlySupabaseClient();
+
+  // This is the moment the mandate stops being "Analyzing…" and acquires a
+  // real company, so it is the moment its client can be resolved. Before
+  // 049 the company was only ever a string on this row.
+  const { data: project } = await supabase
+    .from("projects")
+    .select("organization_id, created_by")
+    .eq("id", projectId)
+    .maybeSingle<{ organization_id: string | null; created_by: string | null }>();
+
+  const clientId = await resolveClientId(supabase, {
+    organizationId: project?.organization_id ?? null,
+    companyName: parsed.company_name,
+    createdBy: project?.created_by ?? null,
+  });
+
   const { error } = await supabase
     .from("projects")
     .update({
       title: parsed.role_title,
       company_name: parsed.company_name,
       calibration_model,
+      // The mandate's frozen copy. The client gets the canonical one below.
       company_context,
+      // Null when the name could not be resolved — the mandate keeps its
+      // company_name either way, so nothing downstream breaks.
+      ...(clientId ? { client_id: clientId } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", projectId);
@@ -72,4 +96,10 @@ export async function analyzeAndStoreRole(
   if (error) {
     throw new Error(`Failed to persist role analysis: ${error.message}`);
   }
+
+  // Forward the research to the client so the next mandate here starts warm.
+  await promoteCompanyContextToClient(supabase, {
+    clientId,
+    companyContext: company_context,
+  });
 }

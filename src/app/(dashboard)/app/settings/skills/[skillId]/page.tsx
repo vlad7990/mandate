@@ -17,6 +17,7 @@ type SkillRow = {
   trigger_conditions: string;
   instructions: string;
   applies_to_project_id: string | null;
+  applies_to_client_id: string | null;
 };
 
 export default async function EditSkillPage({
@@ -45,7 +46,7 @@ export default async function EditSkillPage({
     supabase
       .from("skills")
       .select(
-        "id, name, description, skill_type, trigger_conditions, instructions, applies_to_project_id"
+        "id, name, description, skill_type, trigger_conditions, instructions, applies_to_project_id, applies_to_client_id"
       )
       .eq("id", skillId)
       .maybeSingle<SkillRow>(),
@@ -68,7 +69,14 @@ export default async function EditSkillPage({
     trigger_conditions: skill.trigger_conditions,
     instructions: skill.instructions,
     applies_to_project_id: skill.applies_to_project_id,
+    applies_to_client_id: skill.applies_to_client_id,
   };
+
+  const { data: clientRows } = await supabase
+    .from("clients")
+    .select("id, name")
+    .order("name");
+  const clients = (clientRows ?? []) as Array<{ id: string; name: string }>;
 
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1400px] mx-auto">
@@ -89,6 +97,7 @@ export default async function EditSkillPage({
       </header>
 
       <SkillForm
+        clients={clients}
         initial={initial}
         projects={(projectsQ.data ?? []) as SkillFormProject[]}
       />

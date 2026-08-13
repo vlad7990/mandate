@@ -90,6 +90,12 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { pattern: "/app/projects/:id/candidates/new", capability: "candidates:write" },
   { pattern: "/app/projects/:id/sourcing", capability: "candidates:write", prefix: true },
 
+  // --- Clients -------------------------------------------------------------
+  // No rule needed: reading the client list and a client record is `org:read`
+  // like every other list, and clients are created as a side effect of the
+  // mandate and executive-search flows, which are already gated. Listed here
+  // as a comment so the next person does not assume it was forgotten.
+
   // --- Executive Intelligence ---------------------------------------------
   // Opening an executive search is opening a mandate; everything under an
   // existing search is readable, and its writes are guarded in the actions.
