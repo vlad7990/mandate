@@ -2,6 +2,13 @@ import { notFound } from "next/navigation";
 import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import {
+  buildCandidateEvidence,
+  buildComparisonGrid,
+} from "@/lib/comparison/evidence-index";
+import { extractEvidence } from "@/lib/comparison/evidence-extractors";
+import type { CandidateProfile } from "@/lib/ai/cv-parsing";
+import type { CalibrationModel } from "@/lib/ai/role-analysis";
+import {
   IconLock,
 } from "@/components/icons";
 import {
@@ -26,6 +33,7 @@ type ProjectRow = {
   title: string;
   company_name: string;
   status: string | null;
+  calibration_model: Partial<CalibrationModel> | null;
 };
 
 type ShortlistRow = {
@@ -91,7 +99,7 @@ export default async function HiringManagerPublicPage({
   const [projectQ, shortlistQ, candidatesQ, scoresQ] = await Promise.all([
     supabase
       .from("projects")
-      .select("id, title, company_name, status")
+      .select("id, title, company_name, status, calibration_model")
       .eq("id", verified.project_id)
       .single<ProjectRow>(),
     supabase
@@ -124,6 +132,33 @@ export default async function HiringManagerPublicPage({
   const portalCandidates = shapeSlate(shortlist, candidates, scores);
   const progress = computeProgress(candidates, shortlist);
 
+  // Evidence coverage for the shortlisted people only — the hiring manager is
+  // being asked about the slate, not about everyone the search touched.
+  const scoreByCandidate = new Map(scores.map((s) => [s.candidate_id, s]));
+  const weights = project.calibration_model?.dimension_weights ?? null;
+  const evidenceGrid = buildComparisonGrid(
+    portalCandidates.map((pc) => {
+      const source = candidates.find((c) => c.id === pc.id);
+      return buildCandidateEvidence(
+        {
+          candidate_id: pc.id,
+          full_name: pc.full_name,
+          items: extractEvidence({
+            scores: scoreByCandidate.get(pc.id) ?? null,
+            cv:
+              source?.cv_structured && typeof source.cv_structured === "object"
+                ? (source.cv_structured as Partial<CandidateProfile>)
+                : null,
+            recruiter: normaliseRecruiterAssessment(source?.recruiter_assessment)
+              .dimension_notes,
+          }),
+        },
+        weights
+      );
+    }),
+    weights
+  );
+
   return (
     <PortalContent
       projectId={project.id}
@@ -133,6 +168,7 @@ export default async function HiringManagerPublicPage({
       progress={progress}
       mode="hiring_manager"
       submitHandle={token}
+      evidenceGrid={evidenceGrid}
     />
   );
 }

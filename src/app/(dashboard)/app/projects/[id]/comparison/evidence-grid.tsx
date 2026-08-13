@@ -56,12 +56,30 @@ const BASIS_LABEL: Record<EvidenceBasis, string> = {
   self_reported: "CV",
 };
 
+/**
+ * Who is reading.
+ *
+ * `internal` shows each cell's evidence items verbatim — including the
+ * recruiter's own per-dimension notes, which are working commentary written
+ * for their file.
+ *
+ * `client` shows coverage STATE and gaps only. The distinction follows the
+ * precedent already set by buildPortalCandidate, which hands a hiring manager
+ * the recruiter's tier but never their fit_notes: the coverage picture is an
+ * honest disclosure the client is owed, the candid sentence behind it is not
+ * theirs to read. "Sources disagree on domain expertise" is useful to a hiring
+ * manager; "impressive CV, thin in person" is a note to self.
+ */
+export type EvidenceGridVariant = "internal" | "client";
+
 export function EvidenceGrid({
   projectId,
   grid,
+  variant = "internal",
 }: {
-  projectId: string;
+  projectId?: string;
   grid: ComparisonGrid;
+  variant?: EvidenceGridVariant;
 }) {
   if (grid.candidates.length === 0) {
     return (
@@ -113,13 +131,17 @@ export function EvidenceGrid({
                   key={c.candidate_id}
                   className="text-left px-3 py-2 font-mono-label text-mono-label text-on-surface uppercase tracking-widest"
                 >
-                  <Link
-                    href={`/app/projects/${projectId}/candidates/${c.candidate_id}`}
-                    prefetch={false}
-                    className="hover:text-primary transition-colors"
-                  >
-                    {c.full_name}
-                  </Link>
+                  {projectId ? (
+                    <Link
+                      href={`/app/projects/${projectId}/candidates/${c.candidate_id}`}
+                      prefetch={false}
+                      className="hover:text-primary transition-colors"
+                    >
+                      {c.full_name}
+                    </Link>
+                  ) : (
+                    c.full_name
+                  )}
                   {c.critical_gaps.length > 0 && (
                     <span className="block mt-0.5 text-tertiary normal-case tracking-normal font-mono-data text-body-main">
                       {c.critical_gaps.length} critical gap
@@ -148,7 +170,7 @@ export function EvidenceGrid({
                     key={cell.candidate_id}
                     className="align-top px-3 py-2.5"
                   >
-                    <Cell coverage={cell.coverage} />
+                    <Cell coverage={cell.coverage} variant={variant} />
                   </td>
                 ))}
               </tr>
@@ -157,12 +179,18 @@ export function EvidenceGrid({
         </table>
       </div>
 
-      <ContextNote />
+      <ContextNote variant={variant} />
     </section>
   );
 }
 
-function Cell({ coverage }: { coverage: DimensionCoverage }) {
+function Cell({
+  coverage,
+  variant,
+}: {
+  coverage: DimensionCoverage;
+  variant: EvidenceGridVariant;
+}) {
   if (coverage.state === "absent") {
     // A dash, never a zero. "We did not look" and "they scored badly" are
     // different claims and only one of them is true here.
@@ -189,6 +217,7 @@ function Cell({ coverage }: { coverage: DimensionCoverage }) {
           <span className="opacity-70">· {BASIS_LABEL[coverage.best_basis]}</span>
         )}
       </span>
+      {variant === "client" ? null : (
       <ul className="space-y-0.5">
         {coverage.items.slice(0, 3).map((item, i) => (
           <li
@@ -210,6 +239,7 @@ function Cell({ coverage }: { coverage: DimensionCoverage }) {
           </li>
         )}
       </ul>
+      )}
     </div>
   );
 }
@@ -235,7 +265,20 @@ function Legend() {
  * Names what the grid cannot show. Without this the omission reads as "these
  * assets do not exist" rather than "they do not make dimension-level claims".
  */
-function ContextNote() {
+function ContextNote({ variant }: { variant: EvidenceGridVariant }) {
+  if (variant === "client") {
+    return (
+      <p className="font-mono-data text-body-main text-on-surface-variant flex items-start gap-1.5">
+        <IconInfo size={12} className="mt-0.5 shrink-0" />
+        <span>
+          This shows how well each dimension is evidenced, not a verdict.
+          &ldquo;Not assessed&rdquo; means the search has not tested it yet —
+          it is not a mark against the candidate.
+        </span>
+      </p>
+    );
+  }
+
   return (
     <p className="font-mono-data text-body-main text-on-surface-variant flex items-start gap-1.5">
       <IconInfo size={12} className="mt-0.5 shrink-0" />

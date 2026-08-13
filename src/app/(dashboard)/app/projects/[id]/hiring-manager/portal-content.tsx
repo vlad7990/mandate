@@ -4,6 +4,8 @@ import { TierComparison } from "@/components/ui/tier-comparison";
 import { type CandidateProfile, type FitDimensions } from "@/lib/ai/cv-parsing";
 import { type CandidateEvaluation } from "@/lib/ai/candidate-evaluation";
 import { type RecruiterAssessment } from "@/lib/recruiter-assessment";
+import type { ComparisonGrid } from "@/lib/comparison/evidence-index";
+import { EvidenceGrid } from "../comparison/evidence-grid";
 import { HmFeedbackForm, type HmFeedbackCandidate } from "./feedback-form";
 import { IconChevronRight } from "@/components/icons";
 
@@ -54,6 +56,13 @@ export type PortalProps = {
   mode: "founder" | "hiring_manager";
   /** Submission handle for the feedback form (token UUID, "preview" for founder). */
   submitHandle: string;
+  /**
+   * Evidence coverage for the slate. Rendered in the `client` variant, which
+   * shows coverage state and gaps but never the recruiter's verbatim notes —
+   * the same boundary buildPortalCandidate already draws by handing over the
+   * recruiter's tier and not their fit_notes.
+   */
+  evidenceGrid?: ComparisonGrid | null;
 };
 
 export function PortalContent({
@@ -63,6 +72,7 @@ export function PortalContent({
   progress,
   mode,
   submitHandle,
+  evidenceGrid,
 }: PortalProps) {
   const formCandidates: HmFeedbackCandidate[] = candidates.map((c) => ({
     id: c.id,
@@ -81,6 +91,12 @@ export function PortalContent({
         progress={progress}
       />
       <SlateGrid candidates={candidates} />
+      {/* Between the slate and the feedback form on purpose: the hiring
+          manager should see what is still unknown before they are asked to
+          give a verdict on it. */}
+      {evidenceGrid && evidenceGrid.candidates.length > 0 && (
+        <EvidenceGrid grid={evidenceGrid} variant="client" />
+      )}
       <HmFeedbackForm
         candidates={formCandidates}
         submitHandle={submitHandle}
