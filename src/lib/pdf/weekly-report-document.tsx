@@ -89,9 +89,14 @@ export function WeeklyReportPdfDocument({
             <Text style={PDF_STYLES.pMuted}>No stage changes this week.</Text>
           ) : (
             report.pipeline_moves.map((m, i) => (
+              // "»" rather than "→": the PDF fonts are the standard base-14
+              // set, whose WinAnsi encoding has no arrows. An arrow here
+              // printed as a right single quote — "Screened ’ Client
+              // interview" — because react-pdf substitutes silently rather
+              // than failing. See the note on GLYPH safety in styles.ts.
               <BulletRow
                 key={i}
-                text={`${m.name} · ${m.from_stage} → ${m.to_stage}`}
+                text={`${m.name} · ${m.from_stage} » ${m.to_stage}`}
               />
             ))
           )}
@@ -104,9 +109,12 @@ export function WeeklyReportPdfDocument({
             <Text style={PDF_STYLES.pMuted}>No ranking shifts this week.</Text>
           ) : (
             report.rank_moves.map((r, i) => (
+              // Direction as a word, not a triangle: "▲"/"▼" printed as "²"
+              // and "¼", and the substituted glyph's metrics also shunted the
+              // name onto its own line. The word carries it without a font.
               <BulletRow
                 key={i}
-                text={`${r.direction === "up" ? "▲" : "▼"} ${r.name} · ${r.delta} positions`}
+                text={`${r.name} · ${r.direction === "up" ? "up" : "down"} ${r.delta} position${r.delta === 1 ? "" : "s"}`}
               />
             ))
           )}

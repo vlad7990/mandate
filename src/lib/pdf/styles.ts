@@ -20,6 +20,19 @@ Font.registerHyphenationCallback((word) => [word]);
 // black-and-white photocopy — high contrast on the dark header,
 // medium-contrast on body text.
 
+// GLYPH SAFETY
+//
+// These documents use the standard base-14 PDF fonts (Helvetica), whose
+// WinAnsi encoding covers Latin-1 and little else. A character outside it is
+// not dropped and does not raise — react-pdf emits whatever byte falls at
+// that position, so "→" prints as "’", "▲" as "²" and "▼" as "¼". Both
+// arrows and triangles shipped in the weekly report this way.
+//
+// Safe: accented Latin, — – … « » · † ‡ ‰ € £ © ® ° ± × ÷ ¼ ½ ¾ and curly
+// quotes. Not safe: arrows, geometric shapes, check marks, most maths, and
+// emoji. AI-generated prose is the standing risk here, since nothing stops a
+// model emitting "→" or "✓" mid-sentence; anything new that reaches a PDF
+// wants a look at the rendered output, not just the JSX.
 export const PDF_COLORS = {
   ink: "#0b1020",
   inkSoft: "#1f2937",
