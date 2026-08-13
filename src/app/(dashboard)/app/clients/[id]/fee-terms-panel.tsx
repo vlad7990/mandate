@@ -127,8 +127,12 @@ export function FeeTermsPanel({
               </dl>
 
               {plan.length > 0 && (
-                <div className="border border-outline-variant/60">
-                  <table className="w-full border-collapse text-left">
+                // `relative` on the scroll wrapper for the `sr-only` reason
+                // documented on the placements table; `overflow-x-auto` because
+                // three columns of label + trigger + share do not fit 257px at
+                // 360, and a fee schedule should scroll rather than crush.
+                <div className="relative overflow-x-auto border border-outline-variant/60">
+                  <table className="w-full min-w-[320px] border-collapse text-left">
                     <thead>
                       <tr className="border-b border-outline-variant/60">
                         <th className={`${LABEL} px-3 py-2 font-normal`}>Instalment</th>
@@ -168,9 +172,22 @@ export function FeeTermsPanel({
       )}
 
       {editing && (
+        /*
+         * `onSubmit` rather than `action`, because React resets a form once
+         * its action returns — including when the action threw. The
+         * agreement form validates server-side (the instalments must come
+         * to 100%), so with `action` a rejected submit wiped what the user
+         * had typed and silently reverted the controlled fee-model select
+         * to its state value, which then posted the wrong model on the
+         * retry. Handling submit ourselves keeps the form exactly as it
+         * was, which is what the error message is asking them to correct.
+         */
         <form
           className={`${PANEL_BODY} space-y-4`}
-          action={(fd) => run(saveFeeTermsAction, fd, "Agreement saved")}
+          onSubmit={(event) => {
+            event.preventDefault();
+            run(saveFeeTermsAction, new FormData(event.currentTarget), "Agreement saved");
+          }}
         >
           <input type="hidden" name="clientId" value={clientId} />
 

@@ -16,12 +16,12 @@ import {
   IconRefresh,
   IconSend,
 } from "@/components/icons";
+import { logOutreachAction } from "./outreach-actions";
 import {
-  logOutreachAction,
   OUTREACH_CHANNELS,
   type OutreachChannel,
   type OutreachDirection,
-} from "./outreach-actions";
+} from "./outreach-constants";
 
 export type OutreachEntry = {
   id: string;

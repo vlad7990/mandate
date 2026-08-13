@@ -355,14 +355,24 @@ export function ArchetypeSelect({
   };
 
   return (
-    <label className="inline-flex items-center gap-1">
+    // `max-w-full min-w-0` on the label, not just on the select: an
+    // `inline-flex` box sizes to its content and will not shrink below it,
+    // so capping the select alone left the label at its intrinsic 400px.
+    <label className="inline-flex max-w-full min-w-0 items-center gap-1">
       <span className="sr-only">Archetype</span>
       <select
         value={value ?? ""}
         disabled={pending}
         onChange={(e) => handleChange(e.target.value)}
         className={cn(
-          "bg-surface-container-high border border-outline-variant px-2 py-0.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant hover:border-primary focus:border-primary focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          // `max-w-full min-w-0`: a <select> sizes to its widest *option*,
+          // and these options carry a sentence each ("BUILDER — Built
+          // something from zero…"), so it claimed 400px inside a 297px
+          // column at 360 and pushed the candidate header over. Same class
+          // of bug as the `flex-1` ones fixed in the responsive pass — the
+          // element has an intrinsic width nothing was allowing it to give
+          // up. Found sweeping the placement tab; the select is older.
+          "max-w-full min-w-0 truncate bg-surface-container-high border border-outline-variant px-2 py-0.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant hover:border-primary focus:border-primary focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         )}
       >
         <option value="">— ARCHETYPE —</option>

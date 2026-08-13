@@ -478,3 +478,94 @@ export function sampleCandidatesForMandate(
 ): readonly SampleCandidate[] {
   return SAMPLE_CANDIDATES.filter((c) => c.mandateId === mandateId);
 }
+
+/**
+ * Sample placements, for the revenue screen.
+ *
+ * The screen exists to answer "what did we bill this quarter", and an
+ * empty one cannot demonstrate that — a recruiter evaluating the product
+ * would see four zeroes and learn nothing about what it does once it has
+ * data. These are the same three mandates and the same people as the rest
+ * of the sample workspace, carried through to their outcomes, so the
+ * fixture reads as one agency rather than three unrelated screens.
+ *
+ * Chosen to show the four states that matter and are otherwise hard to
+ * see: a retainer part-billed, a contingent fee earned in full, a
+ * placement inside its guarantee, and one that fell through and was
+ * clawed back. The clawback is what makes the quarter columns interesting
+ * — it lands in the quarter it happened, not the one that booked the fee.
+ *
+ * Amounts are in the sample's own currency and are never summed with real
+ * rows: `shouldShowSample` only renders these when the org has no
+ * placements at all.
+ */
+export type SamplePlacement = {
+  readonly id: string;
+  readonly candidate: string;
+  readonly mandate: string;
+  readonly client: string;
+  readonly status: "OFFER OUT" | "ACCEPTED" | "STARTED" | "FELL THROUGH";
+  readonly startDate: string | null;
+  readonly guarantee: string;
+  /** Total fee booked, in the org's base currency. */
+  readonly fee: number;
+  /** Of that, what has been earned — negative where clawed back. */
+  readonly billed: number;
+};
+
+export const SAMPLE_PLACEMENTS: readonly SamplePlacement[] = [
+  {
+    id: "sample-placement-anand",
+    candidate: "Priya Anand",
+    mandate: "Chief Technology Officer",
+    client: "Larkspur Health",
+    status: "STARTED",
+    startDate: "2026-07-06",
+    guarantee: "In guarantee",
+    fee: 96_000,
+    billed: 64_000,
+  },
+  {
+    id: "sample-placement-okonjo",
+    candidate: "Daniel Okonjo",
+    mandate: "Chief Operating Officer",
+    client: "Northvale Capital",
+    status: "STARTED",
+    startDate: "2026-04-20",
+    guarantee: "Guarantee cleared",
+    fee: 78_000,
+    billed: 78_000,
+  },
+  {
+    id: "sample-placement-mbeki",
+    candidate: "Helena Mbeki-Sørensen",
+    mandate: "VP Engineering",
+    client: "Cindermere Robotics",
+    status: "FELL THROUGH",
+    startDate: "2026-05-11",
+    guarantee: "Fell through",
+    fee: 0,
+    billed: -54_000,
+  },
+  {
+    id: "sample-placement-varga",
+    candidate: "Ilona Varga",
+    mandate: "VP Engineering",
+    client: "Cindermere Robotics",
+    status: "ACCEPTED",
+    startDate: null,
+    guarantee: "—",
+    fee: 61_500,
+    billed: 0,
+  },
+];
+
+/** Headline figures for the sample revenue tiles, written out rather than summed. */
+export const SAMPLE_REVENUE = {
+  billedThisQuarter: 64_000,
+  outstanding: 93_500,
+  started: 2,
+  inGuarantee: 1,
+  /** Oldest first, matching `recentQuarters`. */
+  byQuarter: [48_000, 132_000, 24_000, 64_000],
+} as const;

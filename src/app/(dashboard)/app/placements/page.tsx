@@ -1,7 +1,15 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { ListPanel, PageShell, TerminalTitle } from "@/components/ui/page-shell";
+import { SampleBanner } from "@/components/sample/sample-banner";
+import {
+  SAMPLE_DISMISSED_COOKIE,
+  SAMPLE_PLACEMENTS,
+  SAMPLE_REVENUE,
+  shouldShowSample,
+} from "@/lib/sample";
 import { getAccess } from "@/lib/auth/access";
 import { can } from "@/lib/auth/roles";
 import {
@@ -115,6 +123,16 @@ export default async function PlacementsPage() {
     (p) => guaranteeState(p, today) === "running"
   ).length;
 
+  // An empty revenue screen is four zeroes and a sentence, which teaches
+  // nothing about the one question this page exists to answer. The sample
+  // shows a part-billed retainer, a fee earned in full, a placement inside
+  // its guarantee and a clawback — the states that make the quarter columns
+  // mean something. It never mixes with real rows: `hasRealData` is any
+  // placement at all, so the first one recorded replaces it for good.
+  const dismissed = (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
+  const showSample =
+    seesFees && shouldShowSample({ hasRealData: placements.length > 0, dismissed });
+
   return (
     <PageShell className="space-y-5">
       <SetBreadcrumbs crumbs={[{ label: "Placements" }]} />
@@ -122,16 +140,22 @@ export default async function PlacementsPage() {
       <div>
         <TerminalTitle>PLACEMENTS_AND_FEES</TerminalTitle>
         <p className="mt-2 font-mono-label text-mono-label uppercase leading-[1.5] tracking-widest text-on-surface-variant tabular-nums">
-          {[
-            `${placements.length} placement${placements.length === 1 ? "" : "s"}`,
-            `${started} started`,
-            `${inGuarantee} in guarantee`,
-            seesFees ? `Base ${baseCurrency}` : "Fees restricted",
-          ].join(" // ")}
+          {showSample
+            ? `${SAMPLE_PLACEMENTS.length} example placements // sample data`
+            : [
+                `${placements.length} placement${placements.length === 1 ? "" : "s"}`,
+                `${started} started`,
+                `${inGuarantee} in guarantee`,
+                seesFees ? `Base ${baseCurrency}` : "Fees restricted",
+              ].join(" // ")}
         </p>
       </div>
 
-      {seesFees ? (
+      {showSample && <SampleBanner scope="placements" />}
+
+      {showSample ? (
+        <SampleRevenue baseCurrency={baseCurrency} quarters={quarters.map((q) => q.label)} />
+      ) : seesFees ? (
         <>
           <div className="grid grid-cols-1 gap-px border border-outline-variant bg-outline-variant sm:grid-cols-2 lg:grid-cols-4">
             <Tile
@@ -218,7 +242,9 @@ export default async function PlacementsPage() {
           </h2>
         </div>
 
-        {placements.length === 0 ? (
+        {showSample ? (
+          <SamplePlacementRows baseCurrency={baseCurrency} />
+        ) : placements.length === 0 ? (
           <div className="px-[18px] py-8">
             <p className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
               No placements recorded
@@ -332,6 +358,141 @@ export default async function PlacementsPage() {
         )}
       </ListPanel>
     </PageShell>
+  );
+}
+
+/**
+ * The sample tiles and quarter row.
+ *
+ * Figures come from `SAMPLE_REVENUE` written out longhand rather than
+ * summed from `SAMPLE_PLACEMENTS`, because a fixture that computes itself
+ * can only ever agree with itself — the point of these numbers is to show
+ * a shape a real book has (a clawback quarter below the ones around it),
+ * not to demonstrate that addition works.
+ */
+function SampleRevenue({
+  baseCurrency,
+  quarters,
+}: {
+  baseCurrency: string;
+  quarters: string[];
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-1 gap-px border border-outline-variant bg-outline-variant sm:grid-cols-2 lg:grid-cols-4">
+        <Tile
+          label={`Billed ${quarters[quarters.length - 1]}`}
+          value={formatMoney(SAMPLE_REVENUE.billedThisQuarter, baseCurrency)}
+          hint="Earned instalments less reversals"
+        />
+        <Tile
+          label="Booked, not yet earned"
+          value={formatMoney(SAMPLE_REVENUE.outstanding, baseCurrency)}
+          hint="Pending instalments across live placements"
+        />
+        <Tile
+          label="Placements started"
+          value={String(SAMPLE_REVENUE.started)}
+          hint="Candidates who have begun"
+        />
+        <Tile
+          label="Inside guarantee"
+          value={String(SAMPLE_REVENUE.inGuarantee)}
+          hint="Still at risk of a clawback"
+        />
+      </div>
+
+      <ListPanel>
+        <div className="border-b border-outline-variant px-[18px] py-[15px]">
+          <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+            Billed by quarter
+          </h2>
+        </div>
+        <div className="relative overflow-x-auto">
+          <table className="w-full min-w-[520px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-outline-variant/60">
+                {quarters.map((label) => (
+                  <Th key={label}>{label}</Th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {quarters.map((label, i) => (
+                  <td
+                    key={label}
+                    className="px-4 py-3 font-h1 text-[18px] tabular-nums text-on-surface"
+                  >
+                    {formatMoney(SAMPLE_REVENUE.byQuarter[i] ?? 0, baseCurrency)}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ListPanel>
+    </>
+  );
+}
+
+/** The sample rows, in the same columns as the real table. */
+function SamplePlacementRows({ baseCurrency }: { baseCurrency: string }) {
+  return (
+    <div className="relative overflow-x-auto">
+      <table className="w-full min-w-[860px] border-collapse text-left">
+        <thead>
+          <tr className="border-b border-outline-variant/60">
+            <Th>Candidate</Th>
+            <Th>Mandate</Th>
+            <Th>Client</Th>
+            <Th>Status</Th>
+            <Th>Start</Th>
+            <Th>Guarantee</Th>
+            <Th align="right">Fee</Th>
+            <Th align="right">Billed</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {SAMPLE_PLACEMENTS.map((p) => (
+            <tr key={p.id} className="border-b border-outline-variant/30 last:border-0">
+              <td className="max-w-0 truncate px-4 py-3 text-body-s text-on-surface">
+                {p.candidate}
+              </td>
+              <td className="max-w-0 truncate px-4 py-3 text-body-s text-on-surface-variant">
+                {p.mandate}
+              </td>
+              <td className="max-w-0 truncate px-4 py-3 text-body-s text-on-surface-variant">
+                {p.client}
+              </td>
+              <td
+                className={`px-4 py-3 font-mono-label text-[11px] uppercase tracking-[0.08em] ${
+                  p.status === "FELL THROUGH" ? "text-tertiary" : "text-on-surface-variant"
+                }`}
+              >
+                {p.status}
+              </td>
+              <td className="px-4 py-3 font-mono-label text-[11px] tracking-[0.08em] text-outline tabular-nums">
+                {p.startDate ?? "—"}
+              </td>
+              <td className="px-4 py-3 font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
+                {p.guarantee}
+              </td>
+              <td className="px-4 py-3 text-right font-mono-label text-mono-label text-on-surface tabular-nums">
+                {formatMoney(p.fee, baseCurrency)}
+              </td>
+              <td
+                className={`px-4 py-3 text-right font-mono-label text-mono-label tabular-nums ${
+                  p.billed < 0 ? "text-tertiary" : "text-on-surface-variant"
+                }`}
+              >
+                {formatMoney(p.billed, baseCurrency)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

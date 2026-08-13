@@ -328,17 +328,33 @@ export function pipelineValue(lines: readonly FeeLineRow[]): number {
  * its client-side rehydration must produce the same string — a locale
  * read from the request would flip thousands separators on hydration and
  * React would warn about it on every money value in the product.
+ *
+ * ## Cents appear only when there are cents
+ *
+ * Rounding everything to whole units reads better on a headline and lies
+ * on a ledger. A retainer of 90,000 split 33.333 / 33.333 / 33.334 is
+ * 29,999.70 / 29,999.70 / 30,000.60, and rounding those three to
+ * 30,000 / 30,000 / 30,001 puts a column on screen that sums to 90,001
+ * against a total of 90,000 — which reads as an arithmetic bug to the one
+ * person most likely to check, the recruiter reconciling an invoice. So
+ * whole amounts print whole and fractional ones print their cents.
  */
 export function formatMoney(amount: number, currency: string): string {
+  const fractionDigits = Number.isInteger(amount) ? 0 : 2;
+
   try {
     return new Intl.NumberFormat("en-GB", {
       style: "currency",
       currency,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
     }).format(amount);
   } catch {
     // An unrecognised ISO code should print the number, not blow up a page.
-    return `${currency} ${Math.round(amount).toLocaleString("en-GB")}`;
+    return `${currency} ${amount.toLocaleString("en-GB", {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    })}`;
   }
 }
 

@@ -437,6 +437,31 @@ describe("formatMoney", () => {
     expect(formatMoney(62_500, "USD")).toContain("62,500");
   });
 
+  it("prints whole amounts without cents", () => {
+    expect(formatMoney(90_000, "USD")).not.toContain(".");
+  });
+
+  /**
+   * The reason this is not a flat `maximumFractionDigits: 0`. Rounding the
+   * three instalments of a 90,000 retainer to whole units puts a column on
+   * screen summing to 90,001 against a total of 90,000.
+   */
+  it("prints cents when the amount has them, so a ledger column sums", () => {
+    const lines = expandFeeLines(
+      { fee_model: "retained", instalment_plan: DEFAULT_RETAINER_PLAN },
+      90_000
+    );
+    expect(lines.map((l) => formatMoney(l.amount, "USD"))).toEqual([
+      "US$29,999.70",
+      "US$29,999.70",
+      "US$30,000.60",
+    ]);
+  });
+
+  it("keeps the sign on a reversal", () => {
+    expect(formatMoney(-60_000, "USD")).toContain("-");
+  });
+
   /** An unrecognised ISO code should print the number, not take out a page. */
   it("degrades rather than throwing on an unknown code", () => {
     expect(formatMoney(1000, "XYZ")).toContain("1,000");

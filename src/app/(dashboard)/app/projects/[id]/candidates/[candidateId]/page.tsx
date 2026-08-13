@@ -44,12 +44,16 @@ import { can } from "@/lib/auth/roles";
 import { canReadPlacementFees } from "@/lib/fees/access";
 import {
   FEE_LINE_COLUMNS,
+  FEE_MODEL_LABELS,
+  FEE_TERMS_COLUMNS,
   PLACEMENT_COLUMNS,
   PLACEMENT_FEE_COLUMNS,
   type FeeLineRow,
+  type FeeTermsRow,
   type PlacementFeeRow,
   type PlacementRow,
 } from "@/lib/fees/types";
+import { resolveTerms } from "@/lib/fees/compute";
 import { OutreachPanel, type OutreachEntry } from "./outreach-panel";
 import { PipelineSelect } from "./pipeline-select";
 import { RecruiterAssessmentPanel } from "./recruiter-assessment-panel";
@@ -78,6 +82,7 @@ type ProjectRow = {
   id: string;
   title: string;
   company_name: string;
+  client_id: string | null;
   calibration_model: Partial<CalibrationModel> | null;
   company_context:
     | (Partial<CompanyContext> & {
@@ -168,7 +173,7 @@ export default async function CandidateProfilePage({
     supabase
       .from("projects")
       .select(
-        "id, title, company_name, calibration_model, company_context, onboarding_responses"
+        "id, title, company_name, client_id, calibration_model, company_context, onboarding_responses"
       )
       .eq("id", id)
       .single<ProjectRow>(),
@@ -359,6 +364,30 @@ export default async function CandidateProfilePage({
 
   // The caller's org, not the project's — RLS scopes both to the same one,
   // and the project select does not carry `organization_id`.
+  // The agreement in force, for the record-offer form's defaults and the
+  // line that tells the user what it will bill. RLS refuses these rows
+  // without `fees:read`, so a researcher gets null and the form asks for
+  // the numbers instead of pretending to know them.
+  const { data: termsRows } = canSeeFees
+    ? await supabase
+        .from("fee_terms")
+        .select(FEE_TERMS_COLUMNS)
+        .or(
+          [
+            `project_id.eq.${projectId}`,
+            project.client_id ? `client_id.eq.${project.client_id}` : null,
+          ]
+            .filter(Boolean)
+            .join(",")
+        )
+        .returns<FeeTermsRow[]>()
+    : { data: null };
+
+  const resolvedTerms = resolveTerms(
+    (termsRows ?? []).find((t) => t.client_id != null) ?? null,
+    (termsRows ?? []).find((t) => t.project_id === projectId) ?? null
+  );
+
   const { data: orgRow } = access?.organizationId
     ? await supabase
         .from("organizations")
@@ -612,7 +641,27 @@ export default async function CandidateProfilePage({
                 canWrite={can(access?.role, "mandates:write")}
                 today={new Date().toISOString().slice(0, 10)}
                 baseCurrency={orgRow?.base_currency ?? "USD"}
-                termsSummary={null}
+                terms={
+                  resolvedTerms
+                    ? {
+                        summary: [
+                          resolvedTerms.source === "mandate"
+                            ? "Mandate override"
+                            : "Client agreement",
+                          FEE_MODEL_LABELS[resolvedTerms.fee_model],
+                          resolvedTerms.fee_percentage != null
+                            ? `${resolvedTerms.fee_percentage}%`
+                            : null,
+                          resolvedTerms.currency,
+                          `${resolvedTerms.guarantee_days}-day guarantee`,
+                        ]
+                          .filter(Boolean)
+                          .join(" // "),
+                        feePercentage: resolvedTerms.fee_percentage,
+                        currency: resolvedTerms.currency,
+                      }
+                    : null
+                }
               />
             ),
           },

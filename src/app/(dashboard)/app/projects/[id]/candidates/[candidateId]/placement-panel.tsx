@@ -82,8 +82,14 @@ export type PlacementPanelProps = {
   /** Today, from the server, so server and client agree across midnight. */
   today: string;
   baseCurrency: string;
-  /** Terms in force, for the "what will this bill" hint. Null when none. */
-  termsSummary: string | null;
+  /**
+   * The agreement in force, or null when there is none on file.
+   *
+   * Null is the ordinary first-week state, not an error — but it is the
+   * reason a recorded offer can come back with no fee, so the form asks
+   * for the rate rather than silently computing nothing.
+   */
+  terms: { summary: string; feePercentage: number | null; currency: string } | null;
 };
 
 export function PlacementPanel(props: PlacementPanelProps) {
@@ -101,7 +107,8 @@ function NoPlacement({
   candidateId,
   canWrite,
   today,
-  termsSummary,
+  terms,
+  baseCurrency,
 }: PlacementPanelProps) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
@@ -130,9 +137,19 @@ function NoPlacement({
       )}
 
       {open && (
+        /*
+         * `onSubmit` rather than `action` throughout this panel. React
+         * resets a form once its action returns, including when the action
+         * threw — so a rejected submit discarded everything the user had
+         * typed and reverted controlled fields to their state values.
+         * Handling submit ourselves leaves the form as it was, which is
+         * what the error message is asking them to fix.
+         */
         <form
           className={`${PANEL_BODY} space-y-4`}
-          action={(formData) =>
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
             start(async () => {
               try {
                 await recordPlacementAction(formData);
@@ -142,17 +159,15 @@ function NoPlacement({
               } catch (error) {
                 toast.error(error instanceof Error ? error.message : "Could not record the offer");
               }
-            })
-          }
+            });
+          }}
         >
           <input type="hidden" name="projectId" value={projectId} />
           <input type="hidden" name="candidateId" value={candidateId} />
 
-          {termsSummary && (
-            <p className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
-              {`Terms in force // ${termsSummary}`}
-            </p>
-          )}
+          <p className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
+            {terms ? `Terms in force // ${terms.summary}` : "No agreement on file"}
+          </p>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="space-y-1.5">
@@ -176,11 +191,31 @@ function NoPlacement({
               <span className={LABEL}>Other cash</span>
               <input name="otherCash" inputMode="decimal" className={FIELD} />
             </label>
+            <label className="space-y-1.5">
+              <span className={LABEL}>Fee %</span>
+              <input
+                name="feePercentage"
+                inputMode="decimal"
+                placeholder="25"
+                defaultValue={terms?.feePercentage ?? ""}
+                className={FIELD}
+              />
+            </label>
+            <label className="space-y-1.5">
+              <span className={LABEL}>Currency</span>
+              <input
+                name="currency"
+                maxLength={3}
+                defaultValue={terms?.currency ?? baseCurrency}
+                className={FIELD}
+              />
+            </label>
           </div>
 
           <p className="text-body-s text-on-surface-variant">
-            The package is optional now — an offer often goes out before it is final. The
-            fee is computed from it when you add it.
+            {terms
+              ? "The package is optional now — an offer often goes out before it is final. The fee is computed from it and the agreement above."
+              : "The package is optional now — an offer often goes out before it is final. With no agreement on file, a salary and a percentage together are what produce a fee; either alone records the offer and nothing more."}
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -211,6 +246,7 @@ function ExistingPlacement({
   canWrite,
   today,
   baseCurrency,
+  terms,
 }: PlacementPanelProps & { placement: PlacementRow }) {
   const [pending, start] = useTransition();
   const [editingFee, setEditingFee] = useState(false);
@@ -299,6 +335,11 @@ function ExistingPlacement({
             <p className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
               No fee recorded
             </p>
+            <p className="mt-1.5 max-w-[68ch] text-body-s leading-relaxed text-on-surface-variant">
+              {terms
+                ? `This placement has no fee against it yet. ${terms.summary} applies once a package is recorded.`
+                : "This placement has no fee against it, and this client has no agreement on file — so there is no rate to compute one from. Add the fee here, or record the client's terms once and every placement after it is priced automatically."}
+            </p>
             {canWrite && (
               <button
                 type="button"
@@ -379,7 +420,9 @@ function ExistingPlacement({
         {canWrite && fallingThrough && (
           <form
             className="space-y-3 border border-tertiary/40 px-3 py-3"
-            action={(fd) => {
+            onSubmit={(event) => {
+              event.preventDefault();
+              const fd = new FormData(event.currentTarget);
               setFallingThrough(false);
               run(updatePlacementStatusAction, fd, "Placement marked as fallen through");
             }}
@@ -629,7 +672,13 @@ function FeeForm({
   onSubmit: (fd: FormData) => void;
 }) {
   return (
-    <form className="space-y-4 border border-outline-variant/60 px-3 py-3" action={onSubmit}>
+    <form
+      className="space-y-4 border border-outline-variant/60 px-3 py-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit(new FormData(event.currentTarget));
+      }}
+    >
       <input type="hidden" name="placementId" value={placementId} />
       <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="candidateId" value={candidateId} />

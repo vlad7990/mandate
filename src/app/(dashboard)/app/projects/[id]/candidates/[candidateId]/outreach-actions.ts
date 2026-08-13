@@ -11,16 +11,11 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
-export const OUTREACH_CHANNELS = [
-  { value: "email", label: "Email" },
-  { value: "linkedin", label: "LinkedIn" },
-  { value: "phone", label: "Phone" },
-  { value: "referral", label: "Referral / intro" },
-  { value: "other", label: "Other" },
-] as const;
-
-export type OutreachChannel = (typeof OUTREACH_CHANNELS)[number]["value"];
-export type OutreachDirection = "outbound" | "inbound";
+// The channel vocabulary lives in `outreach-constants.ts`, not here: a
+// `"use server"` module may only export async functions, and exporting the
+// array from this file made the whole page's action manifest invalid. See
+// the note in that file.
+import type { OutreachChannel, OutreachDirection } from "./outreach-constants";
 
 export type LogOutreachInput = {
   channel: OutreachChannel;
