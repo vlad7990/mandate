@@ -36,12 +36,12 @@ export type OutreachEntry = {
 /**
  * The contact record for one candidate, and the Art. 14 duty attached to it.
  *
- * The privacy-notice checkbox is the only thing that can stamp
- * subject_notified_at, and it is worded as a statement of fact about the
- * message rather than a compliance toggle — because that is what it is. Ticking
- * it when the message said nothing about where the data came from records a
- * notification that never happened, which is worse than leaving the obligation
- * visibly open.
+ * There is deliberately no "this message carried the notice" checkbox. It used
+ * to stamp subject_notified_at, which made the record an attestation: the
+ * person was marked as told because someone said so. Migration 044 moved that
+ * to a completed-send event, so this panel records CONTACT only and the
+ * notification is recorded when Mandate sends the notice and the provider
+ * confirms it.
  */
 export function OutreachPanel({
   projectId,
@@ -60,7 +60,6 @@ export function OutreachPanel({
   const [direction, setDirection] = useState<OutreachDirection>("outbound");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [notice, setNotice] = useState(false);
 
   const state = notificationState(candidate, new Date());
   const label = notificationLabel(state);
@@ -70,21 +69,16 @@ export function OutreachPanel({
     if (pending) return;
     start(async () => {
       try {
-        const result = await logOutreachAction(projectId, candidateId, {
+        await logOutreachAction(projectId, candidateId, {
           channel,
           direction,
           subject,
           body,
-          includesPrivacyNotice: notice,
+          includesPrivacyNotice: false,
         });
-        toast.success(
-          result.notifiedAt && notice
-            ? "Logged — and recorded as the Art. 14 notification"
-            : "Contact logged"
-        );
+        toast.success("Contact logged");
         setSubject("");
         setBody("");
-        setNotice(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Nothing was logged.");
@@ -120,12 +114,7 @@ export function OutreachPanel({
             </select>
             <select
               value={direction}
-              onChange={(e) => {
-                const next = e.target.value as OutreachDirection;
-                setDirection(next);
-                // A reply cannot be the message that notified them.
-                if (next === "inbound") setNotice(false);
-              }}
+              onChange={(e) => setDirection(e.target.value as OutreachDirection)}
               disabled={pending}
               className="px-2 py-1.5 bg-surface-container-lowest border border-outline-variant font-mono-label text-mono-label text-on-surface uppercase tracking-widest"
             >
@@ -151,22 +140,12 @@ export function OutreachPanel({
           />
 
           {direction === "outbound" && !noticeAlreadyGiven && (
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={notice}
-                onChange={(e) => setNotice(e.target.checked)}
-                disabled={pending}
-                className="mt-1"
-              />
-              <span className="font-mono-data text-body-main text-on-surface-variant leading-snug">
-                This message told them what data we hold and where it came from.
-                <span className="block text-outline">
-                  Only tick this if it is true — it is what records the GDPR
-                  Art. 14 notification, and it cannot be undone.
-                </span>
-              </span>
-            </label>
+            <p className="font-mono-data text-body-main text-on-surface-variant leading-snug border-l-2 border-tertiary/50 pl-3">
+              Logging contact here does not discharge the Art. 14 notice. The
+              notification is recorded only when Mandate sends the notice itself
+              and the provider confirms delivery — so the record reflects what
+              actually reached them, not what was intended.
+            </p>
           )}
 
           <button
