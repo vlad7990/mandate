@@ -1,24 +1,25 @@
-# Continuation — roles, the terminal re-skin, and responsive repair
+# Continuation — roles, the terminal re-skin, and the client entity
 
 **Date:** 2026-08-13
 **Supersedes:** `2026-08-13-platform-features.md` entirely. Both open
-decisions in it are now made, and three of its priority items are done. Its
+decisions in it are now made, and four of its priority items are done. Its
 Resend and `ANTHROPIC_API_KEY` blockers are unchanged and repeated below.
 
 Work in `/Users/vladbreygin/Projects/mandate`. Supabase project
 `xipyqnltkbtywxqyxupf`. Bash cwd resets to a stale iCloud clone between calls
 — always `cd` first or use `git -C`.
 
-`main` is clean, pushed, and deployed to `getmandate.io` at `2e482df`.
-Migrations `046`–`048` applied; schema and code are in step. 442 tests
+`main` is clean, pushed, and deployed to `getmandate.io` at `a288eb8`.
+Migrations `046`–`049` applied; schema and code are in step. 451 tests
 (was 389), tsc / lint / build green.
 
-Four commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
-terminal re-skin, `567d0f5` and `2e482df` responsive repair.
+Five commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
+terminal re-skin, `567d0f5` and `2e482df` responsive repair, `a288eb8` the
+client entity.
 
 ---
 
-## 1. The two open decisions, now made
+## 1. The decisions, now made
 
 Both were the founder's to make, and neither is derivable from the code.
 
@@ -34,6 +35,11 @@ Hiring managers and clients stay on the token portal at `/hm/[token]` and get
 no login — that is what kept the role model a column on `users` rather than a
 `project_members` graph with per-project RLS on every recruiting table. It is
 the decision to revisit if clients are ever meant to live in the product.
+
+**The client entity is identity plus company profile**, and nothing else in
+this pass. Company research and client psychology are canonical on the client
+and snapshotted per mandate; client skills scope to a client. Contacts, notes
+and commercial terms were all considered and deliberately excluded — see §5.
 
 ---
 
@@ -193,7 +199,74 @@ an SVG element's `scrollWidth` is not a page layout overflow.
 
 ---
 
-## 5. Verification — what is proven, and the recipe
+## 5. The client entity
+
+`projects.company_name` had been a text column since 001. Two mandates at the
+same bank were unrelated rows sharing a string, and there was nowhere to put
+anything that belongs to the client rather than to one search.
+
+**The schema was already written, on the wrong row.** The executive-search
+intake captures industry, business model, revenue range, headcount, funding
+stage, ownership structure, geographic footprint and regulatory environment —
+a complete company profile, stored per search and retyped for every search at
+the same company. Migration 049 lifts those eight columns onto `clients`
+rather than inventing a schema, so the intake populates a client and a client
+can prefill the intake.
+
+**What the client owns, and what the mandate keeps.** Company research and
+client psychology are canonical on `clients` and reused across its mandates —
+before this, a second mandate at the same bank re-ran identical research.
+Each mandate still keeps the copy it used: a shortlist PDF exported in March
+must render what it was built from, and reading through to a live record
+would silently rewrite it in June. Same reasoning as the calibration
+snapshots in 029. So `projects.company_context` and
+`projects.client_psychology` did not move — they changed meaning from "the
+only copy" to "the frozen copy".
+
+**Dedupe** is a generated `name_key` column (`lower(btrim(name))`) plus a
+unique index on `(organization_id, name_key)`. `clientNameKey()` in
+`src/lib/clients/types.ts` must keep agreeing with it; there is a test that
+says so. Legal suffixes are deliberately *not* normalised — "Acme Ltd" and
+"Acme Limited" are different clients, and merging them is a human decision
+the product does not make.
+
+**Resolution** goes through the `resolve_client` RPC rather than
+select-then-insert: role analysis runs in a background `after()` callback, so
+two mandates opened at the same client seconds apart would both read "no such
+client" and both insert. `ON CONFLICT` makes the unique index the arbiter.
+The RPC is SECURITY INVOKER on purpose, and that was verified — a researcher
+calling it directly is refused exactly as if they had inserted by hand.
+
+**Client skills now scope.** `skills.applies_to_client_id` narrows a rule to
+one client's mandates; null keeps the pre-049 org-wide behaviour so skills
+written before this do not silently stop firing. None of the eight agent
+runners changed — `loadActiveSkills` resolves the client from the project it
+was already being given, which is why this cost one query rather than a
+plumbing change through every call site.
+
+### The trap in the backfill
+
+`projects/new/actions.ts` inserts a mandate as **"Analyzing…"** and lets the
+role-analysis agent fill the real name in afterwards. A naive backfill
+therefore creates a client called "Analyzing…" and attaches every
+half-analysed mandate in the org to it. Excluded in three places — the
+migration, the RPC, and `isResolvableClientName` — because each is reachable
+without the others. Both spellings are matched: the source uses U+2026 but
+three dots survive some editors.
+
+### Deliberately not in this pass
+
+No contacts, no notes, no commercial terms. Fee terms in particular belong to
+the client but fee *amounts* belong to the placement, so doing half of it
+here would make the placement record (§8 item 4) harder rather than easier.
+
+The clients list is also not paginated, unlike Mandates and Candidates: a
+client count is bounded by how many companies an agency works for. It wants
+`parseListParams` like the others the day that stops being true.
+
+---
+
+## 6. Verification — what is proven, and the recipe
 
 **RLS was tested by impersonation, not by reading policy text.** Under
 `SET LOCAL ROLE authenticated` with a forged JWT claim, each of the four
@@ -242,7 +315,7 @@ means a scratch organisation, not the founder's.
 
 ---
 
-## 6. Blockers not ours to clear
+## 7. Blockers not ours to clear
 
 Unchanged from the previous two handoffs.
 
@@ -258,16 +331,14 @@ Unchanged from the previous two handoffs.
 
 ---
 
-## 7. What is next
+## 8. What is next
 
 From the original review's priority order, with the done items struck:
 
 1. ~~Pagination and list filtering~~ — `ba2abeb`.
 2. ~~Roles and route guards~~ — `498e46f`.
-3. **Client entity.** `projects.company_name` is still a text column. No
-   clients table, no contacts, no client history. `skills/page.tsx` still
-   admits the consequence: Client Skills are "same scope as search skills
-   today; the type tags intent."
+3. ~~Client entity~~ — `a288eb8`, identity and company profile only. See §5
+   for the three pieces deliberately left out.
 4. **Placement and fee record.** `pipeline_stage` has `offer` and `hired` and
    nothing else — no offer date, salary, fee, start date, guarantee period,
    fallthrough. A recruiting product that cannot answer "what did we bill
@@ -275,7 +346,9 @@ From the original review's priority order, with the done items struck:
 5. ~~Design system consolidation~~ — `dfd2ca5`.
 6. **Link `/app/candidates/search` into the nav.** Still unlinked. A
    620-line AI natural-language search that nothing points at. Minutes of
-   work; left alone deliberately because it is item 6.
+   work; left alone deliberately because it is item 6. Note the nav now has
+   a Clients entry, so there is a worked example of adding one — `NAV` in
+   `src/components/dashboard/nav-model.ts` plus an icon in `sidebar.tsx`.
 7. **Sample data on the other 37 pages.** Only Portfolio, Candidates and
    Mandates have it. Competencies and Templates still tell the user to
    "check that migration 033 has been applied."
@@ -289,6 +362,10 @@ Smaller, added by this session:
   `hmLabel || "hiring_manager"`. Since 046 the recruiter side is a
   constrained vocabulary rather than free text, so the prompt is worth a
   read with `researcher` and `viewer` in it.
+- **Client contacts, notes and commercial terms** were scoped out of §5 and
+  are the obvious next increment on the entity — but the contacts half is
+  worth doing with, not before, the placement record, since both want to
+  know who signed off.
 - **The ten screaming-snake page titles hardcode their capitals**, so screen
   readers announce `GLOBAL_EXECUTIVE_NETWORK` underscores and all. The rest
   of the product uppercases in CSS. Worth reconciling.
@@ -302,7 +379,7 @@ and right-to-erasure, DEI reporting. Nothing is scheduled at all — no
 
 ---
 
-## 8. Known limitations carried deliberately
+## 9. Known limitations carried deliberately
 
 **The PDF fonts are the base-14 set, so no non-Latin script renders.**
 `sanitizeForPdf` maps symbols a model might emit onto characters the font
