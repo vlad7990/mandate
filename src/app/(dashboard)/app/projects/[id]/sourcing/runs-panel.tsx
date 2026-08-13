@@ -9,9 +9,17 @@ import {
   type SourcingRunRow,
 } from "@/lib/sourcing/runs";
 import {
+  computeLineageConversion,
+  formatRate,
+  suppressionLabel,
+  type LineageConversion,
+} from "@/lib/sourcing/conversion";
+import type { PipelineStage } from "@/lib/ai/cv-parsing";
+import {
   IconArrowRight,
   IconCommit,
   IconHistory,
+  IconInfo,
   IconUpload,
 } from "@/components/icons";
 import { CreateRunButton } from "./create-run-dialog";
@@ -74,6 +82,11 @@ export async function SourcingRunsPanel({
     }
   }
 
+  // Per-lineage outcomes, for the conversion guard. Attribution is first
+  // touch and read from the view, so a candidate surfaced by three runs
+  // counts once, for the lineage that found them first.
+  const conversionByRoot = await loadConversions(supabase, projectId);
+
   const lineages = groupLineages(runs);
 
   return (
@@ -96,6 +109,10 @@ export async function SourcingRunsPanel({
               projectId={projectId}
               lineage={lineage}
               pendingByRun={pendingByRun}
+              conversion={
+                conversionByRoot.get(lineage.root_run_id) ??
+                computeLineageConversion({ candidates: [] })
+              }
             />
           ))}
         </div>
@@ -149,14 +166,67 @@ function EmptyRuns() {
   );
 }
 
+/**
+ * Outcomes per lineage, keyed by root run.
+ *
+ * Two reads rather than a join: the attribution view already resolves first
+ * touch per candidate, and the second query only needs the pipeline stage.
+ */
+async function loadConversions(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  projectId: string
+): Promise<Map<string, LineageConversion>> {
+  const out = new Map<string, LineageConversion>();
+
+  const { data: attributionRows } = await supabase
+    .from("sourcing_candidate_attribution")
+    .select("candidate_id, attributed_root_run_id")
+    .eq("project_id", projectId);
+
+  const attribution = (attributionRows ?? []) as Array<{
+    candidate_id: string;
+    attributed_root_run_id: string;
+  }>;
+  if (attribution.length === 0) return out;
+
+  const { data: candidateRows } = await supabase
+    .from("candidates")
+    .select("id, pipeline_stage")
+    .in(
+      "id",
+      attribution.map((a) => a.candidate_id)
+    );
+
+  const stageById = new Map(
+    ((candidateRows ?? []) as Array<{
+      id: string;
+      pipeline_stage: string | null;
+    }>).map((c) => [c.id, (c.pipeline_stage as PipelineStage | null) ?? null])
+  );
+
+  const byRoot = new Map<string, Array<{ pipeline_stage: PipelineStage | null }>>();
+  for (const row of attribution) {
+    const bucket = byRoot.get(row.attributed_root_run_id) ?? [];
+    bucket.push({ pipeline_stage: stageById.get(row.candidate_id) ?? null });
+    byRoot.set(row.attributed_root_run_id, bucket);
+  }
+
+  for (const [root, candidates] of byRoot) {
+    out.set(root, computeLineageConversion({ candidates }));
+  }
+  return out;
+}
+
 function LineageCard({
   projectId,
   lineage,
   pendingByRun,
+  conversion,
 }: {
   projectId: string;
   lineage: Lineage;
   pendingByRun: Map<string, number>;
+  conversion: LineageConversion;
 }) {
   const totals = lineageTotals(lineage);
   const originLabel = lineage.runs[0]?.label ?? "Untitled strategy";
@@ -191,7 +261,8 @@ function LineageCard({
         ))}
       </ul>
 
-      <footer className="px-4 py-2.5 border-t border-outline-variant bg-surface-container-lowest flex items-baseline justify-end gap-3 flex-wrap">
+      <footer className="px-4 py-2.5 border-t border-outline-variant bg-surface-container-lowest flex items-baseline justify-between gap-3 flex-wrap">
+        <LineageOutcomes conversion={conversion} />
         <CreateRunButton
           projectId={projectId}
           parentRunId={lineage.runs[lineage.runs.length - 1].id}
@@ -290,6 +361,43 @@ function RunLine({
         )}
       </div>
     </li>
+  );
+}
+
+/**
+ * What a lineage actually converted — counts always, a rate only once the
+ * sample can carry one.
+ *
+ * The suppressed state is deliberately a sentence and not a greyed-out number.
+ * A dash or a blank reads as "zero", which is a different and equally wrong
+ * claim; and any rendering of a ratio, however tentative, is the thing a
+ * recruiter will remember and act on. Below the threshold there is no ratio to
+ * soften — there is only "we cannot tell yet, and here is what would change
+ * that".
+ */
+function LineageOutcomes({ conversion }: { conversion: LineageConversion }) {
+  const label = suppressionLabel(conversion);
+
+  return (
+    <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap font-mono-label text-mono-label uppercase tracking-widest tabular-nums">
+      <span className="text-on-surface-variant">
+        {conversion.linked} attributed
+      </span>
+      <span className="text-on-surface-variant">
+        {conversion.hired} hired · {conversion.rejected} rejected ·{" "}
+        {conversion.in_flight} in flight
+      </span>
+      {conversion.hire_rate !== null ? (
+        <span className="text-secondary-fixed-dim">
+          {formatRate(conversion.hire_rate)} of finished candidates hired
+        </span>
+      ) : (
+        <span className="text-tertiary flex items-center gap-1.5 normal-case tracking-normal font-mono-data text-body-main">
+          <IconInfo size={12} />
+          {label}
+        </span>
+      )}
+    </div>
   );
 }
 
