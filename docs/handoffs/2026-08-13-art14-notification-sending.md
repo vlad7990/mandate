@@ -1,7 +1,17 @@
 # Continuation — Art. 14 notification sending via Resend
 
 **Date:** 2026-08-13
-**Status:** Blocked on one credential decision. Design settled; no app code written yet.
+**Status:** Schema + composition DONE (`ef60bc1`). Send path NOT written — blocked
+on the Resend credential, which needs a browser step the CLI cannot drive.
+
+**Done:** migration 044 applied (candidate_notifications, record_notification_sent /
+record_notification_failed, stamping stripped out of log_candidate_outreach);
+8 SQL invariants in `supabase/tests/candidate_notification_invariants.sql`;
+`src/lib/outreach/compose.ts` + 11 tests.
+
+**Remaining:** resolve the credential, then the server send action (compose →
+Resend → record_notification_sent / _failed), the compose UI, and the
+send-path tests listed below. The action queue needs no change.
 
 Work in `/Users/vladbreygin/Projects/mandate`. Supabase project `xipyqnltkbtywxqyxupf`.
 
