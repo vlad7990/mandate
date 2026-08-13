@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { TerminalTitle } from "@/components/ui/page-shell";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { MastHead } from "@/components/ui/mast-head";
@@ -64,9 +65,7 @@ export default async function WeeklyReportsPage({
 
       <header className="flex items-end justify-between gap-4 flex-wrap">
         <div className="space-y-2">
-          <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
-            WEEKLY_PROGRESS_REPORT
-          </h1>
+          <TerminalTitle>WEEKLY_PROGRESS_REPORT</TerminalTitle>
           <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
             {reports.length === 0
               ? "No reports yet — generate the first one to share with your client."

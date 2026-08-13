@@ -135,10 +135,16 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
 
       {/* One h1. Everything else beneath it is metadata. */}
       <div className="flex flex-wrap items-start gap-4">
-        <div className="min-w-0 flex-1">
+        {/*
+          `basis-[320px]` so the row's `flex-wrap` fires before the title is
+          crushed. Without it the identity block took whatever the snapshot
+          and action buttons left — 109px at 768px — and the h1 overflowed
+          its own container rather than the buttons moving to a second line.
+        */}
+        <div className="min-w-0 flex-1 basis-[320px]">
           <div className="flex flex-wrap items-center gap-2.5">
             {vm.ready ? (
-              <h1 className="text-[28px] font-bold leading-tight tracking-tight text-on-surface">
+              <h1 className="text-[22px] font-bold leading-tight tracking-tight text-on-surface sm:text-[28px]">
                 {vm.title}
               </h1>
             ) : (

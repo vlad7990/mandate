@@ -130,6 +130,55 @@ export async function PageHeader({
 }
 
 /**
+ * The screaming-snake page title — `GLOBAL_EXECUTIVE_NETWORK`,
+ * `COMPARATIVE_MARKET_REPORT`, and eight others.
+ *
+ * Ten pages had written this `h1` with byte-identical classes, and every one
+ * of them overflowed on a phone: a 24-character token has no space to break
+ * at, so it is a single unbreakable word ~490px wide in a 327px column, and
+ * `min-w-0` cannot help because the box cannot go below one word.
+ *
+ * `<wbr>` after each underscore is the fix. It offers the browser a break
+ * opportunity without putting anything in the text — no hyphen appears, the
+ * DOM text is still `GLOBAL_EXECUTIVE_NETWORK` for copy and for screen
+ * readers, and on a wide screen it stays on one line exactly as before.
+ * `break-all` was the alternative and is worse: it breaks mid-word at
+ * whatever column runs out, so `GLOBAL_EXECUT / IVE_NETWORK`.
+ *
+ * The size ramp matches `PageHeader` — 26px below `sm`, the 32px token above.
+ */
+export function TerminalTitle({
+  children,
+  className,
+}: {
+  children: string;
+  className?: string;
+}) {
+  const segments = children.split("_");
+
+  return (
+    <h1
+      className={cn(
+        "font-h1 text-[26px] leading-tight tracking-tight text-on-surface sm:text-h1",
+        className
+      )}
+    >
+      {segments.map((segment, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && (
+            <>
+              {"_"}
+              <wbr />
+            </>
+          )}
+          {segment}
+        </React.Fragment>
+      ))}
+    </h1>
+  );
+}
+
+/**
  * The one primary button shape, as a class string.
  *
  * A string rather than a component because most call sites are inside client

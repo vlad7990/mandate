@@ -9,7 +9,7 @@ import {
 } from "@/lib/network/network-aggregator";
 import { type Archetype } from "@/lib/ai/cv-parsing";
 import { NetworkTable } from "./network-table";
-import { PageShell } from "@/components/ui/page-shell";
+import { PageShell, TerminalTitle } from "@/components/ui/page-shell";
 
 export default async function NetworkPage() {
   const supabase = await createServerSupabaseClient();
@@ -31,9 +31,7 @@ export default async function NetworkPage() {
       />
 
       <header className="space-y-2">
-        <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
-          GLOBAL_EXECUTIVE_NETWORK
-        </h1>
+        <TerminalTitle>GLOBAL_EXECUTIVE_NETWORK</TerminalTitle>
         <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest tabular-nums">
           <span className="text-primary">
             {String(analytics.total).padStart(3, "0")}

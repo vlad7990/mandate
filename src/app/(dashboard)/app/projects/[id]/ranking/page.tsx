@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TerminalTitle } from "@/components/ui/page-shell";
 import { CapabilityGate } from "@/components/auth/capability-gate";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
@@ -193,9 +194,7 @@ export default async function RankingPage({
 
       <header className="flex items-end justify-between gap-4 flex-wrap">
         <div className="space-y-2 min-w-0">
-          <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
-            RANK_LEADERBOARD
-          </h1>
+          <TerminalTitle>RANK_LEADERBOARD</TerminalTitle>
           <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest tabular-nums">
             <span className="text-primary">{String(ranked.length).padStart(2, "0")}</span>{" "}
             ranked · {String(unscored.length).padStart(2, "0")} pending parse ·{" "}

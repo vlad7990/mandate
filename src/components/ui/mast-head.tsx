@@ -42,15 +42,22 @@ export function MastHead({
     <div className={cn("flex items-center gap-3 flex-wrap", className)}>
       <span
         className={cn(
-          "px-3 py-1.5 border font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-2 shrink-0",
+          "min-w-0 px-3 py-1.5 border font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-2",
           CHIP_TONES[tone]
         )}
       >
         {label}
       </span>
       <div className={cn("flex-1 h-px", RULE_TONES[tone])} />
+      {/*
+        Not `shrink-0`. Callers pass arbitrary prose here — Skills Studio
+        sends "Org-wide rules captured from a client's ..." — and an
+        unshrinkable box around a sentence overflows the section at any
+        width narrower than the sentence. `min-w-0` lets it wrap instead,
+        which is what a caption should do.
+      */}
       {meta != null && (
-        <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider shrink-0">
+        <span className="min-w-0 font-mono-label text-mono-label text-outline uppercase tracking-wider">
           {meta}
         </span>
       )}

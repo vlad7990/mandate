@@ -330,7 +330,7 @@ function ScopeToggle({
     { value: "all", label: "All" },
   ];
   return (
-    <div className="inline-flex border border-outline-variant divide-x divide-outline-variant">
+    <div className="inline-flex max-w-full flex-wrap border border-outline-variant divide-x divide-outline-variant">
       {opts.map((o) => (
         <button
           key={o.value}
@@ -484,7 +484,10 @@ function CandidateRow({
   return (
     <li
       className={cn(
-        "flex items-center gap-3 px-3 py-2 hover:bg-surface-container transition-colors",
+        // `flex-wrap` so the `basis-[200px]` on the identity block below has
+        // somewhere to wrap to. A basis on a child of a nowrap row only
+        // changes how space is distributed, not whether a second line exists.
+        "flex flex-wrap items-center gap-3 px-3 py-2 hover:bg-surface-container transition-colors",
         selected && "bg-primary-container/10"
       )}
     >
@@ -495,7 +498,7 @@ function CandidateRow({
         aria-label={`Select ${candidate.full_name}`}
         className="w-4 h-4 accent-primary cursor-pointer shrink-0"
       />
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1 basis-[200px]">
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="min-w-0 break-words text-[13px] font-semibold text-on-surface">
             {candidate.full_name}

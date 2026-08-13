@@ -693,16 +693,22 @@ function SectionCard({
         )}
       />
       <header className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
+        {/*
+          `min-w-0` on the group and `shrink-0` on the tag: the section tag
+          is a fixed chip, the label beside it is prose. Without this the
+          pair could not shrink and "# RESPONSIBILITIES / Key
+          Responsibilities" ran out of the panel on a phone.
+        */}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span
             className={cn(
-              "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-1.5",
+              "shrink-0 px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-1.5",
               "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
             )}
           >
             # {def.short}
           </span>
-          <span className="text-on-surface text-body-main font-semibold">
+          <span className="min-w-0 text-on-surface text-body-main font-semibold">
             {def.label}
           </span>
         </div>

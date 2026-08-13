@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { TerminalTitle } from "@/components/ui/page-shell";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import {
@@ -80,9 +81,7 @@ export default async function EditSkillPage({
       />
 
       <header className="space-y-2">
-        <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
-          EDIT_SKILL
-        </h1>
+        <TerminalTitle>EDIT_SKILL</TerminalTitle>
         <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
           Changes apply to the next agent invocation. Existing reports keep
           the prompt they were generated against.

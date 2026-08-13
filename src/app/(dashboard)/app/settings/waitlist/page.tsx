@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { TerminalTitle } from "@/components/ui/page-shell";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { WaitlistTable, type WaitlistRow } from "./waitlist-table";
@@ -56,9 +57,7 @@ export default async function WaitlistPage() {
 
       <header className="flex items-end justify-between gap-4 flex-wrap">
         <div className="space-y-2">
-          <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
-            ACCESS_REQUESTS
-          </h1>
+          <TerminalTitle>ACCESS_REQUESTS</TerminalTitle>
           <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest tabular-nums flex items-center gap-3 flex-wrap">
             <span>
               <span className="text-primary">

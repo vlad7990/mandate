@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TerminalTitle } from "@/components/ui/page-shell";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
@@ -216,9 +217,7 @@ export default async function ComparisonDashboardPage({
 
       <header className="flex items-end justify-between gap-4 flex-wrap">
         <div className="space-y-2 min-w-0">
-          <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
-            COMPARATIVE_MARKET_REPORT
-          </h1>
+          <TerminalTitle>COMPARATIVE_MARKET_REPORT</TerminalTitle>
           <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest tabular-nums">
             <span className="text-primary">
               {String(rows.length).padStart(2, "0")}

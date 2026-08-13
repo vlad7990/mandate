@@ -274,10 +274,15 @@ function FunnelRow({
       ? Math.round(entry.conversionFromPrev * 100)
       : null;
   return (
-    <li className="grid grid-cols-[160px_1fr_120px] gap-3 items-center">
+    // 160 + 120 + gaps needs ~300px before the bar gets anything, and a
+    // phone gives this list 285px — so below `sm` the stage label takes its
+    // own row and the bar shares the next one with the conversion figure.
+    // The bar is the thing that has to stay wide; it is the only part that
+    // carries meaning by length.
+    <li className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 sm:grid-cols-[160px_1fr_120px] sm:gap-y-0">
       <span
         className={cn(
-          "font-mono-label text-mono-label uppercase tracking-widest",
+          "col-span-2 font-mono-label text-mono-label uppercase tracking-widest sm:col-span-1",
           isRejected ? "text-error" : "text-on-surface"
         )}
       >
@@ -301,7 +306,7 @@ function FunnelRow({
       </div>
       <span
         className={cn(
-          "font-mono-label text-mono-label uppercase tracking-wider tabular-nums",
+          "whitespace-nowrap text-right font-mono-label text-mono-label uppercase tracking-wider tabular-nums sm:text-left",
           conversionPct == null
             ? "text-outline"
             : conversionPct >= 50

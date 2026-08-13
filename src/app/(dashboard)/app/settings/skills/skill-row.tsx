@@ -74,7 +74,14 @@ export function SkillRow({ skill }: { skill: SkillRowData }) {
       )}
     >
       <div className="flex items-start gap-4 px-4 py-3 flex-wrap">
-        <div className="flex-1 min-w-0 space-y-1.5">
+        {/*
+          `basis-[280px]` so the row's `flex-wrap` actually fires. With
+          `flex-1` alone this block absorbed whatever the three action
+          buttons left over — 13px on a phone — instead of pushing them to
+          their own line, because `flex-1` shrinks rather than wraps. Same
+          shape of bug as the ranking row.
+        */}
+        <div className="min-w-0 flex-1 basis-[280px] space-y-1.5">
           <div className="flex items-baseline gap-2 flex-wrap">
             <h3 className="font-h2 text-h2 text-on-surface truncate">
               {skill.name}

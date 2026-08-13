@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TerminalTitle } from "@/components/ui/page-shell";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
@@ -192,9 +193,7 @@ export default async function CandidateSearchPage({
       />
 
       <header className="space-y-2">
-        <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
-          AI_CANDIDATE_SEARCH
-        </h1>
+        <TerminalTitle>AI_CANDIDATE_SEARCH</TerminalTitle>
         <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
           Type what you&rsquo;re looking for in plain English. The AI parses
           intent, scores the pool, and ranks the matches with reasoning.
@@ -261,7 +260,7 @@ function SearchForm({
           autoFocus
           defaultValue={query}
           placeholder="Senior post-trade engineering leaders with FCA exposure who've shipped a T+1 migration"
-          className="flex-1 bg-transparent border-b border-outline-variant focus:border-primary focus:outline-none px-2 py-2 text-on-surface text-body-main placeholder:text-outline transition-colors"
+          className="min-w-0 flex-1 bg-transparent border-b border-outline-variant focus:border-primary focus:outline-none px-2 py-2 text-on-surface text-body-main placeholder:text-outline transition-colors"
         />
         <button
           type="submit"

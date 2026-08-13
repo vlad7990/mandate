@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { TerminalTitle } from "@/components/ui/page-shell";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { SkillForm, type SkillFormProject } from "../skill-form";
@@ -36,9 +37,7 @@ export default async function NewSkillPage() {
       />
 
       <header className="space-y-2">
-        <h1 className="font-h1 text-h1 text-on-surface tracking-tight">
-          NEW_SKILL
-        </h1>
+        <TerminalTitle>NEW_SKILL</TerminalTitle>
         <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
           Compose a behavioural override that all six AI agents will pick up
           on their next invocation.
