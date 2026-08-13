@@ -126,9 +126,19 @@ Marketing automation, campaign management, sequencing, AI-generated outreach, CR
   because there has been no delivery to attempt. The send path there remains
   untested rather than broken.
 - **Verification debt.** Never seen with real data: the evidence grid populated,
-  the HM portal grid, and — most importantly — **no comparison PDF has ever been
-  generated and looked at.** `@react-pdf/renderer` layout can differ from what
-  the JSX suggests, especially a table with a variable column count.
+  and the HM portal grid.
+
+  ~~No comparison PDF has ever been generated and looked at.~~ **Done** —
+  rendered at 3/4/5/6/8 candidates and inspected (`b142e9f`). The suspicion was
+  right, and worse than expected: three of the four defects were present in
+  every export at every pool size, not just at high column counts. Every numeric
+  column in the master scoring table was narrower than its own heading, so the
+  headings overprinted each other and "Xform" clipped off the right margin;
+  rows split across page breaks; and automatic hyphenation broke words
+  mid-syllable ("Not as-sessed") through the whole evidence grid. react-pdf
+  reports none of this — it prints over the neighbour and carries on. Fixtures
+  are not real data, so the remaining unknown is content (do real evaluation
+  narratives run long?), not layout.
 - **Password rotation.** The founder's Mandate password was pasted into two
   sessions and is shared with their Resend login. Both should be rotated.
 - Deferred infra, founder's own order: Sentry → rate limiting → Resend → Stripe.
