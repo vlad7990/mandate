@@ -83,7 +83,7 @@ export function AgentTiles({ states, actions }: AgentTilesProps) {
           <div
             key={agent.key}
             className={cn(
-              "p-4 border transition-all duration-300 rounded relative overflow-hidden flex flex-col",
+              "p-4 border transition-all duration-300 relative overflow-hidden flex flex-col",
               STATE_TONE[state]
             )}
           >
@@ -99,7 +99,7 @@ export function AgentTiles({ states, actions }: AgentTilesProps) {
                 reads as one unit. Same idiom as StatusChip's `dot`. */}
             <div className="flex items-center justify-end gap-1.5 mb-3">
               {state === "active" && (
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
+                <span className="w-2 h-2 bg-primary animate-pulse shrink-0" />
               )}
               <span className="font-mono-label text-mono-label uppercase tracking-wider">
                 {STATE_LABEL[state]}

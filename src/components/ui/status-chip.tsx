@@ -96,7 +96,7 @@ export function StatusChip({
       ) : dot ? (
         <span
           className={cn(
-            "w-1.5 h-1.5 rounded-full shrink-0",
+            "w-1.5 h-1.5 shrink-0",
             DOT_TONES[tone],
             pulse && "animate-pulse"
           )}

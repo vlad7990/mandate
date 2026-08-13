@@ -23,7 +23,7 @@ export default function DashboardNotFound() {
               404
             </span>
           </div>
-          <h1 className="font-h1 text-h1">Not found</h1>
+          <h1 className="font-h1 text-h1 uppercase tracking-tight">Not found</h1>
           <p className="max-w-xl text-body-main text-on-surface-variant">
             This page doesn&apos;t exist, or the record it points to isn&apos;t
             available to your organization.

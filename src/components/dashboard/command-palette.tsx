@@ -43,13 +43,13 @@ export function CommandPalette({ role }: { role: Role | null }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-[34px] min-w-0 items-center gap-2 rounded-lg border border-outline-variant bg-surface-container-low px-3 text-left transition-colors hover:border-outline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary sm:min-w-[240px] lg:min-w-[280px]"
+        className="flex h-[34px] min-w-0 items-center gap-2 border border-outline-variant bg-surface-container-low px-3 text-left transition-colors hover:border-outline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary sm:min-w-[240px] lg:min-w-[280px]"
       >
         <IconSearch size={15} className="shrink-0 text-outline" />
         <span className="hidden truncate text-[13px] text-outline sm:inline">
           Jump to…
         </span>
-        <kbd className="ml-auto hidden shrink-0 rounded border border-outline-variant px-1.5 py-0.5 font-mono-label text-[11px] text-outline sm:inline">
+        <kbd className="ml-auto hidden shrink-0 border border-outline-variant px-1.5 py-0.5 font-mono-label text-[11px] text-outline sm:inline">
           ⌘K
         </kbd>
       </button>
@@ -145,7 +145,7 @@ function PaletteDialog({
         aria-modal="true"
         aria-label="Jump to a page"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg overflow-hidden rounded-xl border border-outline-variant bg-surface-container shadow-2xl"
+        className="w-full max-w-lg overflow-hidden border border-outline-variant bg-surface-container shadow-2xl"
       >
         <div className="flex items-center gap-2.5 border-b border-outline-variant px-4">
           <IconSearch size={16} className="shrink-0 text-outline" />
@@ -185,7 +185,7 @@ function PaletteDialog({
                 onMouseEnter={() => setIndex(i)}
                 onClick={() => go(r.href)}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+                  "flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors",
                   i === cursor
                     ? "bg-surface-container-high text-on-surface"
                     : "text-on-surface-variant"

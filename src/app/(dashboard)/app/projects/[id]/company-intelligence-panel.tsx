@@ -165,7 +165,7 @@ export function CompanyIntelligencePanel({
                 {report.transformation_priorities.map((t, i) => (
                   <li
                     key={i}
-                    className="rounded-md border border-outline-variant bg-surface-container-low px-2 py-1 text-[13px] text-on-surface"
+                    className="border border-outline-variant bg-surface-container-low px-2 py-1 text-[13px] text-on-surface"
                   >
                     {t}
                   </li>
@@ -200,7 +200,7 @@ export function CompanyIntelligencePanel({
                 {report.red_flags.map((r, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 rounded-md border border-tertiary/40 bg-tertiary/5 px-3 py-2"
+                    className="flex items-start gap-2 border border-tertiary/40 bg-tertiary/5 px-3 py-2"
                   >
                     <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary">
                       Flag
@@ -269,7 +269,7 @@ function ProgressTracker() {
               ) : (
                 <span
                   aria-hidden
-                  className="h-[7px] w-[7px] rounded-full border border-current"
+                  className="h-[7px] w-[7px] border border-current"
                 />
               )}
               {step.label}

@@ -59,7 +59,7 @@ export default async function ExecutiveCompetenciesPage() {
         </header>
 
         {error && (
-          <div className="border border-error/40 bg-error-container/30 px-4 py-3 rounded text-error text-body-main">
+          <div className="border border-error/40 bg-error-container/30 px-4 py-3 text-error text-body-main">
             Failed to load competencies: {error.message}
           </div>
         )}

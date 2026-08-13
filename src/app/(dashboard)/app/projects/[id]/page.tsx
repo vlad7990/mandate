@@ -466,7 +466,7 @@ function RecalibrationBanner({
     <Link
       href={`/app/projects/${projectId}/feedback`}
       prefetch={false}
-      className="group block rounded-xl border border-secondary-fixed-dim/40 bg-secondary-fixed-dim/5 p-4 transition-colors hover:border-secondary-fixed-dim/70 hover:bg-secondary-fixed-dim/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-fixed-dim"
+      className="group block border border-secondary-fixed-dim/40 bg-secondary-fixed-dim/5 p-4 transition-colors hover:border-secondary-fixed-dim/70 hover:bg-secondary-fixed-dim/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-fixed-dim"
     >
       <div className="flex items-start gap-3">
         <IconRefresh size={18} className="mt-0.5 shrink-0 text-secondary-fixed-dim" />
@@ -531,7 +531,7 @@ function BuildSourcingCta({ projectId }: { projectId: string }) {
     <Link
       href={`/app/projects/${projectId}/sourcing`}
       prefetch={false}
-      className="group block rounded-xl border border-primary-container/40 bg-primary-container/10 p-4 transition-colors hover:border-primary-container hover:bg-primary-container/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="group block border border-primary-container/40 bg-primary-container/10 p-4 transition-colors hover:border-primary-container hover:bg-primary-container/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">

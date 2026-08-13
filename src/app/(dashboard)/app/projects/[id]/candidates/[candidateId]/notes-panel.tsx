@@ -672,7 +672,7 @@ function LiveCallNotesModal({
           >
             <span
               className={cn(
-                "w-2 h-2 rounded-full",
+                "w-2 h-2",
                 running ? "bg-error animate-pulse" : "bg-outline"
               )}
               aria-hidden

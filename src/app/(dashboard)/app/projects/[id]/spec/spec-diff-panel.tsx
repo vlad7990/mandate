@@ -261,7 +261,7 @@ function Timeline({
             <li key={v.id} className="relative">
               <span
                 className={cn(
-                  "absolute -left-[1.42rem] top-1 w-3 h-3 rounded-full border-2",
+                  "absolute -left-[1.42rem] top-1 w-3 h-3 border-2",
                   v.is_final
                     ? "bg-secondary-fixed-dim border-secondary-fixed-dim"
                     : isCurrent

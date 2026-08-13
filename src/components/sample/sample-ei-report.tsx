@@ -93,7 +93,7 @@ export function SampleEiReport({ searchId }: { searchId: string }) {
           provenance block closes it as a footer. Nothing about export
           re-lays it out.
         */}
-        <article className="mx-auto w-full max-w-[780px] rounded-[10px] border border-outline-variant bg-surface-container-low px-8 py-10 sm:px-16 sm:py-12 print:max-w-none print:border-0 print:px-0">
+        <article className="mx-auto w-full max-w-[780px] border border-outline-variant bg-surface-container-low px-8 py-10 sm:px-16 sm:py-12 print:max-w-none print:border-0 print:px-0">
           <header className="flex flex-col gap-4 border-b border-outline-variant/60 pb-7">
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-outline">
               Mandate · Executive Intelligence
@@ -106,7 +106,7 @@ export function SampleEiReport({ searchId }: { searchId: string }) {
             </p>
 
             {/* What it is not, before anything it is. */}
-            <div className="flex items-start gap-3 rounded-lg border border-outline-variant p-4">
+            <div className="flex items-start gap-3 border border-outline-variant p-4">
               <IconInfo size={15} className="mt-0.5 shrink-0 text-outline" />
               <p className="text-[13px] leading-relaxed text-outline">
                 This report records evidence gathered against an approved
@@ -138,7 +138,7 @@ export function SampleEiReport({ searchId }: { searchId: string }) {
               </span>
             </p>
 
-            <div className="overflow-hidden rounded-[10px] border border-outline-variant bg-surface-container">
+            <div className="overflow-hidden border border-outline-variant bg-surface-container">
               <div className="flex flex-wrap items-baseline gap-3.5 border-b border-outline-variant/60 px-5 py-4">
                 <span className="font-heading text-[30px] leading-none tabular-nums text-on-surface">
                   100%
@@ -160,7 +160,7 @@ export function SampleEiReport({ searchId }: { searchId: string }) {
                     {/* One hue at two weights — never a quality gradient. */}
                     <span
                       aria-hidden
-                      className="h-1.5 min-w-[60px] flex-1 overflow-hidden rounded-sm bg-surface-container-high"
+                      className="h-1.5 min-w-[60px] flex-1 overflow-hidden bg-surface-container-high"
                     >
                       <span
                         className={`block h-full ${c.level === "Strong" ? "bg-primary" : "bg-outline"}`}
@@ -236,7 +236,7 @@ export function SampleEiReport({ searchId }: { searchId: string }) {
             <p className="font-mono-label text-[10px] font-bold uppercase tracking-[0.12em] text-outline">
               Status
             </p>
-            <span className="mt-2.5 inline-block rounded-md bg-primary/20 px-2.5 py-1.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+            <span className="mt-2.5 inline-block bg-primary/20 px-2.5 py-1.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
               Compiled from approved records
             </span>
             <p className="mt-2.5 text-xs leading-relaxed text-outline">

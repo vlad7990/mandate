@@ -20,10 +20,10 @@ export default async function NewProjectPage({
       <div className="max-w-4xl mx-auto pt-6 space-y-8">
         <header className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="w-8 h-1 bg-primary rounded-full" />
-            <span className="w-2 h-1 bg-surface-container-highest rounded-full" />
-            <span className="w-2 h-1 bg-surface-container-highest rounded-full" />
-            <span className="w-2 h-1 bg-surface-container-highest rounded-full" />
+            <span className="w-8 h-1 bg-primary" />
+            <span className="w-2 h-1 bg-surface-container-highest" />
+            <span className="w-2 h-1 bg-surface-container-highest" />
+            <span className="w-2 h-1 bg-surface-container-highest" />
             <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider ml-2">
               Step 1: Identity
             </span>
@@ -36,7 +36,7 @@ export default async function NewProjectPage({
         </header>
 
         {error && (
-          <div className="border border-error/40 bg-error-container/30 px-4 py-3 rounded text-error text-body-main">
+          <div className="border border-error/40 bg-error-container/30 px-4 py-3 text-error text-body-main">
             {error}
           </div>
         )}

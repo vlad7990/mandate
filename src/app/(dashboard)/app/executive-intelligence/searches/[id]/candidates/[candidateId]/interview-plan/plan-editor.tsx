@@ -224,7 +224,7 @@ export function PlanEditor({
 
         {activeGeneration && (
           <div className="border border-primary-container/70 bg-surface-container-lowest px-4 py-3 flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="w-2 h-2 bg-primary animate-pulse" />
             <p className="text-body-main text-on-surface-variant">
               A new AI draft (V{String(activeGeneration.version).padStart(2, "0")}) is
               generating. It will appear in version history when it lands.

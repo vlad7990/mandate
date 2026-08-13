@@ -13,6 +13,13 @@ import Link from "next/link";
  * ligature beside every heading, which both shipped the literal string
  * "tips_and_updates" to the accessibility tree and made twelve stacked
  * sections read as twelve competing badges. The heading carries the section.
+ *
+ * Re-voiced to the terminal language on 2026-08-13. Fifteen files render a
+ * `Panel`, and between them they are most of the mandate workspace and the
+ * whole candidate detail screen — so squaring the corners and moving the
+ * title to a mono label is the single highest-leverage edit in the re-skin.
+ * The title is uppercased in CSS, not in the string, so screen readers still
+ * announce it as written. See `PageHeader` for the full rule set.
  */
 export function Panel({
   title,
@@ -32,12 +39,14 @@ export function Panel({
 }) {
   return (
     <section
-      className={`overflow-hidden rounded-xl border bg-surface-container-low ${
+      className={`overflow-hidden border bg-surface-container-low ${
         tone === "notice" ? "border-tertiary/40" : "border-outline-variant"
       }`}
     >
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-outline-variant px-[18px] py-[15px]">
-        <h2 className="text-sm font-semibold text-on-surface">{title}</h2>
+        <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+          {title}
+        </h2>
         {meta}
         {action && <div className="ml-auto flex items-center gap-2">{action}</div>}
       </div>
@@ -52,7 +61,7 @@ export function PanelLink({ href, children }: { href: string; children: React.Re
     <Link
       href={href}
       prefetch={false}
-      className="text-xs font-medium text-primary hover:underline"
+      className="font-mono-label text-mono-label uppercase tracking-wider text-primary hover:underline"
     >
       {children}
     </Link>
@@ -75,10 +84,10 @@ export function PanelMeta({ children }: { children: React.ReactNode }) {
  * same props.
  */
 export const PANEL_BUTTON =
-  "flex items-center gap-2 rounded-md bg-primary-container px-3 py-1.5 font-mono-label text-[11px] font-semibold uppercase tracking-[0.08em] text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "flex items-center gap-2 bg-primary-container px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 export const PANEL_BUTTON_QUIET =
-  "flex items-center gap-2 rounded-md border border-outline-variant px-3 py-1.5 font-mono-label text-[11px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "flex items-center gap-2 border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 /** Body padding, so panels do not drift apart on spacing. */
 export const PANEL_BODY = "px-[18px] py-4";

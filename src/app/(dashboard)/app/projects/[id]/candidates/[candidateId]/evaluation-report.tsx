@@ -316,7 +316,7 @@ function AlignmentTestSection({
           <span className="flex items-center gap-1.5">
             <span
               className={cn(
-                "w-1.5 h-1.5 rounded-full",
+                "w-1.5 h-1.5",
                 ALIGNMENT_DOT[test.light],
                 test.light === "red" && "animate-pulse"
               )}
@@ -440,7 +440,7 @@ function GapsSection({ gaps }: { gaps: CandidateEvaluation["gaps"] }) {
         {gaps.map((g, i) => (
           <li
             key={i}
-            className="rounded-md border border-error/40 bg-error/5 p-4"
+            className="border border-error/40 bg-error/5 p-4"
           >
             <header className="mb-2 flex items-start gap-3">
               <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-error">

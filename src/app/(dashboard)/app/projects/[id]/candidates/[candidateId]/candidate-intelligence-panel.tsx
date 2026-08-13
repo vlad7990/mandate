@@ -165,7 +165,7 @@ export function CandidateIntelligencePanel({
                 {report.risk_signals.map((s, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 rounded-md border border-tertiary/40 bg-tertiary/5 px-3 py-2 text-[13px] leading-relaxed text-on-surface"
+                    className="flex items-start gap-2 border border-tertiary/40 bg-tertiary/5 px-3 py-2 text-[13px] leading-relaxed text-on-surface"
                   >
                     <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary">
                       Signal
@@ -241,7 +241,7 @@ function ProgressTracker() {
               ) : (
                 <span
                   aria-hidden
-                  className="h-[7px] w-[7px] rounded-full border border-current"
+                  className="h-[7px] w-[7px] border border-current"
                 />
               )}
               {label}

@@ -42,11 +42,11 @@ export function UserMenu({ displayName, email, role }: UserMenuProps) {
         <button
           type="button"
           aria-label={`Account menu — ${displayName}`}
-          className="flex w-full min-h-11 items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary md:justify-center xl:justify-start"
+          className="flex w-full min-h-11 items-center gap-2.5 p-1.5 text-left transition-colors hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary md:justify-center xl:justify-start"
         >
           <span
             aria-hidden
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-outline-variant bg-surface-container-high font-mono-label text-[11px] font-semibold text-on-surface-variant"
+            className="flex h-8 w-8 shrink-0 items-center justify-center border border-outline-variant bg-surface-container-high font-mono-label text-[11px] font-semibold text-on-surface-variant"
           >
             {initials}
           </span>
@@ -100,7 +100,7 @@ export function UserMenu({ displayName, email, role }: UserMenuProps) {
         <form action="/auth/signout" method="post">
           <button
             type="submit"
-            className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-3 py-2 text-sm text-error transition-colors hover:bg-error-container/30 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-error"
+            className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm text-error transition-colors hover:bg-error-container/30 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-error"
           >
             <svg
               width="16"

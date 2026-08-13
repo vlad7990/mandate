@@ -56,7 +56,7 @@ export function ReportGate({
         approved — there is nothing else to run.
       </p>
 
-      <ul className="mt-6 flex flex-col divide-y divide-outline-variant/60 rounded-[10px] border border-outline-variant bg-surface-container-low">
+      <ul className="mt-6 flex flex-col divide-y divide-outline-variant/60 border border-outline-variant bg-surface-container-low">
         {sources.map((s) => (
           <li key={s.label} className="flex flex-wrap items-start gap-x-4 gap-y-2 px-5 py-4">
             <div className="min-w-0 flex-1">
@@ -106,7 +106,7 @@ export function ReportGate({
         </p>
       )}
 
-      <div className="mt-8 flex items-start gap-3 rounded-lg border border-outline-variant p-4">
+      <div className="mt-8 flex items-start gap-3 border border-outline-variant p-4">
         <IconInfo size={15} className="mt-0.5 shrink-0 text-outline" />
         <p className="text-[13px] leading-relaxed text-outline">
           Nothing is generated at read time and no part of the document is

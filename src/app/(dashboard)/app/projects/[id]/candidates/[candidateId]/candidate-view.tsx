@@ -66,7 +66,11 @@ export function CandidateView({
                 aria-selected={current?.id === t.id}
                 aria-controls={`panel-${t.id}`}
                 onClick={() => setActive(t.id)}
-                className={`relative -mb-px min-h-11 border-0 bg-transparent px-0.5 pb-3 text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
+                // Uppercase mono to match the mandate workspace's tab strip
+                // one level up — the two sit in the same navigation position
+                // and read as the same control, so they should not disagree
+                // about their own voice.
+                className={`relative -mb-px min-h-11 border-0 bg-transparent px-0.5 pb-3 font-mono-label text-mono-label uppercase tracking-widest transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
                   current?.id === t.id
                     ? "text-on-surface"
                     : "text-outline hover:text-on-surface-variant"
@@ -102,7 +106,7 @@ export function CandidateView({
         </div>
 
         {/* The decision rail. Stays put across every tab. */}
-        <aside className="flex flex-col gap-5 self-start rounded-xl border border-outline-variant bg-surface-container-lowest p-5 xl:sticky xl:top-6">
+        <aside className="flex flex-col gap-5 self-start border border-outline-variant bg-surface-container-lowest p-5 xl:sticky xl:top-6">
           {rail}
         </aside>
       </div>

@@ -70,7 +70,7 @@ function HealthDot({ status }: { status: HealthStatus | SampleHealth }) {
     >
       <span
         aria-hidden
-        className={`h-[7px] w-[7px] shrink-0 rounded-full ${
+        className={`h-[7px] w-[7px] shrink-0 ${
           critical || warn ? "bg-error" : "bg-outline"
         }`}
       />
@@ -201,7 +201,7 @@ export default async function MandatesPage({
                       <td className="px-4 py-3">
                         <Link
                           href={`/app/projects/${m.id}`}
-                          className="block rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                          className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                         >
                           <span className="block text-[13px] font-medium text-on-surface">
                             {m.title}
@@ -212,7 +212,7 @@ export default async function MandatesPage({
                         </Link>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="rounded-md bg-surface-container-high px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">
+                        <span className="bg-surface-container-high px-2 py-1 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant">
                           {m.stage}
                         </span>
                       </td>
@@ -239,7 +239,7 @@ export default async function MandatesPage({
                       <td className="px-4 py-3">
                         <Link
                           href={`/app/projects/${p.id}`}
-                          className="block rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                          className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                         >
                           <span className="block text-[13px] font-medium text-on-surface">
                             {p.title}
@@ -250,7 +250,7 @@ export default async function MandatesPage({
                         </Link>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="rounded-md bg-surface-container-high px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">
+                        <span className="bg-surface-container-high px-2 py-1 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant">
                           {(p.status ?? "active").toUpperCase()}
                         </span>
                       </td>
@@ -266,7 +266,7 @@ export default async function MandatesPage({
         </div>
 
         {!showSample && projects.length === 0 && (
-          <p className="px-4 py-10 text-center text-sm text-outline">
+          <p className="px-4 py-10 text-center font-mono-label text-mono-label uppercase leading-[1.6] tracking-widest text-outline">
             {isFiltered(params)
               ? "No mandates match these filters."
               : "No mandates yet."}

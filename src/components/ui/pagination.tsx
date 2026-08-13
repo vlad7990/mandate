@@ -89,7 +89,7 @@ function PageLink({
   children: React.ReactNode;
 }) {
   const shape =
-    "inline-flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-colors";
+    "inline-flex h-8 items-center gap-1.5 border px-3 text-xs font-medium transition-colors";
 
   if (disabled) {
     return (

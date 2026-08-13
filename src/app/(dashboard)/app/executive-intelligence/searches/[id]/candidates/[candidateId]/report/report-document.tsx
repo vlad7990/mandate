@@ -58,7 +58,7 @@ export function ExecutiveReportDocument({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] print:block">
         {/* The 780px measure survives print: it is the document, and on a
             wide sheet `max-w-none` would set 200-character lines. */}
-        <article className="m-report-doc mx-auto w-full max-w-[780px] rounded-[10px] border border-outline-variant bg-surface-container-low px-8 py-10 sm:px-16 sm:py-12 print:rounded-none print:border-0 print:px-0 print:py-0">
+        <article className="m-report-doc mx-auto w-full max-w-[780px] border border-outline-variant bg-surface-container-low px-8 py-10 sm:px-16 sm:py-12 print:rounded-none print:border-0 print:px-0 print:py-0">
           <header className="flex flex-col gap-4 border-b border-outline-variant/60 pb-7">
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-outline">
               Mandate · Executive Intelligence
@@ -71,7 +71,7 @@ export function ExecutiveReportDocument({
             </p>
 
             {/* What it is not, before anything it is. */}
-            <div className="flex items-start gap-3 rounded-lg border border-outline-variant p-4">
+            <div className="flex items-start gap-3 border border-outline-variant p-4">
               <IconInfo size={15} className="mt-0.5 shrink-0 text-outline" />
               <p className="text-[13px] leading-relaxed text-outline">
                 This report records evidence gathered against an approved
@@ -88,7 +88,7 @@ export function ExecutiveReportDocument({
               approved as if they were the approved ones.
             */}
             {report.weightsDrifted && (
-              <p className="rounded-lg border border-outline-variant bg-surface-container p-4 text-[13px] leading-relaxed text-on-surface-variant">
+              <p className="border border-outline-variant bg-surface-container p-4 text-[13px] leading-relaxed text-on-surface-variant">
                 The competency weights on this search changed after the
                 assessment was approved. Coverage below is computed against the
                 current weights and the approved ratings. Re-approve the
@@ -123,7 +123,7 @@ export function ExecutiveReportDocument({
               </span>
             </p>
 
-            <div className="overflow-hidden rounded-[10px] border border-outline-variant bg-surface-container">
+            <div className="overflow-hidden border border-outline-variant bg-surface-container">
               <div className="flex flex-wrap items-baseline gap-3.5 border-b border-outline-variant/60 px-5 py-4">
                 <span className="font-heading text-[30px] leading-none tabular-nums text-on-surface">
                   {report.coveredWeightPercent}%
@@ -161,7 +161,7 @@ export function ExecutiveReportDocument({
                     {/* One hue at two weights — never a quality gradient. */}
                     <span
                       aria-hidden
-                      className="m-report-bar col-span-2 h-1.5 overflow-hidden rounded-sm bg-surface-container-high sm:col-span-1 sm:col-start-3 sm:row-start-1"
+                      className="m-report-bar col-span-2 h-1.5 overflow-hidden bg-surface-container-high sm:col-span-1 sm:col-start-3 sm:row-start-1"
                     >
                       <span
                         className={`block h-full ${c.rating === "strong" ? "bg-primary" : "bg-outline"}`}
@@ -260,7 +260,7 @@ export function ExecutiveReportDocument({
             <p className="font-mono-label text-[10px] font-bold uppercase tracking-[0.12em] text-outline">
               Status
             </p>
-            <span className="mt-2.5 inline-block rounded-md bg-primary/20 px-2.5 py-1.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+            <span className="mt-2.5 inline-block bg-primary/20 px-2.5 py-1.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
               Compiled from approved records
             </span>
             <p className="mt-2.5 text-xs leading-relaxed text-outline">

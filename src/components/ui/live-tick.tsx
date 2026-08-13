@@ -35,7 +35,7 @@ export function LiveTick({
     >
       {pulse && (
         <span
-          className="w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim animate-pulse"
+          className="w-1.5 h-1.5 bg-secondary-fixed-dim animate-pulse"
           aria-hidden
         />
       )}

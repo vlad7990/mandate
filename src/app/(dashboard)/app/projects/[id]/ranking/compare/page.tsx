@@ -293,7 +293,7 @@ function ComparisonGrid({
             )}
           >
             <div className="flex items-center gap-3 mb-3">
-              <span className="w-12 h-12 rounded bg-surface-container border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase">
+              <span className="w-12 h-12 bg-surface-container border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase">
                 {initials(base.full_name)}
               </span>
               <div className="min-w-0">

@@ -62,7 +62,7 @@ export function JobSpecEmpty({ projectId, roleTitle, companyName }: Props) {
         </div>
 
         <div className="bg-surface-container-low border border-outline-variant p-12 flex flex-col items-center text-center space-y-6">
-          <div className="w-16 h-16 rounded-full bg-primary-container/10 border border-primary-container/40 flex items-center justify-center">
+          <div className="w-16 h-16 bg-primary-container/10 border border-primary-container/40 flex items-center justify-center">
             <IconDocument size={28} className="text-primary" />
           </div>
 

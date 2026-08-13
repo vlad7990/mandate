@@ -110,7 +110,7 @@ export function CultureIntelligencePanel({
             /* Was a 🚩 emoji. An emoji is not an icon — it renders in the
                system font, at the system's colour, and reads aloud as
                "triangular flag on post". */
-            <span className="rounded-md border border-tertiary/60 bg-tertiary/10 px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary tabular-nums">
+            <span className="border border-tertiary/60 bg-tertiary/10 px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary tabular-nums">
               {flagCount} flagged
             </span>
           )}
@@ -372,7 +372,7 @@ function AxisCard({
             aria-label={flagged ? "Remove flag" : "Flag this assessment"}
             title={flagged ? "Remove flag" : "Flag this assessment"}
             className={cn(
-              "flex h-7 w-7 items-center justify-center rounded-md border transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary",
+              "flex h-7 w-7 items-center justify-center border transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary",
               flagged
                 ? "border-tertiary/60 bg-tertiary/10 text-tertiary"
                 : "border-outline-variant text-outline hover:border-tertiary hover:text-tertiary"
@@ -386,7 +386,7 @@ function AxisCard({
         {value}
       </div>
       {flagged && (
-        <span className="inline-flex items-center gap-1.5 rounded-md border border-tertiary/60 bg-tertiary/10 px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary">
+        <span className="inline-flex items-center gap-1.5 border border-tertiary/60 bg-tertiary/10 px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary">
           <IconFlag size={11} />
           Recruiter flagged
         </span>
@@ -480,7 +480,7 @@ function Section({
             rows={3}
             placeholder="What does this section miss? What did you learn that the AI didn't see?"
             onChange={(e) => setDraft(e.target.value)}
-            className="w-full resize-y rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[13px] leading-relaxed text-on-surface transition-colors focus:border-primary focus:outline-none"
+            className="w-full resize-y border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[13px] leading-relaxed text-on-surface transition-colors focus:border-primary focus:outline-none"
           />
           <div className="flex items-center justify-end gap-2">
             <button
@@ -539,7 +539,7 @@ function RegenerateContextPanel({
         disabled={pending}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full resize-y rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[13px] leading-relaxed text-on-surface transition-colors focus:border-primary focus:outline-none"
+        className="w-full resize-y border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[13px] leading-relaxed text-on-surface transition-colors focus:border-primary focus:outline-none"
       />
       <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest leading-snug">
         Treated as informed prior knowledge — the AI must still ground every

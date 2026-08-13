@@ -100,7 +100,7 @@ export function JobSpecGenerating({
               Spec Generation Engine
             </span>
             <span className="ml-auto font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-secondary-fixed-dim animate-pulse" />
+              <span className="w-2 h-2 bg-secondary-fixed-dim animate-pulse" />
               Live AI compilation
             </span>
           </div>
@@ -142,7 +142,7 @@ export function JobSpecGenerating({
 function SkeletonRow({ widthPct, delay }: { widthPct: number; delay: number }) {
   return (
     <div
-      className="h-3 bg-surface-container-high rounded-sm animate-pulse"
+      className="h-3 bg-surface-container-high animate-pulse"
       style={{ width: `${widthPct}%`, animationDelay: `${delay}ms` }}
     />
   );

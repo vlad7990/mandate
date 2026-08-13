@@ -35,7 +35,7 @@ export function PlanGate({
         </div>
 
         <div className="bg-surface-container-low border border-outline-variant p-12 flex flex-col items-center text-center space-y-6">
-          <div className="w-16 h-16 rounded-full bg-surface-container-highest/40 border border-outline-variant flex items-center justify-center">
+          <div className="w-16 h-16 bg-surface-container-highest/40 border border-outline-variant flex items-center justify-center">
             <IconLock size={28} className="text-outline" />
           </div>
           <div className="space-y-2 max-w-md">

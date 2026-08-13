@@ -219,7 +219,7 @@ export function CandidateSearchPanel({
       <div className={cn(PANEL_BODY, "flex flex-col gap-4")}>
         {/* Search + scope toggle */}
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex min-w-[240px] flex-1 items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 transition-colors focus-within:border-primary">
+          <label className="flex min-w-[240px] flex-1 items-center gap-2 border border-outline-variant bg-surface-container-lowest px-3 py-2 transition-colors focus-within:border-primary">
             <IconSearch size={15} className="shrink-0 text-outline" />
             <input
               type="search"
@@ -287,7 +287,7 @@ export function CandidateSearchPanel({
             No candidates match the current filters.
           </p>
         ) : (
-          <ul className="max-h-[480px] divide-y divide-outline-variant overflow-y-auto rounded-md border border-outline-variant">
+          <ul className="max-h-[480px] divide-y divide-outline-variant overflow-y-auto border border-outline-variant">
             {filtered.map((c) => (
               <CandidateRow
                 key={c.id}

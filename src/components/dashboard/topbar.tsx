@@ -59,7 +59,7 @@ export function Topbar({ role }: { role: Role | null }) {
               {c.href && !last ? (
                 <Link
                   href={c.href}
-                  className="truncate rounded transition-colors hover:text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                  className="truncate transition-colors hover:text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                 >
                   {label}
                 </Link>

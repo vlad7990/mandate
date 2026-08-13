@@ -101,9 +101,11 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-low">
+    <section className="overflow-hidden border border-outline-variant bg-surface-container-low">
       <div className="flex items-center gap-2.5 border-b border-outline-variant px-[18px] py-[15px]">
-        <h2 className="text-sm font-semibold text-on-surface">{title}</h2>
+        <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+          {title}
+        </h2>
         {meta}
         {action && (
           <Link
@@ -143,11 +145,11 @@ export function SampleProjectDetail({ id }: { id: string }) {
             <h1 className="text-[28px] font-bold leading-tight tracking-tight text-on-surface">
               {mandate.title}
             </h1>
-            <span className="rounded-md border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-primary">
+            <span className="border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-primary">
               {mandate.stage}
             </span>
             {mandate.health !== "on_track" && (
-              <span className="rounded-md border border-error/60 bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-error">
+              <span className="border border-error/60 bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-error">
                 {mandate.health === "blocked" ? "Blocked" : "Stalling"}
               </span>
             )}
@@ -165,7 +167,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
       </div>
 
       {/* Stage rail */}
-      <div className="mt-5 flex items-center gap-2.5 rounded-xl border border-outline-variant bg-surface-container-low px-[18px] py-4">
+      <div className="mt-5 flex items-center gap-2.5 border border-outline-variant bg-surface-container-low px-[18px] py-4">
         {STAGES.map((s) => (
           <div
             key={s.label}
@@ -174,7 +176,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
           >
             <span
               aria-hidden
-              className={`h-[3px] rounded-sm ${
+              className={`h-[3px] ${
                 s.tone === "done"
                   ? "bg-primary"
                   : s.tone === "risk"
@@ -211,7 +213,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
               {LIVE_TILES.map((t) => (
                 <div
                   key={t.name}
-                  className={`flex flex-col gap-2.5 rounded-[10px] border bg-surface-container p-3.5 ${
+                  className={`flex flex-col gap-2.5 border bg-surface-container p-3.5 ${
                     t.state === "active"
                       ? "border-primary"
                       : t.state === "failed"
@@ -222,7 +224,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
                   <div className="flex items-center gap-2">
                     <span
                       aria-hidden
-                      className={`h-[7px] w-[7px] rounded-full ${
+                      className={`h-[7px] w-[7px] ${
                         t.state === "active"
                           ? "bg-primary"
                           : t.state === "failed"
@@ -248,7 +250,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
                   {t.progress !== undefined && (
                     <span
                       aria-hidden
-                      className="h-[3px] overflow-hidden rounded-sm bg-surface-container-high"
+                      className="h-[3px] overflow-hidden bg-surface-container-high"
                     >
                       <span
                         className="block h-full bg-primary"
@@ -259,7 +261,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
 
                   {/* Failure offers recovery in place, not a shrug. */}
                   {t.state === "failed" && (
-                    <span className="mt-auto inline-flex h-[30px] items-center justify-center rounded-md border border-outline-variant bg-surface-container-high text-[11px] font-semibold text-on-surface">
+                    <span className="mt-auto inline-flex h-[30px] items-center justify-center border border-outline-variant bg-surface-container-high text-[11px] font-semibold text-on-surface">
                       Retry
                     </span>
                   )}
@@ -271,7 +273,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
               {DONE_TILES.map((t) => (
                 <div
                   key={t.name}
-                  className="flex flex-col gap-2 rounded-[10px] border border-outline-variant bg-surface-container-low p-3.5"
+                  className="flex flex-col gap-2 border border-outline-variant bg-surface-container-low p-3.5"
                 >
                   <div className="flex items-center gap-2">
                     <svg
@@ -324,7 +326,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
                     (t) => (
                       <span
                         key={t}
-                        className="rounded-full bg-surface-container-high px-2.5 py-1.5 text-[11px] font-medium text-on-surface-variant"
+                        className="bg-surface-container-high px-2.5 py-1.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant"
                       >
                         {t}
                       </span>
@@ -406,7 +408,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
                       </span>
                       {c.tier !== null && (
                         <span
-                          className={`shrink-0 rounded-md px-2 py-1 font-mono-label text-[10px] font-bold uppercase tracking-[0.08em] ${
+                          className={`shrink-0 px-2 py-1 font-mono-label text-[10px] font-bold uppercase tracking-[0.08em] ${
                             c.tier === 1
                               ? "bg-primary/20 text-primary"
                               : "bg-surface-container-high text-on-surface-variant"
@@ -437,10 +439,10 @@ export function SampleProjectDetail({ id }: { id: string }) {
                   </div>
                   <span
                     aria-hidden
-                    className="mt-1 block h-1 rounded-sm bg-surface-container-high"
+                    className="mt-1 block h-1 bg-surface-container-high"
                   >
                     <span
-                      className="block h-full rounded-sm bg-primary"
+                      className="block h-full bg-primary"
                       style={{ width: `${d.weight}%` }}
                     />
                   </span>

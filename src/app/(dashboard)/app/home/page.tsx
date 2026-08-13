@@ -15,7 +15,8 @@ import { SkeletonCard } from "@/components/ui/skeleton";
 import { ActionQueuePanel } from "./action-queue-panel";
 import { SampleBanner } from "@/components/sample/sample-banner";
 import { IconArrowRight, IconCopilot, IconInfo } from "@/components/icons";
-import { PageShell } from "@/components/ui/page-shell";
+import { PageShell, PRIMARY_ACTION, QUIET_ACTION } from "@/components/ui/page-shell";
+import { cn } from "@/lib/utils";
 import {
   HEALTH_LABEL as SAMPLE_HEALTH_LABEL,
   SAMPLE_AGENT_RUNS,
@@ -96,8 +97,14 @@ export default async function DashboardHomePage() {
           and only one of those gets acted on before lunch. Suspended so a slow
           aggregate never delays the portfolio itself. Hidden in sample mode —
           a demo portfolio has no real obligations to chase. */}
+      {/*
+        `mt-5` matters since the re-skin: the header's context line is now an
+        11px mono label rather than 14px prose, and without a gap it and the
+        action queue's own mono label stack into what reads as one four-line
+        heading. Every other block on this page already opens with `mt-5`.
+      */}
       {!showSample && (
-        <div className="mb-6">
+        <div className="mt-5 mb-6">
           <Suspense fallback={<SkeletonCard />}>
             <ActionQueuePanel />
           </Suspense>
@@ -107,7 +114,7 @@ export default async function DashboardHomePage() {
       {error && (
         <div
           role="alert"
-          className="mt-5 rounded-xl border border-error/60 bg-error/10 px-4 py-3 text-sm text-error"
+          className="mt-5 border border-error/60 bg-error/10 px-4 py-3 text-body-main text-error"
         >
           Could not load mandates: {error.message}
         </div>
@@ -162,24 +169,41 @@ function summarise(count: number, metrics: PortfolioMetrics | null): string {
   const risk = metrics?.attentionList.length ?? 0;
   const noun = count === 1 ? "mandate" : "mandates";
   return risk > 0
-    ? `${count} active ${noun} · ${risk} need attention`
-    : `${count} active ${noun} · all on track`;
+    ? `${count} active ${noun} // ${risk} need attention`
+    : `${count} active ${noun} // all on track`;
 }
 
+/**
+ * The portfolio masthead.
+ *
+ * This is the only screen that carries the wordmark in its title —
+ * `MANDATE // PORTFOLIO`, the shape the founder picked when choosing the
+ * terminal language. It earns it by being the landing screen; every other
+ * page names only its section, because repeating the product name twelve
+ * times is noise rather than signature.
+ */
 function PageHeader({ subtitle }: { subtitle: string }) {
   return (
-    <div className="flex flex-wrap items-start gap-4">
+    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start">
       <div className="min-w-0 flex-1">
-        <h1 className="text-[28px] font-bold leading-tight tracking-tight text-on-surface">
+        <h1 className="font-h1 text-[26px] uppercase leading-tight tracking-tight text-on-surface sm:text-h1">
+          {/*
+            The wordmark is dropped below `sm`. On a phone the rail is a
+            hamburger and the product name is already in the browser chrome,
+            so `MANDATE //` buys nothing and costs two of the three lines the
+            title wraps onto.
+          */}
+          <span className="hidden sm:inline">
+            Mandate <span className="text-outline">{"//"}</span>{" "}
+          </span>
           Portfolio
         </h1>
-        <p className="mt-1.5 text-sm text-on-surface-variant">{subtitle}</p>
+        <p className="mt-2 font-mono-label text-mono-label uppercase leading-[1.5] tracking-widest text-on-surface-variant tabular-nums">
+          {subtitle}
+        </p>
       </div>
       <CapabilityGate capability="mandates:write">
-        <Link
-          href="/app/projects/new"
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-primary bg-primary px-4 text-sm font-semibold text-on-primary transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
+        <Link href="/app/projects/new" className={cn(PRIMARY_ACTION, "h-9 shrink-0")}>
           New mandate
           <IconArrowRight size={15} />
         </Link>
@@ -203,27 +227,33 @@ function Kpi({
 }) {
   return (
     <div
-      className={`flex flex-col gap-2.5 rounded-xl border p-[18px] ${
+      className={`flex flex-col gap-2.5 border p-[18px] ${
         critical
           ? "border-error/60 bg-surface-container-low"
           : "border-outline-variant bg-surface-container-low"
       }`}
     >
       <p
-        className={`font-mono-label text-[10px] font-bold uppercase tracking-[0.12em] ${
+        className={`flex items-center gap-1.5 font-mono-label text-mono-label uppercase tracking-widest ${
           critical ? "text-error" : "text-outline"
         }`}
       >
         {label}
+        {/* Decorative: the colour and the label already carry it, and a
+            screen reader announcing "black up-pointing triangle" adds
+            nothing to "needs attention". */}
+        {critical && <span aria-hidden="true">{"\u25B2"}</span>}
       </p>
       <p
-        className={`font-heading text-[34px] leading-none tabular-nums ${
+        className={`font-mono-data text-[34px] leading-none tabular-nums ${
           critical ? "text-error" : "text-on-surface"
         }`}
       >
         {value}
       </p>
-      <p className="text-xs text-outline">{meta}</p>
+      <p className="font-mono-label text-mono-label uppercase leading-[1.4] tracking-wider text-outline">
+        {meta}
+      </p>
     </div>
   );
 }
@@ -312,17 +342,19 @@ function Panel({
 }) {
   return (
     <section
-      className={`overflow-hidden rounded-xl border bg-surface-container-low ${
+      className={`overflow-hidden border bg-surface-container-low ${
         accent ? "border-primary" : "border-outline-variant"
       }`}
     >
       <div className="flex items-center gap-2.5 border-b border-outline-variant px-[18px] py-[15px]">
-        <h2 className="text-sm font-semibold text-on-surface">{title}</h2>
+        <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+          {title}
+        </h2>
         {meta}
         {action && (
           <Link
             href={action.href}
-            className="ml-auto text-xs font-medium text-primary hover:underline"
+            className="ml-auto font-mono-label text-mono-label uppercase tracking-wider text-primary hover:underline"
           >
             {action.label}
           </Link>
@@ -338,7 +370,7 @@ function SeverityDot({ tone }: { tone: "urgent" | "attention" | "routine" }) {
   return (
     <span
       aria-hidden
-      className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${
+      className={`mt-0.5 h-2 w-2 shrink-0 ${
         tone === "urgent"
           ? "bg-error"
           : tone === "attention"
@@ -373,7 +405,7 @@ function PriorityRow({
       </div>
       <Link
         href={href}
-        className="inline-flex h-8 shrink-0 items-center rounded-lg border border-outline-variant bg-surface-container px-3 text-xs font-medium text-on-surface-variant transition-colors hover:text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+className={cn(QUIET_ACTION, "h-8 shrink-0 px-3")}
       >
         {action}
       </Link>
@@ -460,7 +492,7 @@ function HealthCell({ status }: { status: HealthStatus | SampleHealth }) {
     >
       <span
         aria-hidden
-        className={`h-[7px] w-[7px] shrink-0 rounded-full ${bad ? "bg-error" : "bg-outline"}`}
+        className={`h-[7px] w-[7px] shrink-0 ${bad ? "bg-error" : "bg-outline"}`}
       />
       {label}
     </span>
@@ -516,7 +548,7 @@ function MandatesPanel({
                     className="border-b border-outline-variant/40 last:border-0"
                   >
                     <td className="px-[18px] py-3">
-                      <Link href={`/app/projects/${m.id}`} className="block rounded">
+                      <Link href={`/app/projects/${m.id}`} className="block">
                         <span className="block text-[13px] font-medium text-on-surface">
                           {m.title}
                         </span>
@@ -526,7 +558,7 @@ function MandatesPanel({
                       </Link>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="rounded-md bg-surface-container-high px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">
+                      <span className="bg-surface-container-high px-2 py-1 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant">
                         {m.stage}
                       </span>
                     </td>
@@ -554,7 +586,7 @@ function MandatesPanel({
                     className="border-b border-outline-variant/40 last:border-0"
                   >
                     <td className="px-[18px] py-3">
-                      <Link href={`/app/projects/${p.id}`} className="block rounded">
+                      <Link href={`/app/projects/${p.id}`} className="block">
                         <span className="block text-[13px] font-medium text-on-surface">
                           {p.title}
                         </span>
@@ -564,7 +596,7 @@ function MandatesPanel({
                       </Link>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="rounded-md bg-surface-container-high px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">
+                      <span className="bg-surface-container-high px-2 py-1 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant">
                         {(p.status ?? "active").toUpperCase()}
                       </span>
                     </td>
@@ -608,7 +640,7 @@ function AgentActivity() {
       title="Agent activity"
       meta={
         <span className="ml-auto inline-flex items-center gap-1.5 font-mono-label text-[11px] text-outline">
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-primary" />
+          <span aria-hidden className="h-1.5 w-1.5 bg-primary" />
           {running} RUNNING
         </span>
       }
@@ -618,7 +650,7 @@ function AgentActivity() {
           <li key={r.id} className="flex gap-3 px-[18px] py-2.5">
             <span
               aria-hidden
-              className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
+              className={`mt-1.5 h-1.5 w-1.5 shrink-0 ${
                 r.state === "running"
                   ? "bg-primary"
                   : r.state === "failed"
@@ -660,7 +692,7 @@ function NextBestAction() {
         </p>
         <Link
           href={SAMPLE_NEXT_ACTION.href}
-          className="inline-flex h-9 items-center justify-center rounded-lg border border-primary bg-primary text-[13px] font-semibold text-on-primary transition-opacity hover:opacity-90"
+          className={cn(PRIMARY_ACTION, "h-9 justify-center")}
         >
           {SAMPLE_NEXT_ACTION.actionLabel}
         </Link>

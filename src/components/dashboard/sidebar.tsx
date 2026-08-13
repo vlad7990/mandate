@@ -98,7 +98,7 @@ export function Sidebar({ user, badges }: SidebarProps) {
         aria-label="Open navigation"
         aria-expanded={drawerOpen}
         onClick={() => setDrawerOpen(true)}
-        className="fixed left-2 top-2 z-50 flex h-11 w-11 items-center justify-center rounded-lg text-on-surface md:hidden"
+        className="fixed left-2 top-2 z-50 flex h-11 w-11 items-center justify-center text-on-surface md:hidden"
       >
         <IconMenu />
       </button>
@@ -123,7 +123,7 @@ export function Sidebar({ user, badges }: SidebarProps) {
           <Link
             href="/app/home"
             aria-label="Mandate — portfolio"
-            className="flex items-center gap-2.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className="flex items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
           >
             <span
               aria-hidden
@@ -140,7 +140,7 @@ export function Sidebar({ user, badges }: SidebarProps) {
             type="button"
             aria-label="Close navigation"
             onClick={() => setDrawerOpen(false)}
-            className="-mr-2 ml-auto flex h-11 w-11 items-center justify-center rounded-lg text-outline md:hidden"
+            className="-mr-2 ml-auto flex h-11 w-11 items-center justify-center text-outline md:hidden"
           >
             <IconClose />
           </button>
@@ -184,7 +184,7 @@ export function Sidebar({ user, badges }: SidebarProps) {
                     // and so would leave the drawer open.
                     onClick={() => setDrawerOpen(false)}
                     className={cn(
-                      "group relative flex items-center gap-2.5 rounded-lg transition-colors",
+                      "group relative flex items-center gap-2.5 transition-colors",
                       "min-h-11 px-2.5",
                       "md:mx-auto md:h-10 md:w-10 md:min-h-0 md:justify-center md:px-0",
                       "xl:mx-0 xl:h-auto xl:w-auto xl:min-h-0 xl:justify-start xl:px-2.5 xl:py-2.5",
@@ -225,7 +225,7 @@ export function Sidebar({ user, badges }: SidebarProps) {
                         never intercept the click on its own link. */}
                     <span
                       role="tooltip"
-                      className="pointer-events-none absolute left-[52px] z-50 hidden whitespace-nowrap rounded-md border border-outline-variant bg-surface-container-high px-2.5 py-1.5 text-xs font-medium text-on-surface opacity-0 shadow-lg transition-opacity md:block md:group-hover:opacity-100 md:group-focus-visible:opacity-100 xl:md:hidden"
+                      className="pointer-events-none absolute left-[52px] z-50 hidden whitespace-nowrap border border-outline-variant bg-surface-container-high px-2.5 py-1.5 text-xs font-medium text-on-surface opacity-0 shadow-lg transition-opacity md:block md:group-hover:opacity-100 md:group-focus-visible:opacity-100 xl:md:hidden"
                     >
                       {navItem.label}
                     </span>

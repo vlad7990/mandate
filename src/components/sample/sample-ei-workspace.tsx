@@ -133,14 +133,14 @@ function Panel({
 }) {
   return (
     <section
-      className={`overflow-hidden rounded-xl bg-surface-container-low ${
+      className={`overflow-hidden bg-surface-container-low ${
         dashed
           ? "border border-dashed border-outline-variant"
           : "border border-outline-variant"
       }`}
     >
       <div className="flex items-center gap-2.5 border-b border-outline-variant px-5 py-4">
-        <h2 className="font-heading text-[15px] font-semibold text-on-surface">
+        <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
           {title}
         </h2>
         {meta}
@@ -170,10 +170,10 @@ export function SampleEiWorkspace() {
             <h1 className="font-heading text-[30px] font-semibold leading-tight tracking-tight text-on-surface">
               Chief Operating Officer
             </h1>
-            <span className="rounded-md border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-primary">
+            <span className="border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-primary">
               Active
             </span>
-            <span className="rounded-md border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
+            <span className="border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
               Premium
             </span>
           </div>
@@ -188,7 +188,7 @@ export function SampleEiWorkspace() {
       </div>
 
       {/* The chain, drawn as a path rather than discovered by hitting walls. */}
-      <section className="mt-5 rounded-xl border border-outline-variant bg-surface-container-low p-5">
+      <section className="mt-5 border border-outline-variant bg-surface-container-low p-5">
         <div className="flex flex-wrap items-center gap-2.5">
           <h2 className="text-sm font-semibold text-on-surface">
             Diligence chain
@@ -202,7 +202,7 @@ export function SampleEiWorkspace() {
           {CHAIN.map((s, i) => (
             <li key={s.label} className="flex min-w-0 flex-1 items-stretch">
               <div
-                className={`flex min-w-0 flex-1 flex-col gap-2 rounded-[10px] border p-3.5 ${
+                className={`flex min-w-0 flex-1 flex-col gap-2 border p-3.5 ${
                   s.state === "progress"
                     ? "border-primary bg-surface-container"
                     : s.state === "locked"
@@ -248,7 +248,7 @@ export function SampleEiWorkspace() {
             title="Success profile"
             meta={
               <>
-                <span className="rounded-md bg-primary/20 px-2 py-1 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+                <span className="bg-primary/20 px-2 py-1 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
                   Approved · read-only
                 </span>
                 <span className="ml-auto font-mono-label text-[11px] text-outline">
@@ -278,10 +278,10 @@ export function SampleEiWorkspace() {
                       </div>
                       <span
                         aria-hidden
-                        className="block h-1 rounded-sm bg-surface-container-high"
+                        className="block h-1 bg-surface-container-high"
                       >
                         <span
-                          className="block h-full rounded-sm bg-primary"
+                          className="block h-full bg-primary"
                           style={{ width: `${d.w}%` }}
                         />
                       </span>
@@ -321,7 +321,7 @@ export function SampleEiWorkspace() {
                 >
                   <span
                     aria-hidden
-                    className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] border border-outline-variant bg-surface-container-high font-mono-label text-[11px] font-semibold text-on-surface-variant"
+                    className="flex h-[34px] w-[34px] shrink-0 items-center justify-center border border-outline-variant bg-surface-container-high font-mono-label text-[11px] font-semibold text-on-surface-variant"
                   >
                     {c.initials}
                   </span>
@@ -335,7 +335,7 @@ export function SampleEiWorkspace() {
                       {c.role}
                     </span>
                   </span>
-                  <span className="shrink-0 rounded-md bg-surface-container-high px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
+                  <span className="shrink-0 bg-surface-container-high px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
                     {c.stage}
                   </span>
                   <span className="w-full text-xs leading-relaxed text-outline sm:w-[200px]">

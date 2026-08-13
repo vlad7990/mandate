@@ -213,11 +213,11 @@ function SuggestionRow({
     typeof suggestion.applicable_payload?.replacement === "string" &&
     (suggestion.applicable_payload.replacement as string).trim().length > 0;
   return (
-    <li className="flex flex-col gap-2 rounded-[10px] border border-outline-variant bg-surface-container px-3.5 py-3">
+    <li className="flex flex-col gap-2 border border-outline-variant bg-surface-container px-3.5 py-3">
       <div className="flex items-baseline gap-2 flex-wrap">
         <span
           className={cn(
-            "rounded-md border px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em]",
+            "border px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em]",
             PRIORITY_TONE[suggestion.priority]
           )}
         >
@@ -252,7 +252,7 @@ function SuggestionRow({
             />
             Preview replacement query
           </summary>
-          <pre className="mt-2 max-h-[240px] overflow-auto whitespace-pre-wrap break-words rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 font-mono-data text-mono-data leading-relaxed text-on-surface">
+          <pre className="mt-2 max-h-[240px] overflow-auto whitespace-pre-wrap break-words border border-outline-variant bg-surface-container-lowest px-3 py-2 font-mono-data text-mono-data leading-relaxed text-on-surface">
             {String(suggestion.applicable_payload.replacement)}
           </pre>
         </details>

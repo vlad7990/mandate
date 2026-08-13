@@ -308,7 +308,7 @@ export default async function CandidateProfilePage({
       {parseError && (
         <div
           role="alert"
-          className="mb-5 flex items-start gap-3 rounded-xl border border-error/60 bg-error/10 px-4 py-3"
+          className="mb-5 flex items-start gap-3 border border-error/60 bg-error/10 px-4 py-3"
         >
           <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-error">
             Failed
@@ -328,7 +328,7 @@ export default async function CandidateProfilePage({
         <div
           role="status"
           aria-live="polite"
-          className="mb-5 flex items-center gap-3 rounded-xl border border-primary-container/40 bg-primary-container/10 px-4 py-3"
+          className="mb-5 flex items-center gap-3 border border-primary-container/40 bg-primary-container/10 px-4 py-3"
         >
           <IconRefresh size={16} className="animate-spin text-primary" />
           <div>
@@ -591,7 +591,7 @@ function CandidateIdentity({
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
       <span
         aria-hidden
-        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-outline-variant bg-surface-container-high font-mono-label text-base font-semibold uppercase text-on-surface-variant"
+        className="flex h-14 w-14 shrink-0 items-center justify-center border border-outline-variant bg-surface-container-high font-mono-label text-base font-semibold uppercase text-on-surface-variant"
       >
         {initials(candidate.full_name)}
       </span>
@@ -748,7 +748,7 @@ function DecisionRail({
           )}
         </div>
         <div
-          className="mt-2 h-1.5 overflow-hidden rounded-sm bg-surface-container-highest"
+          className="mt-2 h-1.5 overflow-hidden bg-surface-container-highest"
           role="meter"
           aria-valuemin={0}
           aria-valuemax={100}
@@ -779,7 +779,7 @@ function DecisionRail({
         <Link
           href={`/app/projects/${projectId}/feedback?candidate=${candidate.id}`}
           prefetch={false}
-          className="flex items-center justify-center gap-2 rounded-md border border-outline-variant px-4 py-2.5 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex items-center justify-center gap-2 border border-outline-variant px-4 py-2.5 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           Submit feedback
         </Link>
@@ -1123,7 +1123,7 @@ function ChipCard({
             {items.map((item, i) => (
               <span
                 key={i}
-                className="rounded-md border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] uppercase tracking-[0.08em] text-on-surface-variant"
+                className="border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] uppercase tracking-[0.08em] text-on-surface-variant"
               >
                 {item}
               </span>
@@ -1170,10 +1170,10 @@ function CareerTimeline({
               </div>
               <div className="flex items-start gap-3 min-w-0">
                 <div
-                  className="mt-2 h-2 w-2 shrink-0 rounded-full bg-secondary-fixed-dim ring-1 ring-secondary-fixed-dim/40 ring-offset-2 ring-offset-surface-container-low"
+                  className="mt-2 h-2 w-2 shrink-0 bg-secondary-fixed-dim ring-1 ring-secondary-fixed-dim/40 ring-offset-2 ring-offset-surface-container-low"
                   aria-hidden
                 />
-                <div className="min-w-0 flex-1 rounded-md border border-outline-variant bg-surface-container px-3 py-2">
+                <div className="min-w-0 flex-1 border border-outline-variant bg-surface-container px-3 py-2">
                   <div className="text-[13px] font-semibold text-on-surface">
                     {role.title}
                   </div>

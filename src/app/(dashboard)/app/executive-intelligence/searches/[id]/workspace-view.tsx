@@ -117,9 +117,9 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-low">
+    <section className="overflow-hidden border border-outline-variant bg-surface-container-low">
       <div className="flex flex-wrap items-center gap-2.5 border-b border-outline-variant px-5 py-4">
-        <h2 className="font-heading text-[15px] font-semibold text-on-surface">
+        <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
           {title}
         </h2>
         {meta}
@@ -138,7 +138,7 @@ function Chip({
 }) {
   return (
     <span
-      className={`rounded-md border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] ${
+      className={`border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] ${
         tone === "accent" ? "text-primary" : "text-on-surface-variant"
       }`}
     >
@@ -181,9 +181,11 @@ export function ExecutiveSearchWorkspace({ vm }: { vm: WorkspaceVm }) {
       </header>
 
       {/* The chain, drawn as a path rather than discovered by hitting walls. */}
-      <section className="mt-5 rounded-xl border border-outline-variant bg-surface-container-low p-5">
+      <section className="mt-5 border border-outline-variant bg-surface-container-low p-5">
         <div className="flex flex-wrap items-center gap-2.5">
-          <h2 className="text-sm font-semibold text-on-surface">Diligence chain</h2>
+          <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+            Diligence chain
+          </h2>
           <span className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
             Each step unlocks the next · approval is irreversible in place
           </span>
@@ -193,7 +195,7 @@ export function ExecutiveSearchWorkspace({ vm }: { vm: WorkspaceVm }) {
           {vm.chain.map((s, i) => {
             const card = (
               <div
-                className={`flex h-full min-w-0 flex-1 flex-col gap-2 rounded-[10px] border p-3.5 ${
+                className={`flex h-full min-w-0 flex-1 flex-col gap-2 border p-3.5 ${
                   s.state === "active"
                     ? "border-primary bg-surface-container"
                     : s.state === "locked"
@@ -250,7 +252,7 @@ export function ExecutiveSearchWorkspace({ vm }: { vm: WorkspaceVm }) {
             meta={
               <>
                 {vm.profile.kind === "approved" ? (
-                  <span className="rounded-md bg-primary/20 px-2 py-1 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+                  <span className="bg-primary/20 px-2 py-1 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
                     Approved · read-only
                   </span>
                 ) : (
@@ -297,10 +299,10 @@ export function ExecutiveSearchWorkspace({ vm }: { vm: WorkspaceVm }) {
                             </div>
                             <span
                               aria-hidden
-                              className="block h-1 rounded-sm bg-surface-container-high"
+                              className="block h-1 bg-surface-container-high"
                             >
                               <span
-                                className="block h-full rounded-sm bg-primary"
+                                className="block h-full bg-primary"
                                 style={{ width: `${Math.round((w.share / max) * 100)}%` }}
                               />
                             </span>
@@ -377,7 +379,7 @@ export function ExecutiveSearchWorkspace({ vm }: { vm: WorkspaceVm }) {
                     >
                       <span
                         aria-hidden
-                        className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] border border-outline-variant bg-surface-container-high font-mono-label text-[11px] font-semibold text-on-surface-variant"
+                        className="flex h-[34px] w-[34px] shrink-0 items-center justify-center border border-outline-variant bg-surface-container-high font-mono-label text-[11px] font-semibold text-on-surface-variant"
                       >
                         {c.initials}
                       </span>
@@ -393,7 +395,7 @@ export function ExecutiveSearchWorkspace({ vm }: { vm: WorkspaceVm }) {
                           {c.subtitle}
                         </span>
                       </span>
-                      <span className="shrink-0 rounded-md bg-surface-container-high px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
+                      <span className="shrink-0 bg-surface-container-high px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
                         {c.stageLabel}
                       </span>
                       <span className="w-full text-xs leading-relaxed text-outline sm:w-[200px]">
@@ -426,13 +428,13 @@ export function ExecutiveSearchWorkspace({ vm }: { vm: WorkspaceVm }) {
               {vm.contextStatus === "generating" && (
                 <>
                   <p className="flex items-center gap-2 text-[13px] leading-relaxed text-on-surface-variant">
-                    <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-primary" />
+                    <span className="h-2 w-2 shrink-0 animate-pulse bg-primary" />
                     Researching {vm.companyName} — this panel updates
                     automatically.
                   </p>
-                  <div className="h-3 w-11/12 animate-pulse rounded-sm bg-surface-container-high" />
-                  <div className="h-3 w-4/5 animate-pulse rounded-sm bg-surface-container-high" />
-                  <div className="h-3 w-3/5 animate-pulse rounded-sm bg-surface-container-high" />
+                  <div className="h-3 w-11/12 animate-pulse bg-surface-container-high" />
+                  <div className="h-3 w-4/5 animate-pulse bg-surface-container-high" />
+                  <div className="h-3 w-3/5 animate-pulse bg-surface-container-high" />
                 </>
               )}
 
@@ -463,7 +465,7 @@ export function ExecutiveSearchWorkspace({ vm }: { vm: WorkspaceVm }) {
                       {vm.context.operating_challenges.map((c) => (
                         <span
                           key={c}
-                          className="rounded-md border border-outline-variant px-2 py-1 font-mono-label text-[10px] uppercase tracking-[0.08em] text-on-surface-variant"
+                          className="border border-outline-variant px-2 py-1 font-mono-label text-[10px] uppercase tracking-[0.08em] text-on-surface-variant"
                         >
                           {c}
                         </span>

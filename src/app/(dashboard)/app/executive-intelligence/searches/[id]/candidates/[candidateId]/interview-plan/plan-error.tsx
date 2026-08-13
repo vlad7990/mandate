@@ -62,7 +62,7 @@ export function PlanError({
         </div>
 
         <div className="bg-surface-container-low border border-error/40 p-12 flex flex-col items-center text-center space-y-6">
-          <div className="w-16 h-16 rounded-full bg-error-container/20 border border-error/40 flex items-center justify-center">
+          <div className="w-16 h-16 bg-error-container/20 border border-error/40 flex items-center justify-center">
             <IconAlert size={28} className="text-error" />
           </div>
           <div className="space-y-2 max-w-md">

@@ -96,7 +96,7 @@ export function ListToolbar({
           onChange={(e) => setQuery(e.target.value)}
           placeholder={searchPlaceholder}
           aria-label={searchPlaceholder}
-          className="h-9 w-full rounded-lg border border-outline-variant bg-surface-container-lowest pl-9 pr-3 text-sm text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+          className="h-9 w-full border border-outline-variant bg-surface-container-lowest pl-9 pr-3 text-body-main text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
         />
       </div>
 
@@ -106,7 +106,7 @@ export function ListToolbar({
           <select
             value={params.filters[filter.key] ?? ""}
             onChange={(e) => setFilter(filter.key, e.target.value)}
-            className="h-9 rounded-lg border border-outline-variant bg-surface-container-lowest px-2.5 text-sm text-on-surface-variant focus:border-primary focus:outline-none"
+            className="h-9 border border-outline-variant bg-surface-container-lowest px-2.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant focus:border-primary focus:outline-none"
           >
             <option value="">{filter.label}: any</option>
             {filter.options.map((o) => (
@@ -128,7 +128,7 @@ export function ListToolbar({
               );
             })
           }
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-outline-variant px-3 text-xs font-medium text-on-surface-variant transition-colors hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="inline-flex h-9 items-center gap-1.5 border border-outline-variant px-3 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-primary hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           <IconClose size={13} />
           Clear

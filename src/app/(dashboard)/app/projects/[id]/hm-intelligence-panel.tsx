@@ -175,7 +175,7 @@ export function HMIntelligencePanel({
                 {report.red_lines.map((r, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 rounded-md border border-error/40 bg-error/5 px-3 py-2 text-[13px] leading-relaxed text-on-surface"
+                    className="flex items-start gap-2 border border-error/40 bg-error/5 px-3 py-2 text-[13px] leading-relaxed text-on-surface"
                   >
                     <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-error">
                       Flag
@@ -233,7 +233,7 @@ function ProgressTracker() {
               ) : (
                 <span
                   aria-hidden
-                  className="h-[7px] w-[7px] rounded-full border border-current"
+                  className="h-[7px] w-[7px] border border-current"
                 />
               )}
               {label}
@@ -281,7 +281,7 @@ function ChipList({
         <li
           key={i}
           className={cn(
-            "flex items-center gap-1.5 rounded-md border px-2 py-1 text-[13px]",
+            "flex items-center gap-1.5 border px-2 py-1 text-[13px]",
             cls
           )}
         >

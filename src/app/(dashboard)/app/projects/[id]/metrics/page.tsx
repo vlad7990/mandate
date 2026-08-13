@@ -108,7 +108,7 @@ export default async function ProjectMetricsPage({
           >
             <span
               className={cn(
-                "w-2 h-2 rounded-full",
+                "w-2 h-2",
                 HEALTH_BARS[health.status],
                 health.status === "at_risk" ? "animate-pulse" : ""
               )}

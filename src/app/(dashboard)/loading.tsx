@@ -25,7 +25,7 @@ export default function DashboardLoading() {
               Loading
             </span>
           </div>
-          <div className="h-8 w-72 animate-pulse rounded-sm bg-surface-container-high" />
+          <div className="h-8 w-72 animate-pulse bg-surface-container-high" />
         </header>
 
         <div className="space-y-4">

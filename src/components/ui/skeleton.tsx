@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Loading placeholder. Matches the idiom the generating views already use
- * (`bg-surface-container-high`, `rounded-sm`, `animate-pulse`) so a route
+ * (`bg-surface-container-high`, square, `animate-pulse`) so a route
  * skeleton and an agent's drafting skeleton read as the same system.
  *
  * `delay` staggers rows so a stack of bars pulses as a wave rather than
@@ -21,7 +21,7 @@ export function Skeleton({
     <div
       aria-hidden="true"
       className={cn(
-        "h-3 rounded-sm bg-surface-container-high animate-pulse",
+        "h-3 bg-surface-container-high animate-pulse",
         className
       )}
       style={{ width, animationDelay: delay ? `${delay}ms` : undefined }}

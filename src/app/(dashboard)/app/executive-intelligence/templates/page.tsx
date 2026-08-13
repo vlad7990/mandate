@@ -46,7 +46,7 @@ export default async function ExecutiveTemplatesPage() {
         </header>
 
         {error && (
-          <div className="border border-error/40 bg-error-container/30 px-4 py-3 rounded text-error text-body-main">
+          <div className="border border-error/40 bg-error-container/30 px-4 py-3 text-error text-body-main">
             Failed to load templates: {error.message}
           </div>
         )}

@@ -14,7 +14,7 @@ export function PrintReportButton() {
     <button
       type="button"
       onClick={() => window.print()}
-      className="flex w-full items-center justify-center gap-2 rounded-md border border-outline-variant bg-surface-container-low px-4 py-2.5 font-mono-label text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="flex w-full items-center justify-center gap-2 border border-outline-variant bg-surface-container-low px-4 py-2.5 font-mono-label text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <IconPrint size={15} />
       Print or save as PDF

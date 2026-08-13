@@ -133,7 +133,7 @@ export function ClientIntelligencePanel({
                     <div className="flex flex-wrap items-baseline gap-2">
                       <span
                         className={cn(
-                          "shrink-0 rounded-md border px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em]",
+                          "shrink-0 border px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em]",
                           p.direction === "favours"
                             ? "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
                             : "border-error/60 bg-error/10 text-error"

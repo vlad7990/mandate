@@ -117,7 +117,7 @@ function TierBadge({ tier }: { tier: number | null }) {
   const lead = tier === 1;
   return (
     <span
-      className={`rounded-md px-2 py-1 font-mono-label text-[10px] font-bold uppercase tracking-[0.08em] ${
+      className={`px-2 py-1 font-mono-label text-mono-label uppercase tracking-wider ${
         lead
           ? "bg-primary/20 text-primary"
           : "bg-surface-container-high text-on-surface-variant"
@@ -133,14 +133,14 @@ function Avatar({ name, parsing }: { name: string; parsing?: boolean }) {
     return (
       <span
         aria-hidden
-        className="h-[30px] w-[30px] shrink-0 rounded-lg border border-dashed border-outline-variant bg-surface-container"
+        className="h-[30px] w-[30px] shrink-0 border border-dashed border-outline-variant bg-surface-container"
       />
     );
   }
   return (
     <span
       aria-hidden
-      className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg border border-outline-variant bg-surface-container-high font-mono-label text-[10px] font-semibold text-on-surface-variant"
+      className="flex h-[30px] w-[30px] shrink-0 items-center justify-center border border-outline-variant bg-surface-container-high font-mono-label text-mono-label text-on-surface-variant"
     >
       {initials(name)}
     </span>
@@ -152,7 +152,7 @@ function Pending({ w }: { w: number }) {
   return (
     <span
       aria-hidden
-      className="block h-2.5 rounded-full bg-surface-container-high"
+      className="block h-2.5 bg-surface-container-high"
       style={{ width: w }}
     />
   );
@@ -364,7 +364,7 @@ export default async function CandidatesPage({
                         key={c.id}
                         className="border-b border-outline-variant/40 last:border-0"
                       >
-                        <td className="px-3 py-3 pl-[18px]">
+                        <td className="w-[38%] max-w-0 px-3 py-3 pl-[18px]">
                           <div className="flex items-center gap-3">
                             <Avatar name={c.name} parsing={c.parsing} />
                             <div className="min-w-0">
@@ -388,7 +388,7 @@ export default async function CandidatesPage({
                           {c.parsing ? (
                             <Pending w={72} />
                           ) : c.archetype ? (
-                            <span className="rounded-full bg-surface-container-high px-2.5 py-1 text-[11px] font-medium text-on-surface-variant">
+                            <span className="bg-surface-container-high px-2.5 py-1 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant">
                               {c.archetype}
                             </span>
                           ) : (
@@ -427,14 +427,14 @@ export default async function CandidatesPage({
                         key={c.id}
                         className="border-b border-outline-variant/40 last:border-0"
                       >
-                        <td className="px-3 py-3 pl-[18px]">
+                        <td className="w-[38%] max-w-0 px-3 py-3 pl-[18px]">
                           <Link
                             href={
                               c.project_id
                                 ? `/app/projects/${c.project_id}/candidates/${c.id}`
                                 : "/app/candidates"
                             }
-                            className="flex items-center gap-3 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                            className="flex items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                           >
                             <Avatar
                               name={c.full_name}
@@ -461,7 +461,7 @@ export default async function CandidatesPage({
                           {c.cv_processing ? (
                             <Pending w={72} />
                           ) : c.archetype ? (
-                            <span className="rounded-full bg-surface-container-high px-2.5 py-1 text-[11px] font-medium text-on-surface-variant">
+                            <span className="bg-surface-container-high px-2.5 py-1 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant">
                               {c.archetype}
                             </span>
                           ) : (
@@ -484,7 +484,7 @@ export default async function CandidatesPage({
                             Math.round(s.overall_score)
                           )}
                         </td>
-                        <td className="px-3 py-3 text-xs capitalize text-on-surface-variant">
+                        <td className="px-3 py-3 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant">
                           {c.cv_processing
                             ? "Parsing"
                             : (c.pipeline_stage ?? "—").replace(/_/g, " ")}
@@ -500,7 +500,7 @@ export default async function CandidatesPage({
         </div>
 
         {!showSample && candidates.length === 0 && (
-          <p className="px-[18px] py-10 text-center text-sm text-outline">
+          <p className="px-[18px] py-10 text-center font-mono-label text-mono-label uppercase leading-[1.6] tracking-widest text-outline">
             {isFiltered(params)
               ? "No candidates match these filters."
               : "No candidates yet. Open a mandate and upload CVs to get started."}

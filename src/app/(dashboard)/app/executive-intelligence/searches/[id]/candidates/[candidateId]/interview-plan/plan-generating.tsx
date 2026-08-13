@@ -83,7 +83,7 @@ export function PlanGenerating({
               Interview Architect
             </span>
             <span className="ml-auto font-mono-label text-mono-label text-secondary-fixed-dim uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-secondary-fixed-dim animate-pulse" />
+              <span className="w-2 h-2 bg-secondary-fixed-dim animate-pulse" />
               Drafting for human review
             </span>
           </div>
@@ -111,11 +111,11 @@ export function PlanGenerating({
                 </span>
               </div>
               <div
-                className="h-3 bg-surface-container-high rounded-sm animate-pulse"
+                className="h-3 bg-surface-container-high animate-pulse"
                 style={{ width: "88%", animationDelay: `${i * 80}ms` }}
               />
               <div
-                className="h-3 bg-surface-container-high rounded-sm animate-pulse"
+                className="h-3 bg-surface-container-high animate-pulse"
                 style={{ width: "70%", animationDelay: `${i * 80 + 40}ms` }}
               />
             </div>

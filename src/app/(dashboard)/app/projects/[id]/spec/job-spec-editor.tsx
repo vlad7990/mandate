@@ -502,7 +502,7 @@ function ActiveGenerationBanner({
         </div>
       </div>
       <span className="font-mono-label text-mono-label text-primary uppercase tracking-wider flex items-center gap-1.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+        <span className="w-1.5 h-1.5 bg-primary animate-pulse" />
         LIVE
       </span>
     </div>
@@ -970,7 +970,7 @@ function DiffSummaryCard({
               >
                 <span
                   className={cn(
-                    "w-1.5 h-1.5 rounded-full",
+                    "w-1.5 h-1.5",
                     changed ? "bg-tertiary" : "bg-outline-variant"
                   )}
                 />
@@ -1108,7 +1108,7 @@ function HistoryView({
                       : v.is_generating
                         ? (
                           <span className="flex items-center gap-1.5 text-tertiary">
-                            <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" />
+                            <span className="w-1.5 h-1.5 bg-tertiary animate-pulse" />
                             Generating
                           </span>
                         )

@@ -106,9 +106,9 @@ function SkeletonRows({ rows }: { rows: number }) {
     <div className="flex flex-col gap-3" role="status" aria-label="Loading content">
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex flex-col gap-1.5">
-          <div className="h-3 w-20 animate-pulse rounded-sm bg-surface-container-high" />
+          <div className="h-3 w-20 animate-pulse bg-surface-container-high" />
           <div
-            className="h-4 animate-pulse rounded-sm bg-surface-container-high"
+            className="h-4 animate-pulse bg-surface-container-high"
             style={{ width: `${50 + ((i * 17) % 40)}%` }}
           />
         </div>
@@ -143,7 +143,7 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
               </h1>
             ) : (
               <div
-                className="h-9 w-72 animate-pulse rounded-md bg-surface-container-high"
+                className="h-9 w-72 animate-pulse bg-surface-container-high"
                 role="status"
                 aria-label="Loading mandate title"
               />
@@ -172,8 +172,8 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
                 prefetch={false}
                 className={
                   vm.calibrated
-                    ? "flex items-center gap-2 rounded-md border border-outline-variant px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    : "flex items-center gap-2 rounded-md bg-primary-container px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    ? "flex items-center gap-2 border border-outline-variant px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    : "flex items-center gap-2 bg-primary-container px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 }
               >
                 {vm.calibrated ? "Re-run calibration" : "Start onboarding"}
@@ -181,7 +181,7 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
               <Link
                 href={`/app/projects/${vm.projectId}/hiring-manager`}
                 prefetch={false}
-                className="flex items-center gap-2 rounded-md border border-outline-variant px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="flex items-center gap-2 border border-outline-variant px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 Share with HM
               </Link>
@@ -193,7 +193,7 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
       {vm.ready && vm.modules.length > 0 && (
         <nav
           aria-label="Project modules"
-          className="mt-5 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-low"
+          className="mt-5 overflow-hidden border border-outline-variant bg-surface-container-low"
         >
           <ul className="flex divide-x divide-outline-variant overflow-x-auto">
             {vm.modules.map((mod) => (
@@ -219,7 +219,7 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
             get the position and the current stage in words instead; the rail
             itself starts at sm.
           */}
-          <div className="mt-5 flex flex-col gap-2 rounded-xl border border-outline-variant bg-surface-container-low px-[18px] py-4 sm:hidden">
+          <div className="mt-5 flex flex-col gap-2 border border-outline-variant bg-surface-container-low px-[18px] py-4 sm:hidden">
             <div className="flex items-baseline justify-between gap-3">
               <span
                 className={`font-mono-label text-[11px] font-semibold uppercase tracking-[0.08em] ${
@@ -232,9 +232,9 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
                 Stage {currentIndex + 1} of {vm.stages.length}
               </span>
             </div>
-            <span aria-hidden className="block h-[3px] rounded-sm bg-surface-container-high">
+            <span aria-hidden className="block h-[3px] bg-surface-container-high">
               <span
-                className={`block h-full rounded-sm ${
+                className={`block h-full ${
                   currentStage.tone === "risk" ? "bg-error" : "bg-primary"
                 }`}
                 style={{ width: `${((currentIndex + 1) / vm.stages.length) * 100}%` }}
@@ -242,7 +242,7 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
             </span>
           </div>
 
-          <div className="mt-5 hidden items-center gap-2.5 rounded-xl border border-outline-variant bg-surface-container-low px-[18px] py-4 sm:flex">
+          <div className="mt-5 hidden items-center gap-2.5 border border-outline-variant bg-surface-container-low px-[18px] py-4 sm:flex">
           {vm.stages.map((s) => (
             <div
               key={s.label}
@@ -251,7 +251,7 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
             >
               <span
                 aria-hidden
-                className={`h-[3px] rounded-sm ${
+                className={`h-[3px] ${
                   s.tone === "done"
                     ? "bg-primary"
                     : s.tone === "risk"
@@ -368,10 +368,10 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
                     </div>
                     <span
                       aria-hidden
-                      className="mt-1 block h-1 rounded-sm bg-surface-container-high"
+                      className="mt-1 block h-1 bg-surface-container-high"
                     >
                       <span
-                        className="block h-full rounded-sm bg-primary"
+                        className="block h-full bg-primary"
                         style={{ width: `${(d.value / 10) * 100}%` }}
                       />
                     </span>
@@ -397,15 +397,31 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
               action={<PanelLink href={vm.health.href}>Metrics</PanelLink>}
             >
               <div className="grid grid-cols-2 divide-x divide-y divide-outline-variant/40 border-b border-outline-variant/40">
+                {/*
+                  `min-w-0` on the cell and `truncate` on the value: a grid
+                  child defaults to `min-width: auto`, so a wide value pushes
+                  the column instead of shrinking. Three of these four KPIs are
+                  two-digit counts, but "Last activity" falls back to an
+                  absolute date once the mandate is months old, and at 22px
+                  that ran out through the side of the card. Caught by looking
+                  at the rendered page — the fixtures all had recent activity,
+                  so it never showed in a screenshot before.
+                */}
                 {vm.health.kpis.map((k) => (
-                  <div key={k.label} className="flex flex-col gap-1 px-[18px] py-3">
+                  <div
+                    key={k.label}
+                    className="flex min-w-0 flex-col gap-1 px-[18px] py-3"
+                  >
                     <span className="font-mono-label text-[10px] font-bold uppercase tracking-[0.12em] text-outline">
                       {k.label}
                     </span>
-                    <span className="font-heading text-[22px] leading-none tabular-nums text-on-surface">
+                    <span
+                      title={k.value}
+                      className="truncate font-mono-data text-[20px] leading-none tabular-nums text-on-surface"
+                    >
                       {k.value}
                     </span>
-                    <span className="font-mono-label text-[10px] uppercase tracking-[0.08em] text-outline">
+                    <span className="truncate font-mono-label text-[10px] uppercase tracking-[0.08em] text-outline">
                       {k.unit}
                     </span>
                   </div>

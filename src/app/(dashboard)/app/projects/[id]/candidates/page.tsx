@@ -197,7 +197,7 @@ export default async function CandidatesPage({
 function EmptyState({ projectId }: { projectId: string }) {
   return (
     <div className="bg-surface-container-low border border-outline-variant p-12 flex flex-col items-center text-center space-y-6">
-      <div className="w-16 h-16 rounded-full bg-primary-container/10 border border-primary-container/40 flex items-center justify-center">
+      <div className="w-16 h-16 bg-primary-container/10 border border-primary-container/40 flex items-center justify-center">
         <IconGroup size={28} className="text-primary" />
       </div>
       <div className="space-y-2 max-w-md">
@@ -293,7 +293,7 @@ function CandidateRow({
         prefetch={false}
         className="flex-1 min-w-0 flex items-center gap-4 px-5 py-4"
       >
-        <span className="w-10 h-10 rounded bg-surface-container-high border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase">
+        <span className="w-10 h-10 bg-surface-container-high border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase">
           {initials(candidate.full_name)}
         </span>
         <div className="flex-1 min-w-0">

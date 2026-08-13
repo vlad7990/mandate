@@ -52,9 +52,11 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-outline-variant bg-surface-container-low p-5">
+    <section className="border border-outline-variant bg-surface-container-low p-5">
       <div className="flex flex-wrap items-center gap-2.5">
-        <h3 className="text-sm font-semibold text-on-surface">{title}</h3>
+        <h3 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+          {title}
+        </h3>
         {meta && (
           <span className="ml-auto font-mono-label text-[10px] uppercase tracking-[0.08em] text-outline">
             {meta}
@@ -97,7 +99,7 @@ export function SampleCandidateDetail({
           <div className="flex items-start gap-4">
             <span
               aria-hidden
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-outline-variant bg-surface-container-high font-mono-label text-base font-semibold text-on-surface-variant"
+              className="flex h-14 w-14 shrink-0 items-center justify-center border border-outline-variant bg-surface-container-high font-mono-label text-base font-semibold text-on-surface-variant"
             >
               {c.name
                 .split(/\s+/)
@@ -113,7 +115,7 @@ export function SampleCandidateDetail({
                 </h1>
                 {c.tier !== null && (
                   <span
-                    className={`rounded-md px-2 py-1 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] ${
+                    className={`px-2 py-1 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] ${
                       c.tier === 1
                         ? "bg-primary/20 text-primary"
                         : "bg-surface-container-high text-on-surface-variant"
@@ -123,7 +125,7 @@ export function SampleCandidateDetail({
                   </span>
                 )}
                 {c.archetype && (
-                  <span className="rounded-full bg-surface-container-high px-2.5 py-1.5 text-[11px] font-medium text-on-surface-variant">
+                  <span className="bg-surface-container-high px-2.5 py-1.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant">
                     {c.archetype}
                   </span>
                 )}
@@ -307,7 +309,7 @@ export function SampleCandidateDetail({
                   ].map((v) => (
                     <div
                       key={v.k}
-                      className="flex flex-col gap-2.5 rounded-[10px] border border-outline-variant bg-surface-container p-4"
+                      className="flex flex-col gap-2.5 border border-outline-variant bg-surface-container p-4"
                     >
                       <p className="font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
                         {v.k}
@@ -337,7 +339,7 @@ export function SampleCandidateDetail({
                 title="Submission narrative"
                 meta="Draft · editable · goes to the client"
               >
-                <div className="max-w-[74ch] rounded-[10px] border border-outline-variant bg-surface-container-lowest px-6 py-5">
+                <div className="max-w-[74ch] border border-outline-variant bg-surface-container-lowest px-6 py-5">
                   <p className="font-heading text-base leading-[1.75] text-on-surface">
                     {c.name.split(" ")[0]} has already done the thing{" "}
                     {mandate.company} is about to attempt — replacing a
@@ -387,12 +389,12 @@ export function SampleCandidateDetail({
           The decision rail. Stays put across every tab, because the two
           things a recruiter does daily should never be behind a tab.
         */}
-        <aside className="flex flex-col gap-5 rounded-xl border border-outline-variant bg-surface-container-lowest p-5">
+        <aside className="flex flex-col gap-5 border border-outline-variant bg-surface-container-lowest p-5">
           <div className="flex flex-col gap-2.5">
             <p className="font-mono-label text-[10px] font-bold uppercase tracking-[0.12em] text-outline">
               Pipeline stage
             </p>
-            <div className="flex h-[38px] items-center gap-2.5 rounded-lg border border-outline-variant bg-surface-container-low px-3">
+            <div className="flex h-[38px] items-center gap-2.5 border border-outline-variant bg-surface-container-low px-3">
               <span className="text-[13px] text-on-surface">{c.stage}</span>
               <IconChevronDown size={14} className="ml-auto text-outline" />
             </div>

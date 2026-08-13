@@ -440,7 +440,7 @@ export function ShortlistBuilder({
                 meta={
                   <span className="flex items-center gap-1.5">
                     <span
-                      className="w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim animate-pulse"
+                      className="w-1.5 h-1.5 bg-secondary-fixed-dim animate-pulse"
                       aria-hidden
                     />
                     Live comparison mode
@@ -559,7 +559,7 @@ function PoolCard({
       >
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-start gap-2 min-w-0">
-            <span className="w-9 h-9 rounded bg-surface-container border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase shrink-0">
+            <span className="w-9 h-9 bg-surface-container border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase shrink-0">
               {initials(candidate.full_name)}
             </span>
             <div className="min-w-0">

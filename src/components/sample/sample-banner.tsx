@@ -36,7 +36,7 @@ export function SampleBanner({
     <div
       role="note"
       aria-label="Sample data notice"
-      className="flex items-start gap-3 rounded-xl border border-primary/40 bg-primary/[0.06] px-4 py-3"
+      className="flex items-start gap-3 border border-primary/40 bg-primary/[0.06] px-4 py-3"
     >
       <IconInfo size={16} className="mt-0.5 shrink-0 text-primary" />
 
@@ -44,7 +44,7 @@ export function SampleBanner({
         <p className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
           Sample {scope}
         </p>
-        <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">
+        <p className="mt-1 text-body-main leading-relaxed text-on-surface-variant">
           An example account, so you can see how Mandate works before you
           have your own searches running.{" "}
           <span className="text-on-surface">None of this is your data</span> —
@@ -56,7 +56,7 @@ export function SampleBanner({
         type="button"
         onClick={dismiss}
         aria-label="Dismiss sample data and show my own workspace"
-        className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-outline transition-colors hover:text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+        className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center text-outline transition-colors hover:text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
       >
         <IconClose size={16} />
       </button>

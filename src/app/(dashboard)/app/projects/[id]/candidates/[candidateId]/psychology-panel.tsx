@@ -129,7 +129,7 @@ export function PsychologyPanel({
             {profile ? formatRelative(profile.generated_at) : "Not generated"}
           </PanelMeta>
           {flagCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-tertiary/60 bg-tertiary/10 px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary tabular-nums">
+            <span className="inline-flex items-center gap-1.5 border border-tertiary/60 bg-tertiary/10 px-1.5 py-0.5 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-tertiary tabular-nums">
               <IconFlag size={11} />
               {flagCount} flagged
             </span>
