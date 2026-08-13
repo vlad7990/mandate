@@ -22,17 +22,24 @@ Two Resend credential paths exist and **neither can send**:
 | `RESEND_API_KEY` + `RESEND_FROM` (manual, ~103 days old, Production) | Key is VALID. Used by `src/lib/waitlist/notify.ts`. |
 | Marketplace resource `resend-email-violet-dog` (provisioned today, `getmandate.io`, `us-east-1`) | Provisioned but NEVER CONNECTED — `RESEND_API_KEY` name collision, then `--prefix MANDATE_` hit "Additional setup required. Opening browser…" |
 
-**Queried `GET https://api.resend.com/domains` with the existing key: `NO DOMAINS
-configured in this Resend account`.**
+**The Resend account state is UNVERIFIED — we have never successfully queried it.**
+`RESEND_API_KEY` is marked Sensitive in Vercel, so `vercel env pull` writes the
+literal placeholder `[SENSITIVE]` rather than the value. Both API calls made on
+2026-08-13 authenticated with that placeholder and returned
+`{"statusCode":400,"message":"API key is invalid"}`.
 
-Consequences, both unresolved:
+An earlier version of this handoff claimed "NO DOMAINS configured in this Resend
+account". **That was wrong** — a parser read the error object's missing `data`
+field as an empty list. Nothing is known about that account's domains. Do not
+carry that claim forward; re-check with a real key.
 
-- `getmandate.io` is **not** a verified sender anywhere we can see. Sending
-  cannot work until DKIM/SPF DNS records are added. That is a founder action.
-- **The waitlist has been live for months against an account with no domain.**
-  `waitlist/notify.ts` can only be sending from Resend's `onboarding@resend.dev`
-  test sender, or silently failing. **Verify whether those emails ever arrived** —
-  this is a real possible production defect, not part of the Art. 14 work.
+What IS known: `waitlist/notify.ts` sends `from: RESEND_FROM`, currently
+`Mandate <hello@getmandate.io>`, and throws on a non-OK response. If
+`getmandate.io` is unverified there, every send would have thrown — but see
+section 4: nothing has ever triggered it.
+
+`getmandate.io` still needs DKIM/SPF verification before outreach can send.
+That is a founder action either way.
 
 ### What the founder must do before code can proceed
 
@@ -112,6 +119,11 @@ Marketing automation, campaign management, sequencing, AI-generated outreach, CR
   `buildMarketInsight` is pool-internal only); and deleting the losing branch in
   `run-sourcing-search.ts`, which still carries both sides of an untested
   assumption about combining `web_search` with `output_config.format`.
+- **The waitlist has never been exercised.** `public.waitlist` holds ZERO rows —
+  no request has ever been submitted, so `notifyFoundersOfWaitlistRequest` has
+  never run against a real payload. There is no evidence of a delivery defect
+  because there has been no delivery to attempt. The send path there remains
+  untested rather than broken.
 - **Verification debt.** Never seen with real data: the evidence grid populated,
   the HM portal grid, and — most importantly — **no comparison PDF has ever been
   generated and looked at.** `@react-pdf/renderer` layout can differ from what
