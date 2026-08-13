@@ -92,8 +92,17 @@ export function KpiTile({
         className={cn("absolute left-0 top-0 bottom-0 w-0.5", ACCENT_BAR[accent])}
         aria-hidden
       />
-      <div className="flex items-start justify-between gap-2 pl-1.5">
-        <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+      {/*
+        `flex-wrap` and `min-w-0` because this tile goes two-up on a phone.
+        At 390px each tile is ~132px of content, and an uppercase label at
+        `tracking-widest` plus a `shrink-0` delta needs ~148px — the label
+        cannot shrink below the width of its longest word, so the row
+        overflowed. Wrapping drops the delta onto its own line and gives the
+        label the full width, which keeps both readable instead of clipping
+        one. Fixes every consumer of the tile, not just Analytics.
+      */}
+      <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 pl-1.5">
+        <span className="min-w-0 font-mono-label text-mono-label text-outline uppercase tracking-widest">
           {label}
         </span>
         {delta && (

@@ -83,7 +83,7 @@ export default async function MembersPage() {
       />
 
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <h1 className="font-h1 text-h1 text-primary">MEMBERS</h1>
           <p className="mt-1 font-mono-label text-mono-label uppercase tracking-widest text-outline tabular-nums">
             {members.length} {members.length === 1 ? "ACCOUNT" : "ACCOUNTS"}
@@ -109,8 +109,19 @@ export default async function MembersPage() {
           meta={activeAdmins === 1 ? "ONE ADMIN — CANNOT BE DEMOTED" : undefined}
         />
 
-        <div className="overflow-x-auto border border-outline-variant bg-surface-container-low">
-          <table className="w-full min-w-[720px] border-collapse">
+        {/*
+          `relative` is load-bearing, not decoration. The cells below carry
+          `sr-only` spans, and `sr-only` is `position: absolute`. With no
+          positioned ancestor their containing block is the root, so although
+          each is 1px wide it is *placed* at its static position — out at
+          x≈700 inside this 720px table — and extends the document's
+          scrollable width straight past the scroll container that should
+          have clipped it. The whole page then scrolled sideways on a phone
+          while nothing visible was over-wide. Positioning the wrapper makes
+          it their containing block, so the clip applies.
+        */}
+        <div className="relative min-w-0 max-w-full overflow-x-auto border border-outline-variant bg-surface-container-low">
+          <table className="w-full border-collapse sm:min-w-[720px]">
             <thead>
               <tr className="border-b border-outline-variant">
                 {["Name", "Email", "Status", "Joined", "Role"].map((h, i) => (
@@ -201,8 +212,19 @@ export default async function MembersPage() {
       <section className="space-y-3">
         <MastHead tone="neutral" label="WHAT EACH ROLE CARRIES" />
 
-        <div className="overflow-x-auto border border-outline-variant bg-surface-container-low">
-          <table className="w-full min-w-[720px] border-collapse">
+        {/*
+          `relative` is load-bearing, not decoration. The cells below carry
+          `sr-only` spans, and `sr-only` is `position: absolute`. With no
+          positioned ancestor their containing block is the root, so although
+          each is 1px wide it is *placed* at its static position — out at
+          x≈700 inside this 720px table — and extends the document's
+          scrollable width straight past the scroll container that should
+          have clipped it. The whole page then scrolled sideways on a phone
+          while nothing visible was over-wide. Positioning the wrapper makes
+          it their containing block, so the clip applies.
+        */}
+        <div className="relative min-w-0 max-w-full overflow-x-auto border border-outline-variant bg-surface-container-low">
+          <table className="w-full border-collapse sm:min-w-[720px]">
             <thead>
               <tr className="border-b border-outline-variant">
                 <th

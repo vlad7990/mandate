@@ -516,11 +516,27 @@ function CandidateRow({
   return (
     <li className="bg-surface-container-low border border-outline-variant hover:bg-surface-container-high hover:border-outline transition-colors">
       <div className="flex items-center gap-4 px-4 py-3 flex-wrap">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        {/*
+          `basis-[260px]` is what makes the row's `flex-wrap` actually wrap.
+          With `flex-1` alone the identity block absorbs whatever is left
+          after the scores — 100px on a phone — and squeezes the rank badge,
+          avatar and name into it rather than moving to its own line. A basis
+          declares the width below which wrapping is preferable to shrinking.
+        */}
+        <div className="flex min-w-0 flex-1 basis-[260px] items-center gap-3">
+          {/*
+            `shrink-0`, not `flex-1`. This link wraps a fixed 48px rank badge
+            and nothing else, but it was declared `flex-1` — so it and the
+            identity link below split the row evenly regardless of what
+            either needed. On a wide screen there is slack and it never
+            showed; at 390px the badge link took half the row, squeezed the
+            name to 10px, and then overflowed itself because its own child is
+            `w-12 shrink-0`.
+          */}
           <Link
             href={`/app/projects/${projectId}/candidates/${candidate.id}`}
             prefetch={false}
-            className="flex items-center gap-3 min-w-0 group flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="flex shrink-0 items-center gap-3 group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <span
               className="font-h2 text-h2 text-primary tabular-nums w-12 text-right shrink-0"
