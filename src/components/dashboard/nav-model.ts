@@ -14,6 +14,8 @@
  * layer, and the rest is system.
  */
 
+import { can, type Capability, type Role } from "@/lib/auth/roles";
+
 export type NavGroupKey = "workspace" | "search" | "intelligence" | "system";
 
 export type NavItem = {
@@ -36,6 +38,17 @@ export type NavItem = {
   badgeKey?: "network" | "mandates";
   /** Rendered indented, under the item above it. */
   child?: true;
+  /**
+   * Hidden from roles that lack this. Omitted means every active role sees
+   * it — most destinations are readable, and the rail is not the boundary.
+   *
+   * Deliberately not derived from `ROUTE_RULES`: a route can require
+   * `mandates:write` while its rail entry should stay visible, because the
+   * entry points at a section a researcher reads and only some pages inside
+   * it are restricted. Hiding those would leave a researcher unable to see
+   * that mandates exist.
+   */
+  capability?: Capability;
 };
 
 export const NAV_GROUPS: ReadonlyArray<{
@@ -111,7 +124,27 @@ export const NAV: readonly NavItem[] = [
     matchPrefix: true,
   },
   { href: "/app/settings", label: "Settings", icon: "settings", group: "system" },
+  {
+    href: "/app/settings/members",
+    label: "Members",
+    icon: "settings",
+    group: "system",
+    child: true,
+    capability: "org:manage",
+  },
 ];
+
+/**
+ * The rail as `role` should see it.
+ *
+ * This is presentation, not protection — the proxy and RLS decide what a
+ * person can actually reach. Its job is to stop the product offering a
+ * destination that will bounce, which reads as broken rather than as
+ * restricted.
+ */
+export function navFor(role: Role | null | undefined): readonly NavItem[] {
+  return NAV.filter((item) => !item.capability || can(role, item.capability));
+}
 
 /**
  * Whether `item` should read as the current section for `pathname`.
@@ -137,7 +170,16 @@ export function isNavItemActive(item: NavItem, pathname: string): boolean {
   return pathname === item.href;
 }
 
-/** Items belonging to one group, in declaration order. */
-export function navItemsInGroup(group: NavGroupKey): readonly NavItem[] {
-  return NAV.filter((i) => i.group === group);
+/**
+ * Items belonging to one group, in declaration order.
+ *
+ * Takes the item list rather than reading `NAV` directly so the caller can
+ * pass the role-filtered one — otherwise the rail would render a group
+ * heading above no items.
+ */
+export function navItemsInGroup(
+  group: NavGroupKey,
+  items: readonly NavItem[] = NAV
+): readonly NavItem[] {
+  return items.filter((i) => i.group === group);
 }

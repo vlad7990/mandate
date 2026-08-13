@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { requireActionContext } from "@/lib/auth/access";
 import { parseCv, PDF_MIME, DOCX_MIME } from "@/lib/ai/parse-cv";
 import type { CandidateProfile } from "@/lib/ai/cv-parsing";
 import {
@@ -17,20 +18,7 @@ type AuthContext = {
 };
 
 async function requireActiveUser(): Promise<AuthContext> {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated.");
-  const { data: profile, error } = await supabase
-    .from("users")
-    .select("organization_id, status")
-    .eq("id", user.id)
-    .single<{ organization_id: string | null; status: string }>();
-  if (error || !profile?.organization_id || profile.status !== "active") {
-    throw new Error("Account is not provisioned.");
-  }
-  return { userId: user.id, organizationId: profile.organization_id };
+  return requireActionContext("candidates:write");
 }
 
 /**

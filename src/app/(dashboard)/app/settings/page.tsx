@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { can, parseRole } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 import { UserStatusActions } from "./user-actions";
 import {
@@ -122,6 +123,21 @@ export default async function SettingsPage() {
           </p>
         </div>
         <nav className="flex items-center gap-2 flex-wrap">
+          {/*
+            Only shown to admins: the route itself refuses anyone else, and a
+            link that bounces reads as a broken product rather than a
+            restricted one.
+          */}
+          {can(parseRole(profile.role), "org:manage") && (
+            <Link
+              href="/app/settings/members"
+              prefetch={false}
+              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <IconGroup size={14} />
+              Members
+            </Link>
+          )}
           <Link
             href="/app/settings/skills"
             prefetch={false}

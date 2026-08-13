@@ -6,6 +6,8 @@ import { after } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { runAndStoreExecutiveCompanyContext } from "@/lib/ai/run-executive-company-context";
 import { recordExecutiveAuditEvent } from "@/lib/executive/audit";
+import { can, parseRole } from "@/lib/auth/roles";
+import { requireActionContext } from "@/lib/auth/access";
 import type {
   ExecutiveRoleTemplateRow,
   TemplateCompetencyWeight,
@@ -52,12 +54,21 @@ export async function createExecutiveSearchAction(formData: FormData) {
 
   const { data: profile, error: profileError } = await supabase
     .from("users")
-    .select("organization_id, status")
+    .select("organization_id, status, role")
     .eq("id", user.id)
     .single();
 
   if (profileError || !profile?.organization_id || profile.status !== "active") {
     backToForm("Your account is not provisioned to start an executive search.", templateKey);
+  }
+
+  // Opening an executive search is opening a mandate. Reported back onto the
+  // form like every other failure in this action rather than thrown.
+  if (!can(parseRole(profile.role), "mandates:write")) {
+    backToForm(
+      "Your role does not permit opening an executive search. Ask an admin for recruiter access.",
+      templateKey
+    );
   }
 
   // Resolve the template (if any) before insert so template_id and the
@@ -201,11 +212,12 @@ export async function createExecutiveSearchAction(formData: FormData) {
 export async function regenerateCompanyContextAction(
   searchId: string
 ): Promise<void> {
+  // Re-running the company research rewrites the search's grounding and
+  // spends a model call, so it sits with the rest of the mandate writes.
+  // This action checked only that the caller was signed in.
+  const { userId } = await requireActionContext("mandates:write");
+
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated.");
 
   const { data, error } = await supabase
     .from("executive_searches")
@@ -232,7 +244,7 @@ export async function regenerateCompanyContextAction(
   await recordExecutiveAuditEvent(supabase, {
     organizationId: data.organization_id,
     searchId,
-    actorId: user.id,
+    actorId: userId,
     eventType: "search_updated",
     detail: { action: "company_context_regenerate" },
   });

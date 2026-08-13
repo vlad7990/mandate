@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CapabilityGate } from "@/components/auth/capability-gate";
 import { cookies } from "next/headers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { computePortfolioMetrics } from "@/lib/metrics/portfolio";
@@ -151,6 +152,7 @@ export default async function MandatesPage({
           label: "New mandate",
           href: "/app/projects/new",
           icon: <IconArrowRight size={15} />,
+          capability: "mandates:write",
         }}
       />
 
@@ -267,11 +269,13 @@ export default async function MandatesPage({
           <p className="px-4 py-10 text-center text-sm text-outline">
             {isFiltered(params)
               ? "No mandates match these filters."
-              : "No mandates yet."}{" "}
-            <Link href="/app/projects/new" className="text-primary hover:underline">
-              Start one
-            </Link>
-            .
+              : "No mandates yet."}
+            <CapabilityGate capability="mandates:write">
+              {" "}
+              <Link href="/app/projects/new" className="text-primary hover:underline">
+                Start one
+              </Link>
+            </CapabilityGate>
           </p>
         )}
 

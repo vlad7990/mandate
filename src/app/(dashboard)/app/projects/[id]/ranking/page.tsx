@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CapabilityGate } from "@/components/auth/capability-gate";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
@@ -304,14 +305,16 @@ function EmptyState({
             : "Upload a candidate CV first — the ranking engine scores parsed profiles against the role's calibration weights."}
         </p>
       </div>
-      <Link
-        href={`/app/projects/${projectId}/candidates/new`}
-        prefetch={false}
-        className="relative px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      >
-        <IconUpload size={16} />
-        Add Candidate
-      </Link>
+      <CapabilityGate capability="candidates:write">
+        <Link
+          href={`/app/projects/${projectId}/candidates/new`}
+          prefetch={false}
+          className="relative px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <IconUpload size={16} />
+          Add Candidate
+        </Link>
+      </CapabilityGate>
     </div>
   );
 }

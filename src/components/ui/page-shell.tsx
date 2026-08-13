@@ -1,6 +1,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { hasCapability } from "@/lib/auth/access";
+import { type Capability } from "@/lib/auth/roles";
 
 /**
  * The outer frame every dashboard page sits in.
@@ -46,7 +48,7 @@ export function PageShell({
  * elsewhere. One action only, by intent: a page with three equally-weighted
  * buttons has not decided what it is for.
  */
-export function PageHeader({
+export async function PageHeader({
   title,
   subtitle,
   action,
@@ -54,10 +56,22 @@ export function PageHeader({
 }: {
   title: string;
   subtitle?: React.ReactNode;
-  action?: { label: string; href: string; icon?: React.ReactNode };
+  action?: {
+    label: string;
+    href: string;
+    icon?: React.ReactNode;
+    /**
+     * Hide the action from roles that lack this. The header's action is
+     * always a write — "New mandate", "New search" — so offering it to a
+     * viewer produces a button whose only outcome is the no-access page.
+     */
+    capability?: Capability;
+  };
   /** Secondary controls, rendered beside the action. */
   children?: React.ReactNode;
 }) {
+  const actionAllowed =
+    !action?.capability || (await hasCapability(action.capability));
   return (
     <div className="flex flex-wrap items-start gap-4">
       <div className="min-w-0 flex-1">
@@ -69,7 +83,7 @@ export function PageHeader({
         )}
       </div>
       {children}
-      {action && (
+      {action && actionAllowed && (
         <Link
           href={action.href}
           className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-primary bg-primary px-4 text-sm font-semibold text-on-primary transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"

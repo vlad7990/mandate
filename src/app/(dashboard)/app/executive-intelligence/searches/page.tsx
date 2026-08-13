@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CapabilityGate } from "@/components/auth/capability-gate";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   IconArrowLeft,
@@ -56,13 +57,15 @@ export default async function ExecutiveSearchesPage() {
               Structured due-diligence engagements — one per executive role.
             </p>
           </div>
-          <Link
-            href="/app/executive-intelligence/searches/new"
-            className="bg-primary-container text-on-primary-container px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
-          >
-            <IconPlus size={16} />
-            New Search
-          </Link>
+          <CapabilityGate capability="mandates:write">
+            <Link
+              href="/app/executive-intelligence/searches/new"
+              className="bg-primary-container text-on-primary-container px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
+            >
+              <IconPlus size={16} />
+              New Search
+            </Link>
+          </CapabilityGate>
         </header>
 
         {error && (
@@ -83,12 +86,14 @@ export default async function ExecutiveSearchesPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Link
-                href="/app/executive-intelligence/searches/new"
-                className="bg-primary-container text-on-primary-container px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all"
-              >
-                Start Blank
-              </Link>
+              <CapabilityGate capability="mandates:write">
+                <Link
+                  href="/app/executive-intelligence/searches/new"
+                  className="bg-primary-container text-on-primary-container px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all"
+                >
+                  Start Blank
+                </Link>
+              </CapabilityGate>
               <Link
                 href="/app/executive-intelligence/templates"
                 className="border border-outline-variant text-on-surface-variant px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container transition-colors"

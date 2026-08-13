@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { requireActionContext } from "@/lib/auth/access";
 
 const SKILL_TYPES = ["role_skill", "client_skill", "search_skill"] as const;
 type SkillType = (typeof SKILL_TYPES)[number];
@@ -13,23 +14,7 @@ type AuthContext = {
 };
 
 async function requireAuth(): Promise<AuthContext> {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated.");
-
-  const { data: profile, error } = await supabase
-    .from("users")
-    .select("organization_id, status")
-    .eq("id", user.id)
-    .single<{ organization_id: string | null; status: string }>();
-
-  if (error || !profile?.organization_id || profile.status !== "active") {
-    throw new Error("Account is not provisioned.");
-  }
-
-  return { userId: user.id, organizationId: profile.organization_id };
+  return requireActionContext("skills:write");
 }
 
 type SkillFormInput = {

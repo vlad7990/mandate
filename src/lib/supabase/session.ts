@@ -29,5 +29,8 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { response, user };
+  // The client is returned alongside so the proxy's route guard can read
+  // the caller's role without constructing a second one and repeating the
+  // cookie plumbing above.
+  return { response, user, supabase };
 }

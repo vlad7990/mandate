@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CapabilityGate } from "@/components/auth/capability-gate";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
@@ -161,14 +162,16 @@ export default async function CandidatesPage({
               </p>
             )}
           </div>
-          <Link
-            href={`/app/projects/${project.id}/candidates/new`}
-            prefetch={false}
-            className="px-6 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
-          >
-            <IconPlus size={16} />
-            Add Candidate
-          </Link>
+          <CapabilityGate capability="candidates:write">
+            <Link
+              href={`/app/projects/${project.id}/candidates/new`}
+              prefetch={false}
+              className="px-6 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
+            >
+              <IconPlus size={16} />
+              Add Candidate
+            </Link>
+          </CapabilityGate>
         </header>
 
         {candidates.length === 0 ? (
@@ -204,14 +207,16 @@ function EmptyState({ projectId }: { projectId: string }) {
           fit against this role&rsquo;s calibration model.
         </p>
       </div>
-      <Link
-        href={`/app/projects/${projectId}/candidates/new`}
-        prefetch={false}
-        className="px-6 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
-      >
-        <IconUpload size={16} />
-        Add Candidate
-      </Link>
+      <CapabilityGate capability="candidates:write">
+        <Link
+          href={`/app/projects/${projectId}/candidates/new`}
+          prefetch={false}
+          className="px-6 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
+        >
+          <IconUpload size={16} />
+          Add Candidate
+        </Link>
+      </CapabilityGate>
     </div>
   );
 }

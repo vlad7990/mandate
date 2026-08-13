@@ -6,6 +6,7 @@ import { BreadcrumbProvider } from "@/components/dashboard/breadcrumbs";
 import { Toaster } from "@/components/ui/sonner";
 import { CopilotPanel } from "@/components/copilot/copilot-panel";
 import { countNetworkPeople } from "@/lib/network/network-aggregator";
+import { parseRole } from "@/lib/auth/roles";
 
 export default async function DashboardLayout({
   children,
@@ -54,6 +55,14 @@ export default async function DashboardLayout({
   const displayName = profile?.full_name?.trim() || profile?.email || user.email || "Operator";
   const email = profile?.email || user.email || "";
 
+  // Parsed once here and passed down, rather than each chrome component
+  // re-reading the column and forming its own opinion of what the string
+  // means. The two status redirects above have already run, so anything
+  // reaching this line is active — but `parseRole` still returns null for a
+  // value outside the vocabulary, and null shows the smallest possible rail
+  // rather than the largest.
+  const role = parseRole(profile?.role);
+
   return (
     <BreadcrumbProvider>
       {/*
@@ -69,7 +78,7 @@ export default async function DashboardLayout({
             user={{
               displayName,
               email,
-              role: profile?.role ?? null,
+              role,
             }}
             badges={{ network: networkCount, mandates: mandateCount ?? 0 }}
           />
@@ -88,7 +97,7 @@ export default async function DashboardLayout({
         */}
         <main className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden print:block print:h-auto print:overflow-visible">
           <div className="contents print:hidden">
-            <Topbar />
+            <Topbar role={role} />
           </div>
           <div className="flex-1 overflow-auto print:overflow-visible">{children}</div>
         </main>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { requireActionContext } from "@/lib/auth/access";
 import {
   applyRollup,
   buildAssessmentSkeleton,
@@ -14,22 +15,7 @@ import { recordExecutiveAuditEvent } from "@/lib/executive/audit";
 type AuthContext = { userId: string; organizationId: string };
 
 async function requireAuth(): Promise<AuthContext> {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated.");
-
-  const { data: profile, error } = await supabase
-    .from("users")
-    .select("organization_id, status")
-    .eq("id", user.id)
-    .single();
-
-  if (error || !profile?.organization_id || profile.status !== "active") {
-    throw new Error("Account is not provisioned.");
-  }
-  return { userId: user.id, organizationId: profile.organization_id };
+  return requireActionContext("mandates:write");
 }
 
 type SupabaseClient = Awaited<ReturnType<typeof createServerSupabaseClient>>;

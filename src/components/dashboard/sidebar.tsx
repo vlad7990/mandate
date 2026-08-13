@@ -8,9 +8,11 @@ import { UserMenu } from "./user-menu";
 import {
   NAV_GROUPS,
   isNavItemActive,
+  navFor,
   navItemsInGroup,
   type NavItem,
 } from "./nav-model";
+import { type Role } from "@/lib/auth/roles";
 import {
   IconAnalytics,
   IconCandidates,
@@ -63,12 +65,15 @@ const ICONS: Record<
 };
 
 type SidebarProps = {
-  user: { displayName: string; email: string; role: string | null };
+  user: { displayName: string; email: string; role: Role | null };
   badges?: { network?: number; mandates?: number };
 };
 
 export function Sidebar({ user, badges }: SidebarProps) {
   const pathname = usePathname();
+  // Destinations this role can actually open. Presentation only — the
+  // proxy and RLS are what stop a hand-typed URL.
+  const items = navFor(user.role);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Escape closes; the background stops scrolling while it is open.
@@ -145,7 +150,12 @@ export function Sidebar({ user, badges }: SidebarProps) {
           aria-label="Primary"
           className="flex flex-1 flex-col gap-5 overflow-y-auto p-3 md:items-center md:gap-3 xl:items-stretch xl:gap-[22px]"
         >
-          {NAV_GROUPS.map((group) => (
+          {NAV_GROUPS.map((group) => {
+            const groupItems = navItemsInGroup(group.key, items);
+            // A heading above nothing reads as a section that failed to
+            // load rather than one this role does not have.
+            if (groupItems.length === 0) return null;
+            return (
             <div key={group.key} className="flex w-full flex-col gap-1">
               {/* No room for a group label on the icon rail — the
                   tooltip carries the destination name there instead. */}
@@ -153,7 +163,7 @@ export function Sidebar({ user, badges }: SidebarProps) {
                 {group.label}
               </p>
 
-              {navItemsInGroup(group.key).map((navItem) => {
+              {groupItems.map((navItem) => {
                 const Icon = ICONS[navItem.icon];
                 const active = isNavItemActive(navItem, pathname);
                 const badge =
@@ -223,7 +233,8 @@ export function Sidebar({ user, badges }: SidebarProps) {
                 );
               })}
             </div>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="shrink-0 border-t border-outline-variant p-3">

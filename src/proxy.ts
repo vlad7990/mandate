@@ -1,6 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/session";
 import { DASHBOARD_HOME } from "@/lib/routes";
+import { can, parseRole } from "@/lib/auth/roles";
+import {
+  capabilityForPath,
+  DEFAULT_CAPABILITY,
+  NO_ACCESS_PATH,
+} from "@/lib/auth/route-access";
 
 // Hard-public — skip session refresh entirely. Used for endpoints that
 // must work for unauthenticated visitors with no cookie round-trip
@@ -56,7 +62,7 @@ async function handle(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const { response, user } = await updateSession(request);
+  const { response, user, supabase } = await updateSession(request);
 
   // Authenticated visitor on a marketing/auth landing page → bounce
   // to the dashboard so they don't get stuck on the public surface.
@@ -81,6 +87,42 @@ async function handle(request: NextRequest) {
       signinUrl.searchParams.set("next", pathname);
     }
     return NextResponse.redirect(signinUrl);
+  }
+
+  // Authenticated, and on a route that asks for more than the baseline →
+  // check the role before rendering it.
+  //
+  // The `!== DEFAULT_CAPABILITY` test is what keeps this affordable. Most
+  // of the forty dashboard routes are readable by every role, and querying
+  // the profile on each of them would put a database round trip in front of
+  // every navigation for no decision. Only the routes that actually
+  // restrict something pay for the lookup.
+  //
+  // Not consulted for the marketing surface or the HM portal: those return
+  // null from `capabilityForPath` and never reach here.
+  const required = capabilityForPath(pathname);
+
+  if (required && required !== DEFAULT_CAPABILITY) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role, status")
+      .eq("id", user.id)
+      .single<{ role: string | null; status: string }>();
+
+    // Status is folded in here rather than trusted from the layout: a
+    // suspended account keeps its org and its role string, and only the
+    // active check stops it. Same rule as `current_user_role()` in
+    // migration 046, so the guard and the database agree.
+    const role = profile?.status === "active" ? parseRole(profile.role) : null;
+
+    if (!can(role, required)) {
+      const denied = request.nextUrl.clone();
+      denied.pathname = NO_ACCESS_PATH;
+      denied.search = "";
+      denied.searchParams.set("capability", required);
+      denied.searchParams.set("from", pathname);
+      return NextResponse.redirect(denied);
+    }
   }
 
   return response;

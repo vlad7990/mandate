@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV, isNavItemActive } from "./nav-model";
+import { isNavItemActive, navFor } from "./nav-model";
+import { type Role } from "@/lib/auth/roles";
 import { truncateCrumb, useBreadcrumbs } from "./breadcrumbs";
 import { CommandPalette } from "./command-palette";
 import { IconChevronRight } from "@/components/icons";
@@ -27,13 +28,13 @@ import { IconChevronRight } from "@/components/icons";
  * **No export button.** The comp moves export into page headers, where
  * it has an object to act on. A global export has no referent.
  */
-export function Topbar() {
+export function Topbar({ role }: { role: Role | null }) {
   const pathname = usePathname();
   const pageCrumbs = useBreadcrumbs();
 
   // Fallback: the section from the nav model. Always right, never a
   // uuid, and enough to answer "where am I" before a page opts in.
-  const section = NAV.find((i) => isNavItemActive(i, pathname));
+  const section = navFor(role).find((i) => isNavItemActive(i, pathname));
   const crumbs =
     pageCrumbs && pageCrumbs.length > 0
       ? pageCrumbs
@@ -79,7 +80,7 @@ export function Topbar() {
       </nav>
 
       <div className="ml-auto flex shrink-0 items-center gap-2.5">
-        <CommandPalette />
+        <CommandPalette role={role} />
       </div>
     </header>
   );

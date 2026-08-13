@@ -1,0 +1,26 @@
+-- `guard_user_privilege_changes` is a trigger function, and 046 revoked it
+-- from `public` and `anon` but not from `authenticated` — which left it
+-- listed at `/rest/v1/rpc/guard_user_privilege_changes` and flagged by the
+-- Supabase linter as a SECURITY DEFINER function signed-in users can call.
+--
+-- Calling it directly would fail anyway ("trigger functions can only be
+-- called as triggers"), so this is tidying rather than a hole. It is worth
+-- doing because a SECURITY DEFINER function on the public API surface is
+-- exactly the shape of thing an advisor sweep should stay quiet about, and
+-- a warning nobody can dismiss is a warning nobody reads.
+--
+-- Revoking EXECUTE does not stop the trigger firing: Postgres checks
+-- EXECUTE when the trigger is created, not each time it fires. Verified by
+-- updating a row as `authenticated` afterwards and watching the guard still
+-- reject an `is_founder` change.
+REVOKE ALL ON FUNCTION public.guard_user_privilege_changes() FROM authenticated;
+
+-- Note on what is deliberately left alone:
+--
+-- `public.current_user_role()` stays executable by `authenticated`, and the
+-- linter will keep flagging it. RLS policies evaluate their predicates as
+-- the calling role, so every policy written in 046 would fail closed
+-- without it — every read in the product would return nothing. It follows
+-- the same pattern as `current_user_org_id()` from 003, and it discloses
+-- only the caller's own role, which the caller can already see on their
+-- own `public.users` row.

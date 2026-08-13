@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CapabilityGate } from "@/components/auth/capability-gate";
 import { PageShell } from "@/components/ui/page-shell";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
@@ -187,13 +188,15 @@ export default async function ExecutiveIntelligencePage() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Link
-            href="/app/executive-intelligence/searches/new"
-            className="bg-primary-container text-on-primary-container px-6 py-3 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
-          >
-            <IconPlus size={18} />
-            New Executive Search
-          </Link>
+          <CapabilityGate capability="mandates:write">
+            <Link
+              href="/app/executive-intelligence/searches/new"
+              className="bg-primary-container text-on-primary-container px-6 py-3 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
+            >
+              <IconPlus size={18} />
+              New Executive Search
+            </Link>
+          </CapabilityGate>
           <Link
             href="/app/executive-intelligence/templates"
             className="border border-outline-variant text-on-surface-variant px-6 py-3 font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container transition-colors"

@@ -290,6 +290,7 @@ export default async function CandidatesPage({
           label: "Upload CVs",
           href: "/app/projects",
           icon: <IconArrowRight size={15} />,
+          capability: "candidates:write",
         }}
       />
 

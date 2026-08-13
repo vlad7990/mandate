@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { analyzeAndStoreRole } from "@/lib/ai/analyze-role";
+import { can, parseRole } from "@/lib/auth/roles";
 
 const MAX_INPUT_LENGTH = 500;
 
@@ -33,13 +34,22 @@ export async function createProjectAction(formData: FormData) {
 
   const { data: profile, error: profileError } = await supabase
     .from("users")
-    .select("organization_id, status")
+    .select("organization_id, status, role")
     .eq("id", user.id)
     .single();
 
   if (profileError || !profile?.organization_id || profile.status !== "active") {
     redirect(
       `/app/projects/new?error=${encodeURIComponent("Your account is not provisioned to start a search.")}`
+    );
+  }
+
+  // Redirected rather than thrown, because this action reports every other
+  // failure back onto the form the same way — a thrown error here would be
+  // the only one that reached the error boundary instead.
+  if (!can(parseRole(profile.role), "mandates:write")) {
+    redirect(
+      `/app/projects/new?error=${encodeURIComponent("Your role does not permit opening a mandate. Ask an admin for recruiter access.")}`
     );
   }
 

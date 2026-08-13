@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { deriveAndStoreCalibration } from "@/lib/ai/derive-calibration";
+import { requireActionContext } from "@/lib/auth/access";
 import {
   ANTI_PATTERNS_MAX,
   ANTI_PATTERNS_MIN,
@@ -73,6 +74,11 @@ export async function submitOnboarding(
   projectId: string,
   responses: OnboardingResponses
 ): Promise<void> {
+  // Onboarding is where a mandate's calibration is set, so it is a mandate
+  // write — a researcher may screen against a calibration but not redefine
+  // the one every score in the search is measured by.
+  await requireActionContext("mandates:write");
+
   const error = validate(responses);
   if (error) throw new Error(error);
 

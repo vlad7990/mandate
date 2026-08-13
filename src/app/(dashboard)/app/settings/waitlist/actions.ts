@@ -2,32 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { assertFounder } from "@/lib/auth/access";
 
+/**
+ * The waitlist is Mandate's own intake, not a customer org's, so it stays on
+ * `is_founder` rather than on the role model — an org admin administers
+ * their organisation, not our pipeline. See the note in `roles.ts`.
+ */
 async function requireFounder(): Promise<{
   userId: string;
   organizationId: string | null;
 }> {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated.");
-
-  const { data: profile, error } = await supabase
-    .from("users")
-    .select("is_founder, organization_id, status")
-    .eq("id", user.id)
-    .single<{
-      is_founder: boolean;
-      organization_id: string | null;
-      status: string;
-    }>();
-
-  if (error || !profile) throw new Error("Profile not found.");
-  if (!profile.is_founder || profile.status !== "active") {
-    throw new Error("Founder access required.");
-  }
-  return { userId: user.id, organizationId: profile.organization_id };
+  const access = await assertFounder();
+  return { userId: access.userId, organizationId: access.organizationId };
 }
 
 export async function approveWaitlistRequestAction(

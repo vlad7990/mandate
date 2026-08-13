@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { NAV, NAV_GROUPS } from "./nav-model";
+import { NAV_GROUPS, navFor } from "./nav-model";
+import { type Role } from "@/lib/auth/roles";
 import { IconSearch } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +24,7 @@ import { cn } from "@/lib/utils";
  * Built on a plain overlay rather than adding `cmdk` — the entire
  * behaviour is a filter over a static list.
  */
-export function CommandPalette() {
+export function CommandPalette({ role }: { role: Role | null }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -59,12 +60,18 @@ export function CommandPalette() {
         meant writing that state inside a `setOpen` updater, and React
         may run an updater twice — state changes do not belong in one.
       */}
-      {open && <PaletteDialog onClose={() => setOpen(false)} />}
+      {open && <PaletteDialog role={role} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function PaletteDialog({ onClose }: { onClose: () => void }) {
+function PaletteDialog({
+  role,
+  onClose,
+}: {
+  role: Role | null;
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
@@ -73,7 +80,10 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const all = NAV.map((item) => ({
+    // Same filtered list the rail shows. A palette that offers a
+    // destination the proxy will bounce is worse than the rail doing it,
+    // because the palette is where you go when you already know the name.
+    const all = navFor(role).map((item) => ({
       href: item.href,
       label: item.label,
       group: NAV_GROUPS.find((g) => g.key === item.group)?.label ?? "",
@@ -83,7 +93,7 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
       (r) =>
         r.label.toLowerCase().includes(q) || r.group.toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, role]);
 
   // Derived, not stored: filtering can shorten the list under the
   // cursor, and a stored index would point past the end for a paint.

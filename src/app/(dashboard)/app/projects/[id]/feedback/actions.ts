@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { requireActionContext } from "@/lib/auth/access";
+import { parseRole, type Role } from "@/lib/auth/roles";
 import {
   FEEDBACK_TYPES,
   type FeedbackInterpretation,
@@ -18,37 +20,34 @@ const FEEDBACK_TYPE_VALUES = FEEDBACK_TYPES as readonly string[];
 type AuthContext = {
   userId: string;
   organizationId: string;
-  role: string | null;
+  /** Parsed, so a value outside the vocabulary reaches the interpreter as null. */
+  role: Role | null;
   fullName: string | null;
 };
 
+/**
+ * Feedback reshapes a mandate's calibration, so submitting it is a mandate
+ * write. A researcher screens against the calibration; they do not move it.
+ *
+ * The extra profile read is for the interpreter, not for the guard — it is
+ * told who is speaking, because "the hiring manager thinks he is too junior"
+ * and "the researcher thinks he is too junior" are different signals.
+ */
 async function requireAuth(): Promise<AuthContext> {
+  const { userId, organizationId } = await requireActionContext("mandates:write");
+
   const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated.");
-
-  const { data: profile, error } = await supabase
+  const { data: profile } = await supabase
     .from("users")
-    .select("organization_id, status, role, full_name")
-    .eq("id", user.id)
-    .single<{
-      organization_id: string;
-      status: string;
-      role: string | null;
-      full_name: string | null;
-    }>();
-
-  if (error || !profile?.organization_id || profile.status !== "active") {
-    throw new Error("Account is not provisioned.");
-  }
+    .select("role, full_name")
+    .eq("id", userId)
+    .single<{ role: string | null; full_name: string | null }>();
 
   return {
-    userId: user.id,
-    organizationId: profile.organization_id,
-    role: profile.role,
-    fullName: profile.full_name,
+    userId,
+    organizationId,
+    role: parseRole(profile?.role),
+    fullName: profile?.full_name ?? null,
   };
 }
 

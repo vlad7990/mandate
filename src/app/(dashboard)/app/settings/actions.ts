@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { assertFounder } from "@/lib/auth/access";
 
 type AuthContext = {
   userId: string;
@@ -9,37 +10,18 @@ type AuthContext = {
   organizationId: string | null;
 };
 
+/**
+ * Approving a pending account assigns it to an organisation, which is a
+ * platform act rather than an org one — so these two stay founder-gated.
+ * Changing a member's role *within* an org is the admin's job and lives in
+ * `settings/members/actions.ts`.
+ */
 async function requireFounder(): Promise<AuthContext> {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthenticated.");
-
-  const { data: profile, error } = await supabase
-    .from("users")
-    .select("is_founder, organization_id, status")
-    .eq("id", user.id)
-    .single<{
-      is_founder: boolean;
-      organization_id: string | null;
-      status: string;
-    }>();
-
-  if (error || !profile) {
-    throw new Error("Profile not found.");
-  }
-  if (profile.status !== "active") {
-    throw new Error("Account is not active.");
-  }
-  if (!profile.is_founder) {
-    throw new Error("Founders only.");
-  }
-
+  const access = await assertFounder();
   return {
-    userId: user.id,
-    isFounder: profile.is_founder,
-    organizationId: profile.organization_id,
+    userId: access.userId,
+    isFounder: access.isFounder,
+    organizationId: access.organizationId,
   };
 }
 

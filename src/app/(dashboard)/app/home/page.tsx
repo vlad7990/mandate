@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { CapabilityGate } from "@/components/auth/capability-gate";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
@@ -174,13 +175,15 @@ function PageHeader({ subtitle }: { subtitle: string }) {
         </h1>
         <p className="mt-1.5 text-sm text-on-surface-variant">{subtitle}</p>
       </div>
-      <Link
-        href="/app/projects/new"
-        className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-primary bg-primary px-4 text-sm font-semibold text-on-primary transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      >
-        New mandate
-        <IconArrowRight size={15} />
-      </Link>
+      <CapabilityGate capability="mandates:write">
+        <Link
+          href="/app/projects/new"
+          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-primary bg-primary px-4 text-sm font-semibold text-on-primary transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          New mandate
+          <IconArrowRight size={15} />
+        </Link>
+      </CapabilityGate>
     </div>
   );
 }
@@ -577,11 +580,13 @@ function MandatesPanel({
 
         {!showSample && projects.length === 0 && (
           <p className="px-[18px] py-8 text-center text-sm text-outline">
-            No mandates yet.{" "}
-            <Link href="/app/projects/new" className="text-primary hover:underline">
-              Start one
-            </Link>
-            .
+            No mandates yet.
+            <CapabilityGate capability="mandates:write">
+              {" "}
+              <Link href="/app/projects/new" className="text-primary hover:underline">
+                Start one
+              </Link>
+            </CapabilityGate>
           </p>
         )}
       </div>
