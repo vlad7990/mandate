@@ -9,10 +9,9 @@ Work in `/Users/vladbreygin/Projects/mandate`. Supabase project
 `xipyqnltkbtywxqyxupf`. Bash cwd resets to a stale iCloud clone between calls
 — always `cd` first or use `git -C`.
 
-Branch `roles-and-route-guards`, commit `498e46f`, **not merged and not
-pushed**. Migrations `046`, `047`, `048` are **already applied to the live
-database**, so `main` is currently behind the schema it runs against. Merge
-or revert deliberately.
+Merged to `main` and pushed on 2026-08-13 (fast-forward from `f433fbc`;
+the work is commit `498e46f`). Migrations `046`, `047`, `048` were applied
+to the live database before the merge, so schema and code are now in step.
 
 442 tests, tsc / lint / build green.
 
