@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
@@ -9,6 +10,8 @@ import {
   type PortfolioMetrics,
 } from "@/lib/metrics/types";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
+import { SkeletonCard } from "@/components/ui/skeleton";
+import { ActionQueuePanel } from "./action-queue-panel";
 import { SampleBanner } from "@/components/sample/sample-banner";
 import { IconArrowRight, IconCopilot, IconInfo } from "@/components/icons";
 import {
@@ -85,6 +88,19 @@ export default async function DashboardHomePage() {
             : summarise(projects.length, metrics)
         }
       />
+
+      {/* What needs doing, before the portfolio metrics. The rest of this page
+          answers "how are my searches doing"; this answers "what do I do now",
+          and only one of those gets acted on before lunch. Suspended so a slow
+          aggregate never delays the portfolio itself. Hidden in sample mode —
+          a demo portfolio has no real obligations to chase. */}
+      {!showSample && (
+        <div className="mb-6">
+          <Suspense fallback={<SkeletonCard />}>
+            <ActionQueuePanel />
+          </Suspense>
+        </div>
+      )}
 
       {error && (
         <div
