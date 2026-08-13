@@ -747,3 +747,18 @@ export function IconPlacements({ size = 16, className }: IconProps) {
     </svg>
   );
 }
+
+/**
+ * The activity trail. A clock with a back-arrow — the trail is a record of
+ * what already happened, not a live feed, and the history metaphor says
+ * that better than a list glyph would.
+ */
+export function IconActivity({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3 8.8" />
+      <path d="M3 4.5V9h4.5" />
+      <path d="M12 7.5V12l3 1.8" />
+    </svg>
+  );
+}

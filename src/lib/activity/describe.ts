@@ -1,0 +1,199 @@
+/**
+ * Turning a stored event into a sentence.
+ *
+ * The wording is derived here rather than stored on the row, so improving
+ * a phrase does not mean rewriting history — and so a row written by an
+ * older build still reads correctly under a newer one. What *is* stored is
+ * the facts: before and after values, amounts, currencies, reasons.
+ *
+ * Every function is pure over a row, so the feed, a per-entity history
+ * panel and a test all produce the same string from the same event.
+ */
+
+import { formatMoney } from "@/lib/fees/compute";
+import { PLACEMENT_STATUS_LABELS, parsePlacementStatus } from "@/lib/fees/types";
+import { ROLE_LABELS, parseRole } from "@/lib/auth/roles";
+import type { ActivityEventRow, ActivityEventType } from "./types";
+
+/** Read a string out of `detail`, or null. */
+function str(detail: Record<string, unknown>, key: string): string | null {
+  const value = detail[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+/** Read a number out of `detail`. Postgres numerics arrive as numbers or strings. */
+function num(detail: Record<string, unknown>, key: string): number | null {
+  const value = detail[key];
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+/** A placement status, labelled if we recognise it, raw if we do not. */
+function stage(value: unknown): string {
+  const parsed = parsePlacementStatus(value);
+  if (parsed) return PLACEMENT_STATUS_LABELS[parsed].toLowerCase();
+  return typeof value === "string" && value ? value.replace(/_/g, " ") : "unknown";
+}
+
+function role(value: unknown): string {
+  const parsed = parseRole(value);
+  if (parsed) return ROLE_LABELS[parsed];
+  return typeof value === "string" && value ? value : "unknown";
+}
+
+/** Money from a detail pair, in whichever currency the event recorded. */
+function money(detail: Record<string, unknown>, amountKey: string, currencyKey = "currency"): string | null {
+  const amount = num(detail, amountKey);
+  if (amount == null) return null;
+  const currency = str(detail, currencyKey) ?? "USD";
+  return formatMoney(amount, currency);
+}
+
+/**
+ * One line describing what happened.
+ *
+ * Deliberately does not name the actor — the feed renders that separately
+ * so it can be styled and so a per-person view is not repeating the name
+ * on every row.
+ */
+export function describeActivity(event: ActivityEventRow): string {
+  const d = event.detail ?? {};
+
+  switch (event.event_type) {
+    case "placement_recorded":
+      return `Recorded a placement${str(d, "offer_date") ? `, offer dated ${str(d, "offer_date")}` : ""}`;
+
+    case "placement_status_changed": {
+      const from = stage(d.from);
+      const to = stage(d.to);
+      const reason = str(d, "reason");
+      return `Moved the placement from ${from} to ${to}${reason ? ` — ${reason}` : ""}`;
+    }
+
+    case "placement_deleted":
+      return "Deleted a placement";
+
+    case "fee_recorded": {
+      const total = money(d, "total");
+      const pct = num(d, "percentage");
+      const model = str(d, "model");
+      const parts = [model, pct != null ? `${pct}%` : null].filter(Boolean).join(", ");
+      return `Recorded a fee of ${total ?? "an unrecorded amount"}${parts ? ` (${parts})` : ""}`;
+    }
+
+    case "fee_updated": {
+      const from = money(d, "total_from");
+      const to = money(d, "total_to");
+      if (from && to && from !== to) return `Changed the fee from ${from} to ${to}`;
+
+      const pctFrom = num(d, "percentage_from");
+      const pctTo = num(d, "percentage_to");
+      if (pctFrom != null && pctTo != null && pctFrom !== pctTo) {
+        return `Changed the fee rate from ${pctFrom}% to ${pctTo}%`;
+      }
+
+      const curFrom = str(d, "currency_from");
+      const curTo = str(d, "currency_to");
+      if (curFrom && curTo && curFrom !== curTo) {
+        return `Changed the fee currency from ${curFrom} to ${curTo}`;
+      }
+      return "Changed the fee";
+    }
+
+    case "fee_line_earned": {
+      const label = str(d, "label") ?? "An instalment";
+      const amount = money(d, "amount");
+      const on = str(d, "earned_on");
+      return `Marked ${label}${amount ? ` (${amount})` : ""} earned${on ? ` on ${on}` : ""}`;
+    }
+
+    case "fee_line_cancelled": {
+      const label = str(d, "label") ?? "An instalment";
+      return `Cancelled ${label}`;
+    }
+
+    case "fee_reversed": {
+      const amount = money(d, "amount");
+      const reason = str(d, "reason");
+      // The amount is stored negative; the sentence already says "reversed",
+      // so showing "-US$30,000" here would read as a double negative.
+      const shown = amount ? amount.replace("-", "") : null;
+      return `Reversed ${shown ?? "a fee"}${reason ? ` — ${reason}` : ""}`;
+    }
+
+    case "fee_terms_created":
+      return `Added ${str(d, "scope") === "client" ? "client" : "mandate"} fee terms${termsSuffix(d)}`;
+
+    case "fee_terms_updated":
+      return `Updated ${str(d, "scope") === "client" ? "client" : "mandate"} fee terms${termsSuffix(d)}`;
+
+    case "fee_terms_deleted":
+      return `Removed ${str(d, "scope") === "client" ? "client" : "mandate"} fee terms`;
+
+    case "member_role_changed": {
+      const who = str(d, "member") ?? "a member";
+      return `Changed ${who} from ${role(d.from)} to ${role(d.to)}`;
+    }
+
+    case "member_status_changed": {
+      const who = str(d, "member") ?? "a member";
+      return `Changed ${who}'s account from ${str(d, "from") ?? "unknown"} to ${str(d, "to") ?? "unknown"}`;
+    }
+
+    case "member_founder_changed": {
+      const who = str(d, "member") ?? "a member";
+      return d.to === true
+        ? `Made ${who} a platform operator`
+        : `Removed platform operator from ${who}`;
+    }
+
+    case "shortlist_published": {
+      const count = num(d, "count");
+      return `Published a shortlist${count != null ? ` of ${count}` : ""}`;
+    }
+
+    case "report_exported":
+      return `Exported ${str(d, "kind") ?? "a report"}`;
+
+    case "hm_portal_opened":
+      return "Opened the hiring-manager portal";
+
+    default: {
+      // A row written by a migration this build predates. Render it rather
+      // than crash the feed — an audit trail that goes blank on an
+      // unrecognised row is the opposite of what it is for.
+      const exhaustive: never = event.event_type;
+      return String(exhaustive).replace(/_/g, " ");
+    }
+  }
+}
+
+function termsSuffix(d: Record<string, unknown>): string {
+  const pct = num(d, "percentage");
+  const fixed = num(d, "fixed_amount");
+  const currency = str(d, "currency") ?? "USD";
+  if (pct != null) return ` at ${pct}%`;
+  if (fixed != null) return ` at ${formatMoney(fixed, currency)}`;
+  return "";
+}
+
+/** Who did it, for the feed's byline. */
+export function describeActor(event: ActivityEventRow): string {
+  return event.actor_label?.trim() || "System";
+}
+
+/**
+ * Whether an event carries money a reader might not be allowed to see.
+ *
+ * Only used to decide styling and grouping in the UI — RLS has already
+ * refused to send rows the caller may not read, so this never has to
+ * withhold anything. It exists so the feed can mark the commercial rows,
+ * which is useful precisely because not everyone is seeing them.
+ */
+export function isMoneyEvent(type: ActivityEventType): boolean {
+  return type.startsWith("fee_");
+}

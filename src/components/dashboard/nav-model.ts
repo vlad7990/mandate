@@ -30,6 +30,7 @@ export type NavItem = {
     | "network"
     | "clients"
     | "placements"
+    | "activity"
     | "intelligence"
     | "skills"
     | "settings";
@@ -92,6 +93,18 @@ export const NAV: readonly NavItem[] = [
     href: "/app/placements",
     label: "Placements",
     icon: "placements",
+    group: "workspace",
+  },
+
+  /**
+   * Not gated on a capability, for the same reason the page is not: every
+   * role has a trail to read, it is just a different one. Hiding it from a
+   * researcher would hide the history of their own placements from them.
+   */
+  {
+    href: "/app/activity",
+    label: "Activity",
+    icon: "activity",
     group: "workspace",
   },
 

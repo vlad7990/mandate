@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { recordActivity } from "@/lib/activity/record";
 import { requireActionContext } from "@/lib/auth/access";
 import {
   generateShortlistReport,
@@ -341,6 +342,15 @@ export async function submitShortlistAction(projectId: string): Promise<void> {
       candError
     );
   }
+
+  // The slate has left the building. Nothing in the row change says that —
+  // `submitted_at` records when, not that a person did it deliberately —
+  // so this is one of the three events the application has to state.
+  await recordActivity(supabase, {
+    eventType: "shortlist_published",
+    projectId,
+    detail: { count: sl.candidate_ids.length },
+  });
 
   revalidatePath(`/app/projects/${projectId}/shortlist`);
   revalidatePath(`/app/projects/${projectId}/candidates`);
