@@ -1,161 +1,131 @@
-# Continuation — Art. 14 notification sending via Resend
+# Continuation — Art. 14 notification sending, and what else is open
 
 **Date:** 2026-08-13
-**Status:** Schema + composition DONE (`ef60bc1`). Send path NOT written — blocked
-on the Resend credential, which needs a browser step the CLI cannot drive.
-
-**Done:** migration 044 applied (candidate_notifications, record_notification_sent /
-record_notification_failed, stamping stripped out of log_candidate_outreach);
-8 SQL invariants in `supabase/tests/candidate_notification_invariants.sql`;
-`src/lib/outreach/compose.ts` + 11 tests.
-
-**Remaining:** resolve the credential, then the server send action (compose →
-Resend → record_notification_sent / _failed), the compose UI, and the
-send-path tests listed below. The action queue needs no change.
+**Status:** Schema + composition DONE and deployed. Send path NOT written —
+blocked on Resend credentials AND on no verified sending domain existing.
 
 Work in `/Users/vladbreygin/Projects/mandate`. Supabase project `xipyqnltkbtywxqyxupf`.
+Bash cwd resets to a stale iCloud clone between calls — always `cd` first or use `git -C`.
+
+`main` is clean, in sync with origin, and deployed to production
+(`getmandate.io`). Last commits: `a8170ac`, `ef60bc1`, `3347574`, `8f72bea`.
+320 tests, tsc / lint / build green.
 
 ---
 
-## Where this got to
+## 1. THE BLOCKER — read this before touching Resend
 
-Resend was provisioned through the Vercel Marketplace (`messaging` → `resend/resend-email`,
-resource **`resend-email-violet-dog`**, domain `getmandate.io`, region `us-east-1`).
-Marketplace terms accepted by the founder.
+Two Resend credential paths exist and **neither can send**:
 
-**It did not connect to the project.** The CLI failed with:
+| Path | State |
+|---|---|
+| `RESEND_API_KEY` + `RESEND_FROM` (manual, ~103 days old, Production) | Key is VALID. Used by `src/lib/waitlist/notify.ts`. |
+| Marketplace resource `resend-email-violet-dog` (provisioned today, `getmandate.io`, `us-east-1`) | Provisioned but NEVER CONNECTED — `RESEND_API_KEY` name collision, then `--prefix MANDATE_` hit "Additional setup required. Opening browser…" |
 
-```
-Failed to connect: This project already has an existing environment variable
-with name RESEND_API_KEY in one of the chosen environments (400)
-```
+**Queried `GET https://api.resend.com/domains` with the existing key: `NO DOMAINS
+configured in this Resend account`.**
 
-Because `RESEND_API_KEY` + `RESEND_FROM` already exist (Production, ~103 days old)
-and are already used by `src/lib/waitlist/notify.ts` for waitlist notifications.
+Consequences, both unresolved:
 
-So there are now TWO Resend credential paths, which is exactly what the
-founder's principle 7 says to avoid. **Resolve this before writing send code.**
+- `getmandate.io` is **not** a verified sender anywhere we can see. Sending
+  cannot work until DKIM/SPF DNS records are added. That is a founder action.
+- **The waitlist has been live for months against an account with no domain.**
+  `waitlist/notify.ts` can only be sending from Resend's `onboarding@resend.dev`
+  test sender, or silently failing. **Verify whether those emails ever arrived** —
+  this is a real possible production defect, not part of the Art. 14 work.
 
-### The decision
+### What the founder must do before code can proceed
 
-- **(a) Adopt the managed resource as the single key.** Delete the manual
-  `RESEND_API_KEY`/`RESEND_FROM`, re-run
-  `vercel integration add resend/resend-email -m domain=getmandate.io -m region=us-east-1`,
-  then `vercel env pull --yes`, and repoint `waitlist/notify.ts` at it.
-  Cleanest end state. **Risk: waitlist emails stop until the managed key works
-  and `getmandate.io` is verified in the new Resend account.**
-- **(b) Keep the manual key, remove the provisioned resource.** Zero production
-  risk, but not marketplace-managed and it contradicts the stated preference.
-- **(c) Connect the managed resource under `--prefix MANDATE_` so both coexist.**
-  Unblocks candidate outreach without touching waitlist. Two credential paths,
-  justified only as a migration step, not an end state.
-
-**Unverified either way: whether `getmandate.io` is DNS-verified as a sending
-domain in the Resend account behind the newly provisioned resource.** A new
-Resend domain requires DKIM/SPF records before it will send. Check the resource
-dashboard and report exactly which DNS records are outstanding — do not ship
-production outreach from a test sender.
+1. Finish the Vercel-side connect for `resend-email-violet-dog` (browser step the
+   CLI cannot drive) so a managed key lands as `MANDATE_RESEND_API_KEY`. This is
+   option (c) — both keys coexist, waitlist untouched.
+2. Add the DKIM/SPF records Resend supplies. Recommend `mail.getmandate.io`
+   rather than the root, to keep transactional reputation separate. The root was
+   provisioned only because the founder named it; changing it means re-provisioning.
+3. Do NOT ship production outreach from a test sender.
 
 ---
 
-## Design (agreed with the founder, do not relitigate)
+## 2. What is already built (do not rebuild)
 
-`subject_notified_at` must represent a **completed notification event**, never
-recruiter attestation. Today `log_candidate_outreach()` stamps it when the
-recruiter ticks `includes_privacy_notice` — that is the attestation model and it
-must be dismantled.
+**Migration 044, applied.** `candidate_notifications` (recipient, template_key,
+template_version, notice_version, provider_message_id, status, error, sent_at,
+created_by, idempotency_key) + `record_notification_sent` /
+`record_notification_failed`, and `log_candidate_outreach` stripped of its
+stamping power.
 
-### Migration 044 (not yet written)
+Guarantees now enforced by the database, not by application care:
 
-1. **`candidate_notifications`** — the evidence record. Columns:
-   `id, candidate_id -> candidates ON DELETE CASCADE, project_id,
-   organization_id, channel ('email'), recipient, template_key,
-   template_version, notice_version, provider ('resend'), provider_message_id,
-   status ('sent'|'failed'), error, sent_at, created_by, created_at,
-   idempotency_key text NOT NULL`.
-   - `UNIQUE (idempotency_key)` — a retried request cannot send twice.
-   - `CREATE UNIQUE INDEX ... ON candidate_notifications (candidate_id) WHERE status = 'sent'`
-     — at most ONE successful statutory notice per candidate, enforced by the
-     database rather than by application care.
-   - RLS org-scoped, matching every other table.
+- `subject_notified_at` is reachable ONLY via `record_notification_sent` (the
+  043 guard trigger blocks everything else).
+- Partial unique index `(candidate_id) WHERE status='sent'` → at most ONE
+  successful statutory notice per person.
+- Unique `idempotency_key` → double-clicks, resubmits and provider retries
+  collide instead of mailing someone twice.
+- Failure records evidence and stamps nothing, so the obligation stays in the
+  action queue.
 
-2. **Strip the stamping power from `log_candidate_outreach()`.** It keeps
-   recording contact; it must no longer touch `subject_notified_at`. The
-   `guard_subject_notified` trigger from migration 043 already blocks direct
-   updates, so after this change the ONLY path is the new RPC.
+Invariants: `supabase/tests/candidate_notification_invariants.sql` (8 cases,
+verified rolled back against prod, then applied).
 
-3. **`record_notification_sent(...)`** — SECURITY INVOKER. Inserts the evidence
-   row and stamps `subject_notified_at` in one transaction, under the existing
-   `mandate.allow_notification_stamp` flag. Stamps the EARLIEST successful
-   notice only. Called by the server *after* Resend returns success.
-
-4. **`record_notification_failed(...)`** — writes a `failed` evidence row and
-   stamps nothing.
-
-Follow house discipline: invariant SQL asserting the SPECIFIC error per case,
-run rolled back via MCP `execute_sql`, then `apply_migration`.
-
-### Composition — the notice is structural, not typed
-
-`src/lib/outreach/compose.ts`, pure and client-safe:
-
-```
-composeOutreach({ recruiterBody, candidate, org, noticeRequired })
-  -> { subject, text, html, blocks: [recruiter, notice?, footer] }
-```
-
-The recruiter edits ONLY `recruiterBody`. The notice block is assembled from a
-versioned template constant and cannot be reached by recruiter input — that is
-what makes "notice was included" a guarantee rather than a claim. Version the
-notice text (`NOTICE_VERSION`) and record it on the evidence row, so a future
-wording change stays attributable.
-
-`noticeRequired` comes from the EXISTING classifier —
-`notificationState(candidate, now).status` is `due` or `overdue`. Do not
-re-derive it, and do not apply it to applicants.
-
-### Send path
-
-Server action → compose → send via Resend (server-side only, key from env) →
-on success call `record_notification_sent`, on failure
-`record_notification_failed`. Fails closed: any error leaves
-`subject_notified_at` NULL and the item in the action queue.
-
-Idempotency key: deterministic per (candidate_id, notice_version), so a
-double-click or a server retry collides on the unique index instead of sending
-a second statutory notice. A deliberate later re-send of ordinary outreach is a
-different act and must not reuse that key.
-
-### Action queue
-
-No change needed. `src/lib/home/action-queue.ts` already keys off
-`subject_notified_at` via `notificationState`, so once stamping is tied to a
-successful send, "sent → leaves queue / failed → stays" falls out for free.
-Add a test that asserts it.
-
-### Tests required (founder's list, verbatim intent)
-
-sourced candidate → notice block present; non-sourced → no forced block;
-successful send → recorded; failed send → `subject_notified_at` still null;
-duplicate/retry → no second statutory notice; recruiter cannot remove the
-compliance block; overdue action leaves the queue only after success;
-due-but-not-overdue behaves; applicant never enters the workflow; cross-org
-access impossible. Use Resend's test addresses for delivery simulation — never
-real candidate emails in tests.
+**`src/lib/outreach/compose.ts`** (+ 11 tests). Builds
+`recruiter body + [notice] + footer`. The recruiter edits only their own block,
+so no edit can remove the notice — it is never in a field they can reach.
+`NOTICE_VERSION = "art14-v1"`. `noticeIdempotencyKey(candidateId)` is
+deterministic per candidate + notice version. Whether a notice is owed comes
+from `notificationState()` and is never re-derived, so applicants cannot be
+pulled into the sourced-person workflow.
 
 ---
 
-## Out of scope (explicit)
+## 3. Remaining work on this task
 
-Marketing automation, campaign management, sequencing, AI-generated outreach,
-CRM. This task is the statutory notice path only.
+1. Resolve the credential + domain (section 1). Everything below waits on it.
+2. **Server send action** — `src/app/(dashboard)/app/projects/[id]/candidates/[candidateId]/`:
+   compose → send via Resend server-side → on success
+   `record_notification_sent(...)`, on failure `record_notification_failed(...)`.
+   Read the key from env, preferring `MANDATE_RESEND_API_KEY` and falling back
+   to `RESEND_API_KEY`. Never client-side, never hard-coded.
+3. **Compose UI** in the Outreach tab: editable recruiter block, a read-only
+   system block showing the notice that will be attached, then Send. Founder's
+   wording direction: calm and operational, not "performing a legal procedure".
+4. **Send-path tests** (the pure halves are already covered): successful send →
+   recorded; failed send → `subject_notified_at` still null; retry → no second
+   statutory notice; overdue action leaves the queue only after success;
+   cross-org access impossible. Use Resend's test addresses — never a real
+   candidate address in tests.
 
-## Needs counsel, not code
+The cross-mandate action queue needs NO change: `src/lib/home/action-queue.ts`
+already keys off `subject_notified_at`, so sent-leaves / failed-stays falls out.
 
-- Whether a notice delivered by phone or LinkedIn can ever satisfy Art. 14 in
-  this product. The new model records only successful *email* sends, so a
-  recruiter who notifies someone by phone currently has no way to record it.
-  That is a deliberate tightening — confirm it is the intended policy.
-- Whether `getmandate.io` root or a subdomain (`mail.` / `send.`) should carry
-  transactional sending. A subdomain isolates reputation from the root domain's
-  mail; the root was provisioned because the founder named it.
+### Out of scope, explicitly
+Marketing automation, campaign management, sequencing, AI-generated outreach, CRM.
+
+---
+
+## 4. Also open, unrelated to Resend
+
+- **`ANTHROPIC_API_KEY` has no credit.** Blocks: the coverage-analysis agent's
+  first real run (built, deployed, never executed); comparison layer 4
+  (trade-off narration — the evidence grid is a clean input for it); layer 5
+  (market/industry analysis, which also needs an outside data source, since
+  `buildMarketInsight` is pool-internal only); and deleting the losing branch in
+  `run-sourcing-search.ts`, which still carries both sides of an untested
+  assumption about combining `web_search` with `output_config.format`.
+- **Verification debt.** Never seen with real data: the evidence grid populated,
+  the HM portal grid, and — most importantly — **no comparison PDF has ever been
+  generated and looked at.** `@react-pdf/renderer` layout can differ from what
+  the JSX suggests, especially a table with a variable column count.
+- **Password rotation.** The founder's Mandate password was pasted into two
+  sessions and is shared with their Resend login. Both should be rotated.
+- Deferred infra, founder's own order: Sentry → rate limiting → Resend → Stripe.
+
+## 5. Needs counsel, not code
+
+- The model now accepts **only successful email sends** as notification. A
+  recruiter who notifies someone by phone or LinkedIn has no way to record it.
+  Deliberate tightening — confirm it is the intended policy.
+- Root domain vs `mail.` / `send.` subdomain for transactional sending.
+- The notice wording in `compose.ts` is deliberately non-jurisdictional (names
+  the rights to object and to erasure, nothing more). Wants a lawyer's eye
+  before it reaches a real candidate.
