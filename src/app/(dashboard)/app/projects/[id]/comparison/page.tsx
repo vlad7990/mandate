@@ -235,6 +235,7 @@ export default async function ComparisonDashboardPage({
           weights={weights}
           insight={insight}
           context={context}
+          grid={evidenceGrid}
         />
       </header>
 

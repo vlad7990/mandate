@@ -9,6 +9,11 @@ import {
 } from "@/lib/ai/candidate-evaluation";
 import { type DimensionKey } from "@/lib/ai/onboarding-analysis";
 import { TIER_BANDS, type Tier } from "@/lib/ranking/tiers";
+import {
+  blindSpots,
+  type ComparisonGrid,
+  type CoverageState,
+} from "./evidence-index";
 
 const DIMENSION_LABEL: Record<DimensionKey, string> = {
   technical: "Technical",
@@ -63,6 +68,161 @@ export type ComparisonContext = {
   company_name: string;
   generated_at: string;
 };
+
+// ────────────────────────────────────────────────────────────────────────
+// Evidence & gaps — shared by every export surface
+//
+// This section travels further than the app does. A comparison sent to a
+// hiring manager is read as a recommendation, and a table of scores with no
+// statement of what was never assessed invites a decision made on apparent
+// completeness. Exporting the gaps alongside the scores is what keeps the
+// artifact honest once it leaves the recruiter's screen.
+// ────────────────────────────────────────────────────────────────────────
+
+const STATE_TEXT: Record<CoverageState, string> = {
+  evidenced: "Evidenced",
+  thin: "Their account only",
+  conflicted: "Sources disagree",
+  absent: "Not assessed",
+};
+
+/** Markdown lines. Empty array when there is no grid, so callers can spread. */
+export function evidenceToMarkdown(grid: ComparisonGrid | null): string[] {
+  if (!grid || grid.candidates.length === 0) return [];
+  const lines: string[] = [];
+
+  lines.push("## Evidence & gaps");
+  lines.push("");
+  lines.push(
+    "What is actually known about each candidate, per dimension. A blank is a gap in the search, not a low score."
+  );
+  lines.push("");
+
+  const spots = blindSpots(grid);
+  if (spots.length > 0) {
+    lines.push(
+      `**Nobody has been assessed on: ${spots
+        .map((s) => DIMENSION_LABEL[s].toLowerCase())
+        .join(", ")}.** Every candidate looks equally unproven there because none was tested on it.`
+    );
+    lines.push("");
+  }
+
+  const header = ["Dimension", ...grid.candidates.map((c) => c.full_name)];
+  lines.push(`| ${header.join(" | ")} |`);
+  lines.push(`| ${header.map(() => "---").join(" | ")} |`);
+
+  for (const row of grid.rows) {
+    const cells = row.cells.map((cell) => STATE_TEXT[cell.coverage.state]);
+    const label =
+      row.weight === null
+        ? DIMENSION_LABEL[row.dimension]
+        : `${DIMENSION_LABEL[row.dimension]} (weight ${row.weight})`;
+    lines.push(`| ${[label, ...cells].join(" | ")} |`);
+  }
+  lines.push("");
+
+  for (const candidate of grid.candidates) {
+    if (candidate.critical_gaps.length === 0) continue;
+    lines.push(
+      `- **${candidate.full_name}** — still unknown on ${candidate.critical_gaps
+        .map((g) => DIMENSION_LABEL[g].toLowerCase())
+        .join(", ")}, which this role weights heavily.`
+    );
+  }
+  lines.push("");
+
+  return lines;
+}
+
+export function evidenceToHtml(grid: ComparisonGrid | null): string {
+  if (!grid || grid.candidates.length === 0) return "";
+  const spots = blindSpots(grid);
+
+  const head = grid.candidates
+    .map((c) => `<th>${escapeHtml(c.full_name)}</th>`)
+    .join("");
+
+  const body = grid.rows
+    .map((row) => {
+      const label =
+        row.weight === null
+          ? DIMENSION_LABEL[row.dimension]
+          : `${DIMENSION_LABEL[row.dimension]} <span class="muted">w${row.weight}</span>`;
+      const cells = row.cells
+        .map(
+          (cell) =>
+            `<td class="state-${cell.coverage.state}">${STATE_TEXT[cell.coverage.state]}</td>`
+        )
+        .join("");
+      return `<tr><th scope="row">${label}</th>${cells}</tr>`;
+    })
+    .join("");
+
+  const gaps = grid.candidates
+    .filter((c) => c.critical_gaps.length > 0)
+    .map(
+      (c) =>
+        `<li><strong>${escapeHtml(c.full_name)}</strong> — still unknown on ${c.critical_gaps
+          .map((g) => DIMENSION_LABEL[g].toLowerCase())
+          .join(", ")}.</li>`
+    )
+    .join("");
+
+  return `
+  <section>
+    <h2>Evidence &amp; gaps</h2>
+    <p class="muted">What is actually known about each candidate, per dimension. A blank is a gap in the search, not a low score.</p>
+    ${
+      spots.length > 0
+        ? `<p class="warn"><strong>Nobody has been assessed on: ${spots
+            .map((s) => DIMENSION_LABEL[s].toLowerCase())
+            .join(", ")}.</strong></p>`
+        : ""
+    }
+    <table><thead><tr><th>Dimension</th>${head}</tr></thead><tbody>${body}</tbody></table>
+    ${gaps ? `<ul>${gaps}</ul>` : ""}
+  </section>`;
+}
+
+/**
+ * The email digest. Deliberately gaps-only: an email is skimmed, and the whole
+ * grid pasted into one would be scrolled past. What survives compression is
+ * what the reader most needs — what nobody has checked.
+ */
+export function evidenceToEmailLines(grid: ComparisonGrid | null): string[] {
+  if (!grid || grid.candidates.length === 0) return [];
+  const lines: string[] = [];
+  const spots = blindSpots(grid);
+
+  lines.push("EVIDENCE GAPS");
+  if (spots.length > 0) {
+    lines.push(
+      `- Nobody assessed on: ${spots
+        .map((s) => DIMENSION_LABEL[s].toLowerCase())
+        .join(", ")}`
+    );
+  }
+  for (const c of grid.candidates) {
+    if (c.critical_gaps.length === 0) continue;
+    lines.push(
+      `- ${c.full_name}: unknown on ${c.critical_gaps
+        .map((g) => DIMENSION_LABEL[g].toLowerCase())
+        .join(", ")}`
+    );
+  }
+  if (lines.length === 1) lines.push("- None — every weighted dimension has evidence.");
+  lines.push("");
+  return lines;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 // ────────────────────────────────────────────────────────────────────────
 // Insight builders — deterministic, no AI calls
@@ -248,11 +408,15 @@ export function comparisonToMarkdown({
   weights,
   insight,
   context,
+  grid,
 }: {
   rows: ComparisonRow[];
   weights: DimensionWeights | null;
   insight: MarketInsight;
   context: ComparisonContext;
+  /** Optional so existing callers keep working; omitted means no evidence
+   * section rather than an empty one. */
+  grid?: ComparisonGrid | null;
 }): string {
   const lines: string[] = [];
 
@@ -266,6 +430,10 @@ export function comparisonToMarkdown({
   lines.push("");
   lines.push("---");
   lines.push("");
+
+  // Evidence first, for the same reason it sits above the tables on screen:
+  // a reader who takes in the ranking first rarely goes back for the gaps.
+  lines.push(...evidenceToMarkdown(grid ?? null));
 
   // Master scoring table
   lines.push("## 1. Master Scoring Table");
@@ -386,11 +554,15 @@ export function comparisonToHtml({
   weights,
   insight,
   context,
+  grid,
 }: {
   rows: ComparisonRow[];
   weights: DimensionWeights | null;
   insight: MarketInsight;
   context: ComparisonContext;
+  /** Optional so existing callers keep working; omitted means no evidence
+   * section rather than an empty one. */
+  grid?: ComparisonGrid | null;
 }): string {
   const primary = rows.slice(0, Math.min(4, rows.length));
   const backup = rows.slice(primary.length, primary.length + 3);
@@ -410,6 +582,11 @@ export function comparisonToHtml({
 
   const styles = `
     :root { color-scheme: light; }
+    .state-evidenced { color: #0d6e4e; }
+    .state-thin { color: #b45309; }
+    .state-conflicted { color: #9f1239; font-weight: 600; }
+    .state-absent { color: #64748b; }
+    .warn { color: #b45309; }
     * { box-sizing: border-box; }
     body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #0f172a; background: #f8fafc; margin: 0; padding: 32px; line-height: 1.55; }
     .doc { max-width: 1100px; margin: 0 auto; background: #fff; padding: 40px; border: 1px solid #e2e8f0; }
@@ -534,6 +711,8 @@ export function comparisonToHtml({
     <div class="meta">${esc(context.company_name)} · Generated ${esc(context.generated_at.slice(0, 10))} · ${insight.total_scored} scored / ${insight.total_parsed} parsed</div>
   </header>
 
+  ${evidenceToHtml(grid ?? null)}
+
   <h2>Master Scoring Table</h2>
   ${
     weights
@@ -580,10 +759,12 @@ export function comparisonToEmail({
   rows,
   insight,
   context,
+  grid,
 }: {
   rows: ComparisonRow[];
   insight: MarketInsight;
   context: ComparisonContext;
+  grid?: ComparisonGrid | null;
 }): { subject: string; body: string } {
   const subject = `${context.project_title} — comparative slate (${insight.total_scored} scored, ${insight.tier_counts.tier_1 + insight.tier_counts.tier_2} viable)`;
 
@@ -603,6 +784,7 @@ export function comparisonToEmail({
     }
   });
   lines.push("");
+  lines.push(...evidenceToEmailLines(grid ?? null));
 
   if (backup.length > 0) {
     lines.push(`Backup slate:`);

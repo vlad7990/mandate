@@ -21,12 +21,16 @@ import {
   type DimensionWeights,
   type MarketInsight,
 } from "@/lib/comparison/comparison-export";
+import type { ComparisonGrid } from "@/lib/comparison/evidence-index";
 
 type Props = {
   rows: ComparisonRow[];
   weights: DimensionWeights | null;
   insight: MarketInsight;
   context: ComparisonContext;
+  /** Evidence coverage. Travels into every artifact so an exported comparison
+   * states what was never assessed, not just who ranked highest. */
+  grid?: ComparisonGrid | null;
 };
 
 export function ComparisonExportActions(props: Props) {
@@ -69,6 +73,7 @@ export function ComparisonExportActions(props: Props) {
             weights={props.weights}
             insight={props.insight}
             context={props.context}
+            grid={props.grid ?? null}
           />
         ).toBlob();
         const url = URL.createObjectURL(blob);

@@ -6,7 +6,35 @@ import type {
   DimensionWeights,
   MarketInsight,
 } from "@/lib/comparison/comparison-export";
+import {
+  blindSpots,
+  type ComparisonGrid,
+  type CoverageState,
+} from "@/lib/comparison/evidence-index";
+import type { DimensionKey } from "@/lib/ai/onboarding-analysis";
 import { PDF_COLORS, PDF_STYLES, scoreColor, tierColor } from "./styles";
+
+const DIMENSION_LABEL: Record<DimensionKey, string> = {
+  technical: "Technical",
+  domain: "Domain",
+  leadership: "Leadership",
+  regulatory: "Regulatory",
+  transformation: "Transformation",
+};
+
+const STATE_TEXT: Record<CoverageState, string> = {
+  evidenced: "Evidenced",
+  thin: "Their account",
+  conflicted: "Disagree",
+  absent: "Not assessed",
+};
+
+const STATE_COLOR: Record<CoverageState, string> = {
+  evidenced: PDF_COLORS.good,
+  thin: PDF_COLORS.warn,
+  conflicted: PDF_COLORS.bad,
+  absent: PDF_COLORS.textDim,
+};
 
 const TIER_ORDER: Tier[] = ["tier_1", "tier_2", "tier_3", "tier_4"];
 
@@ -15,11 +43,13 @@ export function ComparisonPdfDocument({
   weights,
   insight,
   context,
+  grid,
 }: {
   rows: ComparisonRow[];
   weights: DimensionWeights | null;
   insight: MarketInsight;
   context: ComparisonContext;
+  grid?: ComparisonGrid | null;
 }) {
   const primary = rows.slice(0, Math.min(4, rows.length));
   const backup = rows.slice(primary.length, primary.length + 3);
@@ -54,9 +84,14 @@ export function ComparisonPdfDocument({
         </View>
 
         <View style={PDF_STYLES.body}>
+          {/* Evidence before scores. A PDF sent to a hiring manager is read as
+              a recommendation, and a reader who takes in the ranking first
+              rarely goes back for what was never assessed. */}
+          <EvidenceSection grid={grid ?? null} />
+
           {/* Master scoring table */}
           <SectionHeader
-            label="01 · Master Scoring Table"
+            label="02 · Master Scoring Table"
             meta={
               weights
                 ? `Weights T${weights.technical}/D${weights.domain}/L${weights.leadership}/R${weights.regulatory}/X${weights.transformation}`
@@ -154,7 +189,7 @@ export function ComparisonPdfDocument({
           </View>
 
           {/* Tiered market view */}
-          <SectionHeader label="02 · Tiered Market View" />
+          <SectionHeader label="03 · Tiered Market View" />
           {TIER_ORDER.map((tier) => {
             const list = rows.filter((r) => r.tier === tier);
             if (list.length === 0) return null;
@@ -258,7 +293,7 @@ export function ComparisonPdfDocument({
 
           {/* Slate */}
           <SectionHeader
-            label="03 · Recommended Slate"
+            label="04 · Recommended Slate"
             meta={`Primary ${primary.length} · Backup ${backup.length}`}
           />
           <SlateBlock title={`Primary slate — Top ${primary.length}`} rows={primary} accent={PDF_COLORS.accent} />
@@ -299,6 +334,80 @@ export function ComparisonPdfDocument({
         </View>
       </Page>
     </Document>
+  );
+}
+
+/**
+ * Evidence coverage, per dimension, per candidate.
+ *
+ * Renders nothing when there is no grid — an empty section in an exported
+ * document reads as "nothing was found", which is a different and wrong claim
+ * from "this export predates the evidence index".
+ */
+function EvidenceSection({ grid }: { grid: ComparisonGrid | null }) {
+  if (!grid || grid.candidates.length === 0) return null;
+  const spots = blindSpots(grid);
+
+  return (
+    <View>
+      <SectionHeader
+        label="01 · Evidence & Gaps"
+        meta="A blank is a gap in the search, not a low score"
+      />
+
+      {spots.length > 0 && (
+        <Text
+          style={[
+            PDF_STYLES.pMuted,
+            { color: PDF_COLORS.warn, marginBottom: 6 },
+          ]}
+        >
+          Nobody has been assessed on{" "}
+          {spots.map((s) => DIMENSION_LABEL[s].toLowerCase()).join(", ")}. Every
+          candidate looks equally unproven there because none was tested on it.
+        </Text>
+      )}
+
+      <View style={PDF_STYLES.table}>
+        <View style={PDF_STYLES.thead}>
+          <Text style={[PDF_STYLES.th, { flex: 2 }]}>Dimension</Text>
+          {grid.candidates.map((c) => (
+            <Text key={c.candidate_id} style={[PDF_STYLES.th, { flex: 2 }]}>
+              {c.full_name}
+            </Text>
+          ))}
+        </View>
+        {grid.rows.map((row) => (
+          <View key={row.dimension} style={PDF_STYLES.tbodyRow}>
+            <Text style={[PDF_STYLES.td, { flex: 2 }]}>
+              {DIMENSION_LABEL[row.dimension]}
+              {row.weight === null ? "" : ` (w${row.weight})`}
+            </Text>
+            {row.cells.map((cell) => (
+              <Text
+                key={cell.candidate_id}
+                style={[
+                  PDF_STYLES.td,
+                  { flex: 2, color: STATE_COLOR[cell.coverage.state] },
+                ]}
+              >
+                {STATE_TEXT[cell.coverage.state]}
+              </Text>
+            ))}
+          </View>
+        ))}
+      </View>
+
+      {grid.candidates
+        .filter((c) => c.critical_gaps.length > 0)
+        .map((c) => (
+          <Text key={c.candidate_id} style={PDF_STYLES.pMuted}>
+            {c.full_name} — still unknown on{" "}
+            {c.critical_gaps.map((g) => DIMENSION_LABEL[g].toLowerCase()).join(", ")}
+            , which this role weights heavily.
+          </Text>
+        ))}
+    </View>
   );
 }
 
