@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { MastHead } from "@/components/ui/mast-head";
+import { KpiTile } from "@/components/ui/kpi-tile";
 import {
   loadNetworkOverview,
   type NetworkPerson,
 } from "@/lib/network/network-aggregator";
 import { type Archetype } from "@/lib/ai/cv-parsing";
 import { NetworkTable } from "./network-table";
+import { PageShell } from "@/components/ui/page-shell";
 
 export default async function NetworkPage() {
   const supabase = await createServerSupabaseClient();
@@ -20,10 +22,9 @@ export default async function NetworkPage() {
   const analytics = computeAnalytics(overview.people);
 
   return (
-    <div className="px-6 py-6 space-y-5 max-w-[1500px] mx-auto">
-      <BreadcrumbRail
-        segments={[
-          { label: "Mandate", href: "/app/home" },
+    <PageShell className="space-y-5">
+      <SetBreadcrumbs
+        crumbs={[
           { label: "Candidates", href: "/app/candidates" },
           { label: "Network" },
         ]}
@@ -41,6 +42,20 @@ export default async function NetworkPage() {
           {analytics.shortlistedCount} shortlisted before
         </p>
       </header>
+
+      {/* A short network and a truncated one look identical, so say which
+          this is. See CANDIDATE_ROW_CAP. */}
+      {overview.truncated && (
+        <p
+          role="status"
+          className="border border-tertiary/40 bg-surface-container-low px-4 py-3 text-body-main text-on-surface-variant"
+        >
+          Folded from the {overview.rows_considered.toLocaleString()} most
+          recently updated candidate records. Older records are not counted in
+          the figures below, so a long-standing contact may be missing or show
+          fewer appearances than they have.
+        </p>
+      )}
 
       <AnalyticsBlock analytics={analytics} />
 
@@ -66,7 +81,7 @@ export default async function NetworkPage() {
           activeProjects={overview.active_projects}
         />
       </section>
-    </div>
+    </PageShell>
   );
 }
 
@@ -131,26 +146,26 @@ function AnalyticsBlock({ analytics }: { analytics: AnalyticsBlock }) {
       <KpiTile
         className="lg:col-span-3"
         label="Total executives"
-        value={analytics.total}
-        tone="primary"
+        value={String(analytics.total).padStart(2, "0")}
+        accent="primary"
       />
       <KpiTile
         className="lg:col-span-3"
         label="Returning candidates"
-        value={analytics.returning}
-        tone="secondary"
+        value={String(analytics.returning).padStart(2, "0")}
+        accent="secondary"
       />
       <KpiTile
         className="lg:col-span-3"
         label="Shortlisted before"
-        value={analytics.shortlistedCount}
-        tone="secondary"
+        value={String(analytics.shortlistedCount).padStart(2, "0")}
+        accent="secondary"
       />
       <KpiTile
         className="lg:col-span-3"
         label="Distinct domains"
-        value={analytics.byDomain.length}
-        tone="tertiary"
+        value={String(analytics.byDomain.length).padStart(2, "0")}
+        accent="warn"
       />
 
       <BreakdownCard
@@ -190,39 +205,6 @@ function AnalyticsBlock({ analytics }: { analytics: AnalyticsBlock }) {
         />
       </div>
     </section>
-  );
-}
-
-function KpiTile({
-  className,
-  label,
-  value,
-  tone,
-}: {
-  className?: string;
-  label: string;
-  value: number;
-  tone: "primary" | "secondary" | "tertiary";
-}) {
-  const toneClass =
-    tone === "primary"
-      ? "text-primary border-primary-container/40"
-      : tone === "secondary"
-        ? "text-secondary-fixed-dim border-secondary-fixed-dim/40"
-        : "text-tertiary border-tertiary/40";
-  return (
-    <div
-      className={`bg-surface-container-low border ${toneClass} p-4 ${className ?? ""}`}
-    >
-      <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-        {label}
-      </div>
-      <div
-        className={`font-h1 text-h1 tabular-nums leading-none mt-1 ${toneClass.split(" ")[0]}`}
-      >
-        {String(value).padStart(2, "0")}
-      </div>
-    </div>
   );
 }
 

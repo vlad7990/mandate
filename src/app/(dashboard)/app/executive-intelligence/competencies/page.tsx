@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageShell } from "@/components/ui/page-shell";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   IconArrowLeft,
@@ -35,8 +36,7 @@ export default async function ExecutiveCompetenciesPage() {
   }
 
   return (
-    <div className="min-h-full p-6">
-      <div className="max-w-5xl mx-auto pt-4 space-y-6">
+    <PageShell width="reading" className="space-y-6">
         <div className="flex items-center gap-3 font-mono-label text-mono-label uppercase tracking-widest text-outline">
           <Link
             href="/app/executive-intelligence"
@@ -133,7 +133,6 @@ export default async function ExecutiveCompetenciesPage() {
             </section>
           );
         })}
-      </div>
-    </div>
+    </PageShell>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV, isNavItemActive } from "./nav-model";
-import { useBreadcrumbs } from "./breadcrumbs";
+import { truncateCrumb, useBreadcrumbs } from "./breadcrumbs";
 import { CommandPalette } from "./command-palette";
 import { IconChevronRight } from "@/components/icons";
 
@@ -49,6 +49,7 @@ export function Topbar() {
       >
         {crumbs.map((c, i) => {
           const last = i === crumbs.length - 1;
+          const label = truncateCrumb(c.label, c.maxChars);
           return (
             <span key={`${c.label}-${i}`} className="flex min-w-0 items-center gap-2">
               {i > 0 && (
@@ -59,7 +60,7 @@ export function Topbar() {
                   href={c.href}
                   className="truncate rounded transition-colors hover:text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                 >
-                  {c.label}
+                  {label}
                 </Link>
               ) : (
                 <span
@@ -67,8 +68,9 @@ export function Topbar() {
                     last ? "truncate text-on-surface-variant" : "truncate"
                   }
                   aria-current={last ? "page" : undefined}
+                  title={label === c.label ? undefined : c.label}
                 >
-                  {c.label}
+                  {label}
                 </span>
               )}
             </span>

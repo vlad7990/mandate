@@ -8,7 +8,7 @@ import {
 import { computeAndStoreScores } from "@/lib/ranking/scoring-engine";
 import { type Tier } from "@/lib/ranking/tiers";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
-import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { LiveTick } from "@/components/ui/live-tick";
 import { MastHead } from "@/components/ui/mast-head";
 import { RefreshScoresButton } from "./refresh-button";
@@ -183,9 +183,8 @@ export default async function RankingPage({
 
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
-      <BreadcrumbRail
-        segments={[
-          { label: "Mandate", href: "/app/home" },
+      <SetBreadcrumbs
+        crumbs={[
           { label: project.title, href: `/app/projects/${project.id}`, maxChars: 32 },
           { label: "Ranking" },
         ]}

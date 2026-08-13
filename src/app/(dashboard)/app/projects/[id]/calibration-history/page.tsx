@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { LiveTick } from "@/components/ui/live-tick";
 import {
   loadCalibrationHistory,
@@ -67,9 +67,8 @@ export default async function CalibrationHistoryPage({
 
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1200px] mx-auto">
-      <BreadcrumbRail
-        segments={[
-          { label: "Mandate", href: "/app/home" },
+      <SetBreadcrumbs
+        crumbs={[
           { label: project.title, href: `/app/projects/${project.id}`, maxChars: 32 },
           { label: "Calibration History" },
         ]}

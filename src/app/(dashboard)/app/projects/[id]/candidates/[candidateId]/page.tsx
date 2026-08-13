@@ -16,7 +16,7 @@ import {
   type CompanyContext,
 } from "@/lib/ai/role-analysis";
 import { cn } from "@/lib/utils";
-import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { LiveTick } from "@/components/ui/live-tick";
 import { IconInfo, IconRefresh } from "@/components/icons";
 import { CandidateView } from "./candidate-view";
@@ -486,14 +486,12 @@ export default async function CandidateProfilePage({
 
   return (
     <>
-      <BreadcrumbRail
-        segments={[
-          { label: "Mandate", href: "/app/home" },
+      <SetBreadcrumbs
+        crumbs={[
           { label: project.title, href: `/app/projects/${project.id}`, maxChars: 24 },
           { label: "Candidates", href: `/app/projects/${project.id}/candidates` },
           { label: candidate.full_name, maxChars: 28 },
         ]}
-        className="mx-auto max-w-[1600px] px-6 pt-6"
       />
 
       <CandidateView

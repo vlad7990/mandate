@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { MastHead, type MastTone } from "@/components/ui/mast-head";
 import { SkillRow, type SkillRowData } from "./skill-row";
 import { IconIntelligence, IconPlus } from "@/components/icons";
+import { PageShell } from "@/components/ui/page-shell";
 
 type SkillType = "role_skill" | "client_skill" | "search_skill";
 
@@ -103,10 +104,9 @@ export default async function SkillsStudioPage() {
   const totalActive = skills.filter((s) => s.is_active).length;
 
   return (
-    <div className="px-6 py-6 space-y-5 max-w-[1400px] mx-auto">
-      <BreadcrumbRail
-        segments={[
-          { label: "Mandate", href: "/app/home" },
+    <PageShell className="space-y-5">
+      <SetBreadcrumbs
+        crumbs={[
           { label: "Settings", href: "/app/settings" },
           { label: "Skills" },
         ]}
@@ -197,7 +197,7 @@ export default async function SkillsStudioPage() {
           })}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 

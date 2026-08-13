@@ -40,6 +40,13 @@ const ARCHETYPE_TONE: Record<Archetype, string> = {
   Infrastructure: "border-outline-variant text-on-surface-variant",
 };
 
+/**
+ * People per page. Each row is a card carrying appearances, scores and
+ * project chips, so the whole pool in one list was both a long scroll and a
+ * large amount of DOM.
+ */
+const PER_PAGE = 25;
+
 export function NetworkTable({
   people,
   activeProjects,
@@ -55,6 +62,7 @@ export function NetworkTable({
   const [yearsFilter, setYearsFilter] = useState<string>("");
   const [sortKey, setSortKey] = useState<SortKey>("best_score");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [page, setPage] = useState(1);
 
   // Domain options come from the actual data — capped + sorted.
   const domainOptions = useMemo(() => {
@@ -121,6 +129,15 @@ export function NetworkTable({
     });
     return list;
   }, [filtered, sortKey, sortDir]);
+
+  const pageCount = Math.max(1, Math.ceil(sorted.length / PER_PAGE));
+  // A filter change can leave the current page past the end of the new
+  // result set; clamp rather than showing an empty page.
+  const currentPage = Math.min(page, pageCount);
+  const visible = sorted.slice(
+    (currentPage - 1) * PER_PAGE,
+    currentPage * PER_PAGE
+  );
 
   return (
     <div className="space-y-3">
@@ -203,7 +220,10 @@ export function NetworkTable({
       </div>
 
       <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
-        Showing {sorted.length} of {people.length} people
+        Showing {visible.length === 0 ? 0 : (currentPage - 1) * PER_PAGE + 1}–
+        {(currentPage - 1) * PER_PAGE + visible.length} of {sorted.length}
+        {sorted.length === people.length ? "" : ` filtered from ${people.length}`}{" "}
+        people
       </p>
 
       {sorted.length === 0 ? (
@@ -211,15 +231,22 @@ export function NetworkTable({
           No people match the current filters.
         </p>
       ) : (
-        <ul className="space-y-2">
-          {sorted.map((p) => (
-            <NetworkCard
-              key={p.identity_key}
-              person={p}
-              activeProjects={activeProjects}
-            />
-          ))}
-        </ul>
+        <>
+          <ul className="space-y-2">
+            {visible.map((p) => (
+              <NetworkCard
+                key={p.identity_key}
+                person={p}
+                activeProjects={activeProjects}
+              />
+            ))}
+          </ul>
+          <NetworkPager
+            page={currentPage}
+            pageCount={pageCount}
+            onPage={setPage}
+          />
+        </>
       )}
     </div>
   );
@@ -499,4 +526,54 @@ function formatRelative(iso: string): string {
   const day = Math.round(hr / 24);
   if (day < 30) return `${day}d ago`;
   return `${Math.round(day / 30)}mo ago`;
+}
+
+/**
+ * Pager for the deduped people list.
+ *
+ * Client-side, unlike the candidate and mandate lists: the set being paged
+ * is already in memory because folding rows into people needs all of them at
+ * once. This bounds what gets rendered, not what gets fetched — the fetch is
+ * bounded by CANDIDATE_ROW_CAP instead.
+ */
+function NetworkPager({
+  page,
+  pageCount,
+  onPage,
+}: {
+  page: number;
+  pageCount: number;
+  onPage: (p: number) => void;
+}) {
+  if (pageCount <= 1) return null;
+
+  const button =
+    "px-3 py-1.5 border border-outline-variant font-mono-label text-mono-label uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:border-primary enabled:hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+
+  return (
+    <nav
+      aria-label="Network pages"
+      className="flex items-center justify-between gap-3 pt-1"
+    >
+      <button
+        type="button"
+        className={button}
+        onClick={() => onPage(page - 1)}
+        disabled={page <= 1}
+      >
+        Previous
+      </button>
+      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
+        Page {page} / {pageCount}
+      </span>
+      <button
+        type="button"
+        className={button}
+        onClick={() => onPage(page + 1)}
+        disabled={page >= pageCount}
+      >
+        Next
+      </button>
+    </nav>
+  );
 }

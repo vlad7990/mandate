@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { MastHead } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { TierComparison } from "@/components/ui/tier-comparison";
@@ -253,10 +253,9 @@ export function ShortlistBuilder({
   return (
     <div className="min-h-full bg-surface text-on-surface">
       <div className="max-w-[1600px] mx-auto px-6 py-6 space-y-5">
-        <BreadcrumbRail
-          segments={[
-            { label: "Mandate", href: "/app/home" },
-            { label: roleTitle, href: `/app/projects/${projectId}`, maxChars: 32 },
+        <SetBreadcrumbs
+          crumbs={[
+              { label: roleTitle, href: `/app/projects/${projectId}`, maxChars: 32 },
             { label: "Shortlist" },
           ]}
         />

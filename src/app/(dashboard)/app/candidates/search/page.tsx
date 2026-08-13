@@ -15,7 +15,7 @@ import type {
   CandidateSearchInputCandidate,
   CandidateSearchResult,
 } from "@/lib/ai/candidate-search";
-import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import {
   IconChevronRight,
   IconFilter,
@@ -184,9 +184,8 @@ export default async function CandidateSearchPage({
 
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1400px] mx-auto">
-      <BreadcrumbRail
-        segments={[
-          { label: "Mandate", href: "/app/home" },
+      <SetBreadcrumbs
+        crumbs={[
           { label: "Candidates", href: "/app/candidates" },
           { label: "AI Search" },
         ]}

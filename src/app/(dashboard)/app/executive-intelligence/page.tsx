@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageShell } from "@/components/ui/page-shell";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   IconChecklist,
@@ -151,8 +152,7 @@ export default async function ExecutiveIntelligencePage() {
   ];
 
   return (
-    <div className="min-h-full p-6">
-      <div className="max-w-6xl mx-auto pt-4 space-y-8">
+    <PageShell width="reading" className="space-y-8">
         <header className="space-y-3">
           <div className="flex items-center gap-3">
             <span className="h-px w-8 bg-primary" />
@@ -259,7 +259,6 @@ export default async function ExecutiveIntelligencePage() {
             )}
           </div>
         </section>
-      </div>
-    </div>
+    </PageShell>
   );
 }

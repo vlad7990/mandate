@@ -14,6 +14,7 @@ import { SkeletonCard } from "@/components/ui/skeleton";
 import { ActionQueuePanel } from "./action-queue-panel";
 import { SampleBanner } from "@/components/sample/sample-banner";
 import { IconArrowRight, IconCopilot, IconInfo } from "@/components/icons";
+import { PageShell } from "@/components/ui/page-shell";
 import {
   HEALTH_LABEL as SAMPLE_HEALTH_LABEL,
   SAMPLE_AGENT_RUNS,
@@ -78,7 +79,7 @@ export default async function DashboardHomePage() {
   const metrics = projects.length > 0 ? await computePortfolioMetrics() : null;
 
   return (
-    <div className="mx-auto max-w-[1600px] px-6 py-6">
+    <PageShell>
       <SetBreadcrumbs crumbs={[{ label: "Portfolio" }]} />
 
       <PageHeader
@@ -151,7 +152,7 @@ export default async function DashboardHomePage() {
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   );
 }
 

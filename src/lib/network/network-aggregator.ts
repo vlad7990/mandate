@@ -77,9 +77,32 @@ export type NetworkPerson = {
   returning: boolean;
 };
 
+/**
+ * Candidate rows read per Network view.
+ *
+ * This page cannot page in SQL the way the candidate and mandate lists do.
+ * A person here is several candidate rows folded together by `identityKey`,
+ * and which rows fold together is only knowable once they have all been
+ * compared — so a LIMIT would cut a person in half rather than cut the list
+ * short, and the page would report someone as appearing on one search when
+ * they appear on four.
+ *
+ * The window is a bound rather than a fix: it makes the cost of the view
+ * constant instead of proportional to the pool, at the price of only seeing
+ * the most recently updated rows. `truncated` says when that has happened,
+ * because a silently short network reads as a small network. Removing the
+ * bound properly means grouping by identity in Postgres — a stored key
+ * column and an aggregate function, along the lines of migration 040.
+ */
+export const CANDIDATE_ROW_CAP = 2000;
+
 export type NetworkOverview = {
   people: NetworkPerson[];
   projects: NetworkProject[];
+  /** True when the pool is larger than `CANDIDATE_ROW_CAP`. */
+  truncated: boolean;
+  /** Candidate rows actually folded into `people`. */
+  rows_considered: number;
   /** Active projects only (status = 'active' or null) — used by the
    * "available for" matcher and the add-to-search picker. */
   active_projects: NetworkProject[];
@@ -115,7 +138,10 @@ export async function loadNetworkOverview(): Promise<NetworkOverview> {
       .select(
         "id, project_id, full_name, email, linkedin_url, current_title, current_company, archetype, pipeline_stage, cv_structured, updated_at"
       )
-      .order("updated_at", { ascending: false }),
+      .order("updated_at", { ascending: false })
+      // Overfetches one row so the caller can tell a full window from a
+      // truncated one. See CANDIDATE_ROW_CAP.
+      .range(0, CANDIDATE_ROW_CAP),
     supabase
       .from("projects")
       .select("id, title, company_name, status")
@@ -127,7 +153,9 @@ export async function loadNetworkOverview(): Promise<NetworkOverview> {
       ),
   ]);
 
-  const candidateRows = (candidatesQ.data ?? []) as CandidateRow[];
+  const fetched = (candidatesQ.data ?? []) as CandidateRow[];
+  const truncated = fetched.length > CANDIDATE_ROW_CAP;
+  const candidateRows = truncated ? fetched.slice(0, CANDIDATE_ROW_CAP) : fetched;
   const projects = (projectsQ.data ?? []) as NetworkProject[];
   const scoreRows = (scoresQ.data ?? []) as ScoreRow[];
 
@@ -247,7 +275,13 @@ export async function loadNetworkOverview(): Promise<NetworkOverview> {
     (p) => (p.status ?? "active") === "active"
   );
 
-  return { people, projects, active_projects };
+  return {
+    people,
+    projects,
+    active_projects,
+    truncated,
+    rows_considered: candidateRows.length,
+  };
 }
 
 /**

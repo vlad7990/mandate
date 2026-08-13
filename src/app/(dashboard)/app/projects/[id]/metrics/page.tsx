@@ -16,6 +16,7 @@ import {
   MandateHorizontalBarChart,
   type MandateBarDatum,
 } from "@/components/charts/mandate-charts";
+import { KpiTile } from "@/components/ui/kpi-tile";
 import { cn } from "@/lib/utils";
 import type { HealthSuggestionsBlob } from "@/lib/ai/search-health-agent";
 import { HealthSuggestionsPanel } from "../health-suggestions-panel";
@@ -214,40 +215,6 @@ export default async function ProjectMetricsPage({
         {/* Source performance */}
         <SourceSection breakdown={pipeline.sourceBreakdown} total={health.totalCandidates} />
       </div>
-    </div>
-  );
-}
-
-function KpiTile({
-  label,
-  value,
-  unit,
-  accent,
-}: {
-  label: string;
-  value: string;
-  unit: string;
-  accent?: "primary" | "secondary" | "neutral";
-}) {
-  const valueColor =
-    accent === "primary"
-      ? "text-primary"
-      : accent === "secondary"
-        ? "text-secondary-fixed-dim"
-        : "text-on-surface";
-  return (
-    <div className="bg-surface-container-low border border-outline-variant p-3 flex flex-col justify-between min-h-[96px]">
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-        {label}
-      </span>
-      <div className="flex items-baseline gap-2">
-        <span className={cn("font-h2 text-h2 tabular-nums", valueColor)}>
-          {value}
-        </span>
-      </div>
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-        {unit}
-      </span>
     </div>
   );
 }

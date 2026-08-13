@@ -13,6 +13,16 @@ import {
   type SampleHealth,
 } from "@/lib/sample";
 import { IconArrowRight } from "@/components/icons";
+import { ListPanel, PageHeader, PageShell } from "@/components/ui/page-shell";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
+import {
+  isFiltered,
+  parseListParams,
+  rangeFor,
+  splitOverfetch,
+  type RawSearchParams,
+} from "@/lib/list-params";
 
 export const metadata = { title: "Mandates" };
 
@@ -23,7 +33,24 @@ export const metadata = { title: "Mandates" };
  * would have 404'd, and the only way to see the full list was the
  * dashboard's table, which shows the top few. The dashboard comp's
  * "View all" link needs a destination.
+ *
+ * The real table carries three columns fewer than the sample one. Candidate
+ * counts, tier-1 counts and day-of-search need a per-project aggregate this
+ * page does not do, and three columns of em-dashes on every row is a worse
+ * answer than not offering the column — the mandate's own page has them.
+ * The sample keeps them because it is showing what a populated workspace
+ * looks like.
  */
+
+const BASE_PATH = "/app/projects";
+const PER_PAGE = 25;
+
+/** Mirrors the `status` values the rest of the app writes. */
+const STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "paused", label: "Paused" },
+  { value: "closed", label: "Closed" },
+];
 
 /** Health is a dot plus a word. Never a gauge, never a red-to-green ramp. */
 function HealthDot({ status }: { status: HealthStatus | SampleHealth }) {
@@ -51,50 +78,81 @@ function HealthDot({ status }: { status: HealthStatus | SampleHealth }) {
   );
 }
 
-export default async function MandatesPage() {
+/** See the note in the candidates list — `or=` treats these as syntax. */
+function searchTerm(q: string): string {
+  return q.replace(/[,()*\\]/g, " ").trim();
+}
+
+export default async function MandatesPage({
+  searchParams,
+}: {
+  searchParams: Promise<RawSearchParams>;
+}) {
+  const params = parseListParams(await searchParams, {
+    perPage: PER_PAGE,
+    filters: ["status"],
+    sorts: ["created_at", "title", "company_name"],
+    defaultSort: "created_at",
+    defaultDir: "desc",
+  });
+
   const supabase = await createServerSupabaseClient();
-  const { data } = await supabase
+
+  const { from, to } = rangeFor(params);
+  let query = supabase
     .from("projects")
     .select("id, title, company_name, status, created_at")
-    .order("created_at", { ascending: false });
+    .order(params.sort ?? "created_at", { ascending: params.dir === "asc" })
+    .range(from, to);
 
-  const projects = data ?? [];
+  const term = searchTerm(params.q);
+  if (term) {
+    query = query.or(`title.ilike.%${term}%,company_name.ilike.%${term}%`);
+  }
+  if (params.filters.status) {
+    query = query.eq("status", params.filters.status);
+  }
+
+  const { data } = await query;
+  const { rows: projects, hasMore } = splitOverfetch(data ?? [], params);
+
   const dismissed =
     (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
   const showSample = shouldShowSample({
-    hasRealData: projects.length > 0,
+    hasRealData: projects.length > 0 || isFiltered(params),
     dismissed,
   });
 
-  // Only worth computing when there is something to compute it for.
+  // Health is portfolio-wide rather than per-page, and only worth computing
+  // when there is something to compute it for.
   const metrics = projects.length > 0 ? await computePortfolioMetrics() : null;
   const healthByProject = new Map(
     metrics?.attentionList.map((a) => [a.projectId, a.status]) ?? []
   );
 
+  const head = showSample
+    ? ["Mandate", "Stage", "Candidates", "Tier 1", "Day", "Health"]
+    : ["Mandate", "Status", "Health"];
+
   return (
-    <div className="mx-auto max-w-[1600px] px-6 py-6">
+    <PageShell>
       <SetBreadcrumbs crumbs={[{ label: "Mandates" }]} />
 
-      <div className="flex flex-wrap items-start gap-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold tracking-tight text-on-surface">
-            Mandates
-          </h1>
-          <p className="mt-1.5 text-sm text-on-surface-variant">
-            {showSample
-              ? "An example portfolio — your own mandates will appear here."
-              : `${projects.length} ${projects.length === 1 ? "mandate" : "mandates"} in this workspace.`}
-          </p>
-        </div>
-        <Link
-          href="/app/projects/new"
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-primary bg-primary px-4 text-sm font-semibold text-on-primary transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
-          New mandate
-          <IconArrowRight size={15} />
-        </Link>
-      </div>
+      <PageHeader
+        title="Mandates"
+        subtitle={
+          showSample
+            ? "An example portfolio — your own mandates will appear here."
+            : isFiltered(params)
+              ? `${projects.length} ${projects.length === 1 ? "match" : "matches"} on this page.`
+              : "Most recently opened first."
+        }
+        action={{
+          label: "New mandate",
+          href: "/app/projects/new",
+          icon: <IconArrowRight size={15} />,
+        }}
+      />
 
       {showSample && (
         <div className="mt-5">
@@ -102,27 +160,36 @@ export default async function MandatesPage() {
         </div>
       )}
 
-      <div className="mt-5 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-low">
+      <ListPanel className="mt-5">
+        {!showSample && (
+          <ListToolbar
+            basePath={BASE_PATH}
+            params={params}
+            searchPlaceholder="Search mandate or company…"
+            filters={[
+              { key: "status", label: "Status", options: STATUS_OPTIONS },
+            ]}
+          />
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] border-collapse tabular-nums">
             <caption className="sr-only">
               {showSample
                 ? "Example mandates, with stage, candidate counts and health."
-                : "Your mandates, with stage, candidate counts and health."}
+                : "Your mandates, with status and health."}
             </caption>
             <thead>
               <tr>
-                {["Mandate", "Stage", "Candidates", "Tier 1", "Day", "Health"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      scope="col"
-                      className="border-b border-outline-variant px-4 py-3 text-left font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-outline"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                {head.map((h) => (
+                  <th
+                    key={h}
+                    scope="col"
+                    className="border-b border-outline-variant px-4 py-3 text-left font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-outline"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -185,11 +252,6 @@ export default async function MandatesPage() {
                           {(p.status ?? "active").toUpperCase()}
                         </span>
                       </td>
-                      {/* Per-candidate counts need a join this page does
-                          not do yet; the mandate's own page has them. */}
-                      <td className="px-4 py-3 text-outline">—</td>
-                      <td className="px-4 py-3 text-outline">—</td>
-                      <td className="px-4 py-3 text-outline">—</td>
                       <td className="px-4 py-3">
                         <HealthDot
                           status={healthByProject.get(p.id) ?? "healthy"}
@@ -200,7 +262,29 @@ export default async function MandatesPage() {
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+
+        {!showSample && projects.length === 0 && (
+          <p className="px-4 py-10 text-center text-sm text-outline">
+            {isFiltered(params)
+              ? "No mandates match these filters."
+              : "No mandates yet."}{" "}
+            <Link href="/app/projects/new" className="text-primary hover:underline">
+              Start one
+            </Link>
+            .
+          </p>
+        )}
+
+        {!showSample && (
+          <Pagination
+            basePath={BASE_PATH}
+            params={params}
+            rowsOnPage={projects.length}
+            hasMore={hasMore}
+            noun="mandates"
+          />
+        )}
+      </ListPanel>
+    </PageShell>
   );
 }

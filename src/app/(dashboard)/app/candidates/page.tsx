@@ -4,6 +4,21 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { SampleBanner } from "@/components/sample/sample-banner";
 import { IconArrowRight } from "@/components/icons";
+import { PIPELINE_LABELS, PIPELINE_STAGES } from "@/lib/ai/cv-parsing";
+import {
+  ListPanel,
+  PageHeader,
+  PageShell,
+} from "@/components/ui/page-shell";
+import { ListToolbar } from "@/components/ui/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
+import {
+  isFiltered,
+  parseListParams,
+  rangeFor,
+  splitOverfetch,
+  type RawSearchParams,
+} from "@/lib/list-params";
 import {
   SAMPLE_CANDIDATES,
   SAMPLE_DISMISSED_COOKIE,
@@ -28,7 +43,22 @@ import {
  * - **Dedupe is visible.** The network view states how each merge
  *   happened, so a wrong merge can be found rather than silently
  *   trusted.
+ *
+ * The page reads one screenful at a time. It previously selected every
+ * candidate the org could see plus every score, and did the joining in
+ * JavaScript — fine against a demo pool, fatal against a real one. Search
+ * and the mandate and stage filters run in Postgres; see the note on `tier`
+ * below for the one that cannot.
  */
+
+const BASE_PATH = "/app/candidates";
+const PER_PAGE = 25;
+
+/**
+ * Sortable columns, and the allowlist that reaches `.order()`.
+ * `updated_at` leads because the question this page answers is "what moved".
+ */
+const SORTS = ["updated_at", "full_name", "current_company"] as const;
 
 type ProjectLite = {
   id: string;
@@ -138,29 +168,106 @@ const HEAD = [
   "Updated",
 ];
 
-export default async function CandidatesPage() {
-  const supabase = await createServerSupabaseClient();
-  const [projectsQ, candidatesQ, scoresQ] = await Promise.all([
-    supabase.from("projects").select("id, title, company_name"),
-    supabase
-      .from("candidates")
-      .select(
-        "id, project_id, full_name, current_title, current_company, archetype, pipeline_stage, cv_processing, updated_at"
-      )
-      .order("updated_at", { ascending: false }),
-    supabase
-      .from("candidate_scores")
-      .select("candidate_id, overall_score, tier"),
-  ]);
+/**
+ * PostgREST `or=` takes a comma-separated filter list, so a comma or a
+ * parenthesis in the search term would be read as syntax rather than text.
+ * Stripping them costs nothing on a name search and keeps a stray comma
+ * from returning the whole table.
+ */
+function searchTerm(q: string): string {
+  return q.replace(/[,()*\\]/g, " ").trim();
+}
 
+export default async function CandidatesPage({
+  searchParams,
+}: {
+  searchParams: Promise<RawSearchParams>;
+}) {
+  const params = parseListParams(await searchParams, {
+    perPage: PER_PAGE,
+    filters: ["project_id", "pipeline_stage", "tier"],
+    sorts: SORTS,
+    defaultSort: "updated_at",
+    defaultDir: "desc",
+  });
+
+  const supabase = await createServerSupabaseClient();
+
+  // Mandates are needed whole: they populate the filter and label each row,
+  // and a workspace has tens of them, not thousands.
+  const projectsQ = await supabase
+    .from("projects")
+    .select("id, title, company_name")
+    .order("created_at", { ascending: false });
   const projects = (projectsQ.data ?? []) as ProjectLite[];
-  const candidates = (candidatesQ.data ?? []) as CandidateLite[];
-  const scores = (scoresQ.data ?? []) as ScoreLite[];
+
+  // `tier` lives on candidate_scores, one join away, and PostgREST cannot
+  // filter a table by an embedded resource without an inner join it does not
+  // expose here. Resolving the tier filter to a candidate id set first keeps
+  // the page's paging honest — filtering after the fact would silently
+  // return short pages.
+  let tierCandidateIds: string[] | null = null;
+  if (params.filters.tier) {
+    const tierQ = await supabase
+      .from("candidate_scores")
+      .select("candidate_id")
+      .eq("tier", `tier_${params.filters.tier}`);
+    tierCandidateIds = (tierQ.data ?? []).map(
+      (r) => (r as { candidate_id: string }).candidate_id
+    );
+  }
+
+  const { from, to } = rangeFor(params);
+  let query = supabase
+    .from("candidates")
+    .select(
+      "id, project_id, full_name, current_title, current_company, archetype, pipeline_stage, cv_processing, updated_at"
+    )
+    .order(params.sort ?? "updated_at", { ascending: params.dir === "asc" })
+    .range(from, to);
+
+  const term = searchTerm(params.q);
+  if (term) {
+    query = query.or(
+      `full_name.ilike.%${term}%,current_title.ilike.%${term}%,current_company.ilike.%${term}%`
+    );
+  }
+  if (params.filters.project_id) {
+    query = query.eq("project_id", params.filters.project_id);
+  }
+  if (params.filters.pipeline_stage) {
+    query = query.eq("pipeline_stage", params.filters.pipeline_stage);
+  }
+  if (tierCandidateIds !== null) {
+    // An empty set must match nothing rather than being skipped.
+    query = query.in("id", tierCandidateIds);
+  }
+
+  const candidatesQ = await query;
+  const { rows: candidates, hasMore } = splitOverfetch(
+    (candidatesQ.data ?? []) as CandidateLite[],
+    params
+  );
+
+  // Scores for the rows actually on screen, not for the whole pool.
+  const scoreQ =
+    candidates.length > 0
+      ? await supabase
+          .from("candidate_scores")
+          .select("candidate_id, overall_score, tier")
+          .in(
+            "candidate_id",
+            candidates.map((c) => c.id)
+          )
+      : { data: [] as ScoreLite[] };
+  const scores = (scoreQ.data ?? []) as ScoreLite[];
 
   const dismissed =
     (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
+  // A filtered view that finds nothing is not an empty workspace, so the
+  // sample must not appear on top of a search that simply had no hits.
   const showSample = shouldShowSample({
-    hasRealData: candidates.length > 0,
+    hasRealData: candidates.length > 0 || isFiltered(params),
     dismissed,
   });
 
@@ -168,35 +275,23 @@ export default async function CandidatesPage() {
   const scoreByCandidate = new Map(scores.map((s) => [s.candidate_id, s]));
   const mandateById = new Map(SAMPLE_MANDATES.map((m) => [m.id, m]));
 
-  const distinct = new Set(
-    candidates.map((c) =>
-      `${c.full_name}|${c.current_company ?? ""}`.toLowerCase()
-    )
-  ).size;
-
   return (
-    <div className="mx-auto max-w-[1600px] px-6 py-6">
+    <PageShell>
       <SetBreadcrumbs crumbs={[{ label: "Candidates" }]} />
 
-      <div className="flex flex-wrap items-start gap-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-[28px] font-bold leading-tight tracking-tight text-on-surface">
-            Candidates
-          </h1>
-          <p className="mt-1.5 text-sm text-on-surface-variant">
-            {showSample
-              ? `${SAMPLE_CANDIDATES.length} example rows across ${SAMPLE_MANDATES.length} mandates`
-              : `${candidates.length} ${candidates.length === 1 ? "row" : "rows"} across ${projects.length} ${projects.length === 1 ? "mandate" : "mandates"} · ${distinct} distinct ${distinct === 1 ? "person" : "people"}`}
-          </p>
-        </div>
-        <Link
-          href="/app/projects"
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-primary bg-primary px-4 text-sm font-semibold text-on-primary transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
-          Upload CVs
-          <IconArrowRight size={15} />
-        </Link>
-      </div>
+      <PageHeader
+        title="Candidates"
+        subtitle={
+          showSample
+            ? `${SAMPLE_CANDIDATES.length} example rows across ${SAMPLE_MANDATES.length} mandates`
+            : describe(candidates.length, params, projects.length)
+        }
+        action={{
+          label: "Upload CVs",
+          href: "/app/projects",
+          icon: <IconArrowRight size={15} />,
+        }}
+      />
 
       {showSample && (
         <div className="mt-5">
@@ -204,7 +299,41 @@ export default async function CandidatesPage() {
         </div>
       )}
 
-      <div className="mt-5 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-low">
+      <ListPanel className="mt-5">
+        {!showSample && (
+          <ListToolbar
+            basePath={BASE_PATH}
+            params={params}
+            searchPlaceholder="Search name, title or company…"
+            filters={[
+              {
+                key: "project_id",
+                label: "Mandate",
+                options: projects.map((p) => ({
+                  value: p.id,
+                  label: p.title,
+                })),
+              },
+              {
+                key: "pipeline_stage",
+                label: "Stage",
+                options: PIPELINE_STAGES.map((s) => ({
+                  value: s,
+                  label: PIPELINE_LABELS[s],
+                })),
+              },
+              {
+                key: "tier",
+                label: "Tier",
+                options: [1, 2, 3, 4].map((n) => ({
+                  value: String(n),
+                  label: `Tier ${n}`,
+                })),
+              },
+            ]}
+          />
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] border-collapse tabular-nums">
             <caption className="sr-only">
@@ -371,10 +500,43 @@ export default async function CandidatesPage() {
 
         {!showSample && candidates.length === 0 && (
           <p className="px-[18px] py-10 text-center text-sm text-outline">
-            No candidates yet. Open a mandate and upload CVs to get started.
+            {isFiltered(params)
+              ? "No candidates match these filters."
+              : "No candidates yet. Open a mandate and upload CVs to get started."}
           </p>
         )}
-      </div>
-    </div>
+
+        {!showSample && (
+          <Pagination
+            basePath={BASE_PATH}
+            params={params}
+            rowsOnPage={candidates.length}
+            hasMore={hasMore}
+            noun="candidates"
+          />
+        )}
+      </ListPanel>
+    </PageShell>
   );
+}
+
+/**
+ * The subtitle no longer states a total: counting every matching row on
+ * every view is the cost this page was rewritten to avoid, and "25 rows" on
+ * page one of forty would be a worse answer than not claiming one.
+ */
+function describe(
+  rowsOnPage: number,
+  params: ReturnType<typeof parseListParams>,
+  projectCount: number
+): string {
+  if (isFiltered(params)) {
+    return rowsOnPage === 0
+      ? "No matches."
+      : `Showing ${rowsOnPage} ${rowsOnPage === 1 ? "match" : "matches"} on this page.`;
+  }
+  const mandates = `${projectCount} ${projectCount === 1 ? "mandate" : "mandates"}`;
+  return rowsOnPage === 0
+    ? `No candidates yet across ${mandates}.`
+    : `Most recently updated first, across ${mandates}.`;
 }

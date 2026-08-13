@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { ShareLinkCard, type HmTokenRow } from "./share-link-card";
 import {
@@ -101,9 +101,8 @@ export default async function HiringManagerPortalFounderPage({
 
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1400px] mx-auto">
-      <BreadcrumbRail
-        segments={[
-          { label: "Mandate", href: "/app/home" },
+      <SetBreadcrumbs
+        crumbs={[
           { label: project.title, href: `/app/projects/${project.id}`, maxChars: 32 },
           { label: "Hiring Manager Portal" },
         ]}

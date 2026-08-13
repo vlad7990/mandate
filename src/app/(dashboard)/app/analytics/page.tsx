@@ -19,6 +19,7 @@ import { KpiTile } from "@/components/ui/kpi-tile";
 import { LiveTick } from "@/components/ui/live-tick";
 import { MastHead } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
+import { PageShell } from "@/components/ui/page-shell";
 import {
   IconAnalytics,
   IconChevronRight,
@@ -121,7 +122,7 @@ export default async function PortfolioAnalyticsPage() {
   });
 
   return (
-    <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
+    <PageShell className="space-y-5">
       <header className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest mb-1">
@@ -280,7 +281,7 @@ export default async function PortfolioAnalyticsPage() {
           </ul>
         </section>
       )}
-    </div>
+    </PageShell>
   );
 }
 

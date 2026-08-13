@@ -13,12 +13,33 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
  * Until a page opts in, the topbar falls back to the section name from
  * the nav model, which is always correct and never a uuid.
  *
- * Pages still rendering their own inline `BreadcrumbRail` will briefly
- * show both. That resolves per screen as each one is rebuilt — the
- * inline rail comes out when the page starts setting crumbs here.
+ * This is now the only breadcrumb in the product. There was a second,
+ * `BreadcrumbRail`, which each page rendered inline at the top of its own
+ * body: twelve pages carried one, seven set crumbs here, and a few managed
+ * both, so the trail appeared in a different place depending on where you
+ * had navigated from. The rail is gone and its one feature the topbar
+ * lacked — a per-crumb character cap — moved here.
  */
 
-export type Crumb = { label: string; href?: string };
+export type Crumb = {
+  label: string;
+  href?: string;
+  /**
+   * Cap the rendered label, ellipsis included.
+   *
+   * CSS truncation alone is not enough here: the trail is one flex row, so a
+   * long mandate title takes its share of the width and squeezes the crumb
+   * after it — which is usually the one naming where you actually are. A
+   * character cap keeps the last segment legible.
+   */
+  maxChars?: number;
+};
+
+/** Shorten a crumb label to its cap, if it has one. */
+export function truncateCrumb(label: string, maxChars?: number): string {
+  if (!maxChars || label.length <= maxChars) return label;
+  return `${label.slice(0, maxChars - 1)}…`;
+}
 
 type Ctx = {
   crumbs: Crumb[] | null;

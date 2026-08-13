@@ -16,7 +16,8 @@ import {
   type MarketInsight,
 } from "@/lib/comparison/comparison-export";
 import { cn } from "@/lib/utils";
-import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
+import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
+import { KpiTile } from "@/components/ui/kpi-tile";
 import { MastHead, type MastTone } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import {
@@ -205,9 +206,8 @@ export default async function ComparisonDashboardPage({
 
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
-      <BreadcrumbRail
-        segments={[
-          { label: "Mandate", href: "/app/home" },
+      <SetBreadcrumbs
+        crumbs={[
           { label: project.title, href: `/app/projects/${project.id}`, maxChars: 32 },
           { label: "Ranking", href: `/app/projects/${project.id}/ranking` },
           { label: "Full Comparison" },
@@ -376,23 +376,23 @@ function MarketInsightPanel({
           <div className="grid grid-cols-2 gap-3">
             <KpiTile
               label="Scored"
-              value={insight.total_scored}
-              tone="primary"
+              value={String(insight.total_scored).padStart(2, "0")}
+              accent="primary"
             />
             <KpiTile
               label="Viable"
-              value={viable}
-              tone={viable > 0 ? "secondary" : "warn"}
+              value={String(viable).padStart(2, "0")}
+              accent={viable > 0 ? "secondary" : "warn"}
             />
             <KpiTile
               label="Stretch"
-              value={insight.tier_counts.tier_3}
-              tone="tertiary"
+              value={String(insight.tier_counts.tier_3).padStart(2, "0")}
+              accent="warn"
             />
             <KpiTile
               label="Off"
-              value={insight.tier_counts.tier_4}
-              tone="error"
+              value={String(insight.tier_counts.tier_4).padStart(2, "0")}
+              accent="danger"
             />
           </div>
           {insight.total_parsed > insight.total_scored && (
@@ -443,34 +443,6 @@ function MarketInsightPanel({
         </div>
       </div>
     </section>
-  );
-}
-
-function KpiTile({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: "primary" | "secondary" | "tertiary" | "warn" | "error";
-}) {
-  const tones: Record<typeof tone, string> = {
-    primary: "text-primary border-primary-container/40",
-    secondary: "text-secondary-fixed-dim border-secondary-fixed-dim/40",
-    tertiary: "text-tertiary border-tertiary/40",
-    warn: "text-tertiary border-tertiary/40",
-    error: "text-error border-error/40",
-  };
-  return (
-    <div className={cn("border bg-surface-container-lowest p-3", tones[tone])}>
-      <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-        {label}
-      </div>
-      <div className={cn("font-h2 text-h2 tabular-nums leading-none mt-1", tones[tone].split(" ")[0])}>
-        {String(value).padStart(2, "0")}
-      </div>
-    </div>
   );
 }
 
