@@ -21,11 +21,24 @@ export default async function DashboardLayout({
     redirect("/auth/signin");
   }
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("status, full_name, email, role")
-    .eq("id", user.id)
-    .single();
+  // The profile read and the two rail badges are independent, so they run
+  // together rather than as three serial round trips on every single page
+  // load. The status gate below still runs before anything renders — the
+  // badge queries are org-scoped by RLS, so a pending user (no org) reads
+  // nothing from them anyway, and a redirect simply discards the results.
+  const [{ data: profile }, networkCount, { count: mandateCount }] =
+    await Promise.all([
+      supabase
+        .from("users")
+        .select("status, full_name, email, role")
+        .eq("id", user.id)
+        .single(),
+      // Distinct people in the org's candidate pool, matching the Network
+      // page's own dedupe. Counted in Postgres — see the aggregator.
+      countNetworkPeople(),
+      // Head-only: a count, no rows.
+      supabase.from("projects").select("id", { count: "exact", head: true }),
+    ]);
 
   if (profile?.status === "pending") {
     redirect("/auth/pending");
@@ -40,16 +53,6 @@ export default async function DashboardLayout({
 
   const displayName = profile?.full_name?.trim() || profile?.email || user.email || "Operator";
   const email = profile?.email || user.email || "";
-
-  // Network badge — distinct people in the org's candidate pool. The
-  // aggregator dedupes per-project rows by identity (email/linkedin/
-  // name+company) so the badge matches the Network page count.
-  const networkCount = await countNetworkPeople();
-
-  // Mandate count for the rail badge. Cheap — head-only, no rows.
-  const { count: mandateCount } = await supabase
-    .from("projects")
-    .select("id", { count: "exact", head: true });
 
   return (
     <BreadcrumbProvider>

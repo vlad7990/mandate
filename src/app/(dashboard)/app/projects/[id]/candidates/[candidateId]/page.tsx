@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { after } from "next/server";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { isSampleId } from "@/lib/sample";
@@ -21,7 +22,10 @@ import { IconInfo, IconRefresh } from "@/components/icons";
 import { CandidateView } from "./candidate-view";
 import { PANEL_BODY, Panel, PanelMeta } from "@/components/projects/panel";
 import { StatusChip } from "@/components/ui/status-chip";
-import { ensureCandidateEvaluation } from "@/lib/ai/generate-evaluation";
+import {
+  ensureCandidateEvaluation,
+  readCandidateEvaluation,
+} from "@/lib/ai/generate-evaluation";
 import { type Tier } from "@/lib/ranking/tiers";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { ContactFieldsRail } from "./contact-fields";
@@ -137,26 +141,33 @@ export default async function CandidateProfilePage({
 
   const supabase = await createServerSupabaseClient();
 
-  const { data: project, error: projectError } = await supabase
-    .from("projects")
-    .select(
-      "id, title, company_name, calibration_model, company_context, onboarding_responses"
-    )
-    .eq("id", id)
-    .single<ProjectRow>();
+  // Independent lookups — neither filters on the other — so they issue
+  // together. The ownership check that ties them (candidate.project_id
+  // === id) still runs below, before anything renders.
+  const [
+    { data: project, error: projectError },
+    { data: candidate, error: candError },
+  ] = await Promise.all([
+    supabase
+      .from("projects")
+      .select(
+        "id, title, company_name, calibration_model, company_context, onboarding_responses"
+      )
+      .eq("id", id)
+      .single<ProjectRow>(),
+    supabase
+      .from("candidates")
+      .select(
+        "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, pipeline_stage, cv_url, cv_structured, cv_processing, cv_parse_error, recruiter_assessment, updated_at"
+      )
+      .eq("id", candidateId)
+      .single<CandidateRow>(),
+  ]);
 
   if (projectError || !project) {
     if (projectError?.code === "PGRST116") notFound();
     redirect("/");
   }
-
-  const { data: candidate, error: candError } = await supabase
-    .from("candidates")
-    .select(
-      "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, pipeline_stage, cv_url, cv_structured, cv_processing, cv_parse_error, recruiter_assessment, updated_at"
-    )
-    .eq("id", candidateId)
-    .single<CandidateRow>();
 
   if (candError || !candidate) {
     if (candError?.code === "PGRST116") notFound();
@@ -182,12 +193,32 @@ export default async function CandidateProfilePage({
     project.calibration_model?.dimension_weights ?? null
   );
 
-  // Generate the executive evaluation on first profile visit. The gate
-  // is idempotent: cache hit returns the stored report immediately;
-  // miss runs the agent (~6–10s), persists, and returns. Falls back to
-  // null when the CV isn't ready yet — the page renders a placeholder
-  // panel instead of the full report.
-  const evaluation = await ensureCandidateEvaluation(candidate.id, project.id);
+  // Executive evaluation. This is a CACHE READ — it never calls the
+  // agent, so the dossier renders at query speed whether or not a report
+  // exists yet.
+  //
+  // It used to await `ensureCandidateEvaluation`, which generates on a
+  // miss. That put a ~90s Sonnet call in the render path of the most
+  // visited page in the product: with no loading boundary, first visit to
+  // any candidate was a blank screen until the agent finished. Now a miss
+  // schedules the same generation in `after()` — which runs once the
+  // response has been flushed — and the page renders its existing pending
+  // panel in the meantime.
+  const evaluationState = await readCandidateEvaluation(candidate.id, project.id);
+  if (evaluationState.status === "pending") {
+    after(async () => {
+      try {
+        await ensureCandidateEvaluation(candidate.id, project.id);
+      } catch (err) {
+        // after() rejections are invisible to the request; log so a
+        // failed first-visit generation is at least diagnosable. The
+        // recruiter still has the Retry button on the pending panel.
+        console.error("[evaluation] background generation failed", err);
+      }
+    });
+  }
+  const evaluation =
+    evaluationState.status === "ready" ? evaluationState.evaluation : null;
 
   // AI-derived tier from candidate_scores (the canonical source of
   // truth — `evaluation.final_verdict.tier` is a snapshot per report).

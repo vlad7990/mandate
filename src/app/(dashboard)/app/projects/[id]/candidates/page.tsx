@@ -7,12 +7,14 @@ import {
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import { cn } from "@/lib/utils";
+import { platformLabel } from "@/lib/sourcing/runs";
 import {
   IconArrowLeft,
   IconChevronRight,
   IconGroup,
   IconPlus,
   IconRefresh,
+  IconTarget,
   IconUpload,
 } from "@/components/icons";
 
@@ -32,6 +34,20 @@ type CandidateRow = {
   cv_processing: boolean;
   cv_parse_error: string | null;
   updated_at: string;
+  source_kind: string | null;
+  source_platform: string | null;
+};
+
+/**
+ * Which sourcing run a person is credited to. First touch — the earliest
+ * EXECUTED run that surfaced them — read from `sourcing_candidate_attribution`
+ * rather than stored, so back-filling an earlier run later corrects the answer
+ * instead of leaving a stale winner behind.
+ */
+type Origin = {
+  runId: string;
+  version: number;
+  label: string | null;
 };
 
 const STAGE_TONES: Record<string, string> = {
@@ -77,7 +93,7 @@ export default async function CandidatesPage({
   const { data: candidateRows, error: candidatesError } = await supabase
     .from("candidates")
     .select(
-      "id, full_name, current_title, current_company, archetype, pipeline_stage, cv_processing, cv_parse_error, updated_at"
+      "id, full_name, current_title, current_company, archetype, pipeline_stage, cv_processing, cv_parse_error, updated_at, source_kind, source_platform"
     )
     .eq("project_id", id)
     .order("updated_at", { ascending: false });
@@ -87,6 +103,7 @@ export default async function CandidatesPage({
   }
 
   const candidates = (candidateRows ?? []) as CandidateRow[];
+  const origins = await loadOrigins(supabase, id);
 
   return (
     <div className="min-h-full bg-surface text-on-surface">
@@ -130,7 +147,12 @@ export default async function CandidatesPage({
         ) : (
           <ul className="bg-surface-container-low border border-outline-variant divide-y divide-outline-variant/40">
             {candidates.map((c) => (
-              <CandidateRow key={c.id} projectId={project.id} candidate={c} />
+              <CandidateRow
+                key={c.id}
+                projectId={project.id}
+                candidate={c}
+                origin={origins.get(c.id) ?? null}
+              />
             ))}
           </ul>
         )}
@@ -164,23 +186,75 @@ function EmptyState({ projectId }: { projectId: string }) {
   );
 }
 
+/**
+ * First-touch attribution for every sourced person in this search, in two
+ * reads. The view already resolves the winner per candidate; the second query
+ * only supplies the labels the chip prints.
+ */
+async function loadOrigins(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  projectId: string
+): Promise<Map<string, Origin>> {
+  const origins = new Map<string, Origin>();
+
+  const { data: attributionRows } = await supabase
+    .from("sourcing_candidate_attribution")
+    .select("candidate_id, attributed_run_id")
+    .eq("project_id", projectId);
+
+  const attribution = (attributionRows ?? []) as Array<{
+    candidate_id: string;
+    attributed_run_id: string;
+  }>;
+  if (attribution.length === 0) return origins;
+
+  const { data: runRows } = await supabase
+    .from("sourcing_runs")
+    .select("id, version, label")
+    .eq("project_id", projectId);
+
+  const runsById = new Map(
+    ((runRows ?? []) as Array<{
+      id: string;
+      version: number;
+      label: string | null;
+    }>).map((r) => [r.id, r])
+  );
+
+  for (const row of attribution) {
+    const run = runsById.get(row.attributed_run_id);
+    if (!run) continue;
+    origins.set(row.candidate_id, {
+      runId: run.id,
+      version: run.version,
+      label: run.label,
+    });
+  }
+
+  return origins;
+}
+
 function CandidateRow({
   projectId,
   candidate,
+  origin,
 }: {
   projectId: string;
   candidate: CandidateRow;
+  origin: Origin | null;
 }) {
   const stage = (candidate.pipeline_stage ?? "found") as PipelineStage;
   const archetype = candidate.archetype as Archetype | null;
   const stageTone = STAGE_TONES[stage] ?? STAGE_TONES.found;
 
   return (
-    <li>
+    // The origin chip links to its RUN, not to the candidate, so it has to sit
+    // outside the row link rather than nested inside it.
+    <li className="flex items-center hover:bg-surface-container-high transition-colors group">
       <Link
         href={`/app/projects/${projectId}/candidates/${candidate.id}`}
         prefetch={false}
-        className="flex items-center gap-4 px-5 py-4 hover:bg-surface-container-high transition-colors group"
+        className="flex-1 min-w-0 flex items-center gap-4 px-5 py-4"
       >
         <span className="w-10 h-10 rounded bg-surface-container-high border border-outline-variant flex items-center justify-center font-mono-data text-mono-data text-on-surface uppercase">
           {initials(candidate.full_name)}
@@ -230,12 +304,76 @@ function CandidateRow({
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider hidden lg:inline">
           {formatRelative(candidate.updated_at)}
         </span>
-        <IconChevronRight
-          size={18}
-          className="text-outline group-hover:text-primary transition-colors"
-        />
       </Link>
+      <OriginChip
+        projectId={projectId}
+        sourceKind={candidate.source_kind}
+        sourcePlatform={candidate.source_platform}
+        origin={origin}
+      />
+      <IconChevronRight
+        size={18}
+        className="mr-5 ml-2 shrink-0 text-outline group-hover:text-primary transition-colors"
+      />
     </li>
+  );
+}
+
+/**
+ * Origin chip — shown only for `source_kind = 'sourced'`.
+ *
+ * That flag marks someone who is in the system without having approached us,
+ * which is the distinction everything downstream keys off: retention, the
+ * Art. 14 notification obligation, and erasure. Making it visible on the list
+ * is the cheapest way to keep it from becoming invisible bookkeeping.
+ *
+ * The chip links to the run that surfaced them — first touch, from the
+ * attribution view. Without an executed run behind them (an archived lineage,
+ * or a person marked sourced by hand) it still says so, just without a link:
+ * "sourced, origin unrecorded" is a truthful chip, and a silent one is not.
+ */
+function OriginChip({
+  projectId,
+  sourceKind,
+  sourcePlatform,
+  origin,
+}: {
+  projectId: string;
+  sourceKind: string | null;
+  sourcePlatform: string | null;
+  origin: Origin | null;
+}) {
+  if (sourceKind !== "sourced") return null;
+
+  const chipClass =
+    "hidden sm:flex items-center gap-1.5 shrink-0 px-2 py-0.5 border border-tertiary/40 text-tertiary font-mono-label text-mono-label uppercase tracking-wider";
+
+  if (!origin) {
+    return (
+      <span
+        className={chipClass}
+        title={
+          sourcePlatform
+            ? `Sourced from ${platformLabel(sourcePlatform)}`
+            : "Sourced — no executed run recorded"
+        }
+      >
+        <IconTarget size={12} />
+        Sourced
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={`/app/projects/${projectId}/sourcing/runs/${origin.runId}/import`}
+      prefetch={false}
+      title={`First surfaced by v${origin.version}${origin.label ? ` · ${origin.label}` : ""}${sourcePlatform ? ` on ${platformLabel(sourcePlatform)}` : ""}`}
+      className={cn(chipClass, "hover:border-primary hover:text-primary transition-colors")}
+    >
+      <IconTarget size={12} />
+      Sourced · v{origin.version}
+    </Link>
   );
 }
 
