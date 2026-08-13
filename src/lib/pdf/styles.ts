@@ -66,6 +66,48 @@ export const PDF_CONTENT_WIDTH = 595.28 - 72;
 /** Side padding on numeric cells and their headings. Shared so they align. */
 const NUM_COL_PADDING = 4;
 
+/**
+ * Clearance between the brand bar and whatever follows it.
+ *
+ * The bar is `fixed`, so it repeats in the flow at the top of every page —
+ * and so does this margin, which is the point. Continuation pages used to
+ * start their content about 8pt under the black band, close enough to touch
+ * it, because the only top padding was on `body` and `body` occurs once.
+ *
+ * On page one the subhead cancels it with an equal negative margin, so the
+ * two masthead bands stay flush and read as one block. Nothing else follows
+ * the bar directly, so nothing else needs to.
+ */
+const BRAND_BAR_GAP = 18;
+
+/**
+ * Space a callout needs below it before it will start on the current page.
+ *
+ * Without this the Final Verdict block opened at the foot of a page with
+ * room for its border and nothing else, stranding a bare blue rule at the
+ * top of the next one. Roughly a label plus two lines — enough that a
+ * callout which does start is worth reading. Deliberately not `wrap={false}`:
+ * these hold AI-generated prose of no fixed length, and an unsplittable
+ * block taller than the page would be clipped rather than flowed.
+ */
+export const PDF_CALLOUT_MIN_PRESENCE = 56;
+
+// TABLES ACROSS PAGE BREAKS
+//
+// Two failures, and they trade against each other. A row left to split puts
+// a candidate's name on one page and their figures on the next; stopping
+// that moves the break up, so the heading band opens the foot of a page with
+// its rows overleaf, which is worse — the columns arrive unlabelled.
+//
+// `minPresenceAhead` reads like the answer and is not: it governs the space
+// that must follow an element, so it neither holds a heading to its rows nor
+// pushes a table onto the next page. Verified against rendered output.
+//
+// What works depends on whether the row count is bounded. A table with a
+// fixed number of rows is `wrap={false}` and moves whole. The comparison
+// master table has one row per candidate and can genuinely outgrow a page,
+// so it wraps, and its heading is `fixed` to repeat above the continuation.
+
 export const PDF_STYLES = StyleSheet.create({
   page: {
     paddingTop: 0,
@@ -82,6 +124,7 @@ export const PDF_STYLES = StyleSheet.create({
     color: PDF_COLORS.brandText,
     paddingVertical: 18,
     paddingHorizontal: 36,
+    marginBottom: BRAND_BAR_GAP,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
@@ -112,6 +155,9 @@ export const PDF_STYLES = StyleSheet.create({
     backgroundColor: PDF_COLORS.paperAlt,
     paddingVertical: 14,
     paddingHorizontal: 36,
+    // Cancels the brand bar's gap so the two bands stay flush. Page one only,
+    // which is the only page the subhead appears on.
+    marginTop: -BRAND_BAR_GAP,
     borderBottomWidth: 1,
     borderBottomColor: PDF_COLORS.outline,
   },

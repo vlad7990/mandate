@@ -6,7 +6,13 @@ import {
   type CandidateEvaluation,
 } from "@/lib/ai/candidate-evaluation";
 import { type DimensionKey } from "@/lib/ai/onboarding-analysis";
-import { PDF_COLORS, PDF_STYLES, scoreColor, tierColor } from "./styles";
+import {
+  PDF_CALLOUT_MIN_PRESENCE,
+  PDF_COLORS,
+  PDF_STYLES,
+  scoreColor,
+  tierColor,
+} from "./styles";
 
 const DIM_LABEL: Record<DimensionKey, string> = {
   technical: "Technical",
@@ -104,7 +110,9 @@ export function EvaluationPdfDocument({
 
           {/* 1. Scoring table */}
           <SectionHeader label="01 · Scoring Table" />
-          <View style={PDF_STYLES.table}>
+          {/* wrap={false}: five bounded rows. Left to wrap, the heading
+              band opened the foot of a page with its rows on the next. */}
+          <View style={PDF_STYLES.table} wrap={false}>
             <View style={PDF_STYLES.thead}>
               <Text style={[PDF_STYLES.th, { flex: 2 }]}>Dimension</Text>
               <Text style={[PDF_STYLES.th, { width: 50, textAlign: "right" }]}>
@@ -115,8 +123,10 @@ export function EvaluationPdfDocument({
               </Text>
               <Text style={[PDF_STYLES.th, { flex: 4 }]}>Commentary</Text>
             </View>
+            {/* wrap={false}: a split row leaves the commentary on the next
+                page with no dimension or score beside it. */}
             {evaluation.scoring_table.map((row) => (
-              <View key={row.dimension} style={PDF_STYLES.tbodyRow}>
+              <View key={row.dimension} style={PDF_STYLES.tbodyRow} wrap={false}>
                 <Text style={[PDF_STYLES.td, { flex: 2 }]}>
                   {DIM_LABEL[row.dimension]}
                 </Text>
@@ -229,8 +239,9 @@ export function EvaluationPdfDocument({
           {/* 6. Comparison */}
           <SectionHeader label="06 · Comparison" />
           <Text style={PDF_STYLES.p}>{evaluation.comparison.positioning}</Text>
+          {/* wrap={false}: at most three rows — see the scoring table. */}
           {evaluation.comparison.competitors.length > 0 && (
-            <View style={PDF_STYLES.table}>
+            <View style={PDF_STYLES.table} wrap={false}>
               <View style={PDF_STYLES.thead}>
                 <Text style={[PDF_STYLES.th, { flex: 2 }]}>Candidate</Text>
                 <Text style={[PDF_STYLES.th, { flex: 1 }]}>Tier</Text>
@@ -238,7 +249,11 @@ export function EvaluationPdfDocument({
                 <Text style={[PDF_STYLES.th, { flex: 4 }]}>Trade-off</Text>
               </View>
               {evaluation.comparison.competitors.map((c) => (
-                <View key={c.candidate_id} style={PDF_STYLES.tbodyRow}>
+                <View
+                  key={c.candidate_id}
+                  style={PDF_STYLES.tbodyRow}
+                  wrap={false}
+                >
                   <Text style={[PDF_STYLES.td, { flex: 2 }]}>
                     {c.full_name}
                   </Text>
@@ -273,7 +288,7 @@ export function EvaluationPdfDocument({
 
           {/* 7. Final verdict */}
           <SectionHeader label="07 · Final Verdict" />
-          <View style={PDF_STYLES.callout}>
+          <View style={PDF_STYLES.callout} minPresenceAhead={PDF_CALLOUT_MIN_PRESENCE}>
             <Text style={PDF_STYLES.calloutLabel}>
               {VERDICT_TIER_LABELS[verdictTier]}
             </Text>
@@ -313,7 +328,7 @@ export function EvaluationPdfDocument({
 
           {/* 9. Recommendation */}
           <SectionHeader label="09 · Recommendation" />
-          <View style={PDF_STYLES.callout}>
+          <View style={PDF_STYLES.callout} minPresenceAhead={PDF_CALLOUT_MIN_PRESENCE}>
             <Text style={PDF_STYLES.calloutLabel}>
               {RECOMMENDATION_LABELS[evaluation.recommendation]}
             </Text>

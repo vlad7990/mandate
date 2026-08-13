@@ -1,6 +1,6 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import type { WeeklyReport } from "@/lib/ai/weekly-report-agent";
-import { PDF_COLORS, PDF_STYLES } from "./styles";
+import { PDF_CALLOUT_MIN_PRESENCE, PDF_COLORS, PDF_STYLES } from "./styles";
 
 export type WeeklyReportPdfMeta = {
   project_title: string;
@@ -148,7 +148,7 @@ export function WeeklyReportPdfDocument({
           ))}
 
           <SectionHeader label="08 · Market Commentary" />
-          <View style={PDF_STYLES.callout}>
+          <View style={PDF_STYLES.callout} minPresenceAhead={PDF_CALLOUT_MIN_PRESENCE}>
             <Text style={PDF_STYLES.p}>{report.market_commentary}</Text>
           </View>
         </View>

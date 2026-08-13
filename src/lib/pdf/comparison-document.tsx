@@ -13,6 +13,7 @@ import {
 } from "@/lib/comparison/evidence-index";
 import type { DimensionKey } from "@/lib/ai/onboarding-analysis";
 import {
+  PDF_CALLOUT_MIN_PRESENCE,
   PDF_COLORS,
   PDF_CONTENT_WIDTH,
   PDF_STYLES,
@@ -394,12 +395,13 @@ export function ComparisonPdfDocument({
           )}
 
           {/* Market reality + partner take */}
-          <View style={PDF_STYLES.callout}>
+          <View style={PDF_STYLES.callout} minPresenceAhead={PDF_CALLOUT_MIN_PRESENCE}>
             <Text style={PDF_STYLES.calloutLabel}>Market Reality</Text>
             <Text style={PDF_STYLES.p}>{insight.reality_statement}</Text>
           </View>
           <View
             style={[PDF_STYLES.callout, { borderLeftColor: PDF_COLORS.good }]}
+            minPresenceAhead={PDF_CALLOUT_MIN_PRESENCE}
           >
             <Text
               style={[PDF_STYLES.calloutLabel, { color: PDF_COLORS.good }]}
@@ -457,7 +459,8 @@ function EvidenceSection({ grid }: { grid: ComparisonGrid | null }) {
         </Text>
       )}
 
-      <View style={PDF_STYLES.table}>
+      {/* wrap={false}: always five rows, one per dimension. */}
+      <View style={PDF_STYLES.table} wrap={false}>
         <View style={PDF_STYLES.thead}>
           <Text style={[PDF_STYLES.th, { width: DIMENSION_COL }]}>
             Dimension
