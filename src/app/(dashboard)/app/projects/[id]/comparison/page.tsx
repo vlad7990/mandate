@@ -19,6 +19,13 @@ import { cn } from "@/lib/utils";
 import { BreadcrumbRail } from "@/components/ui/breadcrumb-rail";
 import { MastHead, type MastTone } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
+import {
+  buildCandidateEvidence,
+  buildComparisonGrid,
+} from "@/lib/comparison/evidence-index";
+import { extractEvidence } from "@/lib/comparison/evidence-extractors";
+import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
+import { EvidenceGrid } from "./evidence-grid";
 import { MasterScoringTable } from "./master-table";
 import { ComparisonExportActions } from "./export-actions";
 import {
@@ -44,6 +51,7 @@ type CandidateRow = {
   archetype: string | null;
   cv_processing: boolean;
   cv_structured: unknown;
+  recruiter_assessment: unknown;
 };
 
 type ScoreRow = {
@@ -95,7 +103,7 @@ export default async function ComparisonDashboardPage({
     supabase
       .from("candidates")
       .select(
-        "id, full_name, current_title, current_company, archetype, cv_processing, cv_structured"
+        "id, full_name, current_title, current_company, archetype, cv_processing, cv_structured, recruiter_assessment"
       )
       .eq("project_id", id),
     supabase
@@ -171,6 +179,30 @@ export default async function ComparisonDashboardPage({
   const primary = rows.slice(0, primaryCount);
   const backup = rows.slice(primaryCount, primaryCount + 3);
 
+  // The evidence grid runs off the same rows the tables do, but asks a
+  // different question: not "who scored highest" but "what do we actually
+  // know, and where does the search still have nothing".
+  const evidenceGrid = buildComparisonGrid(
+    candidates
+      .filter((c) => primary.some((r) => r.candidate_id === c.id))
+      .map((c) =>
+        buildCandidateEvidence(
+          {
+            candidate_id: c.id,
+            full_name: c.full_name,
+            items: extractEvidence({
+              scores: scoresByCandidate.get(c.id) ?? null,
+              cv: asProfile(c.cv_structured),
+              recruiter: normaliseRecruiterAssessment(c.recruiter_assessment)
+                .dimension_notes,
+            }),
+          },
+          weights
+        )
+      ),
+    weights
+  );
+
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1600px] mx-auto">
       <BreadcrumbRail
@@ -211,6 +243,12 @@ export default async function ComparisonDashboardPage({
       ) : (
         <>
           <MarketInsightPanel insight={insight} weights={weights} />
+
+          {/* Above the scoring tables on purpose. The tables answer "who ranks
+              highest"; the grid answers "what do we actually know" — and a
+              recruiter who reads the ranking first tends not to go looking for
+              the gaps behind it. */}
+          <EvidenceGrid projectId={project.id} grid={evidenceGrid} />
 
           <Section
             tone="primary"
@@ -767,6 +805,12 @@ function archetypeTone(archetype: Archetype): ChipTone {
     Infrastructure: "neutral",
   };
   return map[archetype];
+}
+
+/** cv_structured is unknown at the DB boundary; the extractors type-check
+ * every field they read, so handing them the object is safe. */
+function asProfile(raw: unknown): Partial<CandidateProfile> | null {
+  return raw && typeof raw === "object" ? (raw as Partial<CandidateProfile>) : null;
 }
 
 function hasFitDimensions(raw: unknown): boolean {

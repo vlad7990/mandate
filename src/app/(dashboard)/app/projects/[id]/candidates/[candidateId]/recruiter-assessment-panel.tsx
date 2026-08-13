@@ -8,11 +8,19 @@ import { IconCheck, IconRefresh } from "@/components/icons";
 import { PANEL_BODY, Panel } from "@/components/projects/panel";
 import { TIER_BANDS, TIER_ORDER, type Tier } from "@/lib/ranking/tiers";
 import {
+  DIMENSION_VERDICTS,
+  DIMENSION_VERDICT_LABELS,
   PRESENT_DECISIONS,
   PRESENT_DECISION_LABELS,
+  type DimensionNotes,
+  type DimensionVerdict,
   type PresentDecision,
   type RecruiterAssessment,
 } from "@/lib/recruiter-assessment";
+import {
+  DIMENSION_KEYS,
+  type DimensionKey,
+} from "@/lib/ai/onboarding-analysis";
 import {
   TierComparison,
   tierToneClass,
@@ -29,6 +37,22 @@ const PRESENT_TONE: Record<PresentDecision, string> = {
   yes: "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim",
   maybe: "border-tertiary/60 bg-tertiary/10 text-tertiary",
   no: "border-error/60 bg-error/10 text-error",
+};
+
+const DIMENSION_LABELS: Record<DimensionKey, string> = {
+  technical: "Technical",
+  domain: "Domain",
+  leadership: "Leadership",
+  regulatory: "Regulatory",
+  transformation: "Transformation",
+};
+
+const VERDICT_TONE: Record<DimensionVerdict, string> = {
+  strong:
+    "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim",
+  adequate: "border-primary-container/60 bg-primary-container/10 text-primary",
+  gap: "border-error/60 bg-error/10 text-error",
+  unknown: "border-outline bg-surface-container-low text-on-surface-variant",
 };
 
 export function RecruiterAssessmentPanel({
@@ -50,13 +74,27 @@ export function RecruiterAssessmentPanel({
   const [fitNotes, setFitNotes] = useState(initial.fit_notes);
   const [strengths, setStrengths] = useState<string[]>(initial.strengths);
   const [newStrength, setNewStrength] = useState("");
+  const [dimensionNotes, setDimensionNotes] = useState<DimensionNotes>(
+    initial.dimension_notes
+  );
   const [pending, start] = useTransition();
 
   const dirty =
     tier !== initial.tier ||
     wouldPresent !== initial.would_present ||
     fitNotes !== initial.fit_notes ||
-    !arraysEqual(strengths, initial.strengths);
+    !arraysEqual(strengths, initial.strengths) ||
+    JSON.stringify(dimensionNotes) !== JSON.stringify(initial.dimension_notes);
+
+  const setDimension = (
+    dimension: DimensionKey,
+    patch: Partial<{ verdict: DimensionVerdict; note: string }>
+  ) => {
+    setDimensionNotes((prev) => {
+      const current = prev[dimension] ?? { verdict: "unknown" as const, note: "" };
+      return { ...prev, [dimension]: { ...current, ...patch } };
+    });
+  };
 
   const handleAddStrength = () => {
     const trimmed = newStrength.trim();
@@ -89,6 +127,7 @@ export function RecruiterAssessmentPanel({
           fit_notes: fitNotes,
           strengths,
           would_present: wouldPresent,
+          dimension_notes: dimensionNotes,
         });
         toast.success("Recruiter assessment saved");
         router.refresh();
@@ -109,6 +148,7 @@ export function RecruiterAssessmentPanel({
     setFitNotes("");
     setStrengths([]);
     setNewStrength("");
+    setDimensionNotes({});
     start(async () => {
       try {
         await updateRecruiterAssessment(candidateId, projectId, {
@@ -116,6 +156,7 @@ export function RecruiterAssessmentPanel({
           fit_notes: "",
           strengths: [],
           would_present: null,
+          dimension_notes: {},
         });
         toast.success("Assessment cleared");
         router.refresh();
@@ -193,6 +234,56 @@ export function RecruiterAssessmentPanel({
                 >
                   {PRESENT_DECISION_LABELS[d]}
                 </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        {/* Per-dimension judgement — what makes this comparable */}
+        <Field
+          label="Dimension read"
+          hint="Your call per dimension. This is the only human judgement the comparison grid can line up candidate against candidate — leave anything you have not assessed as 'Not assessed' rather than guessing."
+        >
+          <div className="flex flex-col gap-3">
+            {DIMENSION_KEYS.map((dimension) => {
+              const entry = dimensionNotes[dimension];
+              const verdict = entry?.verdict ?? "unknown";
+              return (
+                <div key={dimension} className="space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest w-28 shrink-0">
+                      {DIMENSION_LABELS[dimension]}
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {DIMENSION_VERDICTS.map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setDimension(dimension, { verdict: v })}
+                          aria-pressed={verdict === v}
+                          className={cn(
+                            "px-2 py-1 border font-mono-label text-mono-label uppercase tracking-widest transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                            verdict === v
+                              ? VERDICT_TONE[v]
+                              : "border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary"
+                          )}
+                        >
+                          {DIMENSION_VERDICT_LABELS[v]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {verdict !== "unknown" && (
+                    <input
+                      value={entry?.note ?? ""}
+                      onChange={(e) =>
+                        setDimension(dimension, { note: e.target.value })
+                      }
+                      placeholder="Optional — what you saw that says so"
+                      className="w-full px-3 py-1.5 bg-surface-container-lowest border border-outline-variant font-mono-data text-body-main text-on-surface placeholder:text-outline focus-visible:outline-none focus-visible:border-primary"
+                    />
+                  )}
+                </div>
               );
             })}
           </div>

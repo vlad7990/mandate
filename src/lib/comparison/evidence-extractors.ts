@@ -24,15 +24,23 @@
 
 import type { DimensionKey } from "@/lib/ai/onboarding-analysis";
 import type { CandidateProfile, FitDimensions } from "@/lib/ai/cv-parsing";
+import {
+  DIMENSION_VERDICT_LABELS,
+  type DimensionNotes,
+  type DimensionVerdict,
+} from "@/lib/recruiter-assessment";
 import type { EvidenceItem, EvidencePolarity } from "./evidence-index";
 
 /**
  * Assets that describe the whole person and cannot honestly be split across
  * dimensions. Listed so the UI can show them as context rather than silently
  * omitting them, and so the omission is a decision on the record.
+ *
+ * The recruiter assessment used to be on this list. It came off not by being
+ * inferred more cleverly, but by the form ASKING for per-dimension judgement —
+ * which is the only honest way to make prose comparable.
  */
 export const CANDIDATE_LEVEL_ASSETS = [
-  "recruiter_assessment",
   "psychology_profile",
   "culture_match",
   "triangulation",
@@ -220,12 +228,67 @@ export function fromCvProfile(
 }
 
 // ---------------------------------------------------------------------------
+// Recruiter judgement — the only human basis
+// ---------------------------------------------------------------------------
+
+const VERDICT_POLARITY: Record<DimensionVerdict, EvidencePolarity | null> = {
+  strong: "supports",
+  adequate: "supports",
+  gap: "contradicts",
+  // Not a judgement about the candidate. A recruiter who could not assess a
+  // dimension has told us about the process, not about the person, so it
+  // produces no evidence and the cell stays honestly empty.
+  unknown: null,
+};
+
+/**
+ * Per-dimension recruiter notes.
+ *
+ * `recruiter` basis — outranked only by the scoring engine, because a
+ * professional judgement made against a specific dimension is the strongest
+ * signal the product has short of a computed one, and unlike the CV it is not
+ * the candidate's own account.
+ *
+ * A verdict with no note still counts. Making the note mandatory would push
+ * recruiters to write something rather than nothing, and a filler sentence is
+ * worse evidence than a clean verdict.
+ */
+export function fromRecruiterDimensionNotes(
+  notes: DimensionNotes | null | undefined
+): EvidenceItem[] {
+  if (!notes || typeof notes !== "object") return [];
+  const items: EvidenceItem[] = [];
+
+  for (const dimension of Object.keys(DIMENSION_LABEL) as DimensionKey[]) {
+    const entry = notes[dimension];
+    if (!entry) continue;
+
+    const polarity = VERDICT_POLARITY[entry.verdict];
+    if (polarity === null) continue;
+
+    const note = entry.note?.trim();
+    items.push({
+      dimension,
+      basis: "recruiter",
+      polarity,
+      source_label: "Recruiter assessment",
+      summary: note
+        ? note
+        : `Recruiter assessed ${DIMENSION_LABEL[dimension].toLowerCase()} as ${DIMENSION_VERDICT_LABELS[entry.verdict].toLowerCase()}.`,
+    });
+  }
+
+  return items;
+}
+
+// ---------------------------------------------------------------------------
 // Assembly
 // ---------------------------------------------------------------------------
 
 export type CandidateAssets = {
   scores?: CandidateScoreRow | null;
   cv?: Partial<CandidateProfile> | null;
+  recruiter?: DimensionNotes | null;
 };
 
 /**
@@ -238,6 +301,7 @@ export type CandidateAssets = {
 export function extractEvidence(assets: CandidateAssets): EvidenceItem[] {
   return [
     ...fromCandidateScores(assets.scores),
+    ...fromRecruiterDimensionNotes(assets.recruiter),
     ...fromFitDimensions(assets.cv?.fit_dimensions),
     ...fromCvProfile(assets.cv),
   ];

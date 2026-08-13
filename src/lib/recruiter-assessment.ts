@@ -4,6 +4,43 @@
 // the page; the ranking / shortlist views read from it via this type.
 
 import type { Tier } from "@/lib/ranking/tiers";
+import { DIMENSION_KEYS, type DimensionKey } from "@/lib/ai/onboarding-analysis";
+
+/**
+ * A recruiter's read on one calibration dimension.
+ *
+ * This exists because the recruiter assessment was the richest human input in
+ * the system and the least comparable: one `fit_notes` box that speaks about
+ * the whole person. The comparison grid could not use it without inferring
+ * dimensions from prose, which would manufacture dimension-level judgement out
+ * of a sentence that never made one. Asking is honest; inferring is not.
+ */
+export const DIMENSION_VERDICTS = [
+  /** Clear evidence, above what the role needs. */
+  "strong",
+  /** Meets the bar. */
+  "adequate",
+  /** Looked, and it is not there. */
+  "gap",
+  /** Not assessed. The default, and not a judgement. */
+  "unknown",
+] as const;
+
+export type DimensionVerdict = (typeof DIMENSION_VERDICTS)[number];
+
+export const DIMENSION_VERDICT_LABELS: Record<DimensionVerdict, string> = {
+  strong: "Strong",
+  adequate: "Adequate",
+  gap: "Gap",
+  unknown: "Not assessed",
+};
+
+export type DimensionNote = {
+  verdict: DimensionVerdict;
+  note: string;
+};
+
+export type DimensionNotes = Partial<Record<DimensionKey, DimensionNote>>;
 
 export const RECRUITER_TIERS = [
   "tier_1",
@@ -26,6 +63,8 @@ export type RecruiterAssessment = {
   fit_notes: string;
   strengths: string[];
   would_present: PresentDecision | null;
+  /** Per-dimension judgement. Absent on every record written before this. */
+  dimension_notes: DimensionNotes;
   updated_by: string | null;
   updated_at: string | null;
 };
@@ -35,6 +74,7 @@ export const EMPTY_RECRUITER_ASSESSMENT: RecruiterAssessment = {
   fit_notes: "",
   strengths: [],
   would_present: null,
+  dimension_notes: {},
   updated_by: null,
   updated_at: null,
 };
@@ -71,9 +111,41 @@ export function normaliseRecruiterAssessment(
     fit_notes: typeof obj.fit_notes === "string" ? obj.fit_notes : "",
     strengths,
     would_present,
+    dimension_notes: normaliseDimensionNotes(obj.dimension_notes),
     updated_by: typeof obj.updated_by === "string" ? obj.updated_by : null,
     updated_at: typeof obj.updated_at === "string" ? obj.updated_at : null,
   };
+}
+
+/**
+ * Coerce stored per-dimension notes.
+ *
+ * A `unknown` verdict with no note is dropped rather than stored: it is the
+ * default state of an untouched form, and keeping it would make every
+ * candidate look assessed on every dimension.
+ */
+export function normaliseDimensionNotes(raw: unknown): DimensionNotes {
+  if (!raw || typeof raw !== "object") return {};
+  const source = raw as Record<string, unknown>;
+  const out: DimensionNotes = {};
+
+  for (const key of DIMENSION_KEYS) {
+    const value = source[key];
+    if (!value || typeof value !== "object") continue;
+    const entry = value as Partial<DimensionNote>;
+
+    const verdict =
+      typeof entry.verdict === "string" &&
+      (DIMENSION_VERDICTS as readonly string[]).includes(entry.verdict)
+        ? (entry.verdict as DimensionVerdict)
+        : "unknown";
+    const note = typeof entry.note === "string" ? entry.note.trim() : "";
+
+    if (verdict === "unknown" && !note) continue;
+    out[key] = { verdict, note };
+  }
+
+  return out;
 }
 
 /** True when the recruiter has filled in any field beyond defaults. */
@@ -82,6 +154,7 @@ export function hasRecruiterAssessment(a: RecruiterAssessment): boolean {
     a.tier != null ||
     a.fit_notes.trim().length > 0 ||
     a.strengths.length > 0 ||
-    a.would_present != null
+    a.would_present != null ||
+    Object.keys(a.dimension_notes).length > 0
   );
 }

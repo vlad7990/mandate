@@ -7,8 +7,10 @@ import {
   ensureCandidateEvaluation,
 } from "@/lib/ai/generate-evaluation";
 import {
+  normaliseDimensionNotes,
   PRESENT_DECISIONS,
   RECRUITER_TIERS,
+  type DimensionNotes,
   type PresentDecision,
   type RecruiterAssessment,
 } from "@/lib/recruiter-assessment";
@@ -442,6 +444,9 @@ export type RecruiterAssessmentInput = {
   fit_notes: string;
   strengths: string[];
   would_present: PresentDecision | null;
+  /** Per-dimension judgement. The only human input the comparison grid can
+   * line up candidate against candidate. */
+  dimension_notes?: DimensionNotes;
 };
 
 /**
@@ -484,11 +489,17 @@ export async function updateRecruiterAssessment(
         .filter((s) => s.length > 0)
     : [];
 
+  // Dropped through the same normaliser the read path uses, so an untouched
+  // form ("Not assessed", no note) stores nothing rather than making every
+  // candidate look assessed on every dimension.
+  const dimensionNotes = normaliseDimensionNotes(input.dimension_notes);
+
   const isEmpty =
     tier == null &&
     wouldPresent == null &&
     fitNotes.length === 0 &&
-    strengths.length === 0;
+    strengths.length === 0 &&
+    Object.keys(dimensionNotes).length === 0;
 
   const next: RecruiterAssessment | null = isEmpty
     ? null
@@ -497,6 +508,7 @@ export async function updateRecruiterAssessment(
         fit_notes: fitNotes,
         strengths,
         would_present: wouldPresent,
+        dimension_notes: dimensionNotes,
         updated_by: auth.userId,
         updated_at: new Date().toISOString(),
       };
