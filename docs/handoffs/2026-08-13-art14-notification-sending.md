@@ -2,7 +2,8 @@
 
 **Date:** 2026-08-13
 **Status:** Schema + composition DONE and deployed. Send path NOT written —
-blocked on Resend credentials AND on no verified sending domain existing.
+blocked on Resend credentials, and on sending-domain verification whose state is
+UNKNOWN (see section 1; it has never been successfully checked).
 
 Work in `/Users/vladbreygin/Projects/mandate`. Supabase project `xipyqnltkbtywxqyxupf`.
 Bash cwd resets to a stale iCloud clone between calls — always `cd` first or use `git -C`.
@@ -19,7 +20,7 @@ Two Resend credential paths exist and **neither can send**:
 
 | Path | State |
 |---|---|
-| `RESEND_API_KEY` + `RESEND_FROM` (manual, ~103 days old, Production) | Key is VALID. Used by `src/lib/waitlist/notify.ts`. |
+| `RESEND_API_KEY` + `RESEND_FROM` (manual, ~103 days old, Production) | Marked Sensitive, so its value cannot be read via `vercel env pull`. Validity UNVERIFIED. Used by `src/lib/waitlist/notify.ts`, which has never run against a real submission. |
 | Marketplace resource `resend-email-violet-dog` (provisioned today, `getmandate.io`, `us-east-1`) | Provisioned but NEVER CONNECTED — `RESEND_API_KEY` name collision, then `--prefix MANDATE_` hit "Additional setup required. Opening browser…" |
 
 **The Resend account state is UNVERIFIED — we have never successfully queried it.**
