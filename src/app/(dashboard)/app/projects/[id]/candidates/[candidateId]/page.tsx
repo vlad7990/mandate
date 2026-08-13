@@ -38,6 +38,7 @@ import {
 } from "./editable-fields";
 import { EvaluationReport } from "./evaluation-report";
 import { CandidateNotesPanel, type CandidateNote } from "./notes-panel";
+import { OutreachPanel, type OutreachEntry } from "./outreach-panel";
 import { PipelineSelect } from "./pipeline-select";
 import { RecruiterAssessmentPanel } from "./recruiter-assessment-panel";
 import { PositioningPanel } from "./positioning-panel";
@@ -97,6 +98,10 @@ type CandidateRow = {
   cv_parse_error: string | null;
   recruiter_assessment: unknown;
   updated_at: string;
+  /** Provenance. Drives the Art. 14 notification duty for sourced people. */
+  source_kind: string | null;
+  sourced_at: string | null;
+  subject_notified_at: string | null;
 };
 
 const ARCHETYPE_BLURBS: Record<Archetype, string> = {
@@ -158,7 +163,7 @@ export default async function CandidateProfilePage({
     supabase
       .from("candidates")
       .select(
-        "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, pipeline_stage, cv_url, cv_structured, cv_processing, cv_parse_error, recruiter_assessment, updated_at"
+        "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, pipeline_stage, cv_url, cv_structured, cv_processing, cv_parse_error, recruiter_assessment, updated_at, source_kind, sourced_at, subject_notified_at"
       )
       .eq("id", candidateId)
       .single<CandidateRow>(),
@@ -233,6 +238,19 @@ export default async function CandidateProfilePage({
   const recruiterAssessment = normaliseRecruiterAssessment(
     candidate.recruiter_assessment
   );
+
+  // Contact record, newest first. Drives both the outreach history and the
+  // Art. 14 banner — a sourced person who has never been told is an open
+  // obligation, not just an empty tab.
+  const { data: outreachRows } = await supabase
+    .from("candidate_outreach")
+    .select(
+      "id, channel, direction, subject, body, includes_privacy_notice, occurred_at"
+    )
+    .eq("candidate_id", candidate.id)
+    .order("occurred_at", { ascending: false });
+
+  const outreach = (outreachRows ?? []) as OutreachEntry[];
 
   // Notes feed for the candidate. Pinned first, then newest. RLS scopes
   // by org, so the SELECT is implicitly safe across orgs.
@@ -526,6 +544,22 @@ export default async function CandidateProfilePage({
                 projectId={projectId}
                 candidateName={candidate.full_name}
                 notes={notes as CandidateNote[]}
+              />
+            ),
+          },
+          {
+            id: "outreach",
+            label: "Outreach",
+            content: (
+              <OutreachPanel
+                projectId={projectId}
+                candidateId={candidate.id}
+                candidate={{
+                  source_kind: candidate.source_kind,
+                  sourced_at: candidate.sourced_at,
+                  subject_notified_at: candidate.subject_notified_at,
+                }}
+                entries={outreach}
               />
             ),
           },

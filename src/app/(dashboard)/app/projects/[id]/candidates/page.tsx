@@ -9,9 +9,15 @@ import {
 import { cn } from "@/lib/utils";
 import { platformLabel } from "@/lib/sourcing/runs";
 import {
+  notificationBacklog,
+  notificationLabel,
+  notificationState,
+} from "@/lib/candidates/notification";
+import {
   IconArrowLeft,
   IconChevronRight,
   IconGroup,
+  IconMail,
   IconPlus,
   IconRefresh,
   IconTarget,
@@ -36,6 +42,8 @@ type CandidateRow = {
   updated_at: string;
   source_kind: string | null;
   source_platform: string | null;
+  sourced_at: string | null;
+  subject_notified_at: string | null;
 };
 
 /**
@@ -93,7 +101,7 @@ export default async function CandidatesPage({
   const { data: candidateRows, error: candidatesError } = await supabase
     .from("candidates")
     .select(
-      "id, full_name, current_title, current_company, archetype, pipeline_stage, cv_processing, cv_parse_error, updated_at, source_kind, source_platform"
+      "id, full_name, current_title, current_company, archetype, pipeline_stage, cv_processing, cv_parse_error, updated_at, source_kind, source_platform, sourced_at, subject_notified_at"
     )
     .eq("project_id", id)
     .order("updated_at", { ascending: false });
@@ -104,6 +112,11 @@ export default async function CandidatesPage({
 
   const candidates = (candidateRows ?? []) as CandidateRow[];
   const origins = await loadOrigins(supabase, id);
+  // Art. 14 backlog. Sourced people who have never been told we hold their
+  // data are an open legal obligation, so the count belongs in the header
+  // rather than buried one click into each record.
+  const now = new Date();
+  const backlog = notificationBacklog(candidates, now);
 
   return (
     <div className="min-h-full bg-surface text-on-surface">
@@ -131,6 +144,22 @@ export default async function CandidatesPage({
               {candidates.length} {candidates.length === 1 ? "candidate" : "candidates"} ·{" "}
               {project.company_name}
             </p>
+            {(backlog.due > 0 || backlog.overdue > 0) && (
+              <p
+                className={cn(
+                  "font-mono-label text-mono-label uppercase tracking-widest mt-1 flex items-center gap-1.5",
+                  backlog.overdue > 0 ? "text-error" : "text-tertiary"
+                )}
+              >
+                <IconMail size={12} />
+                {backlog.overdue > 0
+                  ? `${backlog.overdue} notification${backlog.overdue === 1 ? "" : "s"} overdue`
+                  : `${backlog.due} notification${backlog.due === 1 ? "" : "s"} owed`}
+                {backlog.overdue > 0 && backlog.due > 0
+                  ? ` · ${backlog.due} more owed`
+                  : ""}
+              </p>
+            )}
           </div>
           <Link
             href={`/app/projects/${project.id}/candidates/new`}
@@ -152,6 +181,7 @@ export default async function CandidatesPage({
                 projectId={project.id}
                 candidate={c}
                 origin={origins.get(c.id) ?? null}
+                now={now}
               />
             ))}
           </ul>
@@ -238,10 +268,12 @@ function CandidateRow({
   projectId,
   candidate,
   origin,
+  now,
 }: {
   projectId: string;
   candidate: CandidateRow;
   origin: Origin | null;
+  now: Date;
 }) {
   const stage = (candidate.pipeline_stage ?? "found") as PipelineStage;
   const archetype = candidate.archetype as Archetype | null;
@@ -305,6 +337,12 @@ function CandidateRow({
           {formatRelative(candidate.updated_at)}
         </span>
       </Link>
+      <NotificationChip
+        projectId={projectId}
+        candidateId={candidate.id}
+        candidate={candidate}
+        now={now}
+      />
       <OriginChip
         projectId={projectId}
         sourceKind={candidate.source_kind}
@@ -316,6 +354,49 @@ function CandidateRow({
         className="mr-5 ml-2 shrink-0 text-outline group-hover:text-primary transition-colors"
       />
     </li>
+  );
+}
+
+/**
+ * Art. 14 chip — shown only while a notification is actually owed.
+ *
+ * It disappears once the person has been told, because a permanent "notified"
+ * badge on every sourced candidate is noise that trains people to stop reading
+ * the row. What needs to be visible is the open obligation and how late it is.
+ * It links to the Outreach tab, which is the only place the duty can be
+ * discharged.
+ */
+function NotificationChip({
+  projectId,
+  candidateId,
+  candidate,
+  now,
+}: {
+  projectId: string;
+  candidateId: string;
+  candidate: CandidateRow;
+  now: Date;
+}) {
+  const state = notificationState(candidate, now);
+  if (state.status !== "due" && state.status !== "overdue") return null;
+
+  const overdue = state.status === "overdue";
+  return (
+    <Link
+      href={`/app/projects/${projectId}/candidates/${candidateId}#outreach`}
+      prefetch={false}
+      title="GDPR Art. 14: this person did not give us their data and has not been told we hold it."
+      className={cn(
+        "hidden sm:flex items-center gap-1.5 shrink-0 px-2 py-0.5 border",
+        "font-mono-label text-mono-label uppercase tracking-wider transition-colors",
+        overdue
+          ? "border-error/50 text-error hover:bg-error/10"
+          : "border-tertiary/50 text-tertiary hover:bg-tertiary/10"
+      )}
+    >
+      <IconMail size={12} />
+      {notificationLabel(state)}
+    </Link>
   );
 }
 
