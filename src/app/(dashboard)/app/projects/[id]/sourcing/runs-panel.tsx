@@ -14,6 +14,8 @@ import {
   suppressionLabel,
   type LineageConversion,
 } from "@/lib/sourcing/conversion";
+import { MIN_ROWS_FOR_ANALYSIS } from "@/lib/sourcing/coverage";
+import { CoveragePanel } from "./coverage-panel";
 import type { PipelineStage } from "@/lib/ai/cv-parsing";
 import {
   IconArrowRight,
@@ -47,7 +49,7 @@ export async function SourcingRunsPanel({
   const { data: runRows, error } = await supabase
     .from("sourcing_runs")
     .select(
-      "id, parent_run_id, root_run_id, version, label, status, content_json, result_count, imported_count, executed_at, created_at"
+      "id, parent_run_id, root_run_id, version, label, status, content_json, analysis_json, result_count, imported_count, executed_at, created_at"
     )
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
@@ -256,6 +258,7 @@ function LineageCard({
               lineage.runs.find((r) => r.id === run.parent_run_id)?.version ??
               null
             }
+            nextVersion={nextVersion}
             pending={pendingByRun.get(run.id) ?? 0}
           />
         ))}
@@ -289,11 +292,13 @@ function RunLine({
   projectId,
   run,
   parentVersion,
+  nextVersion,
   pending,
 }: {
   projectId: string;
   run: RunRow;
   parentVersion: number | null;
+  nextVersion: number;
   pending: number;
 }) {
   const content = normalizeRunContent(run.content_json);
@@ -336,6 +341,20 @@ function RunLine({
           {content.queries.length === 1 ? "query" : "queries"} snapshotted
           {run.executed_at ? ` · executed ${formatDay(run.executed_at)}` : ""}
         </p>
+
+        {/* Coverage analysis is only meaningful once a run has executed and
+            returned enough rows to describe a strategy rather than a handful
+            of people. */}
+        {run.status !== "draft" && (
+          <CoveragePanel
+            projectId={projectId}
+            runId={run.id}
+            runVersion={run.version}
+            nextVersion={nextVersion}
+            analysisJson={run.analysis_json}
+            canAnalyse={run.result_count >= MIN_ROWS_FOR_ANALYSIS}
+          />
+        )}
       </div>
 
       <div className="flex items-center gap-4 shrink-0">

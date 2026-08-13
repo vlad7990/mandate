@@ -50,6 +50,9 @@ export type SourcingRunRow = {
   label: string | null;
   status: SourcingRunStatus;
   content_json: unknown;
+  /** Coverage findings, written AFTER execution. Unknown at the DB boundary;
+   * normalizeCoverageAnalysis() is what makes it safe to render. */
+  analysis_json: unknown;
   result_count: number;
   imported_count: number;
   executed_at: string | null;

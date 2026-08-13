@@ -16,6 +16,7 @@
 // deterministic core in @/lib/sourcing/import.
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   dedupeImportRows,
@@ -26,12 +27,20 @@ import {
   type ParseResult,
 } from "@/lib/sourcing/import";
 import {
+  normalizeRunContent,
   PROVENANCE_KEY,
   type ImportProvenance,
   type PromoteDecision,
   type SourcingRunContent,
   type SourcingRunQuery,
 } from "@/lib/sourcing/runs";
+import {
+  canAnalyseAperture,
+  MIN_ROWS_FOR_ANALYSIS,
+  summariseAperture,
+  type ApertureRow,
+} from "@/lib/sourcing/coverage";
+import { runCoverageAnalysis } from "@/lib/ai/run-coverage-analysis";
 import { slotForDbRow, SLOTS } from "@/lib/ai/sourcing-analysis";
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
 
@@ -417,6 +426,113 @@ export async function stageImportAction(
     skippedUnnamed: parsed.skippedUnnamed,
     droppedForCap: parsed.droppedForCap,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Coverage analysis
+// ---------------------------------------------------------------------------
+
+/**
+ * Ask the coverage agent where this run's search aperture was narrow.
+ *
+ * Returns as soon as the work is queued. The model call runs in `after()`,
+ * because it takes tens of seconds and an AI call in a render path is the bug
+ * that was fixed in 6468808 — the recruiter should get their page back and see
+ * the findings when they land.
+ *
+ * Writing to `analysis_json` on an executed run is legal by design: the guard
+ * in migration 041 freezes content_json and the execution record but leaves
+ * analysis open, because coverage analysis happens after execution by
+ * definition.
+ */
+export async function analyseRunCoverageAction(
+  projectId: string,
+  runId: string
+): Promise<{ queued: true }> {
+  const { organizationId } = await requireAuth();
+  await loadProject(projectId, organizationId);
+  const supabase = await createServerSupabaseClient();
+
+  const { data: run, error: runError } = await supabase
+    .from("sourcing_runs")
+    .select("id, project_id, status, content_json, result_count, imported_count")
+    .eq("id", runId)
+    .single<{
+      id: string;
+      project_id: string;
+      status: string;
+      content_json: unknown;
+      result_count: number;
+      imported_count: number;
+    }>();
+
+  if (runError || !run) throw new Error("Sourcing run not found.");
+  if (run.project_id !== projectId) {
+    throw new Error("This run belongs to a different search.");
+  }
+  if (run.status === "draft") {
+    throw new Error(
+      "This run has not been executed yet — there are no results to analyse."
+    );
+  }
+
+  const { data: resultRows, error: resultsError } = await supabase
+    .from("sourcing_run_results")
+    .select("current_company, current_title, location")
+    .eq("run_id", runId);
+
+  if (resultsError) {
+    throw new Error(`Failed to read results: ${resultsError.message}`);
+  }
+
+  const aperture = summariseAperture((resultRows ?? []) as ApertureRow[]);
+
+  // Refused before the model is called, not after. A finding about four rows
+  // describes four rows rather than a strategy, and a confident one would get
+  // a working search rewritten.
+  if (!canAnalyseAperture(aperture)) {
+    throw new Error(
+      `Too few results to analyse — ${MIN_ROWS_FOR_ANALYSIS} are needed and this run returned ${aperture.total_rows}.`
+    );
+  }
+
+  const content = normalizeRunContent(run.content_json);
+
+  after(async () => {
+    try {
+      const analysis = await runCoverageAnalysis(
+        {
+          brief: content.brief,
+          strategy_rationale: content.strategy_rationale,
+          queries: content.queries.map((q) => ({
+            slot: q.slot,
+            content: q.content,
+          })),
+          yield: {
+            result_count: run.result_count,
+            imported_count: run.imported_count,
+          },
+          aperture,
+        },
+        { projectId, organizationId }
+      );
+
+      const background = await createServerSupabaseClient();
+      await background
+        .from("sourcing_runs")
+        .update({ analysis_json: analysis, updated_at: new Date().toISOString() })
+        .eq("id", runId);
+
+      revalidatePath(`/app/projects/${projectId}/sourcing`);
+    } catch (err) {
+      // Swallowed deliberately: this runs after the response. Throwing here
+      // reaches nobody, and the UI already reads "no analysis yet" — which is
+      // the truth when the call failed.
+      console.error("[coverage-analysis] run %s failed", runId, err);
+    }
+  });
+
+  return { queued: true };
 }
 
 // ---------------------------------------------------------------------------

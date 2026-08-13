@@ -21,6 +21,7 @@ function run(overrides: Partial<SourcingRunRow> = {}): SourcingRunRow {
     label: "Conservative",
     status: "executed",
     content_json: {},
+    analysis_json: {},
     result_count: 0,
     imported_count: 0,
     executed_at: "2026-08-01T00:00:00.000Z",
