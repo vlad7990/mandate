@@ -12,7 +12,113 @@ import {
   type CoverageState,
 } from "@/lib/comparison/evidence-index";
 import type { DimensionKey } from "@/lib/ai/onboarding-analysis";
-import { PDF_COLORS, PDF_STYLES, scoreColor, tierColor } from "./styles";
+import {
+  PDF_COLORS,
+  PDF_CONTENT_WIDTH,
+  PDF_STYLES,
+  scoreColor,
+  tierColor,
+} from "./styles";
+
+/**
+ * Master scoring table column widths, in points.
+ *
+ * Each score column has to be wide enough for its own heading, not just for
+ * a single digit — the headings are the widest thing in these columns. See
+ * `thNum` in styles.ts for the tracking that makes these fit.
+ */
+const SCORE_COL = 34;
+const RANK_COL = 22;
+const TIER_COL = 64;
+const OVERALL_COL = 42;
+
+/** Evidence grid: the dimension label column. Fits "Transformation (w4)". */
+const DIMENSION_COL = 84;
+
+/**
+ * What the master table's fixed columns consume, leaving the rest to the
+ * candidate name. Exported so a test can assert the table still fits the
+ * page: react-pdf does not complain when columns overrun, it just prints
+ * the last one off the right margin.
+ */
+export const MASTER_TABLE_FIXED_WIDTH =
+  RANK_COL + TIER_COL + OVERALL_COL + SCORE_COL * 5;
+
+/**
+ * The evidence grid grows a column per candidate, so its type has to shrink
+ * as the slate grows or the names overprint each other. Thresholds are in
+ * points of available column width, measured rather than guessed.
+ *
+ * The comparison page builds this grid from the primary slate only — at most
+ * four candidates today — so in practice only the first tier is reached. The
+ * narrower tiers are here because nothing in the type stops a caller passing
+ * the full pool, and the failure mode when it does is silent overprinting
+ * rather than an error.
+ *
+ * Past roughly nine columns even the stacked layout runs out of room. A slate
+ * that wide wants a landscape page, which the document does not do today.
+ */
+export function gridDensity(candidateCount: number) {
+  const colWidth =
+    (PDF_CONTENT_WIDTH - DIMENSION_COL) / Math.max(candidateCount, 1);
+  if (colWidth >= 90)
+    return { name: 8, cell: 9, pad: 6, tracking: 0.5, stack: false };
+  // Below this a double-barrelled surname is wider than its column, so the
+  // name has to be laid out a token per line rather than wrapped.
+  if (colWidth >= 64)
+    return { name: 7.5, cell: 8.5, pad: 5, tracking: 0.25, stack: true };
+  return { name: 7, cell: 8, pad: 4, tracking: 0, stack: true };
+}
+
+type GridDensity = ReturnType<typeof gridDensity>;
+
+/**
+ * A candidate's name as an evidence-grid column heading.
+ *
+ * Once the columns are narrow, a surname can be wider than its column, and
+ * react-pdf overflows rather than clips — the name overprints the next
+ * candidate's. Below that width the name is laid out a word per line, with
+ * double-barrelled surnames split at the hyphen they already contain, so
+ * every line is a token that fits.
+ */
+function HeaderName({
+  name,
+  density,
+}: {
+  name: string;
+  density: GridDensity;
+}) {
+  const style = {
+    fontSize: density.name,
+    fontFamily: "Helvetica-Bold",
+    color: "#ffffff",
+    letterSpacing: density.tracking,
+    // Overrides `th`, which uppercases. Capitals cost roughly a sixth of the
+    // width for no gain here — a name is not a label — and at eight columns
+    // that sixth is the difference between fitting and overprinting.
+    textTransform: "none",
+  } as const;
+
+  if (!density.stack) {
+    return <Text style={style}>{name}</Text>;
+  }
+
+  // "Alexander Mwangi-Fitzgerald" → ["Alexander", "Mwangi-", "Fitzgerald"]
+  const lines = name
+    .trim()
+    .split(/\s+/)
+    .flatMap((word) => (word.includes("-") ? word.split(/(?<=-)/) : [word]));
+
+  return (
+    <View>
+      {lines.map((line, i) => (
+        <Text key={i} style={style}>
+          {line}
+        </Text>
+      ))}
+    </View>
+  );
+}
 
 const DIMENSION_LABEL: Record<DimensionKey, string> = {
   technical: "Technical",
@@ -99,53 +205,35 @@ export function ComparisonPdfDocument({
             }
           />
           <View style={PDF_STYLES.table}>
-            <View style={PDF_STYLES.thead}>
-              <Text style={[PDF_STYLES.th, { width: 24 }]}>#</Text>
-              <Text style={[PDF_STYLES.th, { flex: 3 }]}>Candidate</Text>
-              <Text style={[PDF_STYLES.th, { flex: 1 }]}>Tier</Text>
-              <Text
-                style={[PDF_STYLES.th, { width: 40, textAlign: "right" }]}
-              >
+            <View style={PDF_STYLES.thead} fixed>
+              <Text style={[PDF_STYLES.th, { width: RANK_COL }]}>#</Text>
+              <Text style={[PDF_STYLES.th, { flex: 1 }]}>Candidate</Text>
+              <Text style={[PDF_STYLES.th, { width: TIER_COL }]}>Tier</Text>
+              <Text style={[PDF_STYLES.thNum, { width: OVERALL_COL }]}>
                 Overall
               </Text>
-              <Text
-                style={[PDF_STYLES.th, { width: 26, textAlign: "right" }]}
-              >
-                Tech
-              </Text>
-              <Text
-                style={[PDF_STYLES.th, { width: 30, textAlign: "right" }]}
-              >
-                Dom
-              </Text>
-              <Text
-                style={[PDF_STYLES.th, { width: 26, textAlign: "right" }]}
-              >
-                Lead
-              </Text>
-              <Text
-                style={[PDF_STYLES.th, { width: 30, textAlign: "right" }]}
-              >
-                Reg
-              </Text>
-              <Text
-                style={[PDF_STYLES.th, { width: 32, textAlign: "right" }]}
-              >
+              <Text style={[PDF_STYLES.thNum, { width: SCORE_COL }]}>Tech</Text>
+              <Text style={[PDF_STYLES.thNum, { width: SCORE_COL }]}>Dom</Text>
+              <Text style={[PDF_STYLES.thNum, { width: SCORE_COL }]}>Lead</Text>
+              <Text style={[PDF_STYLES.thNum, { width: SCORE_COL }]}>Reg</Text>
+              <Text style={[PDF_STYLES.thNum, { width: SCORE_COL }]}>
                 Xform
               </Text>
             </View>
+            {/* wrap={false}: a split row put a candidate's name on one page and
+                their title and tier on the next, under the fixed brand bar. */}
             {rows.map((r) => (
-              <View key={r.candidate_id} style={PDF_STYLES.tbodyRow}>
+              <View key={r.candidate_id} style={PDF_STYLES.tbodyRow} wrap={false}>
                 <Text
                   style={[
                     PDF_STYLES.td,
                     PDF_STYLES.tdNum,
-                    { width: 24, color: PDF_COLORS.textMuted },
+                    { width: RANK_COL, color: PDF_COLORS.textMuted },
                   ]}
                 >
                   {r.rank}
                 </Text>
-                <View style={[PDF_STYLES.td, { flex: 3 }]}>
+                <View style={[PDF_STYLES.td, { flex: 1 }]}>
                   <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold" }}>
                     {r.full_name}
                   </Text>
@@ -160,7 +248,7 @@ export function ComparisonPdfDocument({
                     {r.current_company ? ` · ${r.current_company}` : ""}
                   </Text>
                 </View>
-                <View style={[PDF_STYLES.td, { flex: 1 }]}>
+                <View style={[PDF_STYLES.td, { width: TIER_COL }]}>
                   <Text
                     style={{
                       ...PDF_STYLES.pill,
@@ -174,16 +262,16 @@ export function ComparisonPdfDocument({
                   style={[
                     PDF_STYLES.td,
                     PDF_STYLES.tdNum,
-                    { width: 40, color: scoreColor(r.overall) },
+                    { width: OVERALL_COL, color: scoreColor(r.overall) },
                   ]}
                 >
                   {r.overall.toFixed(2)}
                 </Text>
-                <ScoreCell value={r.technical} width={26} />
-                <ScoreCell value={r.domain} width={30} />
-                <ScoreCell value={r.leadership} width={26} />
-                <ScoreCell value={r.regulatory} width={30} />
-                <ScoreCell value={r.transformation} width={32} />
+                <ScoreCell value={r.technical} />
+                <ScoreCell value={r.domain} />
+                <ScoreCell value={r.leadership} />
+                <ScoreCell value={r.regulatory} />
+                <ScoreCell value={r.transformation} />
               </View>
             ))}
           </View>
@@ -347,6 +435,7 @@ export function ComparisonPdfDocument({
 function EvidenceSection({ grid }: { grid: ComparisonGrid | null }) {
   if (!grid || grid.candidates.length === 0) return null;
   const spots = blindSpots(grid);
+  const density = gridDensity(grid.candidates.length);
 
   return (
     <View>
@@ -370,16 +459,26 @@ function EvidenceSection({ grid }: { grid: ComparisonGrid | null }) {
 
       <View style={PDF_STYLES.table}>
         <View style={PDF_STYLES.thead}>
-          <Text style={[PDF_STYLES.th, { flex: 2 }]}>Dimension</Text>
+          <Text style={[PDF_STYLES.th, { width: DIMENSION_COL }]}>
+            Dimension
+          </Text>
           {grid.candidates.map((c) => (
-            <Text key={c.candidate_id} style={[PDF_STYLES.th, { flex: 2 }]}>
-              {c.full_name}
-            </Text>
+            <View
+              key={c.candidate_id}
+              style={[
+                PDF_STYLES.th,
+                { flex: 1, paddingHorizontal: density.pad },
+              ]}
+            >
+              {/* Not uppercased: capitals cost roughly a sixth of the width
+                  for no gain here — a name is not a label. */}
+              <HeaderName name={c.full_name} density={density} />
+            </View>
           ))}
         </View>
         {grid.rows.map((row) => (
-          <View key={row.dimension} style={PDF_STYLES.tbodyRow}>
-            <Text style={[PDF_STYLES.td, { flex: 2 }]}>
+          <View key={row.dimension} style={PDF_STYLES.tbodyRow} wrap={false}>
+            <Text style={[PDF_STYLES.td, { width: DIMENSION_COL }]}>
               {DIMENSION_LABEL[row.dimension]}
               {row.weight === null ? "" : ` (w${row.weight})`}
             </Text>
@@ -388,7 +487,12 @@ function EvidenceSection({ grid }: { grid: ComparisonGrid | null }) {
                 key={cell.candidate_id}
                 style={[
                   PDF_STYLES.td,
-                  { flex: 2, color: STATE_COLOR[cell.coverage.state] },
+                  {
+                    flex: 1,
+                    fontSize: density.cell,
+                    paddingHorizontal: density.pad,
+                    color: STATE_COLOR[cell.coverage.state],
+                  },
                 ]}
               >
                 {STATE_TEXT[cell.coverage.state]}
@@ -501,13 +605,13 @@ function SlateBlock({
   );
 }
 
-function ScoreCell({ value, width }: { value: number; width: number }) {
+function ScoreCell({ value }: { value: number }) {
   return (
     <Text
       style={[
         PDF_STYLES.td,
         PDF_STYLES.tdNum,
-        { width, color: scoreColor(value) },
+        { width: SCORE_COL, color: scoreColor(value) },
       ]}
     >
       {value}

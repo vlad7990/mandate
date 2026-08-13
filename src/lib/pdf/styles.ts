@@ -1,4 +1,18 @@
-import { StyleSheet } from "@react-pdf/renderer";
+import { Font, StyleSheet } from "@react-pdf/renderer";
+
+// react-pdf hyphenates automatically, which in narrow table cells splits
+// ordinary words mid-syllable: "Not as-sessed", "DIMEN-SION", "Their
+// ac-count". In the evidence grid that is every cell, and "Not assessed" is
+// the phrase carrying the whole absence-is-a-finding idea — it has to read
+// cleanly. Returning the word whole makes it wrap at spaces instead.
+//
+// Names are the one place a word can be too wide for its column on its own
+// (a double-barrelled surname is a single unbreakable token). Breaking those
+// is handled where it happens, by laying the name out over several lines —
+// letting the hyphenator do it renders a doubled hyphen, because it appends
+// its own to a fragment that already ends in one.
+// Applies to every Mandate PDF, since they all import this module.
+Font.registerHyphenationCallback((word) => [word]);
 
 // Mandate PDF visual system. Single source of truth so the evaluation
 // PDF and the comparison PDF share identical typography, colours, and
@@ -28,6 +42,16 @@ export const PDF_COLORS = {
   brand: "#000000",
   brandText: "#ffffff",
 } as const;
+
+/**
+ * Usable width inside `body` on A4 (595.28pt less 36pt padding a side).
+ * Table column budgets are checked against this — a table whose fixed
+ * columns exceed it silently clips at the right margin.
+ */
+export const PDF_CONTENT_WIDTH = 595.28 - 72;
+
+/** Side padding on numeric cells and their headings. Shared so they align. */
+const NUM_COL_PADDING = 4;
 
 export const PDF_STYLES = StyleSheet.create({
   page: {
@@ -165,6 +189,20 @@ export const PDF_STYLES = StyleSheet.create({
     letterSpacing: 1,
     textTransform: "uppercase",
   },
+  // Numeric column heading. `th`'s letterSpacing and 6pt side padding cost
+  // more width than a narrow score column has, so the label used to overflow
+  // its box and collide with its neighbour ("TECHDOM LEADREG XFOR"). Tighter
+  // tracking and padding let the label sit inside the column it labels.
+  thNum: {
+    paddingHorizontal: NUM_COL_PADDING,
+    paddingVertical: 6,
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: "#ffffff",
+    letterSpacing: 0,
+    textTransform: "uppercase",
+    textAlign: "right",
+  },
   tbodyRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
@@ -177,6 +215,8 @@ export const PDF_STYLES = StyleSheet.create({
     color: PDF_COLORS.textPrimary,
   },
   tdNum: {
+    // Must match thNum's padding or the figures sit off their heading.
+    paddingHorizontal: NUM_COL_PADDING,
     fontFamily: "Helvetica-Bold",
     textAlign: "right",
   },
