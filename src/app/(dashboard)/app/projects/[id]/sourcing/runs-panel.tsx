@@ -82,6 +82,14 @@ export async function SourcingRunsPanel({
         <EmptyRuns />
       ) : (
         <div className="space-y-3">
+          {/* Said once for the whole panel. It is the rule that governs how
+              every lineage below reads, not a property of any one of them —
+              repeating it per card turned a point into wallpaper. */}
+          <p className="font-mono-data text-body-main text-on-surface-variant">
+            Every version stays readable. A later version is a different bet,
+            not a correction — v1&rsquo;s yield is the baseline the rest are
+            judged against.
+          </p>
           {lineages.map((lineage) => (
             <LineageCard
               key={lineage.root_run_id}
@@ -183,12 +191,7 @@ function LineageCard({
         ))}
       </ul>
 
-      <footer className="px-4 py-2.5 border-t border-outline-variant bg-surface-container-lowest flex items-baseline justify-between gap-3 flex-wrap">
-        <p className="font-mono-data text-body-main text-on-surface-variant">
-          Every version stays readable. A later version is a different bet, not
-          a correction — v1&rsquo;s yield is the baseline the rest are judged
-          against.
-        </p>
+      <footer className="px-4 py-2.5 border-t border-outline-variant bg-surface-container-lowest flex items-baseline justify-end gap-3 flex-wrap">
         <CreateRunButton
           projectId={projectId}
           parentRunId={lineage.runs[lineage.runs.length - 1].id}
