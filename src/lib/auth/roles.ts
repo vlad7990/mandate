@@ -41,13 +41,32 @@ export const DEFAULT_ROLE: Role = "viewer";
  * done on, because several screens mutate the same domain and a screen
  * can move.
  *
- * `mandates:write` and `clients:share` currently resolve to the same two
- * roles, which looks redundant. They are kept apart because they are the
- * two separate limits that define the researcher role — "cannot open a
- * mandate" and "cannot put anything in front of a client" — and they
- * cover different route trees and different tables. Merging them now
- * would mean re-splitting them the first time a researcher is allowed to
- * open a mandate but still not to send anything out.
+ * `mandates:write`, `clients:share` and `fees:read` all currently resolve
+ * to the same two roles, which looks redundant. They are kept apart
+ * because they are separate limits that happen to coincide — "cannot open
+ * a mandate", "cannot put anything in front of a client", "cannot see what
+ * we billed" — and they cover different route trees and different tables.
+ * Merging them now would mean re-splitting them the first time a
+ * researcher is allowed to open a mandate but still not to send anything
+ * out, or a delivery consultant presents slates without seeing the book.
+ *
+ * ## `fees:read` is the first capability that restricts a *read*
+ *
+ * Everything above it is a write tier over data every active role can
+ * see; `org:read` has meant "sees everything" since 046. Money is where
+ * that stops — a contract researcher or a viewer account handed to a
+ * stakeholder would otherwise open the whole revenue book.
+ *
+ * It has no `fees:write` counterpart. Recording what a placement paid is
+ * part of running the mandate, so the fee tables take `mandates:write` on
+ * the write side, which is the same two roles. A second capability there
+ * would be a name with nothing behind it. Migration 050 does the same:
+ * `can_read_fees()` on SELECT, `can_write_mandates()` on the rest.
+ *
+ * The exception the capability cannot express is the own-placement rule —
+ * whoever owns or sourced a placement sees that placement's money whatever
+ * their role. That is per-row and therefore lives in RLS and in
+ * `canReadPlacementFees` in `src/lib/fees/access.ts`, not here.
  */
 export const CAPABILITIES = [
   /** See the org's recruiting data. Every active role has this. */
@@ -58,6 +77,8 @@ export const CAPABILITIES = [
   "mandates:write",
   /** Publish a shortlist, open the HM portal, export client-facing PDFs, send outreach. */
   "clients:share",
+  /** See fee terms, placement fees and the revenue book across the org. */
+  "fees:read",
   /** Author skills, competencies and role templates — they change how every search scores. */
   "skills:write",
   /** Org settings and member administration. */
@@ -72,10 +93,11 @@ const GRANTS: Record<Role, readonly Capability[]> = {
     "candidates:write",
     "mandates:write",
     "clients:share",
+    "fees:read",
     "skills:write",
     "org:manage",
   ],
-  recruiter: ["org:read", "candidates:write", "mandates:write", "clients:share"],
+  recruiter: ["org:read", "candidates:write", "mandates:write", "clients:share", "fees:read"],
   researcher: ["org:read", "candidates:write"],
   viewer: ["org:read"],
 };
@@ -125,8 +147,9 @@ export const ROLE_LABELS: Record<Role, string> = {
 export const ROLE_SUMMARIES: Record<Role, string> = {
   admin: "Everything a recruiter can do, plus org settings, member roles and the skills studio.",
   recruiter: "Runs mandates end to end — sourcing, evaluation, shortlists, client exports and outreach.",
-  researcher: "Sourcing and evaluation. Cannot open a mandate, publish a shortlist or contact a candidate.",
-  viewer: "Read-only across the org. Writes nothing anywhere.",
+  researcher:
+    "Sourcing and evaluation. Cannot open a mandate, publish a shortlist or contact a candidate. Sees fees only on placements they are credited on.",
+  viewer: "Read-only across the org, excluding fees and revenue. Writes nothing anywhere.",
 };
 
 /** Human-readable name for a capability, for the settings matrix. */
@@ -135,6 +158,7 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
   "candidates:write": "Candidates and sourcing",
   "mandates:write": "Mandates and calibration",
   "clients:share": "Shortlists, exports and outreach",
+  "fees:read": "Placement fees and revenue",
   "skills:write": "Skills studio",
   "org:manage": "Org settings and members",
 };

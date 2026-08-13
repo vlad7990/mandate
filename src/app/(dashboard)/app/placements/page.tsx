@@ -1,0 +1,376 @@
+import Link from "next/link";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
+import { ListPanel, PageShell, TerminalTitle } from "@/components/ui/page-shell";
+import { getAccess } from "@/lib/auth/access";
+import { can } from "@/lib/auth/roles";
+import {
+  billedInPeriod,
+  formatMoney,
+  guaranteeState,
+  GUARANTEE_STATE_LABELS,
+  pipelineValue,
+  quarterOf,
+  recentQuarters,
+} from "@/lib/fees/compute";
+import {
+  FEE_LINE_COLUMNS,
+  PLACEMENT_COLUMNS,
+  PLACEMENT_STATUS_LABELS,
+  type FeeLineRow,
+  type PlacementRow,
+  type PlacementStatus,
+} from "@/lib/fees/types";
+
+/**
+ * The revenue book — the screen that answers "what did we bill this
+ * quarter".
+ *
+ * That question is the acceptance test for the whole placement record, so
+ * it is the headline here rather than something you reach by filtering a
+ * list. Everything else on the page exists to make the number
+ * interrogable: the four quarters behind it, the placements that make it
+ * up, and what is booked but not yet earned.
+ *
+ * ## What each role sees
+ *
+ * A researcher or viewer holds `org:read` but not `fees:read`, so RLS
+ * sends them the placements and none of the fee lines. Rather than
+ * showing them a revenue page reading zero — which is a lie, not a
+ * restriction — the page says so and shows the placement list without the
+ * money columns. A researcher credited on a placement does see that
+ * placement's fee, which is why the totals here are computed from
+ * whatever lines RLS actually returned rather than from a count the
+ * server assumes.
+ *
+ * The list is not paginated, on the same reasoning as the client list:
+ * placements are bounded by how many searches an agency closes, which is
+ * two orders of magnitude below its candidate count. It wants
+ * `parseListParams` the day that stops being true.
+ */
+
+type PlacementListRow = PlacementRow & {
+  candidates: { full_name: string } | null;
+  projects: { title: string } | null;
+  clients: { name: string } | null;
+};
+
+const STATUS_TONE: Record<PlacementStatus, string> = {
+  offered: "text-on-surface-variant",
+  declined: "text-outline",
+  accepted: "text-primary",
+  started: "text-primary",
+  fell_through: "text-tertiary",
+};
+
+export default async function PlacementsPage() {
+  const supabase = await createServerSupabaseClient();
+  const access = await getAccess();
+
+  const seesFees = can(access?.role, "fees:read");
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [{ data: placementRows }, { data: lineRows }, { data: orgRow }] = await Promise.all([
+    supabase
+      .from("placements")
+      .select(
+        `${PLACEMENT_COLUMNS}, candidates(full_name), projects(title), clients(name)`
+      )
+      .order("offer_date", { ascending: false })
+      .returns<PlacementListRow[]>(),
+    // RLS decides how much of this comes back. A viewer gets an empty
+    // array and every total below is honestly zero-of-nothing rather than
+    // a redacted figure.
+    supabase
+      .from("placement_fee_lines")
+      .select(FEE_LINE_COLUMNS)
+      .returns<FeeLineRow[]>(),
+    access?.organizationId
+      ? supabase
+          .from("organizations")
+          .select("base_currency")
+          .eq("id", access.organizationId)
+          .maybeSingle<{ base_currency: string }>()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const placements = placementRows ?? [];
+  const lines = lineRows ?? [];
+  const baseCurrency = orgRow?.base_currency ?? "USD";
+
+  const thisQuarter = quarterOf(today);
+  const quarters = recentQuarters(today, 4);
+  const billedThisQuarter = billedInPeriod(lines, thisQuarter);
+  const outstanding = pipelineValue(lines);
+
+  const linesByPlacement = new Map<string, FeeLineRow[]>();
+  for (const line of lines) {
+    const bucket = linesByPlacement.get(line.placement_id);
+    if (bucket) bucket.push(line);
+    else linesByPlacement.set(line.placement_id, [line]);
+  }
+
+  const started = placements.filter((p) => p.status === "started").length;
+  const inGuarantee = placements.filter(
+    (p) => guaranteeState(p, today) === "running"
+  ).length;
+
+  return (
+    <PageShell className="space-y-5">
+      <SetBreadcrumbs crumbs={[{ label: "Placements" }]} />
+
+      <div>
+        <TerminalTitle>PLACEMENTS_AND_FEES</TerminalTitle>
+        <p className="mt-2 font-mono-label text-mono-label uppercase leading-[1.5] tracking-widest text-on-surface-variant tabular-nums">
+          {[
+            `${placements.length} placement${placements.length === 1 ? "" : "s"}`,
+            `${started} started`,
+            `${inGuarantee} in guarantee`,
+            seesFees ? `Base ${baseCurrency}` : "Fees restricted",
+          ].join(" // ")}
+        </p>
+      </div>
+
+      {seesFees ? (
+        <>
+          <div className="grid grid-cols-1 gap-px border border-outline-variant bg-outline-variant sm:grid-cols-2 lg:grid-cols-4">
+            <Tile
+              label={`Billed ${thisQuarter.label}`}
+              value={formatMoney(billedThisQuarter, baseCurrency)}
+              hint="Earned instalments less reversals"
+            />
+            <Tile
+              label="Booked, not yet earned"
+              value={formatMoney(outstanding, baseCurrency)}
+              hint="Pending instalments across live placements"
+            />
+            <Tile
+              label="Placements started"
+              value={String(started)}
+              hint="Candidates who have begun"
+            />
+            <Tile
+              label="Inside guarantee"
+              value={String(inGuarantee)}
+              hint="Still at risk of a clawback"
+            />
+          </div>
+
+          <ListPanel>
+            <div className="border-b border-outline-variant px-[18px] py-[15px]">
+              <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+                Billed by quarter
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[520px] border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-outline-variant/60">
+                    {quarters.map((q) => (
+                      <th
+                        key={q.label}
+                        className="px-4 py-2.5 font-mono-label text-[11px] font-normal uppercase tracking-[0.08em] text-outline"
+                      >
+                        {q.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    {quarters.map((q) => {
+                      const value = billedInPeriod(lines, q);
+                      return (
+                        <td
+                          key={q.label}
+                          className={`px-4 py-3 font-h1 text-[18px] tabular-nums ${
+                            value < 0 ? "text-tertiary" : "text-on-surface"
+                          }`}
+                        >
+                          {formatMoney(value, baseCurrency)}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </ListPanel>
+        </>
+      ) : (
+        <div className="border border-outline-variant bg-surface-container-low px-[18px] py-4">
+          <p className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+            Fees restricted
+          </p>
+          <p className="mt-2 max-w-[68ch] text-body-s leading-relaxed text-on-surface-variant">
+            Your role can see that these placements happened but not what they billed.
+            Fee terms, amounts and the revenue book are visible to admins and recruiters,
+            and to whoever is credited on an individual placement. The placements below
+            are the full list — nothing is hidden from it.
+          </p>
+        </div>
+      )}
+
+      <ListPanel>
+        <div className="border-b border-outline-variant px-[18px] py-[15px]">
+          <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+            All placements
+          </h2>
+        </div>
+
+        {placements.length === 0 ? (
+          <div className="px-[18px] py-8">
+            <p className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
+              No placements recorded
+            </p>
+            <p className="mt-2 max-w-[68ch] text-body-s leading-relaxed text-on-surface-variant">
+              A placement is recorded from the candidate who got the offer — open a
+              candidate and use the Placement &amp; fee tab. Everything on this page is
+              computed from those records.
+            </p>
+          </div>
+        ) : (
+          // `relative` on the scroll wrapper: `sr-only` is `position:
+          // absolute`, so without a positioned ancestor its containing block
+          // is the root and it extends the document's scrollable width past
+          // the overflow that should have clipped it. That bug made the whole
+          // Members page scroll sideways in an earlier session.
+          <div className="relative overflow-x-auto">
+            <table className="w-full min-w-[860px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-outline-variant/60">
+                  <Th>Candidate</Th>
+                  <Th>Mandate</Th>
+                  <Th>Client</Th>
+                  <Th>Status</Th>
+                  <Th>Start</Th>
+                  <Th>Guarantee</Th>
+                  {seesFees && <Th align="right">Fee</Th>}
+                  {seesFees && <Th align="right">Billed</Th>}
+                </tr>
+              </thead>
+              <tbody>
+                {placements.map((placement) => {
+                  const own = linesByPlacement.get(placement.id) ?? [];
+                  // A credited researcher sees their own placement's lines
+                  // even without the capability, so this is computed per row
+                  // from what came back rather than gated on `seesFees`.
+                  const visible = own.length > 0;
+                  const booked = visible
+                    ? own
+                        .filter((l) => l.status !== "cancelled")
+                        .reduce((sum, l) => sum + l.base_amount, 0)
+                    : 0;
+                  const billed = visible
+                    ? own
+                        .filter((l) => l.status === "earned")
+                        .reduce((sum, l) => sum + l.base_amount, 0)
+                    : 0;
+                  const guarantee = guaranteeState(placement, today);
+
+                  return (
+                    <tr
+                      key={placement.id}
+                      className="border-b border-outline-variant/30 last:border-0"
+                    >
+                      {/* max-w-0 is what makes `truncate` bite in a table cell —
+                          without it the column sizes to its longest name. */}
+                      <td className="max-w-0 px-4 py-3">
+                        <Link
+                          href={`/app/projects/${placement.project_id}/candidates/${placement.candidate_id}`}
+                          prefetch={false}
+                          className="block truncate text-body-s text-on-surface hover:text-primary hover:underline"
+                        >
+                          {placement.candidates?.full_name ?? "Unknown"}
+                        </Link>
+                      </td>
+                      <td className="max-w-0 px-4 py-3">
+                        <Link
+                          href={`/app/projects/${placement.project_id}`}
+                          prefetch={false}
+                          className="block truncate text-body-s text-on-surface-variant hover:text-primary hover:underline"
+                        >
+                          {placement.projects?.title ?? "—"}
+                        </Link>
+                      </td>
+                      <td className="max-w-0 truncate px-4 py-3 text-body-s text-on-surface-variant">
+                        {placement.clients?.name ?? "—"}
+                      </td>
+                      <td
+                        className={`px-4 py-3 font-mono-label text-[11px] uppercase tracking-[0.08em] ${
+                          STATUS_TONE[placement.status]
+                        }`}
+                      >
+                        {PLACEMENT_STATUS_LABELS[placement.status]}
+                      </td>
+                      <td className="px-4 py-3 font-mono-label text-[11px] tracking-[0.08em] text-outline tabular-nums">
+                        {placement.start_date ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
+                        {GUARANTEE_STATE_LABELS[guarantee]}
+                      </td>
+                      {seesFees && (
+                        <td className="px-4 py-3 text-right font-mono-label text-mono-label text-on-surface tabular-nums">
+                          {visible ? formatMoney(booked, baseCurrency) : "—"}
+                        </td>
+                      )}
+                      {seesFees && (
+                        <td
+                          className={`px-4 py-3 text-right font-mono-label text-mono-label tabular-nums ${
+                            billed < 0 ? "text-tertiary" : "text-on-surface-variant"
+                          }`}
+                        >
+                          {visible ? formatMoney(billed, baseCurrency) : "—"}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </ListPanel>
+    </PageShell>
+  );
+}
+
+function Th({
+  children,
+  align = "left",
+}: {
+  children: React.ReactNode;
+  align?: "left" | "right";
+}) {
+  return (
+    <th
+      className={`px-4 py-2.5 font-mono-label text-[11px] font-normal uppercase tracking-[0.08em] text-outline ${
+        align === "right" ? "text-right" : "text-left"
+      }`}
+    >
+      {children}
+    </th>
+  );
+}
+
+function Tile({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div className="bg-surface-container-low px-4 py-4">
+      <p className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
+        {label}
+      </p>
+      <p className="mt-2 font-h1 text-[26px] leading-none tabular-nums text-on-surface">
+        {value}
+      </p>
+      <p className="mt-2 text-[12px] leading-snug text-on-surface-variant">{hint}</p>
+    </div>
+  );
+}

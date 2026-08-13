@@ -10,6 +10,10 @@ import {
   CLIENT_PROFILE_FIELDS,
   type ClientRow,
 } from "@/lib/clients/types";
+import { getAccess } from "@/lib/auth/access";
+import { can } from "@/lib/auth/roles";
+import { FEE_TERMS_COLUMNS, type FeeTermsRow } from "@/lib/fees/types";
+import { FeeTermsPanel } from "./fee-terms-panel";
 
 /**
  * The client record: who they are, what we know about them, and everything
@@ -79,6 +83,21 @@ export default async function ClientDetailPage({
   const projectRows = (mandates ?? []) as MandateRow[];
   const searchRows = (searches ?? []) as SearchRow[];
 
+  // The commercial agreement. RLS refuses the row without `fees:read`, so
+  // a researcher gets null and the section is simply absent — there is no
+  // "restricted" state to draw for terms, unlike a placement's fee, which
+  // has an own-placement exception this table deliberately does not.
+  const access = await getAccess();
+  const seesFees = can(access?.role, "fees:read");
+
+  const { data: feeTerms } = seesFees
+    ? await supabase
+        .from("fee_terms")
+        .select(FEE_TERMS_COLUMNS)
+        .eq("client_id", id)
+        .maybeSingle<FeeTermsRow>()
+    : { data: null };
+
   const knownFields = CLIENT_PROFILE_FIELDS.filter((f) => client[f.key]);
 
   return (
@@ -144,6 +163,14 @@ export default async function ClientDetailPage({
           </dl>
         )}
       </section>
+
+      {seesFees && (
+        <FeeTermsPanel
+          clientId={client.id}
+          terms={feeTerms ?? null}
+          canWrite={can(access?.role, "mandates:write")}
+        />
+      )}
 
       <section className="space-y-3">
         <MastHead

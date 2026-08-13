@@ -38,6 +38,18 @@ import {
 } from "./editable-fields";
 import { EvaluationReport } from "./evaluation-report";
 import { CandidateNotesPanel, type CandidateNote } from "./notes-panel";
+import { PlacementPanel } from "./placement-panel";
+import { getAccess } from "@/lib/auth/access";
+import { can } from "@/lib/auth/roles";
+import { canReadPlacementFees } from "@/lib/fees/access";
+import {
+  FEE_LINE_COLUMNS,
+  PLACEMENT_COLUMNS,
+  PLACEMENT_FEE_COLUMNS,
+  type FeeLineRow,
+  type PlacementFeeRow,
+  type PlacementRow,
+} from "@/lib/fees/types";
 import { OutreachPanel, type OutreachEntry } from "./outreach-panel";
 import { PipelineSelect } from "./pipeline-select";
 import { RecruiterAssessmentPanel } from "./recruiter-assessment-panel";
@@ -303,6 +315,58 @@ export default async function CandidateProfilePage({
     created_by_name: n.created_by ? authorMap.get(n.created_by) ?? null : null,
   }));
 
+  // The placement record, and the money behind it. Three reads rather than
+  // one join because the fee tables are behind `fees:read` and the
+  // placement is not — a researcher gets the placement and two empty
+  // arrays, which is the answer, not a failure. See migration 050.
+  const { data: placementRow } = await supabase
+    .from("placements")
+    .select(PLACEMENT_COLUMNS)
+    .eq("candidate_id", candidate.id)
+    .eq("project_id", projectId)
+    .maybeSingle<PlacementRow>();
+
+  let placementFee: PlacementFeeRow | null = null;
+  let feeLines: FeeLineRow[] = [];
+
+  if (placementRow) {
+    const [{ data: feeRow }, { data: lineRows }] = await Promise.all([
+      supabase
+        .from("placement_fees")
+        .select(PLACEMENT_FEE_COLUMNS)
+        .eq("placement_id", placementRow.id)
+        .maybeSingle<PlacementFeeRow>(),
+      supabase
+        .from("placement_fee_lines")
+        .select(FEE_LINE_COLUMNS)
+        .eq("placement_id", placementRow.id)
+        .order("sequence", { ascending: true })
+        .returns<FeeLineRow[]>(),
+    ]);
+    placementFee = feeRow ?? null;
+    feeLines = lineRows ?? [];
+  }
+
+  const access = await getAccess();
+
+  // The own-placement exception, decided here so the panel never holds a
+  // figure it declines to draw. RLS has already refused to send the rows
+  // to anyone this returns false for; this is what makes the UI say
+  // "Restricted" rather than "no fee recorded".
+  const canSeeFees = placementRow
+    ? canReadPlacementFees(access?.role, access?.userId ?? null, placementRow)
+    : can(access?.role, "fees:read");
+
+  // The caller's org, not the project's — RLS scopes both to the same one,
+  // and the project select does not carry `organization_id`.
+  const { data: orgRow } = access?.organizationId
+    ? await supabase
+        .from("organizations")
+        .select("base_currency")
+        .eq("id", access.organizationId)
+        .maybeSingle<{ base_currency: string }>()
+    : { data: null };
+
   const notices = (
     <>
       {parseError && (
@@ -530,6 +594,25 @@ export default async function CandidateProfilePage({
                   ((profile as { positioning_kit?: PositioningResult })
                     .positioning_kit) ?? null
                 }
+              />
+            ),
+          },
+          {
+            id: "placement",
+            label: "Placement & fee",
+            content: (
+              <PlacementPanel
+                projectId={projectId}
+                candidateId={candidate.id}
+                candidateName={candidate.full_name}
+                placement={placementRow ?? null}
+                fee={placementFee}
+                lines={feeLines}
+                canSeeFees={canSeeFees}
+                canWrite={can(access?.role, "mandates:write")}
+                today={new Date().toISOString().slice(0, 10)}
+                baseCurrency={orgRow?.base_currency ?? "USD"}
+                termsSummary={null}
               />
             ),
           },

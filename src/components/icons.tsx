@@ -732,3 +732,18 @@ export function IconDocument({ size = 14, className }: IconProps) {
     </svg>
   );
 }
+
+/**
+ * Placements and fees. A banknote rather than a currency glyph — a "$"
+ * would be wrong the moment an org sets its base currency to anything
+ * else, and the rail must not assert a currency the product does not know.
+ */
+export function IconPlacements({ size = 16, className }: IconProps) {
+  return (
+    <svg {...svg(size, className)}>
+      <rect x="2.5" y="6" width="19" height="12" rx="1" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M6 9.5v5M18 9.5v5" />
+    </svg>
+  );
+}

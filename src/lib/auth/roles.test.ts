@@ -25,6 +25,7 @@ const MATRIX: Record<Capability, readonly Role[]> = {
   "candidates:write": ["admin", "recruiter", "researcher"],
   "mandates:write": ["admin", "recruiter"],
   "clients:share": ["admin", "recruiter"],
+  "fees:read": ["admin", "recruiter"],
   "skills:write": ["admin"],
   "org:manage": ["admin"],
 };
@@ -73,6 +74,7 @@ describe("the shape of the roles", () => {
       "candidates:write",
       "mandates:write",
       "clients:share",
+      "fees:read",
     ]);
   });
 });

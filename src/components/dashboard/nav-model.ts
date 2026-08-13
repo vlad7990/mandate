@@ -29,6 +29,7 @@ export type NavItem = {
     | "candidates"
     | "network"
     | "clients"
+    | "placements"
     | "intelligence"
     | "skills"
     | "settings";
@@ -78,6 +79,20 @@ export const NAV: readonly NavItem[] = [
     icon: "analytics",
     group: "workspace",
     matchPrefix: true,
+  },
+
+  /**
+   * Deliberately not gated on `fees:read`. The page is readable by every
+   * active role — it shows the placements and says plainly that the money
+   * is restricted — and hiding it would leave a researcher unable to see
+   * that the placements they sourced were even recorded. Same reasoning as
+   * the Mandates entry staying visible to a role that cannot open one.
+   */
+  {
+    href: "/app/placements",
+    label: "Placements",
+    icon: "placements",
+    group: "workspace",
   },
 
   { href: "/app/clients", label: "Clients", icon: "clients", group: "search" },
