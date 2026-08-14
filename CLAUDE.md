@@ -120,7 +120,7 @@ coupled code.
 - [ ] **Enable leaked-password protection** (Supabase Auth dashboard toggle, not SQL — founder's call). The only security finding left with an unapplied fix.
 - [ ] Add hCaptcha/Turnstile to /request-access form
 - [ ] Rotate Supabase service role key (was exposed in terminal)
-- [ ] Review all RLS policies on pre-existing tables — **partially done.** `users` was reviewed and rewritten in `058`/`059`: its 002/003 policies predated the 046 sweep and let a suspended account read the whole member roster (§5h). That is a reason to expect the same class of bug on the other pre-046 tables, not evidence they are clean — they have not been re-read.
+- [x] Review all RLS policies on pre-existing tables — `058`/`059`/`060`, 2026-08-14. Every policy in the database was enumerated and classified by whether it consults `status`. 046's generated policies are all sound; the two hand-written founder/self-scoped tables were not — `users` (§5h) and `waitlist` (§5i), both fixed. Map of what was checked, including storage, views and SECURITY DEFINER functions, is in §5i. `suspended_account_invariants.sql` loops every RLS-enabled table, so **new tables are covered automatically**.
 - [x] Fix unindexed FK warnings on older migrations — 15 findings, 3 indexed and 12 left deliberately. The 11 `created_by`/`submitted_by`/`generated_by` keys do not earn an index: nothing in the product deletes a user and no query filters on them. Reasoning in §5g.
 
 ### Before First Client

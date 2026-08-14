@@ -1,6 +1,7 @@
 # Continuation — roles, the re-skin, clients, placements, the trail, contacts, the advisor sweep
 
-**Date:** 2026-08-13, extended 2026-08-14 with the advisor sweep (§5g, §5h)
+**Date:** 2026-08-13, extended 2026-08-14 with the advisor sweep and the
+status sweep that followed it (§5g–§5i)
 **Supersedes:** `2026-08-13-platform-features.md` entirely. Both open
 decisions in it are now made, and five of its priority items are done. Its
 Resend and `ANTHROPIC_API_KEY` blockers are unchanged and repeated below.
@@ -10,8 +11,8 @@ Work in `/Users/vladbreygin/Projects/mandate`. Supabase project
 — always `cd` first or use `git -C`.
 
 `main` is clean, pushed, and deployed to `getmandate.io`.
-Migrations `046`–`059` applied; schema and code are in step. 544 tests
-(was 389), tsc / lint / build green. **Next migration is 060.**
+Migrations `046`–`060` applied; schema and code are in step. 544 tests
+(was 389), tsc / lint / build green. **Next migration is 061.**
 
 Nine commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
 terminal re-skin, `567d0f5` and `2e482df` responsive repair, `a288eb8` the
@@ -981,6 +982,77 @@ that claim untestable.
 
 ---
 
+## 5i. The rest of the schema, swept for the same gap — migration 060
+
+059 raised an obvious question it did not answer: if `users` had this bug,
+what else does. So every policy in the database was enumerated and
+classified by whether *anything* in it consults `status`. The answer is
+worth recording as a map, because it says where to look next time rather
+than only what was fixed.
+
+**What is already sound**, and can be trusted without re-deriving it:
+
+- All 39 tables in `public` have RLS enabled, and none has zero policies.
+- Every policy that scopes by `current_user_org_id()` is conjoined with a
+  helper that resolves through `current_user_role()` — `can_read_org`,
+  `can_write_candidates`, `can_write_mandates`, `can_share_clients`,
+  `can_read_fees`, `is_org_admin` — all of which require `status = 'active'`.
+  **046's generated sweep did its job completely.** The bug was never in the
+  generated policies; it was in the two written by hand.
+- Every OR-branch sits *inside* one of those conjuncts, including the two
+  most likely to escape: the global-catalogue disjunction on
+  `executive_competencies` / `executive_role_templates` (056), and the
+  own-placement fee exception on `placement_fees` / `placement_fee_lines`
+  (050). The second deserves its own note — `is_placement_credited()` has no
+  status check of its own, but it is SECURITY INVOKER over `placements`,
+  whose SELECT policy *is* status-checked, so a suspended owner cannot see
+  the placement to be credited on it. Gated transitively rather than
+  directly, which is the same argument §5f makes about cross-org authors.
+- The four `cvs` storage policies (047) are status-checked.
+- The one view, `sourcing_candidate_attribution`, is `security_invoker =
+  true`, so it does not launder RLS. Worth knowing that a view without that
+  option would have been a hole nothing else in this sweep would have found.
+- `record_activity_event` is SECURITY DEFINER and bypasses RLS by
+  construction, but already returns early unless `can_read_org()`. It was
+  written after 046 and got this right.
+
+**What was not**: `waitlist`, and only `waitlist`. Both founder-scoped
+policies from 030 tested `is_founder` with an inline EXISTS over
+`public.users` and never looked at `status`. They matched none of the
+patterns any earlier sweep grepped for — no `current_user_org_id()`, no
+capability helper — which is exactly why 046 and 059 both passed over them.
+
+The waitlist is every person who has ever asked for access to Mandate: name,
+email, company, and their written use case. It is the company's own inbound
+pipeline, and a suspended founder could read all of it and triage it —
+approve, reject, annotate.
+
+060 makes two changes, and the second is not tidying:
+
+1. `can_read_org()` added — the status gate.
+2. The inline EXISTS replaced with `is_current_user_founder()`. The old
+   predicate read `public.users` as the calling user, so it was subject to
+   the `users` SELECT policy — meaning the waitlist's access rules depended
+   on the users policy, and 059 had just changed that policy. **Two tables
+   coupled through an implicit RLS dependency is how one gets fixed and the
+   other silently does not.** The helper is SECURITY DEFINER and breaks the
+   coupling. It is also a per-row correlated subquery replaced by two
+   InitPlans, so it is the same class of win 058 was making.
+
+`waitlist_anon_insert` is deliberately untouched: `WITH CHECK (true)` to
+`anon, authenticated` is the public `/request-access` form, and a suspended
+account submitting a request gains nothing a signed-out stranger does not
+already have. The open insert is a rate-limiting problem and is already on
+the pre-launch checklist as one.
+
+**`users` and `waitlist` are the only two tables in the schema scoped by
+founder or by self rather than by organisation.** That is the whole
+explanation for why they are the two 046 did not generate and the two that
+carried this bug. Any future table scoped that way should be assumed to have
+it until someone proves otherwise.
+
+---
+
 ## 6. Verification — what is proven, and the recipe
 
 **RLS was tested by impersonation, not by reading policy text.** Under
@@ -1010,6 +1082,37 @@ inverted raised, which also proves execution reached the bottom of the file.
 Worth recording: assertion (5) failing on its first run is the entire reason
 §5h exists. The assertion was written from the documentation, not from the
 database, and the database disagreed.
+
+**The status sweep has its own file** —
+`supabase/tests/suspended_account_invariants.sql`, 10 invariants. The one
+worth copying is assertion (1): instead of naming tables, it **loops over
+every RLS-enabled table in `public`** and asserts the same rule against each
+— whatever an active admin can read, a suspended member of the same
+organisation reads none of, with `users` the one deliberate exception at
+self-only. A table added by a future migration is covered the day it exists,
+without anyone remembering to add it here, which is the failure mode that
+produced the `waitlist` gap in the first place.
+
+Assertion (2) exists because the loop would otherwise be able to pass
+vacuously: it pins that at least 15 tables held rows the admin could
+actually see, so a broken seed fails loudly rather than turning every
+assertion above it into "an empty table leaked nothing". The fixture seeds
+18 tables for that reason. Assertion (3) re-runs the whole loop for a
+pending account, which is a different shape from suspension. Assertions (8)
+and (9) pin the direction that must keep working — an active founder still
+reads and still triages the waitlist — because a status gate that was too
+enthusiastic would break triage and every other assertion would still pass.
+
+Run before 060 it failed at (5) with the waitlist row in hand, which is the
+proof the gap was real; after 060 all ten pass; the **control run** with the
+final assertion inverted raised.
+
+**The waitlist page was driven in a browser** under a temporary founder
+account with one `SMOKE`-prefixed row: the page renders, the row shows, and
+the founder-only gate still admits an active founder. The row and the
+account were deleted afterwards and counts checked back to baseline, with
+the waitlist itself back to 0. The triage *write* is proven by invariant (9)
+against the live database rather than by a browser click.
 
 **The users policies were also driven in a browser**, because §6's own rule
 says a policy change is not finished until it has been. Under a temporary
@@ -1205,10 +1308,14 @@ The priority list from the original review is now **done**, apart from items
 
 - ~~The full Supabase advisor sweep~~ — migrations `058` and `059`. See §5g
   for what was fixed and what was left, and §5h for the gap it turned up.
-  The two CLAUDE.md pre-launch items it covers are ticked. Re-run it after
-  the next migration that adds tables or policies; the residue to expect is
-  six deliberate SECURITY DEFINER findings, the leaked-password toggle, and
-  a growing pile of `unused_index` noise.
+  Re-run it after the next migration that adds tables or policies; the
+  residue to expect is six deliberate SECURITY DEFINER findings, the
+  leaked-password toggle, and a growing pile of `unused_index` noise.
+- ~~Review the pre-046 RLS policies for the same status gap~~ — migration
+  `060`. §5i is the map: every generated policy is sound, and the two
+  hand-written founder/self-scoped tables were the only ones at risk. Both
+  are now closed and `suspended_account_invariants.sql` keeps them that way
+  for tables that do not exist yet.
 
 Smaller, added by this session:
 
