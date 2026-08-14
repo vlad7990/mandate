@@ -135,6 +135,7 @@ coupled code.
 - [ ] Set up Stripe billing
 - [ ] Set up Resend for transactional emails
 - [ ] Add rate limiting to /request-access
+- [x] Rate-limit `/api/demo` — migration `061`, 2026-08-14. Was a module-scoped Map, i.e. per serverless instance, so "10/hour/IP" was never the real ceiling. Now Postgres-backed: 10/hour/IP **and 200/day globally**, which is the cap that actually bounds spend. Fails closed. Its 502 body also used to return the provider's raw JSON — vendor, billing advice and a request id — to any anonymous caller; API routes are not redacted the way Server Actions are.
 - [ ] Add error monitoring (Sentry or similar)
 - [ ] Write onboarding documentation
 - [ ] Set up status page

@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { agentErrorMessage } from "@/lib/ai/agent-errors";
 import { getAnthropic } from "@/lib/anthropic";
 
 /**
- * Public landing-page Intake demo. No auth, in-memory rate limited per
- * IP (10 reqs / 1h). Calls Claude with the web_search tool so the
- * model can ground role context in the company's recent public moves.
+ * Public landing-page Intake demo. No auth. Calls Claude with the
+ * web_search tool so the model can ground role context in the company's
+ * recent public moves — which makes it the most expensive thing an
+ * anonymous stranger can make this product do, since web search is billed
+ * per search on top of tokens.
+ *
+ * Rate limited in Postgres (migration 061), not in this process: 10 per
+ * hour per IP, and 200 per day globally. The global cap is the one that
+ * bounds spend. Fails closed.
  *
  * Returns a strict JSON shape the marketing simulator renders into
  * the Bloomberg-style readout.
@@ -14,18 +22,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const DEMO_MODEL = "claude-sonnet-4-6";
-const RATE_LIMIT_PER_HOUR = 10;
-const WINDOW_MS = 60 * 60 * 1000;
 const WEB_SEARCH_MAX_USES = 3;
 const MAX_INPUT_LENGTH = 800;
 
-// Module-scoped Map. Survives across requests on a single Lambda /
-// Node instance — adequate for the closed-beta marketing surface.
-// Pre-public-launch we'll swap this for Upstash or similar (item on
-// CLAUDE.md PRE-LAUNCH CHECKLIST). Keep ENTRY_TTL grooming so the
-// Map can't grow unbounded under attack.
-type Bucket = { count: number; resetAt: number };
-const buckets = new Map<string, Bucket>();
+/**
+ * Mirrors the caps in migration 061 so the 429 body can state them. The
+ * database is the enforcer; these two numbers are for the message only, and
+ * if they drift the limit still holds — it is just described wrongly.
+ */
+const RATE_LIMIT_PER_HOUR = 10;
+const GLOBAL_DAILY_LIMIT = 200;
 
 function getClientIp(req: Request): string {
   // Vercel sets x-forwarded-for; fall back to x-real-ip; finally a
@@ -37,40 +43,52 @@ function getClientIp(req: Request): string {
   return "anon";
 }
 
-function checkRateLimit(ip: string): {
+type RateVerdict = {
   allowed: boolean;
-  remaining: number;
-  resetAt: number;
-} {
-  const now = Date.now();
+  scope: "ok" | "ip" | "global" | "unavailable";
+  retryAfterSeconds: number;
+};
 
-  // Lazy GC — drop expired entries each call. Keeps the Map small
-  // without a separate timer thread.
-  for (const [k, v] of buckets) {
-    if (v.resetAt <= now) buckets.delete(k);
-  }
+/**
+ * Ask Postgres, not this process.
+ *
+ * The previous limiter was a module-scoped Map, which on Vercel means "per
+ * instance": instances scale out and reset on every deploy, so the stated
+ * 10/hour was never the real ceiling. 061 moves both counters into the
+ * database and adds a global daily cap, which is the one that actually
+ * bounds spend — a per-IP limit is worthless against a caller with many
+ * IPs, and rotating IPs is cheap.
+ *
+ * **Fails closed.** If the check cannot be reached we refuse rather than
+ * calling Anthropic: an outage should cost nothing, and this endpoint is
+ * unauthenticated, uses the billed web_search tool, and is the most
+ * expensive thing a stranger can make the product do.
+ */
+async function checkRateLimit(ip: string): Promise<RateVerdict> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase
+      .rpc("check_demo_rate_limit", { p_ip: ip })
+      .maybeSingle<{
+        allowed: boolean;
+        scope: string;
+        retry_after_seconds: number;
+      }>();
 
-  const existing = buckets.get(ip);
-  if (!existing || existing.resetAt <= now) {
-    const fresh = { count: 1, resetAt: now + WINDOW_MS };
-    buckets.set(ip, fresh);
+    if (error || !data) {
+      console.error("[demo] rate-limit check failed", error);
+      return { allowed: false, scope: "unavailable", retryAfterSeconds: 60 };
+    }
+
     return {
-      allowed: true,
-      remaining: RATE_LIMIT_PER_HOUR - 1,
-      resetAt: fresh.resetAt,
+      allowed: data.allowed,
+      scope: (data.scope as RateVerdict["scope"]) ?? "ip",
+      retryAfterSeconds: data.retry_after_seconds ?? 60,
     };
+  } catch (err) {
+    console.error("[demo] rate-limit check threw", err);
+    return { allowed: false, scope: "unavailable", retryAfterSeconds: 60 };
   }
-
-  if (existing.count >= RATE_LIMIT_PER_HOUR) {
-    return { allowed: false, remaining: 0, resetAt: existing.resetAt };
-  }
-
-  existing.count += 1;
-  return {
-    allowed: true,
-    remaining: RATE_LIMIT_PER_HOUR - existing.count,
-    resetAt: existing.resetAt,
-  };
 }
 
 const DEMO_SCHEMA = {
@@ -159,24 +177,27 @@ Speed matters — this is a live demo. Aim for fewer searches when the role is s
 
 export async function POST(req: Request): Promise<Response> {
   const ip = getClientIp(req);
-  const rate = checkRateLimit(ip);
+  const rate = await checkRateLimit(ip);
   if (!rate.allowed) {
-    const retrySeconds = Math.max(
-      1,
-      Math.ceil((rate.resetAt - Date.now()) / 1000)
-    );
+    // Three different refusals, and the visitor should be able to tell them
+    // apart: their own usage, the demo being spent for the day, or us being
+    // unable to check. Only the first is anything they did.
+    const message =
+      rate.scope === "global"
+        ? `The simulator has hit its daily limit of ${GLOBAL_DAILY_LIMIT} runs. It resets at midnight UTC — or book a walkthrough and we will run your brief live.`
+        : rate.scope === "unavailable"
+          ? "The simulator is briefly unavailable. Try again in a minute."
+          : `Rate limit reached for this IP. The simulator allows ${RATE_LIMIT_PER_HOUR} requests per hour to keep the public demo fair. Try again later.`;
+
     return NextResponse.json(
+      { error: message },
       {
-        error:
-          "Rate limit reached for this IP. The simulator allows 10 requests per hour to keep the public demo fair. Try again later.",
-      },
-      {
-        status: 429,
+        status: rate.scope === "unavailable" ? 503 : 429,
         headers: {
-          "Retry-After": String(retrySeconds),
+          "Retry-After": String(Math.max(1, rate.retryAfterSeconds)),
           "X-RateLimit-Limit": String(RATE_LIMIT_PER_HOUR),
           "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": String(Math.floor(rate.resetAt / 1000)),
+          "X-RateLimit-Scope": rate.scope,
         },
       }
     );
@@ -238,13 +259,28 @@ export async function POST(req: Request): Promise<Response> {
     const parsed = JSON.parse(last.text) as Record<string, unknown>;
     return NextResponse.json(parsed, {
       headers: {
+        // The remaining count is no longer echoed: the counters live in
+        // Postgres now and the honest answer would need a second read for a
+        // number nothing consumes. The limit and the refusal are what a
+        // caller can act on.
         "X-RateLimit-Limit": String(RATE_LIMIT_PER_HOUR),
-        "X-RateLimit-Remaining": String(rate.remaining),
-        "X-RateLimit-Reset": String(Math.floor(rate.resetAt / 1000)),
       },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Demo failed.";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    // NOT err.message. This is an API route, not a Server Action, so Next
+    // does not redact it — the body went straight to the caller, and with
+    // the key out of credit that body was the provider's own JSON: vendor
+    // name, "go to Plans & Billing", and a request id. On an endpoint any
+    // stranger can POST to, that is our billing status published to the
+    // internet.
+    //
+    // live-simulator.tsx already refuses to *render* this body and says why.
+    // That protected the landing page and nothing else; the response itself
+    // still carried it.
+    console.error("[demo] upstream call failed", err);
+    return NextResponse.json(
+      { error: agentErrorMessage(err, "The intake demo") },
+      { status: 502 }
+    );
   }
 }
