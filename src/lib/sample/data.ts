@@ -569,3 +569,75 @@ export const SAMPLE_REVENUE = {
   /** Oldest first, matching `recentQuarters`. */
   byQuarter: [48_000, 132_000, 24_000, 64_000],
 } as const;
+
+/* ────────────────────────────────────────────────────────────────────
+   Skills studio
+   ──────────────────────────────────────────────────────────────────── */
+
+export type SampleSkill = {
+  id: string;
+  name: string;
+  description: string;
+  skillType: "search_skill" | "client_skill" | "role_skill";
+  triggerConditions: string;
+  instructions: string;
+  isActive: boolean;
+  /** Rendered where a real role skill would name its project. */
+  appliesTo: string | null;
+};
+
+/**
+ * Three skills, one per type, because the type *is* the lesson.
+ *
+ * A skill is the most abstract thing in the product — an instruction block
+ * injected into six agents — and the empty state can only describe it. These
+ * show the shape: a trigger, an instruction written in the second person to
+ * the agent, and a scope that narrows from every search to a single mandate.
+ *
+ * Written to be worth reading rather than to fill a table. Each one is a rule
+ * a real search firm would actually hold, and the precedence line on the page
+ * (Role > Client > Search) is legible from the three side by side.
+ *
+ * Deliberately *not* a hire/no-hire rule anywhere. Skills steer how an agent
+ * reads evidence; they do not hand it a verdict, and a sample that implied
+ * otherwise would teach the wrong thing about the product on the one screen
+ * whose whole job is teaching.
+ */
+export const SAMPLE_SKILLS: readonly SampleSkill[] = [
+  {
+    id: "sample-skill-regulated",
+    name: "Regulated-industry evidence bar",
+    description:
+      "Raises the evidence required before crediting regulatory experience.",
+    skillType: "search_skill",
+    triggerConditions:
+      "Any mandate in financial services, healthcare, or utilities.",
+    instructions:
+      "When a CV claims regulatory exposure, look for the specific regime by name (SMCR, MiFID II, HIPAA, Ofgem) and the candidate's own role in it. Treat 'worked in a regulated environment' as unevidenced unless the CV names what they personally owned. Record the distinction in the evidence note rather than adjusting the score silently.",
+    isActive: true,
+    appliesTo: null,
+  },
+  {
+    id: "sample-skill-tenure",
+    name: "Cindermere — tenure context",
+    description:
+      "Client-specific framing for short tenures, agreed with the client.",
+    skillType: "client_skill",
+    triggerConditions: "Mandates for Cindermere Robotics.",
+    instructions:
+      "This client has said repeatedly that a two-year tenure inside a scale-up is normal and not a flag. Do not surface short tenure as a risk on its own. If a pattern spans four or more roles, describe the pattern factually and leave the read to the recruiter.",
+    isActive: true,
+    appliesTo: null,
+  },
+  {
+    id: "sample-skill-platform",
+    name: "Platform rebuild — scope check",
+    description: "Narrows what counts as relevant scale for one mandate.",
+    skillType: "role_skill",
+    triggerConditions: "Invoked for the Larkspur VP Engineering mandate only.",
+    instructions:
+      "Scale here means concurrent users and deploy frequency, not headcount. A candidate who ran a team of eighty on a quarterly release cycle is a weaker match on scale than one who ran twelve engineers shipping daily. Say which of the two you are looking at when you cite scale.",
+    isActive: false,
+    appliesTo: "VP Engineering · Larkspur",
+  },
+];

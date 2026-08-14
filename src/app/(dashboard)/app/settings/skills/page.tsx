@@ -7,6 +7,14 @@ import { MastHead, type MastTone } from "@/components/ui/mast-head";
 import { SkillRow, type SkillRowData } from "./skill-row";
 import { IconIntelligence, IconPlus } from "@/components/icons";
 import { PageShell, TerminalTitle } from "@/components/ui/page-shell";
+import { cookies } from "next/headers";
+import { SampleBanner } from "@/components/sample/sample-banner";
+import {
+  SAMPLE_DISMISSED_COOKIE,
+  SAMPLE_SKILLS,
+  shouldShowSample,
+  type SampleSkill,
+} from "@/lib/sample";
 
 type SkillType = "role_skill" | "client_skill" | "search_skill";
 
@@ -104,6 +112,18 @@ export default async function SkillsStudioPage() {
 
   const totalActive = skills.filter((s) => s.is_active).length;
 
+  // A skill is the most abstract object in the product, and the empty state
+  // could only ever describe one. Three worked examples teach the shape —
+  // trigger, instruction, scope — and make the precedence line above them
+  // (Role > Client > Search) legible. Same rule as everywhere else: the
+  // moment this org has one real skill, the sample never appears again.
+  const dismissed =
+    (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
+  const showSample = shouldShowSample({
+    hasRealData: skills.length > 0,
+    dismissed,
+  });
+
   return (
     <PageShell className="space-y-5">
       <SetBreadcrumbs
@@ -158,7 +178,7 @@ export default async function SkillsStudioPage() {
       </section>
 
       {skills.length === 0 ? (
-        <EmptyState />
+        showSample ? <SampleSkills /> : <EmptyState />
       ) : (
         <div className="space-y-6">
           {TYPE_ORDER.map((type) => {
@@ -250,5 +270,100 @@ function EmptyState() {
         </Link>
       </CapabilityGate>
     </div>
+  );
+}
+
+/**
+ * The sample studio: three example skills in the same grouped shape the real
+ * list uses, so the layout a recruiter learns here is the one they get.
+ *
+ * Read-only on purpose. The rows carry no toggle and no delete — they are not
+ * this org's rows, and offering a control that cannot work would be worse
+ * than the empty state it replaced. The create CTA is kept, because that is
+ * the one action that *does* apply.
+ */
+function SampleSkills() {
+  const grouped = TYPE_ORDER.map((type) => ({
+    type,
+    meta: SKILL_TYPE_META[type],
+    rows: SAMPLE_SKILLS.filter((s) => s.skillType === type),
+  }));
+
+  return (
+    <div className="space-y-5">
+      <SampleBanner scope="skills" />
+
+      <div className="space-y-6">
+        {grouped.map(({ type, meta, rows }) => (
+          <section key={type} className="space-y-2">
+            <MastHead tone={meta.tone} label={meta.label} meta={meta.blurb} />
+            <ul className="space-y-2">
+              {rows.map((skill) => (
+                <SampleSkillRow key={skill.id} skill={skill} />
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+
+      <CapabilityGate capability="skills:write">
+        <Link
+          href="/app/settings/skills/new"
+          prefetch={false}
+          className="inline-flex px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <IconPlus size={16} />
+          Create Your First Skill
+        </Link>
+      </CapabilityGate>
+    </div>
+  );
+}
+
+function SampleSkillRow({ skill }: { skill: SampleSkill }) {
+  return (
+    <li className="bg-surface-container-low border border-outline-variant px-4 py-3 space-y-2">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0 space-y-1">
+          <p className="text-body-main text-on-surface">{skill.name}</p>
+          <p className="text-body-main text-on-surface-variant">
+            {skill.description}
+          </p>
+        </div>
+        <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline shrink-0">
+          {skill.isActive ? "active" : "inactive"} · example
+        </span>
+      </div>
+
+      <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+        <div>
+          <dt className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+            Fires when
+          </dt>
+          <dd className="text-body-main text-on-surface-variant">
+            {skill.triggerConditions}
+          </dd>
+        </div>
+        {skill.appliesTo && (
+          <div>
+            <dt className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+              Scoped to
+            </dt>
+            <dd className="text-body-main text-on-surface-variant">
+              {skill.appliesTo}
+            </dd>
+          </div>
+        )}
+      </dl>
+
+      <div>
+        <dt className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+          Instruction
+        </dt>
+        <dd className="text-body-main text-on-surface-variant">
+          {skill.instructions}
+        </dd>
+      </div>
+    </li>
   );
 }

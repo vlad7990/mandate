@@ -39,16 +39,24 @@ rather than re-decided per page.
 **Needs the founder.** Everything in the Executive Search workstream is
 blocked on it.
 
-### D2. Does sample data survive the Anthropic credit landing?
+### D2. ~~Does sample data survive the Anthropic credit landing?~~ — ANSWERED 2026-08-14
 
-Nine routes exist to display agent output. If the API has credit, the
-cheaper and far more honest path is **one seeded mandate that the real
-agents fill in**, rather than hand-written fixtures that will drift from
-what the agents actually produce. Hand-writing them now risks doing the work
-twice and shipping a demo that no longer matches the product.
+**Credit is on the account and the agents run.** Verified end to end: the
+candidate search parsed a natural-language query into intent, must-haves and
+nice-to-haves, scored the pool, and returned a ranked match with its
+reasoning. First real agent run in the product.
 
-**Recommendation:** hold the Executive Search and Research workstreams until
-this is known. It changes the approach, not just the estimate.
+This changes the *approach* for the nine agent-output routes, not just the
+estimate. The recommendation is now firm: **seed one coherent mandate and let
+the real agents fill it**, rather than hand-writing fixtures that will drift
+from what the agents actually produce. Hand-written agent output would also
+be the hardest kind to keep honest under D1.
+
+It also moves the whole loop — intake → research → spec → calibration →
+sourcing → evaluation — from "never run" to "runnable", which is worth doing
+once for its own sake before more sample-data work. Expect it to surface
+defects; every screen opened for the first time in the last four sessions
+has.
 
 ### D3. One label mechanism, decided once
 
@@ -99,16 +107,28 @@ around it) · `generated` (needs agent output — see D1/D2) · `relational`
 
 ## 3. Workstreams
 
-### W1 · Administration & Settings — 8 routes
+### W1 · Administration & Settings — 8 routes — DONE 2026-08-14
 
-Lowest risk, no product decisions, no agent output. Good first workstream.
+Lowest risk, no product decisions, no agent output. It turned out to be one
+page of work, not three, and the survey's own caveat about `thin` being a
+judgement call is why:
+
+- **`/app/settings` needs nothing.** It renders real account data — org name,
+  slug, created date, founders, role — and is complete for any real account.
+  It only looked thin against the founder's near-empty org.
+- **`/app/settings/waitlist` should not get sample data.** It is founder-only
+  and Mandate-internal; no customer ever sees it, so fabricated rows would
+  have no demo value. Inventing people "requesting access" is also the wrong
+  kind of fabrication. Its empty state ("No requests in this state.") is
+  adequate.
+- **`/app/settings/skills` was the one worth doing**, and is done.
 
 | Route | State | Kind | Size | Depends on | Value |
 |---|---|---|---|---|---|
-| `/app/settings` | thin | simple | S | — | Med |
+| `/app/settings` | complete | — | — | — | — |
 | `/app/settings/members` | complete | — | — | — | — |
-| `/app/settings/waitlist` | empty-only | simple | S | — | Med |
-| `/app/settings/skills` | empty-only | simple | M | — | High |
+| `/app/settings/waitlist` | complete | — | — | — | — |
+| `/app/settings/skills` | complete | — | — | — | — |
 | `/app/settings/skills/new` | n/a | — | — | — | — |
 | `/app/settings/skills/[skillId]` | n/a | — | — | — | — |
 | `/app/no-access` | complete | — | — | — | — |
@@ -116,7 +136,17 @@ Lowest risk, no product decisions, no agent output. Good first workstream.
 
 **Note:** `/app/activity` is listed here but is genuinely last — the trail is
 a *projection* of other entities. Seeded before them it reads as noise;
-seeded after them it fills itself.
+seeded after them it fills itself. Still outstanding.
+
+**What the skills page got**, since it is the pattern for the rest: three
+worked examples, one per type, because the type is the lesson. A skill is the
+most abstract object in the product and the empty state could only describe
+one. The rows are read-only — no toggle, no delete — because they are not
+that org's rows and a control that cannot work is worse than the empty state
+it replaced. The create CTA stays, being the one action that does apply. None
+of the three is a hire/no-hire rule; skills steer how an agent reads
+evidence, and a sample implying otherwise would teach the wrong thing on the
+one screen whose job is teaching.
 
 ### W2 · Client Experience — 2 routes
 
@@ -219,16 +249,16 @@ copy on a branch that never runs.
 ## 4. Recommended order
 
 1. ~~**D4 fix** — the two migration-033 messages.~~ Done 2026-08-14.
-2. **W1 Administration** (minus `/app/activity`) — no decisions, no agent
-   output, gets the mechanism exercised on easy pages.
+2. ~~**W1 Administration** (minus `/app/activity`).~~ Done 2026-08-14 —
+   one page of work, not three.
 3. **W2 Client Experience** — small, self-contained, and W3 depends on it
    for the hiring-manager and fee surfaces.
 4. **W3 Mandates** — the spine. Extends the existing `sample-larkspur`
    fixture rather than inventing anything.
 5. **W4 Candidates** — falls out of W3 cheaply once the mandate exists.
 6. **W6 Reports & Analytics** — mostly free once 3–5 land.
-7. **W5 Research & Sourcing** — hold for D2.
-8. **W7 Executive Search** — hold for D1, approach set by D2.
+7. **W5 Research & Sourcing** — unblocked by D2; approach is now "seed a mandate, let the agents run".
+8. **W7 Executive Search** — still held for **D1**. D2 is answered and sets the approach.
 9. `/app/activity` last, as a projection of everything above.
 
 **Do not start at W7** despite it being the largest and most impressive
