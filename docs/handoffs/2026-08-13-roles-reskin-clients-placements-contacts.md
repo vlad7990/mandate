@@ -10,8 +10,8 @@ Work in `/Users/vladbreygin/Projects/mandate`. Supabase project
 — always `cd` first or use `git -C`.
 
 `main` is clean, pushed, and deployed to `getmandate.io`.
-Migrations `046`–`054` applied; schema and code are in step. 544 tests
-(was 389), tsc / lint / build green. **Next migration is 055.**
+Migrations `046`–`055` applied; schema and code are in step. 544 tests
+(was 389), tsc / lint / build green. **Next migration is 056.**
 
 Nine commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
 terminal re-skin, `567d0f5` and `2e482df` responsive repair, `a288eb8` the
@@ -549,7 +549,8 @@ because RLS only ever inspects the former. A crafted insert naming this org
 and another org's client was accepted. Harmless on most tables; not harmless
 on the primary-contact trigger, which writes to sibling rows. The two new
 tables carry a composite FK to `clients (organization_id, id)` making it a
-database guarantee. **The pre-054 tables still carry the assumption.**
+database guarantee. **The pre-054 tables carried the assumption until `055`
+swept it out of the schema entirely — see §5d.**
 
 **The demotion trigger is SECURITY INVOKER,** unlike every function in 053.
 Those must be DEFINER to write to `activity_events`, which `authenticated`
@@ -582,6 +583,90 @@ for no gain.
 
 ---
 
+## 5d. Org and parent can no longer disagree
+
+Migration `055`. The sweep 054 said was outstanding: **68 composite foreign
+keys** asserting that a row's `organization_id` matches its parent's, across
+every pre-054 table that had the shape.
+
+Before it, this was accepted by every policy in the product, because RLS only
+ever inspects the child's own `organization_id`:
+
+```sql
+insert into candidate_notes (organization_id, candidate_id, ...)
+values (my_org, some_other_orgs_candidate, ...);
+```
+
+**No live data violated any of the 68** — checked pair by pair first, which is
+why they could be added and validated immediately rather than as `NOT VALID`.
+
+### Why it is more than tidiness
+
+On most tables a mismatch is a wart: a note carrying a foreign candidate still
+only renders to its own org, because the *note* is what RLS filters on. It
+does not leak.
+
+It stops being a wart wherever a row is used to **reach** another row. 054
+found the concrete case — the primary-contact trigger writes to sibling rows
+selected by `client_id`, so a contact naming your org and another org's client
+would have demoted that client's primary contact. `is_placement_credited`,
+`resolve_client` and the fee-terms lookup are the same shape waiting for the
+same input. Removing the class is cheaper than auditing each one forever.
+
+### The load-bearing decision: NO ACTION
+
+Each relationship gains a *second* key alongside the existing single-column
+one, which keeps its exact `ON DELETE` semantics. The composite is
+`ON DELETE NO ACTION`, and that is not a detail:
+
+**A composite `SET NULL` nulls every column in the key — including
+`organization_id`.** Roughly a third of these parents are `SET NULL`, so
+deleting a client would have blanked the org on its placements and dropped
+them out of RLS entirely: rows visible to nobody, still in the revenue book.
+PG 17 does support `SET NULL (column_list)`, but the second key needs no
+referential action at all — the original performs it, and `NO ACTION` is
+checked at the *end* of the statement, by which time the child column is NULL
+and MATCH SIMPLE skips the composite check.
+
+That is reasoning about trigger ordering, so it was **tested before the
+migration was written**: a rolled-back probe added the constraint to
+`placements`, deleted a client, and confirmed `client_id` went null while
+`organization_id` survived — and that a genuine cross-org update was still
+refused.
+
+### Two exclusions, both load-bearing
+
+**Everything pointing at `users`** — 37 relationships. `users.organization_id`
+is a *membership*, not a parent scope, and it changes: an account is created
+with a null org and gets one when a founder approves it. Constraining
+`(organization_id, created_by)` would make approving an account, or moving
+anyone between orgs, fail against every row they had authored. A cross-org
+`created_by` is also not a leak — it is a name on a row, not a key anything
+resolves through.
+
+**The seeded EI catalogues.** All 24 `executive_competencies` and all 8
+`executive_role_templates` have a **NULL** `organization_id` — that is what
+makes them global. A composite key from `executive_search_competencies` would
+compare a non-null child org against a null parent org and **reject every row
+in the catalogue**. `search_id` on that table is constrained; `competency_id`
+cannot be while global rows are modelled as NULL-org.
+
+That leaves a shape worth knowing: a parent with a NULL org can have no
+org-scoped children at all, because MATCH SIMPLE only skips when the *child's*
+column is null. Correct for the nine tables whose org is nullable — a project
+with no organisation is broken, not global — but it is the reason **a future
+global catalogue should use an explicit flag rather than a null org**.
+
+### Cost, and a side benefit
+
+68 constraints and 68 covering indexes on tables holding at most 27 rows each.
+The indexes are `(organization_id, parent_id)`, so they also cover the bare
+`organization_id` foreign key on the same table: the advisor's unindexed-FK
+findings went from **28 to 15**, and the 13 cleared are exactly the org ones.
+What remains is mostly `created_by` / `submitted_by` — the excluded class.
+
+---
+
 ## 6. Verification — what is proven, and the recipe
 
 **RLS was tested by impersonation, not by reading policy text.** Under
@@ -595,6 +680,21 @@ last admin, and suspending the last admin.
 closed.** 27 routes were driven in a browser at five widths, including the
 project tree, candidate detail, and sample mode. Still unseen: the HM portal
 with real data, and the evidence grid populated.
+
+**The org/parent constraints were proven with their own file** —
+`supabase/tests/org_parent_integrity_invariants.sql`, 10 invariants against
+the live database. It covers both directions, which matters more here than
+usual: three cross-org writes refused, *and* the ordinary same-org write still
+accepted, because over-constraining would break the product as thoroughly as
+under-constraining leaves it open. It also pins the two exclusions — a global
+competency can still be attached to a search, and a user can still be moved
+between organisations after authoring rows — so an exclusion that silently
+stopped working is a test failure rather than an outage. A **control run** with
+the final assertion inverted raised, as with the contacts file.
+
+Unlike the RLS files this one runs as a privileged role: it is about
+*constraints*, and a constraint that only held for `authenticated` would be no
+constraint at all.
 
 **The contact and note rules were proven the same way** —
 `supabase/tests/client_contact_invariants.sql` is 23 invariants run as all
