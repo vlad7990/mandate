@@ -198,7 +198,10 @@ export default async function CandidateSearchPage({
       />
 
       <header className="space-y-2">
-        <TerminalTitle>AI_CANDIDATE_SEARCH</TerminalTitle>
+        {/* Derivation would give "Ai candidate search". */}
+        <TerminalTitle label="AI candidate search">
+          AI_CANDIDATE_SEARCH
+        </TerminalTitle>
         <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
           Type what you&rsquo;re looking for in plain English. The AI parses
           intent, scores the pool, and ranks the matches with reasoning.

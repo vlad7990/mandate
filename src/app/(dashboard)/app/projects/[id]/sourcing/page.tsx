@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { getAccess } from "@/lib/auth/access";
+import { can } from "@/lib/auth/roles";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { IconArrowLeft } from "@/components/icons";
 import {
@@ -14,6 +16,7 @@ import {
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
 import { SourcingEditor } from "./sourcing-editor";
 import { SourcingEmpty } from "./sourcing-empty";
+import { SourcingNeedsSpec } from "./sourcing-needs-spec";
 import {
   SourcingVersionHistory,
   type SlotVersions,
@@ -89,7 +92,26 @@ export default async function SourcingPage({
     .maybeSingle<{ id: string; version: number }>();
 
   if (!finalSpec) {
-    redirect(`/app/projects/${id}/spec`);
+    // Redirecting to /spec is right for anyone who can finalize one. For a
+    // researcher it was not: /spec needs `mandates:write`, so the proxy
+    // caught the redirect and sent them to /app/no-access naming /spec —
+    // a screen they never asked for, blaming their role for what is really
+    // the mandate's state. Two different problems wearing the same message.
+    //
+    // A researcher IS allowed on this route (`candidates:write`), so the
+    // honest answer is to keep them here and say what is actually missing
+    // and who can fix it.
+    const access = await getAccess();
+    if (can(access?.role ?? null, "mandates:write")) {
+      redirect(`/app/projects/${id}/spec`);
+    }
+    return (
+      <SourcingNeedsSpec
+        projectId={id}
+        roleTitle={project.title}
+        companyName={project.company_name}
+      />
+    );
   }
 
   const { data: queryRows, error: queriesError } = await supabase

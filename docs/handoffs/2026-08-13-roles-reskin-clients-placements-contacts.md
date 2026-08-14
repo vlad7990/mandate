@@ -1401,7 +1401,16 @@ Smaller, added by this session:
   was read back afterwards holding the safe sentence. Scratch org deleted;
   counts back to baseline.
 
-- **Fix the researcher → `/sourcing` → `/spec` bounce message** (§2).
+- ~~Fix the researcher → `/sourcing` → `/spec` bounce message~~ (§2). The
+  redirect to `/spec` is right for anyone who can finalize a spec and wrong
+  for a researcher: the proxy caught it and sent them to `/app/no-access`
+  naming `/spec`, a screen they never asked for, reporting a capability
+  failure for what is really the mandate's state. The two have different
+  fixes — one is "ask an admin for a different role", the other is "ask a
+  recruiter to finalize the spec" — and the old message pointed at the
+  wrong one. The redirect is now conditional on `mandates:write`; everyone
+  else stays on `/sourcing`, which they are entitled to, and is told what is
+  missing and who clears it.
 - **The role now reaches the feedback interpreter as "who is speaking".**
   `submitted_role` is a field on `InterpretFeedbackInput`, not a column —
   the recruiter path passes the parsed role, the HM portal passes
@@ -1411,9 +1420,18 @@ Smaller, added by this session:
 - ~~Client contacts, notes and commercial terms~~ — terms in `050`, contacts
   and notes in `054`. The client entity is complete; §5c records the four
   founder decisions behind the contacts half.
-- **The ten screaming-snake page titles hardcode their capitals**, so screen
-  readers announce `GLOBAL_EXECUTIVE_NETWORK` underscores and all. The rest
-  of the product uppercases in CSS. Worth reconciling.
+- ~~The screaming-snake page titles hardcode their capitals~~ — twelve, not
+  ten. Fixed in `TerminalTitle` rather than at the call sites: the visible
+  token is now `aria-hidden` and the `h1` carries an `aria-label` derived
+  from it, so `GLOBAL_EXECUTIVE_NETWORK` announces as "Global executive
+  network" while the glyphs on screen are untouched. Deriving the name
+  instead of passing it meant none of the twelve call sites changed and a
+  thirteenth cannot forget; `label` overrides it where the derivation is
+  wrong, which so far is only `AI_CANDIDATE_SEARCH` ("Ai candidate search").
+
+  Worth noting the comment above that component previously asserted the DOM
+  text was "still `GLOBAL_EXECUTIVE_NETWORK` for copy and for screen
+  readers" — half right, and the wrong half was the one that mattered.
 
 Still absent and worth a decision at some point: interview scheduling, tasks
 a human can create, tags, saved views, retention and right-to-erasure, DEI

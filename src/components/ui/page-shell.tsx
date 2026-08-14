@@ -139,43 +139,77 @@ export async function PageHeader({
  * `min-w-0` cannot help because the box cannot go below one word.
  *
  * `<wbr>` after each underscore is the fix. It offers the browser a break
- * opportunity without putting anything in the text — no hyphen appears, the
- * DOM text is still `GLOBAL_EXECUTIVE_NETWORK` for copy and for screen
- * readers, and on a wide screen it stays on one line exactly as before.
- * `break-all` was the alternative and is worse: it breaks mid-word at
- * whatever column runs out, so `GLOBAL_EXECUT / IVE_NETWORK`.
+ * opportunity without putting anything in the text — no hyphen appears, and
+ * on a wide screen it stays on one line exactly as before. `break-all` was
+ * the alternative and is worse: it breaks mid-word at whatever column runs
+ * out, so `GLOBAL_EXECUT / IVE_NETWORK`.
+ *
+ * **The accessible name is not the visible text.** The note above used to
+ * claim the DOM text was fine "for screen readers". It is not: a reader
+ * announces `GLOBAL_EXECUTIVE_NETWORK` as its literal characters, so the
+ * page heading — the single most important landmark on the screen — arrives
+ * as punctuation. The rest of the product uppercases in CSS and does not
+ * have this problem; these twelve hardcode their capitals because the
+ * underscores are the visual signature and CSS cannot insert them.
+ *
+ * So the glyphs stay and the name is supplied separately: the visible token
+ * is hidden from assistive tech and `aria-label` carries the sentence. The
+ * name is derived from the token by default, which means the twelve existing
+ * call sites did not have to change and a thirteenth cannot forget. Pass
+ * `label` where the derivation would be wrong — an acronym is the usual
+ * reason, e.g. `AI_CANDIDATE_SEARCH`, which derives as "Ai candidate search".
  *
  * The size ramp matches `PageHeader` — 26px below `sm`, the 32px token above.
  */
 export function TerminalTitle({
   children,
+  label,
   className,
 }: {
   children: string;
+  /** Overrides the derived accessible name. Use for acronyms. */
+  label?: string;
   className?: string;
 }) {
   const segments = children.split("_");
 
   return (
     <h1
+      aria-label={label ?? humanizeTerminalTitle(children)}
       className={cn(
         "font-h1 text-[26px] leading-tight tracking-tight text-on-surface sm:text-h1",
         className
       )}
     >
-      {segments.map((segment, i) => (
-        <React.Fragment key={i}>
-          {i > 0 && (
-            <>
-              {"_"}
-              <wbr />
-            </>
-          )}
-          {segment}
-        </React.Fragment>
-      ))}
+      <span aria-hidden="true">
+        {segments.map((segment, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && (
+              <>
+                {"_"}
+                <wbr />
+              </>
+            )}
+            {segment}
+          </React.Fragment>
+        ))}
+      </span>
     </h1>
   );
+}
+
+/**
+ * `PLACEMENTS_AND_FEES` → `Placements and fees`.
+ *
+ * Sentence case rather than title case: a screen reader is reading a
+ * sentence to somebody, and Title Case On Every Word reads as emphasis it
+ * has not earned.
+ */
+export function humanizeTerminalTitle(token: string): string {
+  const words = token.split("_").filter(Boolean).map((w) => w.toLowerCase());
+  if (words.length === 0) return token;
+  return words[0].charAt(0).toUpperCase() + words[0].slice(1) +
+    (words.length > 1 ? " " + words.slice(1).join(" ") : "");
 }
 
 /**
