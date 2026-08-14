@@ -20,6 +20,7 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
+import { contactLabel } from "@/lib/clients/contacts";
 import {
   expandFeeLines,
   dueDate,
@@ -588,6 +589,81 @@ async function unwindFee(
       created_by: userId,
     }))
   );
+}
+
+/**
+ * Record who on the client's side signed the placement off.
+ *
+ * Writes both columns together: the FK so the client screen can join, and
+ * the label so the answer survives the contact being deleted. 054 makes the
+ * FK `ON DELETE SET NULL` precisely so that deleting a person cannot erase
+ * who authorised a booked fee.
+ *
+ * The label is derived from the contact rather than taken from the form
+ * when a contact is chosen, so the two cannot disagree. When no contact is
+ * chosen the typed name is kept on its own — knowing the name on the offer
+ * letter should not be blocked on somebody first creating a CRM record.
+ *
+ * Takes `mandates:write` like everything else here, and is on the placement
+ * rather than the fee, so a researcher who can see the placement can also
+ * see who signed it off. See §10 of the handoff for that line.
+ */
+export async function setPlacementSignOffAction(formData: FormData): Promise<void> {
+  await requireActionContext("mandates:write");
+
+  const placementId = str(formData, "placementId");
+  const projectId = str(formData, "projectId");
+  const candidateId = str(formData, "candidateId");
+  if (!placementId) throw new Error("Missing placement.");
+
+  const supabase = await createServerSupabaseClient();
+
+  const { data: placement, error: loadError } = await supabase
+    .from("placements")
+    .select("id, client_id")
+    .eq("id", placementId)
+    .single<{ id: string; client_id: string | null }>();
+
+  if (loadError || !placement) throw new Error("Placement not found.");
+
+  const contactId = str(formData, "contactId") || null;
+  let label = str(formData, "signedOffByLabel") || null;
+
+  if (contactId) {
+    // Checked against the placement's own client, not merely against the
+    // org: RLS scopes contacts by organisation, so "this contact works at
+    // the client we placed into" is a check only the application makes.
+    const { data: contact } = await supabase
+      .from("client_contacts")
+      .select("id, full_name, title, client_id")
+      .eq("id", contactId)
+      .maybeSingle<{
+        id: string;
+        full_name: string;
+        title: string | null;
+        client_id: string;
+      }>();
+
+    if (!contact) throw new Error("Contact not found.");
+    if (!placement.client_id || contact.client_id !== placement.client_id) {
+      throw new Error("That contact is not at this placement's client.");
+    }
+
+    label = contactLabel(contact);
+  }
+
+  const { error } = await supabase
+    .from("placements")
+    .update({
+      signed_off_by_contact_id: contactId,
+      signed_off_by_label: label,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", placementId);
+
+  if (error) throw new Error(`Could not record the sign-off: ${error.message}`);
+
+  revalidate(projectId, candidateId);
 }
 
 /**

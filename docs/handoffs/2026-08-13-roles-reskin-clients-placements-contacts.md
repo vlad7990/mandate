@@ -1,4 +1,4 @@
-# Continuation — roles, the re-skin, clients, placements, and the trail
+# Continuation — roles, the re-skin, clients, placements, the trail, contacts
 
 **Date:** 2026-08-13
 **Supersedes:** `2026-08-13-platform-features.md` entirely. Both open
@@ -10,14 +10,19 @@ Work in `/Users/vladbreygin/Projects/mandate`. Supabase project
 — always `cd` first or use `git -C`.
 
 `main` is clean, pushed, and deployed to `getmandate.io`.
-Migrations `046`–`053` applied; schema and code are in step. 523 tests
-(was 389), tsc / lint / build green. **Next migration is 054.**
+Migrations `046`–`054` applied; schema and code are in step. 544 tests
+(was 389), tsc / lint / build green. **Next migration is 055.**
 
-Eight commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
+Nine commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
 terminal re-skin, `567d0f5` and `2e482df` responsive repair, `a288eb8` the
 client entity, `460bb8c` the placement and fee record, `09acbac` the five
 bugs the browser found plus sample data for the revenue screen, `aa213c4`
-the activity trail.
+the activity trail, and the client contacts and notes commit that renamed
+this file.
+
+**The client entity is now complete.** 049 gave it identity and a company
+profile, 050 the commercial terms, and 054 the contacts and notes that both
+of those deliberately left out. Nothing on it is outstanding.
 
 ---
 
@@ -46,7 +51,7 @@ with the placement record in 050 (§5a), as a separate `fee_terms` table
 rather than columns on `clients`, for a reason that only became visible once
 `fees:read` existed: `clients` is readable by every active role and an
 agreement is not, and RLS is row-level, so they cannot share a row.
-**Contacts and notes are still not built.**
+**Contacts and notes landed in 054 — see §5c. The entity is complete.**
 
 ---
 
@@ -362,9 +367,10 @@ columns (`owner_user_id`, `sourced_by_user_id`) rather than a
 answering "is this yours" with at most two rows is a join on every fee read
 for nothing. It becomes a table the day a fee is split.
 
-Client **contacts and notes are still not built** — they were scoped out of
-049 and stayed out of this pass. Both halves now want the same thing ("who
-signed off"), so they are the obvious next increment on the client entity.
+Client **contacts and notes** were scoped out of 049 and out of this pass
+too. They landed in `054` — see §5c — and the "who signed off" hole both
+halves shared is now `placements.signed_off_by_contact_id` plus its label
+snapshot.
 
 ---
 
@@ -409,7 +415,9 @@ researcher sees the fee history of their own placement and nobody else's.
 
 Placements, placement fees, the fee ledger, fee terms, and the role model
 (`role`, `status`, `is_founder` — the AFTER half of 046's BEFORE guard: an
-attempt is refused, a change is remembered).
+attempt is refused, a change is remembered). `054` added client contacts and
+the placement sign-off — four more types, all at `'org'`, and it redefined
+the CHECK to do so. Client *notes* write nothing; see §5c.
 
 Two deliberate silences, because a trail that records non-events is one
 nobody scrolls: expanding a retainer into three instalments writes **one**
@@ -454,6 +462,118 @@ which is why none of them appear in the advisor output.
 
 ---
 
+## 5c. Client contacts and notes — the entity closed
+
+Migration `054`. The last piece of the client, and the answer to a question
+both halves had independently: **who signed off** had no answer. A placement
+recorded who was credited on our side and nothing about who authorised it on
+theirs; `hiring_manager_tokens.label` was a free-text string, so "who did we
+send this shortlist to" and "who signed the offer off" were two unrelated
+pieces of prose that could not be compared.
+
+### The four decisions, all the founder's
+
+1. **A contact is scoped to one client.** `client_id` NOT NULL, cascading.
+   A hiring manager who moves banks is a new row at the new bank. The
+   Network page folds candidates by identity and this deliberately does not:
+   sourcing *produces* duplicate rows without anyone intending it, which is
+   what makes folding necessary there, whereas contacts are typed in
+   deliberately and every question asked of them is client-scoped. A
+   `person_id` pointing at a future people table stays additive.
+2. **A portal token can name a contact.** `hiring_manager_tokens.contact_id`,
+   nullable. `label` is untouched, so every existing token still works and a
+   token can still go to somebody with no contact record. A contact is *not*
+   an account — externals stay token-only. The scope mismatch (tokens are
+   project-scoped, contacts client-scoped) is validated in the action rather
+   than by a trigger, because `projects.client_id` is nullable and the carve-
+   out would be the normal case.
+3. **A placement records who signed it off** — `signed_off_by_contact_id`
+   *and* `signed_off_by_label`. Both, because SET NULL on a deleted contact
+   would otherwise erase who authorised a booked fee, which is exactly what
+   `actor_label` exists to prevent in 053. On `placements`, not the fee side:
+   it is the event, not the money, so every active role reads it.
+4. **Client notes carry a visibility tier** — `org` and `commercial`, the
+   latter resolving to `can_read_fees()`. Otherwise `candidate_notes` (020)
+   verbatim, minus `call_duration_minutes` and `interview`, plus an
+   `author_label` snapshot that 020 still lacks. The tier is the reason this
+   is not simply a copy: "they are squeezing us on the rate" is a sentence a
+   viewer must not read, and an org-readable notes table would have undone
+   `fees:read` through the side door.
+
+### Two judgement calls made here, not by the founder
+
+**Contacts go on the trail; notes do not.** Four new event types —
+`client_contact_added` / `_updated` / `_removed` and
+`placement_signoff_changed` — all at `'org'`. `_updated` fires only when an
+identity-bearing field moves, so a corrected phone number is not activity,
+and `_removed` covers archiving and deletion with `detail.mode` recording
+which. Notes write nothing at all: they are the chatty half by design.
+
+**`placement_signoff_changed` watches the label, not the FK.** Because the
+FK is ON DELETE SET NULL, deleting a contact rewrites every placement they
+signed, and a condition including the FK emitted *"changed the sign-off from
+Jane to Jane"* for each one. The recorded answer did not change; only the
+link did. Found by the invariants script, not by reading the trigger.
+
+### Art. 14 — considered, and deliberately not implemented
+
+A client contact carries **no** statutory notification duty. The reason is
+not that it is B2B — Art. 14 turns on whether the data came from the subject,
+not on whether they are at work. It is that candidates are sourced, profiled
+and **scored** without their knowledge (043/044), and that profiling is what
+makes notification necessary. A contact row holds a name, title, email and
+phone collected inside a commercial relationship, with no scoring and no
+automated decision-making. Legitimate interest covers it; Art. 14(5)(b)
+covers the residual.
+
+**The live edge is `client_notes`,** and it is written into the migration
+header rather than left implicit: the moment a note carries an assessment of
+the *person* — "difficult", "not really the decision-maker" — that is
+profiling of an identified individual who was never told. **If client notes
+are ever fed to an agent, or a contact gains a scored or inferred field,
+this analysis has to be redone before that ships.**
+
+### Two things 054 fixed that were not asked for
+
+**Org and parent could disagree.** Every org-scoped table in this schema
+carries `organization_id` beside a parent FK and *assumes* they agree,
+because RLS only ever inspects the former. A crafted insert naming this org
+and another org's client was accepted. Harmless on most tables; not harmless
+on the primary-contact trigger, which writes to sibling rows. The two new
+tables carry a composite FK to `clients (organization_id, id)` making it a
+database guarantee. **The pre-054 tables still carry the assumption.**
+
+**The demotion trigger is SECURITY INVOKER,** unlike every function in 053.
+Those must be DEFINER to write to `activity_events`, which `authenticated`
+has no policy on. This one writes to the table the caller is already writing
+to, and running it as definer would put a row-modifying statement outside RLS
+for no gain.
+
+### Things worth knowing before changing it
+
+- **At most one primary per client, maintained by a trigger** rather than by
+  the application clearing the old one first — two statements that can
+  interleave, where the loser hits a unique index and gets a message about an
+  index. The partial unique index is still there as the guarantee that never
+  fires.
+- **`email_key` is `nullif(btrim(lower(email)), '')`.** The `nullif` is
+  load-bearing: without it an empty string is a value and two contacts with
+  no email collide. `contactEmailKey()` mirrors it and there is a test.
+- **Archiving, not deleting, is the ordinary way a contact leaves** — a
+  portal token and a placement sign-off both point at the row. Delete stays
+  for rows created by mistake.
+- **The notes panel is given every contact including archived ones**, and
+  filters the *picker* itself. Passing the filtered list turned every
+  historical note at an archived contact into "a former contact", throwing
+  away a name the row still held. Found in the browser.
+- **A reader without `fees:read` is not told a commercial note exists.** The
+  count says "01 NOTE", not "02 // 1 restricted". Deliberately unlike a
+  placement fee, where the row *is* sent and the number withheld — a fee that
+  exists and is hidden must be distinguishable from no fee, whereas a note
+  nobody told you about is not yours to know exists.
+
+---
+
 ## 6. Verification — what is proven, and the recipe
 
 **RLS was tested by impersonation, not by reading policy text.** Under
@@ -467,6 +587,24 @@ last admin, and suspending the last admin.
 closed.** 27 routes were driven in a browser at five widths, including the
 project tree, candidate detail, and sample mode. Still unseen: the HM portal
 with real data, and the evidence grid populated.
+
+**The contact and note rules were proven the same way** —
+`supabase/tests/client_contact_invariants.sql` is 23 invariants run as all
+four roles with real inserts, updates and selects against the live database:
+the note visibility tier from both sides, the primary-contact trigger, the
+email dedupe including the several-NULLs case, the composite org FK, the
+sign-off label surviving a deleted contact, and the three event types
+alongside the silence on notes. A **control run** with the *final* assertion
+inverted was also executed and raised — which is the stronger form of the
+control, because it proves execution reached the end of the script and every
+assertion before it was genuinely evaluated.
+
+Worth recording: the first run failed on `author_label`, and it was the
+**fixture** that was wrong, not the product. The signup trigger has already
+created the `public.users` row by the time the seed runs, so every insert
+takes the `on conflict do update` branch — and `full_name` was not in the
+SET list. An assertion catching its own fixture is the cheapest possible
+demonstration that the assertions fire.
 
 **The fee rules were proven the same way** — `supabase/tests/placement_fee_invariants.sql`
 is 21 invariants run as all four roles with real inserts, updates and
@@ -572,8 +710,7 @@ From the original review's priority order, with the done items struck:
 The priority list from the original review is now **done**, apart from items
 6 and 7. The obvious next pieces, in the order they earn their keep:
 
-- **Client contacts and notes** (§5a) — the last piece of the client entity,
-  and the placement record now wants the same thing.
+- ~~Client contacts and notes~~ — migration `054`. See §5c.
 - **Invoicing**, if the founder decides the accounting boundary should move.
   Everything needed is already on `placement_fee_lines`: an instalment knows
   what it is worth, when it was earned and when it is due.
@@ -589,10 +726,9 @@ Smaller, added by this session:
   `hmLabel || "hiring_manager"`. Since 046 the recruiter side is a
   constrained vocabulary rather than free text, so the prompt is worth a
   read with `researcher` and `viewer` in it.
-- **Client contacts, notes and commercial terms** were scoped out of §5 and
-  are the obvious next increment on the entity — but the contacts half is
-  worth doing with, not before, the placement record, since both want to
-  know who signed off.
+- ~~Client contacts, notes and commercial terms~~ — terms in `050`, contacts
+  and notes in `054`. The client entity is complete; §5c records the four
+  founder decisions behind the contacts half.
 - **The ten screaming-snake page titles hardcode their capitals**, so screen
   readers announce `GLOBAL_EXECUTIVE_NETWORK` underscores and all. The rest
   of the product uppercases in CSS. Worth reconciling.

@@ -352,6 +352,26 @@ export default async function CandidateProfilePage({
     feeLines = lineRows ?? [];
   }
 
+  // The client's active contacts, for the sign-off picker. Read from the
+  // placement's own `client_id` rather than the project's, because 050
+  // denormalises it so a placement keeps its client if the mandate is later
+  // re-pointed. Empty when the mandate has no client yet, in which case the
+  // sign-off is typed as a name instead.
+  let signOffContacts: Array<{ id: string; full_name: string; title: string | null }> = [];
+
+  if (placementRow?.client_id) {
+    const { data: contactRows } = await supabase
+      .from("client_contacts")
+      .select("id, full_name, title")
+      .eq("client_id", placementRow.client_id)
+      .eq("is_archived", false)
+      .order("is_primary", { ascending: false })
+      .order("full_name")
+      .returns<Array<{ id: string; full_name: string; title: string | null }>>();
+
+    signOffContacts = contactRows ?? [];
+  }
+
   const access = await getAccess();
 
   // The own-placement exception, decided here so the panel never holds a
@@ -641,6 +661,7 @@ export default async function CandidateProfilePage({
                 canWrite={can(access?.role, "mandates:write")}
                 today={new Date().toISOString().slice(0, 10)}
                 baseCurrency={orgRow?.base_currency ?? "USD"}
+                contacts={signOffContacts}
                 terms={
                   resolvedTerms
                     ? {

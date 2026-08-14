@@ -74,8 +74,50 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Moved the placement from ${from} to ${to}${reason ? ` — ${reason}` : ""}`;
     }
 
+    case "placement_signoff_changed": {
+      const from = str(d, "from");
+      const to = str(d, "to");
+      // Three sentences rather than one with two optional halves, because
+      // "changed the sign-off from nobody to Jane" reads like a bug.
+      if (to && from) return `Changed who signed the placement off from ${from} to ${to}`;
+      if (to) return `Recorded ${to} as signing the placement off`;
+      return `Removed ${from ?? "the contact"} as signing the placement off`;
+    }
+
     case "placement_deleted":
       return "Deleted a placement";
+
+    case "client_contact_added": {
+      const who = contactName(d);
+      // `mode` distinguishes a new contact from a restored one; the event
+      // type is the same because the effect a reader cares about is the
+      // same — this person is a contact again.
+      if (str(d, "mode") === "restored") return `Restored ${who} as a contact`;
+      const title = str(d, "title");
+      return `Added ${who}${title ? `, ${title},` : ""} as a contact${
+        d.is_primary === true ? " and made them the primary" : ""
+      }`;
+    }
+
+    case "client_contact_updated": {
+      const who = contactName(d);
+      const from = str(d, "name_from");
+      if (from && from !== str(d, "name")) return `Renamed the contact ${from} to ${who}`;
+      if (d.is_primary === true && d.was_primary === false) {
+        return `Made ${who} the primary contact`;
+      }
+      if (d.is_primary === false && d.was_primary === true) {
+        return `${who} is no longer the primary contact`;
+      }
+      return `Updated the contact ${who}`;
+    }
+
+    case "client_contact_removed": {
+      const who = contactName(d);
+      return str(d, "mode") === "archived"
+        ? `Archived the contact ${who}`
+        : `Deleted the contact ${who}`;
+    }
 
     case "fee_recorded": {
       const total = money(d, "total");
@@ -170,6 +212,18 @@ export function describeActivity(event: ActivityEventRow): string {
       return String(exhaustive).replace(/_/g, " ");
     }
   }
+}
+
+/**
+ * The contact's name out of `detail`.
+ *
+ * The trail stores the name rather than joining to `client_contacts`,
+ * because the row it would join to is gone by the time a removal is being
+ * read back. Same reasoning as `actor_label` in 053 and
+ * `signed_off_by_label` on a placement.
+ */
+function contactName(d: Record<string, unknown>): string {
+  return str(d, "name") ?? "a contact";
 }
 
 function termsSuffix(d: Record<string, unknown>): string {

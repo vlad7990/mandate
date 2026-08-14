@@ -50,6 +50,7 @@ import {
   markFeeLineEarnedAction,
   recordPlacementAction,
   savePlacementFeeAction,
+  setPlacementSignOffAction,
   updatePlacementStatusAction,
 } from "./placement-actions";
 
@@ -90,6 +91,14 @@ export type PlacementPanelProps = {
    * for the rate rather than silently computing nothing.
    */
   terms: { summary: string; feePercentage: number | null; currency: string } | null;
+  /**
+   * The client's active contacts, for the sign-off picker.
+   *
+   * Empty when the mandate has no client yet — a mandate whose company is
+   * still "Analyzing…" has no `client_id` — in which case the sign-off can
+   * still be typed as a name. See 054.
+   */
+  contacts: Array<{ id: string; full_name: string; title: string | null }>;
 };
 
 export function PlacementPanel(props: PlacementPanelProps) {
@@ -247,9 +256,11 @@ function ExistingPlacement({
   today,
   baseCurrency,
   terms,
+  contacts,
 }: PlacementPanelProps & { placement: PlacementRow }) {
   const [pending, start] = useTransition();
   const [editingFee, setEditingFee] = useState(false);
+  const [editingSignOff, setEditingSignOff] = useState(false);
   const [fallingThrough, setFallingThrough] = useState(false);
   const router = useRouter();
 
@@ -316,6 +327,22 @@ function ExistingPlacement({
             {placement.fell_through_reason}
           </p>
         )}
+
+        <SignOff
+          placement={placement}
+          contacts={contacts}
+          canWrite={canWrite}
+          pending={pending}
+          editing={editingSignOff}
+          projectId={projectId}
+          candidateId={candidateId}
+          onEdit={() => setEditingSignOff(true)}
+          onCancel={() => setEditingSignOff(false)}
+          onRun={(fd) => {
+            run(setPlacementSignOffAction, fd, "Sign-off recorded");
+            setEditingSignOff(false);
+          }}
+        />
 
         {/* The fee. Restricted rather than blank — see the note at the top. */}
         {!canSeeFees && (
@@ -479,6 +506,129 @@ function ExistingPlacement({
         )}
       </div>
     </Panel>
+  );
+}
+
+/**
+ * Who on the client's side signed the placement off.
+ *
+ * The gap 054 closed: the record already knew who was credited on our side
+ * and nothing at all about who authorised it on theirs.
+ *
+ * Rendered at every role, not behind `fees:read` — it lives on
+ * `placements`, which is the event rather than the money, and a researcher
+ * who can see that a placement happened can see who agreed to it. §10 of
+ * the handoff is the reasoning for where that line sits.
+ *
+ * The picker and the free-text field are both offered because a mandate
+ * whose company is still "Analyzing…" has no client and therefore no
+ * contacts, and because knowing the name on the offer letter should never
+ * be blocked on somebody first creating a CRM record. Choosing a contact
+ * wins: the action derives the label from it so the two cannot disagree.
+ */
+function SignOff({
+  placement,
+  contacts,
+  canWrite,
+  pending,
+  editing,
+  projectId,
+  candidateId,
+  onEdit,
+  onCancel,
+  onRun,
+}: {
+  placement: PlacementRow;
+  contacts: Array<{ id: string; full_name: string; title: string | null }>;
+  canWrite: boolean;
+  pending: boolean;
+  editing: boolean;
+  projectId: string;
+  candidateId: string;
+  onEdit: () => void;
+  onCancel: () => void;
+  onRun: (fd: FormData) => void;
+}) {
+  if (!editing) {
+    return (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border border-outline-variant/60 px-3 py-2.5">
+        <div className="min-w-0 flex-1 basis-[200px]">
+          <p className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
+            Signed off by
+          </p>
+          <p className="mt-1 truncate text-body-s text-on-surface">
+            {placement.signed_off_by_label ?? "Not recorded"}
+          </p>
+        </div>
+        {canWrite && (
+          <button type="button" className={PANEL_BUTTON_QUIET} onClick={onEdit}>
+            {placement.signed_off_by_label ? "Change" : "Record"}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    /*
+     * `onSubmit` + `preventDefault`, never `action` — a rejected submit
+     * (a contact at the wrong client) must not wipe the typed name and
+     * revert the select. See §6 of the handoff.
+     */
+    <form
+      className="space-y-3 border border-outline-variant bg-surface-container-high p-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onRun(new FormData(event.currentTarget));
+      }}
+    >
+      <input type="hidden" name="placementId" value={placement.id} />
+      <input type="hidden" name="projectId" value={projectId} />
+      <input type="hidden" name="candidateId" value={candidateId} />
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="space-y-1.5">
+          <span className={LABEL}>Contact</span>
+          <select
+            name="contactId"
+            defaultValue={placement.signed_off_by_contact_id ?? ""}
+            className={FIELD}
+          >
+            <option value="">
+              {contacts.length === 0 ? "No contacts on file" : "Not from the contact list"}
+            </option>
+            {contacts.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title ? `${c.full_name} — ${c.title}` : c.full_name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="space-y-1.5">
+          <span className={LABEL}>Or type a name</span>
+          <input
+            name="signedOffByLabel"
+            defaultValue={placement.signed_off_by_label ?? ""}
+            placeholder="Jane Okafor"
+            className={FIELD}
+          />
+        </label>
+      </div>
+
+      <p className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
+        Choosing a contact wins // the name is kept even if the contact is later deleted
+      </p>
+
+      <div className="flex flex-wrap gap-2">
+        <button type="submit" disabled={pending} className={PANEL_BUTTON}>
+          {pending ? "Saving…" : "Save sign-off"}
+        </button>
+        <button type="button" className={PANEL_BUTTON_QUIET} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </form>
   );
 }
 

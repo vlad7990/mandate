@@ -172,6 +172,122 @@ describe("describeActivity", () => {
       expect(line).not.toContain("NaN");
     }
   });
+
+  /**
+   * The contact events, added by 054.
+   *
+   * The name comes out of `detail` rather than a join, because the row it
+   * would join to is gone by the time a removal is read back — same
+   * reasoning as `actor_label` in 053.
+   */
+  describe("client contacts", () => {
+    it("names the person and the title when one was added", () => {
+      expect(
+        describeActivity(
+          event("client_contact_added", {
+            name: "Jane Okafor",
+            title: "MD, Markets",
+            mode: "created",
+          })
+        )
+      ).toBe("Added Jane Okafor, MD, Markets, as a contact");
+    });
+
+    it("says so when the new contact is also the primary", () => {
+      expect(
+        describeActivity(
+          event("client_contact_added", { name: "Jane Okafor", is_primary: true })
+        )
+      ).toContain("made them the primary");
+    });
+
+    /**
+     * Restoring reuses `client_contact_added` because the effect a reader
+     * cares about is the same — this person is a contact again — and
+     * `detail.mode` is what distinguishes the mechanism. The sentence has
+     * to reflect that or the trail reads as a duplicate.
+     */
+    it("distinguishes a restore from a fresh contact", () => {
+      expect(
+        describeActivity(
+          event("client_contact_added", { name: "Jane Okafor", mode: "restored" })
+        )
+      ).toBe("Restored Jane Okafor as a contact");
+    });
+
+    it("reports a rename with both names", () => {
+      expect(
+        describeActivity(
+          event("client_contact_updated", {
+            name: "Jane Okafor-Smith",
+            name_from: "Jane Okafor",
+          })
+        )
+      ).toBe("Renamed the contact Jane Okafor to Jane Okafor-Smith");
+    });
+
+    it("reports a promotion and a demotion as different things", () => {
+      expect(
+        describeActivity(
+          event("client_contact_updated", {
+            name: "Raj Patel",
+            is_primary: true,
+            was_primary: false,
+          })
+        )
+      ).toBe("Made Raj Patel the primary contact");
+
+      expect(
+        describeActivity(
+          event("client_contact_updated", {
+            name: "Raj Patel",
+            is_primary: false,
+            was_primary: true,
+          })
+        )
+      ).toBe("Raj Patel is no longer the primary contact");
+    });
+
+    it("separates archiving from deleting", () => {
+      expect(
+        describeActivity(
+          event("client_contact_removed", { name: "Raj Patel", mode: "archived" })
+        )
+      ).toBe("Archived the contact Raj Patel");
+
+      expect(
+        describeActivity(
+          event("client_contact_removed", { name: "Raj Patel", mode: "deleted" })
+        )
+      ).toBe("Deleted the contact Raj Patel");
+    });
+  });
+
+  /**
+   * The sign-off. Three sentences rather than one with two optional halves,
+   * because "changed the sign-off from nobody to Jane" reads like a bug.
+   */
+  describe("placement sign-off", () => {
+    it("reads as a recording when there was nothing before", () => {
+      expect(
+        describeActivity(event("placement_signoff_changed", { to: "Jane Okafor" }))
+      ).toBe("Recorded Jane Okafor as signing the placement off");
+    });
+
+    it("reads as a change when there was", () => {
+      expect(
+        describeActivity(
+          event("placement_signoff_changed", { from: "Raj Patel", to: "Jane Okafor" })
+        )
+      ).toBe("Changed who signed the placement off from Raj Patel to Jane Okafor");
+    });
+
+    it("reads as a removal when the name was cleared", () => {
+      expect(
+        describeActivity(event("placement_signoff_changed", { from: "Raj Patel" }))
+      ).toBe("Removed Raj Patel as signing the placement off");
+    });
+  });
 });
 
 describe("describeActor", () => {

@@ -36,6 +36,7 @@ export type ActivityVisibility = (typeof ACTIVITY_VISIBILITIES)[number];
 export const ACTIVITY_EVENT_TYPES = [
   "placement_recorded",
   "placement_status_changed",
+  "placement_signoff_changed",
   "placement_deleted",
 
   "fee_recorded",
@@ -46,6 +47,10 @@ export const ACTIVITY_EVENT_TYPES = [
   "fee_terms_created",
   "fee_terms_updated",
   "fee_terms_deleted",
+
+  "client_contact_added",
+  "client_contact_updated",
+  "client_contact_removed",
 
   "member_role_changed",
   "member_status_changed",
@@ -133,6 +138,7 @@ export const ACTIVITY_GROUP_LABELS: Record<ActivityGroup, string> = {
 export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   placement_recorded: "placements",
   placement_status_changed: "placements",
+  placement_signoff_changed: "placements",
   placement_deleted: "placements",
 
   fee_recorded: "money",
@@ -143,6 +149,10 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   fee_terms_created: "money",
   fee_terms_updated: "money",
   fee_terms_deleted: "money",
+
+  client_contact_added: "client",
+  client_contact_updated: "client",
+  client_contact_removed: "client",
 
   member_role_changed: "members",
   member_status_changed: "members",

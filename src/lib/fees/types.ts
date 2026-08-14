@@ -152,6 +152,21 @@ export type PlacementRow = {
   fell_through_reason: string | null;
   owner_user_id: string | null;
   sourced_by_user_id: string | null;
+  /**
+   * Who on the client's side authorised it — the answer 054 added.
+   *
+   * The FK is `ON DELETE SET NULL` and the label is a snapshot, which is
+   * why both exist. Deleting a contact must not erase who signed off on a
+   * booked fee, and the label may also be set with no contact row at all:
+   * knowing the name on the offer letter should not be blocked on somebody
+   * first creating a CRM record. Same frozen-copy rule as the terms
+   * snapshot in 050 and `actor_label` in 053.
+   *
+   * On `placements` rather than `placement_fees` because it describes the
+   * event, not the money — so every active role reads it.
+   */
+  signed_off_by_contact_id: string | null;
+  signed_off_by_label: string | null;
   notes: string | null;
   created_by: string | null;
   created_at: string;
@@ -159,7 +174,7 @@ export type PlacementRow = {
 };
 
 export const PLACEMENT_COLUMNS =
-  "id, organization_id, project_id, candidate_id, client_id, status, offer_date, declined_date, accepted_date, start_date, guarantee_days, guarantee_ends_on, fell_through_date, fell_through_reason, owner_user_id, sourced_by_user_id, notes, created_by, created_at, updated_at";
+  "id, organization_id, project_id, candidate_id, client_id, status, offer_date, declined_date, accepted_date, start_date, guarantee_days, guarantee_ends_on, fell_through_date, fell_through_reason, owner_user_id, sourced_by_user_id, signed_off_by_contact_id, signed_off_by_label, notes, created_by, created_at, updated_at";
 
 /** Where a placement's terms came from, so a non-standard fee is explicable. */
 export const TERMS_SOURCES = ["client", "mandate", "manual"] as const;

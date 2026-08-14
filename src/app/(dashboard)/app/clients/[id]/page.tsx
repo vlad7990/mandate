@@ -13,7 +13,15 @@ import {
 import { getAccess } from "@/lib/auth/access";
 import { can } from "@/lib/auth/roles";
 import { FEE_TERMS_COLUMNS, type FeeTermsRow } from "@/lib/fees/types";
+import {
+  CLIENT_CONTACT_COLUMNS,
+  CLIENT_NOTE_COLUMNS,
+  type ClientContactRow,
+  type ClientNoteRow,
+} from "@/lib/clients/contacts";
 import { FeeTermsPanel } from "./fee-terms-panel";
+import { ContactsPanel } from "./contacts-panel";
+import { ClientNotesPanel } from "./client-notes-panel";
 
 /**
  * The client record: who they are, what we know about them, and everything
@@ -67,21 +75,40 @@ export default async function ClientDetailPage({
   // answer here on purpose — see the note in the dashboard not-found page.
   if (error || !client) notFound();
 
-  const [{ data: mandates }, { data: searches }] = await Promise.all([
-    supabase
-      .from("projects")
-      .select("id, title, status, created_at, updated_at")
-      .eq("client_id", id)
-      .order("updated_at", { ascending: false }),
-    supabase
-      .from("executive_searches")
-      .select("id, role_title, status, created_at")
-      .eq("client_id", id)
-      .order("created_at", { ascending: false }),
-  ]);
+  const [{ data: mandates }, { data: searches }, { data: contacts }, { data: notes }] =
+    await Promise.all([
+      supabase
+        .from("projects")
+        .select("id, title, status, created_at, updated_at")
+        .eq("client_id", id)
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("executive_searches")
+        .select("id, role_title, status, created_at")
+        .eq("client_id", id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("client_contacts")
+        .select(CLIENT_CONTACT_COLUMNS)
+        .eq("client_id", id)
+        .order("is_primary", { ascending: false })
+        .order("full_name"),
+      // Pinned first, then newest — the same order 020 gives candidate
+      // notes. RLS drops the commercial rows for a reader without
+      // `fees:read`, so this query needs no visibility clause of its own
+      // and the panel has no restricted state to draw.
+      supabase
+        .from("client_notes")
+        .select(CLIENT_NOTE_COLUMNS)
+        .eq("client_id", id)
+        .order("is_pinned", { ascending: false })
+        .order("created_at", { ascending: false }),
+    ]);
 
   const projectRows = (mandates ?? []) as MandateRow[];
   const searchRows = (searches ?? []) as SearchRow[];
+  const contactRows = (contacts ?? []) as ClientContactRow[];
+  const noteRows = (notes ?? []) as ClientNoteRow[];
 
   // The commercial agreement. RLS refuses the row without `fees:read`, so
   // a researcher gets null and the section is simply absent — there is no
@@ -89,6 +116,12 @@ export default async function ClientDetailPage({
   // has an own-placement exception this table deliberately does not.
   const access = await getAccess();
   const seesFees = can(access?.role, "fees:read");
+
+  // Contacts and notes take the mandate tier, the same one 049 gave the
+  // client record itself: holding the client relationship is a recruiter
+  // act. A researcher reads both and writes neither. RLS in 054 is what
+  // enforces that; this decides whether the buttons are drawn.
+  const canWriteClient = can(access?.role, "mandates:write");
 
   const { data: feeTerms } = seesFees
     ? await supabase
@@ -164,13 +197,33 @@ export default async function ClientDetailPage({
         )}
       </section>
 
+      <ContactsPanel
+        clientId={client.id}
+        contacts={contactRows}
+        canWrite={canWriteClient}
+      />
+
       {seesFees && (
         <FeeTermsPanel
           clientId={client.id}
           terms={feeTerms ?? null}
-          canWrite={can(access?.role, "mandates:write")}
+          canWrite={canWriteClient}
         />
       )}
+
+      <ClientNotesPanel
+        clientId={client.id}
+        notes={noteRows}
+        // Every contact, archived included. The panel filters the *picker*
+        // itself — a note cannot be filed against somebody who has left, but
+        // one filed before they did must still say who it was with. Passing
+        // the filtered list here instead turned every historical note at an
+        // archived contact into "a former contact", which throws away a name
+        // the row still holds.
+        contacts={contactRows}
+        canWrite={canWriteClient}
+        canWriteCommercial={seesFees}
+      />
 
       <section className="space-y-3">
         <MastHead
