@@ -23,7 +23,7 @@ export default async function ExecutiveCompetenciesPage() {
   const { data, error } = await supabase
     .from("executive_competencies")
     .select(
-      "id, organization_id, key, name, category, definition, positive_indicators, negative_indicators"
+      "id, organization_id, is_global, key, name, category, definition, positive_indicators, negative_indicators"
     )
     .order("name");
 
@@ -92,8 +92,15 @@ export default async function ExecutiveCompetenciesPage() {
                       <h3 className="text-headline-md text-on-surface font-body-main">
                         {c.name}
                       </h3>
+                      {/*
+                        Read from the flag, not from `organization_id IS
+                        NULL`. Since 056 the flag is the declared tier and the
+                        null is its consequence — a CHECK keeps them in step,
+                        so this renders the same thing either way, but it
+                        reads the fact rather than re-deriving it.
+                      */}
                       <span className="font-mono-label text-mono-label uppercase tracking-wider text-outline shrink-0">
-                        {c.organization_id ? "org" : "global"}
+                        {c.is_global ? "global" : "org"}
                       </span>
                     </div>
                     <p className="text-body-main text-on-surface-variant">{c.definition}</p>

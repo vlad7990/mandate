@@ -53,6 +53,13 @@ export type ExecutiveSearchRow = {
 export type ExecutiveCompetencyRow = {
   id: string;
   organization_id: string | null;
+  /**
+   * The catalogue tier, explicit since 056 — see the note on
+   * `ExecutiveRoleTemplateRow.is_global`. A search records the tier of every
+   * competency it attaches, and the pair is a foreign key, so an org can
+   * only ever weight a global competency or one of its own.
+   */
+  is_global: boolean;
   key: string;
   name: string;
   category: CompetencyCategory;
@@ -64,6 +71,19 @@ export type ExecutiveCompetencyRow = {
 export type ExecutiveRoleTemplateRow = {
   id: string;
   organization_id: string | null;
+  /**
+   * The catalogue tier, explicit since 056.
+   *
+   * Global rows are the seeded catalogue every org reads; org-private rows
+   * are an admin's own. It is a real column rather than `organization_id IS
+   * NULL` because a foreign key has to reference it: a search records the
+   * tier of the template it used, and the pair proves the template is either
+   * global or the search's own org's — never another tenant's.
+   *
+   * A CHECK keeps it in step with `organization_id`, so the two can never
+   * disagree.
+   */
+  is_global: boolean;
   key: string;
   title: string;
   summary: string;

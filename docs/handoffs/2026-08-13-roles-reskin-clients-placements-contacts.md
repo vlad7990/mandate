@@ -10,8 +10,8 @@ Work in `/Users/vladbreygin/Projects/mandate`. Supabase project
 — always `cd` first or use `git -C`.
 
 `main` is clean, pushed, and deployed to `getmandate.io`.
-Migrations `046`–`055` applied; schema and code are in step. 544 tests
-(was 389), tsc / lint / build green. **Next migration is 056.**
+Migrations `046`–`056` applied; schema and code are in step. 544 tests
+(was 389), tsc / lint / build green. **Next migration is 057.**
 
 Nine commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
 terminal re-skin, `567d0f5` and `2e482df` responsive repair, `a288eb8` the
@@ -648,14 +648,17 @@ resolves through.
 `executive_role_templates` have a **NULL** `organization_id` — that is what
 makes them global. A composite key from `executive_search_competencies` would
 compare a non-null child org against a null parent org and **reject every row
-in the catalogue**. `search_id` on that table is constrained; `competency_id`
-cannot be while global rows are modelled as NULL-org.
+in the catalogue**. `search_id` on that table was constrained; `competency_id`
+could not be while global rows were modelled as NULL-org.
 
-That leaves a shape worth knowing: a parent with a NULL org can have no
-org-scoped children at all, because MATCH SIMPLE only skips when the *child's*
-column is null. Correct for the nine tables whose org is nullable — a project
-with no organisation is broken, not global — but it is the reason **a future
-global catalogue should use an explicit flag rather than a null org**.
+**`056` closed this one** by giving the catalogues the explicit flag this
+section said they needed — see §5e. The `users` exclusion stands.
+
+The shape behind it is still worth knowing: a parent with a NULL org can have
+no org-scoped children at all, because MATCH SIMPLE only skips when the
+*child's* column is null. Correct for the nine tables whose org is nullable —
+a project with no organisation is broken, not global — and it is exactly why
+a global tier needs a flag rather than a null.
 
 ### Cost, and a side benefit
 
@@ -664,6 +667,75 @@ The indexes are `(organization_id, parent_id)`, so they also cover the bare
 `organization_id` foreign key on the same table: the advisor's unindexed-FK
 findings went from **28 to 15**, and the 13 cleared are exactly the org ones.
 What remains is mostly `created_by` / `submitted_by` — the excluded class.
+
+---
+
+## 5e. The global catalogue flag
+
+Migration `056`. The exclusion 055 documented, now closed: both EI catalogues
+carry an explicit `is_global` flag, and the two relationships that could not
+be constrained are constrained.
+
+### The hole was real, and it leaked
+
+Both catalogues are genuinely two-tier and 046's RLS says so — an org admin
+may write their own competencies, may never touch a global one, and reads
+global plus their own. So an org-private competency is somebody's IP.
+
+Before 056, org A **could not read** org B's private competency — RLS returned
+zero rows — but **could attach it** to one of its own searches by naming its
+id, because the only key on `competency_id` ignored the organisation. Verified
+against the live database before the migration was written, and kept as case
+(5) of the invariants file. Unlike most of what 055 fixed this one *leaks*:
+those rows are read back with an embed on `executive_competencies(key, name)`,
+so the borrowed competency's name renders on org A's screens.
+
+### Why it takes two keys and a generated column
+
+The rule is a disjunction — *the competency is either global, or owned by this
+row's own organisation* — and no single foreign key expresses that.
+
+- **`is_global` on the parent**, a real column rather than a generated mirror
+  of `organization_id IS NULL`. It is what the first key references, and being
+  declared rather than derived means an insert has to say which kind of row it
+  is; a CHECK refuses both "global with an owner" and "private with nobody".
+- **`competency_is_global` on the child**, denormalised, because only the
+  parent knows the tier and a key cannot consult a third table.
+- **`competency_org_id` on the child, GENERATED** — NULL when the child claims
+  global, else its own `organization_id`. Generated so that "points at a global
+  competency or one of mine, never anybody else's" is structurally unwriteable
+  rather than merely checked.
+
+Then `(competency_id, competency_is_global) → (id, is_global)` proves the
+tier claim is true, and `(competency_org_id, competency_id) →
+(organization_id, id)` proves ownership when the claim is "private". **Neither
+alone is enough**: the first passes for a row claiming `false` while pointing
+at *any* org's private competency; the second is skipped entirely when the
+claim is `true`. The invariants file tests both lies in both directions.
+
+`executive_searches.template_id` gets the identical treatment.
+
+### One property worth knowing
+
+The tier key references `is_global`, so **a competency that searches already
+use cannot be reclassified**. Promoting an org-private competency to global is
+refused while any `executive_search_competencies` row points at it. That is
+correct — reclassifying would silently change who may see a search's
+competency list — but it means "publish my competency to everyone" is
+copy-and-repoint, not an `UPDATE`.
+
+### App-side
+
+Three write paths now record the tier alongside the id, because the pair is a
+key and a mismatched pair is refused: the EI intake's template choice and its
+competency prefill, and the success-profile weight sync. Both competency
+lookups also now prefer an org-private row over a global one on a shared key —
+the resolution the template lookup already did, and now required rather than
+cosmetic, since id and tier have to come from the same row.
+
+The competency library page reads the flag instead of re-deriving the tier
+from the null. It already showed `global` / `org` per row, so nothing moved on
+screen.
 
 ---
 
@@ -680,6 +752,14 @@ last admin, and suspending the last admin.
 closed.** 27 routes were driven in a browser at five widths, including the
 project tree, candidate detail, and sample mode. Still unseen: the HM portal
 with real data, and the evidence grid populated.
+
+**The catalogue flag has its own file** —
+`supabase/tests/global_catalogue_invariants.sql`, 10 invariants covering every
+branch of the disjunction: a global competency attaches, an org's own attaches,
+another org's is refused, and lying about the tier is refused in *both*
+directions. It also pins the CHECK, the reclassification refusal, the cascade,
+and the RLS asymmetry that made the hole worth fixing. Control run with the
+final assertion inverted raised.
 
 **The org/parent constraints were proven with their own file** —
 `supabase/tests/org_parent_integrity_invariants.sql`, 10 invariants against

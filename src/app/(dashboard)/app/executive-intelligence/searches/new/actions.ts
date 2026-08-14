@@ -81,7 +81,7 @@ export async function createExecutiveSearchAction(formData: FormData) {
   if (templateKey) {
     const { data: templateRows } = await supabase
       .from("executive_role_templates")
-      .select("id, organization_id, key, title, summary, role_family, intake_defaults, competency_weights")
+      .select("id, organization_id, is_global, key, title, summary, role_family, intake_defaults, competency_weights")
       .eq("key", templateKey);
     const candidates = (templateRows ?? []) as ExecutiveRoleTemplateRow[];
     template =
@@ -107,6 +107,11 @@ export async function createExecutiveSearchAction(formData: FormData) {
       created_by: user.id,
       client_id: clientId,
       template_id: template?.id ?? null,
+      // The tier the template was taken from. 056 pairs this with
+      // `template_id` in a foreign key, so a search can only ever name a
+      // global template or one of its own organisation's — recording the
+      // wrong tier is refused rather than silently stored.
+      template_is_global: template?.is_global ?? false,
       status: "active",
       service_tier: serviceTier,
       company_name: companyName,
@@ -156,19 +161,28 @@ export async function createExecutiveSearchAction(formData: FormData) {
     const keys = templateWeights.map((w) => w.competency_key);
     const { data: comps } = await supabase
       .from("executive_competencies")
-      .select("id, key")
+      .select("id, key, is_global")
       .in("key", keys);
-    const idByKey = new Map(
-      ((comps ?? []) as Array<{ id: string; key: string }>).map((c) => [c.key, c.id])
-    );
+
+    // A key can match both a global row and an org-private override, exactly
+    // as template keys can — RLS returns both and the org-specific one wins.
+    // The tier has to travel with the id rather than be looked up separately:
+    // 056 pairs them in a foreign key, so a mismatched pair is refused.
+    const byKey = new Map<string, { id: string; is_global: boolean }>();
+    for (const c of (comps ?? []) as Array<{ id: string; key: string; is_global: boolean }>) {
+      const existing = byKey.get(c.key);
+      if (!existing || existing.is_global) byKey.set(c.key, { id: c.id, is_global: c.is_global });
+    }
+
     const rows = templateWeights.flatMap((w) => {
-      const competencyId = idByKey.get(w.competency_key);
-      if (!competencyId) return [];
+      const competency = byKey.get(w.competency_key);
+      if (!competency) return [];
       return [
         {
           search_id: inserted.id,
           organization_id: profile.organization_id,
-          competency_id: competencyId,
+          competency_id: competency.id,
+          competency_is_global: competency.is_global,
           weight: Math.min(100, Math.max(0, Math.round(w.weight))),
           rationale: w.rationale ?? "",
           source: "template",

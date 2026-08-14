@@ -296,28 +296,37 @@ async function syncCompetencyWeightsFromApprovedProfile(
 
     const { data: comps, error: compsError } = await supabase
       .from("executive_competencies")
-      .select("id, key")
+      .select("id, key, is_global")
       .in(
         "key",
         weights.map((w) => w.competency_key)
       );
     if (compsError) throw new Error(compsError.message);
 
-    const idByKey = new Map(
-      ((comps ?? []) as Array<{ id: string; key: string }>).map((c) => [
-        c.key,
-        c.id,
-      ])
-    );
+    // Id and tier together, org-private winning over global on a shared key —
+    // the same resolution the intake prefill does. 056 pairs the two in a
+    // foreign key, so they cannot be looked up independently.
+    const byKey = new Map<string, { id: string; is_global: boolean }>();
+    for (const c of (comps ?? []) as Array<{
+      id: string;
+      key: string;
+      is_global: boolean;
+    }>) {
+      const existing = byKey.get(c.key);
+      if (!existing || existing.is_global) {
+        byKey.set(c.key, { id: c.id, is_global: c.is_global });
+      }
+    }
 
     const rows = weights.flatMap((w) => {
-      const competencyId = idByKey.get(w.competency_key);
-      if (!competencyId) return [];
+      const competency = byKey.get(w.competency_key);
+      if (!competency) return [];
       return [
         {
           search_id: searchId,
           organization_id: organizationId,
-          competency_id: competencyId,
+          competency_id: competency.id,
+          competency_is_global: competency.is_global,
           weight: w.weight,
           rationale: w.rationale,
           source: "ai",
