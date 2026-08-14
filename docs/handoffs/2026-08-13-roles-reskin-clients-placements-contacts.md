@@ -487,6 +487,14 @@ pieces of prose that could not be compared.
    project-scoped, contacts client-scoped) is validated in the action rather
    than by a trigger, because `projects.client_id` is nullable and the carve-
    out would be the normal case.
+
+   **Wired end to end**, not just in the schema: the share-link card on
+   `/hiring-manager` gains a contact picker beside the label field, and the
+   label is *derived* from the chosen contact so the two cannot disagree —
+   the same rule the placement sign-off uses. The label input is disabled
+   rather than ignored when a contact is picked, because a field whose value
+   is silently dropped is worse than one that says it is not in use. Archived
+   contacts are excluded from the picker and refused by the action.
 3. **A placement records who signed it off** — `signed_off_by_contact_id`
    *and* `signed_off_by_label`. Both, because SET NULL on a deleted contact
    would otherwise erase who authorised a booked fee, which is exactly what

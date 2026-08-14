@@ -20,12 +20,20 @@ export type HmTokenRow = {
 export function ShareLinkCard({
   projectId,
   tokens,
+  contacts,
 }: {
   projectId: string;
   tokens: HmTokenRow[];
+  /**
+   * The client's active contacts (054). Empty when the mandate has no client
+   * yet, in which case the label field is the only way to name a recipient —
+   * which is also every token minted before contacts existed.
+   */
+  contacts: Array<{ id: string; full_name: string; title: string | null }>;
 }) {
   const router = useRouter();
   const [label, setLabel] = useState("");
+  const [contactId, setContactId] = useState("");
   const [pending, start] = useTransition();
   const [revoking, startRevoke] = useTransition();
 
@@ -36,9 +44,10 @@ export function ShareLinkCard({
     if (pending) return;
     start(async () => {
       try {
-        await generateHmTokenAction(projectId, label.trim());
+        await generateHmTokenAction(projectId, label.trim(), contactId || undefined);
         toast.success("Share link minted");
         setLabel("");
+        setContactId("");
         router.refresh();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Mint failed.";
@@ -92,6 +101,25 @@ export function ShareLinkCard({
 
       <div className="p-4 space-y-4">
         <div className="flex items-end gap-2 flex-wrap">
+          {contacts.length > 0 && (
+            <label className="flex-1 min-w-[200px] block space-y-1">
+              <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+                Contact
+              </span>
+              <select
+                value={contactId}
+                onChange={(e) => setContactId(e.target.value)}
+                className="w-full min-w-0 bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface focus:border-primary focus:outline-none transition-colors"
+              >
+                <option value="">Not from the contact list</option>
+                {contacts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title ? `${c.full_name} — ${c.title}` : c.full_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="flex-1 min-w-[200px] block space-y-1">
             <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
               Label (recipient)
@@ -100,8 +128,15 @@ export function ShareLinkCard({
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="Jane Smith @ Acme"
-              className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface focus:border-primary focus:outline-none transition-colors"
+              // Disabled rather than merely ignored when a contact is chosen:
+              // the action derives the label from the contact so the two
+              // cannot disagree, and a field whose value is silently dropped
+              // is worse than one that says it is not in use.
+              disabled={contactId !== ""}
+              placeholder={
+                contactId ? "Taken from the contact" : "Jane Smith @ Acme"
+              }
+              className="w-full min-w-0 bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface focus:border-primary focus:outline-none transition-colors disabled:opacity-55"
             />
           </label>
           <button

@@ -53,9 +53,9 @@ export default async function HiringManagerPortalFounderPage({
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, title, company_name, status")
+    .select("id, title, company_name, status, client_id")
     .eq("id", id)
-    .single<ProjectRow>();
+    .single<ProjectRow & { client_id: string | null }>();
 
   if (projectError || !project) {
     if (projectError?.code === "PGRST116") notFound();
@@ -89,6 +89,22 @@ export default async function HiringManagerPortalFounderPage({
       .order("created_at", { ascending: false }),
   ]);
 
+  // The client's active contacts, so a share link can be issued to a person
+  // rather than to another typed string (054). Empty when the mandate has no
+  // client yet — the label field still works on its own.
+  const { data: hmContactRows } = project.client_id
+    ? await supabase
+        .from("client_contacts")
+        .select("id, full_name, title")
+        .eq("client_id", project.client_id)
+        .eq("is_archived", false)
+        .order("is_primary", { ascending: false })
+        .order("full_name")
+        .returns<Array<{ id: string; full_name: string; title: string | null }>>()
+    : { data: null };
+
+  const hmContacts = hmContactRows ?? [];
+
   const shortlist = shortlistQ.data;
   const allCandidates = (candidatesQ.data ?? []) as Array<
     CandidateRow & { pipeline_stage: string | null }
@@ -108,7 +124,7 @@ export default async function HiringManagerPortalFounderPage({
         ]}
       />
 
-      <ShareLinkCard projectId={project.id} tokens={tokens} />
+      <ShareLinkCard projectId={project.id} tokens={tokens} contacts={hmContacts} />
 
       <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest pt-2">
         ▼ Portal Preview · this is what the hiring manager sees
