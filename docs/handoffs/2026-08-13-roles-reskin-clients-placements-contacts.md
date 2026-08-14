@@ -1267,12 +1267,34 @@ Unchanged from the previous two handoffs.
 - **`ANTHROPIC_API_KEY` has no credit.** Blocks the coverage-analysis agent's
   first real run, comparison layers 4 and 5, and deleting the losing branch
   in `run-sourcing-search.ts`.
-- **Leaked-password protection is disabled.** Added by the advisor sweep
-  (§5g). A Supabase Auth dashboard toggle, not SQL: it checks new passwords
-  against HaveIBeenPwned and rejects compromised ones. It changes what
-  happens to a real person at signup, so it is the founder's call and was
-  deliberately not enabled. It is the only security finding left that has a
-  fix nobody has applied.
+- **Leaked-password protection is disabled — and cannot be enabled on the
+  current plan.** Added by the advisor sweep (§5g), where it was written up
+  as a founder decision. The founder made it on 2026-08-14: enable it. It
+  then turned out not to be a decision at all.
+
+  Supabase gates the feature at **Pro**, and org `Stratum`
+  (`bfomdugfdcxxcneocihl`, which owns `xipyqnltkbtywxqyxupf`) is on `free`.
+  The dashboard toggle is locked. There is no SQL for it, the Supabase MCP
+  is database-only and exposes no auth-config tool, and there is no
+  `SUPABASE_ACCESS_TOKEN` in the shell or in any `.env` file and no Supabase
+  CLI installed — so the Management API is not reachable from a session
+  either. Nobody can action this without a Pro upgrade (~$25/mo, org-wide,
+  and the org owns four other projects).
+
+  After upgrading: `Auth → Providers → Email → "Prevent use of leaked
+  passwords"`, or `PATCH /v1/projects/xipyqnltkbtywxqyxupf/config/auth`
+  with `{"password_hibp_enabled": true}` and a personal access token.
+
+  **The timing is genuinely free.** HIBP is checked when a password is
+  *set* — signup and reset — not on existing rows. Turning it on later does
+  not invalidate anyone's password or interrupt an account that already
+  exists, so deferring it costs nothing retroactively. That is the argument
+  for treating it as a launch-day item rather than an urgent one.
+
+  What *is* available on the free tier, on the same settings page, and is a
+  partial substitute: minimum password length (the default is 6; the docs
+  say anything under 8 is not recommended) and required character classes.
+  Neither is set. Also on the checklist.
 
 ---
 
@@ -1310,7 +1332,8 @@ The priority list from the original review is now **done**, apart from items
   for what was fixed and what was left, and §5h for the gap it turned up.
   Re-run it after the next migration that adds tables or policies; the
   residue to expect is six deliberate SECURITY DEFINER findings, the
-  leaked-password toggle, and a growing pile of `unused_index` noise.
+  leaked-password toggle (Pro-gated — see §7), and a growing pile of
+  `unused_index` noise.
 - ~~Review the pre-046 RLS policies for the same status gap~~ — migration
   `060`. §5i is the map: every generated policy is sound, and the two
   hand-written founder/self-scoped tables were the only ones at risk. Both
