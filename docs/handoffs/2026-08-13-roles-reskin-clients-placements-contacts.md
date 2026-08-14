@@ -1254,6 +1254,87 @@ means a scratch organisation, not the founder's.
 
 ---
 
+## 6b. The loop, run end to end — 2026-08-14
+
+Credit landed on the Anthropic account, so the core loop was driven for the
+first time, in a scratch organisation, through the browser.
+
+**What ran, and worked:**
+
+| Stage | Result |
+|---|---|
+| Create mandate (`/app/projects/new`) | Intake + Company Research both COMPLETE in under 10s |
+| Title resolution | "Analyzing…" → "Chief Technology Officer · Meridian Freight" |
+| Onboarding, all five steps | Origin, must-haves, anti-patterns, stakeholders, weighted priorities |
+| Compile calibration model | CALIBRATED |
+| Generate job spec | 6,345 characters, five sections |
+| Mark as final | FINAL_V01 |
+| Sourcing | **blocked — out of credit** |
+
+The chaining is real, not superficial. The spec opened with *"Meridian
+Freight is a PE-backed logistics group in active growth mode, pursuing an
+acquisition-led expansion strategy…"* — the acquisition angle came from a
+stakeholder answer typed three steps earlier, and the vendor-estate framing
+from an anti-pattern. The agents are reading each other's output.
+
+### Finding 1 — the credit is already gone
+
+Sourcing failed with *"Your credit balance is too low"*. One mandate through
+intake → research → calibration → spec → finalise, plus one candidate
+search, exhausted the balance. **Founder action, and it is the blocker for
+everything downstream of the spec.** Nothing past FINAL_V01 has ever
+executed: sourcing, evaluation, ranking, shortlist, comparison, the whole
+Executive Intelligence surface.
+
+Worth sizing before topping up again — five agent calls is not a lot of
+runway.
+
+### Finding 2 — every server-action error message is invisible in production
+
+**This is the important one, and only a production build shows it.**
+
+Next.js redacts errors thrown from Server Actions in production. The
+codebase's pattern is `throw new Error("...")` in the action and
+`catch (e) { toast.error(e.message) }` in the client component — roughly
+twenty files. In production every one of those toasts renders:
+
+> "An error occurred in the Server Components render. The specific message is
+> omitted in production builds to avoid leaking sensitive details. A digest
+> property is included on this error instance which may provide additional
+> details about the nature of the error."
+
+Confirmed twice, on deliberately different paths: the sourcing generate
+button (an AI failure) **and** demoting an organisation's last admin (a
+message the product wrote itself, from the 046 guard). It is not
+AI-specific; it is every server-action error in the product.
+
+So the careful wording in those actions — "an organization must keep at
+least one active admin", "Failed to approve", the fee-terms and contact
+messages — has never reached a user in production. In `next dev` the real
+message shows, which is exactly why it survived: it looks correct locally
+forever.
+
+**The fix is a contract change, not a copy change.** A server action must
+*return* its failure as a value rather than throw it, and the client renders
+that value. It touches every action/panel pair, so it is its own piece of
+work with its own verification, and it is not started.
+
+There is a silver lining worth recording: this redaction is also why the
+`e.message` toasts were never a *leak*. The provider payload does not reach
+the browser from a server action. The leaks fixed in `9a1c65c` and `fe37b55`
+were real because those render server-side — a page body and a database
+column — where no redaction applies. The distinction is load-bearing: it
+decides which of these are security bugs and which are UX bugs.
+
+### Finding 3 — "~5–10 seconds" is wrong
+
+Both the spec page and the sourcing page promise "~5–10 SECONDS". The spec
+generation took **38 seconds** wall-clock (18:17:05 → 18:17:43). The polling
+UI handled it correctly and the copy did not. Small, but it is the first
+number a new user gets to check the product against.
+
+---
+
 ## 7. Blockers not ours to clear
 
 Unchanged from the previous two handoffs.
