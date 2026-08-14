@@ -12,6 +12,7 @@ import {
 } from "@/lib/ai/cv-parsing";
 import { TIER_BANDS, TIER_ORDER, type Tier } from "@/lib/ranking/tiers";
 import { runCandidateSearch } from "@/lib/ai/run-candidate-search";
+import { agentErrorMessage } from "@/lib/ai/agent-errors";
 import type {
   CandidateSearchInputCandidate,
   CandidateSearchResult,
@@ -173,8 +174,12 @@ export default async function CandidateSearchPage({
       try {
         searchResult = await runCandidateSearch(query, inputCandidates);
       } catch (err) {
-        searchError =
-          err instanceof Error ? err.message : "Search agent failed.";
+        // Not `err.message`: that rendered the provider's raw JSON body —
+        // vendor name, billing advice and a request id — straight into the
+        // page. Harmless while this route was unreachable except by typing
+        // the URL; a real screen the moment it was linked into the rail.
+        // See `agent-errors.ts`. The console still gets the whole thing.
+        searchError = agentErrorMessage(err, "The search agent");
         console.error("[candidates/search] agent failed", err);
       }
     }

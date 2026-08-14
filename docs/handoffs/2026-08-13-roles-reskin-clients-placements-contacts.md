@@ -1327,11 +1327,13 @@ From the original review's priority order, with the done items struck:
 4. ~~Placement and fee record~~ — `460bb8c` / `09acbac`, migrations 050–052.
    See §5a and §10.
 5. ~~Design system consolidation~~ — `dfd2ca5`.
-6. **Link `/app/candidates/search` into the nav.** Still unlinked. A
-   620-line AI natural-language search that nothing points at. Minutes of
-   work; left alone deliberately because it is item 6. Note the nav now has
-   a Clients entry, so there is a worked example of adding one — `NAV` in
-   `src/components/dashboard/nav-model.ts` plus an icon in `sidebar.tsx`.
+6. ~~Link `/app/candidates/search` into the nav~~ — "AI search", a child of
+   Candidates in the Search group. It was minutes of work, as predicted, and
+   then it was not: opening it from the rail for the first time showed what
+   the page does when the agent fails, which is that it rendered the
+   provider's raw JSON body — vendor name, "go to Plans & Billing", and a
+   request id — into the page. Fixed in the same commit; see the note below
+   on the three places that still do it.
 7. **Sample data on the other 36 pages.** Portfolio, Candidates, Mandates and
    now Placements have it. Competencies and Templates still tell the user to
    "check that migration 033 has been applied."
@@ -1359,6 +1361,32 @@ The priority list from the original review is now **done**, apart from items
   for tables that do not exist yet.
 
 Smaller, added by this session:
+
+- **Three AI generators still write the provider's raw error into the
+  database.** Found while doing item 6, and left alone because it is a
+  different screen from the one that was being linked.
+
+  `generate-job-spec.ts:116` does `err instanceof Error ? err.message : …`
+  on the Anthropic call and passes it to `markGenerationFailed`, which
+  writes it to `job_specs.generation_error`. `spec/page.tsx` then renders
+  that column. The same shape is in
+  `generate-executive-success-profile.ts:234` and
+  `generate-executive-interview-plan.ts:302`, both rendered by their
+  editors.
+
+  So the payload that `/app/candidates/search` used to show is not merely
+  displayed here, it is **persisted** — currently it would read *"Your
+  credit balance is too low to access the Anthropic API. Please go to Plans
+  & Billing…"* plus a request id, stored in Postgres and shown to a
+  recruiter. `agentErrorMessage()` in `src/lib/ai/agent-errors.ts` is the
+  fix and already exists; each site is a one-line change plus a decision
+  about what the retry view should say. The reason it was not done here is
+  that verifying it means driving three more screens, and one of them
+  (`/spec`) has never had a successful generation to compare against.
+
+  Note the timeout path already gets this right —
+  `spec/actions.ts:225` writes a fixed *"Generation timed out. Please
+  retry."* — so the DB column is not assumed to hold a provider string.
 
 - **Fix the researcher → `/sourcing` → `/spec` bounce message** (§2).
 - **The role now reaches the feedback interpreter as "who is speaking".**

@@ -25,6 +25,7 @@ import {
   IconMenu,
   IconNetwork,
   IconPortfolio,
+  IconSearch,
   IconSettings,
   IconSkills,
 } from "@/components/icons";
@@ -61,6 +62,7 @@ const ICONS: Record<
   analytics: IconAnalytics,
   mandates: IconMandates,
   candidates: IconCandidates,
+  search: IconSearch,
   clients: IconBuilding,
   placements: IconPlacements,
   activity: IconActivity,

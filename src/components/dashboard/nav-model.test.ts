@@ -36,9 +36,13 @@ describe("isNavItemActive", () => {
     ]);
   });
 
+  // Candidates is an exact match rather than a prefix precisely so its two
+  // children own their own paths. Turning it into a prefix rule would light
+  // three rows at once.
   it("distinguishes the candidate destinations", () => {
     expect(activeLabels("/app/candidates")).toEqual(["Candidates"]);
     expect(activeLabels("/app/candidates/network")).toEqual(["Network"]);
+    expect(activeLabels("/app/candidates/search")).toEqual(["AI search"]);
   });
 
   it("lights Executive Intelligence for its own page only", () => {
@@ -68,6 +72,7 @@ describe("isNavItemActive", () => {
       "/app/projects/abc123",
       "/app/candidates",
       "/app/candidates/network",
+      "/app/candidates/search",
       "/app/analytics",
       "/app/executive-intelligence",
       "/app/executive-intelligence/competencies",

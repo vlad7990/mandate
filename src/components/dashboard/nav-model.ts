@@ -28,6 +28,7 @@ export type NavItem = {
     | "mandates"
     | "candidates"
     | "network"
+    | "search"
     | "clients"
     | "placements"
     | "activity"
@@ -117,6 +118,27 @@ export const NAV: readonly NavItem[] = [
     badgeKey: "mandates",
   },
   { href: "/app/candidates", label: "Candidates", icon: "candidates", group: "search" },
+  /**
+   * A 620-line natural-language search over the candidate pool that nothing
+   * pointed at until now — reachable only by typing the URL.
+   *
+   * A child of Candidates rather than a sibling: it searches the same pool
+   * the entry above lists, and promoting it to a top-level destination would
+   * imply a second pool. Note that Candidates is an exact match, not a
+   * prefix, so opening this does not light both — the same arrangement
+   * Network already relies on.
+   *
+   * Not capability-gated. There is no rule for it in `ROUTE_RULES`, so every
+   * active role can reach it, which is right: it reads the pool a viewer can
+   * already read and writes nothing.
+   */
+  {
+    href: "/app/candidates/search",
+    label: "AI search",
+    icon: "search",
+    group: "search",
+    child: true,
+  },
   {
     href: "/app/candidates/network",
     label: "Network",
