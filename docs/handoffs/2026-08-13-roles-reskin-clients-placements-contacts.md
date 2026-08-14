@@ -1362,31 +1362,44 @@ The priority list from the original review is now **done**, apart from items
 
 Smaller, added by this session:
 
-- **Three AI generators still write the provider's raw error into the
-  database.** Found while doing item 6, and left alone because it is a
-  different screen from the one that was being linked.
+- ~~AI generators writing the provider's raw error into the database~~ —
+  done, and it was **four**, not three: `generate-job-spec.ts`,
+  `generate-executive-success-profile.ts`,
+  `generate-executive-interview-plan.ts`, and
+  `run-executive-company-context.ts`, which writes a different column
+  (`company_context_error`) and so did not turn up in the first grep.
 
-  `generate-job-spec.ts:116` does `err instanceof Error ? err.message : …`
-  on the Anthropic call and passes it to `markGenerationFailed`, which
-  writes it to `job_specs.generation_error`. `spec/page.tsx` then renders
-  that column. The same shape is in
-  `generate-executive-success-profile.ts:234` and
-  `generate-executive-interview-plan.ts:302`, both rendered by their
-  editors.
+  Every failure path now writes through `agentErrorMessage()`, and each
+  `markFailed`-style writer applies `safeFailureMessage()` as a backstop, so
+  a generator added later cannot leak a provider body by forgetting to.
 
-  So the payload that `/app/candidates/search` used to show is not merely
-  displayed here, it is **persisted** — currently it would read *"Your
-  credit balance is too low to access the Anthropic API. Please go to Plans
-  & Billing…"* plus a request id, stored in Postgres and shown to a
-  recruiter. `agentErrorMessage()` in `src/lib/ai/agent-errors.ts` is the
-  fix and already exists; each site is a one-line change plus a decision
-  about what the retry view should say. The reason it was not done here is
-  that verifying it means driving three more screens, and one of them
-  (`/spec`) has never had a successful generation to compare against.
+  Three judgements worth keeping:
 
-  Note the timeout path already gets this right —
-  `spec/actions.ts:225` writes a fixed *"Generation timed out. Please
-  retry."* — so the DB column is not assumed to hold a provider string.
+  **Not everything in those columns was unsafe.** The interview-plan
+  generator writes *"No approved success profile for this search. Approve a
+  success profile before generating an interview plan."* — authored for the
+  reader and the most useful sentence that view can show. A blanket scrub
+  would have destroyed it, so the backstop matches only unmistakable
+  provider markers (a JSON error envelope, a `request_id`, a leading HTTP
+  status) and the call site decides everything else.
+
+  **The audit trail keeps the real message.** In the two generators that
+  record an `executive_audit_events` row on failure, the detail still holds
+  the true error — it is ours to read, and recording a sanitised string
+  there would defeat the point of recording it. Two audiences, two strings.
+
+  **The detail survives in the throw.** Every one of these call sites still
+  throws the rich message, so nothing was lost from logs by sanitising the
+  column.
+
+  Verified end to end, not just by unit test: on a scratch org, with
+  `calibration_model.dimension_weights` set as fixture data to unlock the
+  CTA, GENERATE JOB SPEC was clicked against the live (uncredited) API. The
+  failure view now reads *"Job-spec generation could not run. This has been
+  logged…"*, the DOM was asserted clean of `Anthropic`, `credit balance`,
+  `Plans & Billing` and `req_…`, and the `job_specs.generation_error` column
+  was read back afterwards holding the safe sentence. Scratch org deleted;
+  counts back to baseline.
 
 - **Fix the researcher → `/sourcing` → `/spec` bounce message** (§2).
 - **The role now reaches the feedback interpreter as "who is speaking".**

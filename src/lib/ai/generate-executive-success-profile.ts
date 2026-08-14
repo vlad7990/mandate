@@ -2,6 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getAnthropic } from "@/lib/anthropic";
+import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
 import {
   ROLE_ARCHITECT_SYSTEM_PROMPT,
   SUCCESS_PROFILE_SCHEMA,
@@ -13,6 +14,13 @@ import type {
   ExecutiveCompetencyRow,
   ExecutiveSearchRow,
 } from "@/lib/executive/types";
+
+/**
+ * How this generator names itself in a failure a person reads. Whatever
+ * lands in the error column is rendered verbatim with a Retry CTA, so it
+ * outlives the request — see `agent-errors.ts`.
+ */
+const SUBJECT = "Success-profile generation";
 
 export const ROLE_ARCHITECT_MODEL = "claude-sonnet-4-6";
 
@@ -59,7 +67,7 @@ export async function generateAndStoreSuccessProfile(
 
   if (fetchError || !search) {
     const message = `Failed to load executive search ${searchId} for profile generation: ${fetchError?.message ?? "not found"}`;
-    await markGenerationFailed(profileRowId, message);
+    await markGenerationFailed(profileRowId, agentErrorMessage(fetchError, SUBJECT));
     throw new Error(message);
   }
 
@@ -73,7 +81,7 @@ export async function generateAndStoreSuccessProfile(
 
   if (compError) {
     const message = `Failed to load competency library: ${compError.message}`;
-    await markGenerationFailed(profileRowId, message);
+    await markGenerationFailed(profileRowId, agentErrorMessage(compError, SUBJECT));
     throw new Error(message);
   }
 
@@ -148,8 +156,11 @@ export async function generateAndStoreSuccessProfile(
     // with malformed shapes and clamps weights to 0–100.
     content = normalizeSuccessProfile(JSON.parse(textBlock.text));
   } catch (err) {
+    // Two audiences, two strings. The audit trail keeps the real message —
+    // it is ours to read and the whole point of recording a failure — while
+    // the column a recruiter sees gets the mapped one.
     const message = err instanceof Error ? err.message : "AI call failed.";
-    await markGenerationFailed(profileRowId, message);
+    await markGenerationFailed(profileRowId, agentErrorMessage(err, SUBJECT));
     await recordExecutiveAuditEvent(supabase, {
       organizationId: search.organization_id,
       searchId,
@@ -203,11 +214,7 @@ export async function generateAndStoreSuccessProfile(
       },
     });
   } catch (err) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : "Failed to persist generated success profile.";
-    await markGenerationFailed(profileRowId, message);
+    await markGenerationFailed(profileRowId, agentErrorMessage(err, SUBJECT));
     cleared = true;
     throw err;
   } finally {
@@ -231,7 +238,7 @@ async function markGenerationFailed(
       .from("role_success_profiles")
       .update({
         is_generating: false,
-        generation_error: errorMessage,
+        generation_error: safeFailureMessage(errorMessage, SUBJECT),
         updated_at: new Date().toISOString(),
       })
       .eq("id", profileRowId);

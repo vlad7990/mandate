@@ -2,6 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getAnthropic } from "@/lib/anthropic";
+import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
 import {
   JOB_SPEC_SCHEMA,
   JOB_SPEC_SYSTEM_PROMPT,
@@ -13,6 +14,13 @@ import type { OnboardingResponses } from "./onboarding-analysis";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
 const JOB_SPEC_MODEL = "claude-sonnet-4-6";
+
+/**
+ * How this generator names itself in a failure a recruiter reads. The
+ * `generation_error` column is rendered verbatim with a Retry CTA, so
+ * whatever lands in it outlives the request — see `agent-errors.ts`.
+ */
+const SUBJECT = "Job-spec generation";
 
 /**
  * Read-only SSR client for use inside `after()` callbacks. Mirrors the
@@ -70,7 +78,8 @@ export async function generateAndStoreJobSpec(
 
   if (fetchError || !project) {
     const message = `Failed to load project ${projectId} for spec generation: ${fetchError?.message ?? "not found"}`;
-    await markGenerationFailed(specRowId, message);
+    // The detail survives in the throw; the column is user-facing.
+    await markGenerationFailed(specRowId, agentErrorMessage(fetchError, SUBJECT));
     throw new Error(message);
   }
 
@@ -113,8 +122,7 @@ export async function generateAndStoreJobSpec(
 
     sections = JSON.parse(textBlock.text) as JobSpecSections;
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI call failed.";
-    await markGenerationFailed(specRowId, message);
+    await markGenerationFailed(specRowId, agentErrorMessage(err, SUBJECT));
     throw err;
   }
 
@@ -145,8 +153,7 @@ export async function generateAndStoreJobSpec(
     }
     cleared = true;
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to persist generated job spec.";
-    await markGenerationFailed(specRowId, message);
+    await markGenerationFailed(specRowId, agentErrorMessage(err, SUBJECT));
     cleared = true;
     throw err;
   } finally {
@@ -177,7 +184,7 @@ async function markGenerationFailed(
       .from("job_specs")
       .update({
         is_generating: false,
-        generation_error: errorMessage,
+        generation_error: safeFailureMessage(errorMessage, SUBJECT),
         updated_at: new Date().toISOString(),
       })
       .eq("id", specRowId);

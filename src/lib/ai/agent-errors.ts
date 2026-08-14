@@ -54,5 +54,39 @@ export function agentErrorMessage(err: unknown, subject: string): string {
     return `${subject} is busy right now. Try again in a moment.`;
   }
 
-  return `${subject} is unavailable. This has been logged — nothing you typed was lost.`;
+  return unavailable(subject);
+}
+
+function unavailable(subject: string): string {
+  return `${subject} could not run. This has been logged — try again, and tell an admin if it keeps happening.`;
+}
+
+/**
+ * Unmistakable markers of a provider payload. Deliberately narrow: a JSON
+ * error envelope, a request id, or a bare HTTP status followed by a body.
+ *
+ * It does **not** try to detect "internal-looking" text in general. A
+ * heuristic broad enough to catch a stray UUID would also eat
+ * `"No approved success profile for this search."`, which is authored *for*
+ * the reader and is the most useful sentence any of these views can show.
+ * Deciding which is which is the call site's job; this only catches the
+ * case where getting it wrong is unambiguous.
+ */
+const PROVIDER_PAYLOAD = /"request_id"|"type"\s*:\s*"(error|invalid_request_error)"|^\s*\d{3}\s*\{/;
+
+/**
+ * Backstop at a persistence boundary.
+ *
+ * The `generation_error` columns are written by one helper per generator and
+ * rendered verbatim with a Retry CTA, so a raw message reaching one of them
+ * is stored in Postgres and shown to a recruiter — worse than a transient
+ * screen, because it outlives the request.
+ *
+ * Call sites are expected to have already chosen: authored text passes
+ * through untouched, and anything from a `catch` should arrive via
+ * `agentErrorMessage`. This exists so that the next generator someone adds
+ * cannot leak a provider body by simply forgetting to.
+ */
+export function safeFailureMessage(message: string, subject: string): string {
+  return PROVIDER_PAYLOAD.test(message) ? unavailable(subject) : message;
 }

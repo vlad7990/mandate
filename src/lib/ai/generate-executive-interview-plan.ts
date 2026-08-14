@@ -2,6 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getAnthropic } from "@/lib/anthropic";
+import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
 import {
   INTERVIEW_ARCHITECT_SYSTEM_PROMPT,
   INTERVIEW_PLAN_SCHEMA,
@@ -10,6 +11,13 @@ import {
   type InterviewPlanContent,
 } from "./executive-interview-architect-agent";
 import { recordExecutiveAuditEvent } from "@/lib/executive/audit";
+
+/**
+ * How this generator names itself in a failure a person reads. Whatever
+ * lands in the error column is rendered verbatim with a Retry CTA, so it
+ * outlives the request — see `agent-errors.ts`.
+ */
+const SUBJECT = "Interview-plan generation";
 
 export const INTERVIEW_ARCHITECT_MODEL = "claude-sonnet-4-6";
 
@@ -89,7 +97,7 @@ export async function generateAndStoreInterviewPlan(
 
   if (searchError || !search) {
     const msg = `Failed to load search ${searchId}: ${searchError?.message ?? "not found"}`;
-    await markFailed(planRowId, msg);
+    await markFailed(planRowId, agentErrorMessage(searchError, SUBJECT));
     throw new Error(msg);
   }
 
@@ -103,7 +111,7 @@ export async function generateAndStoreInterviewPlan(
 
   if (profileError) {
     const msg = `Failed to load approved success profile: ${profileError.message}`;
-    await markFailed(planRowId, msg);
+    await markFailed(planRowId, agentErrorMessage(profileError, SUBJECT));
     throw new Error(msg);
   }
   if (!profile) {
@@ -123,7 +131,7 @@ export async function generateAndStoreInterviewPlan(
 
   if (weightError) {
     const msg = `Failed to load competency weights: ${weightError.message}`;
-    await markFailed(planRowId, msg);
+    await markFailed(planRowId, agentErrorMessage(weightError, SUBJECT));
     throw new Error(msg);
   }
 
@@ -163,7 +171,7 @@ export async function generateAndStoreInterviewPlan(
 
   if (candidateError || !candidate) {
     const msg = `Failed to load candidate ${candidateId}: ${candidateError?.message ?? "not found"}`;
-    await markFailed(planRowId, msg);
+    await markFailed(planRowId, agentErrorMessage(candidateError, SUBJECT));
     throw new Error(msg);
   }
 
@@ -217,7 +225,7 @@ export async function generateAndStoreInterviewPlan(
     content = normalizeInterviewPlan(JSON.parse(textBlock.text));
   } catch (err) {
     const msg = err instanceof Error ? err.message : "AI call failed.";
-    await markFailed(planRowId, msg);
+    await markFailed(planRowId, agentErrorMessage(err, SUBJECT));
     await recordExecutiveAuditEvent(supabase, {
       organizationId: search.organization_id,
       searchId,
@@ -276,9 +284,7 @@ export async function generateAndStoreInterviewPlan(
       },
     });
   } catch (err) {
-    const msg =
-      err instanceof Error ? err.message : "Failed to persist interview plan.";
-    await markFailed(planRowId, msg);
+    await markFailed(planRowId, agentErrorMessage(err, SUBJECT));
     cleared = true;
     throw err;
   } finally {
@@ -299,7 +305,7 @@ async function markFailed(planRowId: string, errorMessage: string): Promise<void
       .from("executive_interview_plans")
       .update({
         is_generating: false,
-        generation_error: errorMessage,
+        generation_error: safeFailureMessage(errorMessage, SUBJECT),
         updated_at: new Date().toISOString(),
       })
       .eq("id", planRowId);

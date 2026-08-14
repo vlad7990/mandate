@@ -2,12 +2,20 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getAnthropic } from "@/lib/anthropic";
+import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
 import {
   EXECUTIVE_COMPANY_CONTEXT_SCHEMA,
   EXECUTIVE_COMPANY_CONTEXT_SYSTEM_PROMPT,
   type ExecutiveCompanyContext,
 } from "./executive-company-context-agent";
 import type { ExecutiveSearchRow } from "@/lib/executive/types";
+
+/**
+ * How this generator names itself in a failure a person reads. Whatever
+ * lands in the error column is rendered verbatim with a Retry CTA, so it
+ * outlives the request — see `agent-errors.ts`.
+ */
+const SUBJECT = "Company-context research";
 
 export const EXECUTIVE_COMPANY_CONTEXT_MODEL = "claude-sonnet-4-6";
 const WEB_SEARCH_MAX_USES = 6;
@@ -100,7 +108,7 @@ export async function runAndStoreExecutiveCompanyContext(
 
   if (fetchError || !search) {
     const message = `Failed to load executive search ${searchId}: ${fetchError?.message ?? "not found"}`;
-    await markContextFailed(searchId, message);
+    await markContextFailed(searchId, agentErrorMessage(fetchError, SUBJECT));
     throw new Error(message);
   }
 
@@ -164,8 +172,7 @@ export async function runAndStoreExecutiveCompanyContext(
       sources: extractSources(response.content),
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI call failed.";
-    await markContextFailed(searchId, message);
+    await markContextFailed(searchId, agentErrorMessage(err, SUBJECT));
     throw err;
   }
 
@@ -181,7 +188,7 @@ export async function runAndStoreExecutiveCompanyContext(
 
   if (updateError) {
     const message = `Failed to persist company context: ${updateError.message}`;
-    await markContextFailed(searchId, message);
+    await markContextFailed(searchId, agentErrorMessage(updateError, SUBJECT));
     throw new Error(message);
   }
 }
@@ -200,7 +207,7 @@ async function markContextFailed(
       .from("executive_searches")
       .update({
         company_context_status: "failed",
-        company_context_error: errorMessage,
+        company_context_error: safeFailureMessage(errorMessage, SUBJECT),
         updated_at: new Date().toISOString(),
       })
       .eq("id", searchId);
