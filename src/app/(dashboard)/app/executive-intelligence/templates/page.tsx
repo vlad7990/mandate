@@ -20,6 +20,11 @@ export default async function ExecutiveTemplatesPage() {
     .select("id, organization_id, key, title, summary, role_family, competency_weights")
     .order("title");
 
+  // See the competency page — the detail is logged, not rendered.
+  if (error) {
+    console.error("[ei/templates] failed to load templates", error);
+  }
+
   const templates = (data ?? []) as TemplateListRow[];
 
   return (
@@ -47,15 +52,18 @@ export default async function ExecutiveTemplatesPage() {
 
         {error && (
           <div className="border border-error/40 bg-error-container/30 px-4 py-3 text-error text-body-main">
-            Failed to load templates: {error.message}
+            Role templates could not be loaded. This has been logged — try
+            again, and tell an admin if it keeps happening.
           </div>
         )}
 
+        {/* Same reasoning as the competency library — see that page. */}
         {!error && templates.length === 0 && (
           <div className="bg-surface-container-low border border-outline-variant p-12 text-center">
             <p className="text-body-main text-on-surface-variant">
-              No templates available. The global library is seeded by migration 033
-              — check that it has been applied.
+              No role templates are available. They ship with Mandate rather
+              than being configured per organisation, so there is nothing to
+              set up here — if this stays empty, that is ours to fix.
             </p>
           </div>
         )}

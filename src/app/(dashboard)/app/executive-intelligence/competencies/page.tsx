@@ -27,6 +27,13 @@ export default async function ExecutiveCompetenciesPage() {
     )
     .order("name");
 
+  // The reader gets a sentence; the detail belongs here, where it is
+  // useful. Previously `error.message` — a raw PostgREST string — went
+  // straight to the page instead.
+  if (error) {
+    console.error("[ei/competencies] failed to load library", error);
+  }
+
   const competencies = (data ?? []) as ExecutiveCompetencyRow[];
   const byCategory = new Map<CompetencyCategory, ExecutiveCompetencyRow[]>(
     CATEGORY_ORDER.map((c) => [c, []])
@@ -60,15 +67,30 @@ export default async function ExecutiveCompetenciesPage() {
 
         {error && (
           <div className="border border-error/40 bg-error-container/30 px-4 py-3 text-error text-body-main">
-            Failed to load competencies: {error.message}
+            The competency library could not be loaded. This has been logged —
+            try again, and tell an admin if it keeps happening.
           </div>
         )}
 
+        {/*
+          Defensive, and close to unreachable. The 24 competencies in the
+          global set carry `organization_id IS NULL`, and 056's policy admits
+          those to every active account, so a brand-new organisation with no
+          data of its own still sees the full library — verified by
+          impersonation, not assumed.
+
+          It therefore cannot mean "your organisation has not set this up".
+          The previous copy told the reader to "check that migration 033 has
+          been applied", which is a sentence for whoever runs the database and
+          not for a recruiter — and it named a condition that does not arise
+          in a provisioned project.
+        */}
         {!error && competencies.length === 0 && (
           <div className="bg-surface-container-low border border-outline-variant p-12 text-center">
             <p className="text-body-main text-on-surface-variant">
-              The library is empty. The global set is seeded by migration 033 —
-              check that it has been applied.
+              The competency library is unavailable. It ships with Mandate
+              rather than being configured per organisation, so there is
+              nothing to set up here — if it stays empty, that is ours to fix.
             </p>
           </div>
         )}

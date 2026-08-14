@@ -13,7 +13,7 @@ This is an inventory and a proposal. Nothing here is implemented.
 
 ## 1. Decisions needed before implementation
 
-Four, and the first is the expensive one.
+Four, and the first is the expensive one. D4 is already done.
 
 ### D1. What may a fabricated agent say about a fabricated person?
 
@@ -57,15 +57,29 @@ satisfies "labelled at the point of display" — or whether each fabricated
 row needs its own marker — should be settled once. Twelve pages will
 otherwise each invent an answer.
 
-### D4. Two pages currently ship a developer message to customers
+### D4. ~~Two pages ship a developer message to customers~~ — FIXED 2026-08-14
 
-`/app/executive-intelligence/competencies` and `.../templates` both read:
+`/app/executive-intelligence/competencies` and `.../templates` both told the
+reader "the global set is seeded by migration 033 — check that it has been
+applied". Not a sample-data gap; a defect, and fixed separately from this
+programme.
 
-> "The library is empty. The global set is seeded by migration 033 —"
+It was wrong twice over. The catalogue **is** seeded — 24 global
+competencies and 8 global templates, all with `organization_id IS NULL` —
+and 056's policy admits those to every active account, so a brand-new
+organisation with no data of its own still sees the full library. Verified
+by impersonation. The empty branch therefore cannot mean "your organisation
+has not set this up", and in a provisioned project it does not render at
+all.
 
-That is not a sample-data gap, it is a **defect**. A customer is being told
-to check a migration number. Worth fixing immediately and separately from
-this programme.
+**Which is why the copy survived: the branch is unreachable, so nobody ever
+saw it.** Worth remembering when reading the rest of this inventory — an
+`empty-only` classification below means the empty state is what a *real*
+account lands on, and those are a different matter entirely.
+
+Both pages also rendered `error.message` — a raw PostgREST string — to the
+customer. Same class as the AI-error leak fixed earlier; the detail now goes
+to the server log and the reader gets a sentence.
 
 ---
 
@@ -193,18 +207,18 @@ if W3/W4 land.
 | `.../candidates/[candidateId]/assessment` | empty-only | generated | L | D1 | High |
 | `.../candidates/[candidateId]/interview-plan` | empty-only | generated | L | D1, profile | High |
 | `.../candidates/[candidateId]/report` | complete | — | — | — | — |
-| `/app/executive-intelligence/competencies` | **placeholder** | simple | S | — | High |
-| `/app/executive-intelligence/templates` | **placeholder** | simple | S | — | High |
+| `/app/executive-intelligence/competencies` | complete | — | — | — | — |
+| `/app/executive-intelligence/templates` | complete | — | — | — | — |
 
-The last two are D4 — the migration-033 message. They are `S` and should not
-wait for this workstream.
+The last two are done — see D4. They needed no sample data at all: both
+render a seeded global catalogue for every account, and the apparent gap was
+copy on a branch that never runs.
 
 ---
 
 ## 4. Recommended order
 
-1. **D4 fix** — the two migration-033 messages. Immediate, S, independent of
-   everything. A customer should never read that sentence.
+1. ~~**D4 fix** — the two migration-033 messages.~~ Done 2026-08-14.
 2. **W1 Administration** (minus `/app/activity`) — no decisions, no agent
    output, gets the mechanism exercised on easy pages.
 3. **W2 Client Experience** — small, self-contained, and W3 depends on it
