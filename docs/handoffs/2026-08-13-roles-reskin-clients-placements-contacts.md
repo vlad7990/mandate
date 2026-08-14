@@ -1,6 +1,6 @@
-# Continuation — roles, the re-skin, clients, placements, the trail, contacts
+# Continuation — roles, the re-skin, clients, placements, the trail, contacts, the advisor sweep
 
-**Date:** 2026-08-13
+**Date:** 2026-08-13, extended 2026-08-14 with the advisor sweep (§5g, §5h)
 **Supersedes:** `2026-08-13-platform-features.md` entirely. Both open
 decisions in it are now made, and five of its priority items are done. Its
 Resend and `ANTHROPIC_API_KEY` blockers are unchanged and repeated below.
@@ -10,8 +10,8 @@ Work in `/Users/vladbreygin/Projects/mandate`. Supabase project
 — always `cd` first or use `git -C`.
 
 `main` is clean, pushed, and deployed to `getmandate.io`.
-Migrations `046`–`057` applied; schema and code are in step. 544 tests
-(was 389), tsc / lint / build green. **Next migration is 058.**
+Migrations `046`–`059` applied; schema and code are in step. 544 tests
+(was 389), tsc / lint / build green. **Next migration is 060.**
 
 Nine commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
 terminal re-skin, `567d0f5` and `2e482df` responsive repair, `a288eb8` the
@@ -810,6 +810,177 @@ the only moment the claim is true.
 
 ---
 
+## 5g. The advisor sweep — migration 058
+
+Both reports were run in full, `security` and `performance`. The sweep had
+not been run since 054, so 055's 68 composite keys and ~84 indexes, 056's
+catalogue flags and 057's 28 triggers all went through the linter for the
+first time here.
+
+**Security: 33 findings → 9.** **Performance: 95 → 91**, and the four that
+cleared are the four that meant anything.
+
+### What was fixed
+
+**24 functions had a mutable `search_path`.** The pre-046 Executive
+Intelligence and sourcing functions — `next_job_spec_version`,
+`finalize_job_spec`, the six `allocate_and_insert_*`, the four `approve_*`,
+the six `guard_*`, `promote_sourcing_results`,
+`purge_staged_results_for_candidate`, `mark_sourcing_run_executed`,
+`log_candidate_outreach`, `record_notification_sent` / `_failed`. One
+`ALTER FUNCTION` each.
+
+Every body was read before the ALTER, not after, because `search_path =
+public` is only safe if nothing resolves outside it. All 24 turned out to
+be already `public.`-qualified on every table reference; the only
+cross-schema call is `auth.uid()`, which is qualified too; and everything
+they resolve unqualified — `now()`, `set_config()`, `gen_random_uuid()`,
+`jsonb_array_elements()` — is in `pg_catalog`, which is searched ahead of
+anything named. pgcrypto and uuid-ossp are installed into `extensions`, not
+`public`, so there is no ambiguity to inherit. Worth recording that all 24
+are SECURITY **INVOKER**: the exposure is narrower than the linter's wording
+suggests — a caller cannot use it to gain privileges they do not have — but
+a caller with a hostile `search_path` still decides which `candidates` table
+the function writes to, so it is a real defect and not a lint.
+
+058 ends with a `DO` block that re-runs the check and raises if any function
+in `public` still lacks `search_path`. Completeness is asserted by the
+migration rather than by the person writing it.
+
+**`rls_auto_enable` was executable by `anon`.** Not on the deliberate list
+and not in our migrations — it is the body of the `ensure_rls` event
+trigger, the standing guard that turns RLS on for any new table in `public`.
+The exposure is theoretical, since it returns the `event_trigger`
+pseudo-type and Postgres refuses a direct call outright, but the revoke is
+free and the trigger does not need the grant: EXECUTE is checked when an
+event trigger is created, not each time it fires. Same reasoning as 048.
+Revoked from `public` too, so a role added later does not inherit it.
+
+**The `users` policies: five permissive policies down to two.** The linter
+raised two things here and they compound. `auth_rls_initplan` on
+`users_can_read_self` — `auth.uid()` re-evaluated per row, which 046 fixed
+everywhere else and missed here. And `multiple_permissive_policies` on both
+SELECT and UPDATE: Postgres evaluates *every* permissive policy and ORs the
+results, so three SELECT policies meant three predicates per row, each
+calling a helper that reads `public.users` again.
+
+The rewrite is safe for a reason worth writing down rather than trusting:
+permissive policies are OR'd, and USING and WITH CHECK are OR'd
+*separately*. A row passes UPDATE if any policy's USING admits it and any
+policy's WITH CHECK admits the result — not necessarily the same policy for
+both. So one policy whose USING is the disjunction of the old USINGs, and
+whose WITH CHECK is the disjunction of the old WITH CHECKs, is exactly the
+old behaviour and not merely close to it. Every helper call is now wrapped
+`(select ...)` so it is an InitPlan evaluated once per statement.
+
+**Three covering indexes, out of the fifteen asked for.**
+
+- `users(organization_id)` — earned twice over. It is the filter behind the
+  members page, settings and the waitlist, it is the predicate in the org
+  branch of the SELECT policy above, and it is the child side of an ON
+  DELETE CASCADE from `organizations`. 055 excluded `users` from the
+  composite-key sweep; that exclusion was about foreign keys, not about
+  leaving the hottest filter column in the schema unindexed.
+- `candidate_scores(candidate_id)` — ON DELETE CASCADE from `candidates`,
+  and neither existing index leads with the column.
+- `feedback(candidate_id)` — same parent, worse: NO ACTION, so deleting a
+  candidate must *prove* no feedback references them. A full scan every
+  time, and a blocked delete at the end of it.
+
+### What was left, and why
+
+**The eleven attribution foreign keys.** `created_by`, `submitted_by`,
+`generated_by` on `candidate_notes`, `clients`, `feedback`,
+`hiring_manager_tokens`, `job_specs`, `project_reports`, `projects`,
+`shortlists` (×2) and `skills`. The honest test is whether deleting the
+parent happens, since that is the only operation the index serves — and it
+does not. No path in the product deletes a user: the eight `.delete()` call
+sites across the app are contacts, notes, skills, fee terms, fee lines,
+sourcing results and EI candidate links, and none of them touch `users`. No
+query anywhere filters on those columns either — they are read by embedding
+the parent, which is a lookup on `users.id`. They are attribution, and
+attribution does not earn an index. The one place a user *is* deleted is the
+temporary-account recipe in §6, which is operator work against a table
+holding one row.
+
+Two more left on the same reasoning: `candidate_notes.project_id` (projects
+are never deleted by the product, and notes are read by candidate) and
+`hiring_manager_reviews.token_id` (tokens are never deleted).
+
+**79 `unused_index` findings.** Informational, and deliberately ignored for
+anything created by 049 or later. They are unused because nothing has
+queried them yet — the tables hold fewer than thirty rows — not because they
+are dead, and several exist solely to cover a foreign key, which never shows
+up as a scan in `pg_stat_user_indexes`. Note the count went *up*, 77 → 79:
+the three indexes added above joined the list immediately, which is the
+clearest possible demonstration of why the list is not a to-do.
+
+**The six deliberate SECURITY DEFINER findings**, exactly as §2 and 048/053
+describe: `current_user_role`, `current_user_org_id`,
+`is_current_user_founder`, `record_activity_event`, `verify_hm_token`,
+`handle_new_auth_user`. They will appear on every run. Nothing else appears
+alongside them, which is the useful result — every function 046–057 added
+has its grants right.
+
+### One thing for the founder, not for whoever picks this up
+
+`auth_leaked_password_protection` is still disabled. Enabling it is a
+Supabase Auth dashboard toggle — HaveIBeenPwned on password set — not SQL,
+and it changes what happens to a real person at signup. Surfaced, not
+enabled.
+
+---
+
+## 5h. A suspended account could read the roster — migration 059
+
+Not an advisor finding. Found by the invariants file written to prove 058
+changed nothing: the first version of assertion (5) asserted what everyone
+assumed — that a suspended account reads only its own row — and it failed
+against the live database with all five of the organisation's members in
+hand.
+
+The cause is a one-word asymmetry between two helpers that read the same
+table:
+
+```
+current_user_role()    ... WHERE id = auth.uid() AND status = 'active'
+current_user_org_id()  ... WHERE id = auth.uid()
+```
+
+046 closed the write half of this and said so at length. The fix there was
+to make `current_user_role()` return NULL for a non-active account and route
+every generated policy through `can_read_org()`, which tests it.
+`public.users` never got that treatment, because its policies predate 046 —
+they come from 002/003 — and they reach for `current_user_org_id()`
+directly. So every other table in the schema refuses a suspended account,
+and this one, the table holding colleagues' names, emails, roles and account
+statuses, handed the whole list over. A suspended employee holds their own
+anon key; the dashboard's sign-out gate does not stop a request to
+PostgREST. `is_current_user_founder()` has the same missing check, so a
+suspended founder read every organisation.
+
+059 hoists `can_read_org()` above the disjunction in both policies, which
+covers both branches with one conjunct rather than editing a helper the 046
+trigger also depends on.
+
+**The self branch stays unconditional, and that is the load-bearing part.**
+`/auth/pending` reads its own row before it has an organisation, and the
+sign-in gate reads its own `status` on the way to signing itself out. Take
+the self-read away and a suspended user cannot be told why they are being
+turned away. Both were driven in a browser afterwards precisely because they
+are the two things this change could have broken.
+
+Nothing depended on the old behaviour: every read of `public.users` on a
+path a suspended or pending account can reach is `.eq("id", user.id)` — the
+dashboard layout, the sign-in action, `/auth/pending`. The roster reads are
+behind gates a suspended account has already failed.
+
+It is a separate migration from 058 on purpose. 058 claims to be exactly
+equivalent and proves it; folding a behaviour change into it would have made
+that claim untestable.
+
+---
+
 ## 6. Verification — what is proven, and the recipe
 
 **RLS was tested by impersonation, not by reading policy text.** Under
@@ -818,6 +989,46 @@ roles attempted real inserts and updates against the live database. All four
 privilege-escalation vectors are refused by the trigger in 046: granting
 yourself `is_founder`, moving your row to another organisation, demoting the
 last admin, and suspending the last admin.
+
+**The users policies have their own file** —
+`supabase/tests/users_policy_invariants.sql`, 21 invariants covering every
+principal the product has: the four roles, a founder, a suspended account, a
+suspended founder, a pending account, and anon. It was written *before* 058,
+run against the live database to capture what each principal reads today,
+run again after 058, and passed identically — which is the whole evidence
+for the claim that consolidating five policies into two changed nothing a
+caller can see. The only assertion that moved between the two runs was (5),
+and it moved because of 059.
+
+It also covers the three privilege-escalation refusals from 046 —
+self-granting `is_founder`, self-moving organisation, demoting the last
+admin — because those are enforced by a trigger the policy rewrite does not
+touch, and a widened policy that quietly made them reachable is exactly the
+mistake worth guarding against. A **control run** with the *final* assertion
+inverted raised, which also proves execution reached the bottom of the file.
+
+Worth recording: assertion (5) failing on its first run is the entire reason
+§5h exists. The assertion was written from the documentation, not from the
+database, and the database disagreed.
+
+**The users policies were also driven in a browser**, because §6's own rule
+says a policy change is not finished until it has been. Under a temporary
+account in a scratch organisation: sign-in and the dashboard layout's
+self-read; `/app/settings/members` listing both members through the org
+branch; promoting the second member viewer → recruiter, which landed in the
+live row through the consolidated UPDATE policy; a suspended account signing
+in and getting *"Your account is suspended"* rather than a blank; a pending
+account rendering `/auth/pending` with its own email and status, and
+bouncing back to it when it tried the dashboard. The last two are the paths
+059 had to leave working. Account and scratch org deleted afterwards and row
+counts checked back to baseline — 1 org, 2 projects, 1 candidate, 1 client,
+0 contacts, 0 notes, 0 placements, 1 user, 1 auth user, 0 sessions, 0
+activity events.
+
+One trap found doing it, unrelated to any of the above: **running `npm run
+build` while `next dev` is live poisons `.next`**, and the dev server then
+404s routes that exist and are in the production route list. `rm -rf .next`
+and restart. It looks exactly like a routing bug.
 
 **The "never seen rendered" debt from the previous handoff is now largely
 closed.** 27 routes were driven in a browser at five widths, including the
@@ -953,6 +1164,12 @@ Unchanged from the previous two handoffs.
 - **`ANTHROPIC_API_KEY` has no credit.** Blocks the coverage-analysis agent's
   first real run, comparison layers 4 and 5, and deleting the losing branch
   in `run-sourcing-search.ts`.
+- **Leaked-password protection is disabled.** Added by the advisor sweep
+  (§5g). A Supabase Auth dashboard toggle, not SQL: it checks new passwords
+  against HaveIBeenPwned and rejects compromised ones. It changes what
+  happens to a real person at signup, so it is the founder's call and was
+  deliberately not enabled. It is the only security finding left that has a
+  fix nobody has applied.
 
 ---
 
@@ -985,6 +1202,13 @@ The priority list from the original review is now **done**, apart from items
   what it is worth, when it was earned and when it is due.
 - ~~An activity/audit trail for core recruiting~~ — `aa213c4`, migration
   `053`. See §5b, and the two event types it leaves unwritten.
+
+- ~~The full Supabase advisor sweep~~ — migrations `058` and `059`. See §5g
+  for what was fixed and what was left, and §5h for the gap it turned up.
+  The two CLAUDE.md pre-launch items it covers are ticked. Re-run it after
+  the next migration that adds tables or policies; the residue to expect is
+  six deliberate SECURITY DEFINER findings, the leaked-password toggle, and
+  a growing pile of `unused_index` noise.
 
 Smaller, added by this session:
 

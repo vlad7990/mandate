@@ -116,11 +116,12 @@ coupled code.
 ## PRE-LAUNCH CHECKLIST
 
 ### Security & Performance
-- [ ] Run Supabase advisor sweep (mcp_supabase_get_advisors) and fix any new findings before public launch
+- [x] Run Supabase advisor sweep (mcp_supabase_get_advisors) and fix any new findings — migrations `058`/`059`, 2026-08-14. Security 33 findings → 9; what stayed and why is in §5g of the handoff. **Re-run after any migration that adds tables or policies.**
+- [ ] **Enable leaked-password protection** (Supabase Auth dashboard toggle, not SQL — founder's call). The only security finding left with an unapplied fix.
 - [ ] Add hCaptcha/Turnstile to /request-access form
 - [ ] Rotate Supabase service role key (was exposed in terminal)
-- [ ] Review all RLS policies on pre-existing tables
-- [ ] Fix unindexed FK warnings on older migrations
+- [ ] Review all RLS policies on pre-existing tables — **partially done.** `users` was reviewed and rewritten in `058`/`059`: its 002/003 policies predated the 046 sweep and let a suspended account read the whole member roster (§5h). That is a reason to expect the same class of bug on the other pre-046 tables, not evidence they are clean — they have not been re-read.
+- [x] Fix unindexed FK warnings on older migrations — 15 findings, 3 indexed and 12 left deliberately. The 11 `created_by`/`submitted_by`/`generated_by` keys do not earn an index: nothing in the product deletes a user and no query filters on them. Reasoning in §5g.
 
 ### Before First Client
 - [ ] Test full search loop with 8-10 real candidate CVs
