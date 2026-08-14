@@ -6,6 +6,7 @@ import {
   IconLock,
   IconShield,
 } from "@/components/icons";
+import { PASSWORD_MIN_LENGTH } from "@/lib/auth/password-policy";
 
 type SearchParams = Promise<{ error?: string }>;
 
@@ -152,7 +153,8 @@ export default async function SignUpPage({
                   htmlFor="password"
                   className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider"
                 >
-                  Access Key (min 8 characters)
+                  Access Key (min {PASSWORD_MIN_LENGTH} chars · upper, lower,
+                  digit, symbol)
                 </label>
                 <div className="relative">
                   <IconLock
@@ -164,9 +166,9 @@ export default async function SignUpPage({
                     name="password"
                     type="password"
                     required
-                    minLength={8}
+                    minLength={PASSWORD_MIN_LENGTH}
                     autoComplete="new-password"
-                    placeholder="••••••••"
+                    placeholder="••••••••••••"
                     className="w-full bg-surface-container border border-outline-variant focus:border-primary focus:ring-0 text-on-surface pl-10 p-3 font-body-main transition-colors placeholder:text-outline/50 outline-none rounded"
                   />
                 </div>

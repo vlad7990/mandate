@@ -1294,7 +1294,25 @@ Unchanged from the previous two handoffs.
   What *is* available on the free tier, on the same settings page, and is a
   partial substitute: minimum password length (the default is 6; the docs
   say anything under 8 is not recommended) and required character classes.
-  Neither is set. Also on the checklist.
+  The founder set the target on 2026-08-14 — **12 characters, all four
+  classes** — and **the dashboard half is still not applied**, for the same
+  reason as above: no access token, no CLI, no auth-config tool.
+
+  The app half *is* applied, in `src/lib/auth/password-policy.ts`. Read its
+  header before changing either side. The point worth carrying: this module
+  is not a boundary and cannot be one — a caller with the anon key reaches
+  `supabase.auth.signUp()` without passing through `signUpAction`. It earns
+  its place in the *other* direction. Before this, the signup form asked for
+  8 characters and no character classes, so once the dashboard is raised to
+  12, every user who typed a 9-character password would have passed the
+  form's own check and then been handed a raw GoTrue error for a rule the
+  form never mentioned. Same argument as §2: the first two layers exist so
+  the product tells the truth about itself before the database has to
+  refuse.
+
+  It also means the ordering is safe either way round. The app is now
+  stricter than the dashboard, which fails closed — nobody can create an
+  account the dashboard would later reject.
 
 ---
 
