@@ -10,8 +10,8 @@ Work in `/Users/vladbreygin/Projects/mandate`. Supabase project
 — always `cd` first or use `git -C`.
 
 `main` is clean, pushed, and deployed to `getmandate.io`.
-Migrations `046`–`056` applied; schema and code are in step. 544 tests
-(was 389), tsc / lint / build green. **Next migration is 057.**
+Migrations `046`–`057` applied; schema and code are in step. 544 tests
+(was 389), tsc / lint / build green. **Next migration is 058.**
 
 Nine commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
 terminal re-skin, `567d0f5` and `2e482df` responsive repair, `a288eb8` the
@@ -652,7 +652,8 @@ in the catalogue**. `search_id` on that table was constrained; `competency_id`
 could not be while global rows were modelled as NULL-org.
 
 **`056` closed this one** by giving the catalogues the explicit flag this
-section said they needed — see §5e. The `users` exclusion stands.
+section said they needed — see §5e. **`057` closed the `users` one**, though
+not with a key — see §5f for why a key is the wrong instrument there.
 
 The shape behind it is still worth knowing: a parent with a NULL org can have
 no org-scoped children at all, because MATCH SIMPLE only skips when the
@@ -739,6 +740,76 @@ screen.
 
 ---
 
+## 5f. The author of a row belonged to its organisation
+
+Migration `057`. The last exclusion: 37 foreign keys pointing at `users`
+across 28 tables. It is the one piece of this sweep that is **a trigger, not
+a constraint**, and that was measured rather than assumed.
+
+### A foreign key is the wrong instrument here
+
+Both candidate keys are mutable by design. 046's guard explicitly permits a
+founder to change `organization_id` and `is_founder`, and 053 gives both their
+own audit event types because they are expected to happen. Adding the keys and
+then running the product's own operations, rolled back against the live
+database, gave:
+
+| Shape | Operation | Result |
+|---|---|---|
+| 055's plain composite key | founder moves a member between orgs | **refused** |
+| 055's plain composite key | clear a departed member's org | **refused** |
+| 056's tier shape (`is_founder` as the tier) | toggle `is_founder` on an author | **refused** |
+
+Each of those is a real operation with a UI or an audit event behind it. A key
+here does not express an invariant; it freezes a person's lifecycle to
+preserve a historical attribution, which is backwards — **the attribution is a
+fact about the past, the user row is a fact about the present**.
+
+056 could take the opposite view because refusing to reclassify a competency
+searches already use is *correct*. Nothing equivalent is true of a colleague
+changing jobs.
+
+### What is actually true, and where it is enforced
+
+> the user named as author was a member of this row's organisation, **or a
+> platform operator, at the moment the row was written**
+
+That is enforceable exactly once — on write. It is the same disjunction 056
+lands on, with `is_founder` playing the part `is_global` plays there, read at
+write time instead of maintained forever. One generic
+`guard_author_in_org()` reads the column names from `TG_ARGV`, so 28 tables
+share one rule that cannot drift.
+
+Zero rows in the live database violated it before the trigger went on.
+
+### Two details that decide whether it works at all
+
+- **It only checks columns that actually changed.** Without that, re-saving
+  any row whose author has since left would fail — the freeze problem again,
+  one step removed. A row's attribution is re-validated only when somebody
+  rewrites it.
+- **It must be SECURITY DEFINER.** It reads `users`, which is RLS'd to the
+  caller's own org — so a cross-org author, the exact thing being detected,
+  would come back as no rows and be waved through as "unknown user". The check
+  would silently pass in precisely the case it exists for. EXECUTE is revoked
+  from `authenticated`, as 048 and 053 do. There is a test for this.
+
+### What it is and is not
+
+Integrity, not a new boundary. A cross-org `created_by` leaks nothing today:
+`users` is RLS'd, so a foreign name renders as unknown rather than as a name,
+and no policy resolves access *through* an author column.
+`is_placement_credited` comes closest — it reads `owner_user_id` — but it is
+SECURITY INVOKER over `placements`, so a foreign owner cannot see the
+placement to be credited on it. What 057 removes is the class of bug where a
+code path takes `organization_id` from one context and the author from
+another.
+
+**All three exclusions are now closed**, two with keys and one with a check at
+the only moment the claim is true.
+
+---
+
 ## 6. Verification — what is proven, and the recipe
 
 **RLS was tested by impersonation, not by reading policy text.** Under
@@ -752,6 +823,16 @@ last admin, and suspending the last admin.
 closed.** 27 routes were driven in a browser at five widths, including the
 project tree, candidate detail, and sample mode. Still unseen: the HM portal
 with real data, and the evidence grid populated.
+
+**The author check has its own file** —
+`supabase/tests/author_in_org_invariants.sql`, 11 invariants. Half prove the
+rule (cross-org author refused on insert and on re-attribution, own-org and
+platform-operator accepted, credit columns covered, and that RLS cannot blind
+the check); the other half prove the operations a foreign key would have
+broken still work — moving a member between orgs, clearing a departed
+member's org, toggling `is_founder`, and editing a row whose author has since
+left. That second half is the argument for the shape, so it is tested rather
+than asserted. Control run with the final assertion inverted raised.
 
 **The catalogue flag has its own file** —
 `supabase/tests/global_catalogue_invariants.sql`, 10 invariants covering every
