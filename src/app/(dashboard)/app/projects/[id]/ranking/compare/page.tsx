@@ -19,6 +19,8 @@ import {
   IconCompare,
   IconIntelligence,
 } from "@/components/icons";
+import { isSampleId } from "@/lib/sample";
+import { SampleNotBuilt } from "@/components/sample/sample-not-built";
 
 type ProjectRow = {
   id: string;
@@ -89,6 +91,18 @@ export default async function ComparisonPage({
   searchParams: Promise<{ ids?: string }>;
 }) {
   const { id } = await params;
+
+  if (isSampleId(id)) {
+    return (
+      <SampleNotBuilt
+        title="Comparison"
+        context="Sample mandate"
+        backHref={`/app/projects/${id}`}
+        backLabel="Mandate"
+        scope="mandate"
+      />
+    );
+  }
   const { ids: idsParam } = await searchParams;
   const supabase = await createServerSupabaseClient();
 

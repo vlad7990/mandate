@@ -11,6 +11,8 @@ import {
 import { IconArrowLeft, IconSearch } from "@/components/icons";
 import { ImportWizard } from "./import-wizard";
 import { ReviewTable, type StagedRow, type PoolCandidate } from "./review-table";
+import { isSampleId } from "@/lib/sample";
+import { SampleNotBuilt } from "@/components/sample/sample-not-built";
 
 type ProjectRow = {
   id: string;
@@ -35,6 +37,18 @@ export default async function ImportResultsPage({
   params: Promise<{ id: string; runId: string }>;
 }) {
   const { id, runId } = await params;
+
+  if (isSampleId(id) || isSampleId(runId)) {
+    return (
+      <SampleNotBuilt
+        title="Import results"
+        context="Sample mandate"
+        backHref={`/app/projects/${id}`}
+        backLabel="Mandate"
+        scope="mandate"
+      />
+    );
+  }
   const supabase = await createServerSupabaseClient();
 
   const { data: project, error: projectError } = await supabase

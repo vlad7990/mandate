@@ -10,6 +10,9 @@ import {
 import { type Archetype } from "@/lib/ai/cv-parsing";
 import { NetworkTable } from "./network-table";
 import { PageShell, TerminalTitle } from "@/components/ui/page-shell";
+import { cookies } from "next/headers";
+import { SAMPLE_DISMISSED_COOKIE, shouldShowSample } from "@/lib/sample";
+import { SampleNetwork } from "@/components/sample/sample-candidates";
 
 export default async function NetworkPage() {
   const supabase = await createServerSupabaseClient();
@@ -19,6 +22,16 @@ export default async function NetworkPage() {
   if (!user) redirect("/auth/signin");
 
   const overview = await loadNetworkOverview();
+
+  // A network of nobody is the least legible empty state in the product:
+  // the page's whole idea is that a row is a *person folded from several
+  // candidate records*, and that cannot be read off an empty table. Same
+  // rule as everywhere else — the first real candidate replaces it for good.
+  const dismissed = (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
+  if (shouldShowSample({ hasRealData: overview.people.length > 0, dismissed })) {
+    return <SampleNetwork />;
+  }
+
   const analytics = computeAnalytics(overview.people);
 
   return (

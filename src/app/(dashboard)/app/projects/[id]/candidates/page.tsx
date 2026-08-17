@@ -24,6 +24,8 @@ import {
   IconTarget,
   IconUpload,
 } from "@/components/icons";
+import { isSampleId } from "@/lib/sample";
+import { SampleMandateCandidates } from "@/components/sample/sample-candidates";
 
 type ProjectRow = {
   id: string;
@@ -86,6 +88,10 @@ export default async function CandidatesPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // A sample id is not a uuid, so before this the query below failed and
+  // the page redirected to the dashboard. See `sample-not-built.tsx`.
+  if (isSampleId(id)) return <SampleMandateCandidates id={id} />;
   const supabase = await createServerSupabaseClient();
 
   const { data: project, error: projectError } = await supabase

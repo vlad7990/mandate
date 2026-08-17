@@ -6,6 +6,8 @@ import { ProfileEmpty } from "./profile-empty";
 import { ProfileError } from "./profile-error";
 import { ProfileGenerating } from "./profile-generating";
 import { ProfileEditor, type ProfileVersionSummary } from "./profile-editor";
+import { isSampleId } from "@/lib/sample";
+import { SampleNotBuilt } from "@/components/sample/sample-not-built";
 
 // Server-action generation runs in an after() callback on this route; give it a
 // generous ceiling so generation (~80s) completes before the function is
@@ -34,6 +36,21 @@ export default async function SuccessProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // The executive-search sample stops at the search overview and the
+  // report — W7, still held for D1. Everything between them says so rather
+  // than redirecting to the dashboard.
+  if (isSampleId(id)) {
+    return (
+      <SampleNotBuilt
+        title="Success profile"
+        context="Sample executive search"
+        backHref={`/app/executive-intelligence/searches/${id}`}
+        backLabel="Search"
+        scope="executive search"
+      />
+    );
+  }
   const supabase = await createServerSupabaseClient();
 
   const { data: search, error: searchError } = await supabase

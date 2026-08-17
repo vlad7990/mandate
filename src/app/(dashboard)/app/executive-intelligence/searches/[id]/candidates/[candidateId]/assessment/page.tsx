@@ -8,6 +8,8 @@ import {
   AssessmentEditor,
   type AssessmentVersionSummary,
 } from "./assessment-editor";
+import { isSampleId } from "@/lib/sample";
+import { SampleNotBuilt } from "@/components/sample/sample-not-built";
 
 type Params = Promise<{ id: string; candidateId: string }>;
 
@@ -19,6 +21,21 @@ type Params = Promise<{ id: string; candidateId: string }>;
  */
 export default async function AssessmentPage({ params }: { params: Params }) {
   const { id, candidateId } = await params;
+
+  // The executive-search sample stops at the search overview and the
+  // report — W7, still held for D1. Everything between them says so rather
+  // than redirecting to the dashboard.
+  if (isSampleId(id) || isSampleId(candidateId)) {
+    return (
+      <SampleNotBuilt
+        title="Assessment"
+        context="Sample executive search"
+        backHref={`/app/executive-intelligence/searches/${id}`}
+        backLabel="Search"
+        scope="executive search"
+      />
+    );
+  }
   const supabase = await createServerSupabaseClient();
 
   const { data: search, error: searchError } = await supabase

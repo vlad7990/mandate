@@ -8,6 +8,8 @@ import {
   type SkillFormProject,
   type SkillType,
 } from "../skill-form";
+import { isSampleId } from "@/lib/sample";
+import { SampleNotBuilt } from "@/components/sample/sample-not-built";
 
 type SkillRow = {
   id: string;
@@ -26,6 +28,21 @@ export default async function EditSkillPage({
   params: Promise<{ skillId: string }>;
 }) {
   const { skillId } = await params;
+
+  // The three sample skills are read-only rows with no edit control, so
+  // this is only reachable by a typed URL — which is exactly the case the
+  // silent redirect handled worst.
+  if (isSampleId(skillId)) {
+    return (
+      <SampleNotBuilt
+        title="Skill"
+        context="Sample skill"
+        backHref="/app/settings/skills"
+        backLabel="Skills studio"
+        scope="skills"
+      />
+    );
+  }
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },

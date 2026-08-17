@@ -15,6 +15,8 @@ import {
   LinkCandidateButton,
   UnlinkCandidateButton,
 } from "./candidate-link-controls";
+import { isSampleId } from "@/lib/sample";
+import { SampleNotBuilt } from "@/components/sample/sample-not-built";
 
 type SearchSummary = {
   id: string;
@@ -49,6 +51,21 @@ export default async function ExecutiveSearchCandidatesPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { id } = await params;
+
+  // The executive-search sample stops at the search overview and the
+  // report — W7, still held for D1. Everything between them says so rather
+  // than redirecting to the dashboard.
+  if (isSampleId(id)) {
+    return (
+      <SampleNotBuilt
+        title="Search candidates"
+        context="Sample executive search"
+        backHref={`/app/executive-intelligence/searches/${id}`}
+        backLabel="Search"
+        scope="executive search"
+      />
+    );
+  }
   const { q } = await searchParams;
   const query = (q ?? "").trim();
   const supabase = await createServerSupabaseClient();

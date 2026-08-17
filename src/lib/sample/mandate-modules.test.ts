@@ -179,6 +179,51 @@ describe("sample mandate modules", () => {
     }
   });
 
+  it("sources candidates who are actually in the sample", () => {
+    // The week-4 report names three people it sourced. They are sample
+    // candidates on this mandate, so a reader can click from the report into
+    // the pipeline and find them — which is the difference between a report
+    // and a screenshot of one.
+    const onMandate = new Set<string>(
+      SAMPLE_CANDIDATES.filter((c) => c.mandateId === SAMPLE_MANDATE_ID).map(
+        (c) => c.name
+      )
+    );
+    for (const name of SAMPLE_REPORTS[0].sourcedNames) {
+      expect(onMandate.has(name), `${name} is not on this mandate`).toBe(true);
+    }
+  });
+
+  it("shows every pipeline stage the mandate list groups by", () => {
+    // Three candidates produced two groups, which teaches a pipeline with
+    // two stages in it. The list needs enough spread to show the shape.
+    const stages = new Set(
+      SAMPLE_CANDIDATES.filter((c) => c.mandateId === SAMPLE_MANDATE_ID).map(
+        (c) => c.stage
+      )
+    );
+    expect(stages.size).toBeGreaterThanOrEqual(4);
+  });
+
+  it("never shows more candidates than the mandate says it has", () => {
+    const mandate = sampleMandate(SAMPLE_MANDATE_ID)!;
+    const shown = SAMPLE_CANDIDATES.filter(
+      (c) => c.mandateId === SAMPLE_MANDATE_ID
+    ).length;
+    expect(shown).toBeLessThanOrEqual(mandate.candidates);
+  });
+
+  it("shows no more tier-1 candidates than the mandate claims", () => {
+    // The candidate list puts "Tier 1 in the pool" beside the rows it
+    // renders. More tier-1 rows than the pool contains would make the tile
+    // read as a smaller number than the list beneath it.
+    const mandate = sampleMandate(SAMPLE_MANDATE_ID)!;
+    const shownTierOne = SAMPLE_CANDIDATES.filter(
+      (c) => c.mandateId === SAMPLE_MANDATE_ID && c.tier === 1
+    ).length;
+    expect(shownTierOne).toBeLessThanOrEqual(mandate.tierOne ?? 0);
+  });
+
   it("marks exactly one feedback entry as having recalibrated", () => {
     // Three versions exist and v3 is attributed to feedback. More than one
     // entry claiming it would make the calibration screen unreadable.

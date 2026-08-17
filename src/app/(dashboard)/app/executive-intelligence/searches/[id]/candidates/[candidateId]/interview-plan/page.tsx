@@ -7,6 +7,8 @@ import { PlanError } from "./plan-error";
 import { PlanGate } from "./plan-gate";
 import { PlanGenerating } from "./plan-generating";
 import { PlanEditor, type PlanVersionSummary } from "./plan-editor";
+import { isSampleId } from "@/lib/sample";
+import { SampleNotBuilt } from "@/components/sample/sample-not-built";
 
 // Server-action generation runs in an after() callback on this route; give it a
 // generous ceiling so an 8000-token plan (~90–100s) completes before the function
@@ -23,6 +25,21 @@ type Params = Promise<{ id: string; candidateId: string }>;
  */
 export default async function InterviewPlanPage({ params }: { params: Params }) {
   const { id, candidateId } = await params;
+
+  // The executive-search sample stops at the search overview and the
+  // report — W7, still held for D1. Everything between them says so rather
+  // than redirecting to the dashboard.
+  if (isSampleId(id) || isSampleId(candidateId)) {
+    return (
+      <SampleNotBuilt
+        title="Interview plan"
+        context="Sample executive search"
+        backHref={`/app/executive-intelligence/searches/${id}`}
+        backLabel="Search"
+        scope="executive search"
+      />
+    );
+  }
   const supabase = await createServerSupabaseClient();
 
   const { data: search, error: searchError } = await supabase

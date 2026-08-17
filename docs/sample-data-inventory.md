@@ -266,20 +266,51 @@ funnel never widens, every calibration version sums to 100, the feedback
 screen's "applied as v03" matches the weights on the calibration screen, and
 the report only names candidates who are on the slate.
 
-### W4 · Candidate Management — 5 routes
+### W4 · Candidate Management — 5 routes — DONE 2026-08-17
 
 | Route | State | Kind | Size | Depends on | Value |
 |---|---|---|---|---|---|
 | `/app/candidates` | complete | — | — | — | — |
 | `/app/projects/[id]/candidates/[candidateId]` | complete | — | — | — | — |
-| `/app/projects/[id]/candidates` | empty-only | relational | M | W3 | High |
-| `/app/projects/[id]/candidates/new` | n/a | — | — | — | — |
-| `/app/candidates/network` | empty-only | relational | M | candidates across mandates | Med |
+| `/app/projects/[id]/candidates` | complete | — | — | — | — |
+| `/app/projects/[id]/candidates/new` | complete | — | — | — | — |
+| `/app/candidates/network` | complete | — | — | — | — |
 
-`/app/candidates/network` needs candidates in **more than one** mandate to
-show anything meaningful — it is a cross-mandate dedupe view. That makes it
-dependent on the sample workspace having a second mandate, which it
-currently does not.
+The Network worry in the original survey — that it needs candidates across
+more than one mandate — was already solved: `SAMPLE_NETWORK` has existed
+since the first sample commit and folds three people across six appearances
+in five mandates. The page simply never rendered it.
+
+The mandate candidate list gained four more Larkspur candidates, because
+three produced two pipeline groups and the screen's whole idea is the
+pipeline. It now shows seven across four stages and **says so** — "07 shown
+of 18 in the pool" — rather than quietly presenting seven as the pool. All
+three KPI tiles read from the mandate row so they share one scope; an earlier
+version put "In the pool 18" beside a tier-1 count of the rows on screen.
+
+### The bounce class, closed — 2026-08-17
+
+W3 found eleven routes under `/app/projects/[id]` that took a sample id
+straight to Postgres, got `22P02` back rather than `PGRST116`, and fell into
+the `redirect("/")` arm meant for "that record is not yours". **Nine more had
+the identical shape**: `candidates/new`, `ranking/compare`,
+`sourcing/runs/[runId]/import`, four executive-search routes, and the skill
+detail. Twenty routes, one defect, invisible to every test that existed
+because they all render correctly for a real uuid.
+
+All twenty now handle it — with a sample screen where one exists, and with
+`SampleNotBuilt` where it does not, which says the gap is the sample's rather
+than moving the reader somewhere they did not ask to go. Being unreachable by
+clicking was never a fix: a typed URL, a bookmark and a shared link all still
+arrive, and the sample exists for people exploring without a map.
+
+`src/lib/sample/routes.test.ts` walks the route tree rather than naming the
+twenty, so a dynamic page added next month is covered the day it exists —
+the same shape as assertion (1) in `suspended_account_invariants.sql`. Its
+exemption list is empty and needs a written reason to grow. A control run
+that deleted one branch failed naming that route; the first version of the
+test matched the leftover `isSampleId` *import* and passed, which is why it
+now requires the call.
 
 ### W5 · Research & Sourcing — 3 routes
 
@@ -341,7 +372,8 @@ copy on a branch that never runs.
    clients, and D3 answered on the way.
 4. ~~**W3 Mandates**~~ — done 2026-08-17. Seven module screens, a rail, and
    the fix for eleven sub-routes that redirected to `/app/home`.
-5. **W4 Candidates** — falls out of W3 cheaply once the mandate exists.
+5. ~~**W4 Candidates**~~ — done 2026-08-17, together with the sweep that
+   closed the sample-id bounce on all twenty affected routes.
 6. **W6 Reports & Analytics** — mostly free once 3–5 land.
 7. **W5 Research & Sourcing** — unblocked by D2; approach is now "seed a mandate, let the agents run".
 8. **W7 Executive Search** — still held for **D1**. D2 is answered and sets the approach.
