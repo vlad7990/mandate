@@ -29,6 +29,9 @@ import {
   IconTrendUp,
   type IconProps,
 } from "@/components/icons";
+import { cookies } from "next/headers";
+import { SAMPLE_DISMISSED_COOKIE, shouldShowSample } from "@/lib/sample";
+import { SampleAnalytics } from "@/components/sample/sample-reports";
 
 type CandidateLite = {
   pipeline_stage: string | null;
@@ -58,6 +61,19 @@ export default async function PortfolioAnalyticsPage() {
   ]);
 
   const candidates = (candidatesQ.data ?? []) as CandidateLite[];
+
+  // Portfolio analytics over an empty portfolio is four zeroes and three
+  // empty charts, which teaches nothing about the one question the page
+  // answers. The first real candidate replaces it for good.
+  const dismissed = (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
+  if (
+    shouldShowSample({
+      hasRealData: candidates.length > 0 || metrics.activeProjects > 0,
+      dismissed,
+    })
+  ) {
+    return <SampleAnalytics />;
+  }
 
   // Pipeline stage distribution. 'rejected' tinted error so it reads as
   // off-funnel; everything else inherits the chart's primary fill.

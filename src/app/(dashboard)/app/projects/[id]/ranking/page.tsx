@@ -29,7 +29,7 @@ import {
   IconUpload,
 } from "@/components/icons";
 import { isSampleId } from "@/lib/sample";
-import { SampleModuleNotBuilt } from "@/components/sample/sample-mandate-shell";
+import { SampleRanking } from "@/components/sample/sample-reports";
 
 type ProjectRow = {
   id: string;
@@ -77,7 +77,7 @@ export default async function RankingPage({
 
   // Not in the sample workspace yet — W5/W6. Says so, rather than
   // redirecting to `/app/home` the way it used to.
-  if (isSampleId(id)) return <SampleModuleNotBuilt module="ranking" mandateId={id} />;
+  if (isSampleId(id)) return <SampleRanking id={id} />;
   const supabase = await createServerSupabaseClient();
 
   const { data: project, error: projectError } = await supabase

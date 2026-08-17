@@ -325,19 +325,67 @@ sample result at all without either fabricated agent output or a live API —
 its empty state is currently a *good* one (it suggests example queries), so
 this may be the right answer already.
 
-### W6 · Reports & Analytics — 4 routes
+### W6 · Reports & Analytics — 5 routes — DONE 2026-08-17
 
 | Route | State | Kind | Size | Depends on | Value |
 |---|---|---|---|---|---|
-| `/app/analytics` | thin | relational | L | W3, W4, placements | High |
+| `/app/analytics` | complete | — | — | — | — |
 | `/app/placements` | complete | — | — | — | — |
-| `/app/projects/[id]/ranking` | empty-only | generated | M | candidates + scores | High |
-| `/app/projects/[id]/ranking/compare` | empty-only | generated | M | ranking | Med |
-| `/app/projects/[id]/comparison` | empty-only | generated | L | D1, candidates | Med |
+| `/app/projects/[id]/ranking` | complete | — | — | — | — |
+| `/app/projects/[id]/ranking/compare` | complete | — | — | — | — |
+| `/app/projects/[id]/comparison` | complete | — | — | — | — |
 
-`/app/analytics` is 342 lines of portfolio aggregation and is the page most
-improved by everything else being seeded — it needs no fixtures of its own
-if W3/W4 land.
+**`/comparison` was not blocked on D1, and never had been.** The survey
+classified it `generated`; it calls no agent at all. The master table, the
+tier bands, the reality statement and the final partner take are all computed
+in TypeScript from scores and weights (`comparison-export.ts` —
+`buildRealityStatement`, `buildPartnerTake`). The only agent in this
+workstream is the trade-off analysis on `/ranking/compare`, and the product's
+own prompt already draws the line it works inside: comparative, anchored on
+the role weights, "stronger" and "weaker" *relative to the others in the
+set*. So W6 needed no new judgement about what an agent may say — it applies
+the precedent `sample-candidate-detail.tsx` set to five dimensions and six
+people. **D1 remains open, and W7 remains the only thing held for it.**
+
+`/app/analytics` did need a fixture after all. The survey said it "needs no
+fixtures of its own if W3/W4 land", which was true of a *seeded* workspace
+and not of this one: the sample is a render-time fixture, so the analytics
+page still queried an empty database and drew four zeroes. It now derives
+every figure from `SAMPLE_MANDATES`.
+
+### The sample was teaching a vocabulary the product does not have
+
+Found while writing the leaderboard. The scoring engine has exactly five
+dimensions — `DIMENSION_KEYS`: technical, domain, leadership, regulatory,
+transformation — and a calibration model is one weight per key. There is
+nowhere in the schema for a custom dimension name.
+
+The sample had five invented prose ones — "Regulated-environment scale",
+"Platform modernisation", "Executive stakeholder handling", "Team build &
+retention", "Delivery pace" — in `sample-candidate-detail.tsx` since the
+first sample commit, and W3 carried them into the calibration history and the
+feedback screen. They read better than the real five and they taught a
+prospect a vocabulary they would never see again after signing up.
+
+All of it is now on the product's five, with the specificity moved into the
+evidence line where it belongs. `mandate-modules.test.ts` asserts the
+calibration versions and the feedback weight changes use exactly
+`DIMENSION_KEYS` and nothing else.
+
+### What the fixtures pin
+
+Scores are derived, not typed. A candidate's `fit` is already on the mandate
+list, the candidate list and the client slate; the leaderboard computes the
+weighted mean of five dimension scores and `reports-analytics.test.ts`
+asserts it rounds back to that same `fit` for all six candidates. The tier on
+the leaderboard must equal the tier on the candidate row, the ranking may not
+put a worse tier above a better one, the slates may only name ranked
+candidates, and the three scores quoted in the partner take must match the
+leaderboard.
+
+One number was caught in a screenshot rather than by a test — the reality
+statement said "two at Tier 2" beside a table showing three. There is a test
+for it now.
 
 ### W7 · Executive Search Workflow — 11 routes
 
@@ -374,7 +422,9 @@ copy on a branch that never runs.
    the fix for eleven sub-routes that redirected to `/app/home`.
 5. ~~**W4 Candidates**~~ — done 2026-08-17, together with the sweep that
    closed the sample-id bounce on all twenty affected routes.
-6. **W6 Reports & Analytics** — mostly free once 3–5 land.
+6. ~~**W6 Reports & Analytics**~~ — done 2026-08-17. `/comparison` turned out
+   not to need D1 at all, and the sample's invented scoring dimensions were
+   replaced with the product's five.
 7. **W5 Research & Sourcing** — unblocked by D2; approach is now "seed a mandate, let the agents run".
 8. **W7 Executive Search** — still held for **D1**. D2 is answered and sets the approach.
 9. `/app/activity` last, as a projection of everything above.

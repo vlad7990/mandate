@@ -34,12 +34,27 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number];
 
+/*
+  The product's five scoring dimensions, at the weights the current
+  calibration model carries — see `SAMPLE_CALIBRATION_HISTORY[0]`.
+
+  These used to be five invented prose names ("Regulated-environment scale",
+  "Delivery pace") at weights summing to 85. They read better and they taught
+  a vocabulary the product does not have: the scoring engine has exactly five
+  fixed keys and there is nowhere in the schema for a custom name. A prospect
+  who learned those names here would meet Technical / Domain / Leadership /
+  Regulatory / Transformation on their own first mandate.
+
+  The specificity moved into the evidence, which is where it belonged
+  anyway — the rule this screen exists to demonstrate is that a score never
+  travels without the fact that produced it.
+*/
 const DIMENSIONS = [
-  { name: "Regulated-environment scale", weight: 22, score: 92, evidence: "6,400-staff regulated provider, 4 yrs" },
-  { name: "Platform modernisation", weight: 20, score: 95, evidence: "£48m replacement, delivered" },
-  { name: "Executive stakeholder handling", weight: 18, score: 84, evidence: "Two board reviews; no COO reporting line" },
-  { name: "Team build & retention", weight: 15, score: 88, evidence: "90 → 240 headcount, <9% attrition" },
-  { name: "Delivery pace", weight: 10, score: 64, evidence: "Five-year programme horizon" },
+  { name: "Regulatory", weight: 26, score: 95, evidence: "HIPAA and MHRA estates; owned the clinical safety case" },
+  { name: "Transformation", weight: 22, score: 92, evidence: "£48m records replacement, delivered" },
+  { name: "Leadership", weight: 20, score: 84, evidence: "Two board reviews led; no COO reporting line" },
+  { name: "Domain", weight: 18, score: 88, evidence: "6,400-staff regulated care provider, 4 yrs" },
+  { name: "Technical", weight: 14, score: 64, evidence: "Architecture reviews chaired; five-year programme horizon" },
 ];
 
 function Panel({
@@ -223,7 +238,7 @@ export function SampleCandidateDetail({
                   </Panel>
                   <Panel title="Open questions">
                     <ul className="flex flex-col gap-2.5 text-[13px] leading-relaxed text-on-surface-variant">
-                      <li>Delivery pace against a three-year horizon</li>
+                      <li>Technical depth against a three-year horizon</li>
                       <li>Has not reported to a COO; the line here is unchanged</li>
                       <li>Competing process recorded in your note</li>
                     </ul>

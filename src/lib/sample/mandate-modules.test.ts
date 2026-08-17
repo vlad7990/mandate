@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import { DIMENSION_KEYS } from "@/lib/ai/onboarding-analysis";
 import { SAMPLE_CANDIDATES, sampleMandate } from "./data";
 import {
   SAMPLE_CALIBRATION_HISTORY,
@@ -87,6 +88,26 @@ describe("sample mandate modules", () => {
     for (const s of SAMPLE_CALIBRATION_HISTORY) {
       const total = s.weights.reduce((n, w) => n + w.weight, 0);
       expect(total, `v${s.version} sums to ${total}`).toBe(100);
+    }
+  });
+
+  it("uses the product's five scoring dimensions and no others", () => {
+    // The scoring engine has exactly five fixed keys. The sample used to
+    // invent five prose names, which read better and taught a vocabulary a
+    // customer would never see again after signing up. Every calibration
+    // version, and the feedback screen's weight changes, are checked —
+    // drifting on one screen is how the two stopped agreeing last time.
+    const expected = new Set(
+      DIMENSION_KEYS.map((k) => k[0].toUpperCase() + k.slice(1))
+    );
+
+    for (const snapshot of SAMPLE_CALIBRATION_HISTORY) {
+      const names = snapshot.weights.map((w) => w.name);
+      expect(new Set(names)).toEqual(expected);
+      expect(names.length).toBe(DIMENSION_KEYS.length);
+    }
+    for (const a of SAMPLE_FEEDBACK.interpreted.weightAdjustments) {
+      expect(expected.has(a.dimension), `${a.dimension} is not a dimension`).toBe(true);
     }
   });
 

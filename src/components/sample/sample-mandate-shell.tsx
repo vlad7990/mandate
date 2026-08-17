@@ -39,7 +39,7 @@ import {
 export function SampleModuleRail({ current }: { current?: SampleModuleSlug }) {
   return (
     <nav aria-label="Sample mandate modules">
-      <ul className="grid grid-cols-1 gap-px border border-outline-variant bg-outline-variant sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-1 gap-px border border-outline-variant bg-outline-variant sm:grid-cols-2 lg:grid-cols-5">
         {SAMPLE_MODULES.map((m) => {
           const isCurrent = m.slug === current;
           return (
@@ -66,9 +66,9 @@ export function SampleModuleRail({ current }: { current?: SampleModuleSlug }) {
         })}
 
         {/*
-          The four pending modules occupy the eighth cell rather than sitting
-          under the grid. Seven items in a four-column grid otherwise leave a
-          bordered blank that reads as a missing entry, and this is the place
+          The pending modules occupy the last cell rather than sitting under
+          the grid. Nine items plus this one fill two rows of five exactly; a
+          bordered blank reads as a missing entry, and this is the place
           a reader scanning the rail will actually look for "what else is
           there". Named rather than hidden: before W3 they redirected to the
           dashboard, so the workspace looked smaller than it is.

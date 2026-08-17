@@ -58,6 +58,8 @@ export const SAMPLE_MODULES = [
   { slug: "hiring-manager", label: "Hiring manager", meta: "Link live" },
   { slug: "feedback", label: "Feedback", meta: "3 logged" },
   { slug: "reports", label: "Reports", meta: "Week 4" },
+  { slug: "ranking", label: "Ranking", meta: "6 scored" },
+  { slug: "comparison", label: "Comparison", meta: "2 + 2 slate" },
 ] as const;
 
 /**
@@ -69,9 +71,7 @@ export const SAMPLE_MODULES = [
  */
 export const SAMPLE_MODULES_PENDING = [
   { slug: "sourcing", label: "Sourcing" },
-  { slug: "ranking", label: "Ranking" },
   { slug: "shortlist", label: "Shortlist" },
-  { slug: "comparison", label: "Comparison" },
 ] as const;
 
 export type SampleModuleSlug =
@@ -158,6 +158,17 @@ export const SAMPLE_SPEC = {
 
 /* ── Calibration history ─────────────────────────────────────────── */
 
+/**
+ * The scoring engine has exactly five dimensions — `DIMENSION_KEYS` in
+ * `onboarding-analysis.ts` — and a calibration model is a weight per key.
+ * There is nowhere in the schema for a custom dimension name.
+ *
+ * The sample used to invent five prose ones ("Regulated-environment scale",
+ * "Delivery pace"), which read well and taught a vocabulary the product does
+ * not have: a prospect who saw them and then signed up would meet
+ * Technical / Domain / Leadership / Regulatory / Transformation instead. The
+ * evidence lines carry the specificity now, which is where it belongs.
+ */
 export type SampleCalibrationSnapshot = {
   readonly id: string;
   readonly version: number;
@@ -176,15 +187,15 @@ export const SAMPLE_CALIBRATION_HISTORY: readonly SampleCalibrationSnapshot[] = 
     daysAgo: 5,
     trigger: "Recalibrated from hiring-manager feedback",
     rationale:
-      "Three of the first four reviews cited regulated-environment evidence as the deciding factor and none cited delivery pace. Regulatory exposure moves up, delivery pace moves down, and the total is held at 100 so earlier scores stay comparable.",
+      "Three of the first four reviews cited regulated-environment evidence as the deciding factor and none cited engineering depth. Regulatory moves up, technical moves down, and the total is held at 100 so earlier scores stay comparable.",
     weights: [
-      { name: "Regulated-environment scale", weight: 26 },
-      { name: "Platform modernisation", weight: 22 },
-      { name: "Executive stakeholder handling", weight: 20 },
-      { name: "Team build & retention", weight: 18 },
-      { name: "Delivery pace", weight: 14 },
+      { name: "Regulatory", weight: 26 },
+      { name: "Transformation", weight: 22 },
+      { name: "Leadership", weight: 20 },
+      { name: "Domain", weight: 18 },
+      { name: "Technical", weight: 14 },
     ],
-    changed: ["Regulated-environment scale", "Delivery pace", "Team build & retention"],
+    changed: ["Regulatory", "Technical", "Domain"],
   },
   {
     id: "sample-calib-2",
@@ -192,15 +203,15 @@ export const SAMPLE_CALIBRATION_HISTORY: readonly SampleCalibrationSnapshot[] = 
     daysAgo: 19,
     trigger: "Recruiter edit after the calibration review",
     rationale:
-      "Executive stakeholder handling was under-weighted against a spec that makes the board line explicit and gives the CMO a veto. Raised at the expense of platform modernisation, which the must-haves already gate on.",
+      "Leadership was under-weighted against a spec that makes the board line explicit and gives the CMO a veto. Raised at the expense of transformation, which the must-haves already gate on.",
     weights: [
-      { name: "Regulated-environment scale", weight: 22 },
-      { name: "Platform modernisation", weight: 22 },
-      { name: "Executive stakeholder handling", weight: 18 },
-      { name: "Team build & retention", weight: 15 },
-      { name: "Delivery pace", weight: 23 },
+      { name: "Regulatory", weight: 22 },
+      { name: "Transformation", weight: 22 },
+      { name: "Leadership", weight: 18 },
+      { name: "Domain", weight: 15 },
+      { name: "Technical", weight: 23 },
     ],
-    changed: ["Executive stakeholder handling", "Platform modernisation"],
+    changed: ["Leadership", "Transformation"],
   },
   {
     id: "sample-calib-1",
@@ -208,13 +219,13 @@ export const SAMPLE_CALIBRATION_HISTORY: readonly SampleCalibrationSnapshot[] = 
     daysAgo: 24,
     trigger: "Compiled from onboarding",
     rationale:
-      "Derived from the five weighted priorities and the anti-patterns. Delivery pace starts high because the board approved a fixed programme end date; it is the dimension most likely to move once real candidates are scored against it.",
+      "Derived from the five weighted priorities and the anti-patterns. Technical starts high because the board approved a fixed programme end date and the estate is eleven years old; it is the dimension most likely to move once real candidates are scored against it.",
     weights: [
-      { name: "Regulated-environment scale", weight: 20 },
-      { name: "Platform modernisation", weight: 26 },
-      { name: "Executive stakeholder handling", weight: 12 },
-      { name: "Team build & retention", weight: 15 },
-      { name: "Delivery pace", weight: 27 },
+      { name: "Regulatory", weight: 20 },
+      { name: "Transformation", weight: 26 },
+      { name: "Leadership", weight: 12 },
+      { name: "Domain", weight: 15 },
+      { name: "Technical", weight: 27 },
     ],
     changed: [],
   },
@@ -384,9 +395,9 @@ export const SAMPLE_FEEDBACK = {
       "The spec says regulatory exposure means a named regime on the CV. The reviews are applying a narrower test — clinical only. One of the two has to move.",
     ],
     weightAdjustments: [
-      { dimension: "Regulated-environment scale", from: 22, to: 26 },
-      { dimension: "Delivery pace", from: 23, to: 14 },
-      { dimension: "Team build & retention", from: 15, to: 18 },
+      { dimension: "Regulatory", from: 22, to: 26 },
+      { dimension: "Technical", from: 23, to: 14 },
+      { dimension: "Domain", from: 15, to: 18 },
     ],
     applied: true,
   },
@@ -484,7 +495,7 @@ export const SAMPLE_REPORTS: readonly SampleReport[] = [
     weekNumber: 2,
     generatedDaysAgo: 15,
     executiveSummary:
-      "Calibration reviewed and revised. Executive stakeholder handling raised after the spec made the board line explicit.",
+      "Calibration reviewed and revised. Leadership raised after the spec made the board line explicit.",
     topCandidates: [],
     sourcedCount: 6,
     sourcedNames: [],
