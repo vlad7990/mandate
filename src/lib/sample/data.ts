@@ -641,3 +641,562 @@ export const SAMPLE_SKILLS: readonly SampleSkill[] = [
     appliesTo: "VP Engineering · Larkspur",
   },
 ];
+
+/* ────────────────────────────────────────────────────────────────────
+   Clients — W2
+
+   The client record answers "what have we done for this company", which
+   is the question `projects.company_name` could not answer at all before
+   migration 049. An empty client page therefore fails at the one thing
+   it exists for, and its four panels — contacts, notes, commercial
+   terms, mandates — are unconvincing unless all four have content.
+
+   Two constraints shape what is written below.
+
+   **Mandate counts are derived, not typed.** The real list counts every
+   project with `client_id = id`, live or not; `SAMPLE_MANDATES` holds
+   only searches in flight. So a client states its *closed* searches and
+   the count is live + closed. Typing a total instead would let the
+   column contradict the mandate list the same way a hand-written KPI
+   would contradict its own table.
+
+   **A note is about the deal, never about the person.** §5c of the
+   handoff records why: a client contact is not notified that we hold a
+   record on them, and legitimate interest covers a name, a title and a
+   phone number collected inside a commercial relationship. It stops
+   covering the moment a note carries an assessment of the individual —
+   that is profiling of someone who was never told. Every note here is
+   about process, logistics or terms. None of them is about what anybody
+   is like, and none should be added later.
+   ──────────────────────────────────────────────────────────────────── */
+
+export type SampleContact = {
+  readonly id: string;
+  readonly fullName: string;
+  readonly title: string;
+  /** Matches the `client_contacts.contact_type` vocabulary in 054. */
+  readonly contactType: "hiring_manager" | "hr" | "procurement" | "executive" | "other";
+  readonly email: string;
+  readonly phone: string | null;
+  readonly isPrimary: boolean;
+};
+
+export type SampleClientNote = {
+  readonly id: string;
+  readonly noteType: "general" | "call" | "meeting" | "email";
+  /** `commercial` notes are hidden from a reader without `fees:read`, as in 054. */
+  readonly visibility: "org" | "commercial";
+  readonly contactName: string | null;
+  readonly body: string;
+  readonly isPinned: boolean;
+  readonly daysAgo: number;
+  readonly author: string;
+};
+
+export type SampleFeeTerms = {
+  readonly model: "contingent" | "retained" | "fixed";
+  readonly summary: string;
+  readonly basis: "Base salary" | "Total first-year cash";
+  readonly guaranteeDays: number;
+  /** Retained searches only; a contingent fee is one line and has none. */
+  readonly instalments: readonly { readonly label: string; readonly share: string }[];
+  readonly note: string | null;
+};
+
+export type SampleClosedMandate = {
+  readonly title: string;
+  readonly outcome: "Placed" | "Closed";
+  readonly closedDaysAgo: number;
+};
+
+export type SampleClient = {
+  readonly id: string;
+  readonly name: string;
+  readonly domain: string;
+  readonly industry: string;
+  readonly businessModel: string;
+  readonly revenueRange: string;
+  readonly employeeCount: string;
+  readonly fundingStage: string;
+  readonly ownershipStructure: string;
+  readonly geographicFootprint: string;
+  readonly regulatoryEnvironment: string;
+  /** Null where research has not been run — a real state, worth showing once. */
+  readonly researchedDaysAgo: number | null;
+  /** Ids in `SAMPLE_MANDATES`. The live half of the mandate count. */
+  readonly liveMandateIds: readonly string[];
+  readonly closedMandates: readonly SampleClosedMandate[];
+  readonly contacts: readonly SampleContact[];
+  readonly notes: readonly SampleClientNote[];
+  readonly feeTerms: SampleFeeTerms | null;
+};
+
+export const SAMPLE_CLIENTS: readonly SampleClient[] = [
+  {
+    id: "sample-client-larkspur",
+    name: "Larkspur Health",
+    domain: "larkspurhealth.com",
+    industry: "Healthcare technology",
+    businessModel: "B2B SaaS, per-bed licensing with implementation services",
+    revenueRange: "~$180m ARR",
+    employeeCount: "1,200–1,500",
+    fundingStage: "Series E, PE minority",
+    ownershipStructure: "Founder-led, Meridian Growth holds 34%",
+    geographicFootprint: "US, Canada, UK",
+    regulatoryEnvironment: "HIPAA, SOC 2 Type II, MHRA for the UK estate",
+    researchedDaysAgo: 9,
+    liveMandateIds: ["sample-larkspur"],
+    closedMandates: [
+      { title: "VP Clinical Operations", outcome: "Placed", closedDaysAgo: 214 },
+      { title: "Head of Information Security", outcome: "Placed", closedDaysAgo: 402 },
+    ],
+    contacts: [
+      {
+        id: "sample-contact-larkspur-raman",
+        fullName: "Priya Raman",
+        title: "Chief People Officer",
+        contactType: "hr",
+        email: "p.raman@larkspurhealth.com",
+        phone: "+1 617 555 0148",
+        isPrimary: true,
+      },
+      {
+        id: "sample-contact-larkspur-feltrin",
+        fullName: "Tom Feltrin",
+        title: "Chief Executive Officer",
+        contactType: "executive",
+        email: "t.feltrin@larkspurhealth.com",
+        phone: null,
+        isPrimary: false,
+      },
+      {
+        id: "sample-contact-larkspur-oyelaran",
+        fullName: "Dele Oyelaran",
+        title: "Director, Procurement",
+        contactType: "procurement",
+        email: "d.oyelaran@larkspurhealth.com",
+        phone: null,
+        isPrimary: false,
+      },
+    ],
+    notes: [
+      {
+        id: "sample-note-larkspur-panel",
+        noteType: "meeting",
+        visibility: "org",
+        contactName: "Priya Raman",
+        body: "Second-round format confirmed: 90 minutes, architecture deep-dive first, then 30 with the CEO. Panel is Priya, Tom and the VP Clinical. They want the security posture question asked by us in round one rather than by them in round two.",
+        isPinned: true,
+        daysAgo: 6,
+        author: "Elena Marchetti",
+      },
+      {
+        id: "sample-note-larkspur-scheduling",
+        noteType: "email",
+        visibility: "org",
+        contactName: "Priya Raman",
+        body: "Board offsite runs the week of the 14th; no interviews that week. Priya asked for the slate a full working day before the panel rather than the morning of.",
+        isPinned: false,
+        daysAgo: 11,
+        author: "Elena Marchetti",
+      },
+      {
+        id: "sample-note-larkspur-terms",
+        noteType: "call",
+        visibility: "commercial",
+        contactName: "Dele Oyelaran",
+        body: "Renewal agreed at 22% of total first-year cash, up from 20% of base. Procurement wanted the guarantee extended to 120 days in exchange; agreed. Invoicing stays on the same PO structure.",
+        isPinned: false,
+        daysAgo: 34,
+        author: "Elena Marchetti",
+      },
+    ],
+    feeTerms: {
+      model: "contingent",
+      summary: "22% of total first-year cash",
+      basis: "Total first-year cash",
+      guaranteeDays: 120,
+      instalments: [],
+      note: "Renewed at the 34-day mark; supersedes the 20%-of-base agreement.",
+    },
+  },
+  {
+    id: "sample-client-cindermere",
+    name: "Cindermere Robotics",
+    domain: "cindermere.io",
+    industry: "Industrial automation",
+    businessModel: "Hardware plus recurring fleet-software subscription",
+    revenueRange: "~$62m",
+    employeeCount: "380–420",
+    fundingStage: "Series C",
+    ownershipStructure: "Venture-backed, no single majority holder",
+    geographicFootprint: "Germany, Netherlands, US Midwest",
+    regulatoryEnvironment: "CE machinery directive, ISO 10218",
+    researchedDaysAgo: 3,
+    liveMandateIds: ["sample-cindermere"],
+    closedMandates: [
+      { title: "Director of Manufacturing", outcome: "Closed", closedDaysAgo: 158 },
+    ],
+    contacts: [
+      {
+        id: "sample-contact-cindermere-vogt",
+        fullName: "Annika Vogt",
+        title: "Chief Technology Officer",
+        contactType: "hiring_manager",
+        email: "a.vogt@cindermere.io",
+        phone: "+49 30 5550 118",
+        isPrimary: true,
+      },
+      {
+        id: "sample-contact-cindermere-brandt",
+        fullName: "Sebastian Brandt",
+        title: "Talent Partner",
+        contactType: "hr",
+        email: "s.brandt@cindermere.io",
+        phone: null,
+        isPrimary: false,
+      },
+    ],
+    notes: [
+      {
+        id: "sample-note-cindermere-tenure",
+        noteType: "call",
+        visibility: "org",
+        contactName: "Annika Vogt",
+        body: "Annika restated that two-year tenures inside a scale-up are normal here and asked that we stop filtering on them. Recorded as a client skill so the evaluation agent applies it rather than us remembering.",
+        isPinned: true,
+        daysAgo: 19,
+        author: "Elena Marchetti",
+      },
+      {
+        id: "sample-note-cindermere-fallthrough",
+        noteType: "general",
+        visibility: "org",
+        contactName: null,
+        body: "Previous offer was declined at the paperwork stage over relocation support. Package now includes a stated relocation allowance before the offer goes out.",
+        isPinned: false,
+        daysAgo: 41,
+        author: "Elena Marchetti",
+      },
+      {
+        id: "sample-note-cindermere-rebate",
+        noteType: "email",
+        visibility: "commercial",
+        contactName: "Sebastian Brandt",
+        body: "Fall-through inside the guarantee window was credited in full rather than replaced, at their request. The reversal is on the placement record; the replacement search is billed as new.",
+        isPinned: false,
+        daysAgo: 28,
+        author: "Elena Marchetti",
+      },
+    ],
+    feeTerms: {
+      model: "retained",
+      summary: "28% of base salary, three stages",
+      basis: "Base salary",
+      guaranteeDays: 90,
+      instalments: [
+        { label: "On engagement", share: "33.333%" },
+        { label: "On shortlist delivery", share: "33.333%" },
+        { label: "On start date", share: "33.334%" },
+      ],
+      note: "Thirds, so the plan sums to 100% exactly rather than to 99.999%.",
+    },
+  },
+  {
+    id: "sample-client-northvale",
+    name: "Northvale Capital",
+    domain: "northvalecapital.com",
+    industry: "Asset management",
+    businessModel: "Fee on AUM plus carry on the direct-lending vehicles",
+    revenueRange: "Not disclosed",
+    employeeCount: "210–240",
+    fundingStage: "Privately held",
+    ownershipStructure: "Partnership, 11 equity partners",
+    geographicFootprint: "UK, Luxembourg, Singapore",
+    regulatoryEnvironment: "FCA authorised, SMCR applies to the COO seat",
+    researchedDaysAgo: 22,
+    liveMandateIds: ["sample-northvale"],
+    closedMandates: [
+      { title: "Head of Compliance", outcome: "Placed", closedDaysAgo: 96 },
+    ],
+    contacts: [
+      {
+        id: "sample-contact-northvale-akerman",
+        fullName: "Rosalind Akerman",
+        title: "Managing Partner",
+        contactType: "executive",
+        email: "r.akerman@northvalecapital.com",
+        phone: "+44 20 7555 0192",
+        isPrimary: true,
+      },
+      {
+        id: "sample-contact-northvale-desai",
+        fullName: "Nikhil Desai",
+        title: "Head of Talent",
+        contactType: "hr",
+        email: "n.desai@northvalecapital.com",
+        phone: null,
+        isPrimary: false,
+      },
+    ],
+    notes: [
+      {
+        id: "sample-note-northvale-smcr",
+        noteType: "meeting",
+        visibility: "org",
+        contactName: "Rosalind Akerman",
+        body: "The COO seat is an SMF role, so the regulatory reference process adds roughly six weeks between offer and start. Both sides agreed the start date on the offer letter should reflect that rather than being renegotiated later.",
+        isPinned: true,
+        daysAgo: 15,
+        author: "Elena Marchetti",
+      },
+      {
+        id: "sample-note-northvale-partners",
+        noteType: "general",
+        visibility: "org",
+        contactName: null,
+        body: "Final decision sits with the partnership, not with Rosalind alone. Slates go to her first and she circulates; expect four to five working days for a response rather than two.",
+        isPinned: false,
+        daysAgo: 30,
+        author: "Elena Marchetti",
+      },
+    ],
+    feeTerms: {
+      model: "retained",
+      summary: "30% of total first-year cash, two stages",
+      basis: "Total first-year cash",
+      guaranteeDays: 180,
+      instalments: [
+        { label: "On engagement", share: "40%" },
+        { label: "On start date", share: "60%" },
+      ],
+      note: "Longer guarantee negotiated in place of a lower percentage.",
+    },
+  },
+  {
+    id: "sample-client-thornbury",
+    name: "Thornbury Group",
+    domain: "thornburygroup.co.uk",
+    industry: "Building materials",
+    businessModel: "Manufacture and distribution, 60% trade counter",
+    revenueRange: "~£410m",
+    employeeCount: "2,800–3,200",
+    fundingStage: "Listed",
+    ownershipStructure: "LSE main market, free float 78%",
+    geographicFootprint: "UK, Ireland",
+    regulatoryEnvironment: "UK listing rules, TCFD reporting",
+    researchedDaysAgo: 5,
+    liveMandateIds: ["sample-thornbury"],
+    closedMandates: [],
+    contacts: [
+      {
+        id: "sample-contact-thornbury-whitlock",
+        fullName: "Margaret Whitlock",
+        title: "Chair, Audit Committee",
+        contactType: "executive",
+        email: "m.whitlock@thornburygroup.co.uk",
+        phone: null,
+        isPrimary: true,
+      },
+      {
+        id: "sample-contact-thornbury-ianno",
+        fullName: "Carlo Ianno",
+        title: "Group HR Director",
+        contactType: "hr",
+        email: "c.ianno@thornburygroup.co.uk",
+        phone: "+44 121 555 0173",
+        isPrimary: false,
+      },
+    ],
+    notes: [
+      {
+        id: "sample-note-thornbury-timing",
+        noteType: "call",
+        visibility: "org",
+        contactName: "Margaret Whitlock",
+        body: "Close period runs to the end of the month and the audit committee will not convene on appointments during it. First panel date available is the week after results.",
+        isPinned: true,
+        daysAgo: 4,
+        author: "Elena Marchetti",
+      },
+      {
+        id: "sample-note-thornbury-brief",
+        noteType: "meeting",
+        visibility: "org",
+        contactName: "Carlo Ianno",
+        body: "Brief widened after the first calibration: listed-company reporting experience is required, sector experience is not. The spec was reissued and the previous version is in the calibration history.",
+        isPinned: false,
+        daysAgo: 12,
+        author: "Elena Marchetti",
+      },
+    ],
+    feeTerms: {
+      model: "fixed",
+      summary: "£95,000 fixed",
+      basis: "Total first-year cash",
+      guaranteeDays: 90,
+      instalments: [
+        { label: "On engagement", share: "50%" },
+        { label: "On start date", share: "50%" },
+      ],
+      note: "Fixed at their request so the fee is not a function of the package.",
+    },
+  },
+  {
+    id: "sample-client-ashgrove",
+    name: "Ashgrove Logistics",
+    domain: "ashgrove-logistics.com",
+    industry: "Freight and logistics",
+    businessModel: "Asset-light 3PL, contract logistics",
+    revenueRange: "~€240m",
+    employeeCount: "1,900–2,100",
+    fundingStage: "PE-backed, second hold",
+    ownershipStructure: "Cormont Partners majority",
+    geographicFootprint: "Benelux, Germany, Poland",
+    regulatoryEnvironment: "GDPR, EU driving-time rules, customs authorisations",
+    researchedDaysAgo: 1,
+    liveMandateIds: ["sample-ashgrove"],
+    closedMandates: [],
+    contacts: [
+      {
+        id: "sample-contact-ashgrove-nowak",
+        fullName: "Kasia Nowak",
+        title: "Chief Information Officer",
+        contactType: "hiring_manager",
+        email: "k.nowak@ashgrove-logistics.com",
+        phone: "+31 20 555 0166",
+        isPrimary: true,
+      },
+    ],
+    notes: [
+      {
+        id: "sample-note-ashgrove-blocked",
+        noteType: "general",
+        visibility: "org",
+        contactName: "Kasia Nowak",
+        body: "Calibration is waiting on the target operating model, which lands with the board at the end of the month. Sourcing is deliberately paused rather than run against a spec that is about to change.",
+        isPinned: true,
+        daysAgo: 2,
+        author: "Elena Marchetti",
+      },
+    ],
+    feeTerms: {
+      model: "contingent",
+      summary: "20% of base salary",
+      basis: "Base salary",
+      guaranteeDays: 90,
+      instalments: [],
+      note: null,
+    },
+  },
+  {
+    id: "sample-client-merrit",
+    name: "Merrit & Vale",
+    domain: "merritvale.com",
+    industry: "Professional services",
+    businessModel: "Partnership, billable hours with fixed-fee advisory",
+    revenueRange: "~$88m",
+    employeeCount: "300–350",
+    fundingStage: "Privately held",
+    ownershipStructure: "Equity partnership, 26 partners",
+    geographicFootprint: "US East Coast",
+    regulatoryEnvironment: "State bar admission, conflict-of-interest screening",
+    researchedDaysAgo: 7,
+    liveMandateIds: ["sample-merrit"],
+    closedMandates: [],
+    contacts: [
+      {
+        id: "sample-contact-merrit-oduya",
+        fullName: "Grace Oduya",
+        title: "Managing Partner",
+        contactType: "executive",
+        email: "g.oduya@merritvale.com",
+        phone: null,
+        isPrimary: true,
+      },
+      {
+        id: "sample-contact-merrit-halloran",
+        fullName: "Peter Halloran",
+        title: "Director of Operations",
+        contactType: "other",
+        email: "p.halloran@merritvale.com",
+        phone: "+1 212 555 0134",
+        isPrimary: false,
+      },
+    ],
+    notes: [
+      {
+        id: "sample-note-merrit-conflicts",
+        noteType: "email",
+        visibility: "org",
+        contactName: "Peter Halloran",
+        body: "Every candidate has to clear conflict screening before an introduction, not before an offer. Names go to Peter first and come back cleared or blocked within two working days.",
+        isPinned: true,
+        daysAgo: 8,
+        author: "Elena Marchetti",
+      },
+    ],
+    feeTerms: null,
+  },
+  {
+    id: "sample-client-varela",
+    name: "Varela Bioscience",
+    domain: "varelabio.com",
+    industry: "Biotechnology",
+    businessModel: "Pre-revenue, milestone-funded research programmes",
+    revenueRange: "Pre-revenue",
+    employeeCount: "120–150",
+    fundingStage: "Series B",
+    ownershipStructure: "Venture-backed, founder retains board control",
+    geographicFootprint: "Spain, US Northeast",
+    regulatoryEnvironment: "EMA and FDA pathways, GCP for the trial estate",
+    researchedDaysAgo: null,
+    liveMandateIds: ["sample-varela"],
+    closedMandates: [],
+    contacts: [
+      {
+        id: "sample-contact-varela-serrano",
+        fullName: "Miguel Serrano",
+        title: "Chief Executive Officer",
+        contactType: "executive",
+        email: "m.serrano@varelabio.com",
+        phone: null,
+        isPrimary: true,
+      },
+    ],
+    notes: [
+      {
+        id: "sample-note-varela-first",
+        noteType: "call",
+        visibility: "org",
+        contactName: "Miguel Serrano",
+        body: "First mandate with this client. Company research has not been run yet — the intake was taken verbally and the profile below is what Miguel gave us on the call.",
+        isPinned: false,
+        daysAgo: 8,
+        author: "Elena Marchetti",
+      },
+    ],
+    feeTerms: null,
+  },
+];
+
+export function sampleClient(id: string): SampleClient | undefined {
+  return SAMPLE_CLIENTS.find((c) => c.id === id);
+}
+
+/**
+ * Live mandates plus closed ones, which is what the real page counts: it
+ * reads every `projects` row for the client with no status filter, while
+ * `SAMPLE_MANDATES` holds only searches in flight. Derived rather than
+ * typed so the column cannot drift from the mandate list.
+ */
+export function sampleClientMandateCount(client: SampleClient): number {
+  return client.liveMandateIds.length + client.closedMandates.length;
+}
+
+/** The live mandates behind a sample client, resolved against `SAMPLE_MANDATES`. */
+export function sampleClientLiveMandates(client: SampleClient): SampleMandate[] {
+  return client.liveMandateIds
+    .map((id) => sampleMandate(id))
+    .filter((m): m is SampleMandate => m !== undefined);
+}

@@ -22,6 +22,8 @@ import {
 import { FeeTermsPanel } from "./fee-terms-panel";
 import { ContactsPanel } from "./contacts-panel";
 import { ClientNotesPanel } from "./client-notes-panel";
+import { isSampleId } from "@/lib/sample";
+import { SampleClientDetail } from "@/components/sample/sample-client-detail";
 
 /**
  * The client record: who they are, what we know about them, and everything
@@ -63,6 +65,14 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // The `sample-` prefix is the whole routing contract — see `isSampleId`.
+  // A uuid has no letters before its first hyphen, so a real client id can
+  // never land here and a crafted `sample-` id never reaches a query.
+  if (isSampleId(id)) {
+    return <SampleClientDetail id={id} />;
+  }
+
   const supabase = await createServerSupabaseClient();
 
   const { data: client, error } = await supabase

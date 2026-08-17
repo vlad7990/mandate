@@ -5,6 +5,29 @@
  * and the user has not dismissed it. Once a recruiter has their own
  * mandates, the sample never appears again on that screen — a live
  * account must never mix invented rows with real ones.
+ *
+ * ## How fabricated data is labelled — decided 2026-08-17, D3
+ *
+ * **Page level, two markers, and no per-row marker.** A screen in sample
+ * mode carries `SampleBanner` as the first element in its content region,
+ * and `// sample data` in its own subtitle or meta line. Nothing else.
+ *
+ * The alternative considered and rejected was a `SAMPLE` chip on every
+ * fabricated row. It survives a cropped screenshot, which the banner does
+ * not — but it costs a column on tables that are already tight at 360px,
+ * repeats the same word up to twenty times a screen, and would have to be
+ * invented separately by each of the twelve routes that still need sample
+ * data. One mechanism that five screens already ship beats a second one
+ * argued per page.
+ *
+ * The rule this satisfies is that illustrative data carries a visible
+ * label at the point of display. The banner is *at* the display: it is the
+ * first thing in the content region, so a screen reader meets it before
+ * the invented figures rather than after, and it is not dismissible
+ * without also dismissing the sample itself.
+ *
+ * **Do not invent a third mechanism.** If a screen seems to need one, the
+ * question is whether it should be showing a sample at all.
  */
 
 export * from "./data";

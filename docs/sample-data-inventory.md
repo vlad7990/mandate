@@ -58,12 +58,25 @@ once for its own sake before more sample-data work. Expect it to surface
 defects; every screen opened for the first time in the last four sessions
 has.
 
-### D3. One label mechanism, decided once
+### D3. ~~One label mechanism, decided once~~ — ANSWERED 2026-08-17
 
-`shouldShowSample()` and `sample-banner.tsx` exist. Whether the banner alone
-satisfies "labelled at the point of display" — or whether each fabricated
-row needs its own marker — should be settled once. Twelve pages will
-otherwise each invent an answer.
+**Page level, two markers, no per-row marker.** A screen in sample mode
+carries `SampleBanner` as the first element in its content region and
+`// sample data` in its own subtitle. Nothing else.
+
+The rejected alternative was a `SAMPLE` chip on every fabricated row. It
+survives a cropped screenshot, which the banner does not — but it costs a
+column on tables already tight at 360px, repeats the same word up to twenty
+times a screen, and would be re-invented by each remaining route. One
+mechanism that five screens already ship beats a second one argued per page.
+
+The rule it satisfies: the banner *is* at the point of display. It is the
+first thing in the content region, so a screen reader meets it before the
+invented figures, and it cannot be dismissed without dismissing the sample.
+
+Written into the header of `src/lib/sample/index.ts`, which is where the
+next eleven pages will look. **Do not invent a third mechanism** — if a
+screen seems to need one, the question is whether it should show a sample.
 
 ### D4. ~~Two pages ship a developer message to customers~~ — FIXED 2026-08-14
 
@@ -148,16 +161,54 @@ of the three is a hire/no-hire rule; skills steer how an agent reads
 evidence, and a sample implying otherwise would teach the wrong thing on the
 one screen whose job is teaching.
 
-### W2 · Client Experience — 2 routes
+### W2 · Client Experience — 2 routes — DONE 2026-08-17
 
 | Route | State | Kind | Size | Depends on | Value |
 |---|---|---|---|---|---|
-| `/app/clients` | empty-only | simple | S | — | High |
-| `/app/clients/[id]` | empty-only | relational | M | clients, contacts, notes, fee terms | High |
+| `/app/clients` | complete | — | — | — | — |
+| `/app/clients/[id]` | complete | — | — | — | — |
 
-The client entity is complete in the schema (§5c), so this is data only. The
-detail page carries four panels — contacts, notes, commercial terms,
-mandates — and is unconvincing unless all four have content.
+The client entity is complete in the schema (§5c), so this was data only.
+The detail page carries four panels — contacts, notes, commercial terms,
+mandates — and all four have content, which was the founder's call: a page
+with two of four empty is not a demo of the entity.
+
+**What it got, and the three rules that shaped it.**
+
+Seven clients — the same seven companies as `SAMPLE_MANDATES`, so a prospect
+clicking Mandates → Clients lands on the same firms rather than a second
+invented world.
+
+1. **Mandate counts are derived, not typed.** The real list counts every
+   `projects` row for the client with no status filter; `SAMPLE_MANDATES`
+   holds only searches in flight. So a client states its *closed* searches
+   and the count is live + closed — which is also what stops the column
+   being seven identical `01`s. `clients.test.ts` asserts both directions:
+   no mandate without a client, no client naming a mandate that is gone.
+2. **`fees:read` still gates the money.** Commercial terms and `commercial`
+   notes are hidden from a researcher or a viewer here exactly as RLS hides
+   them on a real client, and the count says "02 notes", never
+   "03 // 1 restricted" (§5c). A sample that showed everyone the rate card
+   would teach the opposite of what the product does — worse than teaching
+   nothing, on the one screen whose job is teaching.
+3. **A note is about the deal, never about the person.** §5c records why:
+   legitimate interest covers a name, title and number collected inside a
+   commercial relationship, and stops covering the moment a note carries an
+   assessment of the individual. Every note is process, logistics or terms.
+   The constraint is written into `data.ts` beside the fixture.
+
+Read-only throughout — no add, edit, archive or delete — the same call the
+skills studio made in `5107767`: these are not the reader's rows, and a
+control that refuses is worse than the empty state it replaced.
+
+Three partial states are carried on purpose and pinned by a test, because a
+demo in which every record is complete teaches that the product arrives
+full: one client not yet researched, one with no agreement on file, and one
+retained plan whose thirds sum to 100% rather than 99.999 (§5a).
+
+**Also fixed here:** `/app/clients` rendered `error.message` — a raw
+PostgREST string — into the page body. Same class as D4, and a real leak
+rather than a redacted one, because a page body is server-rendered.
 
 ### W3 · Mandates & Projects — 11 routes
 
@@ -251,8 +302,8 @@ copy on a branch that never runs.
 1. ~~**D4 fix** — the two migration-033 messages.~~ Done 2026-08-14.
 2. ~~**W1 Administration** (minus `/app/activity`).~~ Done 2026-08-14 —
    one page of work, not three.
-3. **W2 Client Experience** — small, self-contained, and W3 depends on it
-   for the hiring-manager and fee surfaces.
+3. ~~**W2 Client Experience**~~ — done 2026-08-17. Two routes, seven
+   clients, and D3 answered on the way.
 4. **W3 Mandates** — the spine. Extends the existing `sample-larkspur`
    fixture rather than inventing anything.
 5. **W4 Candidates** — falls out of W3 cheaply once the mandate exists.

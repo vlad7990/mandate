@@ -1,8 +1,16 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { ListPanel, PageHeader, PageShell } from "@/components/ui/page-shell";
 import { CLIENT_LIST_COLUMNS } from "@/lib/clients/types";
+import { SampleBanner } from "@/components/sample/sample-banner";
+import {
+  SAMPLE_CLIENTS,
+  SAMPLE_DISMISSED_COOKIE,
+  sampleClientMandateCount,
+  shouldShowSample,
+} from "@/lib/sample";
 
 /**
  * The client list.
@@ -11,6 +19,11 @@ import { CLIENT_LIST_COLUMNS } from "@/lib/clients/types";
  * count is bounded by how many companies an agency works for, which is two
  * orders of magnitude below its candidate count. The moment that stops being
  * true this wants `parseListParams` like the others.
+ *
+ * The sample is the seven companies behind the sample mandates, so a
+ * prospect clicking from Mandates to Clients lands on the same firms rather
+ * than a second invented world. Mandate counts are derived, not typed — see
+ * `sampleClientMandateCount`.
  */
 
 type ClientListRow = {
@@ -34,6 +47,17 @@ function formatDate(value: string | null): string {
   });
 }
 
+/**
+ * A fixture stores "9 days ago", never a date — see the rule at the top of
+ * `src/lib/sample/data.ts`. Resolving it to a date here rather than
+ * rendering "9d" keeps the column one format instead of two, and it is safe
+ * because this is a server component: the string is baked into the HTML and
+ * no client render can disagree with it.
+ */
+function formatDaysAgo(days: number): string {
+  return formatDate(new Date(Date.now() - days * 86_400_000).toISOString());
+}
+
 export default async function ClientsPage() {
   const supabase = await createServerSupabaseClient();
 
@@ -44,6 +68,15 @@ export default async function ClientsPage() {
     supabase.from("projects").select("client_id").not("client_id", "is", null),
   ]);
 
+  // The detail goes to the server log, where the PostgREST string is worth
+  // having. Previously it went to the page — a raw driver message rendered
+  // to a recruiter, the same class 613526a fixed on the EI catalogues, and
+  // a real leak rather than a redacted one because a page body is
+  // server-rendered.
+  if (error) {
+    console.error("[clients] failed to load the client list", error);
+  }
+
   const clients = (data ?? []) as ClientListRow[];
 
   const mandatesByClient = new Map<string, number>();
@@ -52,6 +85,32 @@ export default async function ClientsPage() {
     mandatesByClient.set(row.client_id, (mandatesByClient.get(row.client_id) ?? 0) + 1);
   }
 
+  // A failed read is not an empty account, and showing the sample over the
+  // top of one would tell a recruiter their clients had vanished.
+  const dismissed = (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
+  const showSample =
+    !error && shouldShowSample({ hasRealData: clients.length > 0, dismissed });
+
+  const rows = showSample
+    ? SAMPLE_CLIENTS.map((c) => ({
+        id: c.id,
+        name: c.name,
+        domain: c.domain,
+        industry: c.industry,
+        footprint: c.geographicFootprint,
+        mandates: sampleClientMandateCount(c),
+        researched: c.researchedDaysAgo,
+      }))
+    : clients.map((c) => ({
+        id: c.id,
+        name: c.name,
+        domain: c.domain,
+        industry: c.industry,
+        footprint: c.geographic_footprint,
+        mandates: mandatesByClient.get(c.id) ?? 0,
+        researched: c.company_context_refreshed_at,
+      }));
+
   return (
     <PageShell className="space-y-5">
       <SetBreadcrumbs crumbs={[{ label: "Clients" }]} />
@@ -59,11 +118,13 @@ export default async function ClientsPage() {
       <PageHeader
         title="Clients"
         subtitle={
-          clients.length === 0
-            ? "No clients yet"
-            : `${String(clients.length).padStart(2, "0")} ${
-                clients.length === 1 ? "client" : "clients"
-              } // opened from mandates and executive searches`
+          showSample
+            ? `${String(SAMPLE_CLIENTS.length).padStart(2, "0")} clients // sample data`
+            : clients.length === 0
+              ? "No clients yet"
+              : `${String(clients.length).padStart(2, "0")} ${
+                  clients.length === 1 ? "client" : "clients"
+                } // opened from mandates and executive searches`
         }
       />
 
@@ -72,9 +133,12 @@ export default async function ClientsPage() {
           role="alert"
           className="border border-error/60 bg-error/10 px-4 py-3 text-body-main text-error"
         >
-          Could not load clients: {error.message}
+          The client list could not be loaded. This has been logged — try
+          again, and tell an admin if it keeps happening.
         </div>
       )}
+
+      {showSample && <SampleBanner scope="clients" />}
 
       <ListPanel>
         <div className="overflow-x-auto">
@@ -100,7 +164,7 @@ export default async function ClientsPage() {
               </tr>
             </thead>
             <tbody>
-              {clients.map((c) => (
+              {rows.map((c) => (
                 <tr
                   key={c.id}
                   className="border-b border-outline-variant/40 last:border-0"
@@ -123,13 +187,15 @@ export default async function ClientsPage() {
                     {c.industry ?? "—"}
                   </td>
                   <td className="px-4 py-3 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant">
-                    {c.geographic_footprint ?? "—"}
+                    {c.footprint ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-right font-mono-data text-[13px] tabular-nums text-on-surface">
-                    {String(mandatesByClient.get(c.id) ?? 0).padStart(2, "0")}
+                    {String(c.mandates).padStart(2, "0")}
                   </td>
                   <td className="px-4 py-3 text-right font-mono-data text-[13px] tabular-nums text-on-surface-variant">
-                    {formatDate(c.company_context_refreshed_at)}
+                    {typeof c.researched === "number"
+                      ? formatDaysAgo(c.researched)
+                      : formatDate(c.researched)}
                   </td>
                 </tr>
               ))}
@@ -137,7 +203,7 @@ export default async function ClientsPage() {
           </table>
         </div>
 
-        {clients.length === 0 && !error && (
+        {rows.length === 0 && !error && (
           <p className="px-4 py-10 text-center font-mono-label text-mono-label uppercase leading-[1.6] tracking-widest text-outline">
             {/*
               Clients are created as a side effect of opening a mandate, not
