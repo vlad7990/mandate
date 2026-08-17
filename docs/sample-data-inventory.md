@@ -210,7 +210,7 @@ retained plan whose thirds sum to 100% rather than 99.999 (§5a).
 PostgREST string — into the page body. Same class as D4, and a real leak
 rather than a redacted one, because a page body is server-rendered.
 
-### W3 · Mandates & Projects — 11 routes
+### W3 · Mandates & Projects — 11 routes — DONE 2026-08-17
 
 | Route | State | Kind | Size | Depends on | Value |
 |---|---|---|---|---|---|
@@ -218,18 +218,53 @@ rather than a redacted one, because a page body is server-rendered.
 | `/app/projects` | complete | — | — | — | — |
 | `/app/projects/[id]` | complete | — | — | — | — |
 | `/app/projects/new` | n/a | — | — | — | — |
-| `/app/projects/[id]/onboarding` | thin | workflow | M | — | Med |
-| `/app/projects/[id]/spec` | empty-only | generated | M | D1, D2 | High |
-| `/app/projects/[id]/calibration-history` | empty-only | generated | M | spec | Med |
-| `/app/projects/[id]/metrics` | thin | relational | M | candidates, feedback | Med |
-| `/app/projects/[id]/reports` | empty-only | generated | L | D1, D2, whole mandate | High |
-| `/app/projects/[id]/hiring-manager` | empty-only | relational | M | contacts (W2) | High |
-| `/app/projects/[id]/feedback` | empty-only | relational | M | candidates, HM portal | High |
+| `/app/projects/[id]/onboarding` | complete | — | — | — | — |
+| `/app/projects/[id]/spec` | complete | — | — | — | — |
+| `/app/projects/[id]/calibration-history` | complete | — | — | — | — |
+| `/app/projects/[id]/metrics` | complete | — | — | — | — |
+| `/app/projects/[id]/reports` | complete | — | — | — | — |
+| `/app/projects/[id]/hiring-manager` | complete | — | — | — | — |
+| `/app/projects/[id]/feedback` | complete | — | — | — | — |
 
-The three "complete" rows are the existing sample workspace. **Everything
-else in this workstream hangs off `sample-larkspur`** — the fixture that
-already exists — so the work is extending one coherent mandate rather than
-inventing eleven.
+Everything hangs off `sample-larkspur`, so this was extending one coherent
+mandate rather than inventing seven.
+
+**The survey missed the thing that mattered.** It classified these routes by
+what they render when empty; none of them was reachable from the sample at
+all. Every sub-route of `/app/projects/sample-larkspur` — these seven plus
+`/sourcing`, `/ranking`, `/shortlist` and `/comparison` — passed
+`sample-larkspur` to a Postgres query, failed on a malformed uuid, and fell
+through to `redirect("/")`. **Eleven routes silently returning a prospect to
+the dashboard**, and the sample mandate page linked to none of them, so the
+sample workspace was one screen deep and nobody had noticed.
+
+So W3 is a module rail plus seven screens plus an honest state for the four
+that belong to W5/W6 — named rather than omitted, because a rail that leaves
+them out still leaves a typed URL and a bookmark doing the old thing.
+
+**D1 did not block any of it, and the reason is worth keeping.** Only two of
+these screens carry agent judgement about a person — the hiring-manager slate
+and the weekly report — and both do it in the shape
+`sample-candidate-detail.tsx` already set: **a score never travels without
+the fact that produced it**. The remaining agent output is about the *search*
+(a boolean string, a stale slate, a re-score) or about *patterns across
+decisions*, which is what the feedback screen's bias block is. That block is
+written as arithmetic — the stated reason against the record, both halves
+shown — so it is a pattern a reader can check and disagree with. What W7 is
+still held for is long-form narrative risk assessment, which is a different
+thing.
+
+**One defect found by building it.** The mandate page said the spec was at v4
+and the calibration model had nine dimensions approved on day 4; `/spec` said
+FINAL_V01 and `/calibration-history` said five dimensions recalibrated on day
+22 from client feedback. Two screens describing the same search, disagreeing
+on every number they shared — because the mandate page had typed its own
+copy. It now derives them from the fixture, and
+`src/lib/sample/mandate-modules.test.ts` pins the fixture's internal
+consistency: the funnel head equals the mandate's own candidate count, the
+funnel never widens, every calibration version sums to 100, the feedback
+screen's "applied as v03" matches the weights on the calibration screen, and
+the report only names candidates who are on the slate.
 
 ### W4 · Candidate Management — 5 routes
 
@@ -304,8 +339,8 @@ copy on a branch that never runs.
    one page of work, not three.
 3. ~~**W2 Client Experience**~~ — done 2026-08-17. Two routes, seven
    clients, and D3 answered on the way.
-4. **W3 Mandates** — the spine. Extends the existing `sample-larkspur`
-   fixture rather than inventing anything.
+4. ~~**W3 Mandates**~~ — done 2026-08-17. Seven module screens, a rail, and
+   the fix for eleven sub-routes that redirected to `/app/home`.
 5. **W4 Candidates** — falls out of W3 cheaply once the mandate exists.
 6. **W6 Reports & Analytics** — mostly free once 3–5 land.
 7. **W5 Research & Sourcing** — unblocked by D2; approach is now "seed a mandate, let the agents run".

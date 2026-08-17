@@ -24,6 +24,8 @@ import {
   IconTune,
   type IconProps,
 } from "@/components/icons";
+import { isSampleId } from "@/lib/sample";
+import { SampleFeedback } from "@/components/sample/sample-mandate-modules";
 
 type ProjectRow = {
   id: string;
@@ -71,6 +73,12 @@ export default async function FeedbackPage({
   searchParams: Promise<{ candidate?: string }>;
 }) {
   const { id } = await params;
+
+  // The sample mandate has no row in Postgres — `sample-larkspur` is not
+  // a uuid, so before this the query below failed and the page fell
+  // through to `redirect("/")`, landing a prospect on the dashboard with
+  // no explanation. See `sample-mandate-shell.tsx`.
+  if (isSampleId(id)) return <SampleFeedback id={id} />;
   const { candidate: initialCandidateRaw } = await searchParams;
   const supabase = await createServerSupabaseClient();
 

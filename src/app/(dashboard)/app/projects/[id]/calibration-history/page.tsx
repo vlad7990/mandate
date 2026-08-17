@@ -15,6 +15,8 @@ import {
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import { cn } from "@/lib/utils";
 import { RestoreCalibrationButton } from "./restore-button";
+import { isSampleId } from "@/lib/sample";
+import { SampleCalibrationHistory } from "@/components/sample/sample-mandate-modules";
 
 const CHANGE_LABEL: Record<CalibrationHistoryEntry["change_type"], string> = {
   initial: "Initial calibration",
@@ -36,6 +38,12 @@ export default async function CalibrationHistoryPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // The sample mandate has no row in Postgres — `sample-larkspur` is not
+  // a uuid, so before this the query below failed and the page fell
+  // through to `redirect("/")`, landing a prospect on the dashboard with
+  // no explanation. See `sample-mandate-shell.tsx`.
+  if (isSampleId(id)) return <SampleCalibrationHistory id={id} />;
   const supabase = await createServerSupabaseClient();
 
   const { data: project, error } = await supabase

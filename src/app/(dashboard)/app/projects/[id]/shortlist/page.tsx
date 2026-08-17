@@ -9,6 +9,8 @@ import {
 import { normalizeReport } from "@/lib/ai/shortlist-report";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { ShortlistBuilder, type PoolCandidate } from "./shortlist-builder";
+import { isSampleId } from "@/lib/sample";
+import { SampleModuleNotBuilt } from "@/components/sample/sample-mandate-shell";
 
 type ProjectRow = {
   id: string;
@@ -55,6 +57,10 @@ export default async function ShortlistPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Not in the sample workspace yet — W5/W6. Says so, rather than
+  // redirecting to `/app/home` the way it used to.
+  if (isSampleId(id)) return <SampleModuleNotBuilt module="shortlist" mandateId={id} />;
   const supabase = await createServerSupabaseClient();
 
   const { data: project, error: projectError } = await supabase

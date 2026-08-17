@@ -3,6 +3,8 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import type { OnboardingResponses } from "@/lib/ai/onboarding-analysis";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import { OnboardingWizard } from "./onboarding-wizard";
+import { isSampleId } from "@/lib/sample";
+import { SampleOnboarding } from "@/components/sample/sample-mandate-modules";
 
 type ProjectRow = {
   id: string;
@@ -18,6 +20,12 @@ export default async function OnboardingPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // The sample mandate has no row in Postgres — `sample-larkspur` is not
+  // a uuid, so before this the query below failed and the page fell
+  // through to `redirect("/")`, landing a prospect on the dashboard with
+  // no explanation. See `sample-mandate-shell.tsx`.
+  if (isSampleId(id)) return <SampleOnboarding id={id} />;
   const supabase = await createServerSupabaseClient();
 
   const { data, error } = await supabase

@@ -24,6 +24,8 @@ import {
 import { ArchetypePanel, TargetCompaniesPanel } from "./sourcing-strategy";
 import { SourcingRunsPanel } from "./runs-panel";
 import { resolveSourcingTab, SourcingTabs } from "./sourcing-tabs";
+import { isSampleId } from "@/lib/sample";
+import { SampleModuleNotBuilt } from "@/components/sample/sample-mandate-shell";
 
 type ProjectRow = {
   id: string;
@@ -67,6 +69,10 @@ export default async function SourcingPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
+
+  // Not in the sample workspace yet — W5/W6. Says so, rather than
+  // redirecting to `/app/home` the way it used to.
+  if (isSampleId(id)) return <SampleModuleNotBuilt module="sourcing" mandateId={id} />;
   const tab = resolveSourcingTab((await searchParams).tab);
   const supabase = await createServerSupabaseClient();
 

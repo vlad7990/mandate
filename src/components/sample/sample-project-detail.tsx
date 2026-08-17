@@ -3,7 +3,16 @@ import { notFound } from "next/navigation";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { SampleBanner } from "@/components/sample/sample-banner";
 import { IconInfo } from "@/components/icons";
-import { sampleMandate, sampleCandidatesForMandate } from "@/lib/sample";
+import {
+  SAMPLE_CALIBRATION_HISTORY,
+  SAMPLE_MANDATE_ID,
+  SAMPLE_METRICS,
+  SAMPLE_SPEC,
+  sampleFunnel,
+  sampleMandate,
+  sampleCandidatesForMandate,
+} from "@/lib/sample";
+import { SampleModuleRail } from "@/components/sample/sample-mandate-shell";
 
 /**
  * The sample mandate workspace — comp 08, rendered from fixtures.
@@ -63,31 +72,32 @@ const LIVE_TILES: ReadonlyArray<{
   },
 ];
 
-const DONE_TILES: ReadonlyArray<{ name: string; meta: string }> = [
-  { name: "Intake Agent", meta: "DAY 1 · 09:12" },
-  { name: "Company Research", meta: "DAY 1 · 18 SOURCES" },
-  { name: "Role Spec Agent", meta: "DAY 3 · v4 FINAL" },
-  { name: "Calibration Agent", meta: "DAY 4 · 9 DIMENSIONS" },
-];
+/*
+  Everything below is derived from `src/lib/sample/mandate-modules.ts` rather
+  than typed here.
 
-const STAGES: ReadonlyArray<{ label: string; tone: "done" | "risk" | "todo"; grow?: number }> = [
-  { label: "Intake", tone: "done" },
-  { label: "Research", tone: "done" },
-  { label: "Spec v4", tone: "done" },
-  { label: "Calibrated", tone: "done" },
-  { label: "Sourced", tone: "done" },
-  { label: "18 evaluated", tone: "done" },
-  { label: "Shortlist 5", tone: "done" },
-  { label: "With client · 6 days", tone: "risk", grow: 1.2 },
-  { label: "Offer", tone: "todo" },
-];
+  It used to be typed here, and adding the module screens in W3 is what
+  showed why that could not stand: this page said the spec was at v4 and the
+  model had nine dimensions approved on day 4, while `/spec` said FINAL_V01
+  and `/calibration-history` said five dimensions recalibrated on day 22 from
+  client feedback. Both screens were describing the same search and they
+  disagreed on every number they shared.
 
-const BAR = [
-  { label: "Regulated-environment scale", weight: 22 },
-  { label: "Platform modernisation", weight: 20 },
-  { label: "Executive stakeholder handling", weight: 18 },
-  { label: "Team build & retention", weight: 15 },
-];
+  Deriving them is the fix that holds. `mandate-modules.test.ts` pins the
+  fixture's own internal consistency; this makes the mandate page a reader of
+  it rather than a second, quieter copy.
+*/
+const CURRENT_MODEL = SAMPLE_CALIBRATION_HISTORY[0];
+
+/** Which day of the search something that happened `daysAgo` fell on. */
+function dayOf(daysAgo: number, mandateDay: number): number {
+  return Math.max(1, mandateDay - daysAgo);
+}
+
+const BAR = CURRENT_MODEL.weights.map((w) => ({
+  label: w.name,
+  weight: w.weight,
+}));
 
 function Section({
   title,
@@ -127,6 +137,42 @@ export function SampleProjectDetail({ id }: { id: string }) {
 
   const candidates = sampleCandidatesForMandate(id);
 
+  const funnel = sampleFunnel();
+  const reviewed = funnel.find((f) => f.stage === "Reviewed")?.count ?? 0;
+  const shortlisted = funnel.find((f) => f.stage === "Shortlisted")?.count ?? 0;
+  const specDay = dayOf(SAMPLE_SPEC.finalisedDaysAgo, mandate.dayOfSearch);
+  const modelDay = dayOf(CURRENT_MODEL.daysAgo, mandate.dayOfSearch);
+
+  const DONE_TILES: ReadonlyArray<{ name: string; meta: string }> = [
+    { name: "Intake Agent", meta: "DAY 1 · 09:12" },
+    { name: "Company Research", meta: "DAY 1 · 18 SOURCES" },
+    { name: "Role Spec Agent", meta: `DAY ${specDay} · ${SAMPLE_SPEC.label}` },
+    {
+      name: "Calibration Agent",
+      meta: `DAY ${modelDay} · V${String(CURRENT_MODEL.version).padStart(2, "0")} · ${CURRENT_MODEL.weights.length} DIMENSIONS`,
+    },
+  ];
+
+  const STAGES: ReadonlyArray<{
+    label: string;
+    tone: "done" | "risk" | "todo";
+    grow?: number;
+  }> = [
+    { label: "Intake", tone: "done" },
+    { label: "Research", tone: "done" },
+    { label: "Spec final", tone: "done" },
+    { label: "Calibrated", tone: "done" },
+    { label: "Sourced", tone: "done" },
+    { label: `${reviewed} evaluated`, tone: "done" },
+    { label: `Shortlist ${shortlisted}`, tone: "done" },
+    {
+      label: `With client · ${SAMPLE_METRICS.daysSinceLastMovement} days`,
+      tone: "risk",
+      grow: 1.2,
+    },
+    { label: "Offer", tone: "todo" },
+  ];
+
   return (
     <div className="mx-auto max-w-[1600px] px-6 py-6">
       <SetBreadcrumbs
@@ -165,6 +211,21 @@ export function SampleProjectDetail({ id }: { id: string }) {
           </p>
         </div>
       </div>
+
+      {/*
+        The module rail. Only on Larkspur, because it is the one sample
+        mandate with module screens behind it — the other six would offer
+        seven links that all show a different search.
+
+        Before W3 there was no rail and every sub-route redirected to
+        `/app/home`, so the sample workspace was one screen deep and the
+        product's own shape was invisible from inside it.
+      */}
+      {mandate.id === SAMPLE_MANDATE_ID && (
+        <div className="mt-5">
+          <SampleModuleRail />
+        </div>
+      )}
 
       {/* Stage rail */}
       <div className="mt-5 flex items-center gap-2.5 border border-outline-variant bg-surface-container-low px-[18px] py-4">
@@ -448,12 +509,9 @@ export function SampleProjectDetail({ id }: { id: string }) {
                   </span>
                 </div>
               ))}
-              <div className="flex justify-between text-xs text-outline">
-                <span>5 further dimensions</span>
-                <span className="font-mono-data">25%</span>
-              </div>
               <p className="border-t border-outline-variant/60 pt-3 text-[11px] text-outline">
-                Approved on day 4 by {mandate.owner} · v3
+                {CURRENT_MODEL.trigger} on day {modelDay} · v
+                {String(CURRENT_MODEL.version).padStart(2, "0")}
               </p>
             </div>
           </Section>
@@ -486,7 +544,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
             <div className="flex flex-col gap-3 px-[18px] py-4">
               <div className="flex items-baseline gap-2.5">
                 <span className="font-heading text-[26px] leading-none tabular-nums text-error">
-                  6
+                  {SAMPLE_METRICS.daysSinceLastMovement}
                 </span>
                 <span className="text-[13px] leading-snug text-on-surface-variant">
                   days since the slate was delivered with no client response
@@ -494,7 +552,7 @@ export function SampleProjectDetail({ id }: { id: string }) {
               </div>
               <p className="text-[13px] leading-relaxed text-on-surface-variant">
                 Median for closed mandates in this workspace is 2.4 days. Two of
-                five shortlisted candidates have competing processes recorded.
+                the four submitted candidates have competing processes recorded.
               </p>
             </div>
           </Section>

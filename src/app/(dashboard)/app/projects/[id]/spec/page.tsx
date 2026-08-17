@@ -13,6 +13,8 @@ import {
   SpecDiffPanel,
   type SpecVersionPayload,
 } from "./spec-diff-panel";
+import { isSampleId } from "@/lib/sample";
+import { SampleSpec } from "@/components/sample/sample-mandate-modules";
 
 type ProjectRow = {
   id: string;
@@ -62,6 +64,12 @@ export default async function JobSpecPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // The sample mandate has no row in Postgres — `sample-larkspur` is not
+  // a uuid, so before this the query below failed and the page fell
+  // through to `redirect("/")`, landing a prospect on the dashboard with
+  // no explanation. See `sample-mandate-shell.tsx`.
+  if (isSampleId(id)) return <SampleSpec id={id} />;
   const supabase = await createServerSupabaseClient();
 
   const { data: project, error: projectError } = await supabase

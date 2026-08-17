@@ -37,6 +37,8 @@ import {
   IconLeaderboard,
   type IconProps,
 } from "@/components/icons";
+import { isSampleId } from "@/lib/sample";
+import { SampleModuleNotBuilt } from "@/components/sample/sample-mandate-shell";
 
 type ProjectRow = {
   id: string;
@@ -88,6 +90,10 @@ export default async function ComparisonDashboardPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Not in the sample workspace yet — W5/W6. Says so, rather than
+  // redirecting to `/app/home` the way it used to.
+  if (isSampleId(id)) return <SampleModuleNotBuilt module="comparison" mandateId={id} />;
   const supabase = await createServerSupabaseClient();
 
   const { data: project, error: projectError } = await supabase
