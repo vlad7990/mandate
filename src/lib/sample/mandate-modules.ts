@@ -60,6 +60,7 @@ export const SAMPLE_MODULES = [
   { slug: "reports", label: "Reports", meta: "Week 4" },
   { slug: "ranking", label: "Ranking", meta: "6 scored" },
   { slug: "comparison", label: "Comparison", meta: "2 + 2 slate" },
+  { slug: "sourcing", label: "Sourcing", meta: "6 queries" },
 ] as const;
 
 /**
@@ -70,7 +71,6 @@ export const SAMPLE_MODULES = [
  * them out would still leave a typed URL doing it.
  */
 export const SAMPLE_MODULES_PENDING = [
-  { slug: "sourcing", label: "Sourcing" },
   { slug: "shortlist", label: "Shortlist" },
 ] as const;
 

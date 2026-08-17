@@ -28,6 +28,9 @@ import {
 import { MastHead } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { cn } from "@/lib/utils";
+import { cookies } from "next/headers";
+import { SAMPLE_DISMISSED_COOKIE, shouldShowSample } from "@/lib/sample";
+import { SampleSearchExample } from "@/components/sample/sample-sourcing";
 
 type CandidateRow = {
   id: string;
@@ -188,6 +191,14 @@ export default async function CandidateSearchPage({
   // Stitch the agent matches back to full candidate rows for display.
   const candidateById = new Map(filtered.map((c) => [c.id, c]));
 
+  // The pool is what makes this screen work at all, so the sample keys off
+  // it rather than off the project count.
+  const dismissed = (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
+  const showSample = shouldShowSample({
+    hasRealData: inputCandidates.length > 0,
+    dismissed,
+  });
+
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1400px] mx-auto">
       <SetBreadcrumbs
@@ -217,8 +228,17 @@ export default async function CandidateSearchPage({
         filterTier={filterTier}
       />
 
+      {/*
+        A worked example, for an account with no candidates of its own. It
+        sits above the live form's results rather than replacing them: a real
+        query against an empty pool still falls through to `NoMatchesState`,
+        which is the truthful answer. Answering an arbitrary question with a
+        canned result is the one dishonesty this screen cannot afford.
+      */}
+      {showSample && query.length === 0 && <SampleSearchExample />}
+
       {query.length === 0 ? (
-        <EmptyState />
+        showSample ? null : <EmptyState />
       ) : searchError ? (
         <ErrorState error={searchError} />
       ) : searchResult ? (

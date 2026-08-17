@@ -33,6 +33,7 @@
 export * from "./data";
 export * from "./mandate-modules";
 export * from "./reports-analytics";
+export * from "./sourcing";
 
 /** Cookie that records dismissal. Read on the server, set on the client. */
 export const SAMPLE_DISMISSED_COOKIE = "mandate_sample_dismissed";

@@ -312,18 +312,45 @@ that deleted one branch failed naming that route; the first version of the
 test matched the leftover `isSampleId` *import* and passed, which is why it
 now requires the call.
 
-### W5 · Research & Sourcing — 3 routes
+### W5 · Research & Sourcing — 3 routes — DONE 2026-08-17
 
 | Route | State | Kind | Size | Depends on | Value |
 |---|---|---|---|---|---|
-| `/app/projects/[id]/sourcing` | empty-only | generated | M | final spec, D2 | High |
-| `/app/projects/[id]/sourcing/runs/[runId]/import` | empty-only | workflow | M | sourcing run | Med |
-| `/app/candidates/search` | empty-only | generated | M | D2 | Med |
+| `/app/projects/[id]/sourcing` | complete | — | — | — | — |
+| `/app/projects/[id]/sourcing/runs/[runId]/import` | complete | — | — | — | — |
+| `/app/candidates/search` | complete | — | — | — | — |
 
-All three are agent-output surfaces. `/app/candidates/search` cannot show a
-sample result at all without either fabricated agent output or a live API —
-its empty state is currently a *good* one (it suggests example queries), so
-this may be the right answer already.
+**`/sourcing`** gets the six boolean slots with their version history, the
+target-company thesis and the run log. The strings are real syntax — the kind
+a researcher would paste into LinkedIn Recruiter — because the claim of the
+feature is that it saves them an hour, and a toy string demonstrates the
+opposite. Its **archetype tab needed nothing**: `ArchetypePanel` renders
+static reference content identical for every mandate, so it already read
+correctly. Saying so is the right outcome, as it was for `/app/settings`.
+
+**`/app/candidates/search`** gets a worked example above the live form: the
+query, what the agent parsed out of it, three ranked matches each with its
+reasoning, and a count of what fell below the noise floor. The survey
+wondered whether its empty state was already the right answer; it is a good
+empty state, but it describes the feature rather than showing it, and this is
+the product's most distinctive screen.
+
+The example is **not** wired to what the reader types. A real query against
+an empty pool still falls through to the product's own "no matches" state —
+verified. Answering an arbitrary question with a canned result is the one
+dishonesty this screen cannot afford, since its whole claim is that the agent
+reasons about what you asked.
+
+**`/sourcing/runs/[runId]/import` keeps the honest not-built state**, and
+that is the deliverable rather than a gap. It is a mid-workflow step whose
+entire content is a staging table waiting for a promote — a write the sample
+cannot perform — so a read-only copy would be rows with the one control that
+gives them meaning removed. Same reasoning as `/candidates/new`.
+
+**Still outside every workstream:** `/app/projects/[id]/shortlist`. It
+appears in no table in this document — a gap in the original survey, found
+when the module rail needed a complete list. It is the last entry in the
+rail's pending list.
 
 ### W6 · Reports & Analytics — 5 routes — DONE 2026-08-17
 
@@ -425,7 +452,8 @@ copy on a branch that never runs.
 6. ~~**W6 Reports & Analytics**~~ — done 2026-08-17. `/comparison` turned out
    not to need D1 at all, and the sample's invented scoring dimensions were
    replaced with the product's five.
-7. **W5 Research & Sourcing** — unblocked by D2; approach is now "seed a mandate, let the agents run".
+7. ~~**W5 Research & Sourcing**~~ — done 2026-08-17. Two screens built, and
+   the import wizard left on its honest state for a written reason.
 8. **W7 Executive Search** — still held for **D1**. D2 is answered and sets the approach.
 9. `/app/activity` last, as a projection of everything above.
 
