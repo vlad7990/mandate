@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { generateHmTokenAction, revokeHmTokenAction } from "./actions";
 import { IconLink, IconRefresh, IconShare } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 export type HmTokenRow = {
   id: string;
@@ -44,7 +45,7 @@ export function ShareLinkCard({
     if (pending) return;
     start(async () => {
       try {
-        await generateHmTokenAction(projectId, label.trim(), contactId || undefined);
+        unwrap(await generateHmTokenAction(projectId, label.trim(), contactId || undefined));
         toast.success("Share link minted");
         setLabel("");
         setContactId("");
@@ -67,7 +68,7 @@ export function ShareLinkCard({
     }
     startRevoke(async () => {
       try {
-        await revokeHmTokenAction(projectId, tokenId);
+        unwrap(await revokeHmTokenAction(projectId, tokenId));
         toast.success("Link revoked");
         router.refresh();
       } catch (err) {

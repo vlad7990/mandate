@@ -25,6 +25,7 @@ import {
   IconTarget,
   type IconProps,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   projectId: string;
@@ -274,7 +275,7 @@ function SlotEditor({
     }
     startSave(async () => {
       try {
-        await saveQueryEditAction(projectId, slot.key, value);
+        unwrap(await saveQueryEditAction(projectId, slot.key, value));
         toast.success(`${slot.short} saved.`);
         onAfterMutation();
       } catch (e) {
@@ -292,7 +293,7 @@ function SlotEditor({
     }
     startRegenerate(async () => {
       try {
-        await regenerateOneAction(projectId, slot.key, feedback.trim());
+        unwrap(await regenerateOneAction(projectId, slot.key, feedback.trim()));
         toast.success(`Regenerating ${slot.short}…`);
         setFeedback("");
         setFeedbackOpen(false);

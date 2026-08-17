@@ -12,6 +12,7 @@ import {
   IconIntelligence,
   IconRefresh,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   searchId: string;
@@ -27,7 +28,7 @@ export function PlanEmpty({ searchId, candidateId, candidateName }: Props) {
   const handleGenerate = () => {
     startTransition(async () => {
       try {
-        await requestInterviewPlanGeneration(searchId, candidateId);
+        unwrap(await requestInterviewPlanGeneration(searchId, candidateId));
         router.refresh();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Generation failed to start.";

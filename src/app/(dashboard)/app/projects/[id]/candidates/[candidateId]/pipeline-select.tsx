@@ -9,6 +9,7 @@ import {
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import { updatePipelineStage } from "../actions";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   candidateId: string;
@@ -24,7 +25,7 @@ export function PipelineSelect({ candidateId, projectId, current }: Props) {
     if (stage === current) return;
     startTransition(async () => {
       try {
-        await updatePipelineStage(candidateId, projectId, stage);
+        unwrap(await updatePipelineStage(candidateId, projectId, stage));
         toast.success(`Stage → ${PIPELINE_LABELS[stage]}`);
         router.refresh();
       } catch (err) {

@@ -17,6 +17,7 @@ import {
   IconMail,
   IconRefresh,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   evaluation: CandidateEvaluation;
@@ -90,7 +91,7 @@ export function EvaluationActions({
     if (regenPending) return;
     startRegen(async () => {
       try {
-        await regenerateEvaluationAction(candidateId, projectId);
+        unwrap(await regenerateEvaluationAction(candidateId, projectId));
         toast.success("Evaluation regenerated");
         router.refresh();
       } catch (err) {

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { requestRegenerate } from "./actions";
 import { IconAlert, IconArrowLeft, IconRefresh } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   projectId: string;
@@ -35,7 +36,7 @@ export function JobSpecError({
   const handleRetry = () => {
     startTransition(async () => {
       try {
-        await requestRegenerate(projectId);
+        unwrap(await requestRegenerate(projectId));
         // The action revalidates /projects/[id]/spec; refresh re-fetches and
         // the new placeholder (is_generating=true, generation_error=null)
         // becomes the latest version, flipping the page to the polling view.

@@ -18,6 +18,7 @@ import {
 } from "@/components/projects/panel";
 import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
 import { researchHiringManagerAction } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 const HM_RESEARCH_STEPS = [
   "Verifying identity",
@@ -53,7 +54,7 @@ export function HMIntelligencePanel({
     setRunId((r) => r + 1);
     start(async () => {
       try {
-        const next = await researchHiringManagerAction(projectId);
+        const next = unwrap(await researchHiringManagerAction(projectId));
         setReport(next);
         toast.success("HM intelligence refreshed");
         router.refresh();

@@ -18,6 +18,7 @@ import {
 } from "@/components/projects/panel";
 import type { CandidateIntelligenceReport } from "@/lib/ai/candidate-research-agent";
 import { researchCandidateAction } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 const RESEARCH_STEPS = [
   "Verifying identity",
@@ -50,7 +51,7 @@ export function CandidateIntelligencePanel({
     setRunId((r) => r + 1);
     start(async () => {
       try {
-        const next = await researchCandidateAction(candidateId, projectId);
+        const next = unwrap(await researchCandidateAction(candidateId, projectId));
         setReport(next);
         toast.success("Candidate intelligence refreshed");
         router.refresh();

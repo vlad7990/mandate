@@ -35,6 +35,7 @@ import {
 } from "@/lib/ai/role-analysis-agent";
 import { runRoleAnalysisAction } from "./actions";
 import { addCandidateAction } from "./shortlist/actions";
+import { unwrap } from "@/lib/actions/result";
 
 // ────────────────────────────────────────────────────────────────────────
 // Public types — server component pre-shapes candidates for the panel
@@ -166,10 +167,10 @@ export function CandidateSearchPanel({
     }
     startAnalyze(async () => {
       try {
-        const result = await runRoleAnalysisAction(
+        const result = unwrap(await runRoleAnalysisAction(
           projectId,
           Array.from(selected)
-        );
+        ));
         setAnalysis(result);
         toast.success("Role analysis complete");
       } catch (err) {
@@ -183,7 +184,7 @@ export function CandidateSearchPanel({
     if (shortlisting) return;
     startShortlist(async () => {
       try {
-        await addCandidateAction(projectId, candidateId);
+        unwrap(await addCandidateAction(projectId, candidateId));
         toast.success("Added to shortlist");
         router.refresh();
       } catch (err) {

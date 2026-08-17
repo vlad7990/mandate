@@ -14,6 +14,7 @@ import {
 } from "@/lib/sourcing/runs";
 import { IconCheckCircle, IconRefresh, IconLink } from "@/components/icons";
 import { promoteResultsAction } from "../../actions";
+import { unwrap } from "@/lib/actions/result";
 
 export type StagedRow = {
   id: string;
@@ -127,7 +128,7 @@ export function ReviewTable({
     if (pending || decisions.length === 0) return;
     start(async () => {
       try {
-        const summary = await promoteResultsAction(projectId, runId, decisions);
+        const summary = unwrap(await promoteResultsAction(projectId, runId, decisions));
         toast.success(
           `${summary.created} added · ${summary.linked} linked to existing people`
         );

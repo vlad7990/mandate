@@ -11,6 +11,11 @@ import {
   type CompanyContext,
 } from "@/lib/ai/role-analysis";
 import { computeAndStoreScores } from "@/lib/ranking/scoring-engine";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The candidate copy";
 
 type AuthContext = {
   userId: string;
@@ -36,191 +41,193 @@ async function requireActiveUser(): Promise<AuthContext> {
 export async function addPersonToProjectAction(
   sourceCandidateId: string,
   targetProjectId: string
-): Promise<{ candidateId: string }> {
-  if (!sourceCandidateId || !targetProjectId) {
-    throw new Error("Missing source candidate or target project.");
-  }
-
-  const auth = await requireActiveUser();
-  const supabase = await createServerSupabaseClient();
-
-  const [sourceQ, targetQ] = await Promise.all([
-    supabase
-      .from("candidates")
-      .select(
-        "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, cv_url, cv_structured"
-      )
-      .eq("id", sourceCandidateId)
-      .single<{
-        id: string;
-        project_id: string | null;
-        full_name: string;
-        email: string | null;
-        linkedin_url: string | null;
-        twitter_url: string | null;
-        github_url: string | null;
-        website_url: string | null;
-        phone: string | null;
-        location: string | null;
-        current_title: string | null;
-        current_company: string | null;
-        archetype: string | null;
-        cv_url: string | null;
-        cv_structured: unknown;
-      }>(),
-    supabase
-      .from("projects")
-      .select("id, organization_id, calibration_model, company_context")
-      .eq("id", targetProjectId)
-      .single<{
-        id: string;
-        organization_id: string | null;
-        calibration_model: Partial<CalibrationModel> | null;
-        company_context: Partial<CompanyContext> | null;
-      }>(),
-  ]);
-
-  if (sourceQ.error || !sourceQ.data) {
-    throw new Error("Source candidate not found.");
-  }
-  if (targetQ.error || !targetQ.data) {
-    throw new Error("Target project not found.");
-  }
-  const source = sourceQ.data;
-  const target = targetQ.data;
-
-  if (target.organization_id !== auth.organizationId) {
-    throw new Error("Target project belongs to a different organisation.");
-  }
-
-  // Reject when the same person is already in this project. Identity
-  // proxy mirrors the network aggregator: email > linkedin > name.
-  const dupKey = identityKey(source);
-  const { data: existingRows } = await supabase
-    .from("candidates")
-    .select("id, full_name, email, linkedin_url, current_company")
-    .eq("project_id", targetProjectId);
-  type ExistingRow = {
-    id: string;
-    full_name: string;
-    email: string | null;
-    linkedin_url: string | null;
-    current_company: string | null;
-  };
-  const dup = ((existingRows ?? []) as ExistingRow[]).find(
-    (r) => identityKey(r) === dupKey
-  );
-  if (dup) {
-    throw new Error(
-      `${source.full_name} is already in this project (existing row ${dup.id}).`
-    );
-  }
-
-  // Strip project-specific overlays from cv_structured before copying
-  // — evaluation, positioning_kit, psychology, recruiter notes etc.
-  // are calibrated against the source project. fit_dimensions stays
-  // as a starting estimate; the after() re-parse overwrites it with
-  // values calibrated to the target.
-  const sourceCv = (source.cv_structured ?? {}) as Record<string, unknown>;
-  const cleanCv: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(sourceCv)) {
-    if (
-      k === "evaluation" ||
-      k === "positioning_kit" ||
-      k === "psychology" ||
-      k === "psychology_notes" ||
-      k === "psychology_flags" ||
-      k === "psychology_confidence_overrides" ||
-      k === "psychology_context"
-    ) {
-      continue;
+): Promise<ActionResult<{ candidateId: string }>> {
+  return runAction(SUBJECT, async () => {
+    if (!sourceCandidateId || !targetProjectId) {
+      throw new Error("Missing source candidate or target project.");
     }
-    cleanCv[k] = v;
-  }
 
-  // Create the new candidate row. cv_processing=true so the profile
-  // page and ranking views show a "parse in flight" placeholder until
-  // the after() re-parse lands.
-  const { data: inserted, error: insertErr } = await supabase
-    .from("candidates")
-    .insert({
-      organization_id: auth.organizationId,
-      project_id: targetProjectId,
-      full_name: source.full_name,
-      email: source.email,
-      linkedin_url: source.linkedin_url,
-      twitter_url: source.twitter_url,
-      github_url: source.github_url,
-      website_url: source.website_url,
-      phone: source.phone,
-      location: source.location,
-      current_title: source.current_title,
-      current_company: source.current_company,
-      archetype: source.archetype,
-      pipeline_stage: "found",
-      cv_url: null,
-      cv_structured: cleanCv,
-      cv_processing: !!source.cv_url,
-      source: "network_copy",
-    })
-    .select("id")
-    .single<{ id: string }>();
+    const auth = await requireActiveUser();
+    const supabase = await createServerSupabaseClient();
 
-  if (insertErr || !inserted) {
-    throw new Error(
-      `Failed to copy candidate: ${insertErr?.message ?? "no row"}`
+    const [sourceQ, targetQ] = await Promise.all([
+      supabase
+        .from("candidates")
+        .select(
+          "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, cv_url, cv_structured"
+        )
+        .eq("id", sourceCandidateId)
+        .single<{
+          id: string;
+          project_id: string | null;
+          full_name: string;
+          email: string | null;
+          linkedin_url: string | null;
+          twitter_url: string | null;
+          github_url: string | null;
+          website_url: string | null;
+          phone: string | null;
+          location: string | null;
+          current_title: string | null;
+          current_company: string | null;
+          archetype: string | null;
+          cv_url: string | null;
+          cv_structured: unknown;
+        }>(),
+      supabase
+        .from("projects")
+        .select("id, organization_id, calibration_model, company_context")
+        .eq("id", targetProjectId)
+        .single<{
+          id: string;
+          organization_id: string | null;
+          calibration_model: Partial<CalibrationModel> | null;
+          company_context: Partial<CompanyContext> | null;
+        }>(),
+    ]);
+
+    if (sourceQ.error || !sourceQ.data) {
+      throw new Error("Source candidate not found.");
+    }
+    if (targetQ.error || !targetQ.data) {
+      throw new Error("Target project not found.");
+    }
+    const source = sourceQ.data;
+    const target = targetQ.data;
+
+    if (target.organization_id !== auth.organizationId) {
+      throw new Error("Target project belongs to a different organisation.");
+    }
+
+    // Reject when the same person is already in this project. Identity
+    // proxy mirrors the network aggregator: email > linkedin > name.
+    const dupKey = identityKey(source);
+    const { data: existingRows } = await supabase
+      .from("candidates")
+      .select("id, full_name, email, linkedin_url, current_company")
+      .eq("project_id", targetProjectId);
+    type ExistingRow = {
+      id: string;
+      full_name: string;
+      email: string | null;
+      linkedin_url: string | null;
+      current_company: string | null;
+    };
+    const dup = ((existingRows ?? []) as ExistingRow[]).find(
+      (r) => identityKey(r) === dupKey
     );
-  }
+    if (dup) {
+      throw new Error(
+        `${source.full_name} is already in this project (existing row ${dup.id}).`
+      );
+    }
 
-  // Copy the CV file into the target project's path so the new
-  // candidate owns its own copy. After this lands the after()
-  // callback re-parses against the target's calibration.
-  if (source.cv_url) {
-    after(async () => {
-      try {
-        await replicateCvAndReparse({
-          organizationId: auth.organizationId,
-          newCandidateId: inserted.id,
-          targetProjectId,
-          sourceCvPath: source.cv_url!,
-          calibration: target.calibration_model ?? {},
-          company: target.company_context ?? {},
-        });
-        // Re-score the project after the new candidate's
-        // fit_dimensions land.
-        try {
-          await computeAndStoreScores(targetProjectId);
-        } catch (err) {
-          console.error("[network-copy] scoring re-run failed", err);
-        }
-      } catch (err) {
-        console.error("[network-copy] re-parse failed", err);
-        // Best-effort: surface the failure on the row so the
-        // candidate page can show a retry banner.
-        try {
-          const sb = await createServerSupabaseClient();
-          await sb
-            .from("candidates")
-            .update({
-              cv_processing: false,
-              cv_parse_error:
-                err instanceof Error
-                  ? err.message
-                  : "Re-parse failed during network copy.",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", inserted.id);
-        } catch (markErr) {
-          console.error("[network-copy] failed to mark row as failed", markErr);
-        }
+    // Strip project-specific overlays from cv_structured before copying
+    // — evaluation, positioning_kit, psychology, recruiter notes etc.
+    // are calibrated against the source project. fit_dimensions stays
+    // as a starting estimate; the after() re-parse overwrites it with
+    // values calibrated to the target.
+    const sourceCv = (source.cv_structured ?? {}) as Record<string, unknown>;
+    const cleanCv: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(sourceCv)) {
+      if (
+        k === "evaluation" ||
+        k === "positioning_kit" ||
+        k === "psychology" ||
+        k === "psychology_notes" ||
+        k === "psychology_flags" ||
+        k === "psychology_confidence_overrides" ||
+        k === "psychology_context"
+      ) {
+        continue;
       }
-    });
-  }
+      cleanCv[k] = v;
+    }
 
-  revalidatePath("/app/candidates/network");
-  revalidatePath(`/app/projects/${targetProjectId}/candidates`);
-  revalidatePath(`/app/projects/${targetProjectId}/ranking`);
-  return { candidateId: inserted.id };
+    // Create the new candidate row. cv_processing=true so the profile
+    // page and ranking views show a "parse in flight" placeholder until
+    // the after() re-parse lands.
+    const { data: inserted, error: insertErr } = await supabase
+      .from("candidates")
+      .insert({
+        organization_id: auth.organizationId,
+        project_id: targetProjectId,
+        full_name: source.full_name,
+        email: source.email,
+        linkedin_url: source.linkedin_url,
+        twitter_url: source.twitter_url,
+        github_url: source.github_url,
+        website_url: source.website_url,
+        phone: source.phone,
+        location: source.location,
+        current_title: source.current_title,
+        current_company: source.current_company,
+        archetype: source.archetype,
+        pipeline_stage: "found",
+        cv_url: null,
+        cv_structured: cleanCv,
+        cv_processing: !!source.cv_url,
+        source: "network_copy",
+      })
+      .select("id")
+      .single<{ id: string }>();
+
+    if (insertErr || !inserted) {
+      throw new Error(
+        `Failed to copy candidate: ${insertErr?.message ?? "no row"}`
+      );
+    }
+
+    // Copy the CV file into the target project's path so the new
+    // candidate owns its own copy. After this lands the after()
+    // callback re-parses against the target's calibration.
+    if (source.cv_url) {
+      after(async () => {
+        try {
+          await replicateCvAndReparse({
+            organizationId: auth.organizationId,
+            newCandidateId: inserted.id,
+            targetProjectId,
+            sourceCvPath: source.cv_url!,
+            calibration: target.calibration_model ?? {},
+            company: target.company_context ?? {},
+          });
+          // Re-score the project after the new candidate's
+          // fit_dimensions land.
+          try {
+            await computeAndStoreScores(targetProjectId);
+          } catch (err) {
+            console.error("[network-copy] scoring re-run failed", err);
+          }
+        } catch (err) {
+          console.error("[network-copy] re-parse failed", err);
+          // Best-effort: surface the failure on the row so the
+          // candidate page can show a retry banner.
+          try {
+            const sb = await createServerSupabaseClient();
+            await sb
+              .from("candidates")
+              .update({
+                cv_processing: false,
+                cv_parse_error:
+                  err instanceof Error
+                    ? err.message
+                    : "Re-parse failed during network copy.",
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", inserted.id);
+          } catch (markErr) {
+            console.error("[network-copy] failed to mark row as failed", markErr);
+          }
+        }
+      });
+    }
+
+    revalidatePath("/app/candidates/network");
+    revalidatePath(`/app/projects/${targetProjectId}/candidates`);
+    revalidatePath(`/app/projects/${targetProjectId}/ranking`);
+    return { candidateId: inserted.id };
+  });
 }
 
 /**

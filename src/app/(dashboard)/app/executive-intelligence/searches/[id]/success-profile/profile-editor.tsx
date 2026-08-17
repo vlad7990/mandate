@@ -33,6 +33,7 @@ import {
   requestProfileGeneration,
   saveProfileDraft,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 export type ProfileVersionSummary = {
   id: string;
@@ -131,14 +132,14 @@ export function ProfileEditor({
 
   const handleSave = () =>
     run("Save", async () => {
-      await saveProfileDraft(profileId, searchId, content);
+      unwrap(await saveProfileDraft(profileId, searchId, content));
       setIsDirty(false);
       toast.success("Draft saved.");
     });
 
   const handleNewVersion = () =>
     run("New version", async () => {
-      const res = await createProfileNewVersion(searchId, content);
+      const res = unwrap(await createProfileNewVersion(searchId, content));
       setIsDirty(false);
       toast.success(`Version ${res.version} created as a new draft.`);
     });
@@ -153,10 +154,10 @@ export function ProfileEditor({
     }
     run("Approve", async () => {
       if (isDirty) {
-        await saveProfileDraft(profileId, searchId, content);
+        unwrap(await saveProfileDraft(profileId, searchId, content));
         setIsDirty(false);
       }
-      await approveProfile(profileId, searchId);
+      unwrap(await approveProfile(profileId, searchId));
       toast.success(`Version ${version} approved.`);
     });
   };
@@ -170,7 +171,7 @@ export function ProfileEditor({
       return;
     }
     run("Regenerate", async () => {
-      await requestProfileGeneration(searchId);
+      unwrap(await requestProfileGeneration(searchId));
     });
   };
 

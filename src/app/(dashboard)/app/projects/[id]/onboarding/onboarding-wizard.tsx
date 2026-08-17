@@ -39,6 +39,7 @@ import {
   IconShield,
   type IconProps,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type StepDef = {
   id: 1 | 2 | 3 | 4 | 5;
@@ -156,7 +157,7 @@ export function OnboardingWizard({
     }
     startTransition(async () => {
       try {
-        await submitOnboarding(projectId, responses);
+        unwrap(await submitOnboarding(projectId, responses));
         // submitOnboarding redirects, so this code is normally unreachable.
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Calibration failed.";

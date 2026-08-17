@@ -15,6 +15,11 @@ import {
   type SuccessProfileContent,
 } from "@/lib/ai/executive-role-architect-agent";
 import { recordExecutiveAuditEvent } from "@/lib/executive/audit";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The success profile";
 
 type AuthContext = {
   userId: string;
@@ -83,50 +88,52 @@ function profilePath(searchId: string): string {
  */
 export async function requestProfileGeneration(
   searchId: string
-): Promise<{ profileId: string; version: number; wasExisting: boolean }> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ profileId: string; version: number; wasExisting: boolean }>> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const inserted = await allocateAndInsertProfile(supabase, {
-    searchId,
-    organizationId,
-    createdBy: userId,
-    contentJson: EMPTY_SUCCESS_PROFILE,
-    isGenerating: true,
-  });
-
-  if (!inserted.wasExisting) {
-    await recordExecutiveAuditEvent(supabase, {
-      organizationId,
+    const inserted = await allocateAndInsertProfile(supabase, {
       searchId,
-      profileId: inserted.profileId,
-      actorId: userId,
-      eventType:
-        inserted.version === 1
-          ? "profile_generation_requested"
-          : "profile_regenerated",
-      detail: { version: inserted.version },
+      organizationId,
+      createdBy: userId,
+      contentJson: EMPTY_SUCCESS_PROFILE,
+      isGenerating: true,
     });
 
-    after(async () => {
-      try {
-        await generateAndStoreSuccessProfile(
-          inserted.profileId,
-          searchId,
-          userId
-        );
-      } catch (err) {
-        console.error(
-          "[generate-success-profile] failed for profile",
-          inserted.profileId,
-          err
-        );
-      }
-    });
-  }
+    if (!inserted.wasExisting) {
+      await recordExecutiveAuditEvent(supabase, {
+        organizationId,
+        searchId,
+        profileId: inserted.profileId,
+        actorId: userId,
+        eventType:
+          inserted.version === 1
+            ? "profile_generation_requested"
+            : "profile_regenerated",
+        detail: { version: inserted.version },
+      });
 
-  revalidatePath(profilePath(searchId));
-  return inserted;
+      after(async () => {
+        try {
+          await generateAndStoreSuccessProfile(
+            inserted.profileId,
+            searchId,
+            userId
+          );
+        } catch (err) {
+          console.error(
+            "[generate-success-profile] failed for profile",
+            inserted.profileId,
+            err
+          );
+        }
+      });
+    }
+
+    revalidatePath(profilePath(searchId));
+    return inserted;
+  });
 }
 
 const DRAFT_LOCKED_MESSAGE =
@@ -141,42 +148,44 @@ export async function saveProfileDraft(
   profileId: string,
   searchId: string,
   content: SuccessProfileContent
-): Promise<void> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const normalized = normalizeSuccessProfile(content);
+    const normalized = normalizeSuccessProfile(content);
 
-  const { data, error } = await supabase
-    .from("role_success_profiles")
-    .update({
-      content_json: normalized,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", profileId)
-    .eq("search_id", searchId)
-    .eq("status", "draft")
-    .eq("is_generating", false)
-    .select("id")
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("role_success_profiles")
+      .update({
+        content_json: normalized,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", profileId)
+      .eq("search_id", searchId)
+      .eq("status", "draft")
+      .eq("is_generating", false)
+      .select("id")
+      .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to save draft: ${error.message}`);
-  }
-  if (data == null) {
-    throw new Error(DRAFT_LOCKED_MESSAGE);
-  }
+    if (error) {
+      throw new Error(`Failed to save draft: ${error.message}`);
+    }
+    if (data == null) {
+      throw new Error(DRAFT_LOCKED_MESSAGE);
+    }
 
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    profileId,
-    actorId: userId,
-    eventType: "profile_edited",
-    detail: {},
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      profileId,
+      actorId: userId,
+      eventType: "profile_edited",
+      detail: {},
+    });
+
+    revalidatePath(profilePath(searchId));
   });
-
-  revalidatePath(profilePath(searchId));
 }
 
 /**
@@ -187,29 +196,31 @@ export async function saveProfileDraft(
 export async function createProfileNewVersion(
   searchId: string,
   content: SuccessProfileContent
-): Promise<{ profileId: string; version: number }> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ profileId: string; version: number }>> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const inserted = await allocateAndInsertProfile(supabase, {
-    searchId,
-    organizationId,
-    createdBy: userId,
-    contentJson: normalizeSuccessProfile(content),
-    isGenerating: false,
+    const inserted = await allocateAndInsertProfile(supabase, {
+      searchId,
+      organizationId,
+      createdBy: userId,
+      contentJson: normalizeSuccessProfile(content),
+      isGenerating: false,
+    });
+
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      profileId: inserted.profileId,
+      actorId: userId,
+      eventType: "profile_new_version",
+      detail: { version: inserted.version },
+    });
+
+    revalidatePath(profilePath(searchId));
+    return { profileId: inserted.profileId, version: inserted.version };
   });
-
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    profileId: inserted.profileId,
-    actorId: userId,
-    eventType: "profile_new_version",
-    detail: { version: inserted.version },
-  });
-
-  revalidatePath(profilePath(searchId));
-  return { profileId: inserted.profileId, version: inserted.version };
 }
 
 /**
@@ -222,40 +233,42 @@ export async function createProfileNewVersion(
 export async function approveProfile(
   profileId: string,
   searchId: string
-): Promise<void> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase.rpc("approve_success_profile", {
-    p_profile_id: profileId,
-    p_search_id: searchId,
+    const { error } = await supabase.rpc("approve_success_profile", {
+      p_profile_id: profileId,
+      p_search_id: searchId,
+    });
+
+    if (error) {
+      throw new Error(`Failed to approve profile: ${error.message}`);
+    }
+
+    // Approval promotes the profile's competency weights to the operational
+    // source of truth (executive_search_competencies) — see the sync helper
+    // for the overwrite semantics.
+    await syncCompetencyWeightsFromApprovedProfile(
+      supabase,
+      profileId,
+      searchId,
+      organizationId
+    );
+
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      profileId,
+      actorId: userId,
+      eventType: "profile_approved",
+      detail: {},
+    });
+
+    revalidatePath(profilePath(searchId));
+    revalidatePath(`/app/executive-intelligence/searches/${searchId}`);
   });
-
-  if (error) {
-    throw new Error(`Failed to approve profile: ${error.message}`);
-  }
-
-  // Approval promotes the profile's competency weights to the operational
-  // source of truth (executive_search_competencies) — see the sync helper
-  // for the overwrite semantics.
-  await syncCompetencyWeightsFromApprovedProfile(
-    supabase,
-    profileId,
-    searchId,
-    organizationId
-  );
-
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    profileId,
-    actorId: userId,
-    eventType: "profile_approved",
-    detail: {},
-  });
-
-  revalidatePath(profilePath(searchId));
-  revalidatePath(`/app/executive-intelligence/searches/${searchId}`);
 }
 
 /**
@@ -356,24 +369,26 @@ async function syncCompetencyWeightsFromApprovedProfile(
 export async function markProfileGenerationTimedOut(
   profileId: string,
   searchId: string
-): Promise<void> {
-  await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase
-    .from("role_success_profiles")
-    .update({
-      is_generating: false,
-      generation_error: "Generation timed out. Please retry.",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", profileId)
-    .eq("search_id", searchId)
-    .eq("is_generating", true);
+    const { error } = await supabase
+      .from("role_success_profiles")
+      .update({
+        is_generating: false,
+        generation_error: "Generation timed out. Please retry.",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", profileId)
+      .eq("search_id", searchId)
+      .eq("is_generating", true);
 
-  if (error) {
-    throw new Error(`Failed to mark generation as timed out: ${error.message}`);
-  }
+    if (error) {
+      throw new Error(`Failed to mark generation as timed out: ${error.message}`);
+    }
 
-  revalidatePath(profilePath(searchId));
+    revalidatePath(profilePath(searchId));
+  });
 }

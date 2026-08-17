@@ -11,6 +11,7 @@ import {
   IconRefresh,
   IconSpark,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   projectId: string;
@@ -31,7 +32,7 @@ export function SourcingEmpty({
   const handleGenerate = () => {
     startTransition(async () => {
       try {
-        await generateAllAction(projectId);
+        unwrap(await generateAllAction(projectId));
         router.refresh();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to generate.";

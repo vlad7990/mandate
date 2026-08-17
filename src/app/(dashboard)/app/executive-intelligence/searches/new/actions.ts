@@ -14,6 +14,11 @@ import type {
   ExecutiveRoleTemplateRow,
   TemplateCompetencyWeight,
 } from "@/lib/executive/types";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The company research";
 
 const MAX_FIELD_LENGTH = 2000;
 const SERVICE_TIERS = new Set(["standard", "premium", "enterprise"]);
@@ -254,55 +259,57 @@ export async function createExecutiveSearchAction(formData: FormData) {
  */
 export async function regenerateCompanyContextAction(
   searchId: string
-): Promise<void> {
-  // Re-running the company research rewrites the search's grounding and
-  // spends a model call, so it sits with the rest of the mandate writes.
-  // This action checked only that the caller was signed in.
-  const { userId } = await requireActionContext("mandates:write");
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    // Re-running the company research rewrites the search's grounding and
+    // spends a model call, so it sits with the rest of the mandate writes.
+    // This action checked only that the caller was signed in.
+    const { userId } = await requireActionContext("mandates:write");
 
-  const supabase = await createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
 
-  const { data, error } = await supabase
-    .from("executive_searches")
-    .update({
-      company_context_status: "generating",
-      company_context_error: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", searchId)
-    // Never restart over an in-flight generation.
-    .neq("company_context_status", "generating")
-    .select("id, organization_id")
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("executive_searches")
+      .update({
+        company_context_status: "generating",
+        company_context_error: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", searchId)
+      // Never restart over an in-flight generation.
+      .neq("company_context_status", "generating")
+      .select("id, organization_id")
+      .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to restart company research: ${error.message}`);
-  }
-  if (!data) {
-    // Already generating (or not visible) — treat as success; polling
-    // will surface whatever lands.
-    return;
-  }
-
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId: data.organization_id,
-    searchId,
-    actorId: userId,
-    eventType: "search_updated",
-    detail: { action: "company_context_regenerate" },
-  });
-
-  after(async () => {
-    try {
-      await runAndStoreExecutiveCompanyContext(searchId);
-    } catch (err) {
-      console.error(
-        "[executive-company-context] retry failed for search",
-        searchId,
-        err
-      );
+    if (error) {
+      throw new Error(`Failed to restart company research: ${error.message}`);
     }
-  });
+    if (!data) {
+      // Already generating (or not visible) — treat as success; polling
+      // will surface whatever lands.
+      return;
+    }
 
-  revalidatePath(`/app/executive-intelligence/searches/${searchId}`);
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId: data.organization_id,
+      searchId,
+      actorId: userId,
+      eventType: "search_updated",
+      detail: { action: "company_context_regenerate" },
+    });
+
+    after(async () => {
+      try {
+        await runAndStoreExecutiveCompanyContext(searchId);
+      } catch (err) {
+        console.error(
+          "[executive-company-context] retry failed for search",
+          searchId,
+          err
+        );
+      }
+    });
+
+    revalidatePath(`/app/executive-intelligence/searches/${searchId}`);
+  });
 }

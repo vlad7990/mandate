@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconCommit, IconRefresh } from "@/components/icons";
 import { createSourcingRunAction } from "./runs/actions";
+import { unwrap } from "@/lib/actions/result";
 
 /**
  * Save the current Boolean set as a run, either as a new lineage or as a
@@ -37,11 +38,11 @@ export function CreateRunButton({
     }
     start(async () => {
       try {
-        const result = await createSourcingRunAction(projectId, {
+        const result = unwrap(await createSourcingRunAction(projectId, {
           label,
           rationale,
           parentRunId,
-        });
+        }));
         toast.success(`Saved as v${result.version}`);
         setOpen(false);
         setLabel("");

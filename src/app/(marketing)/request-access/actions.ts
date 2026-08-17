@@ -2,6 +2,11 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { notifyFoundersOfWaitlistRequest } from "@/lib/waitlist/notify";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The access request";
 
 export type AccessRequestPayload = {
   full_name: string;
@@ -19,39 +24,41 @@ export type AccessRequestPayload = {
  */
 export async function submitAccessRequestAction(
   payload: AccessRequestPayload
-): Promise<void> {
-  if (!payload.full_name || !payload.email) {
-    throw new Error("Name and email are required.");
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
-    throw new Error("Enter a valid email.");
-  }
-
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.from("waitlist").insert({
-    full_name: payload.full_name,
-    email: payload.email.toLowerCase(),
-    company: payload.company || null,
-    role: payload.role || null,
-    referral_source: payload.referral_source || null,
-    use_case: payload.use_case || null,
-  });
-
-  if (error) {
-    // Hide the unique-index violation behind a friendly message —
-    // we don't want to leak which emails have already applied.
-    if (error.code === "23505") {
-      // Pretend success — applicant gets the same thank-you regardless.
-      return;
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    if (!payload.full_name || !payload.email) {
+      throw new Error("Name and email are required.");
     }
-    throw new Error(`Could not submit your request: ${error.message}`);
-  }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      throw new Error("Enter a valid email.");
+    }
 
-  // Best-effort founder notification. Failures here don't block the
-  // applicant — the row is in the table either way.
-  try {
-    await notifyFoundersOfWaitlistRequest(payload);
-  } catch (err) {
-    console.error("[waitlist] founder notification failed", err);
-  }
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase.from("waitlist").insert({
+      full_name: payload.full_name,
+      email: payload.email.toLowerCase(),
+      company: payload.company || null,
+      role: payload.role || null,
+      referral_source: payload.referral_source || null,
+      use_case: payload.use_case || null,
+    });
+
+    if (error) {
+      // Hide the unique-index violation behind a friendly message —
+      // we don't want to leak which emails have already applied.
+      if (error.code === "23505") {
+        // Pretend success — applicant gets the same thank-you regardless.
+        return;
+      }
+      throw new Error(`Could not submit your request: ${error.message}`);
+    }
+
+    // Best-effort founder notification. Failures here don't block the
+    // applicant — the row is in the table either way.
+    try {
+      await notifyFoundersOfWaitlistRequest(payload);
+    } catch (err) {
+      console.error("[waitlist] founder notification failed", err);
+    }
+  });
 }

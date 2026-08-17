@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { restoreCalibrationSnapshotAction } from "./actions";
 import { IconHistory, IconRefresh } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 export function RestoreCalibrationButton({
   projectId,
@@ -28,7 +29,7 @@ export function RestoreCalibrationButton({
     }
     start(async () => {
       try {
-        await restoreCalibrationSnapshotAction(projectId, snapshotId);
+        unwrap(await restoreCalibrationSnapshotAction(projectId, snapshotId));
         toast.success("Calibration restored");
         router.refresh();
       } catch (err) {

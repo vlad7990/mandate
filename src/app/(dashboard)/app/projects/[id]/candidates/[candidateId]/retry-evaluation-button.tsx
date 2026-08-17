@@ -8,6 +8,7 @@ import {
   IconRefresh,
 } from "@/components/icons";
 import { regenerateEvaluationAction } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 // Manual retry trigger for the executive evaluation. Lives on the
 // pending panel — when generation has failed at least once, recruiters
@@ -30,7 +31,7 @@ export function RetryEvaluationButton({
     if (pending) return;
     start(async () => {
       try {
-        await regenerateEvaluationAction(candidateId, projectId);
+        unwrap(await regenerateEvaluationAction(candidateId, projectId));
         toast.success("Evaluation regenerated");
         router.refresh();
       } catch (err) {

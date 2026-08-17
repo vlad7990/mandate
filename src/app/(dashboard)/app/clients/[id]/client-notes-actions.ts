@@ -37,6 +37,11 @@ import {
   parseClientNoteType,
   parseClientNoteVisibility,
 } from "@/lib/clients/contacts";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The client note";
 
 function str(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
@@ -91,92 +96,98 @@ async function resolveContactId(
   return data.id;
 }
 
-export async function createClientNoteAction(formData: FormData): Promise<void> {
-  const { userId, organizationId } = await requireActionContext("mandates:write");
+export async function createClientNoteAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireActionContext("mandates:write");
 
-  const clientId = str(formData, "clientId");
-  if (!clientId) throw new Error("Missing client.");
+    const clientId = str(formData, "clientId");
+    if (!clientId) throw new Error("Missing client.");
 
-  const content = str(formData, "content");
-  if (!content) throw new Error("A note cannot be empty.");
+    const content = str(formData, "content");
+    if (!content) throw new Error("A note cannot be empty.");
 
-  const visibility = await resolveVisibility(formData);
+    const visibility = await resolveVisibility(formData);
 
-  const supabase = await createServerSupabaseClient();
-  const contactId = await resolveContactId(supabase, clientId, str(formData, "contactId"));
+    const supabase = await createServerSupabaseClient();
+    const contactId = await resolveContactId(supabase, clientId, str(formData, "contactId"));
 
-  // `author_label` is not set here. A BEFORE INSERT trigger in 054 stamps
-  // it from `created_by`, so the name is snapshotted even on a row written
-  // by a hand-run statement — and the action does not need a round trip
-  // purely to read its own name. `created_by` is ON DELETE SET NULL, which
-  // is why the snapshot has to exist at all: without it, every note a
-  // departed colleague wrote goes anonymous the day their account is
-  // removed. Same fix 053 made with `actor_label`.
-  const { error } = await supabase.from("client_notes").insert({
-    organization_id: organizationId,
-    client_id: clientId,
-    contact_id: contactId,
-    created_by: userId,
-    note_type: parseClientNoteType(formData.get("noteType")) ?? "general",
-    content,
-    visibility,
-    is_pinned: formData.get("isPinned") === "on",
-  });
-
-  if (error) throw new Error(`Could not save the note: ${error.message}`);
-
-  revalidate(clientId);
-}
-
-export async function updateClientNoteAction(formData: FormData): Promise<void> {
-  await requireActionContext("mandates:write");
-
-  const noteId = str(formData, "noteId");
-  const clientId = str(formData, "clientId");
-  if (!noteId || !clientId) throw new Error("Missing note.");
-
-  const content = str(formData, "content");
-  if (!content) throw new Error("A note cannot be empty.");
-
-  const visibility = await resolveVisibility(formData);
-
-  const supabase = await createServerSupabaseClient();
-  const contactId = await resolveContactId(supabase, clientId, str(formData, "contactId"));
-
-  const { error } = await supabase
-    .from("client_notes")
-    .update({
-      content,
+    // `author_label` is not set here. A BEFORE INSERT trigger in 054 stamps
+    // it from `created_by`, so the name is snapshotted even on a row written
+    // by a hand-run statement — and the action does not need a round trip
+    // purely to read its own name. `created_by` is ON DELETE SET NULL, which
+    // is why the snapshot has to exist at all: without it, every note a
+    // departed colleague wrote goes anonymous the day their account is
+    // removed. Same fix 053 made with `actor_label`.
+    const { error } = await supabase.from("client_notes").insert({
+      organization_id: organizationId,
+      client_id: clientId,
       contact_id: contactId,
+      created_by: userId,
       note_type: parseClientNoteType(formData.get("noteType")) ?? "general",
+      content,
       visibility,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", noteId)
-    .eq("client_id", clientId);
+      is_pinned: formData.get("isPinned") === "on",
+    });
 
-  if (error) throw new Error(`Could not save the note: ${error.message}`);
+    if (error) throw new Error(`Could not save the note: ${error.message}`);
 
-  revalidate(clientId);
+    revalidate(clientId);
+  });
 }
 
-export async function deleteClientNoteAction(formData: FormData): Promise<void> {
-  await requireActionContext("mandates:write");
+export async function updateClientNoteAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireActionContext("mandates:write");
 
-  const noteId = str(formData, "noteId");
-  const clientId = str(formData, "clientId");
-  if (!noteId || !clientId) throw new Error("Missing note.");
+    const noteId = str(formData, "noteId");
+    const clientId = str(formData, "clientId");
+    if (!noteId || !clientId) throw new Error("Missing note.");
 
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase
-    .from("client_notes")
-    .delete()
-    .eq("id", noteId)
-    .eq("client_id", clientId);
+    const content = str(formData, "content");
+    if (!content) throw new Error("A note cannot be empty.");
 
-  if (error) throw new Error(`Could not remove the note: ${error.message}`);
+    const visibility = await resolveVisibility(formData);
 
-  revalidate(clientId);
+    const supabase = await createServerSupabaseClient();
+    const contactId = await resolveContactId(supabase, clientId, str(formData, "contactId"));
+
+    const { error } = await supabase
+      .from("client_notes")
+      .update({
+        content,
+        contact_id: contactId,
+        note_type: parseClientNoteType(formData.get("noteType")) ?? "general",
+        visibility,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", noteId)
+      .eq("client_id", clientId);
+
+    if (error) throw new Error(`Could not save the note: ${error.message}`);
+
+    revalidate(clientId);
+  });
+}
+
+export async function deleteClientNoteAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireActionContext("mandates:write");
+
+    const noteId = str(formData, "noteId");
+    const clientId = str(formData, "clientId");
+    if (!noteId || !clientId) throw new Error("Missing note.");
+
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase
+      .from("client_notes")
+      .delete()
+      .eq("id", noteId)
+      .eq("client_id", clientId);
+
+    if (error) throw new Error(`Could not remove the note: ${error.message}`);
+
+    revalidate(clientId);
+  });
 }
 
 /**
@@ -186,24 +197,26 @@ export async function deleteClientNoteAction(formData: FormData): Promise<void> 
  * so two people clicking at once converge instead of flipping each other's
  * change back.
  */
-export async function toggleClientNotePinAction(formData: FormData): Promise<void> {
-  await requireActionContext("mandates:write");
+export async function toggleClientNotePinAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireActionContext("mandates:write");
 
-  const noteId = str(formData, "noteId");
-  const clientId = str(formData, "clientId");
-  if (!noteId || !clientId) throw new Error("Missing note.");
+    const noteId = str(formData, "noteId");
+    const clientId = str(formData, "clientId");
+    if (!noteId || !clientId) throw new Error("Missing note.");
 
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase
-    .from("client_notes")
-    .update({
-      is_pinned: str(formData, "pinned") === "true",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", noteId)
-    .eq("client_id", clientId);
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase
+      .from("client_notes")
+      .update({
+        is_pinned: str(formData, "pinned") === "true",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", noteId)
+      .eq("client_id", clientId);
 
-  if (error) throw new Error(`Could not pin the note: ${error.message}`);
+    if (error) throw new Error(`Could not pin the note: ${error.message}`);
 
-  revalidate(clientId);
+    revalidate(clientId);
+  });
 }

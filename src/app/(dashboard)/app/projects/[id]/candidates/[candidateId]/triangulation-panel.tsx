@@ -17,6 +17,7 @@ import {
 } from "@/components/projects/panel";
 import type { TriangulationReport } from "@/lib/ai/triangulation-agent";
 import { generateTriangulationAction } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 type Readiness = {
   company: boolean;
@@ -55,10 +56,10 @@ export function TriangulationPanel({
     if (pending || !allReady) return;
     start(async () => {
       try {
-        const next = await generateTriangulationAction(
+        const next = unwrap(await generateTriangulationAction(
           candidateId,
           projectId
-        );
+        ));
         setReport(next);
         toast.success("Triangulation report generated");
         router.refresh();

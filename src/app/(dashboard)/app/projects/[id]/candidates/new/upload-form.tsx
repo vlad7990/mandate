@@ -19,6 +19,7 @@ import {
   IconSpark,
   IconUpload,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 const ACCEPTED_EXTENSIONS = ".pdf,.docx";
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -89,7 +90,7 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
         const formData = new FormData();
         formData.set("projectId", projectId);
         formData.set("cv", file);
-        await uploadAndParseCv(formData);
+        unwrap(await uploadAndParseCv(formData));
         // The action redirects on success — control normally won't reach here.
       } catch (err) {
         const msg =

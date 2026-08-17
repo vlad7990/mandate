@@ -17,6 +17,7 @@ import {
   stageImportAction,
   type ImportPreview,
 } from "../../actions";
+import { unwrap } from "@/lib/actions/result";
 
 /**
  * Paste or CSV → column mapping → stage.
@@ -62,7 +63,7 @@ export function ImportWizard({
     }
     start(async () => {
       try {
-        const result = await previewImportAction(projectId, text, nextOverrides);
+        const result = unwrap(await previewImportAction(projectId, text, nextOverrides));
         setPreview(result);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Could not read that.");
@@ -93,13 +94,13 @@ export function ImportWizard({
     if (!preview || preview.parsedCount === 0) return;
     start(async () => {
       try {
-        const summary = await stageImportAction(projectId, runId, {
+        const summary = unwrap(await stageImportAction(projectId, runId, {
           text,
           overrides,
           sourceType,
           filename,
           platform,
-        });
+        }));
         toast.success(
           `${summary.staged} rows staged · ${summary.newCount} new, ${summary.duplicateCount} duplicate, ${summary.ambiguousCount} ambiguous`
         );

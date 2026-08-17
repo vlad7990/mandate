@@ -15,6 +15,7 @@ import {
   IconRefresh,
 } from "@/components/icons";
 import { updateCandidateContact, type ContactField } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 // Inline-editable contact rail. Each chip is its own controlled block so
 // one failed save doesn't disturb the others. The recruiter clicks a
@@ -168,7 +169,7 @@ function ContactChip({
     }
     startTransition(async () => {
       try {
-        await updateCandidateContact(candidateId, projectId, def.key, next);
+        unwrap(await updateCandidateContact(candidateId, projectId, def.key, next));
         setEditing(false);
         toast.success(`${def.label} saved`);
         // Refresh so the new value flows back through `initial` and

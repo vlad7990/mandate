@@ -30,6 +30,7 @@ import {
   updateNoteAction,
 } from "./notes-actions";
 import { NOTE_TYPES, type NoteType } from "./notes-constants";
+import { unwrap } from "@/lib/actions/result";
 
 export type CandidateNote = {
   id: string;
@@ -220,12 +221,12 @@ function NoteComposer({
     }
     start(async () => {
       try {
-        await createNoteAction(candidateId, projectId, {
+        unwrap(await createNoteAction(candidateId, projectId, {
           noteType,
           content: trimmed,
           isPinned,
           callDurationMinutes: duration,
-        });
+        }));
         toast.success("Note saved");
         router.refresh();
         onDone();
@@ -360,7 +361,7 @@ function NoteItem({
     }
     start(async () => {
       try {
-        await updateNoteAction(note.id, projectId, next);
+        unwrap(await updateNoteAction(note.id, projectId, next));
         setEditing(false);
         toast.success("Note updated");
         router.refresh();
@@ -375,7 +376,7 @@ function NoteItem({
     if (!window.confirm("Delete this note? This cannot be undone.")) return;
     start(async () => {
       try {
-        await deleteNoteAction(note.id, projectId);
+        unwrap(await deleteNoteAction(note.id, projectId));
         toast.success("Note deleted");
         router.refresh();
       } catch (err) {
@@ -388,7 +389,7 @@ function NoteItem({
   const handleTogglePin = () => {
     start(async () => {
       try {
-        await togglePinAction(note.id, projectId);
+        unwrap(await togglePinAction(note.id, projectId));
         toast.success(note.is_pinned ? "Unpinned" : "Pinned");
         router.refresh();
       } catch (err) {
@@ -623,12 +624,12 @@ function LiveCallNotesModal({
     const minutes = computeDurationMinutes();
     start(async () => {
       try {
-        await createNoteAction(candidateId, projectId, {
+        unwrap(await createNoteAction(candidateId, projectId, {
           noteType: "call",
           content: trimmed,
           isPinned: false,
           callDurationMinutes: minutes,
-        });
+        }));
         toast.success(
           `Call notes saved · ${minutes} min${minutes === 1 ? "" : "s"}`
         );

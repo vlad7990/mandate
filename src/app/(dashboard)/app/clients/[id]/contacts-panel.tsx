@@ -36,6 +36,7 @@ import {
   setContactArchivedAction,
   updateContactAction,
 } from "./contacts-actions";
+import { unwrap, type ActionResult } from "@/lib/actions/result";
 
 const FIELD =
   "w-full min-w-0 border border-outline-variant bg-surface px-3 py-2 text-body-s text-on-surface focus:border-primary focus:outline-none";
@@ -62,10 +63,10 @@ export function ContactsPanel({
   const visible = showArchived ? sorted : sorted.filter((c) => !c.is_archived);
   const activeCount = sorted.length - archivedCount;
 
-  function run(action: (fd: FormData) => Promise<void>, fd: FormData, ok: string) {
+  function run(action: (fd: FormData) => Promise<ActionResult>, fd: FormData, ok: string) {
     start(async () => {
       try {
-        await action(fd);
+        unwrap(await action(fd));
         setEditing(null);
         router.refresh();
         toast.success(ok);

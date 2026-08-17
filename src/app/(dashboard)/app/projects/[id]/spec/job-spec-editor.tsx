@@ -39,6 +39,7 @@ import {
   IconVerified,
   type IconProps,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   projectId: string;
@@ -139,7 +140,7 @@ export function JobSpecEditor({
     }
     startSave(async () => {
       try {
-        await saveDraft(currentSpecId, projectId, sections);
+        unwrap(await saveDraft(currentSpecId, projectId, sections));
         setDirty(false);
         toast.success(`Draft saved · V${String(currentVersion).padStart(2, "0")}`);
         router.refresh();
@@ -161,7 +162,7 @@ export function JobSpecEditor({
   const handleNewVersion = () => {
     startVersion(async () => {
       try {
-        const result = await createNewVersion(projectId, sections);
+        const result = unwrap(await createNewVersion(projectId, sections));
         setDirty(false);
         toast.success(
           `Snapshotted as V${String(result.version).padStart(2, "0")}`
@@ -183,10 +184,10 @@ export function JobSpecEditor({
         // exact text on screen rather than the previously-saved row.
         let targetId = currentSpecId;
         if (dirty) {
-          const snap = await createNewVersion(projectId, sections);
+          const snap = unwrap(await createNewVersion(projectId, sections));
           targetId = snap.specId;
         }
-        await markAsFinal(targetId, projectId);
+        unwrap(await markAsFinal(targetId, projectId));
         setDirty(false);
         toast.success("Job spec marked as final.");
         router.refresh();
@@ -201,7 +202,7 @@ export function JobSpecEditor({
   const handleRegenerate = () => {
     startRegenerate(async () => {
       try {
-        const result = await requestRegenerate(projectId);
+        const result = unwrap(await requestRegenerate(projectId));
         if (result.wasExisting) {
           toast.info(
             `Already compiling V${String(result.version).padStart(2, "0")} — polling for the result.`
@@ -472,7 +473,7 @@ function ActiveGenerationBanner({
         if (timedOutRef.current) return;
         timedOutRef.current = true;
         try {
-          await markGenerationTimedOut(specId, projectId);
+          unwrap(await markGenerationTimedOut(specId, projectId));
         } catch (err) {
           console.error("[spec/banner] timeout marker failed", err);
         }
@@ -537,7 +538,7 @@ function FailedGenerationBanner({
   const handleRetry = () => {
     startRetry(async () => {
       try {
-        const result = await requestRegenerate(projectId);
+        const result = unwrap(await requestRegenerate(projectId));
         if (result.wasExisting) {
           toast.info(
             `Already compiling V${String(result.version).padStart(2, "0")}.`

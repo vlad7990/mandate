@@ -33,6 +33,7 @@ import {
   createAssessmentNewVersion,
   saveAssessmentDraft,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 export type AssessmentVersionSummary = {
   id: string;
@@ -150,14 +151,14 @@ export function AssessmentEditor({
 
   const handleSave = () =>
     run("Save", async () => {
-      await saveAssessmentDraft(assessmentId, searchId, candidateId, content);
+      unwrap(await saveAssessmentDraft(assessmentId, searchId, candidateId, content));
       setIsDirty(false);
       toast.success("Draft saved.");
     });
 
   const handleNewVersion = () =>
     run("New version", async () => {
-      const res = await createAssessmentNewVersion(searchId, candidateId, content);
+      const res = unwrap(await createAssessmentNewVersion(searchId, candidateId, content));
       setIsDirty(false);
       toast.success(`Version ${res.version} created as a new draft.`);
     });
@@ -172,10 +173,10 @@ export function AssessmentEditor({
     }
     run("Approve", async () => {
       if (isDirty) {
-        await saveAssessmentDraft(assessmentId, searchId, candidateId, content);
+        unwrap(await saveAssessmentDraft(assessmentId, searchId, candidateId, content));
         setIsDirty(false);
       }
-      await approveAssessment(assessmentId, searchId, candidateId);
+      unwrap(await approveAssessment(assessmentId, searchId, candidateId));
       toast.success(`Version ${version} approved.`);
     });
   };

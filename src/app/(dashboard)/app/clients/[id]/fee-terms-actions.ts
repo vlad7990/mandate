@@ -26,6 +26,11 @@ import {
   parseFeeTrigger,
   type InstalmentStage,
 } from "@/lib/fees/types";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The fee agreement";
 
 function str(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
@@ -96,80 +101,82 @@ function readInstalmentPlan(formData: FormData): InstalmentStage[] {
  * would otherwise both read "none" and both insert, and the second would
  * fail on the index anyway — with a worse message.
  */
-export async function saveFeeTermsAction(formData: FormData): Promise<void> {
-  const { userId, organizationId } = await requireActionContext("mandates:write");
+export async function saveFeeTermsAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireActionContext("mandates:write");
 
-  const clientId = str(formData, "clientId") || null;
-  const projectId = str(formData, "projectId") || null;
+    const clientId = str(formData, "clientId") || null;
+    const projectId = str(formData, "projectId") || null;
 
-  // Exactly one scope. The CHECK enforces it; this makes the failure a
-  // sentence rather than a constraint name.
-  if (!clientId === !projectId) {
-    throw new Error("Fee terms attach to either a client or a mandate, not both.");
-  }
+    // Exactly one scope. The CHECK enforces it; this makes the failure a
+    // sentence rather than a constraint name.
+    if (!clientId === !projectId) {
+      throw new Error("Fee terms attach to either a client or a mandate, not both.");
+    }
 
-  const feeModel = parseFeeModel(formData.get("feeModel"));
-  if (!feeModel) throw new Error("Choose a fee model.");
+    const feeModel = parseFeeModel(formData.get("feeModel"));
+    if (!feeModel) throw new Error("Choose a fee model.");
 
-  const currency = str(formData, "currency").toUpperCase();
-  if (!/^[A-Z]{3}$/.test(currency)) {
-    throw new Error("Currency must be a three-letter code, such as USD.");
-  }
+    const currency = str(formData, "currency").toUpperCase();
+    if (!/^[A-Z]{3}$/.test(currency)) {
+      throw new Error("Currency must be a three-letter code, such as USD.");
+    }
 
-  const feePercentage = numberOrNull(formData, "feePercentage");
-  const fixedFeeAmount = numberOrNull(formData, "fixedFeeAmount");
+    const feePercentage = numberOrNull(formData, "feePercentage");
+    const fixedFeeAmount = numberOrNull(formData, "fixedFeeAmount");
 
-  if (feeModel === "contingent" && feePercentage == null) {
-    throw new Error("A contingent agreement needs a percentage.");
-  }
-  if (feeModel === "fixed" && fixedFeeAmount == null) {
-    throw new Error("A fixed-fee agreement needs an amount.");
-  }
-  if (feeModel === "retained" && feePercentage == null && fixedFeeAmount == null) {
-    throw new Error("A retained agreement needs either a percentage or a fixed amount.");
-  }
-  if (feePercentage != null && (feePercentage <= 0 || feePercentage > 100)) {
-    throw new Error("The percentage must be above 0 and no more than 100.");
-  }
+    if (feeModel === "contingent" && feePercentage == null) {
+      throw new Error("A contingent agreement needs a percentage.");
+    }
+    if (feeModel === "fixed" && fixedFeeAmount == null) {
+      throw new Error("A fixed-fee agreement needs an amount.");
+    }
+    if (feeModel === "retained" && feePercentage == null && fixedFeeAmount == null) {
+      throw new Error("A retained agreement needs either a percentage or a fixed amount.");
+    }
+    if (feePercentage != null && (feePercentage <= 0 || feePercentage > 100)) {
+      throw new Error("The percentage must be above 0 and no more than 100.");
+    }
 
-  // A retainer must have stages and nothing else may — the CHECK in 050
-  // says so, because a retainer without stages is a contingent fee under
-  // a different name.
-  const plan =
-    feeModel === "retained"
-      ? (() => {
-          const stages = readInstalmentPlan(formData);
-          return stages.length > 0 ? stages : DEFAULT_RETAINER_PLAN;
-        })()
-      : [];
+    // A retainer must have stages and nothing else may — the CHECK in 050
+    // says so, because a retainer without stages is a contingent fee under
+    // a different name.
+    const plan =
+      feeModel === "retained"
+        ? (() => {
+            const stages = readInstalmentPlan(formData);
+            return stages.length > 0 ? stages : DEFAULT_RETAINER_PLAN;
+          })()
+        : [];
 
-  const supabase = await createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase.from("fee_terms").upsert(
-    {
-      organization_id: organizationId,
-      client_id: clientId,
-      project_id: projectId,
-      fee_model: feeModel,
-      fee_percentage: feeModel === "fixed" ? null : feePercentage,
-      fixed_fee_amount: fixedFeeAmount == null ? null : roundMoney(fixedFeeAmount),
-      currency,
-      fee_basis: parseFeeBasis(formData.get("feeBasis")) ?? "total_first_year_cash",
-      guarantee_days: intOr(formData, "guaranteeDays", 90),
-      payment_terms_days: intOr(formData, "paymentTermsDays", 30),
-      instalment_plan: plan,
-      notes: str(formData, "notes") || null,
-      created_by: userId,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: clientId ? "client_id" : "project_id" }
-  );
+    const { error } = await supabase.from("fee_terms").upsert(
+      {
+        organization_id: organizationId,
+        client_id: clientId,
+        project_id: projectId,
+        fee_model: feeModel,
+        fee_percentage: feeModel === "fixed" ? null : feePercentage,
+        fixed_fee_amount: fixedFeeAmount == null ? null : roundMoney(fixedFeeAmount),
+        currency,
+        fee_basis: parseFeeBasis(formData.get("feeBasis")) ?? "total_first_year_cash",
+        guarantee_days: intOr(formData, "guaranteeDays", 90),
+        payment_terms_days: intOr(formData, "paymentTermsDays", 30),
+        instalment_plan: plan,
+        notes: str(formData, "notes") || null,
+        created_by: userId,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: clientId ? "client_id" : "project_id" }
+    );
 
-  if (error) throw new Error(`Could not save the agreement: ${error.message}`);
+    if (error) throw new Error(`Could not save the agreement: ${error.message}`);
 
-  if (clientId) revalidatePath(`/app/clients/${clientId}`);
-  if (projectId) revalidatePath(`/app/projects/${projectId}`);
-  revalidatePath("/app/placements");
+    if (clientId) revalidatePath(`/app/clients/${clientId}`);
+    if (projectId) revalidatePath(`/app/projects/${projectId}`);
+    revalidatePath("/app/placements");
+  });
 }
 
 /**
@@ -179,20 +186,22 @@ export async function saveFeeTermsAction(formData: FormData): Promise<void> {
  * `fee_terms_id` as ON DELETE SET NULL rather than CASCADE, so deleting
  * the agreement forgets where a fee came from but never deletes the fee.
  */
-export async function deleteFeeTermsAction(formData: FormData): Promise<void> {
-  await requireActionContext("mandates:write");
+export async function deleteFeeTermsAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireActionContext("mandates:write");
 
-  const id = str(formData, "feeTermsId");
-  const clientId = str(formData, "clientId");
-  const projectId = str(formData, "projectId");
-  if (!id) throw new Error("Missing agreement.");
+    const id = str(formData, "feeTermsId");
+    const clientId = str(formData, "clientId");
+    const projectId = str(formData, "projectId");
+    if (!id) throw new Error("Missing agreement.");
 
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.from("fee_terms").delete().eq("id", id);
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase.from("fee_terms").delete().eq("id", id);
 
-  if (error) throw new Error(`Could not remove the agreement: ${error.message}`);
+    if (error) throw new Error(`Could not remove the agreement: ${error.message}`);
 
-  if (clientId) revalidatePath(`/app/clients/${clientId}`);
-  if (projectId) revalidatePath(`/app/projects/${projectId}`);
-  revalidatePath("/app/placements");
+    if (clientId) revalidatePath(`/app/clients/${clientId}`);
+    if (projectId) revalidatePath(`/app/projects/${projectId}`);
+    revalidatePath("/app/placements");
+  });
 }

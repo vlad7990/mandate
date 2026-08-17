@@ -12,6 +12,7 @@ import {
   IconPlus,
   IconRefresh,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   searchId: string;
@@ -28,7 +29,7 @@ export function AssessmentEmpty({ searchId, candidateId, candidateName }: Props)
   const handleCreate = () => {
     startTransition(async () => {
       try {
-        await createAssessment(searchId, candidateId);
+        unwrap(await createAssessment(searchId, candidateId));
         router.refresh();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Could not start the assessment.";

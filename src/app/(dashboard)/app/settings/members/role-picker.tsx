@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { setMemberRoleAction } from "./actions";
 import { ROLES, ROLE_LABELS, type Role } from "@/lib/auth/roles";
 import { IconRefresh } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 /**
  * Role picker for one member.
@@ -51,7 +52,7 @@ export function RolePicker({
   const apply = () => {
     startTransition(async () => {
       try {
-        await setMemberRoleAction(userId, selected);
+        unwrap(await setMemberRoleAction(userId, selected));
         toast.success(`${displayName} is now ${ROLE_LABELS[selected]}.`);
         router.refresh();
       } catch (err) {

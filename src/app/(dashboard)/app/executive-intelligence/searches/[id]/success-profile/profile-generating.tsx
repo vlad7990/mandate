@@ -9,6 +9,7 @@ import {
 } from "@/lib/ai/executive-role-architect-agent";
 import { markProfileGenerationTimedOut } from "./actions";
 import { IconArrowLeft } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 const POLL_INTERVAL_MS = 1500;
 // Client-side unstick marker. Must exceed real generation latency — profile
@@ -55,7 +56,7 @@ export function ProfileGenerating({
         if (timedOutRef.current) return;
         timedOutRef.current = true;
         try {
-          await markProfileGenerationTimedOut(profileId, searchId);
+          unwrap(await markProfileGenerationTimedOut(profileId, searchId));
         } catch (err) {
           console.error("[success-profile/generating] timeout marker failed", err);
         }

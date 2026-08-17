@@ -26,6 +26,11 @@ import {
   parseContactType,
   type ContactType,
 } from "@/lib/clients/contacts";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The contact change";
 
 function str(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
@@ -116,88 +121,92 @@ function revalidate(clientId: string) {
   revalidatePath("/app/activity");
 }
 
-export async function createContactAction(formData: FormData): Promise<void> {
-  const { userId } = await requireActionContext("mandates:write");
+export async function createContactAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId } = await requireActionContext("mandates:write");
 
-  const clientId = str(formData, "clientId");
-  if (!clientId) throw new Error("Missing client.");
+    const clientId = str(formData, "clientId");
+    if (!clientId) throw new Error("Missing client.");
 
-  const fullName = str(formData, "fullName");
-  if (!fullName) throw new Error("A contact needs a name.");
+    const fullName = str(formData, "fullName");
+    if (!fullName) throw new Error("A contact needs a name.");
 
-  const contactType: ContactType =
-    parseContactType(formData.get("contactType")) ?? "hiring_manager";
+    const contactType: ContactType =
+      parseContactType(formData.get("contactType")) ?? "hiring_manager";
 
-  const email = emailOrNull(formData, "email");
+    const email = emailOrNull(formData, "email");
 
-  const supabase = await createServerSupabaseClient();
-  const client = await loadClient(supabase, clientId);
-  await assertEmailFree(supabase, clientId, email, null);
+    const supabase = await createServerSupabaseClient();
+    const client = await loadClient(supabase, clientId);
+    await assertEmailFree(supabase, clientId, email, null);
 
-  const { error } = await supabase.from("client_contacts").insert({
-    organization_id: client.organization_id,
-    client_id: clientId,
-    full_name: fullName,
-    title: strOrNull(formData, "title"),
-    email,
-    phone: strOrNull(formData, "phone"),
-    linkedin_url: strOrNull(formData, "linkedinUrl"),
-    contact_type: contactType,
-    // The trigger in 054 demotes whoever was primary before, so this never
-    // has to be a read-then-write and two people promoting two different
-    // contacts at once cannot both win.
-    is_primary: formData.get("isPrimary") === "on",
-    created_by: userId,
-  });
-
-  if (error) {
-    if (error.code === "23505") {
-      throw new Error("That email is already on another contact at this client.");
-    }
-    throw new Error(`Could not add the contact: ${error.message}`);
-  }
-
-  revalidate(clientId);
-}
-
-export async function updateContactAction(formData: FormData): Promise<void> {
-  await requireActionContext("mandates:write");
-
-  const contactId = str(formData, "contactId");
-  const clientId = str(formData, "clientId");
-  if (!contactId || !clientId) throw new Error("Missing contact.");
-
-  const fullName = str(formData, "fullName");
-  if (!fullName) throw new Error("A contact needs a name.");
-
-  const email = emailOrNull(formData, "email");
-
-  const supabase = await createServerSupabaseClient();
-  await assertEmailFree(supabase, clientId, email, contactId);
-
-  const { error } = await supabase
-    .from("client_contacts")
-    .update({
+    const { error } = await supabase.from("client_contacts").insert({
+      organization_id: client.organization_id,
+      client_id: clientId,
       full_name: fullName,
       title: strOrNull(formData, "title"),
       email,
       phone: strOrNull(formData, "phone"),
       linkedin_url: strOrNull(formData, "linkedinUrl"),
-      contact_type: parseContactType(formData.get("contactType")) ?? "hiring_manager",
+      contact_type: contactType,
+      // The trigger in 054 demotes whoever was primary before, so this never
+      // has to be a read-then-write and two people promoting two different
+      // contacts at once cannot both win.
       is_primary: formData.get("isPrimary") === "on",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", contactId)
-    .eq("client_id", clientId);
+      created_by: userId,
+    });
 
-  if (error) {
-    if (error.code === "23505") {
-      throw new Error("That email is already on another contact at this client.");
+    if (error) {
+      if (error.code === "23505") {
+        throw new Error("That email is already on another contact at this client.");
+      }
+      throw new Error(`Could not add the contact: ${error.message}`);
     }
-    throw new Error(`Could not save the contact: ${error.message}`);
-  }
 
-  revalidate(clientId);
+    revalidate(clientId);
+  });
+}
+
+export async function updateContactAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireActionContext("mandates:write");
+
+    const contactId = str(formData, "contactId");
+    const clientId = str(formData, "clientId");
+    if (!contactId || !clientId) throw new Error("Missing contact.");
+
+    const fullName = str(formData, "fullName");
+    if (!fullName) throw new Error("A contact needs a name.");
+
+    const email = emailOrNull(formData, "email");
+
+    const supabase = await createServerSupabaseClient();
+    await assertEmailFree(supabase, clientId, email, contactId);
+
+    const { error } = await supabase
+      .from("client_contacts")
+      .update({
+        full_name: fullName,
+        title: strOrNull(formData, "title"),
+        email,
+        phone: strOrNull(formData, "phone"),
+        linkedin_url: strOrNull(formData, "linkedinUrl"),
+        contact_type: parseContactType(formData.get("contactType")) ?? "hiring_manager",
+        is_primary: formData.get("isPrimary") === "on",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", contactId)
+      .eq("client_id", clientId);
+
+    if (error) {
+      if (error.code === "23505") {
+        throw new Error("That email is already on another contact at this client.");
+      }
+      throw new Error(`Could not save the contact: ${error.message}`);
+    }
+
+    revalidate(clientId);
+  });
 }
 
 /**
@@ -209,31 +218,33 @@ export async function updateContactAction(formData: FormData): Promise<void> {
  * its `label`, but the link would be gone. Archiving keeps both and takes
  * the person out of the pickers.
  */
-export async function setContactArchivedAction(formData: FormData): Promise<void> {
-  await requireActionContext("mandates:write");
+export async function setContactArchivedAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireActionContext("mandates:write");
 
-  const contactId = str(formData, "contactId");
-  const clientId = str(formData, "clientId");
-  if (!contactId || !clientId) throw new Error("Missing contact.");
+    const contactId = str(formData, "contactId");
+    const clientId = str(formData, "clientId");
+    if (!contactId || !clientId) throw new Error("Missing contact.");
 
-  const archived = str(formData, "archived") === "true";
+    const archived = str(formData, "archived") === "true";
 
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase
-    .from("client_contacts")
-    .update({
-      is_archived: archived,
-      // An archived contact cannot also be the primary — the person we
-      // deal with by default cannot be one who has left.
-      ...(archived ? { is_primary: false } : {}),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", contactId)
-    .eq("client_id", clientId);
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase
+      .from("client_contacts")
+      .update({
+        is_archived: archived,
+        // An archived contact cannot also be the primary — the person we
+        // deal with by default cannot be one who has left.
+        ...(archived ? { is_primary: false } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", contactId)
+      .eq("client_id", clientId);
 
-  if (error) throw new Error(`Could not update the contact: ${error.message}`);
+    if (error) throw new Error(`Could not update the contact: ${error.message}`);
 
-  revalidate(clientId);
+    revalidate(clientId);
+  });
 }
 
 /**
@@ -245,21 +256,23 @@ export async function setContactArchivedAction(formData: FormData): Promise<void
  * keeps its snapshot label, so a booked placement never loses who signed
  * it off.
  */
-export async function deleteContactAction(formData: FormData): Promise<void> {
-  await requireActionContext("mandates:write");
+export async function deleteContactAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireActionContext("mandates:write");
 
-  const contactId = str(formData, "contactId");
-  const clientId = str(formData, "clientId");
-  if (!contactId || !clientId) throw new Error("Missing contact.");
+    const contactId = str(formData, "contactId");
+    const clientId = str(formData, "clientId");
+    if (!contactId || !clientId) throw new Error("Missing contact.");
 
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase
-    .from("client_contacts")
-    .delete()
-    .eq("id", contactId)
-    .eq("client_id", clientId);
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase
+      .from("client_contacts")
+      .delete()
+      .eq("id", contactId)
+      .eq("client_id", clientId);
 
-  if (error) throw new Error(`Could not remove the contact: ${error.message}`);
+    if (error) throw new Error(`Could not remove the contact: ${error.message}`);
 
-  revalidate(clientId);
+    revalidate(clientId);
+  });
 }

@@ -10,6 +10,7 @@ import {
   IconArrowLeft,
   IconRefresh,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   searchId: string;
@@ -33,7 +34,7 @@ export function PlanError({
   const handleRetry = () => {
     startTransition(async () => {
       try {
-        await requestInterviewPlanGeneration(searchId, candidateId);
+        unwrap(await requestInterviewPlanGeneration(searchId, candidateId));
         router.refresh();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Retry failed.";

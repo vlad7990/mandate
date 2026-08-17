@@ -41,6 +41,7 @@ import {
   setSlateSizeAction,
   submitShortlistAction,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 export type PoolCandidate = {
   id: string;
@@ -143,21 +144,27 @@ export function ShortlistBuilder({
       return;
     }
     runAction(
-      () => addCandidateAction(projectId, candidateId),
+      async () => {
+        unwrap(await addCandidateAction(projectId, candidateId));
+      },
       "Add to slate failed"
     );
   };
 
   const handleRemove = (candidateId: string) => {
     runAction(
-      () => removeCandidateAction(projectId, candidateId),
+      async () => {
+        unwrap(await removeCandidateAction(projectId, candidateId));
+      },
       "Remove from slate failed"
     );
   };
 
   const handleMove = (candidateId: string, direction: "up" | "down") => {
     runAction(
-      () => moveCandidateAction(projectId, candidateId, direction),
+      async () => {
+        unwrap(await moveCandidateAction(projectId, candidateId, direction));
+      },
       "Reorder failed"
     );
   };
@@ -165,7 +172,9 @@ export function ShortlistBuilder({
   const handlePresetSize = (size: number) => {
     setCustomSize("");
     runAction(
-      () => setSlateSizeAction(projectId, size),
+      async () => {
+        unwrap(await setSlateSizeAction(projectId, size));
+      },
       "Slate size update failed"
     );
   };
@@ -177,7 +186,9 @@ export function ShortlistBuilder({
       return;
     }
     runAction(
-      () => setSlateSizeAction(projectId, n),
+      async () => {
+        unwrap(await setSlateSizeAction(projectId, n));
+      },
       "Slate size update failed"
     );
   };
@@ -188,7 +199,9 @@ export function ShortlistBuilder({
       return;
     }
     runAction(
-      () => saveNarrativeAction(projectId, narrative),
+      async () => {
+        unwrap(await saveNarrativeAction(projectId, narrative));
+      },
       "Narrative save failed",
       startNarrativeSave
     );
@@ -203,9 +216,9 @@ export function ShortlistBuilder({
       async () => {
         // Save narrative first if dirty so the AI prompt sees it.
         if (narrative !== serverNarrative) {
-          await saveNarrativeAction(projectId, narrative);
+          unwrap(await saveNarrativeAction(projectId, narrative));
         }
-        await generateReportAction(projectId);
+        unwrap(await generateReportAction(projectId));
       },
       "Report generation failed",
       startReportGen
@@ -220,9 +233,9 @@ export function ShortlistBuilder({
     runAction(
       async () => {
         if (narrative !== serverNarrative) {
-          await saveNarrativeAction(projectId, narrative);
+          unwrap(await saveNarrativeAction(projectId, narrative));
         }
-        await submitShortlistAction(projectId);
+        unwrap(await submitShortlistAction(projectId));
         toast.success("Slate submitted. Candidates advanced to 'submitted'.");
       },
       "Submit failed",

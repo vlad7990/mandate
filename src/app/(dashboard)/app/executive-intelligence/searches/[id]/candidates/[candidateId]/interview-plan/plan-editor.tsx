@@ -33,6 +33,7 @@ import {
   requestInterviewPlanGeneration,
   saveInterviewPlanDraft,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 export type PlanVersionSummary = {
   id: string;
@@ -118,14 +119,14 @@ export function PlanEditor({
 
   const handleSave = () =>
     run("Save", async () => {
-      await saveInterviewPlanDraft(planId, searchId, candidateId, content);
+      unwrap(await saveInterviewPlanDraft(planId, searchId, candidateId, content));
       setIsDirty(false);
       toast.success("Draft saved.");
     });
 
   const handleNewVersion = () =>
     run("New version", async () => {
-      const res = await createInterviewPlanNewVersion(searchId, candidateId, content);
+      const res = unwrap(await createInterviewPlanNewVersion(searchId, candidateId, content));
       setIsDirty(false);
       toast.success(`Version ${res.version} created as a new draft.`);
     });
@@ -140,10 +141,10 @@ export function PlanEditor({
     }
     run("Approve", async () => {
       if (isDirty) {
-        await saveInterviewPlanDraft(planId, searchId, candidateId, content);
+        unwrap(await saveInterviewPlanDraft(planId, searchId, candidateId, content));
         setIsDirty(false);
       }
-      await approveInterviewPlan(planId, searchId, candidateId);
+      unwrap(await approveInterviewPlan(planId, searchId, candidateId));
       toast.success(`Version ${version} approved.`);
     });
   };
@@ -157,7 +158,7 @@ export function PlanEditor({
       return;
     }
     run("Regenerate", async () => {
-      await requestInterviewPlanGeneration(searchId, candidateId);
+      unwrap(await requestInterviewPlanGeneration(searchId, candidateId));
     });
   };
 

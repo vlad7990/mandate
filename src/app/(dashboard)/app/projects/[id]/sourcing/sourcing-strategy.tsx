@@ -18,6 +18,7 @@ import {
   appendCompaniesToBooleanAction,
   generateTargetCompaniesAction,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 const ARCHETYPE_BLURBS: Record<
   Archetype,
@@ -100,10 +101,10 @@ export function TargetCompaniesPanel({ projectId }: { projectId: string }) {
     if (pending) return;
     start(async () => {
       try {
-        const next = await generateTargetCompaniesAction(
+        const next = unwrap(await generateTargetCompaniesAction(
           projectId,
           archetypeHint || undefined
-        );
+        ));
         setReport(next);
         toast.success(`${next.companies.length} target companies generated`);
       } catch (err) {
@@ -228,7 +229,7 @@ function AppendCompanyButton({
     if (pending) return;
     start(async () => {
       try {
-        await appendCompaniesToBooleanAction(projectId, slot, [companyName]);
+        unwrap(await appendCompaniesToBooleanAction(projectId, slot, [companyName]));
         toast.success(`Added to ${slot.replace("_", " ")}`);
         setOpen(false);
         router.refresh();

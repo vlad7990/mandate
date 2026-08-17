@@ -18,6 +18,7 @@ import {
   setCandidateStageAction,
   unlinkCandidateAction,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 function useAction() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export function LinkCandidateButton({
       aria-busy={isPending ? true : undefined}
       onClick={() =>
         run("Link", async () => {
-          await linkCandidateAction(searchId, candidateId);
+          unwrap(await linkCandidateAction(searchId, candidateId));
           toast.success(`${candidateName} linked to this search.`);
         })
       }
@@ -90,13 +91,15 @@ export function CandidateStageSelect({
       disabled={isPending}
       aria-label="Diligence stage"
       onChange={(e) =>
-        run("Stage change", () =>
-          setCandidateStageAction(
-            searchId,
-            candidateId,
-            e.target.value as ExecutiveCandidateStage
-          )
-        )
+        run("Stage change", async () => {
+          unwrap(
+            await setCandidateStageAction(
+              searchId,
+              candidateId,
+              e.target.value as ExecutiveCandidateStage
+            )
+          );
+        })
       }
       className="bg-surface-container-lowest border border-outline-variant px-2 py-1.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant outline-none focus:border-primary transition-colors disabled:opacity-60"
     >
@@ -128,7 +131,9 @@ export function UnlinkCandidateButton({
     ) {
       return;
     }
-    run("Unlink", () => unlinkCandidateAction(searchId, candidateId));
+    run("Unlink", async () => {
+      unwrap(await unlinkCandidateAction(searchId, candidateId));
+    });
   };
 
   return (

@@ -19,6 +19,7 @@ import {
   IconSend,
   IconSpark,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 export function GenerateReportButton({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -27,7 +28,7 @@ export function GenerateReportButton({ projectId }: { projectId: string }) {
     if (pending) return;
     start(async () => {
       try {
-        await generateWeeklyReportAction(projectId);
+        unwrap(await generateWeeklyReportAction(projectId));
         toast.success("Weekly report generated");
         router.refresh();
       } catch (err) {

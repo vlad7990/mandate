@@ -10,6 +10,7 @@ import {
   IconArrowLeft,
   IconRefresh,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   searchId: string;
@@ -37,7 +38,7 @@ export function ProfileError({
   const handleRetry = () => {
     startTransition(async () => {
       try {
-        await requestProfileGeneration(searchId);
+        unwrap(await requestProfileGeneration(searchId));
         router.refresh();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Retry failed.";

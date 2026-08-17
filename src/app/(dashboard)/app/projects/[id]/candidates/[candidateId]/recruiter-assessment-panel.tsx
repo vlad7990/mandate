@@ -26,6 +26,7 @@ import {
   tierToneClass,
 } from "@/components/ui/tier-comparison";
 import { updateRecruiterAssessment } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 // Recruiter override layer rendered below the AI evaluation report on
 // the candidate profile. Captures tier, present-decision, observed
@@ -122,13 +123,13 @@ export function RecruiterAssessmentPanel({
     if (pending) return;
     start(async () => {
       try {
-        await updateRecruiterAssessment(candidateId, projectId, {
+        unwrap(await updateRecruiterAssessment(candidateId, projectId, {
           tier,
           fit_notes: fitNotes,
           strengths,
           would_present: wouldPresent,
           dimension_notes: dimensionNotes,
-        });
+        }));
         toast.success("Recruiter assessment saved");
         router.refresh();
       } catch (err) {
@@ -151,13 +152,13 @@ export function RecruiterAssessmentPanel({
     setDimensionNotes({});
     start(async () => {
       try {
-        await updateRecruiterAssessment(candidateId, projectId, {
+        unwrap(await updateRecruiterAssessment(candidateId, projectId, {
           tier: null,
           fit_notes: "",
           strengths: [],
           would_present: null,
           dimension_notes: {},
-        });
+        }));
         toast.success("Assessment cleared");
         router.refresh();
       } catch (err) {

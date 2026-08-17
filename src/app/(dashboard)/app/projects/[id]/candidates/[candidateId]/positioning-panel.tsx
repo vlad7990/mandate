@@ -30,6 +30,7 @@ import {
   type PositioningResult,
 } from "@/lib/ai/positioning-agent";
 import { generatePositioningAction } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 // Positioning module on the candidate profile. Tabbed UI: three tone
 // pitches, three email templates. The "Generate" button kicks off the
@@ -77,7 +78,7 @@ export function PositioningPanel({
     if (pending) return;
     start(async () => {
       try {
-        const next = await generatePositioningAction(candidateId, projectId);
+        const next = unwrap(await generatePositioningAction(candidateId, projectId));
         setKit(next);
         toast.success("Positioning kit generated");
         router.refresh();

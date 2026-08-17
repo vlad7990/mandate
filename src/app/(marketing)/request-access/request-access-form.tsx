@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { submitAccessRequestAction } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 export function RequestAccessForm() {
   const [pending, start] = useTransition();
@@ -33,7 +34,7 @@ export function RequestAccessForm() {
 
     start(async () => {
       try {
-        await submitAccessRequestAction(payload);
+        unwrap(await submitAccessRequestAction(payload));
         setSubmitted(true);
       } catch (err) {
         toast.error(

@@ -15,6 +15,7 @@ import type {
   NetworkPerson,
   NetworkProject,
 } from "@/lib/network/network-aggregator";
+import { unwrap } from "@/lib/actions/result";
 
 export function AddToSearchButton({
   person,
@@ -102,10 +103,10 @@ function AddToSearchModal({
     if (pending) return;
     start(async () => {
       try {
-        await addPersonToProjectAction(
+        unwrap(await addPersonToProjectAction(
           person.canonical_candidate_id,
           projectId
-        );
+        ));
         toast.success(`Added to ${projectTitle}`);
         router.refresh();
         onClose();

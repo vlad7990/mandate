@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { requireActionContext } from "@/lib/auth/access";
 import { computeAndStoreScores } from "@/lib/ranking/scoring-engine";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The score refresh";
 
 async function requireAuth(): Promise<void> {
   await requireActionContext("candidates:write");
@@ -15,8 +20,10 @@ async function requireAuth(): Promise<void> {
  * previous_rank in candidate_scores. Used by the "Refresh scores" CTA
  * after the recruiter edits a candidate or changes calibration.
  */
-export async function refreshScoresAction(projectId: string): Promise<void> {
-  await requireAuth();
-  await computeAndStoreScores(projectId);
-  revalidatePath(`/app/projects/${projectId}/ranking`);
+export async function refreshScoresAction(projectId: string): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    await computeAndStoreScores(projectId);
+    revalidatePath(`/app/projects/${projectId}/ranking`);
+  });
 }

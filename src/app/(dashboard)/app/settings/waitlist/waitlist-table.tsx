@@ -10,6 +10,7 @@ import {
   rejectWaitlistRequestAction,
   saveWaitlistNoteAction,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 export type WaitlistRow = {
   id: string;
@@ -84,7 +85,7 @@ function RequestCard({ row }: { row: WaitlistRow }) {
     if (pending) return;
     start(async () => {
       try {
-        await saveWaitlistNoteAction(row.id, notesDraft);
+        unwrap(await saveWaitlistNoteAction(row.id, notesDraft));
         toast.success("Notes saved");
         setNotesEditing(false);
         router.refresh();
@@ -99,7 +100,7 @@ function RequestCard({ row }: { row: WaitlistRow }) {
     if (!window.confirm(`Approve ${row.full_name} (${row.email})?`)) return;
     start(async () => {
       try {
-        await approveWaitlistRequestAction(row.id);
+        unwrap(await approveWaitlistRequestAction(row.id));
         toast.success("Approved");
         router.refresh();
       } catch (err) {
@@ -113,7 +114,7 @@ function RequestCard({ row }: { row: WaitlistRow }) {
     if (!window.confirm(`Reject ${row.full_name}?`)) return;
     start(async () => {
       try {
-        await rejectWaitlistRequestAction(row.id);
+        unwrap(await rejectWaitlistRequestAction(row.id));
         toast.success("Rejected");
         router.refresh();
       } catch (err) {

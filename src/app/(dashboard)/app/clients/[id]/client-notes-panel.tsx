@@ -45,6 +45,7 @@ import {
   toggleClientNotePinAction,
   updateClientNoteAction,
 } from "./client-notes-actions";
+import { unwrap, type ActionResult } from "@/lib/actions/result";
 
 const FIELD =
   "w-full min-w-0 border border-outline-variant bg-surface px-3 py-2 text-body-s text-on-surface focus:border-primary focus:outline-none";
@@ -86,10 +87,10 @@ export function ClientNotesPanel({
   const [pending, start] = useTransition();
   const router = useRouter();
 
-  function run(action: (fd: FormData) => Promise<void>, fd: FormData, ok: string) {
+  function run(action: (fd: FormData) => Promise<ActionResult>, fd: FormData, ok: string) {
     start(async () => {
       try {
-        await action(fd);
+        unwrap(await action(fd));
         setEditing(null);
         router.refresh();
         toast.success(ok);

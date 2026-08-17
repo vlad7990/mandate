@@ -53,6 +53,7 @@ import {
   setPlacementSignOffAction,
   updatePlacementStatusAction,
 } from "./placement-actions";
+import { unwrap, type ActionResult } from "@/lib/actions/result";
 
 const FIELD =
   "w-full min-w-0 border border-outline-variant bg-surface px-3 py-2 font-mono-label text-mono-label uppercase tracking-wider text-on-surface tabular-nums focus:border-primary focus:outline-none";
@@ -161,7 +162,7 @@ function NoPlacement({
             const formData = new FormData(event.currentTarget);
             start(async () => {
               try {
-                await recordPlacementAction(formData);
+                unwrap(await recordPlacementAction(formData));
                 setOpen(false);
                 router.refresh();
                 toast.success("Offer recorded");
@@ -267,10 +268,10 @@ function ExistingPlacement({
   const guarantee = guaranteeState(placement, today);
   const outstanding = canSeeFees ? pipelineValue(lines) : 0;
 
-  function run(action: (fd: FormData) => Promise<void>, fd: FormData, ok: string) {
+  function run(action: (fd: FormData) => Promise<ActionResult>, fd: FormData, ok: string) {
     start(async () => {
       try {
-        await action(fd);
+        unwrap(await action(fd));
         router.refresh();
         toast.success(ok);
       } catch (error) {
@@ -664,7 +665,7 @@ function StatusActions({
   today: string;
   projectId: string;
   candidateId: string;
-  onRun: (action: (fd: FormData) => Promise<void>, fd: FormData, ok: string) => void;
+  onRun: (action: (fd: FormData) => Promise<ActionResult>, fd: FormData, ok: string) => void;
   onFallThrough: () => void;
 }) {
   const next: Array<{ status: PlacementStatus; label: string }> = [];
@@ -736,7 +737,7 @@ function FeeLedger({
   today: string;
   projectId: string;
   candidateId: string;
-  onRun: (action: (fd: FormData) => Promise<void>, fd: FormData, ok: string) => void;
+  onRun: (action: (fd: FormData) => Promise<ActionResult>, fd: FormData, ok: string) => void;
 }) {
   return (
     <div className="border border-outline-variant/60">

@@ -12,6 +12,11 @@ import {
   type JobSpecSections,
 } from "@/lib/ai/job-spec-analysis";
 import { SAVE_DRAFT_FINALIZED_MESSAGE } from "@/lib/constants/job-spec-constants";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The job spec";
 
 type AuthContext = {
   userId: string;
@@ -35,39 +40,41 @@ export async function saveDraft(
   specId: string,
   projectId: string,
   sections: JobSpecSections
-): Promise<void> {
-  await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const normalized = normalizeSections(sections);
-  const markdown = sectionsToMarkdown(normalized);
+    const normalized = normalizeSections(sections);
+    const markdown = sectionsToMarkdown(normalized);
 
-  const { data, error } = await supabase
-    .from("job_specs")
-    .update({
-      content_json: normalized,
-      content: markdown,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", specId)
-    .eq("project_id", projectId)
-    .eq("is_final", false)
-    .select("id")
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("job_specs")
+      .update({
+        content_json: normalized,
+        content: markdown,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", specId)
+      .eq("project_id", projectId)
+      .eq("is_final", false)
+      .select("id")
+      .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to save draft: ${error.message}`);
-  }
+    if (error) {
+      throw new Error(`Failed to save draft: ${error.message}`);
+    }
 
-  // Zero rows means one of: spec was finalised between client read and this
-  // write (the race we're guarding against), spec was deleted, or RLS
-  // hides it. All three deserve the same recruiter-facing message — the
-  // wizard should refresh and the user should snapshot before editing.
-  if (data == null) {
-    throw new Error(SAVE_DRAFT_FINALIZED_MESSAGE);
-  }
+    // Zero rows means one of: spec was finalised between client read and this
+    // write (the race we're guarding against), spec was deleted, or RLS
+    // hides it. All three deserve the same recruiter-facing message — the
+    // wizard should refresh and the user should snapshot before editing.
+    if (data == null) {
+      throw new Error(SAVE_DRAFT_FINALIZED_MESSAGE);
+    }
 
-  revalidatePath(`/app/projects/${projectId}/spec`);
+    revalidatePath(`/app/projects/${projectId}/spec`);
+  });
 }
 
 /**
@@ -80,25 +87,27 @@ export async function saveDraft(
 export async function createNewVersion(
   projectId: string,
   sections: JobSpecSections
-): Promise<{ specId: string; version: number; wasExisting: boolean }> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ specId: string; version: number; wasExisting: boolean }>> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const normalized = normalizeSections(sections);
-  const markdown = sectionsToMarkdown(normalized);
+    const normalized = normalizeSections(sections);
+    const markdown = sectionsToMarkdown(normalized);
 
-  const inserted = await allocateAndInsertSpec(supabase, {
-    projectId,
-    organizationId,
-    createdBy: userId,
-    content: markdown,
-    contentJson: normalized,
-    isFinal: false,
-    isGenerating: false,
+    const inserted = await allocateAndInsertSpec(supabase, {
+      projectId,
+      organizationId,
+      createdBy: userId,
+      content: markdown,
+      contentJson: normalized,
+      isFinal: false,
+      isGenerating: false,
+    });
+
+    revalidatePath(`/app/projects/${projectId}/spec`);
+    return inserted;
   });
-
-  revalidatePath(`/app/projects/${projectId}/spec`);
-  return inserted;
 }
 
 /**
@@ -115,21 +124,23 @@ export async function createNewVersion(
 export async function markAsFinal(
   specId: string,
   projectId: string
-): Promise<void> {
-  await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase.rpc("finalize_job_spec", {
-    p_spec_id: specId,
-    p_project_id: projectId,
+    const { error } = await supabase.rpc("finalize_job_spec", {
+      p_spec_id: specId,
+      p_project_id: projectId,
+    });
+
+    if (error) {
+      throw new Error(`Failed to mark as final: ${error.message}`);
+    }
+
+    revalidatePath(`/app/projects/${projectId}/spec`);
+    revalidatePath(`/app/projects/${projectId}`);
   });
-
-  if (error) {
-    throw new Error(`Failed to mark as final: ${error.message}`);
-  }
-
-  revalidatePath(`/app/projects/${projectId}/spec`);
-  revalidatePath(`/app/projects/${projectId}`);
 }
 
 /**
@@ -148,7 +159,10 @@ export async function markAsFinal(
  */
 export async function initiateJobSpec(
   projectId: string
-): Promise<{ specId: string; version: number; wasExisting: boolean }> {
+): Promise<ActionResult<{ specId: string; version: number; wasExisting: boolean }>> {
+  // Delegates rather than wrapping: `requestRegenerate` is itself an action
+  // and already returns an `ActionResult`. Wrapping it again would nest the
+  // envelope and hide the failure inside a successful outer result.
   return requestRegenerate(projectId);
 }
 
@@ -167,38 +181,40 @@ export async function initiateJobSpec(
  */
 export async function requestRegenerate(
   projectId: string
-): Promise<{ specId: string; version: number; wasExisting: boolean }> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ specId: string; version: number; wasExisting: boolean }>> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const placeholderMarkdown = sectionsToMarkdown(EMPTY_JOB_SPEC);
+    const placeholderMarkdown = sectionsToMarkdown(EMPTY_JOB_SPEC);
 
-  const inserted = await allocateAndInsertSpec(supabase, {
-    projectId,
-    organizationId,
-    createdBy: userId,
-    content: placeholderMarkdown,
-    contentJson: EMPTY_JOB_SPEC,
-    isFinal: false,
-    isGenerating: true,
-  });
-
-  // Only launch a fresh Anthropic call when this request actually created a
-  // new placeholder. If the RPC returned an existing in-flight row the
-  // original after() callback is still pending — adding another would
-  // duplicate spend and could race the persist step.
-  if (!inserted.wasExisting) {
-    after(async () => {
-      try {
-        await generateAndStoreJobSpec(inserted.specId, projectId);
-      } catch (err) {
-        console.error("[generate-job-spec] failed for spec", inserted.specId, err);
-      }
+    const inserted = await allocateAndInsertSpec(supabase, {
+      projectId,
+      organizationId,
+      createdBy: userId,
+      content: placeholderMarkdown,
+      contentJson: EMPTY_JOB_SPEC,
+      isFinal: false,
+      isGenerating: true,
     });
-  }
 
-  revalidatePath(`/app/projects/${projectId}/spec`);
-  return inserted;
+    // Only launch a fresh Anthropic call when this request actually created a
+    // new placeholder. If the RPC returned an existing in-flight row the
+    // original after() callback is still pending — adding another would
+    // duplicate spend and could race the persist step.
+    if (!inserted.wasExisting) {
+      after(async () => {
+        try {
+          await generateAndStoreJobSpec(inserted.specId, projectId);
+        } catch (err) {
+          console.error("[generate-job-spec] failed for spec", inserted.specId, err);
+        }
+      });
+    }
+
+    revalidatePath(`/app/projects/${projectId}/spec`);
+    return inserted;
+  });
 }
 
 /**
@@ -214,26 +230,28 @@ export async function requestRegenerate(
 export async function markGenerationTimedOut(
   specId: string,
   projectId: string
-): Promise<void> {
-  await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase
-    .from("job_specs")
-    .update({
-      is_generating: false,
-      generation_error: "Generation timed out. Please retry.",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", specId)
-    .eq("project_id", projectId)
-    .eq("is_generating", true);
+    const { error } = await supabase
+      .from("job_specs")
+      .update({
+        is_generating: false,
+        generation_error: "Generation timed out. Please retry.",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", specId)
+      .eq("project_id", projectId)
+      .eq("is_generating", true);
 
-  if (error) {
-    throw new Error(`Failed to mark generation as timed out: ${error.message}`);
-  }
+    if (error) {
+      throw new Error(`Failed to mark generation as timed out: ${error.message}`);
+    }
 
-  revalidatePath(`/app/projects/${projectId}/spec`);
+    revalidatePath(`/app/projects/${projectId}/spec`);
+  });
 }
 
 // ---------------------------------------------------------------------------

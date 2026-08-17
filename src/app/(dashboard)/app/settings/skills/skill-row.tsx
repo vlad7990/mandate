@@ -12,6 +12,7 @@ import {
   IconPlay,
   IconTrash,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 export type SkillRowData = {
   id: string;
@@ -35,7 +36,7 @@ export function SkillRow({ skill }: { skill: SkillRowData }) {
     if (togglePending) return;
     startToggle(async () => {
       try {
-        await toggleSkillActiveAction(skill.id, !skill.is_active);
+        unwrap(await toggleSkillActiveAction(skill.id, !skill.is_active));
         toast.success(skill.is_active ? "Skill paused" : "Skill activated");
         router.refresh();
       } catch (err) {
@@ -56,7 +57,7 @@ export function SkillRow({ skill }: { skill: SkillRowData }) {
     }
     startDelete(async () => {
       try {
-        await deleteSkillAction(skill.id);
+        unwrap(await deleteSkillAction(skill.id));
         toast.success("Skill deleted");
         router.refresh();
       } catch (err) {

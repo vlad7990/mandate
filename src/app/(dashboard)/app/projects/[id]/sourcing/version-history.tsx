@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { SLOTS, type SlotKey } from "@/lib/ai/sourcing-analysis";
 import { restoreQueryVersionAction } from "./actions";
 import { IconHistory, IconRefresh } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 // Per-slot version history with side-by-side diff, term-level
 // add/remove highlighting, restore-to-version, basic analytics
@@ -99,7 +100,7 @@ function SlotHistory({
     }
     start(async () => {
       try {
-        const result = await restoreQueryVersionAction(projectId, rowId);
+        const result = unwrap(await restoreQueryVersionAction(projectId, rowId));
         toast.success(`Restored — now at v${result.version}`);
         router.refresh();
       } catch (err) {

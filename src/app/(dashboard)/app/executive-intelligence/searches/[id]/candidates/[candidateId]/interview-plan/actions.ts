@@ -15,6 +15,11 @@ import {
   type InterviewPlanContent,
 } from "@/lib/ai/executive-interview-architect-agent";
 import { recordExecutiveAuditEvent } from "@/lib/executive/audit";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The interview plan";
 
 type AuthContext = { userId: string; organizationId: string };
 
@@ -92,60 +97,62 @@ async function allocateAndInsertPlan(
 export async function requestInterviewPlanGeneration(
   searchId: string,
   candidateId: string
-): Promise<{ planId: string; version: number; wasExisting: boolean }> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ planId: string; version: number; wasExisting: boolean }>> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const sourceProfileId = await approvedProfileId(supabase, searchId);
-  if (!sourceProfileId) {
-    throw new Error(
-      "Approve a success profile for this search before generating an interview plan."
-    );
-  }
+    const sourceProfileId = await approvedProfileId(supabase, searchId);
+    if (!sourceProfileId) {
+      throw new Error(
+        "Approve a success profile for this search before generating an interview plan."
+      );
+    }
 
-  const inserted = await allocateAndInsertPlan(supabase, {
-    searchId,
-    candidateId,
-    organizationId,
-    sourceProfileId,
-    createdBy: userId,
-    contentJson: EMPTY_INTERVIEW_PLAN,
-    isGenerating: true,
-  });
-
-  if (!inserted.wasExisting) {
-    await recordExecutiveAuditEvent(supabase, {
-      organizationId,
+    const inserted = await allocateAndInsertPlan(supabase, {
       searchId,
-      planId: inserted.planId,
-      actorId: userId,
-      eventType:
-        inserted.version === 1
-          ? "interview_plan_generation_requested"
-          : "interview_plan_regenerated",
-      detail: { candidate_id: candidateId, version: inserted.version },
+      candidateId,
+      organizationId,
+      sourceProfileId,
+      createdBy: userId,
+      contentJson: EMPTY_INTERVIEW_PLAN,
+      isGenerating: true,
     });
 
-    after(async () => {
-      try {
-        await generateAndStoreInterviewPlan(
-          inserted.planId,
-          searchId,
-          candidateId,
-          userId
-        );
-      } catch (err) {
-        console.error(
-          "[generate-interview-plan] failed for plan",
-          inserted.planId,
-          err
-        );
-      }
-    });
-  }
+    if (!inserted.wasExisting) {
+      await recordExecutiveAuditEvent(supabase, {
+        organizationId,
+        searchId,
+        planId: inserted.planId,
+        actorId: userId,
+        eventType:
+          inserted.version === 1
+            ? "interview_plan_generation_requested"
+            : "interview_plan_regenerated",
+        detail: { candidate_id: candidateId, version: inserted.version },
+      });
 
-  revalidatePath(planPath(searchId, candidateId));
-  return inserted;
+      after(async () => {
+        try {
+          await generateAndStoreInterviewPlan(
+            inserted.planId,
+            searchId,
+            candidateId,
+            userId
+          );
+        } catch (err) {
+          console.error(
+            "[generate-interview-plan] failed for plan",
+            inserted.planId,
+            err
+          );
+        }
+      });
+    }
+
+    revalidatePath(planPath(searchId, candidateId));
+    return inserted;
+  });
 }
 
 const DRAFT_LOCKED_MESSAGE =
@@ -157,36 +164,38 @@ export async function saveInterviewPlanDraft(
   searchId: string,
   candidateId: string,
   content: InterviewPlanContent
-): Promise<void> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const normalized = normalizeInterviewPlan(content);
+    const normalized = normalizeInterviewPlan(content);
 
-  const { data, error } = await supabase
-    .from("executive_interview_plans")
-    .update({ content_json: normalized, updated_at: new Date().toISOString() })
-    .eq("id", planId)
-    .eq("search_id", searchId)
-    .eq("candidate_id", candidateId)
-    .eq("status", "draft")
-    .eq("is_generating", false)
-    .select("id")
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("executive_interview_plans")
+      .update({ content_json: normalized, updated_at: new Date().toISOString() })
+      .eq("id", planId)
+      .eq("search_id", searchId)
+      .eq("candidate_id", candidateId)
+      .eq("status", "draft")
+      .eq("is_generating", false)
+      .select("id")
+      .maybeSingle();
 
-  if (error) throw new Error(`Failed to save draft: ${error.message}`);
-  if (data == null) throw new Error(DRAFT_LOCKED_MESSAGE);
+    if (error) throw new Error(`Failed to save draft: ${error.message}`);
+    if (data == null) throw new Error(DRAFT_LOCKED_MESSAGE);
 
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    planId,
-    actorId: userId,
-    eventType: "interview_plan_edited",
-    detail: { candidate_id: candidateId },
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      planId,
+      actorId: userId,
+      eventType: "interview_plan_edited",
+      detail: { candidate_id: candidateId },
+    });
+
+    revalidatePath(planPath(searchId, candidateId));
   });
-
-  revalidatePath(planPath(searchId, candidateId));
 }
 
 /** Snapshot current edits as a new draft version (e.g. to branch from approved). */
@@ -194,33 +203,35 @@ export async function createInterviewPlanNewVersion(
   searchId: string,
   candidateId: string,
   content: InterviewPlanContent
-): Promise<{ planId: string; version: number }> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ planId: string; version: number }>> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const sourceProfileId = await approvedProfileId(supabase, searchId);
+    const sourceProfileId = await approvedProfileId(supabase, searchId);
 
-  const inserted = await allocateAndInsertPlan(supabase, {
-    searchId,
-    candidateId,
-    organizationId,
-    sourceProfileId,
-    createdBy: userId,
-    contentJson: normalizeInterviewPlan(content),
-    isGenerating: false,
+    const inserted = await allocateAndInsertPlan(supabase, {
+      searchId,
+      candidateId,
+      organizationId,
+      sourceProfileId,
+      createdBy: userId,
+      contentJson: normalizeInterviewPlan(content),
+      isGenerating: false,
+    });
+
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      planId: inserted.planId,
+      actorId: userId,
+      eventType: "interview_plan_new_version",
+      detail: { candidate_id: candidateId, version: inserted.version },
+    });
+
+    revalidatePath(planPath(searchId, candidateId));
+    return { planId: inserted.planId, version: inserted.version };
   });
-
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    planId: inserted.planId,
-    actorId: userId,
-    eventType: "interview_plan_new_version",
-    detail: { candidate_id: candidateId, version: inserted.version },
-  });
-
-  revalidatePath(planPath(searchId, candidateId));
-  return { planId: inserted.planId, version: inserted.version };
 }
 
 /** Human approval — RPC stamps approved_by from auth.uid() and archives prior. */
@@ -228,27 +239,29 @@ export async function approveInterviewPlan(
   planId: string,
   searchId: string,
   candidateId: string
-): Promise<void> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase.rpc("approve_interview_plan", {
-    p_plan_id: planId,
-    p_search_id: searchId,
-    p_candidate_id: candidateId,
+    const { error } = await supabase.rpc("approve_interview_plan", {
+      p_plan_id: planId,
+      p_search_id: searchId,
+      p_candidate_id: candidateId,
+    });
+    if (error) throw new Error(`Failed to approve interview plan: ${error.message}`);
+
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      planId,
+      actorId: userId,
+      eventType: "interview_plan_approved",
+      detail: { candidate_id: candidateId },
+    });
+
+    revalidatePath(planPath(searchId, candidateId));
   });
-  if (error) throw new Error(`Failed to approve interview plan: ${error.message}`);
-
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    planId,
-    actorId: userId,
-    eventType: "interview_plan_approved",
-    detail: { candidate_id: candidateId },
-  });
-
-  revalidatePath(planPath(searchId, candidateId));
 }
 
 /** Terminal timeout marker for a stuck placeholder — only flips generating rows. */
@@ -256,22 +269,24 @@ export async function markInterviewPlanTimedOut(
   planId: string,
   searchId: string,
   candidateId: string
-): Promise<void> {
-  await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase
-    .from("executive_interview_plans")
-    .update({
-      is_generating: false,
-      generation_error: "Generation timed out. Please retry.",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", planId)
-    .eq("search_id", searchId)
-    .eq("candidate_id", candidateId)
-    .eq("is_generating", true);
+    const { error } = await supabase
+      .from("executive_interview_plans")
+      .update({
+        is_generating: false,
+        generation_error: "Generation timed out. Please retry.",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", planId)
+      .eq("search_id", searchId)
+      .eq("candidate_id", candidateId)
+      .eq("is_generating", true);
 
-  if (error) throw new Error(`Failed to mark generation as timed out: ${error.message}`);
-  revalidatePath(planPath(searchId, candidateId));
+    if (error) throw new Error(`Failed to mark generation as timed out: ${error.message}`);
+    revalidatePath(planPath(searchId, candidateId));
+  });
 }

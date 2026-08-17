@@ -23,6 +23,7 @@ import {
   updateCandidateField,
   type CandidateEditableField,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 // Family of "click-to-edit" primitives shared across the candidate
 // profile. Each component renders a display state, swaps to an input on
@@ -43,7 +44,7 @@ function useFieldSave(
     new Promise((resolve, reject) => {
       startTransition(async () => {
         try {
-          await updateCandidateField(candidateId, projectId, field, value);
+          unwrap(await updateCandidateField(candidateId, projectId, field, value));
           router.refresh();
           resolve();
         } catch (err) {

@@ -23,6 +23,7 @@ import type {
   RecentContextItem,
 } from "@/lib/ai/company-intelligence-agent";
 import { researchCompanyAction } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 const PROGRESS_STEPS = [
   { key: "scrape", label: "Scraping website" },
@@ -83,7 +84,7 @@ export function CompanyIntelligencePanel({
     setRunId((r) => r + 1);
     start(async () => {
       try {
-        const next = await researchCompanyAction(projectId);
+        const next = unwrap(await researchCompanyAction(projectId));
         setReport(next);
         toast.success("Company intelligence refreshed");
         router.refresh();

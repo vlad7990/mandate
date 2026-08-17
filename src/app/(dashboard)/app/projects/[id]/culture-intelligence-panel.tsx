@@ -29,6 +29,7 @@ import {
   saveCultureAnnotationAction,
   toggleCultureFlagAction,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 const CULTURE_SECTION_KEYS = {
   summary: "summary",
@@ -77,10 +78,10 @@ export function CultureIntelligencePanel({
     const ctx = contextDraft.trim();
     start(async () => {
       try {
-        const next = await generateCompanyCultureAction(
+        const next = unwrap(await generateCompanyCultureAction(
           projectId,
           ctx.length > 0 ? ctx : undefined
-        );
+        ));
         setProfile(next);
         setSavedContext(ctx.length > 0 ? ctx : null);
         setContextDraft("");
@@ -339,7 +340,7 @@ function AxisCard({
     if (pending) return;
     start(async () => {
       try {
-        await toggleCultureFlagAction(projectId, axisKey);
+        unwrap(await toggleCultureFlagAction(projectId, axisKey));
         toast.success(flagged ? "Flag removed" : "Flagged for review");
         router.refresh();
       } catch (err) {
@@ -431,7 +432,7 @@ function Section({
     if (pending) return;
     start(async () => {
       try {
-        await saveCultureAnnotationAction(projectId, sectionKey, draft);
+        unwrap(await saveCultureAnnotationAction(projectId, sectionKey, draft));
         toast.success(
           draft.trim().length === 0
             ? "Observation cleared"

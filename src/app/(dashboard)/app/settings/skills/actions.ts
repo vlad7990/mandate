@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The skill change";
 
 const SKILL_TYPES = ["role_skill", "client_skill", "search_skill"] as const;
 type SkillType = (typeof SKILL_TYPES)[number];
@@ -73,92 +78,100 @@ function parseSkillForm(formData: FormData): SkillFormInput {
   };
 }
 
-export async function createSkillAction(formData: FormData): Promise<void> {
-  const auth = await requireAuth();
-  const input = parseSkillForm(formData);
-  const supabase = await createServerSupabaseClient();
+export async function createSkillAction(formData: FormData): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const auth = await requireAuth();
+    const input = parseSkillForm(formData);
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase.from("skills").insert({
-    organization_id: auth.organizationId,
-    created_by: auth.userId,
-    name: input.name,
-    description: input.description,
-    skill_type: input.skill_type,
-    trigger_conditions: input.trigger_conditions,
-    instructions: input.instructions,
-    applies_to_project_id: input.applies_to_project_id,
-    is_active: true,
-  });
-
-  if (error) {
-    throw new Error(`Failed to create skill: ${error.message}`);
-  }
-
-  revalidatePath("/app/settings/skills");
-  redirect("/app/settings/skills");
-}
-
-export async function updateSkillAction(
-  skillId: string,
-  formData: FormData
-): Promise<void> {
-  await requireAuth();
-  const input = parseSkillForm(formData);
-  const supabase = await createServerSupabaseClient();
-
-  const { error } = await supabase
-    .from("skills")
-    .update({
+    const { error } = await supabase.from("skills").insert({
+      organization_id: auth.organizationId,
+      created_by: auth.userId,
       name: input.name,
       description: input.description,
       skill_type: input.skill_type,
       trigger_conditions: input.trigger_conditions,
       instructions: input.instructions,
       applies_to_project_id: input.applies_to_project_id,
-      applies_to_client_id: input.applies_to_client_id,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", skillId);
+      is_active: true,
+    });
 
-  if (error) {
-    throw new Error(`Failed to update skill: ${error.message}`);
-  }
+    if (error) {
+      throw new Error(`Failed to create skill: ${error.message}`);
+    }
 
-  revalidatePath("/app/settings/skills");
-  redirect("/app/settings/skills");
+    revalidatePath("/app/settings/skills");
+    redirect("/app/settings/skills");
+  });
+}
+
+export async function updateSkillAction(
+  skillId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    const input = parseSkillForm(formData);
+    const supabase = await createServerSupabaseClient();
+
+    const { error } = await supabase
+      .from("skills")
+      .update({
+        name: input.name,
+        description: input.description,
+        skill_type: input.skill_type,
+        trigger_conditions: input.trigger_conditions,
+        instructions: input.instructions,
+        applies_to_project_id: input.applies_to_project_id,
+        applies_to_client_id: input.applies_to_client_id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", skillId);
+
+    if (error) {
+      throw new Error(`Failed to update skill: ${error.message}`);
+    }
+
+    revalidatePath("/app/settings/skills");
+    redirect("/app/settings/skills");
+  });
 }
 
 export async function toggleSkillActiveAction(
   skillId: string,
   isActive: boolean
-): Promise<void> {
-  await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase
-    .from("skills")
-    .update({
-      is_active: isActive,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", skillId);
+    const { error } = await supabase
+      .from("skills")
+      .update({
+        is_active: isActive,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", skillId);
 
-  if (error) {
-    throw new Error(`Failed to toggle skill: ${error.message}`);
-  }
+    if (error) {
+      throw new Error(`Failed to toggle skill: ${error.message}`);
+    }
 
-  revalidatePath("/app/settings/skills");
+    revalidatePath("/app/settings/skills");
+  });
 }
 
-export async function deleteSkillAction(skillId: string): Promise<void> {
-  await requireAuth();
-  const supabase = await createServerSupabaseClient();
+export async function deleteSkillAction(skillId: string): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase.from("skills").delete().eq("id", skillId);
+    const { error } = await supabase.from("skills").delete().eq("id", skillId);
 
-  if (error) {
-    throw new Error(`Failed to delete skill: ${error.message}`);
-  }
+    if (error) {
+      throw new Error(`Failed to delete skill: ${error.message}`);
+    }
 
-  revalidatePath("/app/settings/skills");
+    revalidatePath("/app/settings/skills");
+  });
 }

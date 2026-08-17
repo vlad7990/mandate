@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { approveUserAction, rejectUserAction } from "./actions";
 import { IconCheck, IconClose, IconRefresh } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   userId: string;
@@ -20,10 +21,10 @@ export function UserStatusActions({ userId, fullName }: Props) {
     startTransition(async () => {
       try {
         if (action === "approve") {
-          await approveUserAction(userId);
+          unwrap(await approveUserAction(userId));
           toast.success(`${fullName} approved.`);
         } else {
-          await rejectUserAction(userId);
+          unwrap(await rejectUserAction(userId));
           toast.success(`${fullName} rejected.`);
         }
         router.refresh();

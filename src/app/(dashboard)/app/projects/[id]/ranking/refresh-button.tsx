@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { refreshScoresAction } from "./actions";
 import { IconRefresh } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 export function RefreshScoresButton({
   projectId,
@@ -18,7 +19,7 @@ export function RefreshScoresButton({
   const handleClick = () => {
     startTransition(async () => {
       try {
-        await refreshScoresAction(projectId);
+        unwrap(await refreshScoresAction(projectId));
         toast.success("Scores refreshed.");
         router.refresh();
       } catch (e) {

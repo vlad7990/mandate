@@ -7,6 +7,7 @@ import { regenerateCompanyContextAction } from "@/app/(dashboard)/app/executive-
 import {
   IconRefresh,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 const POLL_INTERVAL_MS = 2500;
 
@@ -41,7 +42,7 @@ export function RegenerateContextButton({
   const handleClick = () => {
     startTransition(async () => {
       try {
-        await regenerateCompanyContextAction(searchId);
+        unwrap(await regenerateCompanyContextAction(searchId));
         router.refresh();
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Could not restart research.";

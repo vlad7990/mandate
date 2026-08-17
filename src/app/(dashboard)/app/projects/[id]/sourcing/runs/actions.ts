@@ -44,6 +44,11 @@ import {
 import { runCoverageAnalysis } from "@/lib/ai/run-coverage-analysis";
 import { slotForDbRow, SLOTS } from "@/lib/ai/sourcing-analysis";
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The sourcing run";
 
 type AuthContext = {
   userId: string;
@@ -156,52 +161,54 @@ export type CreateRunInput = {
 export async function createSourcingRunAction(
   projectId: string,
   input: CreateRunInput
-): Promise<{ runId: string; version: number; rootRunId: string }> {
-  const { userId, organizationId } = await requireAuth();
-  const project = await loadProject(projectId, organizationId);
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ runId: string; version: number; rootRunId: string }>> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const project = await loadProject(projectId, organizationId);
+    const supabase = await createServerSupabaseClient();
 
-  const queries = await snapshotQueries(projectId);
-  if (queries.length === 0) {
-    throw new Error(
-      "No sourcing queries to snapshot yet. Generate the Boolean set before saving a run."
-    );
-  }
+    const queries = await snapshotQueries(projectId);
+    if (queries.length === 0) {
+      throw new Error(
+        "No sourcing queries to snapshot yet. Generate the Boolean set before saving a run."
+      );
+    }
 
-  const calibration = project.calibration_model ?? {};
-  const company = project.company_context ?? {};
+    const calibration = project.calibration_model ?? {};
+    const company = project.company_context ?? {};
 
-  const content: SourcingRunContent = {
-    brief: {
-      role_title: calibration.role_title ?? project.title,
-      company_name: company.company_name ?? project.company_name,
-      must_haves: [],
-      geographies: [],
-      target_companies: [],
-    },
-    strategy_rationale: input.rationale.trim(),
-    queries,
-  };
+    const content: SourcingRunContent = {
+      brief: {
+        role_title: calibration.role_title ?? project.title,
+        company_name: company.company_name ?? project.company_name,
+        must_haves: [],
+        geographies: [],
+        target_companies: [],
+      },
+      strategy_rationale: input.rationale.trim(),
+      queries,
+    };
 
-  const { data, error } = await supabase
-    .rpc("allocate_and_insert_sourcing_run", {
-      p_project_id: projectId,
-      p_organization_id: organizationId,
-      p_parent_run_id: input.parentRunId,
-      p_label: input.label.trim() || null,
-      p_content_json: content,
-      p_created_by: userId,
-      p_prompt_version: null,
-      p_model_version: null,
-    })
-    .single<{ id: string; version: number; root_run_id: string }>();
+    const { data, error } = await supabase
+      .rpc("allocate_and_insert_sourcing_run", {
+        p_project_id: projectId,
+        p_organization_id: organizationId,
+        p_parent_run_id: input.parentRunId,
+        p_label: input.label.trim() || null,
+        p_content_json: content,
+        p_created_by: userId,
+        p_prompt_version: null,
+        p_model_version: null,
+      })
+      .single<{ id: string; version: number; root_run_id: string }>();
 
-  if (error || !data) {
-    throw new Error(`Failed to create run: ${error?.message ?? "unknown error"}`);
-  }
+    if (error || !data) {
+      throw new Error(`Failed to create run: ${error?.message ?? "unknown error"}`);
+    }
 
-  revalidatePath(`/app/projects/${projectId}/sourcing`);
-  return { runId: data.id, version: data.version, rootRunId: data.root_run_id };
+    revalidatePath(`/app/projects/${projectId}/sourcing`);
+    return { runId: data.id, version: data.version, rootRunId: data.root_run_id };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -267,10 +274,12 @@ export async function previewImportAction(
   projectId: string,
   text: string,
   overrides: MappingOverrides
-): Promise<ImportPreview> {
-  const { organizationId } = await requireAuth();
-  await loadProject(projectId, organizationId);
-  return toPreview(parseImport(text, overrides));
+): Promise<ActionResult<ImportPreview>> {
+  return runAction(SUBJECT, async () => {
+    const { organizationId } = await requireAuth();
+    await loadProject(projectId, organizationId);
+    return toPreview(parseImport(text, overrides));
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -307,110 +316,112 @@ export async function stageImportAction(
   projectId: string,
   runId: string,
   input: StageImportInput
-): Promise<StageSummary> {
-  const { organizationId } = await requireAuth();
-  await loadProject(projectId, organizationId);
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<StageSummary>> {
+  return runAction(SUBJECT, async () => {
+    const { organizationId } = await requireAuth();
+    await loadProject(projectId, organizationId);
+    const supabase = await createServerSupabaseClient();
 
-  const platform = input.platform.trim();
-  if (!platform) throw new Error("Choose where these results came from.");
+    const platform = input.platform.trim();
+    if (!platform) throw new Error("Choose where these results came from.");
 
-  const { data: run, error: runError } = await supabase
-    .from("sourcing_runs")
-    .select("id, status, project_id")
-    .eq("id", runId)
-    .single<{ id: string; status: string; project_id: string }>();
+    const { data: run, error: runError } = await supabase
+      .from("sourcing_runs")
+      .select("id, status, project_id")
+      .eq("id", runId)
+      .single<{ id: string; status: string; project_id: string }>();
 
-  if (runError || !run) throw new Error("Sourcing run not found.");
-  if (run.project_id !== projectId) {
-    throw new Error("This run belongs to a different search.");
-  }
-  if (run.status !== "draft") {
-    throw new Error(
-      "This run has already been executed. Refine it into a new version to import a fresh set of results."
+    if (runError || !run) throw new Error("Sourcing run not found.");
+    if (run.project_id !== projectId) {
+      throw new Error("This run belongs to a different search.");
+    }
+    if (run.status !== "draft") {
+      throw new Error(
+        "This run has already been executed. Refine it into a new version to import a fresh set of results."
+      );
+    }
+
+    const parsed = parseImport(input.text, input.overrides);
+    if (parsed.rows.length === 0) {
+      throw new Error(
+        parsed.skippedUnnamed > 0
+          ? `No usable rows — all ${parsed.skippedUnnamed} row(s) were missing a name. Check the column mapping.`
+          : "No rows found in that import."
+      );
+    }
+
+    // Dedupe against everyone already in this search's pool.
+    const { data: poolRows, error: poolError } = await supabase
+      .from("candidates")
+      .select("id, full_name, email, linkedin_url, current_company")
+      .eq("project_id", projectId);
+
+    if (poolError) {
+      throw new Error(`Failed to read the candidate pool: ${poolError.message}`);
+    }
+
+    const existing = (poolRows ?? []) as ExistingCandidate[];
+    const deduped = dedupeImportRows(parsed.rows, existing);
+
+    const importedAt = new Date().toISOString();
+    const stagedRows = deduped.map((row) => {
+      const provenance: ImportProvenance = {
+        source: input.sourceType,
+        filename: input.filename,
+        imported_at: importedAt,
+        row_number: row.source_line,
+      };
+      return {
+        run_id: runId,
+        organization_id: organizationId,
+        full_name: row.full_name,
+        current_title: row.current_title,
+        current_company: row.current_company,
+        location: row.location,
+        profile_url: row.profile_url,
+        email: row.email,
+        source_platform: platform,
+        raw: { ...row.raw, [PROVENANCE_KEY]: provenance },
+        match_status: row.match_status,
+        matched_candidate_id: row.matched_candidate_id,
+      };
+    });
+
+    const { error: insertError } = await supabase
+      .from("sourcing_run_results")
+      .insert(stagedRows);
+
+    if (insertError) {
+      throw new Error(`Failed to stage results: ${insertError.message}`);
+    }
+
+    const { error: executeError } = await supabase.rpc(
+      "mark_sourcing_run_executed",
+      { p_run_id: runId, p_result_count: stagedRows.length }
     );
-  }
 
-  const parsed = parseImport(input.text, input.overrides);
-  if (parsed.rows.length === 0) {
-    throw new Error(
-      parsed.skippedUnnamed > 0
-        ? `No usable rows — all ${parsed.skippedUnnamed} row(s) were missing a name. Check the column mapping.`
-        : "No rows found in that import."
-    );
-  }
+    if (executeError) {
+      // Leave no half-imported run behind. The staged rows are the only thing
+      // written so far and nothing references them yet, so clearing them puts the
+      // draft back exactly where it was and the recruiter can simply retry.
+      await supabase.from("sourcing_run_results").delete().eq("run_id", runId);
+      throw new Error(
+        `Failed to record the run as executed, so nothing was staged: ${executeError.message}`
+      );
+    }
 
-  // Dedupe against everyone already in this search's pool.
-  const { data: poolRows, error: poolError } = await supabase
-    .from("candidates")
-    .select("id, full_name, email, linkedin_url, current_company")
-    .eq("project_id", projectId);
+    revalidatePath(`/app/projects/${projectId}/sourcing`);
+    revalidatePath(`/app/projects/${projectId}/sourcing/runs/${runId}/import`);
 
-  if (poolError) {
-    throw new Error(`Failed to read the candidate pool: ${poolError.message}`);
-  }
-
-  const existing = (poolRows ?? []) as ExistingCandidate[];
-  const deduped = dedupeImportRows(parsed.rows, existing);
-
-  const importedAt = new Date().toISOString();
-  const stagedRows = deduped.map((row) => {
-    const provenance: ImportProvenance = {
-      source: input.sourceType,
-      filename: input.filename,
-      imported_at: importedAt,
-      row_number: row.source_line,
-    };
     return {
-      run_id: runId,
-      organization_id: organizationId,
-      full_name: row.full_name,
-      current_title: row.current_title,
-      current_company: row.current_company,
-      location: row.location,
-      profile_url: row.profile_url,
-      email: row.email,
-      source_platform: platform,
-      raw: { ...row.raw, [PROVENANCE_KEY]: provenance },
-      match_status: row.match_status,
-      matched_candidate_id: row.matched_candidate_id,
+      staged: stagedRows.length,
+      newCount: deduped.filter((r) => r.match_status === "new").length,
+      duplicateCount: deduped.filter((r) => r.match_status === "duplicate").length,
+      ambiguousCount: deduped.filter((r) => r.match_status === "ambiguous").length,
+      skippedUnnamed: parsed.skippedUnnamed,
+      droppedForCap: parsed.droppedForCap,
     };
   });
-
-  const { error: insertError } = await supabase
-    .from("sourcing_run_results")
-    .insert(stagedRows);
-
-  if (insertError) {
-    throw new Error(`Failed to stage results: ${insertError.message}`);
-  }
-
-  const { error: executeError } = await supabase.rpc(
-    "mark_sourcing_run_executed",
-    { p_run_id: runId, p_result_count: stagedRows.length }
-  );
-
-  if (executeError) {
-    // Leave no half-imported run behind. The staged rows are the only thing
-    // written so far and nothing references them yet, so clearing them puts the
-    // draft back exactly where it was and the recruiter can simply retry.
-    await supabase.from("sourcing_run_results").delete().eq("run_id", runId);
-    throw new Error(
-      `Failed to record the run as executed, so nothing was staged: ${executeError.message}`
-    );
-  }
-
-  revalidatePath(`/app/projects/${projectId}/sourcing`);
-  revalidatePath(`/app/projects/${projectId}/sourcing/runs/${runId}/import`);
-
-  return {
-    staged: stagedRows.length,
-    newCount: deduped.filter((r) => r.match_status === "new").length,
-    duplicateCount: deduped.filter((r) => r.match_status === "duplicate").length,
-    ambiguousCount: deduped.filter((r) => r.match_status === "ambiguous").length,
-    skippedUnnamed: parsed.skippedUnnamed,
-    droppedForCap: parsed.droppedForCap,
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -433,91 +444,93 @@ export async function stageImportAction(
 export async function analyseRunCoverageAction(
   projectId: string,
   runId: string
-): Promise<{ queued: true }> {
-  const { organizationId } = await requireAuth();
-  await loadProject(projectId, organizationId);
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ queued: true }>> {
+  return runAction(SUBJECT, async () => {
+    const { organizationId } = await requireAuth();
+    await loadProject(projectId, organizationId);
+    const supabase = await createServerSupabaseClient();
 
-  const { data: run, error: runError } = await supabase
-    .from("sourcing_runs")
-    .select("id, project_id, status, content_json, result_count, imported_count")
-    .eq("id", runId)
-    .single<{
-      id: string;
-      project_id: string;
-      status: string;
-      content_json: unknown;
-      result_count: number;
-      imported_count: number;
-    }>();
+    const { data: run, error: runError } = await supabase
+      .from("sourcing_runs")
+      .select("id, project_id, status, content_json, result_count, imported_count")
+      .eq("id", runId)
+      .single<{
+        id: string;
+        project_id: string;
+        status: string;
+        content_json: unknown;
+        result_count: number;
+        imported_count: number;
+      }>();
 
-  if (runError || !run) throw new Error("Sourcing run not found.");
-  if (run.project_id !== projectId) {
-    throw new Error("This run belongs to a different search.");
-  }
-  if (run.status === "draft") {
-    throw new Error(
-      "This run has not been executed yet — there are no results to analyse."
-    );
-  }
-
-  const { data: resultRows, error: resultsError } = await supabase
-    .from("sourcing_run_results")
-    .select("current_company, current_title, location")
-    .eq("run_id", runId);
-
-  if (resultsError) {
-    throw new Error(`Failed to read results: ${resultsError.message}`);
-  }
-
-  const aperture = summariseAperture((resultRows ?? []) as ApertureRow[]);
-
-  // Refused before the model is called, not after. A finding about four rows
-  // describes four rows rather than a strategy, and a confident one would get
-  // a working search rewritten.
-  if (!canAnalyseAperture(aperture)) {
-    throw new Error(
-      `Too few results to analyse — ${MIN_ROWS_FOR_ANALYSIS} are needed and this run returned ${aperture.total_rows}.`
-    );
-  }
-
-  const content = normalizeRunContent(run.content_json);
-
-  after(async () => {
-    try {
-      const analysis = await runCoverageAnalysis(
-        {
-          brief: content.brief,
-          strategy_rationale: content.strategy_rationale,
-          queries: content.queries.map((q) => ({
-            slot: q.slot,
-            content: q.content,
-          })),
-          yield: {
-            result_count: run.result_count,
-            imported_count: run.imported_count,
-          },
-          aperture,
-        },
-        { projectId, organizationId }
-      );
-
-      const background = await createServerSupabaseClient();
-      await background
-        .from("sourcing_runs")
-        .update({ analysis_json: analysis, updated_at: new Date().toISOString() })
-        .eq("id", runId);
-
-      revalidatePath(`/app/projects/${projectId}/sourcing`);
-    } catch (err) {
-      // Swallowed deliberately: this runs after the response. Throwing here
-      // reaches nobody, and the UI already reads "no analysis yet" — which is
-      // the truth when the call failed.
-      console.error("[coverage-analysis] run %s failed", runId, err);
+    if (runError || !run) throw new Error("Sourcing run not found.");
+    if (run.project_id !== projectId) {
+      throw new Error("This run belongs to a different search.");
     }
-  });
+    if (run.status === "draft") {
+      throw new Error(
+        "This run has not been executed yet — there are no results to analyse."
+      );
+    }
 
-  return { queued: true };
+    const { data: resultRows, error: resultsError } = await supabase
+      .from("sourcing_run_results")
+      .select("current_company, current_title, location")
+      .eq("run_id", runId);
+
+    if (resultsError) {
+      throw new Error(`Failed to read results: ${resultsError.message}`);
+    }
+
+    const aperture = summariseAperture((resultRows ?? []) as ApertureRow[]);
+
+    // Refused before the model is called, not after. A finding about four rows
+    // describes four rows rather than a strategy, and a confident one would get
+    // a working search rewritten.
+    if (!canAnalyseAperture(aperture)) {
+      throw new Error(
+        `Too few results to analyse — ${MIN_ROWS_FOR_ANALYSIS} are needed and this run returned ${aperture.total_rows}.`
+      );
+    }
+
+    const content = normalizeRunContent(run.content_json);
+
+    after(async () => {
+      try {
+        const analysis = await runCoverageAnalysis(
+          {
+            brief: content.brief,
+            strategy_rationale: content.strategy_rationale,
+            queries: content.queries.map((q) => ({
+              slot: q.slot,
+              content: q.content,
+            })),
+            yield: {
+              result_count: run.result_count,
+              imported_count: run.imported_count,
+            },
+            aperture,
+          },
+          { projectId, organizationId }
+        );
+
+        const background = await createServerSupabaseClient();
+        await background
+          .from("sourcing_runs")
+          .update({ analysis_json: analysis, updated_at: new Date().toISOString() })
+          .eq("id", runId);
+
+        revalidatePath(`/app/projects/${projectId}/sourcing`);
+      } catch (err) {
+        // Swallowed deliberately: this runs after the response. Throwing here
+        // reaches nobody, and the UI already reads "no analysis yet" — which is
+        // the truth when the call failed.
+        console.error("[coverage-analysis] run %s failed", runId, err);
+      }
+    });
+
+    return { queued: true };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -546,51 +559,53 @@ export async function promoteResultsAction(
   projectId: string,
   runId: string,
   decisions: PromoteDecision[]
-): Promise<PromoteSummary> {
-  const { organizationId } = await requireAuth();
-  await loadProject(projectId, organizationId);
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<PromoteSummary>> {
+  return runAction(SUBJECT, async () => {
+    const { organizationId } = await requireAuth();
+    await loadProject(projectId, organizationId);
+    const supabase = await createServerSupabaseClient();
 
-  if (decisions.length === 0) {
-    throw new Error("Nothing selected to import.");
-  }
+    if (decisions.length === 0) {
+      throw new Error("Nothing selected to import.");
+    }
 
-  for (const d of decisions) {
-    if (d.action === "link" && !d.candidate_id) {
+    for (const d of decisions) {
+      if (d.action === "link" && !d.candidate_id) {
+        throw new Error(
+          "A row set to 'link' has no candidate chosen. Pick the person it matches, or create a new record."
+        );
+      }
+    }
+
+    const { data, error } = await supabase
+      .rpc("promote_sourcing_results", {
+        p_run_id: runId,
+        p_decisions: decisions.map((d) => ({
+          result_id: d.result_id,
+          action: d.action,
+          candidate_id: d.action === "link" ? d.candidate_id : null,
+        })),
+      })
+      .single<{
+        created_count: number;
+        linked_count: number;
+        imported_count: number;
+      }>();
+
+    if (error || !data) {
       throw new Error(
-        "A row set to 'link' has no candidate chosen. Pick the person it matches, or create a new record."
+        `Nothing was imported: ${error?.message ?? "the promotion failed"}`
       );
     }
-  }
 
-  const { data, error } = await supabase
-    .rpc("promote_sourcing_results", {
-      p_run_id: runId,
-      p_decisions: decisions.map((d) => ({
-        result_id: d.result_id,
-        action: d.action,
-        candidate_id: d.action === "link" ? d.candidate_id : null,
-      })),
-    })
-    .single<{
-      created_count: number;
-      linked_count: number;
-      imported_count: number;
-    }>();
+    revalidatePath(`/app/projects/${projectId}/sourcing`);
+    revalidatePath(`/app/projects/${projectId}/sourcing/runs/${runId}/import`);
+    revalidatePath(`/app/projects/${projectId}/candidates`);
 
-  if (error || !data) {
-    throw new Error(
-      `Nothing was imported: ${error?.message ?? "the promotion failed"}`
-    );
-  }
-
-  revalidatePath(`/app/projects/${projectId}/sourcing`);
-  revalidatePath(`/app/projects/${projectId}/sourcing/runs/${runId}/import`);
-  revalidatePath(`/app/projects/${projectId}/candidates`);
-
-  return {
-    created: data.created_count,
-    linked: data.linked_count,
-    imported: data.imported_count,
-  };
+    return {
+      created: data.created_count,
+      linked: data.linked_count,
+      imported: data.imported_count,
+    };
+  });
 }

@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
 import { contactLabel } from "@/lib/clients/contacts";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The share link";
 
 const DEFAULT_EXPIRY_DAYS = 30;
 
@@ -95,60 +100,64 @@ export async function generateHmTokenAction(
   projectId: string,
   label: string,
   contactId?: string
-): Promise<{ token: string; expires_at: string }> {
-  const auth = await requireActiveUser();
-  await assertProjectOwnership(projectId, auth.organizationId);
+): Promise<ActionResult<{ token: string; expires_at: string }>> {
+  return runAction(SUBJECT, async () => {
+    const auth = await requireActiveUser();
+    await assertProjectOwnership(projectId, auth.organizationId);
 
-  const expiresAt = new Date(
-    Date.now() + DEFAULT_EXPIRY_DAYS * 24 * 60 * 60 * 1000
-  ).toISOString();
+    const expiresAt = new Date(
+      Date.now() + DEFAULT_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+    ).toISOString();
 
-  const supabase = await createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
 
-  const contact = contactId?.trim()
-    ? await resolveTokenContact(supabase, projectId, contactId.trim())
-    : null;
+    const contact = contactId?.trim()
+      ? await resolveTokenContact(supabase, projectId, contactId.trim())
+      : null;
 
-  const { data, error } = await supabase
-    .from("hiring_manager_tokens")
-    .insert({
-      project_id: projectId,
-      organization_id: auth.organizationId,
-      created_by: auth.userId,
-      contact_id: contact?.id ?? null,
-      label: contact?.label ?? label.trim(),
-      expires_at: expiresAt,
-    })
-    .select("token, expires_at")
-    .single<{ token: string; expires_at: string }>();
+    const { data, error } = await supabase
+      .from("hiring_manager_tokens")
+      .insert({
+        project_id: projectId,
+        organization_id: auth.organizationId,
+        created_by: auth.userId,
+        contact_id: contact?.id ?? null,
+        label: contact?.label ?? label.trim(),
+        expires_at: expiresAt,
+      })
+      .select("token, expires_at")
+      .single<{ token: string; expires_at: string }>();
 
-  if (error || !data) {
-    throw new Error(`Failed to mint token: ${error?.message ?? "no row"}`);
-  }
+    if (error || !data) {
+      throw new Error(`Failed to mint token: ${error?.message ?? "no row"}`);
+    }
 
-  revalidatePath(`/app/projects/${projectId}/hiring-manager`);
-  return { token: data.token, expires_at: data.expires_at };
+    revalidatePath(`/app/projects/${projectId}/hiring-manager`);
+    return { token: data.token, expires_at: data.expires_at };
+  });
 }
 
 export async function revokeHmTokenAction(
   projectId: string,
   tokenId: string
-): Promise<void> {
-  const auth = await requireActiveUser();
-  await assertProjectOwnership(projectId, auth.organizationId);
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const auth = await requireActiveUser();
+    await assertProjectOwnership(projectId, auth.organizationId);
 
-  const supabase = await createServerSupabaseClient();
-  // RLS already scopes the update by org; the project-id filter keeps
-  // the action narrow.
-  const { error } = await supabase
-    .from("hiring_manager_tokens")
-    .update({ revoked_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq("id", tokenId)
-    .eq("project_id", projectId);
+    const supabase = await createServerSupabaseClient();
+    // RLS already scopes the update by org; the project-id filter keeps
+    // the action narrow.
+    const { error } = await supabase
+      .from("hiring_manager_tokens")
+      .update({ revoked_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("id", tokenId)
+      .eq("project_id", projectId);
 
-  if (error) {
-    throw new Error(`Failed to revoke token: ${error.message}`);
-  }
+    if (error) {
+      throw new Error(`Failed to revoke token: ${error.message}`);
+    }
 
-  revalidatePath(`/app/projects/${projectId}/hiring-manager`);
+    revalidatePath(`/app/projects/${projectId}/hiring-manager`);
+  });
 }

@@ -20,6 +20,11 @@ import {
   type PrioritySignal,
   type RoleOrigin,
 } from "@/lib/ai/onboarding-analysis";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The calibration";
 
 const ROLE_ORIGIN_VALUES = ROLE_ORIGIN_OPTIONS.map((o) => o.value) as readonly RoleOrigin[];
 
@@ -73,31 +78,33 @@ function validate(responses: OnboardingResponses): string | null {
 export async function submitOnboarding(
   projectId: string,
   responses: OnboardingResponses
-): Promise<void> {
-  // Onboarding is where a mandate's calibration is set, so it is a mandate
-  // write — a researcher may screen against a calibration but not redefine
-  // the one every score in the search is measured by.
-  await requireActionContext("mandates:write");
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    // Onboarding is where a mandate's calibration is set, so it is a mandate
+    // write — a researcher may screen against a calibration but not redefine
+    // the one every score in the search is measured by.
+    await requireActionContext("mandates:write");
 
-  const error = validate(responses);
-  if (error) throw new Error(error);
+    const error = validate(responses);
+    if (error) throw new Error(error);
 
-  const sanitized: OnboardingResponses = {
-    role_origin: responses.role_origin,
-    must_haves: clean(responses.must_haves),
-    anti_patterns: clean(responses.anti_patterns),
-    stakeholders: responses.stakeholders
-      .map((s) => ({
-        name: s.name.trim(),
-        role: s.role.trim(),
-        focus: s.focus.trim(),
-      }))
-      .filter((s) => s.name || s.role || s.focus),
-    priority_signals: cleanPrioritySignals(responses.priority_signals),
-  };
+    const sanitized: OnboardingResponses = {
+      role_origin: responses.role_origin,
+      must_haves: clean(responses.must_haves),
+      anti_patterns: clean(responses.anti_patterns),
+      stakeholders: responses.stakeholders
+        .map((s) => ({
+          name: s.name.trim(),
+          role: s.role.trim(),
+          focus: s.focus.trim(),
+        }))
+        .filter((s) => s.name || s.role || s.focus),
+      priority_signals: cleanPrioritySignals(responses.priority_signals),
+    };
 
-  await deriveAndStoreCalibration(projectId, sanitized);
+    await deriveAndStoreCalibration(projectId, sanitized);
 
-  revalidatePath(`/app/projects/${projectId}`);
-  redirect(`/app/projects/${projectId}`);
+    revalidatePath(`/app/projects/${projectId}`);
+    redirect(`/app/projects/${projectId}`);
+  });
 }

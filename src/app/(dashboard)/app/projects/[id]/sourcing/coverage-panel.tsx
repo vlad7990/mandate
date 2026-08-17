@@ -11,6 +11,7 @@ import {
 import type { CoverageDimension } from "@/lib/sourcing/coverage";
 import { IconAlert, IconRefresh, IconSpark, IconTarget } from "@/components/icons";
 import { analyseRunCoverageAction, createSourcingRunAction } from "./runs/actions";
+import { unwrap } from "@/lib/actions/result";
 
 /**
  * Coverage findings for one executed run, and the refinement they argue for.
@@ -57,7 +58,7 @@ export function CoveragePanel({
     if (pending) return;
     start(async () => {
       try {
-        await analyseRunCoverageAction(projectId, runId);
+        unwrap(await analyseRunCoverageAction(projectId, runId));
         setQueued(true);
         toast.success("Analysing coverage — findings appear here when ready");
       } catch (err) {
@@ -71,14 +72,14 @@ export function CoveragePanel({
     if (!suggestion || pending) return;
     start(async () => {
       try {
-        const result = await createSourcingRunAction(projectId, {
+        const result = unwrap(await createSourcingRunAction(projectId, {
           label: suggestion.label,
           // The agent's changes become the new version's rationale, so v(n+1)
           // records what it was trying to fix about v(n) — which is the whole
           // point of keeping both readable.
           rationale: `Refining v${runVersion}: ${suggestion.changes.join("; ")}.`,
           parentRunId: runId,
-        });
+        }));
         toast.success(`Created v${result.version} — ${suggestion.label}`);
         router.refresh();
       } catch (err) {

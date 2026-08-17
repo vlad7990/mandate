@@ -1,7 +1,8 @@
-# Continuation — roles, the re-skin, clients, placements, the trail, contacts, the advisor sweep
+# Continuation — roles, the re-skin, clients, placements, the trail, contacts, the advisor sweep, the action-error contract
 
 **Date:** 2026-08-13, extended 2026-08-14 with the advisor sweep and the
-status sweep that followed it (§5g–§5i)
+status sweep that followed it (§5g–§5i), and 2026-08-17 with the
+server-action error contract and the post-061 advisor run (§11–§12)
 **Supersedes:** `2026-08-13-platform-features.md` entirely. Both open
 decisions in it are now made, and five of its priority items are done. Its
 Resend and `ANTHROPIC_API_KEY` blockers are unchanged and repeated below.
@@ -1291,6 +1292,9 @@ runway.
 
 ### Finding 2 — every server-action error message is invisible in production
 
+**Fixed on 2026-08-17. The write-up below is the diagnosis; §11 is the fix,
+including the one thing that got harder rather than easier by making it.**
+
 **This is the important one, and only a production build shows it.**
 
 Next.js redacts errors thrown from Server Actions in production. The
@@ -1317,7 +1321,7 @@ forever.
 **The fix is a contract change, not a copy change.** A server action must
 *return* its failure as a value rather than throw it, and the client renders
 that value. It touches every action/panel pair, so it is its own piece of
-work with its own verification, and it is not started.
+work with its own verification. **Done — see §11.**
 
 There is a silver lining worth recording: this redaction is also why the
 `e.message` toasts were never a *leak*. The provider payload does not reach
@@ -1440,6 +1444,13 @@ The priority list from the original review is now **done**, apart from items
   hand-written founder/self-scoped tables were the only ones at risk. Both
   are now closed and `suspended_account_invariants.sql` keeps them that way
   for tables that do not exist yet.
+
+- ~~Every server-action error message is invisible in production~~ — done
+  2026-08-17, §11. 104 actions and 95 call sites, one `ActionResult`
+  contract, and a test that fails the build if a call site is added without
+  `unwrap`.
+- ~~Re-run the advisor after 061~~ — done 2026-08-17, §12. Nothing changed;
+  the three new findings are all deliberate and all 061's.
 
 Smaller, added by this session:
 
@@ -1599,3 +1610,206 @@ and fee events inherit exactly the visibility rule described above, including
 the own-placement exception. It was worth doing before invoicing rather than
 after: an invoicing feature built on an unaudited fee table would have needed
 the trail retrofitted underneath it.
+
+---
+
+## 11. The server-action error contract — 2026-08-17
+
+§6b finding 2, closed. Every error message a server action produces now
+reaches the person who caused it, in a production build. Before this, all of
+them rendered the same paragraph about a digest.
+
+It was **not twenty files**. 104 exported actions across 30 modules, and 95
+client call sites. The "around twenty" figure in the continuation prompt came
+from grepping `error.message`, which finds the panels that *render* a message
+and not the actions that produce one.
+
+### The shape
+
+`src/lib/actions/result.ts` — isomorphic, imported by client components:
+
+```ts
+type ActionResult<T = void> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
+
+class ActionFailure extends Error {}
+function unwrap<T>(r: ActionResult<T>): T   // throws ActionFailure if !ok
+```
+
+`src/lib/actions/run.ts` — server-only, imported by action modules:
+
+```ts
+runAction(subject, async () => { ...the action body, unchanged... })
+```
+
+Each action file declares one `SUBJECT` — "The role change", "The sourcing
+strategy" — and every exported action in it is `return runAction(SUBJECT,
+async () => { … })`. Bodies were not rewritten; they still `throw`, and 348
+throw sites are untouched.
+
+### The client still throws, on purpose
+
+`unwrap(await someAction(x))` turns `{ ok: false }` back into an exception —
+**on the client**, where nothing is redacted. The failure has already crossed
+the boundary as data by then, which is the whole fix.
+
+That choice is what made the change reviewable. Each of the 95 call sites has
+its own recovery hanging off `catch`: an optimistic list put back, a `<select>`
+reset to what the server still says, a `finally` clearing a spinner. Rewriting
+95 recovery blocks into early returns would have touched precisely the code
+that has already been debugged in a browser — including the five bugs in
+`09acbac` — for no gain. One token per call site touched none of it.
+
+### The thing that got *harder*, not easier
+
+§6b recorded a silver lining: the redaction that made those toasts useless
+also meant no provider payload ever reached a browser through a Server Action.
+
+**Returning the message removes that cover.** Every string leaving an action
+is now a string a customer can read, and the sourcing path proves it matters:
+`generateAllSourcingQueries` lets the Anthropic SDK's error propagate
+verbatim, so the message crossing the boundary would have been
+
+> `400 {"type":"error","error":{"type":"invalid_request_error","message":"Your
+> credit balance is too low…"},"request_id":"req_011Ce8…"}`
+
+— the exact payload `9a1c65c` and `fe37b55` were written to keep out of a page
+body and a database column. So `runAction` decides, and the rule is:
+
+- **A plain `Error` is an outcome the action authored.** Its message was
+  written for the reader; it passes through `safeFailureMessage()`, the same
+  backstop the `generation_error` columns use.
+- **An `Error` *subclass*, or a non-`Error` throw, is a fault.** The Anthropic
+  SDK throws subclasses; so do `TypeError` and friends. The reader gets
+  `agentErrorMessage()`'s sentence; the real error goes to the server log.
+
+Discriminating on `constructor === Error` rather than on a bespoke
+`ActionError` class is what let this land without editing 348 throw sites, and
+it puts the default on the safe side: a new `throw` nobody thought about is
+only shown if somebody wrote `new Error("a sentence")`. `constructor` and not
+`name`, because a subclass that forgets to set `name` inherits `"Error"` and
+would take the wrong branch.
+
+No second error mapper was written. `agent-errors.ts` is the sink, as it was.
+
+### What keeps throwing
+
+- **`ForbiddenError`.** The guard layer (§2), not an outcome. A caller who
+  reaches an action they hold no capability for is not a user needing a
+  friendly sentence — the proxy and RLS are the boundary. The consequence is
+  carried deliberately: that one case still shows the digest paragraph.
+- **`redirect()` / `notFound()`.** They signal by throwing. Swallowing one
+  would turn every successful redirecting action — `createSkillAction`,
+  `createProjectAction` — into a silent failure toast. `runAction` reads the
+  `digest` string by hand rather than importing
+  `next/dist/client/components/redirect-error`, a private path that has moved
+  between majors; `skill-form.tsx` already does the same check client-side.
+- **The four `<form action={…}>` actions** — `signInAction`, `signUpAction`,
+  `createProjectAction`, `createExecutiveSearchAction` — are not converted at
+  all. React's form-action type forbids a return value, and they already
+  report failure by redirecting with `?error=`, which is server-rendered and
+  so was never redacted.
+
+`initiateJobSpec` delegates to `requestRegenerate` rather than wrapping it:
+both are actions, and wrapping would nest the envelope and hide a failure
+inside a successful outer result. `runAction` also passes an `ActionFailure`
+through unchanged, so an action reading another action's result with `unwrap`
+does not have a good sentence replaced by a vague one for crossing one more
+frame.
+
+### A missed call site is worse than the bug
+
+This is the part the compiler cannot hold. An action returning
+`Promise<ActionResult<void>>` called as `await fooAction(x)` type-checks
+perfectly — the result is discarded — and the UI then reports **success** on a
+mutation the server refused. The redacted toast at least said something had
+gone wrong.
+
+`src/lib/actions/call-sites.test.ts` fails the build if any call of an
+exported action outside a `"use server"` module is not immediately preceded by
+`unwrap(await `. It strips comments and string bodies first, so a doc-comment
+mention of an action name is not read as a call, and it pins
+`actionModules.length > 25` and `actionNames.size > 90` so a scan that
+silently matches nothing fails loudly rather than passing vacuously — the same
+argument as assertion (2) in `suspended_account_invariants.sql`.
+
+**Control run**: deleting one `unwrap(` from `role-picker.tsx` failed the test
+naming that file and line; restoring it passed. TypeScript catches the other
+subset — a result that is read, or an action passed to a typed slot — and
+those are not re-checked here.
+
+### Verified in a production build, because nothing else would do
+
+`npm run build && npm start`, driven in a browser under a temporary admin in a
+scratch organisation. Both paths from §6b, chosen because they fail for
+completely different reasons:
+
+| Path | Before | After |
+|---|---|---|
+| Demote the org's last admin | the digest paragraph | **"an organization must keep at least one active admin"** |
+| BUILD SOURCING QUERIES, no credit | the digest paragraph | **"The sourcing strategy could not run. This has been logged…"** |
+
+Both are in one console log, the old build on `:3002` and the new one on
+`:3000`, which is as direct a before/after as this gets.
+
+On the sourcing run the DOM was also asserted clean of `Anthropic`,
+`credit balance`, `Plans & Billing`, `req_` and `invalid_request_error` — the
+leak the contract change created the opportunity for. The server log holds the
+real payload. Two audiences, two strings, as with the audit trail in §8.
+
+The `<select>` in the members row rolled back to `admin` after the refusal,
+which is the evidence that the existing recovery blocks still run.
+
+Scratch org, project, job spec, auth user, identity and sessions deleted
+afterwards; counts checked back to baseline — 1 org, 2 projects, 1 candidate,
+1 client, 1 user, 1 auth user, 0 sessions, 0 contacts, 0 notes, 0 placements,
+0 activity events, 0 waitlist, 5 skills, 1 job spec, 0 boolean queries.
+
+586 tests (was 584), tsc / lint / build green.
+
+### Three things found on the way
+
+- **Three actions had no return type annotation at all** —
+  `generatePsychologyAction`, `generateClientPsychologyAction`,
+  `generateCompanyCultureAction`. They now declare `CandidatePsychology`,
+  `ClientPsychology` and `CultureProfile`. Inferred return types are fine
+  until something has to wrap them.
+- **`SAVE_DRAFT_FINALIZED_MESSAGE` is a sentinel the editor compares against**,
+  not just prose. It survives: an authored plain `Error` passes through
+  `safeFailureMessage` unchanged, so `msg === SAVE_DRAFT_FINALIZED_MESSAGE`
+  still matches on the far side of `unwrap`.
+- **"~5–10 SECONDS" is still wrong** (§6b finding 3). Untouched.
+
+---
+
+## 12. The advisor sweep after 061 — 2026-08-17
+
+Run because 061 added a table and an anon-executable SECURITY DEFINER
+function. **Security 12, performance 91. Nothing was changed and nothing
+needs to be.**
+
+The three findings that are new since §5g are all 061's, and all three are
+the deliberate shape:
+
+- **`check_demo_rate_limit` under both the `anon` and the `authenticated`
+  SECURITY DEFINER lints.** The caller is a stranger on the marketing page
+  with no session — the same argument as `verify_hm_token` (023). The
+  function takes no parameter it trusts for anything but a bucket name.
+- **`demo_rate_limit` under `rls_enabled_no_policy`.** INFO, and it is the
+  *correct* state rather than an omission: RLS on with zero policies is
+  deny-all, and the SECURITY DEFINER function is the only path in. Verified
+  rather than asserted — as `anon` and as a forged `authenticated` claim,
+  the table reads zero rows and refuses an insert, with a **control run**
+  inverting the last assertion that raised as expected.
+
+The rest is exactly §5g's residue: six deliberate SECURITY DEFINER
+functions, the Pro-gated leaked-password toggle (§7), 12 unindexed
+attribution foreign keys, and 79 `unused_index` — the same 79, unchanged.
+
+The continuation prompt expected `demo_rate_limit` to show up for an unused
+index and it did not. `demo_rate_limit_expires_idx` exists, and the reason it
+is absent from the list is the one §5g gives for why the list is not a to-do
+in the first place: an index is flagged for having no recorded scans, and this
+one has some, because the demo endpoint has actually been called since 061
+landed.

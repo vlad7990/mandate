@@ -21,6 +21,7 @@ import {
   dismissHealthSuggestionAction,
   generateHealthSuggestionsAction,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 const PRIORITY_TONE: Record<HealthSuggestion["priority"], string> = {
   high: "border-error/60 bg-error/10 text-error",
@@ -50,7 +51,7 @@ export function HealthSuggestionsPanel({
     if (pending) return;
     start(async () => {
       try {
-        const next = await generateHealthSuggestionsAction(projectId);
+        const next = unwrap(await generateHealthSuggestionsAction(projectId));
         setBlob(next);
         toast.success(`${next.suggestions.length} suggestions ready`);
         router.refresh();
@@ -66,7 +67,7 @@ export function HealthSuggestionsPanel({
     setBusy(suggestionId);
     start(async () => {
       try {
-        await dismissHealthSuggestionAction(projectId, suggestionId);
+        unwrap(await dismissHealthSuggestionAction(projectId, suggestionId));
         setBlob((b) =>
           b
             ? {
@@ -91,10 +92,10 @@ export function HealthSuggestionsPanel({
     setBusy(suggestion.id);
     start(async () => {
       try {
-        const result = await applySourcingSuggestionAction(
+        const result = unwrap(await applySourcingSuggestionAction(
           projectId,
           suggestion.id
-        );
+        ));
         toast.success(
           `${suggestion.applicable_slot} now at v${result.version}`
         );

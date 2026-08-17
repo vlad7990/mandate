@@ -37,6 +37,7 @@ import {
   type FeeTermsRow,
 } from "@/lib/fees/types";
 import { deleteFeeTermsAction, saveFeeTermsAction } from "./fee-terms-actions";
+import { unwrap, type ActionResult } from "@/lib/actions/result";
 
 const FIELD =
   "w-full min-w-0 border border-outline-variant bg-surface px-3 py-2 font-mono-label text-mono-label uppercase tracking-wider text-on-surface tabular-nums focus:border-primary focus:outline-none";
@@ -60,10 +61,10 @@ export function FeeTermsPanel({
 
   const plan = terms ? parseInstalmentPlan(terms.instalment_plan) : [];
 
-  function run(action: (fd: FormData) => Promise<void>, fd: FormData, ok: string) {
+  function run(action: (fd: FormData) => Promise<ActionResult>, fd: FormData, ok: string) {
     start(async () => {
       try {
-        await action(fd);
+        unwrap(await action(fd));
         setEditing(false);
         router.refresh();
         toast.success(ok);

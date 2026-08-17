@@ -11,6 +11,7 @@ import {
   IconRefresh,
   IconSpark,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   projectId: string;
@@ -31,7 +32,7 @@ export function JobSpecEmpty({ projectId, roleTitle, companyName }: Props) {
   const handleGenerate = () => {
     startTransition(async () => {
       try {
-        await initiateJobSpec(projectId);
+        unwrap(await initiateJobSpec(projectId));
         // The action revalidates /projects/[id]/spec and inserts a row with
         // is_generating=true, so refreshing flips the page to the polling view.
         router.refresh();

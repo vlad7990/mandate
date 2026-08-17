@@ -40,6 +40,7 @@ import {
   savePsychologyAnnotationAction,
   togglePsychologyFlagAction,
 } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 // Section keys (annotations) and axis keys (flags + confidence
 // overrides). Stable strings — they get persisted into the JSONB
@@ -98,11 +99,11 @@ export function PsychologyPanel({
     const ctx = contextDraft.trim();
     start(async () => {
       try {
-        const next = await generatePsychologyAction(
+        const next = unwrap(await generatePsychologyAction(
           candidateId,
           projectId,
           ctx.length > 0 ? ctx : undefined
-        );
+        ));
         setProfile(next);
         setSavedContext(ctx.length > 0 ? ctx : null);
         setContextDraft("");
@@ -444,7 +445,7 @@ function AxisRowView({
     if (pending) return;
     start(async () => {
       try {
-        await togglePsychologyFlagAction(candidateId, projectId, row.key);
+        unwrap(await togglePsychologyFlagAction(candidateId, projectId, row.key));
         toast.success(flagged ? "Flag removed" : "Flagged for review");
         router.refresh();
       } catch (err) {
@@ -457,12 +458,12 @@ function AxisRowView({
     if (pending) return;
     start(async () => {
       try {
-        await overridePsychologyConfidenceAction(
+        unwrap(await overridePsychologyConfidenceAction(
           candidateId,
           projectId,
           row.key,
           value
-        );
+        ));
         toast.success(value === null ? "Override cleared" : "Confidence saved");
         setAdjustOpen(false);
         router.refresh();
@@ -715,12 +716,12 @@ function Section({
     if (pending) return;
     start(async () => {
       try {
-        await savePsychologyAnnotationAction(
+        unwrap(await savePsychologyAnnotationAction(
           candidateId,
           projectId,
           sectionKey,
           draft
-        );
+        ));
         toast.success(
           draft.trim().length === 0
             ? "Observation cleared"

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { SECTION_DEFS } from "@/lib/ai/job-spec-analysis";
 import { markGenerationTimedOut } from "./actions";
 import { IconArrowLeft } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 const POLL_INTERVAL_MS = 1500;
 const TIMEOUT_MS = 60_000;
@@ -62,7 +63,7 @@ export function JobSpecGenerating({
         if (timedOutRef.current) return;
         timedOutRef.current = true;
         try {
-          await markGenerationTimedOut(specId, projectId);
+          unwrap(await markGenerationTimedOut(specId, projectId));
         } catch (err) {
           console.error("[spec/generating] timeout marker failed", err);
         }

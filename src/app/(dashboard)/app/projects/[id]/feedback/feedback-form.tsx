@@ -11,6 +11,7 @@ import {
 } from "@/lib/ai/feedback-analysis";
 import { submitFeedbackAction } from "./actions";
 import { IconPencil, IconRefresh, IconSend } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 export type CandidateOption = {
   id: string;
@@ -55,7 +56,7 @@ export function FeedbackForm({
         formData.set("feedbackType", feedbackType);
         formData.set("candidateId", candidateId);
         formData.set("content", content);
-        await submitFeedbackAction(formData);
+        unwrap(await submitFeedbackAction(formData));
         toast.success(
           "Feedback submitted — interpretation + recalibration in flight."
         );

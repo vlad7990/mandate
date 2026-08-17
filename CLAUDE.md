@@ -40,6 +40,22 @@ Apply to the live DB via MCP `apply_migration` **and** write the numbered file i
 Use `SMOKE`-prefixed synthetic data. Delete everything afterwards and **confirm 0 rows
 remain**.
 
+### Server actions — the failure contract
+
+A server action **returns** its failure; it never throws it to the client.
+Next.js redacts errors thrown out of a Server Action in production, so a
+thrown message is invisible to the person who caused it — and `next dev`
+shows the real one, which is why this survived for months. Anything about
+an error message is verified with `npm run build && npm start`, never
+`npm run dev`.
+
+Wrap the body in `runAction(SUBJECT, …)` from `@/lib/actions/run`; read the
+result with `unwrap(await someAction(…))` from `@/lib/actions/result`.
+`src/lib/actions/call-sites.test.ts` fails the build if a call site skips
+`unwrap` — a discarded `ActionResult` reports success on a refused mutation.
+`assertCapability` / `ForbiddenError` and `redirect()` keep throwing. Full
+reasoning in §11 of the handoff.
+
 ### AI output — non-negotiable
 
 All AI output is **decision support**. Never a hire/no-hire verdict, never psychological
@@ -116,7 +132,7 @@ coupled code.
 ## PRE-LAUNCH CHECKLIST
 
 ### Security & Performance
-- [x] Run Supabase advisor sweep (mcp_supabase_get_advisors) and fix any new findings — migrations `058`/`059`, 2026-08-14. Security 33 findings → 9; what stayed and why is in §5g of the handoff. **Re-run after any migration that adds tables or policies.**
+- [x] Run Supabase advisor sweep (mcp_supabase_get_advisors) and fix any new findings — migrations `058`/`059`, 2026-08-14. Security 33 findings → 9; what stayed and why is in §5g of the handoff. Re-run after `061` on 2026-08-17: security 12, performance 91, **nothing changed and nothing needs to be** — the three new findings are `check_demo_rate_limit` under both SECURITY DEFINER lints and `demo_rate_limit` under `rls_enabled_no_policy`, all deliberate and reasoned about in §12. **Re-run after any migration that adds tables or policies.**
 - [ ] **Enable leaked-password protection** — **blocked on plan tier, not on a decision.** Checked 2026-08-14: org `Stratum` (`bfomdugfdcxxcneocihl`) is on `free`, and Supabase gates this feature at Pro. The dashboard toggle is locked; there is no SQL for it and the Supabase MCP has no auth-config tool. Needs a Pro upgrade (~$25/mo, org-wide) first, then `Auth → Providers → Email → "Prevent use of leaked passwords"`, or `PATCH /v1/projects/xipyqnltkbtywxqyxupf/config/auth {"password_hibp_enabled": true}` with a personal access token. HIBP is checked when a password is **set** — signup and reset — so enabling it later disrupts nobody who has already signed up, and delaying it costs nothing retroactively. It will keep appearing in every advisor run until then.
 - [ ] **Raise the password floor in the Supabase dashboard — `Auth → Providers → Email`.** Founder's decision 2026-08-14: **minimum length 12, all four character classes** (lowercase, uppercase, digits, symbols). Not plan-gated. The app side is already done and shipped — `src/lib/auth/password-policy.ts` enforces exactly this at signup — but **that is not the boundary**: anyone with the anon key can call `supabase.auth.signUp()` directly and bypass it. Until the dashboard matches, the floor is still the default 6 with no class requirement. The two must stay in sync; the policy module says so at the top.
 - [ ] Add hCaptcha/Turnstile to /request-access form

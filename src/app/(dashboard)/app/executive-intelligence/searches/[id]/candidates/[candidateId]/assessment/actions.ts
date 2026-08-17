@@ -11,6 +11,11 @@ import {
 import type { OperationalWeight } from "@/lib/executive/assessment-scoring";
 import type { AssessmentContent } from "@/lib/executive/types";
 import { recordExecutiveAuditEvent } from "@/lib/executive/audit";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The assessment";
 
 type AuthContext = { userId: string; organizationId: string };
 
@@ -116,40 +121,42 @@ async function allocateAndInsertAssessment(
 export async function createAssessment(
   searchId: string,
   candidateId: string
-): Promise<{ assessmentId: string; version: number }> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ assessmentId: string; version: number }>> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const plan = await approvedPlan(supabase, searchId, candidateId);
-  if (!plan) {
-    throw new Error(
-      "Approve an interview plan for this candidate before starting an assessment."
-    );
-  }
+    const plan = await approvedPlan(supabase, searchId, candidateId);
+    if (!plan) {
+      throw new Error(
+        "Approve an interview plan for this candidate before starting an assessment."
+      );
+    }
 
-  const weights = await loadOperationalWeights(supabase, searchId);
-  const skeleton = buildAssessmentSkeleton(weights, plan.content_json);
+    const weights = await loadOperationalWeights(supabase, searchId);
+    const skeleton = buildAssessmentSkeleton(weights, plan.content_json);
 
-  const inserted = await allocateAndInsertAssessment(supabase, {
-    searchId,
-    candidateId,
-    organizationId,
-    sourcePlanId: plan.id,
-    createdBy: userId,
-    contentJson: skeleton,
+    const inserted = await allocateAndInsertAssessment(supabase, {
+      searchId,
+      candidateId,
+      organizationId,
+      sourcePlanId: plan.id,
+      createdBy: userId,
+      contentJson: skeleton,
+    });
+
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      assessmentId: inserted.assessmentId,
+      actorId: userId,
+      eventType: "assessment_created",
+      detail: { candidate_id: candidateId, version: inserted.version },
+    });
+
+    revalidatePath(assessmentPath(searchId, candidateId));
+    return inserted;
   });
-
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    assessmentId: inserted.assessmentId,
-    actorId: userId,
-    eventType: "assessment_created",
-    detail: { candidate_id: candidateId, version: inserted.version },
-  });
-
-  revalidatePath(assessmentPath(searchId, candidateId));
-  return inserted;
 }
 
 const DRAFT_LOCKED_MESSAGE =
@@ -163,36 +170,38 @@ export async function saveAssessmentDraft(
   searchId: string,
   candidateId: string,
   content: AssessmentContent
-): Promise<void> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const weights = await loadOperationalWeights(supabase, searchId);
-  const normalized = applyRollup(normalizeAssessment(content), weights);
+    const weights = await loadOperationalWeights(supabase, searchId);
+    const normalized = applyRollup(normalizeAssessment(content), weights);
 
-  const { data, error } = await supabase
-    .from("executive_assessments")
-    .update({ content_json: normalized, updated_at: new Date().toISOString() })
-    .eq("id", assessmentId)
-    .eq("search_id", searchId)
-    .eq("candidate_id", candidateId)
-    .eq("status", "draft")
-    .select("id")
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("executive_assessments")
+      .update({ content_json: normalized, updated_at: new Date().toISOString() })
+      .eq("id", assessmentId)
+      .eq("search_id", searchId)
+      .eq("candidate_id", candidateId)
+      .eq("status", "draft")
+      .select("id")
+      .maybeSingle();
 
-  if (error) throw new Error(`Failed to save draft: ${error.message}`);
-  if (data == null) throw new Error(DRAFT_LOCKED_MESSAGE);
+    if (error) throw new Error(`Failed to save draft: ${error.message}`);
+    if (data == null) throw new Error(DRAFT_LOCKED_MESSAGE);
 
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    assessmentId,
-    actorId: userId,
-    eventType: "assessment_edited",
-    detail: { candidate_id: candidateId },
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      assessmentId,
+      actorId: userId,
+      eventType: "assessment_edited",
+      detail: { candidate_id: candidateId },
+    });
+
+    revalidatePath(assessmentPath(searchId, candidateId));
   });
-
-  revalidatePath(assessmentPath(searchId, candidateId));
 }
 
 /** Snapshot current edits as a new draft version (e.g. to branch from approved). */
@@ -200,34 +209,36 @@ export async function createAssessmentNewVersion(
   searchId: string,
   candidateId: string,
   content: AssessmentContent
-): Promise<{ assessmentId: string; version: number }> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ assessmentId: string; version: number }>> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const plan = await approvedPlan(supabase, searchId, candidateId);
-  const weights = await loadOperationalWeights(supabase, searchId);
-  const normalized = applyRollup(normalizeAssessment(content), weights);
+    const plan = await approvedPlan(supabase, searchId, candidateId);
+    const weights = await loadOperationalWeights(supabase, searchId);
+    const normalized = applyRollup(normalizeAssessment(content), weights);
 
-  const inserted = await allocateAndInsertAssessment(supabase, {
-    searchId,
-    candidateId,
-    organizationId,
-    sourcePlanId: plan?.id ?? null,
-    createdBy: userId,
-    contentJson: normalized,
+    const inserted = await allocateAndInsertAssessment(supabase, {
+      searchId,
+      candidateId,
+      organizationId,
+      sourcePlanId: plan?.id ?? null,
+      createdBy: userId,
+      contentJson: normalized,
+    });
+
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      assessmentId: inserted.assessmentId,
+      actorId: userId,
+      eventType: "assessment_new_version",
+      detail: { candidate_id: candidateId, version: inserted.version },
+    });
+
+    revalidatePath(assessmentPath(searchId, candidateId));
+    return inserted;
   });
-
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    assessmentId: inserted.assessmentId,
-    actorId: userId,
-    eventType: "assessment_new_version",
-    detail: { candidate_id: candidateId, version: inserted.version },
-  });
-
-  revalidatePath(assessmentPath(searchId, candidateId));
-  return inserted;
 }
 
 /** Human approval — RPC stamps approved_by from auth.uid() and archives prior. */
@@ -235,25 +246,27 @@ export async function approveAssessment(
   assessmentId: string,
   searchId: string,
   candidateId: string
-): Promise<void> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { error } = await supabase.rpc("approve_assessment", {
-    p_assessment_id: assessmentId,
-    p_search_id: searchId,
-    p_candidate_id: candidateId,
+    const { error } = await supabase.rpc("approve_assessment", {
+      p_assessment_id: assessmentId,
+      p_search_id: searchId,
+      p_candidate_id: candidateId,
+    });
+    if (error) throw new Error(`Failed to approve assessment: ${error.message}`);
+
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      assessmentId,
+      actorId: userId,
+      eventType: "assessment_approved",
+      detail: { candidate_id: candidateId },
+    });
+
+    revalidatePath(assessmentPath(searchId, candidateId));
   });
-  if (error) throw new Error(`Failed to approve assessment: ${error.message}`);
-
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    assessmentId,
-    actorId: userId,
-    eventType: "assessment_approved",
-    detail: { candidate_id: candidateId },
-  });
-
-  revalidatePath(assessmentPath(searchId, candidateId));
 }

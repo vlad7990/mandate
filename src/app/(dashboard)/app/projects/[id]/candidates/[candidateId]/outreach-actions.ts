@@ -16,6 +16,11 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 // array from this file made the whole page's action manifest invalid. See
 // the note in that file.
 import type { OutreachChannel, OutreachDirection } from "./outreach-constants";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The outreach log";
 
 export type LogOutreachInput = {
   channel: OutreachChannel;
@@ -51,44 +56,46 @@ export async function logOutreachAction(
   projectId: string,
   candidateId: string,
   input: LogOutreachInput
-): Promise<{ notifiedAt: string | null }> {
-  await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult<{ notifiedAt: string | null }>> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  if (input.includesPrivacyNotice && input.direction === "inbound") {
-    // The RPC rejects this too; caught here so the recruiter gets a sentence
-    // rather than a database error.
-    throw new Error(
-      "A reply you received cannot be the message that notified them."
-    );
-  }
+    if (input.includesPrivacyNotice && input.direction === "inbound") {
+      // The RPC rejects this too; caught here so the recruiter gets a sentence
+      // rather than a database error.
+      throw new Error(
+        "A reply you received cannot be the message that notified them."
+      );
+    }
 
-  const subject = input.subject.trim();
-  const body = input.body.trim();
-  if (!subject && !body) {
-    throw new Error("Add a subject or a note so the record says something.");
-  }
+    const subject = input.subject.trim();
+    const body = input.body.trim();
+    if (!subject && !body) {
+      throw new Error("Add a subject or a note so the record says something.");
+    }
 
-  const { data, error } = await supabase
-    .rpc("log_candidate_outreach", {
-      p_candidate_id: candidateId,
-      p_channel: input.channel,
-      p_direction: input.direction,
-      p_subject: subject || null,
-      p_body: body || null,
-      p_includes_privacy_notice: input.includesPrivacyNotice,
-      p_occurred_at: input.occurredAt ?? null,
-    })
-    .single<{ id: string; subject_notified_at: string | null }>();
+    const { data, error } = await supabase
+      .rpc("log_candidate_outreach", {
+        p_candidate_id: candidateId,
+        p_channel: input.channel,
+        p_direction: input.direction,
+        p_subject: subject || null,
+        p_body: body || null,
+        p_includes_privacy_notice: input.includesPrivacyNotice,
+        p_occurred_at: input.occurredAt ?? null,
+      })
+      .single<{ id: string; subject_notified_at: string | null }>();
 
-  if (error || !data) {
-    throw new Error(
-      `Nothing was logged: ${error?.message ?? "the write failed"}`
-    );
-  }
+    if (error || !data) {
+      throw new Error(
+        `Nothing was logged: ${error?.message ?? "the write failed"}`
+      );
+    }
 
-  revalidatePath(`/app/projects/${projectId}/candidates/${candidateId}`);
-  revalidatePath(`/app/projects/${projectId}/candidates`);
+    revalidatePath(`/app/projects/${projectId}/candidates/${candidateId}`);
+    revalidatePath(`/app/projects/${projectId}/candidates`);
 
-  return { notifiedAt: data.subject_notified_at };
+    return { notifiedAt: data.subject_notified_at };
+  });
 }

@@ -8,6 +8,11 @@ import {
   EXEC_CANDIDATE_STAGES,
   type ExecutiveCandidateStage,
 } from "@/lib/executive/types";
+import { runAction } from "@/lib/actions/run";
+import type { ActionResult } from "@/lib/actions/result";
+
+/** Sentence subject for a failure this file did not author. See `runAction`. */
+const SUBJECT = "The candidate link";
 
 type AuthContext = {
   userId: string;
@@ -30,53 +35,55 @@ function candidatesPath(searchId: string): string {
 export async function linkCandidateAction(
   searchId: string,
   candidateId: string
-): Promise<void> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  // RLS scopes both lookups to the caller's org — a candidate from another
-  // org is simply not found.
-  const { data: candidate, error: candidateError } = await supabase
-    .from("candidates")
-    .select("id, full_name")
-    .eq("id", candidateId)
-    .maybeSingle();
+    // RLS scopes both lookups to the caller's org — a candidate from another
+    // org is simply not found.
+    const { data: candidate, error: candidateError } = await supabase
+      .from("candidates")
+      .select("id, full_name")
+      .eq("id", candidateId)
+      .maybeSingle();
 
-  if (candidateError) {
-    throw new Error(`Failed to load candidate: ${candidateError.message}`);
-  }
-  if (!candidate) {
-    throw new Error("Candidate not found or not accessible.");
-  }
+    if (candidateError) {
+      throw new Error(`Failed to load candidate: ${candidateError.message}`);
+    }
+    if (!candidate) {
+      throw new Error("Candidate not found or not accessible.");
+    }
 
-  const { error: insertError } = await supabase
-    .from("executive_search_candidates")
-    .insert({
-      search_id: searchId,
-      organization_id: organizationId,
-      candidate_id: candidateId,
-      stage: "identified",
-      added_by: userId,
+    const { error: insertError } = await supabase
+      .from("executive_search_candidates")
+      .insert({
+        search_id: searchId,
+        organization_id: organizationId,
+        candidate_id: candidateId,
+        stage: "identified",
+        added_by: userId,
+      });
+
+    if (insertError) {
+      // 23505 = unique violation → already linked; treat as success.
+      if (insertError.code !== "23505") {
+        throw new Error(`Failed to link candidate: ${insertError.message}`);
+      }
+      return;
+    }
+
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      actorId: userId,
+      eventType: "candidate_linked",
+      detail: { candidate_id: candidateId },
     });
 
-  if (insertError) {
-    // 23505 = unique violation → already linked; treat as success.
-    if (insertError.code !== "23505") {
-      throw new Error(`Failed to link candidate: ${insertError.message}`);
-    }
-    return;
-  }
-
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    actorId: userId,
-    eventType: "candidate_linked",
-    detail: { candidate_id: candidateId },
+    revalidatePath(candidatesPath(searchId));
+    revalidatePath(`/app/executive-intelligence/searches/${searchId}`);
   });
-
-  revalidatePath(candidatesPath(searchId));
-  revalidatePath(`/app/executive-intelligence/searches/${searchId}`);
 }
 
 /**
@@ -87,33 +94,35 @@ export async function linkCandidateAction(
 export async function unlinkCandidateAction(
   searchId: string,
   candidateId: string
-): Promise<void> {
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { data, error } = await supabase
-    .from("executive_search_candidates")
-    .delete()
-    .eq("search_id", searchId)
-    .eq("candidate_id", candidateId)
-    .select("id")
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("executive_search_candidates")
+      .delete()
+      .eq("search_id", searchId)
+      .eq("candidate_id", candidateId)
+      .select("id")
+      .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to unlink candidate: ${error.message}`);
-  }
-  if (!data) return; // already unlinked (or not visible) — nothing to record
+    if (error) {
+      throw new Error(`Failed to unlink candidate: ${error.message}`);
+    }
+    if (!data) return; // already unlinked (or not visible) — nothing to record
 
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    actorId: userId,
-    eventType: "candidate_unlinked",
-    detail: { candidate_id: candidateId },
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      actorId: userId,
+      eventType: "candidate_unlinked",
+      detail: { candidate_id: candidateId },
+    });
+
+    revalidatePath(candidatesPath(searchId));
+    revalidatePath(`/app/executive-intelligence/searches/${searchId}`);
   });
-
-  revalidatePath(candidatesPath(searchId));
-  revalidatePath(`/app/executive-intelligence/searches/${searchId}`);
 }
 
 /**
@@ -125,36 +134,38 @@ export async function setCandidateStageAction(
   searchId: string,
   candidateId: string,
   stage: ExecutiveCandidateStage
-): Promise<void> {
-  if (!EXEC_CANDIDATE_STAGES.includes(stage)) {
-    throw new Error(`Invalid stage: ${stage}`);
-  }
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    if (!EXEC_CANDIDATE_STAGES.includes(stage)) {
+      throw new Error(`Invalid stage: ${stage}`);
+    }
 
-  const { userId, organizationId } = await requireAuth();
-  const supabase = await createServerSupabaseClient();
+    const { userId, organizationId } = await requireAuth();
+    const supabase = await createServerSupabaseClient();
 
-  const { data, error } = await supabase
-    .from("executive_search_candidates")
-    .update({ stage, updated_at: new Date().toISOString() })
-    .eq("search_id", searchId)
-    .eq("candidate_id", candidateId)
-    .neq("stage", stage)
-    .select("id")
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("executive_search_candidates")
+      .update({ stage, updated_at: new Date().toISOString() })
+      .eq("search_id", searchId)
+      .eq("candidate_id", candidateId)
+      .neq("stage", stage)
+      .select("id")
+      .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to update stage: ${error.message}`);
-  }
-  if (!data) return; // no-op: same stage, missing link, or not visible
+    if (error) {
+      throw new Error(`Failed to update stage: ${error.message}`);
+    }
+    if (!data) return; // no-op: same stage, missing link, or not visible
 
-  await recordExecutiveAuditEvent(supabase, {
-    organizationId,
-    searchId,
-    actorId: userId,
-    eventType: "candidate_stage_changed",
-    detail: { candidate_id: candidateId, stage },
+    await recordExecutiveAuditEvent(supabase, {
+      organizationId,
+      searchId,
+      actorId: userId,
+      eventType: "candidate_stage_changed",
+      detail: { candidate_id: candidateId, stage },
+    });
+
+    revalidatePath(candidatesPath(searchId));
+    revalidatePath(`/app/executive-intelligence/searches/${searchId}`);
   });
-
-  revalidatePath(candidatesPath(searchId));
-  revalidatePath(`/app/executive-intelligence/searches/${searchId}`);
 }

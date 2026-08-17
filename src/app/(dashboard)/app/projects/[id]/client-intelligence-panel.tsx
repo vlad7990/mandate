@@ -13,6 +13,7 @@ import {
 } from "@/components/projects/panel";
 import type { ClientPsychology } from "@/lib/ai/client-psychology-agent";
 import { generateClientPsychologyAction } from "./actions";
+import { unwrap } from "@/lib/actions/result";
 
 export function ClientIntelligencePanel({
   projectId,
@@ -32,7 +33,7 @@ export function ClientIntelligencePanel({
     if (pending || !ready) return;
     start(async () => {
       try {
-        const next = await generateClientPsychologyAction(projectId);
+        const next = unwrap(await generateClientPsychologyAction(projectId));
         setProfile(next);
         toast.success("Client intelligence updated");
         router.refresh();

@@ -7,6 +7,7 @@ import { markInterviewPlanTimedOut } from "./actions";
 import {
   IconArrowLeft,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 const POLL_INTERVAL_MS = 1500;
 // Client-side unstick marker. Must exceed real generation latency — an 8000-token
@@ -47,7 +48,7 @@ export function PlanGenerating({
         if (timedOutRef.current) return;
         timedOutRef.current = true;
         try {
-          await markInterviewPlanTimedOut(planId, searchId, candidateId);
+          unwrap(await markInterviewPlanTimedOut(planId, searchId, candidateId));
         } catch (err) {
           console.error("[interview-plan/generating] timeout marker failed", err);
         }

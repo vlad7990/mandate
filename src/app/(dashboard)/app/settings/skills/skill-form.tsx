@@ -13,6 +13,7 @@ import {
   IconRefresh,
   IconSave,
 } from "@/components/icons";
+import { unwrap } from "@/lib/actions/result";
 
 export type SkillType = "role_skill" | "client_skill" | "search_skill";
 
@@ -129,9 +130,9 @@ export function SkillForm({
     startTransition(async () => {
       try {
         if (initial.id) {
-          await updateSkillAction(initial.id, formData);
+          unwrap(await updateSkillAction(initial.id, formData));
         } else {
-          await createSkillAction(formData);
+          unwrap(await createSkillAction(formData));
         }
       } catch (err) {
         // The action calls redirect() on success, which throws a

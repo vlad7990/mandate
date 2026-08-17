@@ -22,6 +22,7 @@ import {
   type OutreachChannel,
   type OutreachDirection,
 } from "./outreach-constants";
+import { unwrap } from "@/lib/actions/result";
 
 export type OutreachEntry = {
   id: string;
@@ -69,13 +70,13 @@ export function OutreachPanel({
     if (pending) return;
     start(async () => {
       try {
-        await logOutreachAction(projectId, candidateId, {
+        unwrap(await logOutreachAction(projectId, candidateId, {
           channel,
           direction,
           subject,
           body,
           includesPrivacyNotice: false,
-        });
+        }));
         toast.success("Contact logged");
         setSubject("");
         setBody("");
