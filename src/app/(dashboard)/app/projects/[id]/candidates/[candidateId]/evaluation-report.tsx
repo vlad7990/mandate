@@ -91,11 +91,15 @@ export function EvaluationReport({
   evaluation,
   candidateId,
   candidateName,
+  candidateTitle,
+  candidateCompany,
   projectId,
 }: {
   evaluation: CandidateEvaluation;
   candidateId: string;
   candidateName: string;
+  candidateTitle: string | null;
+  candidateCompany: string | null;
   projectId: string;
 }) {
   return (
@@ -112,6 +116,8 @@ export function EvaluationReport({
           evaluation={evaluation}
           candidateId={candidateId}
           candidateName={candidateName}
+          candidateTitle={candidateTitle}
+          candidateCompany={candidateCompany}
           projectId={projectId}
         />
       }
@@ -191,7 +197,11 @@ function ScoringTable({ rows }: { rows: DimensionRow[] }) {
 
 function ScoringRow({ row }: { row: DimensionRow }) {
   const score = clamp10(row.score);
-  const weight = clamp10(row.weight);
+  // NOT clamped: weights are relative shares of the calibration model
+  // (the five sum to 100), so clamp10 was silently rewriting a weight of
+  // 24 into 10 on screen while the PDF printed "24/10". Three surfaces,
+  // three different answers — found by rendering with real-shaped data.
+  const weight = Math.max(0, Math.round(row.weight));
   const scoreTone =
     score >= 7
       ? "text-secondary-fixed-dim"

@@ -132,7 +132,7 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
             analysis against{" "}
             <span className="text-on-surface">{roleTitle}</span> @{" "}
             <span className="text-on-surface">{companyName}</span> in one
-            pass. Takes ~5–10 seconds.
+            pass. Usually under a minute.
           </p>
         </header>
 

@@ -70,7 +70,12 @@ export type DimensionRow = {
   dimension: DimensionKey;
   /** Integer 0–10 — copied from the candidate's fit_dimensions. */
   score: number;
-  /** Integer 0–10 — copied from the project's calibration weights. */
+  /** Relative share of the calibration model — the five weights sum to
+   * 100, mirrored exactly from `calibration_model.dimension_weights`.
+   * This comment used to claim 0–10 while the prompt said "mirror
+   * exactly", and the two renderers each resolved the contradiction
+   * differently: the screen clamped 24 down to 10 and the PDF printed
+   * "24/10". The mirror instruction is the true one. */
   weight: number;
   /** 1–2 sentence AI commentary on this specific score. */
   commentary: string;
@@ -404,7 +409,7 @@ A response that under-fills or over-fills any of these arrays is invalid; revise
 
 Numeric bounds (the schema cannot enforce these either, so YOU must):
 - scoring_table[*].score: integer 0–10 inclusive. Do not return values outside this range.
-- scoring_table[*].weight: integer 0–10 inclusive. Mirror the project's calibration_model.dimension_weights exactly.
+- scoring_table[*].weight: mirror the project's calibration_model.dimension_weights EXACTLY as given — these are relative shares that sum to 100 across the five dimensions, not marks out of ten. Never rescale them.
 
 Style rules:
 - Be direct. The recruiter is reading this to make a go/no-go call, not to feel reassured.

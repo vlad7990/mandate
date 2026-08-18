@@ -111,7 +111,7 @@ export function JobSpecGenerating({
             and success metrics for{" "}
             <span className="text-on-surface">{roleTitle}</span> @{" "}
             <span className="text-on-surface">{companyName}</span>. This usually
-            takes 5–10 seconds.
+            usually takes 30–60 seconds.
           </p>
         </header>
 

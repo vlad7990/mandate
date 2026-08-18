@@ -61,6 +61,14 @@ export function HmFeedbackForm({
   const [topConcern, setTopConcern] = useState("");
   const [hmLabel, setHmLabel] = useState("");
   const [pending, start] = useTransition();
+  // Set on success and never cleared: the acknowledgment used to be a
+  // toast alone, which vanishes in seconds and leaves the filled form
+  // with a live SUBMIT button under it — a hiring manager who blinked
+  // has no evidence their review landed, and a second click writes a
+  // duplicate review plus one duplicate feedback row per candidate
+  // (the submit route is deliberately not idempotent — reviewing twice
+  // on different days is legitimate). Found by driving the portal e2e.
+  const [submitted, setSubmitted] = useState(false);
   const disabled = mode === "founder";
 
   const ordered = order
@@ -114,6 +122,7 @@ export function HmFeedbackForm({
           throw new Error(text || `Submit failed (${response.status})`);
         }
         toast.success("Feedback submitted — thanks!");
+        setSubmitted(true);
         router.refresh();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Submit failed.";
@@ -124,6 +133,27 @@ export function HmFeedbackForm({
 
   if (candidates.length === 0) {
     return null;
+  }
+
+  // The persistent half of the acknowledgment. Replaces the form rather
+  // than sitting above it, so "did it go through" and "can I accidentally
+  // send it twice" get the same answer. A page reload brings the form
+  // back, deliberately — a second review on another day is a real thing.
+  if (submitted) {
+    return (
+      <section className="bg-surface-container-low border border-outline-variant">
+        <div className="px-6 py-10 text-center">
+          <p className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+            Feedback submitted
+          </p>
+          <p className="mx-auto mt-3 max-w-[52ch] text-body-main leading-relaxed text-on-surface-variant">
+            Your review has gone to the search team — every rating and note
+            you wrote is now part of the record they calibrate against. There
+            is nothing else you need to do.
+          </p>
+        </div>
+      </section>
+    );
   }
 
   return (

@@ -142,7 +142,7 @@ export function EvaluationPdfDocument(props: {
                 <Text
                   style={[PDF_STYLES.td, PDF_STYLES.tdNum, { width: 60 }]}
                 >
-                  {row.weight}/10
+                  {row.weight}
                 </Text>
                 <Text style={[PDF_STYLES.td, { flex: 4 }]}>
                   {row.commentary}

@@ -2074,3 +2074,73 @@ the staged CVs, the EI chain live, the researcher path, measured
 durations into the four files still promising "~5–10 seconds", the HM
 portal, and the PDFs — in that order, with the persona-complete
 declaration at the end of Phase 4.
+
+---
+
+## 15. Phase 2 capability, migration 063, and four defects — 2026-08-18
+
+The founder's call mid-session: credit stays blocked, **build the
+capability now, verify with live agents later**. So every Phase 2 surface
+was driven with seeded data standing in for agent output — the seed
+(`phase2-seed.mjs`, session tmp; typed against the real stored shapes,
+inserted through the scratch admin's own session so RLS applied) builds a
+complete CTO · Meridian Freight mandate: FINAL_V01 spec, four candidates
+with full profiles/evaluation/triangulation, scores, a submitted
+shortlist, a weekly report, a portal token.
+
+### Proven for the first time
+
+- **The HM portal end to end**: token → render (evidence grid populated —
+  both §6 "never seen" items closed) → per-candidate ratings and notes →
+  three `feedback` rows + one `hiring_manager_reviews` row → visible on
+  the recruiter's /feedback screen. Driven on production, which holds the
+  service-role key the local env deliberately lacks.
+- **Every PDF read, not just rendered**: evaluation (3pp), weekly report,
+  comparison. One cosmetic left: the weekly market-commentary blockquote
+  splits awkwardly across a page break.
+- **The researcher happy path** (§2's "never exercised"): a researcher on
+  a final-spec mandate reaches /sourcing, is not bounced, sees the CTA.
+- **The email draft dialog**, now carrying the candidate's seat.
+
+### Four defects, all found by rendering with real-shaped data
+
+1. **The portal's only acknowledgment was a transient toast.** The filled
+   form stayed under a live SUBMIT button; a second click writes duplicate
+   reviews (the route is deliberately not idempotent). Fix: a persistent
+   submitted state replaces the form. Verify in the browser after the next
+   deploy.
+2. **The evaluation weight scale was self-contradictory in three places.**
+   The schema/prompt claimed weights are "integer 0–10" while instructing
+   the agent to mirror `dimension_weights` (which sum to 100) exactly; the
+   screen `clamp10`ed 24 down to 10; the PDF printed "24/10". Weights are
+   relative shares — all three fixed, prompt line rewritten.
+3. **Every evaluation export header rendered "—" for the candidate's
+   seat** — three call sites hardcoded `candidate_title: null`. Threaded
+   through page → report → actions → email dialog.
+4. **(Phase 3, recorded in §14): the proxy 307'd the cron route.**
+
+### Migration 063 — `record_hm_portal_opened`
+
+The §5b gap closed: a definer entry point taking the portal token,
+validating it, debouncing to one event per token per hour, writing through
+`write_activity_event` with the token's label in `detail` (actor NULL →
+"System"). EXECUTE revoked from everyone — the only caller is the portal
+page on the service role, so **no new advisor finding; the residue stays
+at seven**. Five invariants + control run against the live DB
+(`hm_portal_opened_invariants.sql`); wired fire-and-forget into
+`/hm/[token]`. `report_exported` remains the one unwritten vocabulary
+event, for §5b's original reason.
+
+### Duration copy — the four false "~5–10 seconds" claims are gone
+
+Spec screens now say ~30–60s (the one measured datum: 38s, §6b); CV parse
+and sourcing say "usually under a minute" — no invented numbers.
+**Re-measure all four during the Phase 1 live run** and tighten.
+
+### State
+
+707 tests, tsc / lint / build green. **Next migration is 064.** Scratch
+org deleted; counts at baseline (the 3 feedback + 3 hm_tokens rows are the
+founder's own, from May). Awaiting credit: tasks 10–12 (the live loop) and
+the re-verification of evaluation/triangulation/reports with real agent
+output. The persona-complete declaration still waits on that.

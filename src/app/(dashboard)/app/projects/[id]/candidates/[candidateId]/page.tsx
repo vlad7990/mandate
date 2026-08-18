@@ -518,6 +518,8 @@ export default async function CandidateProfilePage({
           evaluation={evaluation}
           candidateId={candidate.id}
           candidateName={candidate.full_name}
+          candidateTitle={candidate.current_title}
+          candidateCompany={candidate.current_company}
           projectId={project.id}
         />
       ) : profile.fit_dimensions ? (

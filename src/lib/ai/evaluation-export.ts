@@ -62,7 +62,9 @@ export function evaluationToMarkdown(
   lines.push("| --- | ---: | ---: | --- |");
   for (const row of evaluation.scoring_table) {
     lines.push(
-      `| ${DIMENSION_LABEL[row.dimension]} | ${row.score}/10 | ${row.weight}/10 | ${escapeTableCell(row.commentary)} |`
+      // Weight is a relative share of the calibration (the five sum to
+      // 100), not a mark out of ten — "24/10" was nonsense in every export.
+      `| ${DIMENSION_LABEL[row.dimension]} | ${row.score}/10 | ${row.weight} | ${escapeTableCell(row.commentary)} |`
     );
   }
   lines.push("");

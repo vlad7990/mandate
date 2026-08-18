@@ -94,7 +94,7 @@ export function JobSpecEmpty({ projectId, roleTitle, companyName }: Props) {
           </button>
 
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-            ~5–10 seconds · Claude Sonnet 4.6 · Five-section structured output
+            ~30–60 seconds · Claude Sonnet 4.6 · Five-section structured output
           </p>
         </div>
       </div>

@@ -23,6 +23,11 @@ type Props = {
   evaluation: CandidateEvaluation;
   candidateId: string;
   candidateName: string;
+  /** Current title/company for the export headers. The three export call
+   * sites all hardcoded null here, so every PDF and markdown header
+   * rendered an em-dash where the candidate's seat belongs. */
+  candidateTitle: string | null;
+  candidateCompany: string | null;
   projectId: string;
 };
 
@@ -30,6 +35,8 @@ export function EvaluationActions({
   evaluation,
   candidateId,
   candidateName,
+  candidateTitle,
+  candidateCompany,
   projectId,
 }: Props) {
   const router = useRouter();
@@ -40,8 +47,8 @@ export function EvaluationActions({
     try {
       const md = evaluationToMarkdown(evaluation, {
         candidate_name: candidateName,
-        candidate_title: null,
-        candidate_company: null,
+        candidate_title: candidateTitle,
+        candidate_company: candidateCompany,
       });
       const filename = buildFilename(candidateName, evaluation, "md");
       const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
@@ -69,8 +76,8 @@ export function EvaluationActions({
             evaluation={evaluation}
             meta={{
               candidate_name: candidateName,
-              candidate_title: null,
-              candidate_company: null,
+              candidate_title: candidateTitle,
+              candidate_company: candidateCompany,
             }}
           />
         ).toBlob();
@@ -151,6 +158,8 @@ export function EvaluationActions({
         <EmailDraftDialog
           evaluation={evaluation}
           candidateName={candidateName}
+          candidateTitle={candidateTitle}
+          candidateCompany={candidateCompany}
           onClose={() => setEmailDraftOpen(false)}
         />
       )}
@@ -165,16 +174,20 @@ export function EvaluationActions({
 function EmailDraftDialog({
   evaluation,
   candidateName,
+  candidateTitle,
+  candidateCompany,
   onClose,
 }: {
   evaluation: CandidateEvaluation;
   candidateName: string;
+  candidateTitle: string | null;
+  candidateCompany: string | null;
   onClose: () => void;
 }) {
   const draft = evaluationToEmailDraft(evaluation, {
     candidate_name: candidateName,
-    candidate_title: null,
-    candidate_company: null,
+    candidate_title: candidateTitle,
+    candidate_company: candidateCompany,
   });
 
   const [subject, setSubject] = useState(draft.subject);

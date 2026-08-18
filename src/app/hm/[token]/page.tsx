@@ -94,6 +94,16 @@ export default async function HiringManagerPublicPage({
     return <PortalAccessDenied reason="expired" />;
   }
 
+  // Record the visit on the activity trail — the event 053 declared and
+  // could not write from this sessionless path (§5b; migration 063).
+  // Fire-and-forget: a trail write must never block or break the portal,
+  // and the function itself debounces refreshes to one event per hour.
+  supabase
+    .rpc("record_hm_portal_opened", { p_token: token })
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.error("[hm/portal] visit event failed", error);
+    });
+
   // Token is valid. Fetch the project + shortlist + candidates +
   // scores scoped to the verified project_id.
   const [projectQ, shortlistQ, candidatesQ, scoresQ] = await Promise.all([
