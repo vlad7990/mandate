@@ -30,7 +30,9 @@
  * question is whether it should be showing a sample at all.
  */
 
+export * from "./activity";
 export * from "./data";
+export * from "./executive";
 export * from "./mandate-modules";
 export * from "./reports-analytics";
 export * from "./sourcing";

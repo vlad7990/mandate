@@ -1,7 +1,16 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { CapabilityGate } from "@/components/auth/capability-gate";
 import { PageShell } from "@/components/ui/page-shell";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import {
+  SAMPLE_DISMISSED_COOKIE,
+  SAMPLE_SEARCHES,
+  SAMPLE_SEARCH_ID,
+  sampleExecutiveKpis,
+  shouldShowSample,
+} from "@/lib/sample";
+import { SampleBanner } from "@/components/sample/sample-banner";
 import {
   IconChecklist,
   IconCopy,
@@ -145,9 +154,33 @@ export default async function ExecutiveIntelligencePage() {
 
   const recent = (recentData ?? []) as RecentSearch[];
 
+  /*
+    Sample mode is decided on the account's own searches, never on the
+    catalogue counts. Templates and competencies are a *seeded global* set
+    that 056's policy admits to every active organisation (D4), so they are
+    non-zero on a brand-new account and would make `hasRealData` true for
+    an org that has never opened a search. The two tiles that describe this
+    organisation are the two that decide.
+  */
+  const dismissed = (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
+  const showSample = shouldShowSample({
+    hasRealData: (activeSearches ?? 0) > 0 || recent.length > 0,
+    dismissed,
+  });
+
+  const sampleCounts = sampleExecutiveKpis();
   const kpis = [
-    { label: "Active Searches", value: activeSearches ?? 0 },
-    { label: "Approved Profiles", value: approvedProfiles ?? 0 },
+    {
+      label: "Active Searches",
+      value: showSample ? sampleCounts.activeSearches : (activeSearches ?? 0),
+    },
+    {
+      label: "Approved Profiles",
+      value: showSample ? sampleCounts.approvedProfiles : (approvedProfiles ?? 0),
+    },
+    // Never sampled: the catalogue is real for every account, including
+    // this one. Inventing a number over a true one would be the only
+    // dishonest tile on the screen.
     { label: "Role Templates", value: templateCount ?? 0 },
     { label: "Competencies", value: competencyCount ?? 0 },
   ];
@@ -170,8 +203,11 @@ export default async function ExecutiveIntelligencePage() {
           </p>
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
             {DECISION_SUPPORT_DISCLAIMER}
+            {showSample && " // sample data"}
           </p>
         </header>
+
+        {showSample && <SampleBanner scope="executive intelligence" />}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {kpis.map((k) => (
@@ -205,29 +241,74 @@ export default async function ExecutiveIntelligencePage() {
           </Link>
         </div>
 
-        {recent.length > 0 && (
+        {showSample ? (
+          /*
+            The sample's own searches, so the module's front door is not a
+            page of zeroes with a module map underneath it. Only the worked
+            search links through — the other two have no screens behind
+            them, and a link landing somewhere emptier is worse than none.
+          */
           <section className="space-y-3">
             <h2 className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
               Recent Searches
             </h2>
             <div className="bg-surface-container-low border border-outline-variant divide-y divide-outline-variant/40">
-              {recent.map((s) => (
-                <Link
-                  key={s.id}
-                  href={`/app/executive-intelligence/searches/${s.id}`}
-                  className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-surface-container transition-colors"
-                >
-                  <span className="text-body-main text-on-surface">
-                    {s.role_title}{" "}
-                    <span className="text-on-surface-variant">@ {s.company_name}</span>
+              {SAMPLE_SEARCHES.map((s) => {
+                const row = (
+                  <span className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+                    <span className="text-body-main text-on-surface">
+                      {s.roleTitle}{" "}
+                      <span className="text-on-surface-variant">
+                        @ {s.companyName}
+                      </span>
+                    </span>
+                    <span className="font-mono-label text-mono-label uppercase tracking-wider text-outline">
+                      {SEARCH_STATUS_LABELS[s.status]}
+                    </span>
                   </span>
-                  <span className="font-mono-label text-mono-label uppercase tracking-wider text-outline">
-                    {SEARCH_STATUS_LABELS[s.status]}
-                  </span>
-                </Link>
-              ))}
+                );
+                return s.id === SAMPLE_SEARCH_ID ? (
+                  <Link
+                    key={s.id}
+                    href={`/app/executive-intelligence/searches/${s.id}`}
+                    prefetch={false}
+                    className="block hover:bg-surface-container transition-colors"
+                  >
+                    {row}
+                  </Link>
+                ) : (
+                  <div key={s.id}>{row}</div>
+                );
+              })}
             </div>
           </section>
+        ) : (
+          recent.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+                Recent Searches
+              </h2>
+              <div className="bg-surface-container-low border border-outline-variant divide-y divide-outline-variant/40">
+                {recent.map((s) => (
+                  <Link
+                    key={s.id}
+                    href={`/app/executive-intelligence/searches/${s.id}`}
+                    className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-surface-container transition-colors"
+                  >
+                    <span className="text-body-main text-on-surface">
+                      {s.role_title}{" "}
+                      <span className="text-on-surface-variant">
+                        @ {s.company_name}
+                      </span>
+                    </span>
+                    <span className="font-mono-label text-mono-label uppercase tracking-wider text-outline">
+                      {SEARCH_STATUS_LABELS[s.status]}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )
         )}
 
         <section className="space-y-3">

@@ -66,21 +66,26 @@ export function SampleModuleRail({ current }: { current?: SampleModuleSlug }) {
         })}
 
         {/*
-          The pending modules occupy the last cell rather than sitting under
-          the grid. Nine items plus this one fill two rows of five exactly; a
-          bordered blank reads as a missing entry, and this is the place
-          a reader scanning the rail will actually look for "what else is
-          there". Named rather than hidden: before W3 they redirected to the
+          Pending modules occupy the last cell rather than sitting under the
+          grid: it is where a reader scanning the rail actually looks for
+          "what else is there", and a bordered blank would read as a missing
+          entry. Named rather than hidden — before W3 they redirected to the
           dashboard, so the workspace looked smaller than it is.
+
+          Rendered only when there are any. W7 emptied the list by building
+          `/shortlist`, and a cell headed "Not in the sample" above nothing
+          is worse than no cell: it asserts a gap that no longer exists.
         */}
-        <li className="bg-surface-container-low px-3 py-2.5">
-          <p className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
-            Not in the sample
-          </p>
-          <p className="mt-1 font-mono-label text-[11px] uppercase leading-[1.4] tracking-[0.08em] text-outline">
-            {SAMPLE_MODULES_PENDING.map((m) => m.label).join(" · ")}
-          </p>
-        </li>
+        {SAMPLE_MODULES_PENDING.length > 0 && (
+          <li className="bg-surface-container-low px-3 py-2.5">
+            <p className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
+              Not in the sample
+            </p>
+            <p className="mt-1 font-mono-label text-[11px] uppercase leading-[1.4] tracking-[0.08em] text-outline">
+              {SAMPLE_MODULES_PENDING.map((m) => m.label).join(" · ")}
+            </p>
+          </li>
+        )}
       </ul>
     </nav>
   );

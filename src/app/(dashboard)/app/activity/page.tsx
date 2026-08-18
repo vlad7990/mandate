@@ -1,5 +1,14 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import {
+  SAMPLE_CLIENTS,
+  SAMPLE_DISMISSED_COOKIE,
+  SAMPLE_MANDATES,
+  sampleActivityFor,
+  shouldShowSample,
+} from "@/lib/sample";
+import { SampleBanner } from "@/components/sample/sample-banner";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { ListPanel, PageShell, TerminalTitle } from "@/components/ui/page-shell";
 import { ListToolbar } from "@/components/ui/list-toolbar";
@@ -106,14 +115,49 @@ export default async function ActivityPage({
   }
 
   const { data } = await query.returns<ActivityEventRow[]>();
-  const { rows, hasMore } = splitOverfetch(data ?? [], params);
+  const real = splitOverfetch(data ?? [], params);
+
+  /*
+    Sample mode.
+
+    The trail is a projection of everything else, so it is the last screen
+    in the programme and the one with the least to invent: the rows below
+    are `ActivityEventRow` objects that go through `describeActivity` and
+    the same renderer as real ones, so the sample cannot word an event
+    differently from the product or name an event type it does not have.
+
+    Only ever shown on a genuinely empty trail, and only unfiltered — a
+    reader who has typed a search or picked a group is asking a question
+    about their own data, and answering it with invented rows would be a
+    lie rather than an illustration.
+    */
+  const dismissed = (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
+  const unfiltered = !params.q && !params.filters.group && params.page === 1;
+  const showSample =
+    unfiltered &&
+    shouldShowSample({ hasRealData: (data ?? []).length > 0, dismissed });
+
+  // Filtered by the reader's own capabilities, exactly as RLS would.
+  const rows = showSample
+    ? sampleActivityFor({ seesFees, seesMembers })
+    : real.rows;
+  const hasMore = showSample ? false : real.hasMore;
 
   // Names for the entities a row points at, resolved in one round trip each
   // rather than per row. RLS scopes all three, so a row whose subject the
   // reader cannot see simply renders without a link.
-  const projectIds = [...new Set(rows.map((r) => r.project_id).filter(Boolean))] as string[];
-  const candidateIds = [...new Set(rows.map((r) => r.candidate_id).filter(Boolean))] as string[];
-  const clientIds = [...new Set(rows.map((r) => r.client_id).filter(Boolean))] as string[];
+  // Never in sample mode: a sample id is not a uuid, so `.in("id", …)`
+  // would hand PostgREST a `22P02` and the row would silently lose its
+  // links. The fixture resolves its own names below.
+  const projectIds = showSample
+    ? []
+    : ([...new Set(rows.map((r) => r.project_id).filter(Boolean))] as string[]);
+  const candidateIds = showSample
+    ? []
+    : ([...new Set(rows.map((r) => r.candidate_id).filter(Boolean))] as string[]);
+  const clientIds = showSample
+    ? []
+    : ([...new Set(rows.map((r) => r.client_id).filter(Boolean))] as string[]);
 
   const [{ data: projects }, { data: candidates }, { data: clients }] = await Promise.all([
     projectIds.length
@@ -128,15 +172,23 @@ export default async function ActivityPage({
   ]);
 
   const projectById = new Map(
-    ((projects ?? []) as Array<{ id: string; title: string }>).map((p) => [p.id, p])
+    showSample
+      ? SAMPLE_MANDATES.map((m) => [m.id, { id: m.id, title: m.title }])
+      : ((projects ?? []) as Array<{ id: string; title: string }>).map((p) => [p.id, p])
   );
   const candidateById = new Map(
-    ((candidates ?? []) as Array<{ id: string; full_name: string; project_id: string }>).map(
-      (c) => [c.id, c]
-    )
+    showSample
+      ? []
+      : ((candidates ?? []) as Array<{
+          id: string;
+          full_name: string;
+          project_id: string;
+        }>).map((c) => [c.id, c])
   );
   const clientById = new Map(
-    ((clients ?? []) as Array<{ id: string; name: string }>).map((c) => [c.id, c])
+    showSample
+      ? SAMPLE_CLIENTS.map((c) => [c.id, { id: c.id, name: c.name }])
+      : ((clients ?? []) as Array<{ id: string; name: string }>).map((c) => [c.id, c])
   );
 
   const availableGroups = ACTIVITY_GROUPS.filter((g) => {
@@ -156,11 +208,14 @@ export default async function ActivityPage({
             "Who changed what",
             seesFees ? "Fees included" : "Fees restricted",
             seesMembers ? "Members included" : null,
+            showSample ? "sample data" : null,
           ]
             .filter(Boolean)
             .join(" // ")}
         </p>
       </div>
+
+      {showSample && <SampleBanner scope="activity trail" />}
 
       <ListPanel>
         <ListToolbar

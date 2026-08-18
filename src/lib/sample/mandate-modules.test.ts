@@ -55,6 +55,46 @@ describe("sample mandate modules", () => {
     expect(new Set([...built, ...pending]).size).toBe(built.length + pending.length);
   });
 
+  it("accounts for every module route the product has", () => {
+    /*
+      The other direction, and the one that was missing.
+
+      The test above walks the *list* and checks each entry has a route.
+      Nothing walked the *routes* and checked each has an entry — so
+      `/app/projects/[id]/shortlist` existed, appeared in no table in
+      `docs/sample-data-inventory.md`, was in neither list here, and stayed
+      invisible through six workstreams. It surfaced only because the rail
+      needed a complete list to render, which is luck rather than a guard.
+
+      Same shape as `routes.test.ts` and assertion (1) in
+      `suspended_account_invariants.sql`: enumerate what exists rather than
+      what somebody remembered to write down. A module added next month is
+      covered the day its directory appears.
+    */
+    const known = new Set<string>([
+      ...SAMPLE_MODULES.map((m) => m.slug),
+      ...SAMPLE_MODULES_PENDING.map((m) => m.slug),
+      // Not modules on the rail. `candidates` is the mandate's candidate
+      // list and detail tree (W4) with its own place in the inventory, and
+      // `new` is the create form.
+      "candidates",
+      "new",
+    ]);
+
+    const routed = fs
+      .readdirSync(ROUTES, { withFileTypes: true })
+      .filter(
+        (e) =>
+          e.isDirectory() &&
+          fs.existsSync(path.join(ROUTES, e.name, "page.tsx"))
+      )
+      .map((e) => e.name);
+
+    // Guards against the walk matching nothing and passing vacuously.
+    expect(routed.length).toBeGreaterThan(8);
+    expect(routed.filter((r) => !known.has(r))).toEqual([]);
+  });
+
   it("pins the funnel head to the mandate's own candidate count", () => {
     const mandate = sampleMandate(SAMPLE_MANDATE_ID)!;
     const funnel = sampleFunnel();

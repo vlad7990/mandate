@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { CapabilityGate } from "@/components/auth/capability-gate";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { SAMPLE_DISMISSED_COOKIE, shouldShowSample } from "@/lib/sample";
+import { SampleEiSearches } from "@/components/sample/sample-ei-searches";
 import {
   IconArrowLeft,
   IconLeaderboard,
@@ -33,7 +36,21 @@ export default async function ExecutiveSearchesPage() {
     )
     .order("created_at", { ascending: false });
 
+  if (error) {
+    // Never `error.message` — a page body is server-rendered, so a raw
+    // PostgREST string reaches the reader intact. Same class as the two
+    // leaks D4 fixed and the one on /app/clients.
+    console.error("[executive-searches] failed to load the search list", error);
+  }
+
   const searches = (data ?? []) as SearchListRow[];
+
+  // An empty executive-search list is a screen that describes the module
+  // rather than showing it, and this is the module's own front door.
+  const dismissed = (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
+  if (!error && shouldShowSample({ hasRealData: searches.length > 0, dismissed })) {
+    return <SampleEiSearches />;
+  }
 
   return (
     <div className="min-h-full p-6">
@@ -69,8 +86,12 @@ export default async function ExecutiveSearchesPage() {
         </header>
 
         {error && (
-          <div className="border border-error/40 bg-error-container/30 px-4 py-3 text-error text-body-main">
-            Failed to load searches: {error.message}
+          <div
+            role="alert"
+            className="border border-error/60 bg-error/10 px-4 py-3 text-body-main text-error"
+          >
+            The executive search list could not be loaded. This has been
+            logged — try again, and tell an admin if it keeps happening.
           </div>
         )}
 

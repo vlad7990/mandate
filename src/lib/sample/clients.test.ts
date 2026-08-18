@@ -55,9 +55,11 @@ describe("sample clients", () => {
   it("counts live plus closed mandates", () => {
     const larkspur = sampleClient("sample-client-larkspur");
     expect(larkspur).toBeDefined();
-    // One in flight, two closed. If this ever reads 1 the closed searches
+    // One in flight, three closed. If this ever reads 1 the closed searches
     // have been dropped and the client list is back to a column of 01s.
-    expect(sampleClientMandateCount(larkspur!)).toBe(3);
+    // (Was 3 — W7 added the Director of Data Engineering closure, which is
+    // the search `sample-placement-demirci` actually belongs to.)
+    expect(sampleClientMandateCount(larkspur!)).toBe(4);
 
     for (const c of SAMPLE_CLIENTS) {
       expect(sampleClientMandateCount(c)).toBe(

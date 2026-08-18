@@ -316,3 +316,98 @@ export function samplePortfolio() {
     velocity: [4, 6, 3, 7, 5, 8, 6, 5],
   };
 }
+
+/* ── The submitted shortlist, for /shortlist ─────────────────────── */
+
+/**
+ * The shortlist as a **record of a submission**, not a builder.
+ *
+ * This route appeared in no table in `docs/sample-data-inventory.md` — a
+ * gap in the original survey, found only when the module rail needed a
+ * complete list of the mandate's screens. It was the last entry in
+ * `SAMPLE_MODULES_PENDING`.
+ *
+ * The product's own screen is `ShortlistBuilder`: a pool on one side, a
+ * slate on the other, drag to compose, generate a report, submit. Almost
+ * all of that is a write, and the standing call since `5107767` is that
+ * the sample ships no control it cannot honour.
+ *
+ * Rather than render a builder with its controls disabled — the worst of
+ * both, since the controls are the screen — this shows the state the
+ * mandate is actually in. `SAMPLE_MANDATES` puts Larkspur at **WITH
+ * CLIENT**, which means the slate has gone. A submitted shortlist is
+ * genuinely read-only in the product too: it is a record of what was sent
+ * and when. So the sample is not a crippled builder, it is the screen
+ * after the button was pressed, which is also the more interesting half.
+ *
+ * The slate itself is **not chosen here** — it is `SAMPLE_COMPARISON`'s
+ * primary and backup sets, so the comparison screen and this one cannot
+ * name different people. `reports-analytics.test.ts` asserts it.
+ */
+export const SAMPLE_SHORTLIST = {
+  submittedDaysAgo: 3,
+  submittedTo: "Dr Miriam Osei-Hart",
+  submittedToRole: "Chief Executive · Larkspur Health",
+  slateSize: 2,
+  /**
+   * Mirrors `ShortlistReport`, which is agent-generated. Every judgement
+   * is comparative and anchored on the weighted dimensions — the same
+   * line the ranking comparison prompt draws, and the same precedent
+   * `sample-candidate-detail.tsx` set: a claim never travels without the
+   * evidence behind it.
+   */
+  executiveSummary:
+    "Two candidates are submitted for the Chief Technology Officer role at Larkspur Health, both at Tier 1 against the current calibration. Both have carried a platform replacement to completion inside a regulated provider, which was the constraint that removed most of the pool. They differ on what they bring after that, and the choice between them is a choice about which risk Larkspur would rather carry.",
+  slateRationale:
+    "Regulatory carries 26 of the 100 weight after the day-22 recalibration, and it is the dimension the field thins on: of six scored candidates only these two clear 9.0. The Tier 2 names are held in reserve rather than submitted, because putting a 7.55 beside an 8.65 invites the client to reject the slate rather than choose within it.",
+  briefs: [
+    {
+      candidateId: "sample-anand",
+      recommendation: "advance" as const,
+      strengths: [
+        "Delivered a £48m platform replacement end to end, with the parallel-running period documented",
+        "Highest regulatory score in the field at 9.5, on clinical rather than adjacent exposure",
+        "Two board reviews led, both on the record",
+      ],
+      risks: [
+        "Team build tops out at 140 engineers; Larkspur's target is 150+ within the year",
+      ],
+      tradeoff:
+        "Ahead of Okonjo on transformation (9.2 against 7.6) with a delivered replacement behind it; behind him on leadership (8.4 against 9.4) and on the size of team built.",
+    },
+    {
+      candidateId: "sample-okonjo",
+      recommendation: "advance" as const,
+      strengths: [
+        "Built and held a 190-person function without attrition running above 12%",
+        "Highest leadership score in the field at 9.4",
+        "19 months of parallel operation — the only direct evidence of it in the set",
+      ],
+      risks: [
+        "The replacement he ran was not one he started; the origination decision was his predecessor's",
+        "Regulatory exposure is clinical but at trust rather than group scale",
+      ],
+      tradeoff:
+        "Ahead of Anand on leadership and on the team build; behind her on transformation, where her evidence is a completed replacement and his is a period of parallel running.",
+    },
+  ],
+  scenarios: [
+    {
+      headline: "If the platform decision is already made",
+      detail:
+        "Anand is the closer fit: her evidence is a replacement carried from business case to decommission, which is the shape of the work Larkspur has approved.",
+    },
+    {
+      headline: "If the engineering function has to grow first",
+      detail:
+        "Okonjo has built past 150 and held it. Anand has not, and the gap is the one risk on her that the calibration does not weight heavily enough to surface.",
+    },
+    {
+      headline: "If both decline",
+      detail:
+        "The Tier 2 backups are held rather than submitted. Tavares is the strongest of them at 7.55, and his regulatory exposure is PCI rather than clinical — a re-weighting conversation, not a shortlist one.",
+    },
+  ],
+  nextStep:
+    "Schedule round one with both in the same week. The comparison is only useful if the client sees them close together.",
+} as const;

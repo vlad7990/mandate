@@ -1,43 +1,74 @@
 # Sample-data inventory — every dashboard route
 
-**Date:** 2026-08-14. Built by enumerating `src/app/(dashboard)/**/page.tsx`
-and reading the routes, not from an earlier note.
+**Date:** 2026-08-14, built by enumerating `src/app/(dashboard)/**/page.tsx`.
+**Completed 2026-08-18.**
 
 **It is 46 routes, not 36.** The "other 36 pages" figure in the handoff
 predates the Executive Intelligence, placements, activity and clients work.
-Nine of the 46 already render sample content.
 
-This is an inventory and a proposal. Nothing here is implemented.
+**All 46 are done.** This began as an inventory and a proposal; it is now
+the record of what was built and why. Each workstream section carries the
+decisions taken inside it and the defects building it exposed — several of
+which were not sample-data problems at all. §6 collects what is worth
+carrying forward.
 
 ---
 
 ## 1. Decisions needed before implementation
 
-Four, and the first is the expensive one. D4 is already done.
+Four. **All four are now answered**; D1 was the expensive one and turned
+out not to be a decision.
 
-### D1. What may a fabricated agent say about a fabricated person?
+### D1. ~~What may a fabricated agent say about a fabricated person?~~ — ANSWERED 2026-08-18
 
-Twelve of these routes display **AI judgement** — assessments, risk reviews,
-interview plans, positioning, comparative reports, tier rankings. Sample data
-for those is not "write some rows"; it is authoring an evaluative opinion
-about an invented executive and rendering it in the product's own voice.
+**It was two screens, not twelve, and both were already inside precedent
+the product had written down.** The question was real; the surface was
+not. This document classified pages by what they look like, and the
+classification was wrong in the most expensive direction.
 
-Two existing rules collide here:
+What the code actually says, checked file by file:
 
-- `CLAUDE.md`, non-negotiable: AI output is **decision support**, never a
-  hire/no-hire verdict, never psychological or mental-health labels, never
-  inference of protected characteristics.
-- Illustrative data must carry a **visible label at the point of display**.
+- **No page under `/app/executive-intelligence` renders agent output
+  directly.** Every one reads a stored row. Exactly three action files
+  invoke an agent: `searches/new` (company context), `success-profile`,
+  and `interview-plan`.
+- **The assessment is not agent-generated.** `assessment/actions.ts`
+  imports `buildAssessmentSkeleton`, `applyRollup` and
+  `normalizeAssessment` from `executive-assessment.ts`, which contains no
+  model call at all. `types.ts` says so above `AssessmentRow` — *"No AI
+  provenance columns: there is no agent"* — `ASSESSMENT_DISCLAIMER` exists
+  as a separate string because the record is a human's, and `report.ts`
+  prints *"Assessment authored by a human · no AI"* into every report's
+  provenance. **The one screen in the module carrying an evaluative
+  judgement of a person is the one screen with no AI in it.** The
+  `generated` classification below was read off the layout.
 
-A sample risk review that says nothing is useless as a demo; one that says
-something is a fabricated negative judgement about a person-shaped thing,
-rendered in the same components that will later render a real one. The
-existing `sample-ei-report.tsx` already makes a call here — **that call
-should be reviewed and then applied deliberately to the other eleven**,
-rather than re-decided per page.
+So the surface was the success profile and the interview plan:
 
-**Needs the founder.** Everything in the Executive Search workstream is
-blocked on it.
+- The **success profile describes the role, never a candidate.**
+  `SuccessProfileContent` has fifteen fields and not one names, scores or
+  characterises a person; the agent's own header states the constraint.
+  `potential_derailers` is the field that looks like the exception and is
+  a property of the job.
+- The **interview plan** is the only place an agent says anything shaped
+  by a specific person — and its system prompt already draws the line:
+  *"Weak-answer indicators and red flags describe ANSWER CONTENT and
+  observable reasoning, not the person's character"*, questions gather
+  evidence about "a demonstrable capability or experience — never about
+  who the person is", and candidate-specific questions derive only from
+  supplied data, never invented.
+
+Which is the W3/W6 precedent restated — **a score never travels without
+the fact that produced it** — so no new founder decision was needed, the
+same way `/comparison` turned out not to need one. The reasoning is
+written into the header of `src/lib/sample/executive.ts` and
+`sample-ei-interview-plan.tsx`, and `executive.test.ts` asserts the
+assessment carries no verdict phrasing.
+
+**What this cost, and the lesson worth keeping:** W7 sat blocked through
+six workstreams on a question that a twenty-minute read of three action
+files would have dissolved. The survey classified by screenshot. Do the
+grep before recording a blocker.
 
 ### D2. ~~Does sample data survive the Anthropic credit landing?~~ — ANSWERED 2026-08-14
 
@@ -145,11 +176,40 @@ judgement call is why:
 | `/app/settings/skills/new` | n/a | — | — | — | — |
 | `/app/settings/skills/[skillId]` | n/a | — | — | — | — |
 | `/app/no-access` | complete | — | — | — | — |
-| `/app/activity` | empty-only | relational | M | W2, W3 | High |
+| `/app/activity` | complete | — | — | — | — |
 
-**Note:** `/app/activity` is listed here but is genuinely last — the trail is
-a *projection* of other entities. Seeded before them it reads as noise;
-seeded after them it fills itself. Still outstanding.
+**Note:** `/app/activity` was listed here but was genuinely last — the trail
+is a *projection* of other entities. Seeded before them it reads as noise;
+seeded after them it fills itself. **Done 2026-08-18**, after everything it
+projects.
+
+**It stores rows, not prose.** 053 keeps the facts in `detail` and derives
+the sentence in `describe.ts`, so a phrase can improve without rewriting
+history. The fixture honours that split exactly: `src/lib/sample/activity.ts`
+builds `ActivityEventRow` objects and the page runs them through
+`describeActivity` and the same renderer as real rows. The sample therefore
+cannot word an event differently from the product, and cannot invent an
+event type — `event_type` is `ActivityEventType`, so a made-up one fails the
+build.
+
+Three things it demonstrates that no other screen can: the fallthrough
+recorded as a status change **plus** a reversal rather than a deletion
+(§5a's third commercial decision, shown rather than described, with the
+reversal quoting the same figure `/app/placements` shows clawed back); one
+row with a null actor, so a reader meets "System" once rather than
+wondering at it later; and visibility that is real — `fees` rows are hidden
+from a reader without `fees:read` and `admin` rows without `org:manage`,
+mirroring RLS rather than approximating it. A control run that flipped one
+fee row to `org` failed the test.
+
+Two silences carried on purpose: `report_exported` and `hm_portal_opened`
+are in the vocabulary, are never written by the product, and are absent
+here. A sample showing an event the product cannot produce would teach a
+feature that does not exist.
+
+The sample is shown **only unfiltered** — a reader who has typed a search
+or picked a group is asking a question about their own data, and answering
+it with invented rows would be a lie rather than an illustration.
 
 **What the skills page got**, since it is the pattern for the rest: three
 worked examples, one per type, because the type is the lesson. A skill is the
@@ -210,7 +270,10 @@ retained plan whose thirds sum to 100% rather than 99.999 (§5a).
 PostgREST string — into the page body. Same class as D4, and a real leak
 rather than a redacted one, because a page body is server-rendered.
 
-### W3 · Mandates & Projects — 11 routes — DONE 2026-08-17
+### W3 · Mandates & Projects — 12 routes — DONE 2026-08-17
+
+*(Twelve, not eleven: `/shortlist` was missing from this table entirely and
+was added 2026-08-18 when W7 built it. See the note at the end of W5.)*
 
 | Route | State | Kind | Size | Depends on | Value |
 |---|---|---|---|---|---|
@@ -225,6 +288,7 @@ rather than a redacted one, because a page body is server-rendered.
 | `/app/projects/[id]/reports` | complete | — | — | — | — |
 | `/app/projects/[id]/hiring-manager` | complete | — | — | — | — |
 | `/app/projects/[id]/feedback` | complete | — | — | — | — |
+| `/app/projects/[id]/shortlist` | complete | — | — | — | — |
 
 Everything hangs off `sample-larkspur`, so this was extending one coherent
 mandate rather than inventing seven.
@@ -347,10 +411,35 @@ entire content is a staging table waiting for a promote — a write the sample
 cannot perform — so a read-only copy would be rows with the one control that
 gives them meaning removed. Same reasoning as `/candidates/new`.
 
-**Still outside every workstream:** `/app/projects/[id]/shortlist`. It
-appears in no table in this document — a gap in the original survey, found
-when the module rail needed a complete list. It is the last entry in the
-rail's pending list.
+**~~Still outside every workstream:~~ `/app/projects/[id]/shortlist`** —
+done 2026-08-18, and now in W3's table where it always belonged.
+
+It appeared in no table in this document. A gap in the original survey,
+found when the module rail needed a complete list, and it survived six
+workstreams because nothing enumerated the routes — only the list. The
+guard is now the other direction too:
+`mandate-modules.test.ts` walks
+`src/app/(dashboard)/app/projects/[id]/*/page.tsx` and fails on any module
+directory that appears in neither `SAMPLE_MODULES` nor
+`SAMPLE_MODULES_PENDING`. Same shape as `routes.test.ts`. A control run
+that removed the shortlist entry failed naming it.
+
+**It is a record, not a builder**, and that is the whole design. The real
+screen is `ShortlistBuilder` — pool, slate, compose, generate, submit —
+and almost every control on it is a write. Disabling them would be the
+worst option available, because on this screen the controls *are* the
+screen. `SAMPLE_MANDATES` puts Larkspur at **WITH CLIENT**, so the slate
+has already gone, and a submitted shortlist is read-only in the real
+product too. Nothing there is a sample limitation dressed as a design.
+
+The two names are `SAMPLE_COMPARISON.primarySlate`, so this screen and
+`/comparison` cannot name different people; ranks and scores come from
+`sampleRanking()`. The backups are named rather than hidden — who was held
+back is half of what a submission record is for.
+
+`SAMPLE_MODULES_PENDING` is now **empty**, and the rail's "Not in the
+sample" cell renders only when it is not: a cell asserting a gap that no
+longer exists is worse than no cell.
 
 ### W6 · Reports & Analytics — 5 routes — DONE 2026-08-17
 
@@ -414,27 +503,115 @@ One number was caught in a screenshot rather than by a test — the reality
 statement said "two at Tier 2" beside a table showing three. There is a test
 for it now.
 
-### W7 · Executive Search Workflow — 11 routes
-
-**Entirely blocked on D1, and its approach depends on D2.**
+### W7 · Executive Search Workflow — 11 routes — DONE 2026-08-18
 
 | Route | State | Kind | Size | Depends on | Value |
 |---|---|---|---|---|---|
-| `/app/executive-intelligence` | thin | relational | M | searches | Med |
-| `/app/executive-intelligence/searches` | empty-only | relational | M | — | High |
+| `/app/executive-intelligence` | complete | — | — | — | — |
+| `/app/executive-intelligence/searches` | complete | — | — | — | — |
 | `/app/executive-intelligence/searches/new` | n/a | — | — | — | — |
 | `/app/executive-intelligence/searches/[id]` | complete | — | — | — | — |
-| `.../searches/[id]/success-profile` | empty-only | generated | L | D1 | High |
-| `.../searches/[id]/candidates` | empty-only | relational | M | search | High |
-| `.../candidates/[candidateId]/assessment` | empty-only | generated | L | D1 | High |
-| `.../candidates/[candidateId]/interview-plan` | empty-only | generated | L | D1, profile | High |
+| `.../searches/[id]/success-profile` | complete | — | — | — | — |
+| `.../searches/[id]/candidates` | complete | — | — | — | — |
+| `.../candidates/[candidateId]/assessment` | complete | — | — | — | — |
+| `.../candidates/[candidateId]/interview-plan` | complete | — | — | — | — |
 | `.../candidates/[candidateId]/report` | complete | — | — | — | — |
 | `/app/executive-intelligence/competencies` | complete | — | — | — | — |
 | `/app/executive-intelligence/templates` | complete | — | — | — | — |
 
-The last two are done — see D4. They needed no sample data at all: both
-render a seeded global catalogue for every account, and the apparent gap was
-copy on a branch that never runs.
+Competencies and templates were done by D4. They needed no sample data at
+all: both render a seeded global catalogue for every account, and the
+apparent gap was copy on a branch that never runs.
+
+Everything hangs off one search — `sample-search-northvale`, the Chief
+Operating Officer engagement the workspace and report components already
+pointed at — the way W3's seven module screens hang off `sample-larkspur`.
+`src/lib/sample/executive.ts` is the single source; `executive.test.ts`
+pins it.
+
+**Three searches, not one.** A list screen with a single row demonstrates
+a detail page. The other two sit at earlier states, and the middle one is
+load-bearing beyond its own screen: the home page's priority card reads
+"Success profile draft ready for approval" and used to name Northvale,
+whose profile the workspace showed as **approved at v3**. Two screens, one
+artifact, two answers. It names Thornbury now, and a test pins that
+exactly one sample search is ever in that state.
+
+#### The sample was teaching a vocabulary the product does not have — again
+
+W6 found this with five invented scoring dimensions. It was happening here
+too, and worse, because this module ships the real vocabulary as a
+clickable screen.
+
+`sample-ei-workspace.tsx` and `sample-ei-report.tsx` both hard-coded six
+competency names — "Partner-level influence", "Talent architecture",
+"Capital & cost discipline" — and **not one of them is in
+`executive_competencies`**, the 24-row seeded catalogue that
+`/app/executive-intelligence/competencies` renders one click away. A
+prospect reading the sample learned six terms they would never find again.
+
+All six are now real keys with the catalogue's own labels
+(`scaling_systems`, `regulatory_compliance`, `cross_functional_influence`,
+`financial_stewardship`, `talent_magnetism`, `technology_strategy`).
+`executive.test.ts` parses `033_executive_intelligence_seed.sql` and fails
+on any key or label the migration does not contain, so this cannot recur
+by hand-editing a component.
+
+#### The report is compiled, not written
+
+`sample-ei-report.tsx` used to hand-write its coverage table, its
+thin-evidence paragraph and its provenance block — somebody had
+transcribed `buildThinParagraphs`' output into a string literal. It now
+runs the fixture through **`compileExecutiveReport`, the same pure
+function the real report uses**. Three things the transcription had
+already got wrong and this cannot:
+
+- It cited evidence as coming from *"stages 1, 3"*. The compiler filters
+  `source_stages` against the approved plan's stage **names** and drops
+  the rest, so those citations would have rendered as nothing.
+- It omitted `weightedStrengthPercent`, which the real report shows beside
+  the coverage figure. The two answer different questions — how much of
+  the weight is covered (100%) versus how strong that evidence is (83%) —
+  and showing only the first flatters the document.
+- Its six competencies were the invented names above.
+
+#### What the fixtures pin
+
+Nothing countable is typed twice. The chain's badges are derived from the
+candidate array, so the header can no longer say "4 candidates in
+diligence" above a chain saying "2 in diligence" — which is what it said.
+`competency_coverage` is computed from stage assignments, so a plan cannot
+claim coverage its own stages do not deliver. The assessment's
+`evidence_rollup` and `weighted_evidence_strength` come from
+`computeEvidenceRollup` and `computeWeightedEvidenceStrength` rather than
+being typed, because the product stamps them server-side and never trusts
+a client copy.
+
+**The audit trail's link events drift-tested immediately.** Typed once,
+they put Rachel Sowande's link on day 30 while her own row said day 23 —
+found by reading the rendered page, not by a test, which is now the third
+time in this programme. `linkedDaysAgo` is the only place a link date
+lives, and there is a test.
+
+#### Two placements were billing searches that were still running
+
+Not a W7 gap, found by building on top of them, and both had teeth:
+
+- `SAMPLE_PLACEMENTS` recorded **Daniel Okonjo as started in the COO seat
+  at Northvale** — the search this whole workstream is built on, with his
+  assessment as the worked example.
+- It recorded **Priya Anand as started as CTO at Larkspur** — the mandate
+  W3–W6 rests on, and the person W7's new shortlist screen submits as a
+  *candidate* for that seat.
+
+The revenue screen was billing searches the portfolio and shortlist
+screens were still pitching. Both re-attributed to searches the client has
+actually closed, with no amount changed, so `SAMPLE_REVENUE` still adds
+up. Two tests: a `STARTED` placement may not share a role and company with
+an open mandate, and must name a mandate its client lists as closed.
+`STARTED` only is the whole precision — Cindermere's `FELL THROUGH` and
+`ACCEPTED` rows against a live search are correct, because a fallthrough
+is exactly what reopens one.
 
 ---
 
@@ -454,12 +631,46 @@ copy on a branch that never runs.
    replaced with the product's five.
 7. ~~**W5 Research & Sourcing**~~ — done 2026-08-17. Two screens built, and
    the import wizard left on its honest state for a written reason.
-8. **W7 Executive Search** — still held for **D1**. D2 is answered and sets the approach.
-9. `/app/activity` last, as a projection of everything above.
+8. ~~**W7 Executive Search**~~ — done 2026-08-18. D1 dissolved on contact
+   with the code: two screens, not eleven, both inside existing precedent.
+   The workstream also closed `/app/projects/[id]/shortlist`, the route
+   that was in no table here.
+9. ~~`/app/activity` last, as a projection of everything above.~~ — done
+   2026-08-18, and it was the right order: every row in it refers to
+   something another sample screen already shows.
 
-**Do not start at W7** despite it being the largest and most impressive
-surface. It is the one where a wrong answer to D1 is both expensive and
-reputationally dangerous.
+~~**Do not start at W7**~~ — the advice was sound and the reason for it
+was not. W7 was worth leaving until last because it is the largest
+surface, but not because D1 made it dangerous: **no page in the module
+renders agent output directly, and the one screen carrying an evaluative
+judgement of a person has no agent behind it at all.** The blocker was a
+classification error, and it cost six workstreams of deferral. See D1.
+
+---
+
+## 6. All 46 routes are done
+
+Nothing in this document is outstanding. What the programme leaves behind,
+in rough order of how much it will save the next person:
+
+- **`src/lib/sample/`** — six fixture files, all re-exported from
+  `index.ts`, whose header carries the D3 labelling rule.
+- **Five structural tests**, each of which walks something rather than
+  listing it, because every gap this programme found was a thing nobody
+  had written down: `routes.test.ts` (every dynamic route handles a sample
+  id), `mandate-modules.test.ts` (every module route is accounted for, in
+  both directions), `executive.test.ts` (every competency key is really
+  seeded), `call-sites.test.ts` (every action call is unwrapped), and
+  `suspended_account_invariants.sql` (every RLS-enabled table).
+- **The recurring defect, named once**: two screens describing the same
+  thing and disagreeing. It was found in W3 (spec version and dimension
+  count), W6 (tier counts, invented dimension names), and four more times
+  in W7 — the profile version, the diligence stage counts, the link dates,
+  and two placements billing live searches. Assume any number typed twice
+  is already wrong; derive it or test it.
+- **Reading the rendered page catches what tests do not.** Three of those
+  seven were found by looking at a screenshot, including two in this
+  session. Budget for it.
 
 ---
 

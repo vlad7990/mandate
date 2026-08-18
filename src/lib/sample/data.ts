@@ -169,10 +169,15 @@ export const SAMPLE_PRIORITIES: readonly SamplePriority[] = [
     id: "sample-priority-profile",
     severity: "attention",
     title: "Success profile draft ready for approval",
+    // Thornbury, not Northvale. This card used to name the Northvale COO
+    // search at v2 while the executive workspace showed that same profile
+    // approved at v3 — two screens describing one artifact and disagreeing,
+    // the defect W3 found on the mandate page. `executive.test.ts` pins
+    // that exactly one sample search is ever in this state.
     detail:
-      "Chief Operating Officer · Northvale Capital · v2 · approving writes competency weights",
+      "Chief Financial Officer · Thornbury Group · v2 · approving writes competency weights",
     action: "Open",
-    href: "/app/projects/sample-northvale",
+    href: "/app/executive-intelligence/searches",
   },
   {
     id: "sample-priority-calibration",
@@ -567,9 +572,22 @@ export type SamplePlacement = {
 
 export const SAMPLE_PLACEMENTS: readonly SamplePlacement[] = [
   {
-    id: "sample-placement-anand",
-    candidate: "Priya Anand",
-    mandate: "Chief Technology Officer",
+    /*
+      Same correction as the Northvale row below, and this one had grown
+      teeth: it placed **Priya Anand as Chief Technology Officer at
+      Larkspur Health** while `sample-larkspur` is the mandate the entire
+      W3–W6 sample is built on — day 27 of 90, stage WITH CLIENT, eighteen
+      candidates — and W7's shortlist screen submits her as a *candidate*
+      for that seat. The revenue screen was billing the search the
+      shortlist screen was still pitching.
+
+      Re-attributed to Larkspur's Director of Data Engineering search,
+      closed 43 days ago, and to the person actually placed on it. Fee and
+      billed figures are untouched, so `SAMPLE_REVENUE` still adds up.
+    */
+    id: "sample-placement-demirci",
+    candidate: "Yusuf Demirci",
+    mandate: "Director of Data Engineering",
     client: "Larkspur Health",
     status: "STARTED",
     startDate: "2026-07-06",
@@ -578,12 +596,29 @@ export const SAMPLE_PLACEMENTS: readonly SamplePlacement[] = [
     billed: 64_000,
   },
   {
-    id: "sample-placement-okonjo",
-    candidate: "Daniel Okonjo",
-    mandate: "Chief Operating Officer",
+    /*
+      Head of Compliance, not the COO search.
+
+      This row used to place **Daniel Okonjo as Chief Operating Officer at
+      Northvale Capital** — a person and a search that three other screens
+      say are still in diligence: `SAMPLE_MANDATES` has `sample-northvale`
+      at stage DILIGENCE on day 41, `SAMPLE_NETWORK` records his outcome
+      there as "In diligence", and the whole executive-search sample is
+      built on his assessment being the one that just reached approval. A
+      placement means the search is over, so the revenue screen was
+      reporting a fee for a mandate the portfolio screen was still running.
+
+      Northvale's own closed mandates already had the right answer in them:
+      "Head of Compliance", placed 96 days ago. So the placement belongs to
+      that search and to somebody else. No amount changed, which is why
+      `SAMPLE_REVENUE` is untouched — only who and which role.
+    */
+    id: "sample-placement-akindele",
+    candidate: "Folake Akindele",
+    mandate: "Head of Compliance",
     client: "Northvale Capital",
     status: "STARTED",
-    startDate: "2026-04-20",
+    startDate: "2026-05-14",
     guarantee: "Guarantee cleared",
     fee: 78_000,
     billed: 78_000,
@@ -799,6 +834,12 @@ export const SAMPLE_CLIENTS: readonly SampleClient[] = [
     researchedDaysAgo: 9,
     liveMandateIds: ["sample-larkspur"],
     closedMandates: [
+      // The search behind `sample-placement-demirci`. Larkspur's other two
+      // closures are 214 and 402 days old, and the placement that pays
+      // `SAMPLE_REVENUE.billedThisQuarter` has to belong to a search that
+      // closed *this* quarter or the revenue screen is reporting a fee
+      // with no mandate this side of the year behind it.
+      { title: "Director of Data Engineering", outcome: "Placed", closedDaysAgo: 43 },
       { title: "VP Clinical Operations", outcome: "Placed", closedDaysAgo: 214 },
       { title: "Head of Information Security", outcome: "Placed", closedDaysAgo: 402 },
     ],

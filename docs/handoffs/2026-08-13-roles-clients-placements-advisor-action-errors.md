@@ -1,8 +1,9 @@
 # Continuation — roles, the re-skin, clients, placements, the trail, contacts, the advisor sweep, the action-error contract
 
 **Date:** 2026-08-13, extended 2026-08-14 with the advisor sweep and the
-status sweep that followed it (§5g–§5i), and 2026-08-17 with the
-server-action error contract and the post-061 advisor run (§11–§12)
+status sweep that followed it (§5g–§5i), 2026-08-17 with the
+server-action error contract and the post-061 advisor run (§11–§12), and
+2026-08-18 with W7 and the close of the sample-data programme (§13)
 **Supersedes:** `2026-08-13-platform-features.md` entirely. Both open
 decisions in it are now made, and five of its priority items are done. Its
 Resend and `ANTHROPIC_API_KEY` blockers are unchanged and repeated below.
@@ -12,8 +13,8 @@ Work in `/Users/vladbreygin/Projects/mandate`. Supabase project
 — always `cd` first or use `git -C`.
 
 `main` is clean, pushed, and deployed to `getmandate.io`.
-Migrations `046`–`060` applied; schema and code are in step. 544 tests
-(was 389), tsc / lint / build green. **Next migration is 061.**
+Migrations `046`–`061` applied; schema and code are in step. 707 tests
+(was 389), tsc / lint / build green. **Next migration is 062.**
 
 Nine commits, in order: `498e46f` roles and route guards, `dfd2ca5` the
 terminal re-skin, `567d0f5` and `2e482df` responsive repair, `a288eb8` the
@@ -1813,3 +1814,126 @@ is absent from the list is the one §5g gives for why the list is not a to-do
 in the first place: an index is flagged for having no recorded scans, and this
 one has some, because the demo endpoint has actually been called since 061
 landed.
+
+---
+
+## 13. W7, the last of the sample data, and a blocker that was not one — 2026-08-18
+
+`docs/sample-data-inventory.md` is complete: **all 46 dashboard routes**.
+This section records only what belongs in a handoff rather than in the
+inventory — the things that change how the next piece of work is
+approached.
+
+### D1 was a classification error, and it cost six workstreams
+
+The inventory recorded W7's eleven routes as "entirely blocked" on a
+founder decision about what a fabricated agent may say about a fabricated
+person. Reading the code rather than the screenshots:
+
+- **No page under `/app/executive-intelligence` renders agent output
+  directly.** Three action files invoke an agent; every page reads a
+  stored row.
+- **The assessment — the one screen carrying an evaluative judgement of a
+  person — has no agent behind it at all.** Its actions file imports three
+  pure functions from `executive-assessment.ts`, which contains no model
+  call. `types.ts` says so in a comment, the module ships a separate
+  `ASSESSMENT_DISCLAIMER` because of it, and `report.ts` prints
+  *"Assessment authored by a human · no AI"* into every report.
+
+So D1's surface was two screens, and both sat inside the precedent W3 and
+W6 had already applied. The same thing had happened once before, with
+`/comparison` in W6.
+
+**The generalisable lesson:** the survey classified pages by what they
+look like. Before recording a blocker against a route, grep what it
+imports. Twenty minutes would have saved six workstreams of deferral.
+
+### Three defects found by building on top of shipped sample data
+
+None was a sample-data gap; all three were in code that had passed
+review, tests and a browser sweep.
+
+1. **The sample taught six competency names the product does not have.**
+   `sample-ei-workspace.tsx` and `sample-ei-report.tsx` hard-coded
+   "Partner-level influence", "Talent architecture" and four more — none
+   of them in `executive_competencies`, the 24-row catalogue the module's
+   own `/competencies` screen renders one click away. Identical in kind to
+   the five invented scoring dimensions W6 found, and worse in effect,
+   because here the real vocabulary is a screen a prospect can open.
+   `executive.test.ts` now parses `033_executive_intelligence_seed.sql`
+   and refuses any key or label the migration does not contain.
+
+2. **Two placements were billing searches that were still running.**
+   `SAMPLE_PLACEMENTS` had Daniel Okonjo started as COO at Northvale — the
+   search W7 is built on — and Priya Anand started as CTO at Larkspur, the
+   mandate W3–W6 rests on and whose shortlist screen submits her as a
+   candidate. The revenue screen was billing what the portfolio screen was
+   still pitching. Both re-attributed to searches their client actually
+   closed; no amount changed. Two tests now pin it, and the rule is
+   `STARTED`-only on purpose: Cindermere's `FELL THROUGH` row against a
+   live search is *correct*, because a fallthrough is what reopens one.
+
+3. **`/app/projects/[id]/shortlist` was in no table in the inventory.** It
+   survived six workstreams because the tests walked the *list* and asked
+   whether each entry had a route — never the reverse. It now walks the
+   route tree too. This is the third guard in the repo built that way
+   (`routes.test.ts`, `suspended_account_invariants.sql`), and the pattern
+   is worth reaching for by default: **enumerate what exists, not what
+   somebody remembered to write down.**
+
+### Reading the rendered page is still finding things tests do not
+
+Two more this session, both in code with passing tests:
+
+- The EI workspace header said **"4 candidates in diligence"** beside its
+  own chain saying "2 in diligence · 1 advanced · 1 on hold". One screen
+  contradicting itself, exactly as `/comparison` did with "two at Tier 2"
+  over a table of three.
+- The audit trail dated Rachel Sowande's link to day 30 while her own row
+  said day 23 — a fixture that drifted within an hour of being written.
+
+Everything countable in the EI sample is now derived, and there are tests
+for both. The tally across this programme: **seven same-thing-twice
+defects, three of them found only by looking at a screenshot.**
+
+### The trap in §6's recipe bit again, as documented
+
+Creating the scratch account fires 053's member-audit trigger, so
+`activity_events` had two rows before the browser was opened — which made
+`hasRealData` true and correctly suppressed the new `/app/activity`
+sample. It looked like the feature was broken. It was not: the trail was
+showing real rows, which is what it is for. Clear `activity_events` for
+the test org after seeding, scoped, as §5b says.
+
+### Verification
+
+- 705 tests (was 641), tsc / lint / build green.
+- Driven in a production build (`npm run build && npm start`) under a
+  temporary admin in a scratch organisation, per §6.
+- **Eleven routes at 360 / 390 / 768 / 1024 / 1440** — 55 page-widths, no
+  horizontal overflow. The sweep was control-tested by injecting an
+  over-wide element and confirming it was detected.
+- The report's figures were read out of the DOM rather than eyeballed:
+  100% weighted coverage, 83% weighted evidence strength, thin-evidence
+  section naming Technology Strategy at 10%, provenance carrying
+  *"ASSESSMENT AUTHORED BY A HUMAN · NO AI"*.
+- **The negative case was tested too**, and it is the one that matters
+  most: inserting a single real `executive_searches` row made the sample
+  vanish from both `/app/executive-intelligence` and `/searches`, with the
+  real row rendering in its place. No mixing.
+- Four control runs, each of which failed as intended before being
+  reverted: an unseeded competency key, a removed module-list entry, a fee
+  row downgraded to `org` visibility, and the overflow probe.
+- Scratch org, user, identity, sessions and the SMOKE search deleted;
+  counts checked back to baseline — 1 org, 2 projects, 1 candidate, 1
+  client, 1 user, 1 auth user, 0 sessions, 0 contacts, 0 notes, 0
+  placements, 0 activity events, 0 waitlist, 5 skills, 1 job spec, 0
+  executive searches, 24 competencies, 8 templates.
+
+**No migrations.** Next is still `062`.
+
+One control run worth recording because it nearly passed silently: the
+first attempt to break a competency key used `sed` with an unescaped `&`,
+which no-opped, and the test reported green. The guard was fine; the
+control was not. *A control run that does not visibly change the file is
+not a control run* — check the diff before trusting the result.

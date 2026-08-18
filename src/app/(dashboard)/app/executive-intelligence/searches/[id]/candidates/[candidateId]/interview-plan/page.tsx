@@ -8,7 +8,7 @@ import { PlanGate } from "./plan-gate";
 import { PlanGenerating } from "./plan-generating";
 import { PlanEditor, type PlanVersionSummary } from "./plan-editor";
 import { isSampleId } from "@/lib/sample";
-import { SampleNotBuilt } from "@/components/sample/sample-not-built";
+import { SampleEiInterviewPlan } from "@/components/sample/sample-ei-interview-plan";
 
 // Server-action generation runs in an after() callback on this route; give it a
 // generous ceiling so an 8000-token plan (~90–100s) completes before the function
@@ -26,19 +26,12 @@ type Params = Promise<{ id: string; candidateId: string }>;
 export default async function InterviewPlanPage({ params }: { params: Params }) {
   const { id, candidateId } = await params;
 
-  // The executive-search sample stops at the search overview and the
-  // report — W7, still held for D1. Everything between them says so rather
-  // than redirecting to the dashboard.
+  // W7 filled this in. This is the whole of D1's real surface — the one
+  // artifact where an agent says something shaped by a specific person —
+  // and the interview architect's own prompt already draws the line the
+  // fixture keeps. See the header of `sample-ei-interview-plan.tsx`.
   if (isSampleId(id) || isSampleId(candidateId)) {
-    return (
-      <SampleNotBuilt
-        title="Interview plan"
-        context="Sample executive search"
-        backHref={`/app/executive-intelligence/searches/${id}`}
-        backLabel="Search"
-        scope="executive search"
-      />
-    );
+    return <SampleEiInterviewPlan candidateId={candidateId} />;
   }
   const supabase = await createServerSupabaseClient();
 

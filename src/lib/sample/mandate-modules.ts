@@ -61,6 +61,7 @@ export const SAMPLE_MODULES = [
   { slug: "ranking", label: "Ranking", meta: "6 scored" },
   { slug: "comparison", label: "Comparison", meta: "2 + 2 slate" },
   { slug: "sourcing", label: "Sourcing", meta: "6 queries" },
+  { slug: "shortlist", label: "Shortlist", meta: "Submitted" },
 ] as const;
 
 /**
@@ -69,14 +70,20 @@ export const SAMPLE_MODULES = [
  * Listed rather than omitted. Before this they redirected to `/app/home`
  * with no message — eleven routes, silently — and a rail that simply left
  * them out would still leave a typed URL doing it.
+ *
+ * **Empty since W7.** `/shortlist` was the last entry and is now in
+ * `SAMPLE_MODULES` above; it had been outside every workstream in the
+ * inventory, which is how it stayed pending through six of them. The list
+ * and the machinery around it stay: `SampleModuleNotBuilt` is still what
+ * the other six sample mandates render for every module, and the next
+ * module the product grows should land here before it lands in the sample.
  */
-export const SAMPLE_MODULES_PENDING = [
-  { slug: "shortlist", label: "Shortlist" },
-] as const;
+export const SAMPLE_MODULES_PENDING: readonly {
+  readonly slug: string;
+  readonly label: string;
+}[] = [];
 
-export type SampleModuleSlug =
-  | (typeof SAMPLE_MODULES)[number]["slug"]
-  | (typeof SAMPLE_MODULES_PENDING)[number]["slug"];
+export type SampleModuleSlug = (typeof SAMPLE_MODULES)[number]["slug"];
 
 /* ── Onboarding ──────────────────────────────────────────────────── */
 

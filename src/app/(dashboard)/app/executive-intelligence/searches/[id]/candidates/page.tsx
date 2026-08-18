@@ -16,7 +16,7 @@ import {
   UnlinkCandidateButton,
 } from "./candidate-link-controls";
 import { isSampleId } from "@/lib/sample";
-import { SampleNotBuilt } from "@/components/sample/sample-not-built";
+import { SampleEiCandidates } from "@/components/sample/sample-ei-candidates";
 
 type SearchSummary = {
   id: string;
@@ -52,19 +52,10 @@ export default async function ExecutiveSearchCandidatesPage({
 }) {
   const { id } = await params;
 
-  // The executive-search sample stops at the search overview and the
-  // report — W7, still held for D1. Everything between them says so rather
-  // than redirecting to the dashboard.
+  // W7 filled this in. No agent output on this screen at all — it reads
+  // the link table. A stage is a funnel position, never a decision.
   if (isSampleId(id)) {
-    return (
-      <SampleNotBuilt
-        title="Search candidates"
-        context="Sample executive search"
-        backHref={`/app/executive-intelligence/searches/${id}`}
-        backLabel="Search"
-        scope="executive search"
-      />
-    );
+    return <SampleEiCandidates />;
   }
   const { q } = await searchParams;
   const query = (q ?? "").trim();

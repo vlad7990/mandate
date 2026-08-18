@@ -9,7 +9,7 @@ import {
   type AssessmentVersionSummary,
 } from "./assessment-editor";
 import { isSampleId } from "@/lib/sample";
-import { SampleNotBuilt } from "@/components/sample/sample-not-built";
+import { SampleEiAssessment } from "@/components/sample/sample-ei-assessment";
 
 type Params = Promise<{ id: string; candidateId: string }>;
 
@@ -22,19 +22,11 @@ type Params = Promise<{ id: string; candidateId: string }>;
 export default async function AssessmentPage({ params }: { params: Params }) {
   const { id, candidateId } = await params;
 
-  // The executive-search sample stops at the search overview and the
-  // report — W7, still held for D1. Everything between them says so rather
-  // than redirecting to the dashboard.
+  // W7 filled this in. The inventory listed this screen `generated` and
+  // blocked on D1; there is no agent anywhere in its action file. See the
+  // header of `sample-ei-assessment.tsx`.
   if (isSampleId(id) || isSampleId(candidateId)) {
-    return (
-      <SampleNotBuilt
-        title="Assessment"
-        context="Sample executive search"
-        backHref={`/app/executive-intelligence/searches/${id}`}
-        backLabel="Search"
-        scope="executive search"
-      />
-    );
+    return <SampleEiAssessment candidateId={candidateId} />;
   }
   const supabase = await createServerSupabaseClient();
 

@@ -10,7 +10,7 @@ import { normalizeReport } from "@/lib/ai/shortlist-report";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { ShortlistBuilder, type PoolCandidate } from "./shortlist-builder";
 import { isSampleId } from "@/lib/sample";
-import { SampleModuleNotBuilt } from "@/components/sample/sample-mandate-shell";
+import { SampleShortlist } from "@/components/sample/sample-shortlist";
 
 type ProjectRow = {
   id: string;
@@ -58,9 +58,10 @@ export default async function ShortlistPage({
 }) {
   const { id } = await params;
 
-  // Not in the sample workspace yet — W5/W6. Says so, rather than
-  // redirecting to `/app/home` the way it used to.
-  if (isSampleId(id)) return <SampleModuleNotBuilt module="shortlist" mandateId={id} />;
+  // The sample shows a *submitted* slate rather than the builder: almost
+  // every control here is a write, and Larkspur is at WITH CLIENT, so the
+  // record is the state the mandate is genuinely in.
+  if (isSampleId(id)) return <SampleShortlist id={id} />;
   const supabase = await createServerSupabaseClient();
 
   const { data: project, error: projectError } = await supabase

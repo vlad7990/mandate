@@ -2,6 +2,18 @@ import Link from "next/link";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { SampleBanner } from "@/components/sample/sample-banner";
 import { IconChevronRight } from "@/components/icons";
+import {
+  SAMPLE_EXECUTIVE_AUDIT,
+  SAMPLE_INTAKE_BRIEF,
+  SAMPLE_LINKED_CANDIDATES,
+  SAMPLE_OPERATIONAL_WEIGHTS,
+  SAMPLE_PROFILE_PROVENANCE,
+  SAMPLE_SEARCH_ID,
+  SAMPLE_SUCCESS_PROFILE,
+  sampleChain,
+  sampleWorkedSearch,
+} from "@/lib/sample";
+import { EXEC_CANDIDATE_STAGE_LABELS } from "@/lib/executive/types";
 
 /**
  * The sample Executive Intelligence workspace — comp 11, from fixtures.
@@ -10,12 +22,11 @@ import { IconChevronRight } from "@/components/icons";
  *
  * - **Approved looks deliberate.** Read-only is expressed as a
  *   provenance footer — who approved it, when, which version it
- *   supersedes, which prompt and model produced the draft — not as a
- *   greyed-out form. An approved success profile is the record of a
- *   decision, and it should read like one.
- * - **Gates are signposts.** The locked step states what unlocks it.
- *   Nobody should discover a database constraint by clicking into a
- *   dead end.
+ *   supersedes, which prompt produced the draft — not as a greyed-out
+ *   form. An approved success profile is the record of a decision, and
+ *   it should read like one.
+ * - **Gates are signposts.** A step states what unlocks it. Nobody should
+ *   discover a database constraint by clicking into a dead end.
  * - **Editorial, not terminal.** EI artifacts get a wider measure and
  *   more generous leading than the rest of the app — same tokens, a
  *   different density register.
@@ -25,100 +36,25 @@ import { IconChevronRight } from "@/components/icons";
  * authenticated bundle for a sample screen, this uses the app's heading
  * face at the comp's sizes and leading. If EI adopts the editorial
  * register for real, load Fraunces in the dashboard layout first.
+ *
+ * ## Two things W7 changed here
+ *
+ * **Nothing countable is typed any more.** This screen used to state "4
+ * candidates in diligence" in its own header beside a chain that said "2
+ * in diligence · 1 advanced" — one screen contradicting itself, the same
+ * class as the comparison screen's "two at Tier 2" over a table of three.
+ * Every count now comes from `sampleChain()` and the fixture arrays.
+ *
+ * **The competency names are the product's.** Six were invented here —
+ * "Partner-level influence", "Talent architecture" — and none of them was
+ * in the catalogue that `/competencies` renders one click away. See the
+ * header of `src/lib/sample/executive.ts`.
  */
 
-type ChainStep = {
-  label: string;
-  state: "ready" | "approved" | "linked" | "progress" | "locked";
-  badge: string;
-  detail: string;
+const CHAIN_HREF: Readonly<Record<string, string>> = {
+  "Success profile": `/app/executive-intelligence/searches/${SAMPLE_SEARCH_ID}/success-profile`,
+  Candidates: `/app/executive-intelligence/searches/${SAMPLE_SEARCH_ID}/candidates`,
 };
-
-const CHAIN: readonly ChainStep[] = [
-  {
-    label: "Company context",
-    state: "ready",
-    badge: "Ready",
-    detail: "Grounded on day 1 · 22 sources",
-  },
-  {
-    label: "Success profile",
-    state: "approved",
-    badge: "Approved",
-    detail: "v3 · approved by E. Marchetti",
-  },
-  {
-    label: "Candidates",
-    state: "linked",
-    badge: "4 linked",
-    detail: "2 in diligence · 1 advanced",
-  },
-  {
-    label: "Interview plans",
-    state: "progress",
-    badge: "In progress",
-    detail: "2 approved · 1 draft · 1 not started",
-  },
-  {
-    // The gate states its own precondition.
-    label: "Assessments",
-    state: "locked",
-    badge: "Locked",
-    detail: "Opens per candidate once their interview plan is approved",
-  },
-];
-
-const WEIGHTS = [
-  { name: "Scaling operations through growth", w: 24 },
-  { name: "Regulatory & control environment", w: 21 },
-  { name: "Partner-level influence", w: 18 },
-  { name: "Capital & cost discipline", w: 15 },
-  { name: "Talent architecture", w: 12 },
-  { name: "Technology judgment", w: 10 },
-];
-
-const LINKED = [
-  {
-    initials: "DO",
-    name: "Daniel Okonjo",
-    role: "CIO · Pellworth NHS Trust",
-    stage: "Advanced",
-    note: "Assessment approved · 6 of 6 competencies evidenced",
-    muted: false,
-  },
-  {
-    initials: "IB",
-    name: "Ingrid Bellweather",
-    role: "COO · Halden Freight",
-    stage: "In diligence",
-    note: "Interview plan approved · assessment not started",
-    muted: false,
-  },
-  {
-    initials: "TQ",
-    name: "Tomasz Quintero-Reyes",
-    role: "Managing Director, Operations · Kestrel Bank",
-    stage: "In diligence",
-    note: "Interview plan in draft · not yet approved",
-    muted: false,
-  },
-  {
-    initials: "RS",
-    name: "Rachel Sowande",
-    role: "COO · Bramblewick Retail",
-    stage: "On hold",
-    note: "Paused at the candidate's request",
-    muted: true,
-  },
-];
-
-const AUDIT = [
-  { d: "Day 39", e: "assessment.approved · Okonjo · E. Marchetti" },
-  { d: "Day 37", e: "interview_plan.approved · Bellweather · v2" },
-  { d: "Day 36", e: "candidate_link.stage_changed · Sowande → on_hold" },
-  { d: "Day 33", e: "success_profile.approved · v3 · weights written" },
-  { d: "Day 33", e: "success_profile.archived · v2 superseded" },
-];
 
 function Panel({
   title,
@@ -153,12 +89,16 @@ function Panel({
 // The sample workspace renders one fixed example search, so the id is
 // only the routing signal — there is nothing to look up with it.
 export function SampleEiWorkspace() {
+  const search = sampleWorkedSearch();
+  const chain = sampleChain();
+  const dayOf = (daysAgo: number) => Math.max(1, search.openedDaysAgo - daysAgo);
+
   return (
     <div className="mx-auto max-w-[1600px] px-6 py-6">
       <SetBreadcrumbs
         crumbs={[
           { label: "Executive Intelligence", href: "/app/executive-intelligence" },
-          { label: "Chief Operating Officer · Northvale Capital" },
+          { label: `${search.roleTitle} · ${search.companyName}` },
         ]}
       />
 
@@ -168,7 +108,7 @@ export function SampleEiWorkspace() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="font-heading text-[30px] font-semibold leading-tight tracking-tight text-on-surface">
-              Chief Operating Officer
+              {search.roleTitle}
             </h1>
             <span className="border border-outline-variant bg-surface-container px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-primary">
               Active
@@ -177,12 +117,20 @@ export function SampleEiWorkspace() {
               Premium
             </span>
           </div>
+          {/* Derived, not typed — see the note above. */}
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-outline">
-            <span className="text-on-surface-variant">Northvale Capital</span>
+            <span className="text-on-surface-variant">{search.companyName}</span>
             <span aria-hidden className="text-outline-variant">/</span>
             <span>Private credit, 340 staff</span>
             <span aria-hidden className="text-outline-variant">/</span>
-            <span>4 candidates in diligence</span>
+            <span className="tabular-nums">
+              {SAMPLE_LINKED_CANDIDATES.length} candidates linked
+            </span>
+            {/* No `/` before this one — `//` is already the separator, and
+                the two together rendered "linked / // SAMPLE DATA". */}
+            <span className="font-mono-label uppercase tracking-wider">
+              {"// sample data"}
+            </span>
           </p>
         </div>
       </div>
@@ -199,8 +147,9 @@ export function SampleEiWorkspace() {
         </div>
 
         <ol className="mt-4 flex flex-col gap-2 xl:flex-row xl:items-stretch xl:gap-0">
-          {CHAIN.map((s, i) => (
-            <li key={s.label} className="flex min-w-0 flex-1 items-stretch">
+          {chain.map((s, i) => {
+            const href = CHAIN_HREF[s.label];
+            const body = (
               <div
                 className={`flex min-w-0 flex-1 flex-col gap-2 border p-3.5 ${
                   s.state === "progress"
@@ -208,7 +157,7 @@ export function SampleEiWorkspace() {
                     : s.state === "locked"
                       ? "border-outline-variant bg-surface-container-low"
                       : "border-outline-variant bg-surface-container"
-                }`}
+                } ${href ? "transition-colors hover:border-primary/70" : ""}`}
               >
                 <span
                   className={`font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] ${
@@ -228,17 +177,29 @@ export function SampleEiWorkspace() {
                   {s.detail}
                 </span>
               </div>
+            );
 
-              {i < CHAIN.length - 1 && (
-                <span
-                  aria-hidden
-                  className="hidden w-6 shrink-0 items-center justify-center text-outline-variant xl:flex"
-                >
-                  <IconChevronRight size={14} />
-                </span>
-              )}
-            </li>
-          ))}
+            return (
+              <li key={s.label} className="flex min-w-0 flex-1 items-stretch">
+                {href ? (
+                  <Link href={href} prefetch={false} className="flex min-w-0 flex-1">
+                    {body}
+                  </Link>
+                ) : (
+                  body
+                )}
+
+                {i < chain.length - 1 && (
+                  <span
+                    aria-hidden
+                    className="hidden w-6 shrink-0 items-center justify-center text-outline-variant xl:flex"
+                  >
+                    <IconChevronRight size={14} />
+                  </span>
+                )}
+              </li>
+            );
+          })}
         </ol>
       </section>
 
@@ -252,7 +213,7 @@ export function SampleEiWorkspace() {
                   Approved · read-only
                 </span>
                 <span className="ml-auto font-mono-label text-[11px] text-outline">
-                  v3
+                  v{SAMPLE_PROFILE_PROVENANCE.version}
                 </span>
               </>
             }
@@ -260,9 +221,7 @@ export function SampleEiWorkspace() {
             <div className="flex flex-col gap-[18px] px-5 py-5">
               {/* Editorial register: wider measure, generous leading. */}
               <p className="max-w-[70ch] text-[17px] leading-[1.7] text-on-surface">
-                Northvale needs an operator who can industrialise a firm that
-                has doubled AUM on founder-era processes — without slowing
-                origination while doing it.
+                {SAMPLE_SUCCESS_PROFILE.role_mission}
               </p>
 
               <div className="flex flex-col gap-3">
@@ -270,11 +229,13 @@ export function SampleEiWorkspace() {
                   Operational competency weights
                 </p>
                 <div className="grid gap-x-7 gap-y-2.5 sm:grid-cols-2">
-                  {WEIGHTS.map((d) => (
-                    <div key={d.name}>
-                      <div className="flex justify-between text-[13px] font-medium leading-[1.7] text-on-surface-variant">
-                        <span>{d.name}</span>
-                        <span className="font-mono-data">{d.w}%</span>
+                  {SAMPLE_OPERATIONAL_WEIGHTS.map((d) => (
+                    <div key={d.competency_key}>
+                      <div className="flex justify-between gap-3 text-[13px] font-medium leading-[1.7] text-on-surface-variant">
+                        <span className="min-w-0">{d.label}</span>
+                        <span className="font-mono-data shrink-0 tabular-nums">
+                          {d.weight}%
+                        </span>
                       </div>
                       <span
                         aria-hidden
@@ -282,7 +243,7 @@ export function SampleEiWorkspace() {
                       >
                         <span
                           className="block h-full bg-primary"
-                          style={{ width: `${d.w}%` }}
+                          style={{ width: `${d.weight}%` }}
                         />
                       </span>
                     </div>
@@ -290,17 +251,34 @@ export function SampleEiWorkspace() {
                 </div>
               </div>
 
+              <Link
+                href={CHAIN_HREF["Success profile"]}
+                prefetch={false}
+                className="self-start font-mono-label text-[11px] uppercase tracking-widest text-primary hover:underline"
+              >
+                Read the full profile {"→"}
+              </Link>
+
               {/*
                 Provenance, not a disabled form. This is what makes an
                 approved artifact read as a record: who, when, which
-                version it supersedes, and which prompt and model drafted
-                it — the same facts the audit trail holds.
+                version it supersedes, and which prompt drafted it — the
+                same facts the audit trail holds.
               */}
               <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-outline-variant/60 pt-4 font-mono-label text-[11px] leading-relaxed text-outline">
-                <span>APPROVED DAY 33 · 14:26 UTC</span>
-                <span>BY ELENA MARCHETTI (SESSION-DERIVED)</span>
-                <span>VERSION 3 · SUPERSEDES v2</span>
-                <span>PROMPT v2.4</span>
+                <span className="tabular-nums">
+                  APPROVED DAY {dayOf(SAMPLE_PROFILE_PROVENANCE.approvedDaysAgo)}
+                </span>
+                <span>
+                  BY {SAMPLE_PROFILE_PROVENANCE.approvedByName.toUpperCase()}
+                </span>
+                <span className="tabular-nums">
+                  VERSION {SAMPLE_PROFILE_PROVENANCE.version} · SUPERSEDES v
+                  {SAMPLE_PROFILE_PROVENANCE.supersedes}
+                </span>
+                <span className="uppercase">
+                  {SAMPLE_PROFILE_PROVENANCE.modelVersion}
+                </span>
               </div>
             </div>
           </Panel>
@@ -308,15 +286,15 @@ export function SampleEiWorkspace() {
           <Panel
             title="Candidates in diligence"
             meta={
-              <span className="font-mono-label text-[11px] text-outline">
-                4 LINKED FROM THE ORGANISATION POOL
+              <span className="font-mono-label text-[11px] tabular-nums text-outline">
+                {SAMPLE_LINKED_CANDIDATES.length} LINKED FROM THE ORGANISATION POOL
               </span>
             }
           >
             <ul className="divide-y divide-outline-variant/40">
-              {LINKED.map((c) => (
+              {SAMPLE_LINKED_CANDIDATES.map((c) => (
                 <li
-                  key={c.name}
+                  key={c.id}
                   className="flex flex-wrap items-center gap-x-3.5 gap-y-2 px-5 py-4"
                 >
                   <span
@@ -327,49 +305,47 @@ export function SampleEiWorkspace() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
-                      className={`block truncate text-sm font-medium ${c.muted ? "text-outline" : "text-on-surface"}`}
+                      className={`block truncate text-sm font-medium ${
+                        c.stage === "on_hold" ? "text-outline" : "text-on-surface"
+                      }`}
                     >
                       {c.name}
                     </span>
                     <span className="block truncate text-xs text-outline">
-                      {c.role}
+                      {c.currentRole}
                     </span>
                   </span>
                   <span className="shrink-0 bg-surface-container-high px-2 py-1 font-mono-label text-[10px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
-                    {c.stage}
+                    {EXEC_CANDIDATE_STAGE_LABELS[c.stage]}
                   </span>
                   <span className="w-full text-xs leading-relaxed text-outline sm:w-[200px]">
-                    {c.note}
+                    {c.chainNote}
                   </span>
                 </li>
               ))}
             </ul>
+            <div className="border-t border-outline-variant/60 px-5 py-3.5">
+              <Link
+                href={CHAIN_HREF.Candidates}
+                prefetch={false}
+                className="font-mono-label text-[11px] uppercase tracking-widest text-primary hover:underline"
+              >
+                Open the diligence funnel {"→"}
+              </Link>
+            </div>
           </Panel>
         </div>
 
         <div className="flex flex-col gap-5">
           <Panel title="Intake brief">
             <div className="flex flex-col gap-3.5 px-5 py-4">
-              {[
-                {
-                  k: "Mandate origin",
-                  v: "AUM doubled in 26 months; operating model unchanged since founding.",
-                },
-                {
-                  k: "Outcomes in 18 months",
-                  v: "Close the control gaps flagged in the last review · reduce origination-to-close cycle by a third · build an ops leadership bench.",
-                },
-                {
-                  k: "Non-negotiable",
-                  v: "Has personally carried a regulated control remediation to closure.",
-                },
-              ].map((r) => (
-                <div key={r.k}>
+              {SAMPLE_INTAKE_BRIEF.map((r) => (
+                <div key={r.key}>
                   <p className="font-mono-label text-[10px] font-bold uppercase tracking-[0.12em] text-outline">
-                    {r.k}
+                    {r.key}
                   </p>
                   <p className="mt-1.5 text-[13px] leading-relaxed text-on-surface-variant">
-                    {r.v}
+                    {r.value}
                   </p>
                 </div>
               ))}
@@ -385,13 +361,13 @@ export function SampleEiWorkspace() {
             }
           >
             <ul className="py-1.5">
-              {AUDIT.map((a) => (
-                <li key={a.e} className="flex gap-3 px-5 py-2.5">
-                  <span className="w-16 shrink-0 font-mono-label text-[11px] leading-relaxed text-outline">
-                    {a.d}
+              {SAMPLE_EXECUTIVE_AUDIT.slice(0, 6).map((a, i) => (
+                <li key={`${a.eventType}-${i}`} className="flex gap-3 px-5 py-2.5">
+                  <span className="w-16 shrink-0 font-mono-label text-[11px] leading-relaxed tabular-nums text-outline">
+                    Day {dayOf(a.daysAgo)}
                   </span>
-                  <span className="text-xs leading-relaxed text-on-surface-variant">
-                    {a.e}
+                  <span className="min-w-0 text-xs leading-relaxed text-on-surface-variant">
+                    {a.eventType} · {a.detail}
                   </span>
                 </li>
               ))}

@@ -7,7 +7,7 @@ import { ProfileError } from "./profile-error";
 import { ProfileGenerating } from "./profile-generating";
 import { ProfileEditor, type ProfileVersionSummary } from "./profile-editor";
 import { isSampleId } from "@/lib/sample";
-import { SampleNotBuilt } from "@/components/sample/sample-not-built";
+import { SampleEiSuccessProfile } from "@/components/sample/sample-ei-success-profile";
 
 // Server-action generation runs in an after() callback on this route; give it a
 // generous ceiling so generation (~80s) completes before the function is
@@ -37,19 +37,11 @@ export default async function SuccessProfilePage({
 }) {
   const { id } = await params;
 
-  // The executive-search sample stops at the search overview and the
-  // report — W7, still held for D1. Everything between them says so rather
-  // than redirecting to the dashboard.
+  // W7 filled this in. The profile describes the role and never a
+  // candidate — see the header of `sample-ei-success-profile.tsx` for why
+  // that put it outside D1 rather than behind it.
   if (isSampleId(id)) {
-    return (
-      <SampleNotBuilt
-        title="Success profile"
-        context="Sample executive search"
-        backHref={`/app/executive-intelligence/searches/${id}`}
-        backLabel="Search"
-        scope="executive search"
-      />
-    );
+    return <SampleEiSuccessProfile />;
   }
   const supabase = await createServerSupabaseClient();
 
