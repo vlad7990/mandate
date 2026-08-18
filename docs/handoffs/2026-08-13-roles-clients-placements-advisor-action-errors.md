@@ -1937,3 +1937,140 @@ first attempt to break a competency key used `sed` with an unescaped `&`,
 which no-opped, and the test reported green. The guard was fine; the
 control was not. *A control run that does not visibly change the file is
 not a control run* — check the diff before trusting the result.
+
+---
+
+## 14. The persona-completion programme: Phase 0 verified, Phase 3 built — 2026-08-18
+
+The recruiter persona has a definition of done and a phased plan (agreed
+with the founder this session): **Phase 0** unblocks, **Phase 1** the loop
+run end to end, **Phase 2** the external surface, **Phase 3** scheduling,
+**Phase 4** written verdicts on every absent feature. This section records
+what executed and what is blocked, so the next session starts at Phase 1
+rather than re-deriving the plan.
+
+### Phase 0 — verified, and both founder actions are NOT done
+
+Verified rather than assumed, which was the point:
+
+- **The Anthropic credit is still negative.** The live key 502s with
+  *"Your credit balance is too low"* (req_011CeAFvNoiAkPuZGh2J5Wxm,
+  confirmed through the product's own demo endpoint and read from the
+  server log). This hard-blocks all of Phase 1 and the agent-dependent
+  half of Phase 2.
+- **The password floor is still 6.** A direct GoTrue signup with an
+  8-character two-class password was **accepted** — the app-side policy in
+  `password-policy.ts` is not the boundary, exactly as its header says.
+  The probe account was deleted and counts checked back to baseline.
+  Worth noting in passing: the signup auto-confirmed the email, so email
+  confirmation appears to be off too — one more thing to look at on the
+  same dashboard page.
+
+Both are five-minute dashboard actions and both remain open.
+
+### Phase 1 — blocked on credit; preparation done
+
+Nine synthetic CV PDFs for the "CTO · logistics" scratch mandate are
+staged (generator script + files in the session tmp dir; regenerating is
+one command). The set is shaped to give every downstream stage signal:
+three strong-but-different fits, two mids with distinct gaps, one match
+for each of the mandate's three anti-patterns, one weak. All fictional,
+smoke-prefixed. **Real-CV validation stays a founder checklist item** —
+these prove the pipeline runs, not that it parses real-world CVs well.
+
+### Phase 3 — the product's first scheduled path (migration 062)
+
+**What runs:** `run_guarantee_maintenance()` earns `guarantee_passed`
+instalments whose placement started and whose guarantee window has passed
+— the one §5a consequence that was derivable from stored dates.
+`earned_on = guarantee_ends_on`, not the run date, so a late cron still
+books the right quarter. 'engagement' and 'shortlist' instalments stay
+manual on purpose: whether those happened is a fact about the world the
+database does not hold.
+
+**The wiring:** `vercel.json` (daily 06:00 UTC) → `/api/cron/maintenance`
+(CRON_SECRET bearer, fails closed with 503 when unset) → the RPC. The
+053 audit trigger writes `fee_line_earned` on the same UPDATE with a NULL
+actor — the trail renders it as "System" — so the first scheduled writer
+in the product is audited by construction rather than by remembering.
+
+**Proven:** `supabase/tests/guarantee_maintenance_invariants.sql`, ten
+invariants against the live DB — earn the due line, and *leave alone* the
+future one, the fell-through one, the accepted-not-started one, the
+cancelled one and the start_date sibling; idempotency; the audit event's
+actor/visibility; and the anon grant the route depends on. Control run
+with the final assertion inverted raised. Two seed corrections were caught
+by 050's own CHECKs on the way, which is those constraints doing their
+job. Route driven locally in a production build: 503 / 401 / 200.
+
+**Two deliberate scope cuts, written down rather than implied:**
+
+- **Stalled-search alerting is detection without a channel.** Health is
+  computed at render on every portfolio load; there is no email until
+  Resend exists. A scheduled job whose output nobody receives is motion,
+  not automation — the cron route documents this and the slot waits.
+- **Agent 14's weekly sweep** is an Anthropic call per active mandate and
+  lands with Phase 1, once credit exists. The route is where it plugs in.
+
+**Deployment state:** CRON_SECRET is set in the Vercel production env
+(generated this session, 64 hex chars). Inert until the vercel.json +
+route deploy with the next push. Until Vercel Cron's first invocation is
+observed in the deploy logs, treat the schedule itself as unverified.
+
+**Advisor re-run after 062:** security 12 → 14, and both new findings are
+`run_guarantee_maintenance` under the two SECURITY DEFINER lints — the
+deliberate shape, argued in the migration header (same reasoning as
+`check_demo_rate_limit`: no input trusted, idempotent, a hostile caller
+can only do our maintenance early). The expected residue is now **seven**
+deliberate SECURITY DEFINER findings.
+
+**One defect found by driving, not by tests:** the proxy bounced
+`/api/cron/maintenance` to `/auth/signin` with a 307 — which a scheduler
+reads as success, so the job would have silently never run. `/api/cron/`
+is now in `ALWAYS_PUBLIC_PREFIXES` beside `/api/demo`, which is exempt for
+the same reason (the route carries its own gate). And one trap variant
+worth naming: a `next-server` process from an earlier session held :3000
+through every `pkill -f "next start"` (its process name is `next-server`,
+which that pattern does not match), so three verification rounds ran
+against a stale build that predated the route. Kill by port —
+`kill $(lsof -tiTCP:3000 -sTCP:LISTEN)` — before trusting a curl.
+
+### Phase 4 — draft verdicts, for the founder to confirm
+
+Persona-complete requires each absent feature to carry a decision, not an
+absence. Drafts, one line each; overrule freely:
+
+- **Interview scheduling — declined for now.** Externals are token-only
+  with no calendar identity; scheduling tools are commodity; revisit when
+  a client asks for it by name.
+- **Human-created tasks — deferred.** The home page's priority queue
+  derives "needs you today" from state, which covers the core need; a
+  task table is additive when wanted.
+- **Tags — deferred.** Skills are the semantic layer the product already
+  has; free-form tags would be a second, unstructured one.
+- **Saved views — deferred.** List state lives in shareable URLs
+  (`parseListParams`), which is most of the value at this team size.
+- **Retention & right-to-erasure — deferred to pre-launch, not declined.**
+  Half exists: erasing a subject cascades through evidence (043/044/053).
+  Missing is scheduled retention and a formal erasure entry point. §5b
+  already calls retention "more pressing than it was"; it should land
+  before public launch.
+- **DEI reporting — declined.** Scoring deliberately never touches
+  protected characteristics; DEI analytics would require collecting
+  exactly what the product refuses to infer. Only with explicit
+  compliance-driven design, never as a side feature.
+- **Non-Latin PDF fonts — deferred until sourcing outside Latin-script
+  markets.** The embedded-font fix is specified in `glyphs.ts`; §9 states
+  the trigger.
+- **Network SQL pagination — deferred until a pool approaches the
+  2000-row window.** The screen states its cap; migration-040-style
+  grouping is the specified fix.
+
+### The one thing this programme waits on
+
+Everything left in Phases 1–2 is executable the hour the Anthropic
+balance is positive. Top-up + auto-reload, then: the loop end to end with
+the staged CVs, the EI chain live, the researcher path, measured
+durations into the four files still promising "~5–10 seconds", the HM
+portal, and the PDFs — in that order, with the persona-complete
+declaration at the end of Phase 4.

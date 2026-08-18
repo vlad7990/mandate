@@ -11,7 +11,11 @@ import {
 // Hard-public — skip session refresh entirely. Used for endpoints that
 // must work for unauthenticated visitors with no cookie round-trip
 // (the HM portal token-based pages, the public landing-page demo API).
-const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/api/demo"];
+// /api/cron carries its own gate (CRON_SECRET, fails closed) — Vercel Cron
+// has no session, and the first version of this list bounced it to
+// /auth/signin with a 307, which a scheduler reads as success. Found by
+// curling the route, not by any test.
+const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/api/demo", "/api/cron/"];
 
 // Public-facing pages that unauthenticated users SHOULD see. We still
 // run the session refresh on these so authenticated visitors can be
