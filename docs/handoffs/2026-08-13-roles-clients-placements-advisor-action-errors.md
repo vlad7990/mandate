@@ -2617,3 +2617,67 @@ exposed Supabase access token revocation, leaked-password protection
 (Pro-gated), and the deferred build list (Sentry → rate limiting →
 Resend → Stripe) — Resend's code half is now built and waiting on DNS
 alone.
+
+---
+
+## 23. Account Lifecycle slice — recovery + resend, proven live, awaiting verdict sign-off — 2026-08-19
+
+The two gaps §21 left open, closed as one slice (plan in
+`NEXT-account-lifecycle.md`, D1–D5 confirmed). One migration (**next is
+071**):
+
+- **070** — `resend_external_invitation`: same token, fresh 14-day
+  clock; staff at clients:share or the client's own admin; accepted and
+  revoked invitations refuse (Revoke must not be undone by a resend
+  button — re-invite is the honest path); writes
+  `external_invitation_resent` with the caller as actor, the external
+  client_admin included. `account_lifecycle_invariants.sql`: 5
+  invariants, clean pass, control run (an accepted invitation with its
+  guard removed) tripping at INVARIANT-FAIL (3) as designed.
+- **Recovery** is GoTrue's own flow plus two pages — no schema.
+  `/auth/recover` asks for the email and answers identically whether or
+  not the address has an account (D2); the recovery link threads
+  through `/auth/callback` (which already turns suspended accounts away
+  by name) to `/auth/reset`, which enforces the same 12/4 floor as
+  signup and redemption — three doors, one floor. The signin page's
+  "Forgot Security Key?" tooltip is now a real link. Resend buttons
+  with delivery honesty sit beside Revoke on both panels — the staff
+  toast hands over the link on email failure; the client_admin's does
+  not (token secrecy holds on the client side).
+
+### Driven live on production
+
+Recovery: request for the scratch recruiter → the D2 screen, and
+`recovery_sent_at` fresh in GoTrue (the built-in sender dispatched;
+real-inbox receipt is founder-confirmable — it is the §18-proven sender
+and the same verify→callback mechanics as the proven confirmation
+chain). Unknown address → the identical screen, no enumeration. Reset:
+a weak password refused, a compliant one accepted; sign-in with the new
+password works; the external client_admin reset hers and landed on
+/app/home → bounced to /portal — the D1 landing with no persona branch
+in the flow. Resend: the staff resend moved a 1-hour clock to 14 days,
+wrote one attributed trail event, and toasted the link by hand; the
+client_admin's resend did the same from her People view with her as the
+event's actor; the invitation then **redeemed successfully after the
+resend**. Scratch world deleted, counts verified back to baseline
+exactly.
+
+**One defect found live, fixed in the drive:** the reset action landed
+on `/app`, which has no page — a 404 over a successful reset (the §16-5
+family: success reported as failure). Now `DASHBOARD_HOME`; re-proven
+live by the external reset.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Self-service account pages** (change own name/password while signed
+  in, staff and portal) — **deferred** to a portal-settings slice; the
+  recovery flow covers the lockout case, which was the urgent half.
+- **Recovery-link TTL** — **deferred**; GoTrue's default stands until
+  it bothers a real person.
+- **Rate limiting on /auth/recover** — **joins the pre-launch
+  rate-limiting item**, not built ad hoc here; GoTrue's own per-email
+  send throttling is the interim floor.
+- **SMS / second-factor recovery — declined** at this scale.
+
+Deployed (`070` applied, fixes live). tsc / lint / build green, 767
+tests. Completion declaration waits on the verdicts above.
