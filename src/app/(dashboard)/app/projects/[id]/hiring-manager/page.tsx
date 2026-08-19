@@ -3,6 +3,9 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { ShareLinkCard, type HmTokenRow } from "./share-link-card";
+import { PortalShareCard } from "./portal-share-card";
+import { getAccess } from "@/lib/auth/access";
+import { can } from "@/lib/auth/roles";
 import {
   PortalContent,
   buildPortalCandidate,
@@ -113,6 +116,43 @@ export default async function HiringManagerPortalFounderPage({
 
   const hmContacts = hmContactRows ?? [];
 
+  // The account door's state (068): shared or not, and which of the
+  // client's hiring managers hold this slate. Grants name users; the
+  // names are fetched by id rather than embedded — the post-060 rule.
+  const [shareQ, grantsQ2, accessCtx] = await Promise.all([
+    supabase
+      .from("mandate_shares")
+      .select("id")
+      .eq("project_id", id)
+      .maybeSingle<{ id: string }>(),
+    supabase
+      .from("mandate_grants")
+      .select("user_id")
+      .eq("project_id", id),
+    getAccess(),
+  ]);
+  const grantUserIds = ((grantsQ2.data ?? []) as Array<{ user_id: string }>).map(
+    (g) => g.user_id
+  );
+  const { data: grantUsers } = grantUserIds.length
+    ? await supabase
+        .from("users")
+        .select("id, full_name, email, status")
+        .in("id", grantUserIds)
+    : { data: [] };
+  const grantedHms = (
+    (grantUsers ?? []) as Array<{
+      id: string;
+      full_name: string | null;
+      email: string;
+      status: string;
+    }>
+  ).map((u) => ({
+    id: u.id,
+    name: u.full_name?.trim() || u.email,
+    suspended: u.status !== "active",
+  }));
+
   const shortlist = shortlistQ.data;
   const allCandidates = (candidatesQ.data ?? []) as Array<
     CandidateRow & { pipeline_stage: string | null }
@@ -133,6 +173,15 @@ export default async function HiringManagerPortalFounderPage({
       />
 
       <ShareLinkCard projectId={project.id} tokens={tokens} contacts={hmContacts} />
+
+      <PortalShareCard
+        projectId={project.id}
+        clientId={project.client_id}
+        clientName={project.company_name}
+        shared={shareQ.data != null}
+        grantedHms={grantedHms}
+        canShare={can(accessCtx?.role, "clients:share")}
+      />
 
       <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest pt-2">
         ▼ Portal Preview · this is what the hiring manager sees

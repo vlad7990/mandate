@@ -56,6 +56,8 @@ export type PortalProps = {
   mode: "founder" | "hiring_manager";
   /** Submission handle for the feedback form (token UUID, "preview" for founder). */
   submitHandle: string;
+  /** Endpoint override for the signed-in /portal door; defaults to the token door. */
+  submitPath?: string;
   /**
    * Evidence coverage for the slate. Rendered in the `client` variant, which
    * shows coverage state and gaps but never the recruiter's verbatim notes —
@@ -72,6 +74,7 @@ export function PortalContent({
   progress,
   mode,
   submitHandle,
+  submitPath,
   evidenceGrid,
 }: PortalProps) {
   const formCandidates: HmFeedbackCandidate[] = candidates.map((c) => ({
@@ -100,6 +103,7 @@ export function PortalContent({
       <HmFeedbackForm
         candidates={formCandidates}
         submitHandle={submitHandle}
+        submitPath={submitPath}
         mode={mode}
       />
     </div>

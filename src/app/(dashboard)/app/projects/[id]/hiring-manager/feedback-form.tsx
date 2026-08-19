@@ -44,10 +44,13 @@ const RATING_TONE: Record<HmRating, string> = {
 export function HmFeedbackForm({
   candidates,
   submitHandle,
+  submitPath,
   mode,
 }: {
   candidates: HmFeedbackCandidate[];
   submitHandle: string;
+  /** Overrides the token-door endpoint; the signed-in /portal door sets it. */
+  submitPath?: string;
   mode: Mode;
 }) {
   const router = useRouter();
@@ -106,7 +109,7 @@ export function HmFeedbackForm({
     }
     start(async () => {
       try {
-        const response = await fetch(`/hm/${submitHandle}/api/submit`, {
+        const response = await fetch(submitPath ?? `/hm/${submitHandle}/api/submit`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

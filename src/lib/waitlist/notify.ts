@@ -1,5 +1,7 @@
 import "server-only";
 
+import { escapeHtml, sendEmail, siteUrl } from "@/lib/email/send";
+
 /**
  * Founders to ping when a new waitlist request lands. Mirrors the
  * FOUNDER_EMAILS allowlist used in auth signup.
@@ -28,8 +30,18 @@ export type WaitlistNotificationPayload = {
 export async function notifyFoundersOfWaitlistRequest(
   payload: WaitlistNotificationPayload
 ): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
+  const result = await sendEmail({
+    to: [...FOUNDER_EMAILS],
+    subject: `[Mandate] New access request — ${payload.full_name}`,
+    html: renderHtml(payload),
+  });
+
+  if (result.sent) return;
+
+  // No key is the normal local state; triage happens at /settings/waitlist
+  // either way. A refused or failed send keeps throwing, as it always has,
+  // so the caller's error path stays what it was.
+  if (result.reason === "not-configured") {
     console.info(
       "[waitlist] new request (no RESEND_API_KEY set — triage at /settings/waitlist)",
       {
@@ -41,33 +53,13 @@ export async function notifyFoundersOfWaitlistRequest(
     return;
   }
 
-  const subject = `[Mandate] New access request — ${payload.full_name}`;
-  const html = renderHtml(payload);
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM ?? "Mandate <noreply@getmandate.io>",
-      to: [...FOUNDER_EMAILS],
-      subject,
-      html,
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Resend error ${response.status}: ${text}`);
-  }
+  throw new Error(result.detail);
 }
 
 function renderHtml(p: WaitlistNotificationPayload): string {
   const row = (label: string, value: string) =>
     value
-      ? `<tr><td style="padding:6px 12px;color:#888;font-family:monospace;text-transform:uppercase;font-size:11px;">${label}</td><td style="padding:6px 12px;color:#222;">${escape(value)}</td></tr>`
+      ? `<tr><td style="padding:6px 12px;color:#888;font-family:monospace;text-transform:uppercase;font-size:11px;">${label}</td><td style="padding:6px 12px;color:#222;">${escapeHtml(value)}</td></tr>`
       : "";
   return `<!doctype html>
 <html><body style="font-family:-apple-system,sans-serif;background:#fafafa;padding:24px;">
@@ -84,18 +76,3 @@ function renderHtml(p: WaitlistNotificationPayload): string {
 </body></html>`;
 }
 
-function escape(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function siteUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.VERCEL_URL ??
-    "https://getmandate.io"
-  );
-}

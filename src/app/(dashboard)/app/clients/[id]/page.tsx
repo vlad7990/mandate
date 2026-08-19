@@ -11,7 +11,7 @@ import {
   type ClientRow,
 } from "@/lib/clients/types";
 import { getAccess } from "@/lib/auth/access";
-import { can } from "@/lib/auth/roles";
+import { can, isExternalRole, parseRole } from "@/lib/auth/roles";
 import { FEE_TERMS_COLUMNS, type FeeTermsRow } from "@/lib/fees/types";
 import {
   CLIENT_CONTACT_COLUMNS,
@@ -22,6 +22,12 @@ import {
 import { FeeTermsPanel } from "./fee-terms-panel";
 import { ContactsPanel } from "./contacts-panel";
 import { ClientNotesPanel } from "./client-notes-panel";
+import {
+  PortalPeoplePanel,
+  type PanelExternal,
+  type PanelInvitation,
+  type PanelMandate,
+} from "./portal-people-panel";
 import { isSampleId } from "@/lib/sample";
 import { SampleClientDetail } from "@/components/sample/sample-client-detail";
 
@@ -141,6 +147,92 @@ export default async function ClientDetailPage({
         .maybeSingle<FeeTermsRow>()
     : { data: null };
 
+  // The portal relationship (067–069). The externals roster and the share
+  // and grant sets are org-readable; the invitations table is RLS'd to
+  // clients:share, so the query is only made when the reader could see
+  // rows at all. Queried by ids rather than embeds — the post-060 rule.
+  const canShare = can(access?.role, "clients:share");
+  const [externalsQ, invitationsQ, sharesQ, grantsQ, orgQ] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, full_name, email, role, status")
+      .eq("client_id", id)
+      .order("created_at", { ascending: true }),
+    canShare
+      ? supabase
+          .from("invitations")
+          .select("id, email, full_name, role, invited_by_label, expires_at")
+          .eq("client_id", id)
+          .is("accepted_at", null)
+          .is("revoked_at", null)
+          .gt("expires_at", new Date().toISOString())
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: null }),
+    supabase.from("mandate_shares").select("project_id").eq("client_id", id),
+    supabase.from("mandate_grants").select("project_id, user_id").eq("client_id", id),
+    supabase.from("organizations").select("name").limit(1).maybeSingle<{ name: string }>(),
+  ]);
+
+  const sharedIds = new Set(
+    ((sharesQ.data ?? []) as Array<{ project_id: string }>).map((s) => s.project_id)
+  );
+  const grantRows = (grantsQ.data ?? []) as Array<{ project_id: string; user_id: string }>;
+
+  const panelMandates: PanelMandate[] = projectRows.map((p) => ({
+    id: p.id,
+    title: p.title,
+    shared: sharedIds.has(p.id),
+  }));
+
+  const panelExternals: PanelExternal[] = (
+    (externalsQ.data ?? []) as Array<{
+      id: string;
+      full_name: string | null;
+      email: string;
+      role: string;
+      status: string;
+    }>
+  ).flatMap((u) => {
+    const role = parseRole(u.role);
+    if (!isExternalRole(role)) return [];
+    return [
+      {
+        id: u.id,
+        name: u.full_name?.trim() || u.email,
+        email: u.email,
+        role,
+        status: u.status,
+        grantedProjectIds: grantRows
+          .filter((g) => g.user_id === u.id)
+          .map((g) => g.project_id),
+      },
+    ];
+  });
+
+  const panelInvitations: PanelInvitation[] = (
+    (invitationsQ.data ?? []) as Array<{
+      id: string;
+      email: string;
+      full_name: string;
+      role: string;
+      invited_by_label: string;
+      expires_at: string;
+    }>
+  ).flatMap((inv) => {
+    const role = parseRole(inv.role);
+    if (!isExternalRole(role)) return [];
+    return [
+      {
+        id: inv.id,
+        email: inv.email,
+        fullName: inv.full_name,
+        role,
+        invitedByLabel: inv.invited_by_label,
+        expiresAt: inv.expires_at,
+      },
+    ];
+  });
+
   const knownFields = CLIENT_PROFILE_FIELDS.filter((f) => client[f.key]);
 
   return (
@@ -211,6 +303,16 @@ export default async function ClientDetailPage({
         clientId={client.id}
         contacts={contactRows}
         canWrite={canWriteClient}
+      />
+
+      <PortalPeoplePanel
+        clientId={client.id}
+        clientName={client.name}
+        organizationName={orgQ.data?.name ?? "your search firm"}
+        mandates={panelMandates}
+        externals={panelExternals}
+        invitations={panelInvitations}
+        canShare={canShare}
       />
 
       {seesFees && (
