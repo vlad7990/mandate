@@ -2681,3 +2681,27 @@ live by the external reset.
 
 Deployed (`070` applied, fixes live). tsc / lint / build green, 767
 tests. Completion declaration waits on the verdicts above.
+
+---
+
+## 24. Account Lifecycle verdicts confirmed — the slice is complete — 2026-08-19
+
+The founder confirmed all four §23 verdicts as drafted: self-service
+account pages deferred to a portal-settings slice; recovery-link TTL
+deferred on GoTrue's default; /auth/recover rate limiting joins the
+pre-launch item; SMS/second-factor recovery declined.
+
+The definition of done is met: any principal — staff or external — who
+loses their password can recover it through one flow that tells
+outsiders nothing, enforces the same floor as every other password
+door, and lands each persona on their own home; and an invitation that
+expired or never arrived is one honest click to send again, refusing
+the states where a resend would lie (accepted, revoked), audited with
+its caller as actor. Every absence carries a confirmed verdict.
+
+**The Account Lifecycle slice is complete.**
+`NEXT-account-lifecycle.md` deleted per its own instruction. Next
+migration is **071**. Founder-owned, unchanged: the Resend DNS records
+at Namecheap (invitation and recovery email both upgrade the moment the
+domain verifies), the exposed Supabase access token, leaked-password
+protection (Pro-gated), and the deferred build list.
