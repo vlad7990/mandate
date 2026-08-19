@@ -55,6 +55,7 @@ import {
 } from "@/lib/fees/types";
 import { resolveTerms } from "@/lib/fees/compute";
 import { OutreachPanel, type OutreachEntry } from "./outreach-panel";
+import { PortalLinkButton } from "./portal-link";
 import { PipelineSelect } from "./pipeline-select";
 import { RecruiterAssessmentPanel } from "./recruiter-assessment-panel";
 import { PositioningPanel } from "./positioning-panel";
@@ -706,16 +707,22 @@ export default async function CandidateProfilePage({
             id: "outreach",
             label: "Outreach",
             content: (
-              <OutreachPanel
-                projectId={projectId}
-                candidateId={candidate.id}
-                candidate={{
-                  source_kind: candidate.source_kind,
-                  sourced_at: candidate.sourced_at,
-                  subject_notified_at: candidate.subject_notified_at,
-                }}
-                entries={outreach}
-              />
+              <>
+                <OutreachPanel
+                  projectId={projectId}
+                  candidateId={candidate.id}
+                  candidate={{
+                    source_kind: candidate.source_kind,
+                    sourced_at: candidate.sourced_at,
+                    subject_notified_at: candidate.subject_notified_at,
+                  }}
+                  entries={outreach}
+                />
+                {/* Beside the notice machinery on purpose (D10): the
+                    notice is the natural moment to hand the person
+                    their window. */}
+                <PortalLinkButton candidateId={candidate.id} />
+              </>
             ),
           },
         ]}

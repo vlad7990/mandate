@@ -18,7 +18,9 @@ import {
 // /invite is the external-identity redemption page (068): the visitor has
 // no account yet by definition, and the token in the URL is the only
 // credential — same trust shape as /hm.
-const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/invite/", "/invite", "/api/demo", "/api/cron/"];
+// /candidate is the candidate portal (073): the token in the URL is the
+// only credential, same trust shape as /hm and /invite.
+const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/invite/", "/invite", "/candidate/", "/candidate", "/api/demo", "/api/cron/"];
 
 // Public-facing pages that unauthenticated users SHOULD see. We still
 // run the session refresh on these so authenticated visitors can be

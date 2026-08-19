@@ -32,6 +32,13 @@ type OrgRow = {
   created_at: string | null;
 };
 
+type ErasureRequestRow = {
+  id: string;
+  requester_label: string;
+  note: string | null;
+  created_at: string | null;
+};
+
 type UserRow = {
   id: string;
   email: string;
@@ -81,7 +88,7 @@ export default async function SettingsPage() {
   // Founders can read every user across orgs (founders_can_read_all_users
   // policy from migration 002). Non-founders only see themselves; for
   // those callers the page mostly shows their own membership info.
-  const [orgQ, usersQ] = await Promise.all([
+  const [orgQ, usersQ, erasureQ] = await Promise.all([
     profile.organization_id
       ? supabase
           .from("organizations")
@@ -95,10 +102,22 @@ export default async function SettingsPage() {
         "id, email, full_name, role, status, is_founder, organization_id, created_at"
       )
       .order("created_at", { ascending: false }),
+    // Open erasure requests filed by candidates from their portal (073).
+    // RLS scopes this to the caller's own organisation; the card below
+    // renders only when there is something to act on.
+    profile.organization_id
+      ? supabase
+          .from("candidate_erasure_requests")
+          .select("id, requester_label, note, created_at")
+          .eq("organization_id", profile.organization_id)
+          .eq("status", "open")
+          .order("created_at", { ascending: true })
+      : Promise.resolve({ data: [] as ErasureRequestRow[] }),
   ]);
 
   const org = orgQ.data;
   const users = (usersQ.data ?? []) as UserRow[];
+  const erasureRequests = (erasureQ.data ?? []) as ErasureRequestRow[];
 
   const founders = users.filter((u) => u.is_founder);
   const activeMembers = users.filter(
@@ -202,6 +221,46 @@ export default async function SettingsPage() {
             <span className="text-on-surface">{profile.role ?? "member"}</span>.
             Only founders can approve pending users or change the
             organisation. Reach out to a founder if you need access changes.
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Erasure requests — candidates asking, from their portal, that
+          this organisation's data about them be removed. Rendered only
+          when there is something to act on; execution is Mandate's hand
+          per the retention verdict, and the search team's part is to
+          stop working the person meanwhile. */}
+      {erasureRequests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-mono-label text-mono-label text-error uppercase tracking-widest flex items-center gap-2">
+              <IconShield size={14} />
+              Erasure requests ({erasureRequests.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <ul className="divide-y divide-outline-variant border border-outline-variant">
+              {erasureRequests.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-3"
+                >
+                  <span className="text-on-surface">{r.requester_label}</span>
+                  {r.note && (
+                    <span className="text-body-main text-on-surface-variant">
+                      &ldquo;{r.note}&rdquo;
+                    </span>
+                  )}
+                  <span className="ml-auto font-mono-data text-on-surface-variant">
+                    {r.created_at ? formatDate(r.created_at) : "—"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-body-main text-on-surface-variant">
+              This person asked for their data to be erased. Stop working
+              them; Mandate reviews and executes the request.
+            </p>
           </CardContent>
         </Card>
       )}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { UserStatusActions } from "./user-actions";
+import { ErasureQueue, type ErasureRow } from "./erasure-queue";
 
 export const metadata = {
   title: "Platform operations",
@@ -32,7 +33,7 @@ type OrgRow = { id: string; name: string; slug: string };
 export default async function OpsOverviewPage() {
   const supabase = await createServerSupabaseClient();
 
-  const [usersQ, orgsQ, clientsQ, waitlistQ] = await Promise.all([
+  const [usersQ, orgsQ, clientsQ, waitlistQ, erasureQ] = await Promise.all([
     supabase
       .from("users")
       .select(
@@ -45,12 +46,35 @@ export default async function OpsOverviewPage() {
       .from("waitlist")
       .select("id, status")
       .eq("status", "pending"),
+    supabase
+      .from("candidate_erasure_requests")
+      .select("id, organization_id, requester_label, note, created_at")
+      .eq("status", "open")
+      .order("created_at", { ascending: true }),
   ]);
 
   const users = (usersQ.data ?? []) as UserRow[];
   const orgs = (orgsQ.data ?? []) as OrgRow[];
   const clients = (clientsQ.data ?? []) as { id: string; organization_id: string; name: string }[];
   const waitlistPending = (waitlistQ.data ?? []).length;
+  const orgNameById = new Map(
+    ((orgsQ.data ?? []) as OrgRow[]).map((o) => [o.id, o.name])
+  );
+  const erasureRows: ErasureRow[] = (
+    (erasureQ.data ?? []) as {
+      id: string;
+      organization_id: string;
+      requester_label: string;
+      note: string | null;
+      created_at: string;
+    }[]
+  ).map((r) => ({
+    id: r.id,
+    requester_label: r.requester_label,
+    organization_name: orgNameById.get(r.organization_id) ?? "unknown org",
+    note: r.note,
+    created_at: r.created_at,
+  }));
 
   const staff = users.filter((u) => !u.client_id);
   const externals = users.filter((u) => u.client_id);
@@ -153,36 +177,44 @@ export default async function OpsOverviewPage() {
         </p>
       </section>
 
-      {/* Erasure requests — the queue exists before its first row so the
-          operator surface is complete when the candidate slice ships it. */}
+      {/* Erasure requests — filed from the candidate portal (073).
+          Resolve records that the erasure was carried out by founder
+          SQL per the retention verdict; the buttons close the ticket,
+          not the data. */}
       <section className="space-y-3">
         <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-tertiary">
-          Erasure requests (0)
+          Erasure requests ({erasureRows.length})
         </h2>
-        <div className="border border-outline-variant bg-surface-container px-5 py-4">
-          <p className="text-body-main text-on-surface-variant">
-            No erasure requests. When the candidate portal ships, a
-            candidate&apos;s request lands here and on the owning
-            organisation&apos;s side; execution stays a deliberate founder
-            act per the retention verdict.
-          </p>
-        </div>
-        <div className="relative border border-dashed border-outline-variant">
-          <p className="border-b border-dashed border-outline-variant px-5 py-2 font-mono-label text-mono-label uppercase tracking-widest text-tertiary">
-            Sample data — how a request will appear
-          </p>
-          <ul className="divide-y divide-outline-variant opacity-60">
-            <li className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 py-3">
-              <span className="text-on-surface">Jordan Hale</span>
-              <span className="font-mono-data text-body-main text-on-surface-variant">
-                requested erasure from Halewick Search
-              </span>
-              <span className="ml-auto font-mono-label text-mono-label uppercase tracking-wider text-outline">
-                12 AUG 2026 · awaiting founder review
-              </span>
-            </li>
-          </ul>
-        </div>
+        {erasureRows.length > 0 ? (
+          <ErasureQueue rows={erasureRows} />
+        ) : (
+          <>
+            <div className="border border-outline-variant bg-surface-container px-5 py-4">
+              <p className="text-body-main text-on-surface-variant">
+                No open erasure requests. A candidate&apos;s request from
+                their portal lands here and on the owning organisation&apos;s
+                side; execution stays a deliberate founder act per the
+                retention verdict.
+              </p>
+            </div>
+            <div className="relative border border-dashed border-outline-variant">
+              <p className="border-b border-dashed border-outline-variant px-5 py-2 font-mono-label text-mono-label uppercase tracking-widest text-tertiary">
+                Sample data — how a request will appear
+              </p>
+              <ul className="divide-y divide-outline-variant opacity-60">
+                <li className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 py-3">
+                  <span className="text-on-surface">Jordan Hale</span>
+                  <span className="font-mono-data text-body-main text-on-surface-variant">
+                    requested erasure from Halewick Search
+                  </span>
+                  <span className="ml-auto font-mono-label text-mono-label uppercase tracking-wider text-outline">
+                    12 AUG 2026 · awaiting founder review
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
