@@ -314,7 +314,7 @@ function buildRealityStatement({
 
   const stretchLine =
     stretches > 0
-      ? ` ${stretches} stretch profile${stretches === 1 ? "" : "s"} sit in Tier 3, viable only if the recruiter can credibly position the gaps.`
+      ? ` ${stretches} stretch profile${stretches === 1 ? " sits" : "s sit"} in Tier 3, viable only if the recruiter can credibly position the gaps.`
       : "";
   const offLine =
     offProfile > 0

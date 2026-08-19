@@ -125,7 +125,7 @@ export async function generateAndStoreInterviewPlan(
   // for names + definitions.
   const { data: weightRows, error: weightError } = await supabase
     .from("executive_search_competencies")
-    .select("weight, rationale, executive_competencies(key, name, definition)")
+    .select("weight, rationale, executive_competencies!executive_search_competencies_competency_id_fkey(key, name, definition)")
     .eq("search_id", searchId)
     .order("weight", { ascending: false });
 

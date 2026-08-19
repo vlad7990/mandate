@@ -33,6 +33,15 @@ export const INDUSTRY_OPTIONS = [
   "Healthcare",
   "Consulting",
   "Tech",
+  "Logistics & Transportation",
+  "Manufacturing & Industrial",
+  "Energy & Utilities",
+  "Retail & Consumer",
+  "Media & Entertainment",
+  "Telecoms",
+  "Real Estate & Construction",
+  "Public Sector",
+  "Other",
 ] as const;
 export type Industry = (typeof INDUSTRY_OPTIONS)[number];
 

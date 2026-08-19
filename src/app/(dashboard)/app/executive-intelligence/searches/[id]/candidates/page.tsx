@@ -75,7 +75,7 @@ export default async function ExecutiveSearchCandidatesPage({
   const { data: linkedData, error: linkedError } = await supabase
     .from("executive_search_candidates")
     .select(
-      "id, stage, created_at, candidate_id, candidates(id, full_name, current_title, current_company, location, project_id)"
+      "id, stage, created_at, candidate_id, candidates!executive_search_candidates_candidate_id_fkey(id, full_name, current_title, current_company, location, project_id)"
     )
     .eq("search_id", id)
     .order("created_at", { ascending: true });

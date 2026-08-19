@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useRef,
   useState,
@@ -39,6 +40,7 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const acceptFile = (candidate: File | null) => {
     if (!candidate) {
@@ -90,12 +92,11 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
         const formData = new FormData();
         formData.set("projectId", projectId);
         formData.set("cv", file);
-        unwrap(await uploadAndParseCv(formData));
-        // The action redirects on success — control normally won't reach here.
+        const { candidateId } = unwrap(await uploadAndParseCv(formData));
+        router.push(`/app/projects/${projectId}/candidates/${candidateId}`);
       } catch (err) {
         const msg =
           err instanceof Error ? err.message : "Upload + parse failed.";
-        if (msg.includes("NEXT_REDIRECT")) return;
         console.error("[candidates] upload failed:", err);
         toast.error(msg);
       }
@@ -132,7 +133,7 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
             analysis against{" "}
             <span className="text-on-surface">{roleTitle}</span> @{" "}
             <span className="text-on-surface">{companyName}</span> in one
-            pass. Usually under a minute.
+            pass. Usually 20–40 seconds.
           </p>
         </header>
 

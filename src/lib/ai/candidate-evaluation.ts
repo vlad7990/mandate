@@ -70,12 +70,12 @@ export type DimensionRow = {
   dimension: DimensionKey;
   /** Integer 0–10 — copied from the candidate's fit_dimensions. */
   score: number;
-  /** Relative share of the calibration model — the five weights sum to
-   * 100, mirrored exactly from `calibration_model.dimension_weights`.
-   * This comment used to claim 0–10 while the prompt said "mirror
-   * exactly", and the two renderers each resolved the contradiction
-   * differently: the screen clamped 24 down to 10 and the PDF printed
-   * "24/10". The mirror instruction is the true one. */
+  /** Mirrored exactly from `calibration_model.dimension_weights`, on
+   * whatever scale that model uses — wizard-derived calibrations emit
+   * 1–10 (a live run mirrored 7/9/8/3/9), seeded ones used 100-sum
+   * shares. Renderers print the bare number and must not assume a scale:
+   * an earlier claim of 0–10 led the screen to clamp 24 down to 10 while
+   * the PDF printed "24/10". The mirror instruction is the contract. */
   weight: number;
   /** 1–2 sentence AI commentary on this specific score. */
   commentary: string;

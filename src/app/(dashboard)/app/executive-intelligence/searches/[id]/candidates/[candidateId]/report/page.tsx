@@ -79,7 +79,7 @@ export default async function EiReportPage({ params }: { params: Params }) {
   // per-candidate page in the module.
   const { data: link, error: linkError } = await supabase
     .from("executive_search_candidates")
-    .select("stage, candidates(id, full_name)")
+    .select("stage, candidates!executive_search_candidates_candidate_id_fkey(id, full_name)")
     .eq("search_id", id)
     .eq("candidate_id", candidateId)
     .maybeSingle<{
@@ -117,7 +117,7 @@ export default async function EiReportPage({ params }: { params: Params }) {
       .order("version", { ascending: false }),
     supabase
       .from("executive_search_competencies")
-      .select("weight, executive_competencies(key, name)")
+      .select("weight, executive_competencies!executive_search_competencies_competency_id_fkey(key, name)")
       .eq("search_id", id)
       .order("weight", { ascending: false }),
   ]);

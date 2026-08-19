@@ -131,13 +131,13 @@ export default async function ExecutiveSearchPage({
       .limit(8),
     supabase
       .from("executive_search_competencies")
-      .select("weight, executive_competencies(key, name)")
+      .select("weight, executive_competencies!executive_search_competencies_competency_id_fkey(key, name)")
       .eq("search_id", id)
       .order("weight", { ascending: false }),
     supabase
       .from("executive_search_candidates")
       .select(
-        "stage, candidate_id, candidates(id, full_name, current_title, current_company)"
+        "stage, candidate_id, candidates!executive_search_candidates_candidate_id_fkey(id, full_name, current_title, current_company)"
       )
       .eq("search_id", id)
       .order("created_at", { ascending: true }),

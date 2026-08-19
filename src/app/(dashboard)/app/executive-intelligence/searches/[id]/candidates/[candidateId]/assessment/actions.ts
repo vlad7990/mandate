@@ -40,7 +40,7 @@ async function loadOperationalWeights(
 ): Promise<OperationalWeight[]> {
   const { data, error } = await supabase
     .from("executive_search_competencies")
-    .select("weight, executive_competencies(key, name)")
+    .select("weight, executive_competencies!executive_search_competencies_competency_id_fkey(key, name)")
     .eq("search_id", searchId)
     .order("weight", { ascending: false });
 

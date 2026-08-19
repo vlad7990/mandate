@@ -60,6 +60,11 @@ export type SkillLoadOptions = {
    * projectId is supplied.
    */
   types?: SkillType[];
+  /**
+   * Pre-built Supabase server client. Required when the caller runs
+   * inside `after()`, where `cookies()` is unavailable.
+   */
+  client?: Awaited<ReturnType<typeof createServerSupabaseClient>>;
 };
 
 /**
@@ -74,7 +79,10 @@ export async function loadActiveSkills(
   if (!opts.organizationId) return [];
 
   try {
-    const supabase = await createServerSupabaseClient();
+    // Callers running inside `after()` must supply the client — building
+    // one here calls `cookies()`, which is unavailable there and silently
+    // stripped every skill from the run.
+    const supabase = opts.client ?? (await createServerSupabaseClient());
 
     // Build the OR filter inline:
     //   * org-wide: skill_type IN ('search_skill', 'client_skill')
@@ -213,6 +221,8 @@ export type AgentSkillContext = {
   clientId?: string | null;
   /** Restrict to specific skill types. Defaults to all. */
   types?: SkillType[];
+  /** Pre-built Supabase server client — required inside `after()`. */
+  client?: Awaited<ReturnType<typeof createServerSupabaseClient>>;
 };
 
 export async function applySkillsToPrompt(
@@ -224,6 +234,7 @@ export async function applySkillsToPrompt(
     organizationId: ctx.organizationId,
     clientId: ctx.clientId ?? null,
     types: ctx.types,
+    client: ctx.client,
   });
   return injectSkillsIntoPrompt(basePrompt, skills);
 }

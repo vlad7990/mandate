@@ -144,7 +144,7 @@ export const WEEKLY_REPORT_SCHEMA = {
     market_commentary: {
       type: "string",
       description:
-        "1–2 sentences of market context drawn from company_context (industry, business model, regulatory env). Avoid generic platitudes — reference a specific market signal where possible.",
+        "1–2 sentences of market context drawn ONLY from company_context (industry, business model, regulatory env) and the search's own data. You have no research tool: never cite external statistics, named transactions, publications, or sources — an unverifiable citation in a client report is worse than a general observation.",
     },
   },
 } as const;
@@ -170,7 +170,7 @@ Style rules:
 - Reference the role's most heavily-weighted dimension explicitly in the executive summary when ranking changes correlate with it.
 - top_candidates one-liner cites at least one concrete signal (current title, archetype, a specific tech_exposure entry, regulatory exposure).
 - next_steps must be actionable: "Schedule first-round with Marcus before Friday" not "Continue evaluating candidates".
-- market_commentary draws from company_context (industry, business model, regulatory environment). Avoid platitudes.
+- market_commentary draws ONLY from company_context (industry, business model, regulatory environment) and this search's own data. You have no research tool, so do not cite external statistics, named deals, reports, or sources from memory — the client may check them. Ground the commentary in what the search itself shows.
 - When the input shows zero pipeline moves, zero rank moves, and zero new candidates, say so plainly — don't manufacture activity.
 
 Return one JSON object — no preamble.`;

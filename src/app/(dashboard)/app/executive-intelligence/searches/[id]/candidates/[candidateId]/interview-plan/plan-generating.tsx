@@ -10,10 +10,11 @@ import {
 import { unwrap } from "@/lib/actions/result";
 
 const POLL_INTERVAL_MS = 1500;
-// Client-side unstick marker. Must exceed real generation latency — an 8000-token
-// plan runs ~90–100s on production, so 90s produced a false "timed out" flash
-// before the server after() callback finished. Kept comfortably above that.
-const TIMEOUT_MS = 180_000;
+// Client-side unstick marker. Must exceed real generation latency — a live
+// 8000-token plan measured 186s, so the earlier 180s marked a successful
+// generation as timed out six seconds before it landed. Matches the route's
+// maxDuration ceiling.
+const TIMEOUT_MS = 300_000;
 
 type Props = {
   searchId: string;

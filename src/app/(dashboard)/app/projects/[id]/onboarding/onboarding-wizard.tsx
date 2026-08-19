@@ -158,11 +158,9 @@ export function OnboardingWizard({
     startTransition(async () => {
       try {
         unwrap(await submitOnboarding(projectId, responses));
-        // submitOnboarding redirects, so this code is normally unreachable.
+        router.push(`/app/projects/${projectId}`);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Calibration failed.";
-        // Next.js redirect throws an internal error; ignore it.
-        if (msg.includes("NEXT_REDIRECT")) return;
         console.error("[onboarding] submit failed:", e);
         toast.error(msg);
       }

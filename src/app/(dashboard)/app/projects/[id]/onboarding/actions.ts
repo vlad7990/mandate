@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { deriveAndStoreCalibration } from "@/lib/ai/derive-calibration";
 import { requireActionContext } from "@/lib/auth/access";
 import {
@@ -104,7 +103,11 @@ export async function submitOnboarding(
 
     await deriveAndStoreCalibration(projectId, sanitized);
 
+    // Navigation is the client's job. redirect() from an action that both
+    // revalidates and redirects came back as a 303 with an empty flight
+    // body under next start, and the wizard hung on "Compiling Calibration"
+    // forever — the router had nothing to commit and the awaited action
+    // promise never settled.
     revalidatePath(`/app/projects/${projectId}`);
-    redirect(`/app/projects/${projectId}`);
   });
 }

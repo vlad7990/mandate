@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
 import { parseCv, PDF_MIME, DOCX_MIME } from "@/lib/ai/parse-cv";
@@ -33,13 +32,15 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024; // mirrors the bucket's file_size_limit
 
 /**
  * Upload a CV file to the cvs storage bucket and parse it via the
- * combined CV-Parsing + Candidate-Review agent. Returns nothing —
- * redirects to the new candidate's profile on success.
+ * combined CV-Parsing + Candidate-Review agent. Returns the new
+ * candidate's id; the upload form navigates to the profile.
  *
  * Synchronous: the action waits for both upload and Anthropic to land
- * before redirecting. Parse takes ~5–10s; UI shows a loading state.
+ * before returning. UI shows a loading state.
  */
-export async function uploadAndParseCv(formData: FormData): Promise<ActionResult> {
+export async function uploadAndParseCv(
+  formData: FormData
+): Promise<ActionResult<{ candidateId: string }>> {
   return runAction(SUBJECT, async () => {
     const projectId = String(formData.get("projectId") ?? "");
     const file = formData.get("cv");
@@ -168,8 +169,10 @@ export async function uploadAndParseCv(formData: FormData): Promise<ActionResult
     // userId reserved for a future audit-trail column on candidates.
     void userId;
 
+    // Navigation is the client's job — see submitOnboarding for the
+    // revalidate-plus-redirect hang this replaces.
     revalidatePath(`/app/projects/${projectId}/candidates`);
-    redirect(`/app/projects/${projectId}/candidates/${candidateId}`);
+    return { candidateId };
   });
 }
 

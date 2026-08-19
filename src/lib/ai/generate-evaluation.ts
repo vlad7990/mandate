@@ -84,13 +84,18 @@ type EvaluationInput = {
  * page-level wrapper in `ensureCandidateEvaluation` does that gating.
  */
 export async function generateCandidateEvaluation(
-  input: EvaluationInput
+  input: EvaluationInput,
+  // Passed separately from `input`, which is JSON-stringified into the
+  // user prompt. Required when running inside `after()` — see
+  // ensureCandidateEvaluation.
+  client?: Awaited<ReturnType<typeof createServerSupabaseClient>>
 ): Promise<CandidateEvaluation> {
   const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
   const system = await applySkillsToPrompt(CANDIDATE_EVALUATION_SYSTEM_PROMPT, {
     projectId: input.skill_context?.project_id ?? null,
     organizationId: input.skill_context?.organization_id ?? null,
+    client,
   });
 
   const response = await anthropic.messages.create({
@@ -196,9 +201,13 @@ export async function readCandidateEvaluation(
 
 export async function ensureCandidateEvaluation(
   candidateId: string,
-  projectId: string
+  projectId: string,
+  // Callers running inside `after()` must build the client during render
+  // and pass it in — `cookies()` (which createServerSupabaseClient calls)
+  // is not available inside an after() callback.
+  client?: Awaited<ReturnType<typeof createServerSupabaseClient>>
 ): Promise<CandidateEvaluation | null> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = client ?? (await createServerSupabaseClient());
 
   const { data: candidate, error: cErr } = await supabase
     .from("candidates")
@@ -342,7 +351,7 @@ export async function ensureCandidateEvaluation(
       project_id: project.id,
       organization_id: project.organization_id,
     },
-  });
+  }, supabase);
 
   if (!evaluation) return null;
 
@@ -377,10 +386,11 @@ export async function ensureCandidateEvaluation(
 }
 
 async function safeGenerate(
-  input: EvaluationInput
+  input: EvaluationInput,
+  client?: Awaited<ReturnType<typeof createServerSupabaseClient>>
 ): Promise<CandidateEvaluation | null> {
   try {
-    return await generateCandidateEvaluation(input);
+    return await generateCandidateEvaluation(input, client);
   } catch (err) {
     console.error("[evaluation] agent generation failed", err);
     return null;

@@ -197,10 +197,11 @@ function ScoringTable({ rows }: { rows: DimensionRow[] }) {
 
 function ScoringRow({ row }: { row: DimensionRow }) {
   const score = clamp10(row.score);
-  // NOT clamped: weights are relative shares of the calibration model
-  // (the five sum to 100), so clamp10 was silently rewriting a weight of
-  // 24 into 10 on screen while the PDF printed "24/10". Three surfaces,
-  // three different answers — found by rendering with real-shaped data.
+  // NOT clamped: weights mirror the calibration model on whatever scale
+  // it uses (1–10 from the wizard, 100-sum in seeds), so clamp10 was
+  // silently rewriting a weight of 24 into 10 on screen while the PDF
+  // printed "24/10". Three surfaces, three different answers — found by
+  // rendering with real-shaped data.
   const weight = Math.max(0, Math.round(row.weight));
   const scoreTone =
     score >= 7

@@ -93,7 +93,7 @@ export function SourcingEmpty({
 
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
             Anchored on FINAL_V{String(finalSpecVersion).padStart(2, "0")} ·
-            Claude Sonnet 4.6 · usually under a minute
+            Claude Sonnet 4.6 · ~20–30 seconds
           </p>
         </div>
       </div>

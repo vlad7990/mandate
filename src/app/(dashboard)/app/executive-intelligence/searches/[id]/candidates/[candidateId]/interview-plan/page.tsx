@@ -50,7 +50,7 @@ export default async function InterviewPlanPage({ params }: { params: Params }) 
   // inner-join shape mean an unlinked/foreign candidate yields no row.
   const { data: link, error: linkError } = await supabase
     .from("executive_search_candidates")
-    .select("candidate_id, candidates(id, full_name)")
+    .select("candidate_id, candidates!executive_search_candidates_candidate_id_fkey(id, full_name)")
     .eq("search_id", id)
     .eq("candidate_id", candidateId)
     .maybeSingle<{

@@ -228,9 +228,11 @@ export default async function CandidateProfilePage({
   // panel in the meantime.
   const evaluationState = await readCandidateEvaluation(candidate.id, project.id);
   if (evaluationState.status === "pending") {
+    // Built during render: `cookies()` is unavailable inside after().
+    const evaluationClient = await createServerSupabaseClient();
     after(async () => {
       try {
-        await ensureCandidateEvaluation(candidate.id, project.id);
+        await ensureCandidateEvaluation(candidate.id, project.id, evaluationClient);
       } catch (err) {
         // after() rejections are invisible to the request; log so a
         // failed first-visit generation is at least diagnosable. The

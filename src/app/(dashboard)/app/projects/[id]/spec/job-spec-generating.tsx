@@ -9,7 +9,7 @@ import { IconArrowLeft } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 
 const POLL_INTERVAL_MS = 1500;
-const TIMEOUT_MS = 60_000;
+const TIMEOUT_MS = 120_000;
 
 type Props = {
   projectId: string;
@@ -111,7 +111,7 @@ export function JobSpecGenerating({
             and success metrics for{" "}
             <span className="text-on-surface">{roleTitle}</span> @{" "}
             <span className="text-on-surface">{companyName}</span>. This usually
-            usually takes 30–60 seconds.
+            takes about 40 seconds.
           </p>
         </header>
 
