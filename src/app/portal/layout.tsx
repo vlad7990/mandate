@@ -6,7 +6,7 @@ import { ROLE_LABELS } from "@/lib/auth/roles";
 /**
  * The client portal shell — deliberately not the staff dashboard chrome.
  * An external sees their company's name, their own standing, and at most
- * two destinations. No sidebar, no copilot, no org rails: every element
+ * three destinations. No sidebar, no copilot, no org rails: every element
  * removed here is one that cannot leak a surface it should not name.
  */
 export default async function PortalLayout({
@@ -46,6 +46,12 @@ export default async function PortalLayout({
                 People
               </Link>
             )}
+            <Link
+              href="/portal/settings"
+              className="font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant transition-colors hover:text-primary"
+            >
+              Account
+            </Link>
             <form action="/auth/signout" method="post">
               <button
                 type="submit"

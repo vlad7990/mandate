@@ -18,6 +18,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { can, parseRole } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 import { UserStatusActions } from "./user-actions";
+import { NameForm, PasswordForm } from "@/components/account/account-forms";
 import {
   IconBlock,
   IconBuilding,
@@ -148,6 +149,43 @@ export default async function SettingsPage() {
           </Link>
         </nav>
       </header>
+
+      {/* Account — the caller's own profile, editable (071). Every staff
+          role sees this, viewer included: the two self-service edits are
+          not a privilege. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
+            <IconShield size={14} />
+            Account
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="space-y-2">
+              <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+                Name
+              </p>
+              <div className="max-w-md">
+                <NameForm initialName={profile.full_name?.trim() || ""} />
+              </div>
+              <p className="text-sm text-on-surface-variant">
+                Signed in as{" "}
+                <span className="font-mono-data">{profile.email}</span>. Email
+                changes are handled by Mandate — ask a founder.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+                Password
+              </p>
+              <div className="max-w-md">
+                <PasswordForm />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {!isFounder && (
         <Card>
