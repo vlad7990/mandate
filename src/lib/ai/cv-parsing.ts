@@ -27,6 +27,10 @@ export const PIPELINE_STAGES = [
   "offer",
   "hired",
   "rejected",
+  // Set by the candidate's own hand through the token portal (073) —
+  // a withdrawal recorded as a rejection would be a lie. Mirrored in
+  // the candidates_pipeline_stage_check constraint; change both.
+  "withdrawn",
 ] as const;
 export type PipelineStage = (typeof PIPELINE_STAGES)[number];
 
@@ -42,6 +46,7 @@ export const PIPELINE_LABELS: Record<PipelineStage, string> = {
   offer: "Offer",
   hired: "Hired",
   rejected: "Rejected",
+  withdrawn: "Withdrawn",
 };
 
 export type CandidateRole = {
