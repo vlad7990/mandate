@@ -2278,3 +2278,40 @@ written verdict (§14, confirmed here).
 Still founder-owned, unchanged: password floor + email confirmations
 (one dashboard page), leaked-password protection (Pro-gated), Resend,
 and the deferred build list (Sentry → rate limiting → Resend → Stripe).
+
+---
+
+## 18. The auth floor closed — password policy and email confirmation live — 2026-08-19
+
+Both §0 blockers are done, applied via the Management API
+(`PATCH /v1/projects/{ref}/config/auth`) and verified by probe rather
+than by reading settings back:
+
+- **password_min_length 6 → 12**, required characters lowercase +
+  uppercase + digits + symbols. A direct GoTrue signup with an 8-char
+  two-class password is refused by the auth server (422 weak_password,
+  reasons: length + characters), and a 12-char letters-only password is
+  refused on characters — the boundary now enforces what
+  `password-policy.ts` promises, and GoTrue's own error message lists
+  the exact symbol set the app's `PASSWORD_SYMBOLS` mirrors.
+- **mailer_autoconfirm on → off.** A strong-password signup returns no
+  session and an unconfirmed user with `confirmation_sent_at` set; the
+  confirmation email delivered to a real inbox and its link confirmed
+  the account 15 seconds later, after which sign-in succeeds. The full
+  chain — send → deliver → link → confirmed → sign-in — is proven. The
+  probe account was deleted and counts checked back to baseline.
+- **site_url corrected** from the stale `mandate-eight.vercel.app` to
+  `https://getmandate.io` — found in passing; confirmation links are
+  built from it, so it was in scope.
+
+The app side needed nothing: signup already validates the same policy,
+redirects to a "check your email" notice when no session comes back, and
+`/auth/callback` exchanges the confirmation code — all built in §14's
+follow-through and waiting for the server to catch up.
+
+Two operational notes: confirmation email is on Supabase's built-in
+sender (a handful per hour — fine for founder-controlled access, and the
+natural trigger to wire Resend when signups open up); and GoTrue now
+rejects undeliverable-looking addresses (`.test` domains) at signup,
+which future probe recipes should account for. Leaked-password
+protection remains Pro-gated, unchanged.

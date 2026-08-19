@@ -16,12 +16,15 @@
  * for a rule the form never mentioned. That was the state before — the form
  * asked for 8 characters and no character classes.
  *
- * The intended dashboard settings, set by the founder on 2026-08-14:
+ * The server-side settings, applied via the Management API and verified by
+ * direct GoTrue probe on 2026-08-19 (an 8-char and a letters-only password
+ * both refused by the auth server itself; handoff §18):
  *
  *   Minimum password length ....... 12
  *   Required characters ........... lowercase, uppercase, digits, symbols
+ *   Email confirmations ........... on (mailer_autoconfirm off)
  *
- * Leaked-password protection (HaveIBeenPwned) belongs beside those two and
+ * Leaked-password protection (HaveIBeenPwned) belongs beside those and
  * is Pro-gated — see the pre-launch checklist in CLAUDE.md.
  */
 
