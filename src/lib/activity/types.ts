@@ -59,6 +59,8 @@ export const ACTIVITY_EVENT_TYPES = [
   "shortlist_published",
   "report_exported",
   "hm_portal_opened",
+
+  "mandate_reassigned",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -92,6 +94,7 @@ export const APP_RECORDABLE_EVENTS = [
   "shortlist_published",
   "report_exported",
   "hm_portal_opened",
+  "mandate_reassigned",
 ] as const;
 
 export type AppRecordableEvent = (typeof APP_RECORDABLE_EVENTS)[number];
@@ -125,10 +128,11 @@ export const ACTIVITY_EVENT_COLUMNS =
  * who changed somebody's access — so those are the filters rather than a
  * list of seventeen checkboxes.
  */
-export const ACTIVITY_GROUPS = ["placements", "money", "members", "client"] as const;
+export const ACTIVITY_GROUPS = ["mandates", "placements", "money", "members", "client"] as const;
 export type ActivityGroup = (typeof ACTIVITY_GROUPS)[number];
 
 export const ACTIVITY_GROUP_LABELS: Record<ActivityGroup, string> = {
+  mandates: "Mandates",
   placements: "Placements",
   money: "Fees",
   members: "Members",
@@ -161,6 +165,8 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   shortlist_published: "client",
   report_exported: "client",
   hm_portal_opened: "client",
+
+  mandate_reassigned: "mandates",
 };
 
 /**

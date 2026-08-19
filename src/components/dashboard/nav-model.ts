@@ -75,6 +75,19 @@ const PROJECTS_TREE = "/app/projects";
 
 export const NAV: readonly NavItem[] = [
   { href: PROJECTS_HREF, label: "Portfolio", icon: "portfolio", group: "workspace" },
+  /**
+   * The manager's surface. Gated on the capability rather than the role so
+   * the nav and the route guard (`/app/desk` in ROUTE_RULES) cannot drift:
+   * both read `desk:manage`, which admin and manager hold.
+   */
+  {
+    href: "/app/desk",
+    label: "Desk",
+    icon: "analytics",
+    group: "workspace",
+    capability: "desk:manage",
+    matchPrefix: true,
+  },
   {
     href: "/app/analytics",
     label: "Analytics",

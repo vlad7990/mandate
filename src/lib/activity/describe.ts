@@ -204,6 +204,12 @@ export function describeActivity(event: ActivityEventRow): string {
     case "hm_portal_opened":
       return "Opened the hiring-manager portal";
 
+    case "mandate_reassigned": {
+      const from = str(d, "from_label") ?? "unassigned";
+      const to = str(d, "to_label") ?? "unassigned";
+      return `Reassigned the mandate from ${from} to ${to}`;
+    }
+
     default: {
       // A row written by a migration this build predates. Render it rather
       // than crash the feed — an audit trail that goes blank on an
