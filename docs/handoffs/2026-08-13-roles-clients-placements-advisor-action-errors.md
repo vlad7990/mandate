@@ -2407,3 +2407,26 @@ server, not the database, when sign-in dies with "fetch failed".
 707 → **721 tests** (roles matrix + vocabulary growth), tsc / lint /
 build green. Scratch data deleted, counts verified. The
 persona-complete declaration waits on the verdicts above.
+
+---
+
+## 20. Recruiting Manager verdicts confirmed — the persona is complete — 2026-08-19
+
+The founder confirmed all seven §19 verdicts as drafted: targets/quotas
+deferred; commission splits deferred to the billing programme;
+recruiter performance scoring declined (the §14 reasoning, on record);
+capacity planning deferred until real desks exist; market benchmarks
+declined in current form; desk CSV export deferred until asked; the
+digest email lands with Resend.
+
+The definition of done is met: a recruiting manager can run a desk of
+several recruiters entirely inside the product — every mandate's
+health, every recruiter's load, pipeline and placements, and the
+revenue book (`fees:read`, /app/placements) — with every number derived
+rather than asserted (one rollup shared by screen and digest), the one
+management action audited by construction, and every absence carrying a
+written verdict.
+
+**The Recruiting Manager persona is complete.** Two of seven personas
+now served. `NEXT-recruiting-manager.md` deleted per its own
+instruction. Next migration is **067**.
