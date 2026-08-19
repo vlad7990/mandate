@@ -3,6 +3,8 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { SampleBanner } from "@/components/sample/sample-banner";
 import { ReassignControl } from "./reassign-control";
+import { DigestPanel } from "./digest-panel";
+import { loadDeskRollup } from "@/lib/desk/rollup";
 
 /**
  * The desk — the Recruiting Manager's surface (persona programme phase 2).
@@ -19,93 +21,23 @@ import { ReassignControl } from "./reassign-control";
  * and the money stays behind `fees:read` on its own pages.
  */
 
-type Member = {
-  id: string;
-  full_name: string | null;
-  email: string;
-  role: string;
-  status: string;
-};
-
-type ProjectRow = {
-  id: string;
-  title: string;
-  company_name: string;
-  status: string;
-  lead_recruiter_id: string | null;
-  updated_at: string | null;
-};
-
 export default async function DeskPage() {
   const supabase = await createServerSupabaseClient();
+  const { desks, activeProjects, unassigned, candidateCountByProject } =
+    await loadDeskRollup(supabase);
 
-  const [{ data: members }, { data: projects }, { data: candidates }, { data: placements }, { data: lastActivity }] =
-    await Promise.all([
-      supabase
-        .from("users")
-        .select("id, full_name, email, role, status")
-        .eq("status", "active")
-        .in("role", ["admin", "manager", "recruiter"])
-        .order("full_name"),
-      supabase
-        .from("projects")
-        .select("id, title, company_name, status, lead_recruiter_id, updated_at")
-        .order("updated_at", { ascending: false }),
-      supabase.from("candidates").select("id, project_id"),
-      supabase.from("placements").select("id, owner_user_id, status"),
-      supabase
-        .from("activity_events")
-        .select("actor_id, created_at")
-        .order("created_at", { ascending: false })
-        .limit(500),
-    ]);
+  const { data: digestRows } = await supabase
+    .from("desk_digests")
+    .select("content_json, created_at")
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const latestDigest = digestRows?.[0] ?? null;
 
-  const memberList = (members ?? []) as Member[];
-  const projectList = (projects ?? []) as ProjectRow[];
-
-  const candidateCountByProject = new Map<string, number>();
-  for (const c of (candidates ?? []) as { id: string; project_id: string | null }[]) {
-    if (!c.project_id) continue;
-    candidateCountByProject.set(c.project_id, (candidateCountByProject.get(c.project_id) ?? 0) + 1);
-  }
-
-  const placementsByOwner = new Map<string, { total: number; started: number }>();
-  for (const p of (placements ?? []) as { id: string; owner_user_id: string | null; status: string }[]) {
-    if (!p.owner_user_id) continue;
-    const entry = placementsByOwner.get(p.owner_user_id) ?? { total: 0, started: 0 };
-    entry.total += 1;
-    if (p.status === "STARTED") entry.started += 1;
-    placementsByOwner.set(p.owner_user_id, entry);
-  }
-
-  const lastSeenByActor = new Map<string, string>();
-  for (const e of (lastActivity ?? []) as { actor_id: string | null; created_at: string }[]) {
-    if (e.actor_id && !lastSeenByActor.has(e.actor_id)) lastSeenByActor.set(e.actor_id, e.created_at);
-  }
-
-  const reassignTargets = memberList.map((m) => ({
-    id: m.id,
-    label: m.full_name || m.email,
+  const reassignTargets = desks.map((d) => ({
+    id: d.member.id,
+    label: d.member.full_name || d.member.email,
   }));
-
-  const activeProjects = projectList.filter((p) => p.status !== "archived");
-  const unassigned = activeProjects.filter((p) => !p.lead_recruiter_id);
   const hasRealData = activeProjects.length > 0;
-
-  const desks = memberList.map((m) => {
-    const led = activeProjects.filter((p) => p.lead_recruiter_id === m.id);
-    const candidateCount = led.reduce(
-      (sum, p) => sum + (candidateCountByProject.get(p.id) ?? 0),
-      0
-    );
-    return {
-      member: m,
-      led,
-      candidateCount,
-      placements: placementsByOwner.get(m.id) ?? { total: 0, started: 0 },
-      lastSeen: lastSeenByActor.get(m.id) ?? null,
-    };
-  });
 
   return (
     <div className="min-h-full bg-surface text-on-surface">
@@ -142,7 +74,7 @@ export default async function DeskPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {desks.map(({ member, led, candidateCount, placements: pl, lastSeen }) => (
+                  {desks.map(({ member, led, candidateCount, placementsTotal, placementsStarted, lastSeen }) => (
                     <tr key={member.id} className="border-b border-outline-variant/40 last:border-b-0 align-top">
                       <th scope="row" className="px-4 py-3 font-normal">
                         <span className="block text-on-surface">{member.full_name || member.email}</span>
@@ -153,7 +85,7 @@ export default async function DeskPage() {
                       <td className="px-4 py-3 text-right font-mono-data tabular-nums">{led.length}</td>
                       <td className="px-4 py-3 text-right font-mono-data tabular-nums">{candidateCount}</td>
                       <td className="px-4 py-3 text-right font-mono-data tabular-nums">
-                        {pl.total} ({pl.started})
+                        {placementsTotal} ({placementsStarted})
                       </td>
                       <td className="px-4 py-3 text-right font-mono-data tabular-nums text-on-surface-variant">
                         {lastSeen ? new Date(lastSeen).toISOString().slice(0, 10) : "—"}
@@ -193,6 +125,8 @@ export default async function DeskPage() {
                 ))}
               </div>
             </section>
+
+            <DigestPanel latest={latestDigest} />
           </>
         )}
       </div>
