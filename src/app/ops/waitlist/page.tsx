@@ -2,7 +2,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { WaitlistTable, type WaitlistRow } from "./waitlist-table";
 
 export const metadata = {
-  title: "Waitlist · Platform operations · Mandate",
+  title: "Waitlist · Platform operations",
 };
 
 /**

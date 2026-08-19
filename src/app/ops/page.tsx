@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { UserStatusActions } from "./user-actions";
 
 export const metadata = {
-  title: "Platform operations · Mandate",
+  title: "Platform operations",
 };
 
 /**

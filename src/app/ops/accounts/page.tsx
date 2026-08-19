@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { UserStatusActions } from "../user-actions";
 
 export const metadata = {
-  title: "Accounts · Platform operations · Mandate",
+  title: "Accounts · Platform operations",
 };
 
 /**
