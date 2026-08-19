@@ -2583,3 +2583,37 @@ lint / build green, 767 tests. The persona-complete declaration for
 **three externals in one programme** waits on the verdicts above and on
 nothing else; email delivery waits on the founder's DNS step and fails
 honest until then.
+
+---
+
+## 22. External Identity verdicts confirmed — three personas complete — 2026-08-19
+
+The founder confirmed all seven §21 verdicts as drafted:
+multi-relationship externals deferred until real; the token portal
+stays; external notification emails deferred to a notifications
+programme; SSO/SAML declined in current form; external erasure joins
+the §14 retention verdict; staff-side external role changes deferred
+(revoke-and-reinvite covers it); portal branding deferred.
+
+The definition of done is met: a hiring manager, a hiring-company HR
+employee and a hiring-company admin can each hold a real credentialed
+account, see exactly what the D2 share-and-grant model says they see
+and nothing else (proven at the RLS/RPC layer by 16 invariants with a
+control run, and live on production per §21), submit feedback that is
+attributed rather than asserted, and be invited, suspended and
+restored — by the recruiting firm at the clients:share tier, or by
+their own client_admin within the shared set — with the whole
+relationship audited by construction in the owning org's trail. Every
+absence carries a written verdict, and the one undelivered piece
+(invitation email) fails honest with the link in the inviter's hand,
+blocked solely on the founder's Resend DNS step.
+
+**The Hiring Manager, Hiring Company HR and Hiring Company Admin
+personas are complete.** Five of seven personas now served.
+`NEXT-external-identity.md` deleted per its own instruction. Next
+migration is **070**. Still founder-owned: the Resend DNS records at
+Namecheap (unblocks invitation email and the D6 SMTP switch), the
+exposed Supabase access token revocation, leaked-password protection
+(Pro-gated), and the deferred build list (Sentry → rate limiting →
+Resend → Stripe) — Resend's code half is now built and waiting on DNS
+alone.
