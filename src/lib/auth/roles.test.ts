@@ -21,11 +21,12 @@ import {
  * is that changing `GRANTS` without meaning to breaks it here.
  */
 const MATRIX: Record<Capability, readonly Role[]> = {
-  "org:read": ["admin", "recruiter", "researcher", "viewer"],
-  "candidates:write": ["admin", "recruiter", "researcher"],
-  "mandates:write": ["admin", "recruiter"],
-  "clients:share": ["admin", "recruiter"],
-  "fees:read": ["admin", "recruiter"],
+  "org:read": ["admin", "manager", "recruiter", "researcher", "viewer"],
+  "candidates:write": ["admin", "manager", "recruiter", "researcher"],
+  "mandates:write": ["admin", "manager", "recruiter"],
+  "clients:share": ["admin", "manager", "recruiter"],
+  "fees:read": ["admin", "manager", "recruiter"],
+  "desk:manage": ["admin", "manager"],
   "skills:write": ["admin"],
   "org:manage": ["admin"],
 };
@@ -66,6 +67,20 @@ describe("the shape of the roles", () => {
     expect(can("researcher", "candidates:write")).toBe(true);
     expect(can("researcher", "mandates:write")).toBe(false);
     expect(can("researcher", "clients:share")).toBe(false);
+  });
+
+  // The three limits that define the manager (064). The first is what
+  // separates them from a recruiter; the other two are what separates them
+  // from an admin — if either flips, the fifth role has collapsed into one
+  // of its neighbours and stopped paying for itself.
+  it("gives the manager the desk and stops them at member administration", () => {
+    expect(can("manager", "desk:manage")).toBe(true);
+    expect(can("manager", "org:manage")).toBe(false);
+    expect(can("manager", "skills:write")).toBe(false);
+  });
+
+  it("keeps the desk from the recruiter", () => {
+    expect(can("recruiter", "desk:manage")).toBe(false);
   });
 
   it("orders capabilities as declared, not as stored", () => {

@@ -21,7 +21,7 @@
  * the waitlist.
  */
 
-export const ROLES = ["admin", "recruiter", "researcher", "viewer"] as const;
+export const ROLES = ["admin", "manager", "recruiter", "researcher", "viewer"] as const;
 
 export type Role = (typeof ROLES)[number];
 
@@ -79,6 +79,8 @@ export const CAPABILITIES = [
   "clients:share",
   /** See fee terms, placement fees and the revenue book across the org. */
   "fees:read",
+  /** The desk: cross-recruiter oversight, and reassigning a mandate's lead. */
+  "desk:manage",
   /** Author skills, competencies and role templates — they change how every search scores. */
   "skills:write",
   /** Org settings and member administration. */
@@ -94,8 +96,20 @@ const GRANTS: Record<Role, readonly Capability[]> = {
     "mandates:write",
     "clients:share",
     "fees:read",
+    "desk:manage",
     "skills:write",
     "org:manage",
+  ],
+  // A recruiter's writes plus the desk, minus member administration and the
+  // skills studio — the "coinciding capabilities diverge" case the header
+  // anticipated, arrived as the Recruiting Manager persona (migration 064).
+  manager: [
+    "org:read",
+    "candidates:write",
+    "mandates:write",
+    "clients:share",
+    "fees:read",
+    "desk:manage",
   ],
   recruiter: ["org:read", "candidates:write", "mandates:write", "clients:share", "fees:read"],
   researcher: ["org:read", "candidates:write"],
@@ -138,6 +152,7 @@ export function parseRole(value: unknown): Role | null {
 /** Display name for a role. Sentence case — these appear inside prose too. */
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Admin",
+  manager: "Manager",
   recruiter: "Recruiter",
   researcher: "Researcher",
   viewer: "Viewer",
@@ -145,7 +160,9 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 /** One line on what the role can do, for the role picker and the member list. */
 export const ROLE_SUMMARIES: Record<Role, string> = {
-  admin: "Everything a recruiter can do, plus org settings, member roles and the skills studio.",
+  admin: "Everything a manager can do, plus org settings, member roles and the skills studio.",
+  manager:
+    "Runs the desk — every recruiter's mandates, pipeline and fees, and reassigns leads. Cannot administer members or author skills.",
   recruiter: "Runs mandates end to end — sourcing, evaluation, shortlists, client exports and outreach.",
   researcher:
     "Sourcing and evaluation. Cannot open a mandate, publish a shortlist or contact a candidate. Sees fees only on placements they are credited on.",
@@ -159,6 +176,7 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
   "mandates:write": "Mandates and calibration",
   "clients:share": "Shortlists, exports and outreach",
   "fees:read": "Placement fees and revenue",
+  "desk:manage": "Desk oversight and reassignment",
   "skills:write": "Skills studio",
   "org:manage": "Org settings and members",
 };

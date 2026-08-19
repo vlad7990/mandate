@@ -57,6 +57,13 @@ export const DEFAULT_CAPABILITY: Capability = "org:read";
  * authoring tools that change how every search scores sit with the admin.
  */
 export const ROUTE_RULES: readonly RouteRule[] = [
+  // --- The desk -----------------------------------------------------------
+  // Cross-recruiter oversight. Not a data-security boundary — a recruiter
+  // could compute most of it from rows they already read — but a persona
+  // boundary: the desk is the manager's surface, and the recruiter's home
+  // is the portfolio.
+  { pattern: "/app/desk", capability: "desk:manage", prefix: true },
+
   // --- Org administration -------------------------------------------------
   // The waitlist is founder-only and keeps its own check in the page; the
   // rule here only stops non-admins from reaching it at all.
