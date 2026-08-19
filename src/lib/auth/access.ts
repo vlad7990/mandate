@@ -172,6 +172,31 @@ export async function requireActionContext(
 }
 
 /**
+ * Whether `access` holds the platform tier (`platform:operate`). Not a
+ * role capability — it resolves from `is_founder`, status-gated like
+ * every predicate since 059. The one place outside the proxy that asks
+ * the boolean; pages and layouts ask this.
+ */
+export function holdsPlatformOperate(access: Access | null): boolean {
+  return !!access && access.status === "active" && access.isFounder;
+}
+
+/**
+ * For /ops pages: the caller operates the platform, or they are sent to
+ * their own home — the dashboard explains itself better than a refusal
+ * screen for a surface they were never shown a link to (the same shape
+ * as requirePortalAccess), and its own gates then sort pending,
+ * suspended and external sessions.
+ */
+export async function requirePlatformOperate(): Promise<Access> {
+  const access = await getAccess();
+  if (!holdsPlatformOperate(access)) {
+    redirect(access ? "/app/home" : "/auth/signin?next=/ops");
+  }
+  return access!;
+}
+
+/**
  * Platform-operator gate, kept separate from the role model on purpose —
  * see the note at the top of `roles.ts`. Replaces the bespoke
  * `requireFounder` implementations that each re-read the profile.

@@ -17,12 +17,9 @@ import {
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { can, parseRole } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
-import { UserStatusActions } from "./user-actions";
 import { NameForm, PasswordForm } from "@/components/account/account-forms";
 import {
-  IconBlock,
   IconBuilding,
-  IconClock,
   IconGroup,
   IconIntelligence,
   IconShield,
@@ -104,14 +101,12 @@ export default async function SettingsPage() {
   const users = (usersQ.data ?? []) as UserRow[];
 
   const founders = users.filter((u) => u.is_founder);
-  const pending = users.filter((u) => u.status === "pending");
   const activeMembers = users.filter(
     (u) =>
       u.status === "active" &&
       !u.is_founder &&
       u.organization_id === profile.organization_id
   );
-  const suspended = users.filter((u) => u.status === "suspended");
 
   return (
     <div className="p-6 space-y-6">
@@ -137,6 +132,19 @@ export default async function SettingsPage() {
             >
               <IconGroup size={14} />
               Members
+            </Link>
+          )}
+          {/* The operator's door. Approvals, the waitlist and cross-org
+              administration moved to /ops — the platform hat and the
+              org-admin hat stopped sharing this screen. */}
+          {isFounder && (
+            <Link
+              href="/ops"
+              prefetch={false}
+              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-tertiary hover:text-tertiary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tertiary"
+            >
+              <IconShield size={14} />
+              Platform ops
             </Link>
           )}
           <Link
@@ -272,60 +280,9 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Pending users — founder-only actions render inline */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <IconClock size={14} />
-            Pending users ({pending.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {pending.length === 0 ? (
-            <p className="text-body-main text-outline italic">
-              No pending users in your view.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Requested</TableHead>
-                  {isFounder && (
-                    <TableHead className="text-right">Action</TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pending.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="text-on-surface">
-                      {u.full_name?.trim() || "—"}
-                    </TableCell>
-                    <TableCell className="font-mono-data text-on-surface-variant">
-                      {u.email}
-                    </TableCell>
-                    <TableCell className="font-mono-data text-on-surface-variant">
-                      {u.created_at ? formatDate(u.created_at) : "—"}
-                    </TableCell>
-                    {isFounder && (
-                      <TableCell className="text-right">
-                        <UserStatusActions
-                          userId={u.id}
-                          fullName={u.full_name?.trim() || u.email}
-                        />
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Active members — only meaningful to founders / org admins */}
+      {/* Active members — only meaningful to founders / org admins.
+          Approvals and suspensions moved to /ops: they are platform
+          acts, and this screen is the organisation's. */}
       {activeMembers.length > 0 && (
         <Card>
           <CardHeader>
@@ -342,9 +299,6 @@ export default async function SettingsPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Joined</TableHead>
-                  {isFounder && (
-                    <TableHead className="text-right">Action</TableHead>
-                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -364,54 +318,6 @@ export default async function SettingsPage() {
                     <TableCell className="font-mono-data text-on-surface-variant">
                       {u.created_at ? formatDate(u.created_at) : "—"}
                     </TableCell>
-                    {isFounder && (
-                      <TableCell className="text-right">
-                        <UserStatusActions
-                          userId={u.id}
-                          fullName={u.full_name?.trim() || u.email}
-                        />
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {isFounder && suspended.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-mono-label text-mono-label text-error uppercase tracking-widest flex items-center gap-2">
-              <IconBlock size={14} />
-              Suspended ({suspended.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {suspended.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="text-on-surface">
-                      {u.full_name?.trim() || "—"}
-                    </TableCell>
-                    <TableCell className="font-mono-data text-on-surface-variant">
-                      {u.email}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <UserStatusActions
-                        userId={u.id}
-                        fullName={u.full_name?.trim() || u.email}
-                      />
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -428,8 +334,8 @@ export default async function SettingsPage() {
           className="text-primary hover:underline"
         >
           /auth/signup
-        </Link>{" "}
-        and approve their request here.
+        </Link>
+        {" — "}Mandate approves their request from platform operations.
       </footer>
     </div>
   );

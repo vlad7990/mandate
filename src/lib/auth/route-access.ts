@@ -151,6 +151,14 @@ function matches(rule: RouteRule, path: string): boolean {
  * hit.
  */
 export function capabilityForPath(pathname: string): Capability | null {
+  // The operator's route tree (D3). One capability for the whole tree,
+  // held by no role: the proxy's platform branch resolves it from
+  // is_founder, and everyone else lands on no-access with the tier
+  // named.
+  if (pathname === "/ops" || pathname.startsWith("/ops/")) {
+    return "platform:operate";
+  }
+
   if (pathname === "/portal" || pathname.startsWith("/portal/")) {
     for (const rule of PORTAL_RULES) {
       if (matches(rule, pathname)) return rule.capability;

@@ -50,7 +50,7 @@ export async function approveWaitlistRequestAction(
     // /settings if needed. Keeping this surface minimal until the
     // founder asks for automatic invite-email delivery.
 
-    revalidatePath("/app/settings/waitlist");
+    revalidatePath("/ops/waitlist");
   });
 }
 
@@ -74,7 +74,7 @@ export async function rejectWaitlistRequestAction(
     if (error) {
       throw new Error(`Failed to reject: ${error.message}`);
     }
-    revalidatePath("/app/settings/waitlist");
+    revalidatePath("/ops/waitlist");
   });
 }
 
@@ -96,6 +96,6 @@ export async function saveWaitlistNoteAction(
     if (error) {
       throw new Error(`Failed to save note: ${error.message}`);
     }
-    revalidatePath("/app/settings/waitlist");
+    revalidatePath("/ops/waitlist");
   });
 }

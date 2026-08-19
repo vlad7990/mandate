@@ -34,6 +34,9 @@ const MATRIX: Record<Capability, readonly Role[]> = {
   "org:manage": ["admin"],
   "portal:read": ["hiring_manager", "client_hr", "client_admin"],
   "client:manage-people": ["client_admin"],
+  // Held by no role at all: it resolves from is_founder, not from the
+  // role column. Every role reading false here IS the assertion.
+  "platform:operate": [],
 };
 
 describe("the capability matrix", () => {
@@ -78,7 +81,15 @@ describe("the shape of the roles", () => {
 
   it("gives the admin everything on the staff side and nothing on the client side", () => {
     expect(capabilitiesOf("admin")).toEqual(
-      CAPABILITIES.filter((c) => c !== "portal:read" && c !== "client:manage-people")
+      CAPABILITIES.filter(
+        (c) =>
+          c !== "portal:read" &&
+          c !== "client:manage-people" &&
+          // Not a role capability at all — a customer org's admin must
+          // never inherit the platform tier (the roles.ts header's own
+          // argument for keeping is_founder out of the role model).
+          c !== "platform:operate"
+      )
     );
   });
 

@@ -112,17 +112,26 @@ async function handle(request: NextRequest) {
   if (required && required !== DEFAULT_CAPABILITY) {
     const { data: profile } = await supabase
       .from("users")
-      .select("role, status")
+      .select("role, status, is_founder")
       .eq("id", user.id)
-      .single<{ role: string | null; status: string }>();
+      .single<{ role: string | null; status: string; is_founder: boolean }>();
 
     // Status is folded in here rather than trusted from the layout: a
     // suspended account keeps its org and its role string, and only the
     // active check stops it. Same rule as `current_user_role()` in
     // migration 046, so the guard and the database agree.
-    const role = profile?.status === "active" ? parseRole(profile.role) : null;
+    const active = profile?.status === "active";
+    const role = active ? parseRole(profile!.role) : null;
 
-    if (!can(role, required)) {
+    // platform:operate is the one capability no role carries — it
+    // resolves from is_founder (D2 of the final-personas programme),
+    // status-gated like everything else.
+    const allowed =
+      required === "platform:operate"
+        ? active && !!profile?.is_founder
+        : can(role, required);
+
+    if (!allowed) {
       const denied = request.nextUrl.clone();
       denied.pathname = NO_ACCESS_PATH;
       denied.search = "";

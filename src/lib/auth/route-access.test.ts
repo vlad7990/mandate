@@ -124,6 +124,29 @@ describe("the client portal", () => {
   });
 });
 
+describe("the operator tree", () => {
+  it("gates every /ops route on platform:operate", () => {
+    expect(capabilityForPath("/ops")).toBe("platform:operate");
+    expect(capabilityForPath("/ops/waitlist")).toBe("platform:operate");
+    expect(capabilityForPath("/ops/accounts")).toBe("platform:operate");
+    expect(capabilityForPath("/ops/anything/nested")).toBe("platform:operate");
+  });
+
+  it("is held by no role at all — the proxy resolves it from is_founder", () => {
+    // The D2 negative: a customer org's admin must never inherit the
+    // platform tier through the role model. can() answering false for
+    // every role IS the design, not a gap.
+    for (const role of [...STAFF_ROLES, ...EXTERNAL_ROLES]) {
+      expect(can(role, "platform:operate")).toBe(false);
+    }
+  });
+
+  it("does not swallow lookalike prefixes", () => {
+    expect(capabilityForPath("/opsx")).toBe(null);
+    expect(capabilityForPath("/opsx/anything")).toBe(null);
+  });
+});
+
 describe("the no-access destination", () => {
   // If this needed a capability the denied user lacked, the proxy would
   // redirect to it, evaluate the rule again, and redirect forever.

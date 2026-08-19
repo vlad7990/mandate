@@ -25,7 +25,7 @@ export type WaitlistNotificationPayload = {
  * Notify the founder allowlist that a new waitlist request has been
  * submitted. Uses Resend when RESEND_API_KEY is present; otherwise
  * logs a structured notice the founder can find in server logs and
- * triages from /settings/waitlist directly.
+ * triages from /ops/waitlist directly.
  */
 export async function notifyFoundersOfWaitlistRequest(
   payload: WaitlistNotificationPayload
@@ -38,12 +38,12 @@ export async function notifyFoundersOfWaitlistRequest(
 
   if (result.sent) return;
 
-  // No key is the normal local state; triage happens at /settings/waitlist
+  // No key is the normal local state; triage happens at /ops/waitlist
   // either way. A refused or failed send keeps throwing, as it always has,
   // so the caller's error path stays what it was.
   if (result.reason === "not-configured") {
     console.info(
-      "[waitlist] new request (no RESEND_API_KEY set — triage at /settings/waitlist)",
+      "[waitlist] new request (no RESEND_API_KEY set — triage at /ops/waitlist)",
       {
         from: payload.email,
         full_name: payload.full_name,
@@ -72,7 +72,7 @@ function renderHtml(p: WaitlistNotificationPayload): string {
     ${row("Heard about", p.referral_source)}
     ${row("Use case", p.use_case)}
   </table>
-  <p style="margin-top:18px;font-size:13px;color:#555;">Triage at <a href="${siteUrl()}/settings/waitlist">/settings/waitlist</a>.</p>
+  <p style="margin-top:18px;font-size:13px;color:#555;">Triage at <a href="${siteUrl()}/ops/waitlist">/ops/waitlist</a>.</p>
 </body></html>`;
 }
 

@@ -75,7 +75,7 @@ export async function approveUserAction(targetUserId: string): Promise<ActionRes
       throw new Error(`Failed to approve user: ${updateError.message}`);
     }
 
-    revalidatePath("/app/settings");
+    revalidatePath("/ops");
   });
 }
 
@@ -103,6 +103,6 @@ export async function rejectUserAction(targetUserId: string): Promise<ActionResu
       throw new Error(`Failed to reject user: ${error.message}`);
     }
 
-    revalidatePath("/app/settings");
+    revalidatePath("/ops");
   });
 }

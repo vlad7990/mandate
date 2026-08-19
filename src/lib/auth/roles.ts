@@ -120,6 +120,16 @@ export const CAPABILITIES = [
   "portal:read",
   /** Invite and suspend the client company's own people. The client_admin's one management act. */
   "client:manage-people",
+  /**
+   * The platform operator's tier: /ops, waitlist triage, cross-org
+   * account administration. Held by NO role — it resolves from
+   * `users.is_founder` (see `holdsPlatformOperate` in access.ts and the
+   * proxy's platform branch), per D2 of the final-personas programme: a
+   * role value would force the 067 XOR three-way and every staff
+   * enumeration to remember to exclude it. It lives in this list so the
+   * route table and the no-access screen can name it.
+   */
+  "platform:operate",
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];
@@ -231,4 +241,5 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
   "org:manage": "Org settings and members",
   "portal:read": "Client portal",
   "client:manage-people": "Client company's people",
+  "platform:operate": "Platform operations",
 };
