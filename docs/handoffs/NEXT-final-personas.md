@@ -10,6 +10,10 @@ declared.
 
 **Gate: no build work past Phase 0 until the founder confirms D1–D12.**
 
+**STATUS 2026-08-19: D1–D12 CONFIRMED by the founder as drafted.** The
+gate is open; execution starts with the operator slice (A1, migration
+072).
+
 ---
 
 ## Where this starts from (2026-08-19, HEAD `1be57af`)
