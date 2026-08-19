@@ -10,6 +10,11 @@ Delete this file when the programme's completion is declared.
 No completion declaration until the founder confirms the Phase 4
 verdicts.
 
+**STATUS 2026-08-19:** D1–D6 confirmed; Phases 1–3 executed and proven
+live (handoff §21). Remaining: founder sign-off on the §21 verdicts,
+and the founder-owned Resend DNS step for email delivery. Delete this
+file when the completion is declared.
+
 ---
 
 ## Where this starts from (2026-08-19, HEAD `1cca082`)
