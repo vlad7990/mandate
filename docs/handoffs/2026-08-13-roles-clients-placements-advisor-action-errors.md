@@ -2144,3 +2144,109 @@ org deleted; counts at baseline (the 3 feedback + 3 hm_tokens rows are the
 founder's own, from May). Awaiting credit: tasks 10–12 (the live loop) and
 the re-verification of evaluation/triangulation/reports with real agent
 output. The persona-complete declaration still waits on that.
+
+---
+
+## 16. Phase 1 — the loop run live, seven defects, and a framework root cause — 2026-08-19
+
+Credit landed 2026-08-18 and the loop ran end to end with real agents for
+the first time: intake → research → onboarding (5 steps) → calibration →
+FINAL_V01 spec → sourcing → the 9 staged CVs parsed → 9 evaluations →
+ranking → HM feedback with a live recalibration → shortlist (Top 3,
+submitted) → comparison → the full EI chain (company context → success
+profile v1 approved → interview plan v1 approved → human assessment v1
+approved → report compiled) → HM portal driven on production with the
+real slate. Everything in `8a109f6`.
+
+### Measured durations (now in the UI copy)
+
+Intake ~3s; intake+research 15–18s; calibration 6–20s; **spec 38.7s**
+(matches §6b's 38s exactly); sourcing 22s; CV parse 20–23s (40s cold,
+first call of a build); evaluation ~90s in `after()`; success profile
+~115s; **interview plan 186s** — which mattered, see defect 5. The four
+duration strings now carry these numbers.
+
+### The tier check — the CV design held
+
+Strong three at ranks 1–3 (Annelise 8.42 T1, Tobias 8.22 T1, Priyanka
+6.64 T2); mids mid-table; all three anti-pattern profiles and the weak CV
+in the bottom four (consulting-Partner capped at 4.0, greenfield #8,
+vendor-estate #9). After the HM's preference-shift feedback the
+recalibration moved technical 7→10, domain 9→7, re-scored all nine, and
+swapped Kaufmann/Okafor — and the comparison page's dominant weights
+reflected the shift. The chain is consistent end to end.
+
+### Seven defects, all found live, all fixed in `8a109f6`
+
+1. **INDUSTRY_OPTIONS was 8 finance-heavy options** — the research agent
+   filed a logistics group under "Consulting". Broadened to 17 + Other;
+   verified live ("Logistics & Transportation").
+2. **Every slow-action client hung forever on Next 16.2.4.** Onboarding's
+   revalidate+redirect 303 arrived with an empty flight body; sourcing's
+   `unwrap → router.refresh()` fetched the fresh payload and never
+   committed it. Fast actions (skill create, contact add) worked — the
+   race only bites when the action runs tens of seconds, which is why
+   §11's verification missed it and every agent button had it. **Next
+   16.3.1 fixes the root cause** (verified: culture agent 40s, same-page
+   commit). Onboarding and CV upload also moved to explicit
+   `router.push`, which is the more deterministic shape either way.
+3. **16.3.1 enforces "no `cookies()` in render-path `after()`"** — the
+   candidate page's background evaluation died on it, and the
+   skill-injector inside that path *silently stripped every skill from
+   the run* (its catch returns `[]` by design). Both now accept a client
+   built during render. Action-path `after()` is unaffected.
+4. **Migration 060's composite FKs made nine PostgREST embeds ambiguous**
+   ("more than one relationship") — the EI candidates page failed to
+   load linked candidates. All embeds between
+   executive_search_candidates/competencies and their targets now carry
+   explicit FK hints. No other unhinted embeds exist in the codebase
+   (swept); note for future embeds: **after 060, every embed between
+   org-scoped tables needs a hint.**
+5. **The interview-plan unstick timeout (180s) marked a successful 186s
+   generation as failed** six seconds before it landed — the recruiter
+   saw "generation failed" over a plan that exists. Generating-view
+   timeouts now match the routes' 300s `maxDuration` (spec 120s).
+6. **The weekly report fabricated citations** — a named acquisition with
+   a price tag and a "CargoRex 2026" study, from an agent with no
+   research tool, invited by a prompt asking for "a specific market
+   signal". Prompt now forbids external citations; the regenerated
+   commentary grounds itself in the search's own data. The evaluation
+   agent never did this — its prompt pins every claim to the CV.
+7. Pluralization in the comparison export ("1 stretch profile sit").
+
+### Re-verified with real output
+
+Evaluation PDF read in full — weights mirror the calibration **bare and
+unclamped on all three surfaces** (the §15 contract, now stated
+scale-agnostically: wizard calibrations emit 1–10, not 100-sum).
+Triangulation fused three live research reports (alignment 62/58/60).
+Weekly report narrates the real week including the recalibration.
+Comparison PDF's counts are self-consistent (9/3/1/5). HM portal on
+production: token → render → three ratings + notes → persistent
+SUBMITTED state (§15's ack fix, confirmed with real data) → 4 feedback
+rows + 1 review on the recruiter's screen → 063's `hm_portal_opened`
+trail event, exactly one, debounced.
+
+### Carried, not fixed
+
+- **The `ř` in "Marek Dvořák" prints as "?" in every PDF** — §9's font
+  gap bites ordinary EU names, not just non-Latin markets. The verdict's
+  trigger may deserve tightening (founder call, Phase 4 item 7).
+- Weekly market-commentary blockquote still splits across a page break;
+  a list item's bullet can strand at a page bottom the same way.
+- Evaluations generated before ranking say "no other candidates in the
+  slate" — competitor context reads candidate_scores, which fill at
+  first ranking-page visit. Sequencing fact, not a bug; a regeneration
+  picks them up.
+- One synchronous panel agent (company intelligence) dies if the page is
+  closed mid-run — it's a plain awaited action. The polling-based agents
+  (spec, profile, plan) survive navigation. Worth a pass someday.
+
+### State
+
+707 tests, tsc / lint / build green on **Next 16.3.1**. Deployed
+(`8a109f6`, 14:32 UTC). No migrations — next is still **064**. Scratch
+org, auth user, storage objects and all mandate data deleted; counts
+verified back to baseline. phase1-assets deleted per the run-book.
+Remaining for persona-complete: **Phase 4 sign-off only** (verdicts
+drafted in §14; the live run argues for tightening item 7's trigger).
