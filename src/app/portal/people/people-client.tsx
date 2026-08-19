@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { unwrap } from "@/lib/actions/result";
 import {
   inviteColleagueAction,
+  resendInvitationAction,
   revokeInvitationAction,
   setColleagueStatusAction,
   grantAccessAction,
@@ -215,6 +216,27 @@ export function InvitationRow({
     });
   };
 
+  const resend = () => {
+    start(async () => {
+      try {
+        const outcome = unwrap(await resendInvitationAction(invitation.id));
+        if (outcome.emailSent) {
+          toast.success(
+            `Invitation re-sent to ${invitation.email} — good for 14 more days.`
+          );
+        } else {
+          toast.warning(
+            "Clock refreshed, but the email could not be sent. Ask your search team to pass the link on.",
+            { description: outcome.emailDetail ?? undefined, duration: 10000 }
+          );
+        }
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not resend.");
+      }
+    });
+  };
+
   return (
     <li className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 py-3">
       <span className="text-on-surface">{invitation.fullName}</span>
@@ -228,14 +250,24 @@ export function InvitationRow({
           : `Expires ${new Date(invitation.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}
       </span>
       {!invitation.revoked && (
-        <button
-          type="button"
-          onClick={revoke}
-          disabled={pending}
-          className="font-mono-label text-mono-label uppercase tracking-wider text-outline transition-colors hover:text-error disabled:opacity-40"
-        >
-          Revoke
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={resend}
+            disabled={pending}
+            className="font-mono-label text-mono-label uppercase tracking-wider text-outline transition-colors hover:text-primary disabled:opacity-40"
+          >
+            Resend
+          </button>
+          <button
+            type="button"
+            onClick={revoke}
+            disabled={pending}
+            className="font-mono-label text-mono-label uppercase tracking-wider text-outline transition-colors hover:text-error disabled:opacity-40"
+          >
+            Revoke
+          </button>
+        </>
       )}
     </li>
   );

@@ -8,6 +8,7 @@ import { unwrap } from "@/lib/actions/result";
 import { ROLE_LABELS, type ExternalRole } from "@/lib/auth/roles";
 import {
   inviteExternalStaffAction,
+  resendInvitationStaffAction,
   revokeInvitationStaffAction,
   setExternalStatusStaffAction,
   setMandateSharedAction,
@@ -248,19 +249,55 @@ export function PortalPeoplePanel({
                 })}
               </span>
               {canShare && (
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() =>
-                    run(async () => {
-                      unwrap(await revokeInvitationStaffAction(clientId, inv.id));
-                      toast.success(`Invitation for ${inv.email} revoked.`);
-                    })
-                  }
-                  className="font-mono-label text-mono-label uppercase tracking-wider text-outline transition-colors hover:text-error disabled:opacity-40"
-                >
-                  Revoke
-                </button>
+                <>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() =>
+                      run(async () => {
+                        const outcome = unwrap(
+                          await resendInvitationStaffAction({
+                            clientId,
+                            clientName,
+                            organizationName,
+                            invitationId: inv.id,
+                          })
+                        );
+                        if (outcome.emailSent) {
+                          toast.success(
+                            `Invitation re-sent to ${inv.email} — the link is good for 14 more days.`
+                          );
+                        } else {
+                          toast.warning("Clock refreshed, but the email did not send.", {
+                            description: outcome.inviteUrl
+                              ? `Share the link by hand: ${outcome.inviteUrl}`
+                              : (outcome.emailDetail ?? undefined),
+                            duration: 15000,
+                          });
+                          if (outcome.inviteUrl && navigator?.clipboard) {
+                            void navigator.clipboard.writeText(outcome.inviteUrl);
+                          }
+                        }
+                      })
+                    }
+                    className="font-mono-label text-mono-label uppercase tracking-wider text-outline transition-colors hover:text-primary disabled:opacity-40"
+                  >
+                    Resend
+                  </button>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() =>
+                      run(async () => {
+                        unwrap(await revokeInvitationStaffAction(clientId, inv.id));
+                        toast.success(`Invitation for ${inv.email} revoked.`);
+                      })
+                    }
+                    className="font-mono-label text-mono-label uppercase tracking-wider text-outline transition-colors hover:text-error disabled:opacity-40"
+                  >
+                    Revoke
+                  </button>
+                </>
               )}
             </li>
           ))}

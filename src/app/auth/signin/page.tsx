@@ -101,12 +101,12 @@ export default async function SignInPage({
                 >
                   Password
                 </label>
-                <span
-                  className="font-mono-label text-mono-label text-on-surface-variant/60 cursor-not-allowed"
-                  title="Password recovery is coming soon."
+                <Link
+                  href="/auth/recover"
+                  className="font-mono-label text-mono-label text-on-surface-variant transition-colors hover:text-primary"
                 >
                   Forgot Security Key?
-                </span>
+                </Link>
               </div>
               <div className="relative">
                 <IconLock

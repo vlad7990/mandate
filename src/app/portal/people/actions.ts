@@ -90,6 +90,57 @@ export async function inviteColleagueAction(input: {
   });
 }
 
+export async function resendInvitationAction(
+  invitationId: string
+): Promise<ActionResult<InviteOutcome>> {
+  return runAction("The resend", async () => {
+    const access = await getPortalAccess();
+    if (!access || access.role !== "client_admin") {
+      throw new Error("Only your company's admin can resend invitations.");
+    }
+
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase.rpc("resend_external_invitation", {
+      p_invitation_id: invitationId,
+    });
+    if (error) throw new Error(error.message);
+
+    type ResendRow = {
+      invitation_token: string;
+      email: string;
+      full_name: string;
+      role: string;
+      expires_at: string;
+    };
+    const inv = ((data ?? []) as ResendRow[])[0];
+    if (!inv || !isExternal(inv.role)) {
+      throw new Error("The invitation could not be resent.");
+    }
+
+    const message = renderInvitationEmail({
+      inviteeName: inv.full_name,
+      inviterLabel: access.fullName,
+      organizationName: access.organizationName,
+      clientName: access.clientName,
+      role: inv.role,
+      token: inv.invitation_token,
+      expiresAt: inv.expires_at,
+    });
+    const sent = await sendEmail({
+      to: [inv.email],
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
+    });
+
+    revalidatePath("/portal/people");
+    return {
+      emailSent: sent.sent,
+      emailDetail: sent.sent ? null : sent.detail,
+    };
+  });
+}
+
 export async function revokeInvitationAction(
   invitationId: string
 ): Promise<ActionResult> {

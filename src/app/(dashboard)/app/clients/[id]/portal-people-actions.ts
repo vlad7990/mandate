@@ -96,6 +96,66 @@ export async function inviteExternalStaffAction(input: {
   });
 }
 
+export async function resendInvitationStaffAction(input: {
+  clientId: string;
+  clientName: string;
+  organizationName: string;
+  invitationId: string;
+}): Promise<ActionResult<StaffInviteOutcome>> {
+  return runAction("The resend", async () => {
+    const actor = await requireActionContext("clients:share");
+    const supabase = await createServerSupabaseClient();
+
+    // Same token, fresh clock (070/D4); the RPC refuses accepted and
+    // revoked states with its own sentences, passed through verbatim.
+    const { data, error } = await supabase.rpc("resend_external_invitation", {
+      p_invitation_id: input.invitationId,
+    });
+    if (error) throw new Error(error.message);
+
+    type ResendRow = {
+      invitation_token: string;
+      email: string;
+      full_name: string;
+      role: string;
+      expires_at: string;
+    };
+    const inv = ((data ?? []) as ResendRow[])[0];
+    if (!inv || !isExternal(inv.role)) {
+      throw new Error("The invitation could not be resent.");
+    }
+
+    const { data: profile } = await supabase
+      .from("users")
+      .select("full_name, email")
+      .eq("id", actor.userId)
+      .maybeSingle<{ full_name: string | null; email: string }>();
+
+    const message = renderInvitationEmail({
+      inviteeName: inv.full_name,
+      inviterLabel: profile?.full_name?.trim() || profile?.email || "",
+      organizationName: input.organizationName,
+      clientName: input.clientName,
+      role: inv.role,
+      token: inv.invitation_token,
+      expiresAt: inv.expires_at,
+    });
+    const sent = await sendEmail({
+      to: [inv.email],
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
+    });
+
+    revalidatePath(`/app/clients/${input.clientId}`);
+    return {
+      emailSent: sent.sent,
+      emailDetail: sent.sent ? null : sent.detail,
+      inviteUrl: sent.sent ? null : `${siteUrl()}/invite/${inv.invitation_token}`,
+    };
+  });
+}
+
 export async function revokeInvitationStaffAction(
   clientId: string,
   invitationId: string
