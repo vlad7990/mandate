@@ -2315,3 +2315,95 @@ natural trigger to wire Resend when signups open up); and GoTrue now
 rejects undeliverable-looking addresses (`.test` domains) at signup,
 which future probe recipes should account for. Leaked-password
 protection remains Pro-gated, unchanged.
+
+---
+
+## 19. The Recruiting Manager persona — built, proven, awaiting verdict sign-off — 2026-08-19
+
+Programme plan in `NEXT-recruiting-manager.md`; D1–D4 confirmed by the
+founder and executed same-day. Three migrations (**next is 067**):
+
+- **064** — fifth role `manager` (recruiter's writes + `fees:read` +
+  new `desk:manage`, minus `org:manage`/`skills:write`; the 046 "one
+  function, not a hundred IN clauses" design meant no policy rewrites),
+  and `projects.lead_recruiter_id`: nullable ownership, trigger-guarded
+  (only desk holders reassign or assign-to-other; leads must be active
+  and mandate-capable; in-org rides 057's author trigger — a composite
+  FK would have broken member moves, re-proven by invariant 13),
+  backfilled from created_by.
+- **065** — `mandate_reassigned` joins the activity vocabulary (table
+  CHECK + `record_activity_event` allowlist + a new "mandates" group);
+  detail carries from/to ids and labels captured at the moment of change.
+- **066** — `desk_digests`, append-only, the second read restriction
+  after fees (SELECT/INSERT `can_manage_desk`): the digest is the
+  manager's read of the desk, decided by §10's reasoning.
+
+**`manager_desk_invariants.sql`** — 14 invariants + control run against
+the live DB, explicit about refusal *kinds* (RLS filters vs triggers
+raise). Invariant 11 caught a real fail-open on its first run:
+`can_manage_desk()` returned NULL for a suspended manager, and the
+trigger's `NOT can_manage_desk()` is NULL — an IF that silently does not
+fire. The predicate is now coalesced, unlike the 046 predicates, and the
+difference is load-bearing (they are only read by RLS, which treats NULL
+as false; this one is read negated by a trigger). The
+users_policy_invariants principal enumeration was deliberately not
+extended — it tests 058/059's read policies, which are role-agnostic;
+the manager principal lives in the desk file.
+
+**The desk** (`/app/desk`, nav + route gated on `desk:manage`):
+per-member rollup (mandates by lead, candidates, placements by
+`owner_user_id`, last activity), mandates list with per-row
+reassignment, labelled sample desk for the empty state. The rollup
+lives in `src/lib/desk/rollup.ts` and is shared verbatim with the
+digest agent so the screen and the digest cannot disagree on a count —
+§13's same-thing-twice family prevented structurally. One defect found
+seeding live data: the rollup compared `status === "STARTED"` against a
+lowercase vocabulary and would have shown every started count as zero.
+
+**The digest** — one Anthropic call per generation across the whole
+desk (never per mandate; §14's cost shape), stored append-only,
+grounding rules forbidding external citations inherited from §16 defect
+6 on day one. The panel states the delivery honesty: renders on the
+desk only, no email until Resend.
+
+**Driven live** in a production build under a scratch two-recruiter
+desk: manager saw the sample state, then the real rollup (counts exact,
+1 unassigned surfaced), reassigned twice (trail rows carry actor +
+from/to labels), generated a digest whose every number reproduced from
+the rollup and which stated plainly that activity timestamps were
+absent. A recruiter has no Desk nav entry and `/app/desk` bounces to
+no-access naming the capability; recruiter/viewer/suspended refusals at
+the database layer are the invariants' (4)(6)(9)(10)(11). Scratch desk
+deleted; counts at baseline; the founder's two mandates now carry their
+creator as lead.
+
+One environment note, not a defect: a mid-session network change left
+the Node server's connection pool timing out against Supabase
+(`UND_ERR_CONNECT_TIMEOUT`) while curl reached it fine — restart the
+server, not the database, when sign-in dies with "fetch failed".
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Individual targets/quotas — deferred.** The desk shows load and
+  outcomes; targets are policy, and imposing a number is the manager's
+  call to make outside the product until asked for by name.
+- **Commission splits — deferred to the billing programme.** Splits are
+  money mechanics; they belong beside Stripe, not before it.
+- **Recruiter performance scoring — declined.** The §14 DEI reasoning
+  echoes here: scoring the people who work for you is a feature to
+  design deliberately with the humans affected, never a bolt-on. The
+  desk states facts and declines to grade.
+- **Capacity planning / forecasting — deferred** until real desks show
+  what loads look like; a model fitted to zero data would be §16-defect-6
+  fabrication with extra steps.
+- **Time-to-fill benchmarks vs market — declined** in the current form:
+  no research tool holds credible benchmark data, and the digest's own
+  grounding rules forbid inventing it.
+- **Desk CSV export — deferred** until a manager asks; the rollup is
+  reproducible arithmetic over readable rows.
+- **Manager-scoped digest email — lands with Resend**, already stated on
+  the panel.
+
+707 → **721 tests** (roles matrix + vocabulary growth), tsc / lint /
+build green. Scratch data deleted, counts verified. The
+persona-complete declaration waits on the verdicts above.

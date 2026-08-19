@@ -81,7 +81,9 @@ export async function loadDeskRollup(supabase: Supabase): Promise<DeskRollup> {
     if (!p.owner_user_id) continue;
     const entry = placementsByOwner.get(p.owner_user_id) ?? { total: 0, started: 0 };
     entry.total += 1;
-    if (p.status === "STARTED") entry.started += 1;
+    // Vocabulary is lowercase ('started', 050's CHECK); the uppercase
+    // variant silently counted zero — caught seeding the live smoke desk.
+    if (p.status === "started") entry.started += 1;
     placementsByOwner.set(p.owner_user_id, entry);
   }
 
