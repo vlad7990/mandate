@@ -28,6 +28,7 @@ export type ContextRow = {
   source_platform: string | null;
   sourced_at: string | null;
   notified_at: string | null;
+  organization_id: string;
   organization_name: string;
   expires_at: string;
   identity_basis: string;

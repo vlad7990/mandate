@@ -364,8 +364,8 @@ RETURNS TABLE (
   linkedin_url text, github_url text, website_url text, twitter_url text,
   current_title text, current_company text,
   has_cv boolean, source_kind text, source_platform text, sourced_at timestamptz,
-  notified_at timestamptz, organization_name text, expires_at timestamptz,
-  identity_basis text
+  notified_at timestamptz, organization_id uuid, organization_name text,
+  expires_at timestamptz, identity_basis text
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -396,6 +396,13 @@ BEGIN
                         c2.email, c2.linkedin_url, c2.full_name, c2.current_company)
                       = v_tok.identity_key)
              AND n.status = 'sent'),
+         -- The org id keys the storage path for CV submissions: the
+         -- cvs_* policies scope staff reads and deletes to the
+         -- {organization_id}/ prefix, and a portal upload outside it
+         -- would be unreadable and undeletable by the org's own staff
+         -- (found in the B3 drive's teardown). The name is already
+         -- shown; the opaque id exposes nothing new.
+         v_tok.organization_id,
          (SELECT o.name FROM public.organizations o WHERE o.id = v_tok.organization_id),
          v_tok.expires_at,
          split_part(v_tok.identity_key, ':', 1)

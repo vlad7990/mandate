@@ -146,7 +146,7 @@ begin
   if v_keys is distinct from array[
        'current_company','current_title','email','expires_at','github_url',
        'has_cv','identity_basis','linkedin_url','location','notified_at',
-       'organization_name','person_name','phone','source_kind',
+       'organization_id','organization_name','person_name','phone','source_kind',
        'source_platform','sourced_at','twitter_url','website_url'] then
     raise exception 'INVARIANT-FAIL (2): context shape drifted: %', v_keys;
   end if;

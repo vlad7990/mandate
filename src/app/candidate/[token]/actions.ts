@@ -114,14 +114,19 @@ export async function submitCvAction(
       "candidate_portal_context",
       { p_token: token }
     );
-    if (ctxError || !ctx || (ctx as unknown[]).length === 0) {
+    const ctxRow = ((ctx ?? []) as { organization_id: string }[])[0];
+    if (ctxError || !ctxRow) {
       throw new Error("This link is not valid.");
     }
 
-    // The token id keys the path, not the org id: the service-role
-    // write must not let a forged path parameter choose the folder.
+    // Under the ORG's storage folder: the cvs_* policies key staff
+    // reads and deletes on the {organization_id}/ prefix, and a portal
+    // upload outside it would be unreadable and undeletable by the very
+    // team meant to review it — including for erasure execution (found
+    // in the B3 drive's teardown). The org id comes from the validated
+    // token's context, never from the caller.
     const ext = file.type === PDF_MIME ? "pdf" : "docx";
-    const storagePath = `candidate-portal/${token}/cv-${Date.now()}.${ext}`;
+    const storagePath = `${ctxRow.organization_id}/candidate-portal/${token}/cv-${Date.now()}.${ext}`;
 
     const service = getServiceRoleSupabaseClient();
     const bytes = new Uint8Array(await file.arrayBuffer());
