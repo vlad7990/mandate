@@ -2250,3 +2250,31 @@ org, auth user, storage objects and all mandate data deleted; counts
 verified back to baseline. phase1-assets deleted per the run-book.
 Remaining for persona-complete: **Phase 4 sign-off only** (verdicts
 drafted in §14; the live run argues for tightening item 7's trigger).
+
+---
+
+## 17. Phase 4 signed off — the persona programme is complete — 2026-08-19
+
+The founder confirmed all eight §14 verdicts as drafted: interview
+scheduling declined for now; human-created tasks, tags, and saved views
+deferred; retention & right-to-erasure deferred to pre-launch (not
+declined); DEI reporting declined; non-Latin PDF fonts deferred on the
+existing trigger — confirmed with §16's finding on record that the glyph
+gap already bites ordinary EU names ("Dvořák" → "Dvo?ák"), so the
+embedded-font fix in `glyphs.ts` is the first thing to reach for when it
+bothers a real client; Network SQL pagination deferred until a pool
+approaches the 2000-row window.
+
+With that, the definition of done is met: a recruiter can run one real
+search from intake to invoiced placement entirely inside the product
+(Phase 1 live loop, §16; placement/fee capability, §5a/§6b), every
+artifact is honest (durations measured, weights mirrored, citations
+grounded, sample data labelled), and every absent feature carries a
+written verdict (§14, confirmed here).
+
+**The Recruiter persona is complete.** The continuation file
+(`NEXT-persona-complete.md`) is deleted per its own instruction.
+
+Still founder-owned, unchanged: password floor + email confirmations
+(one dashboard page), leaked-password protection (Pro-gated), Resend,
+and the deferred build list (Sentry → rate limiting → Resend → Stripe).
