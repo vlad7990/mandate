@@ -2705,3 +2705,130 @@ migration is **071**. Founder-owned, unchanged: the Resend DNS records
 at Namecheap (invitation and recovery email both upgrade the moment the
 domain verifies), the exposed Supabase access token, leaked-password
 protection (Pro-gated), and the deferred build list.
+
+---
+
+## 25. Portal-settings slice — self-service name + password, proven live, awaiting verdict sign-off — 2026-08-19
+
+The §23 verdict come due (plan in `NEXT-portal-settings.md`, D1–D5
+confirmed). One migration (**next is 072**):
+
+- **071 — `users_update_self` + the guard's self branch.** The policy
+  puts one's own row in reach, deliberately not status-gated (a pending
+  user fixing their name before approval is fine; what a non-active
+  account must not do is refused by the guard *because* it is not
+  active — both privileged predicates resolve through
+  `current_user_role()`, NULL off-active). The guard branch sits after
+  the founder-only column rules and above the external-administration
+  block, so an external's self-rename no longer refuses with "only a
+  client admin may administer client accounts" — the wrong sentence for
+  what used to be the right refusal. Self + non-admin ⇒ only
+  `full_name` moves. Two D4 interpretations worth the founder's eye:
+  **"non-admin" means "not an active org admin"** (an org admin falls
+  through and keeps current powers, the last-admin rules still guarding
+  self-demotion and self-suspension); and **the client_admin's 067
+  status power over their own row is kept** rather than silently
+  removed — they gain self-rename and keep self-suspend, refused role
+  and email like everyone else. The branch reads `is_org_admin()`
+  negated, so it is coalesced — the invariant-11 lesson's third
+  application. Uncoalesced, a pending signup's NULL role would skip the
+  branch, fall past the external block (no client) and the last-admin
+  rules (not an admin), and RETURN NEW free to write its own role.
+- **`self_service_invariants.sql`** — 8 invariants, clean pass. Writes
+  made as the forged principal, effects verified privileged (§21's
+  lesson). The pending-signup escalation attempt is the fail-open
+  tripwire: the **control run** re-created the guard with the bare
+  `NOT is_org_admin()` and aborted at INVARIANT-FAIL (3) exactly —
+  invariants 1–2 pass even under the regression (an *active* viewer's
+  predicate is false, not NULL), which is why the pending principal is
+  the one that pins it. Diff verified: clean end-to-end pass vs. abort
+  at (3).
+
+**Surfaces (`4647905`).** `src/lib/account/actions.ts` serves both
+personas: `renameSelfAction` (RLS + guard enforce; the action writes and
+revalidates) and `changePasswordAction`, which re-verifies the current
+password via a scoped sign-in on a throwaway client that persists
+nothing — a walk-up attacker at an open laptop cannot lock the owner out
+(D3) — then `updateUser` under the same 12/4 floor as signup, redemption
+and recovery. Four doors, one floor. One shared form component
+(`src/components/account/account-forms.tsx`) behind `/portal/settings`
+(identity card — name, email, role, company, operated-by line — plus the
+two edits; "Account" nav for all external roles) and an Account section
+atop `/app/settings` for every staff role, viewer included. Both
+surfaces state in place that email is not self-service and who to ask.
+The success toast states that other sessions stay signed in — the
+absence is spoken, per the house shape. tsc / lint / build green, 767
+tests.
+
+### Driven live on production
+
+Scratch world: Selfhaven Search (org) → Rota **Qinn** (recruiter,
+typo'd on purpose) → Bramblewood Group (client) → Holis **Vane**
+(hiring manager, same). Staff: renamed herself to "Rota Quinn" on
+/app/settings — the roster row and the sidebar chip both show it;
+password change with a wrong current password refused with "Your
+current password is incorrect."; with the right one accepted; the old
+password refused at sign-in, the new one in. External HM: the same pair
+on /portal/settings — the rename that 067 would have misfired on landed
+("Name updated.", identity card updated), wrong-current refused,
+change accepted, old password refused at the GoTrue door itself
+(invalid_credentials), new one working. Console probe (PostgREST as the
+HM, real bearer token): self-PATCH of `role`, `status` and `email` each
+refused 403/42501 with the guard's own sentence — "only your name may
+be changed on your own account" — and the `full_name` positive control
+returned 204, proving the probe path. Scratch world deleted; every
+count verified back to the §24 baseline exactly, sessions and refresh
+tokens at zero.
+
+### One defect found live, fixed in the drive (`a8399f3`)
+
+The suspended-session gate 500'd instead of refusing honestly. The
+dashboard layout's suspended branch calls `signOut()` before its
+redirect; GoTrue revocation succeeded, but `@supabase/ssr` then clears
+the auth cookies, and **Next.js forbids cookie writes during render by
+throwing** — so the redirect never ran and a suspended live session
+navigating /app rendered the error boundary (§16-5 family: the right
+refusal reported as a crash). Every prior suspension proof went through
+the sign-in *action*, where cookie writes are legal; this drive was the
+first to walk a live suspended session into /app. The fix is the
+canonical `@supabase/ssr` `setAll` try/catch that `supabase-server.ts`
+was missing — safe because the proxy refreshes sessions and a revoked
+session fails `getUser()` regardless of stale cookies. Re-proven live:
+the suspended HM's session now bounces to sign-in with "Your account is
+suspended." named, and the portal form is unreachable.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Global session revocation on password change — deferred** to an
+  auth-hardening batch alongside leaked-password protection (Pro-gated).
+  The success toast states today's behaviour plainly ("Other signed-in
+  sessions stay active"), so the absence is spoken, not silent; the
+  urgent half of a compromised-credential response is the rotation
+  itself, which is now self-service at both doors.
+- **Email change — deferred**, stays founder/re-invite territory per
+  D2. Email is identity: it mirrors auth.users, keys invitation
+  matching, and a self-service change needs GoTrue's email-change
+  confirmation mail — which waits on the same Resend DNS step as every
+  other send. Both settings surfaces state in place who to ask.
+- **Avatar / photo — deferred** until a client asks. The initials chip
+  serves identification everywhere a face would; an upload adds a
+  storage surface and a moderation question with no requester.
+- **Notification preferences — deferred to the notifications
+  programme** (which already owns external notification emails, §22).
+  Nothing sends unsolicited mail today, so there is nothing to opt out
+  of; every panel states what does and does not send.
+- **Self-deactivation — declined** at this scale. Status is an
+  administrative power held by the org's admins and the client's own
+  admin; a person who wants out asks the people who already hold the
+  power, and the guard refuses self-status below those tiers by
+  design (the client_admin's carried self-suspend being the one
+  deliberate exception, pinned by invariant 6). Erasure joins the §14
+  retention verdict as before.
+
+Deploys `4647905` (slice) and `a8399f3` (suspended-gate fix) live.
+Migration 071 applied via MCP and checked in as the numbered file. The
+completion declaration for the portal-settings slice waits on the
+verdicts above and on nothing else. Founder-owned, unchanged: the
+Resend DNS records at Namecheap, the exposed Supabase access token,
+leaked-password protection (Pro-gated), and the deferred build list
+(Sentry → rate limiting → Resend → Stripe).
