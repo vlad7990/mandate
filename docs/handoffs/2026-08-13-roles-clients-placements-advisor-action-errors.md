@@ -2430,3 +2430,156 @@ written verdict.
 **The Recruiting Manager persona is complete.** Two of seven personas
 now served. `NEXT-recruiting-manager.md` deleted per its own
 instruction. Next migration is **067**.
+
+---
+
+## 21. The External Identity programme — built, proven live, awaiting verdict sign-off — 2026-08-19
+
+Third persona programme, and the first to cross the org boundary: HM
+login + Hiring Company HR + Hiring Company Admin, one build. Plan in
+`NEXT-external-identity.md`; D1–D6 confirmed by the founder and executed
+same-day. Three migrations (**next is 070**):
+
+- **067 — identity.** `hiring_manager` / `client_hr` / `client_admin`
+  join `users.role`; `users.client_id` is the boundary with an XOR
+  CHECK (staff carry org and never client; externals the reverse), so a
+  role change across the line without the columns moving is refused by
+  a constraint, not a trigger. `can_read_org()` stopped meaning "any
+  role" and enumerates the five staff roles — the fail-open the plan
+  existed to prevent, closed twice over. New predicates
+  `current_user_client_id()`, `is_client_admin()` (coalesced — read
+  negated in the guard, invariant-11's lesson applied at authoring
+  time), `client_org()`. The privilege guard learned three rules:
+  client_id moves founder-only; staff can't touch an external's email;
+  a client_admin may change *only* status. Deliberately no
+  last-client-admin rule — unlike an org, the recruiting firm is always
+  there.
+- **068 — relationships.** `invitations` (one door, both directions:
+  staff at clients:share invite any external; a client_admin invites
+  colleagues within the shared set), `mandate_shares` (the D2 act —
+  nothing leaves the building without one), `mandate_grants` (HM-only,
+  enforced by trigger). Issuance is an RPC, not an INSERT policy: the
+  one-account-per-email check reads rows the caller must not see,
+  grants ⊆ shared for client_admins, contact find-or-create keeps the
+  CRM coherent, and a staff grant auto-creates the share because
+  inviting an HM to a mandate *is* the share act. Token secrecy: the
+  client_admin lists invitations through `list_client_invitations`,
+  which returns every column except the token. `guard_author_in_org`
+  gained its third tier — an external of one of the org's clients is a
+  legitimate author in that org's trail; without it every
+  client_admin-caused trail event was refused and silently swallowed by
+  write_activity_event's catch. Nine event types joined the vocabulary,
+  all trigger- or RPC-written; `record_activity_event`'s allowlist
+  deliberately did not grow.
+- **069 — the read surface.** External base-table RLS stays deny-all;
+  SECURITY DEFINER RPCs are the boundary (`portal_context`,
+  `portal_list_mandates`, `portal_get_mandate`,
+  `portal_list_my_reviews`, `portal_list_grants`) because "the slate"
+  is a computed shape RLS cannot express without exposing the pool —
+  every RPC is console-reachable by design and returns only what the
+  page renders. `portal_slate_candidate_ids` mirrors shapeSlate
+  (shortlist ids, else top-5 by rank); the pairing is pinned by the
+  invariants file. `hiring_manager_reviews.submitted_by_user_id` +
+  the author guard attached.
+
+**`external_identity_invariants.sql`** — 16 invariants + control run.
+The control run simulated a fail-open regression (a grant the truth
+table forbids) and the file aborted at INVARIANT-FAIL (4) as designed;
+the clean run passes. Two test-side bugs found by the harness itself
+mid-authoring — both were reads made under a principal whose RLS
+rightly filtered the verification query to zero (a client_admin reading
+mandate_grants, org-B staff reading org-A's trail) — the same lesson
+twice: verify through the reader's real surface, or privileged.
+
+**App side.** roles.ts split the vocabulary (STAFF_ROLES /
+EXTERNAL_ROLES, `isExternalRole`), externals hold `portal:read` (+
+`client:manage-people` for the admin) and — the load-bearing negative —
+no staff role holds `portal:read` and no external holds `org:read`,
+both pinned in tests. /portal is its own route tree with its own
+chrome; the proxy gates it per-navigation (portal:read is never the
+skip-fast default), the dashboard layout bounces externals to /portal,
+/invite/[token] is hard-public. The members screen offers staff roles
+only. The HM submit pipeline was extracted to `src/lib/hm-portal` and
+serves both doors — token (label-only, D5) and session (attributed);
+`src/lib/email` is the one Resend door with delivery-honesty results,
+and the waitlist notifier now rides it. 767 tests (from 721), green
+gate held on both commits.
+
+### Driven live on production (`2161bc2` + `d046e76`)
+
+Scratch world: Halewick Search (org) → Rowan (recruiter) → Cindermere
+Group (client) with a CTO mandate (3 candidates, shortlist of 2) and a
+confidential CFO mandate that was never shared and never appeared on
+any external screen — including the client's own admin. The full loop:
+staff invite (HM with grant — the CTO auto-shared in the same act, the
+invitee landed in the CRM as a contact) → redemption (password set, no
+second confirmation loop) → HM portal showing exactly one search →
+attributed feedback (review row carries `submitted_by_user_id` →
+"Marta Ellison", label auto-filled from the profile, ratings + top
+concern persisted) → the mirror feedback rows fired the real
+interpretation pipeline in production `after()` (both rows interpreted,
+no recalibration requested) → client_admin redeemed, invited an HR
+colleague from her own People screen (subset rule visible: only shared
+searches offered), suspended and the suspension held at sign-in →
+HR redeemed and saw the client-wide shared set. Probe matrix: external
+→ /app and /app/desk both bounce to /portal; staff → /portal lands on
+no-access naming portal:read; a spent invitation shows the one dead
+screen; signed-in externals bounce off /auth/signin through /app to
+/portal; the token portal still works end to end (generated against a
+portal contact, rendered logged-out). The trail wrote itself: 3
+invited (Elena's carries her as actor — the extended author guard
+admitting an external into the org's trail), 3 joined with targets, 1
+grant, the suspension with the client_admin as actor, the share, 3
+contacts. Scratch world deleted; every count verified back to the
+pre-drive baseline exactly.
+
+### The one thing that did not deliver: the email itself
+
+Resend refused every send: **403, "The getmandate.io domain is not
+verified."** The key works; the domain's authoritative DNS is at
+Namecheap (registrar-servers.com — the Vercel DNS zone is configured
+but not authoritative), where a Resend DKIM record exists from an old
+attempt but the send-subdomain SPF/MX records were never added, so
+verification never completed. The delivery-honesty design carried the
+drive anyway: the staff toast said plainly "Invitation created, but the
+email did not send — share the link by hand", handed over the URL, and
+copied it to the clipboard; the client_admin's toast says to ask the
+search team. Refused sends now also land in the server logs (`d046e76`)
+— a toast reaches one person once. **Founder-owned to unblock email:**
+at resend.com/domains open getmandate.io, add the records it lists to
+Namecheap DNS (the missing ones are on the `send` subdomain: an MX to
+Resend's feedback host and the amazonses SPF TXT; the DKIM record is
+already there), click Verify. The D6 SMTP switch (Supabase auth mail
+through Resend) also waits on this and on the key being in hand — the
+Vercel env var is marked Sensitive and cannot be read back.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Multi-relationship externals** (one email, two recruiting firms
+  both working with the same person) — **deferred** until it happens to
+  a real user. The refusal is honest at both doors; designing identity
+  federation for a collision that has never occurred would be §16-6
+  fabrication in schema form.
+- **Retiring the token portal — deferred.** Both doors are live and
+  share one pipeline; real usage decides, per D5 as confirmed.
+- **External notification emails** (new-slate alerts, digest mail) —
+  **deferred to a notifications programme**; every panel states today
+  what does and does not send. The invitation email lands the moment
+  the domain verifies.
+- **SSO / SAML for client companies — declined** in current form: no
+  client has asked, and enterprise auth belongs beside billing and
+  procurement when a client procurement process demands it.
+- **External data erasure — joins the §14 retention verdict**
+  (deferred to pre-launch, not declined): an external account adds
+  users rows, reviews and trail events to the same ledger.
+- **Staff-side role changes for externals — deferred.** The database
+  permits staff to move an external between the three client roles;
+  no UI offers it. Revoke-and-reinvite covers the rare case honestly.
+- **Client-side portal branding — deferred** until a client asks; the
+  "Portal operated by … via Mandate" line is the honest default.
+
+Deploys `2161bc2` (surfaces) and `d046e76` (send logging) live. tsc /
+lint / build green, 767 tests. The persona-complete declaration for
+**three externals in one programme** waits on the verdicts above and on
+nothing else; email delivery waits on the founder's DNS step and fails
+honest until then.
