@@ -2867,3 +2867,104 @@ Founder-owned, unchanged: the Resend DNS records at Namecheap
 the exposed Supabase access token, leaked-password protection
 (Pro-gated), and the deferred build list (Sentry → rate limiting →
 Resend → Stripe).
+
+---
+
+## 27. The platform operator — built, proven live, awaiting verdict sign-off — 2026-08-19
+
+Persona 6 of 7, first slice of the final-personas programme (plan in
+`NEXT-final-personas.md`, D1–D12 confirmed; this is the A-slice, D2–D6).
+One migration plus a same-session fixup (**next is 073**):
+
+- **072 — the boolean gets a trail and a lawful read surface.**
+  `is_founder` stays the boundary per D2 — no ninth role, no XOR change.
+  `member_org_changed` joins the vocabulary and `audit_member_changes`
+  writes it to both sides of an organisation move, names resolved at
+  write time; the `users_audit` trigger now fires on `organization_id`
+  at all — the one founder-only column change was the one leaving no
+  record. Founder SELECT policies on `organizations` and `clients`
+  (status-gated per 059), and nothing on any recruiting-data table.
+- **Two authoring lessons the harness taught before production could:**
+  the losing-org move event cannot name the departed member as
+  `target_user_id` (the AFTER trigger runs post-move; the author guard
+  rightly refuses a foreign user reference and the write was silently
+  swallowed) — they ride in `detail` instead; and signup-trigger rows
+  carry role `viewer` since 046, not the 002-era `recruiter` — the
+  first invariant draft's role change was a no-op that correctly wrote
+  no event (§5h's written-from-docs lesson, repeating).
+- **`operator_invariants.sql`** — 7 invariants, clean pass: the reach
+  matrix (org admin reads own org/client only, founder reads all),
+  approval remembered twice (status + first-org, both attributed), the
+  move remembered on both sides, founder power intact and attributed,
+  waitlist triage row-audited (the deliberate exception — the waitlist
+  belongs to no org, so it has no org trail to land in) and unreachable
+  below the founder, the D5 mechanical negative (no recruiting-data
+  policy may mention the founder predicate — checked against
+  pg_policies by name, so a future migration that adds one fails
+  loudly), and the suspended founder reading zero orgs. The **control
+  run** removed the status-gate conjunct and aborted at INVARIANT-FAIL
+  (7) with the suspended founder reading 3 org rows — including the
+  real Mandate HQ row, which is exactly what the conjunct protects.
+
+**Surfaces (`6f525c6`, `281009a`).** `platform:operate` joins the
+capability vocabulary held by NO role — the proxy resolves it from
+`is_founder`, pinned in tests (a customer org's admin reading false is
+the assertion, not a gap). `/ops` is its own route tree with its own
+chrome: overview (platform counts, pending approvals, organisations,
+and the erasure-request queue rendered before its first row with
+labelled sample data), accounts (every principal named to its org or
+client — the 072 read policies at work), and the waitlist, relocated
+with a redirect stub for old bookmarks. `/app/settings` sheds the
+founder-only sections and gains a founder-visible "Platform ops" door —
+the operator hat and the org-admin hat stop sharing a screen. 778
+tests (from 767), tsc/lint/build green.
+
+### Driven live on production
+
+Scratch world: Opshold Search (org) → Orla Deverin (scratch founder,
+`is_founder` set by hand per the §6 recipe — the allowlist governs
+signup provisioning, not the column) → Sten Marlow (non-founder org
+admin) → Perrin Vale (pending signup, viewer per the 046 default) →
+Ferncliff Group (client) with Maren Ellsworth (HM external). The
+founder's pass: /ops rendered true platform counts (both orgs
+including Mandate HQ — the cross-org read landing); approving Perrin
+from /ops activated him into Opshold Search and wrote exactly two
+attributed events (member_status_changed pending→active,
+member_org_changed null→Opshold Search, both with Orla as actor);
+/ops/accounts named every principal to its org and the external as
+"Ferncliff Group · via Opshold Search"; the waitlist SMOKE row approved
+from /ops with reviewed_by stamped; the old /app/settings/waitlist
+bookmark redirected. The admin's pass: no Platform ops door on
+/app/settings, /ops refused by name (ACCESS DENIED · Platform
+operations · from /ops), the old waitlist bookmark refused through the
+same gate, and the PostgREST probe read exactly one org and one client
+as the admin against both-and-both as the founder. Scratch world
+deleted; every count verified to the §24 baseline exactly.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Founder allowlist management UI — declined** per D2 as confirmed:
+  adding an operator stays a reviewed code change mirrored in the 002
+  trigger; an allowlist screen is how a compromised operator account
+  mints another.
+- **Impersonation ("view as user") — declined** per D5: the one power
+  that would make every attribution in the trail a lie. Support cases
+  needing a user's view are founder SQL plus the user's own words.
+- **AI agents as principals — deferred** per D6 to its own programme
+  with its own NEXT file; the 2026-08-12 founder statement stands
+  recorded, and nothing today authenticates as an agent.
+- **Operator MFA — joins the auth-hardening batch** (with global
+  sign-out on password change and leaked-password protection): the
+  operator account is the platform's highest-value credential and
+  should be the first to carry a second factor when that batch runs.
+- **Org creation/rename/deletion from /ops — deferred** until it is
+  needed twice: onboarding a customer org is founder SQL today, rare
+  and deliberate, and a screen for it would ship untested against real
+  onboarding.
+
+Deploys `6f525c6` and `281009a` live; migration 072 (+ org-move fixup)
+applied via MCP and checked in. The completion declaration for the
+operator persona waits on the verdicts above and on nothing else.
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+and the deferred build list.
