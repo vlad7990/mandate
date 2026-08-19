@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { DASHBOARD_HOME } from "@/lib/routes";
 import { validatePassword } from "@/lib/auth/password-policy";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
@@ -37,7 +38,9 @@ export async function resetPasswordAction(password: string): Promise<ActionResul
   });
 
   if (result.ok) {
-    redirect("/app");
+    // DASHBOARD_HOME, not "/app" — the group layout wraps /app/* but /app
+    // itself has no page, which the first live reset found as a 404.
+    redirect(DASHBOARD_HOME);
   }
   return result;
 }
