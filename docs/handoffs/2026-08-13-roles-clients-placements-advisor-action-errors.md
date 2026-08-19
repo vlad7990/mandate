@@ -2832,3 +2832,38 @@ verdicts above and on nothing else. Founder-owned, unchanged: the
 Resend DNS records at Namecheap, the exposed Supabase access token,
 leaked-password protection (Pro-gated), and the deferred build list
 (Sentry → rate limiting → Resend → Stripe).
+
+---
+
+## 26. Portal-settings verdicts confirmed — the slice is complete — 2026-08-19
+
+The founder confirmed all five §25 verdicts as drafted: global session
+revocation on password change deferred to an auth-hardening batch;
+email change deferred as founder/re-invite territory; avatar deferred
+until a client asks; notification preferences deferred to the
+notifications programme; self-deactivation declined, with the
+client_admin's carried self-suspend as the one deliberate exception.
+The two D4 interpretations ("non-admin" means "not an active org
+admin"; the client_admin keeps their 067 status power on their own
+row) stand as built.
+
+The definition of done is met: any signed-in principal — staff or
+external, pending or active — can correct their own name from their own
+settings surface and see it land where names show; any active principal
+can rotate a password they still know without pretending to have lost
+it, behind a current-password re-verify and the same 12/4 floor as the
+other three doors; what is not self-service (role, status, email,
+founder columns) is refused at the database with a sentence written for
+the reader, proven by 8 invariants with a verified control run and by
+PostgREST probes against production; and every absence carries a
+confirmed verdict. The drive also closed a §16-5-family defect nobody
+had ever walked into: a live suspended session now gets its honest
+refusal instead of a 500.
+
+**The portal-settings slice is complete.** `NEXT-portal-settings.md`
+deleted per its own instruction. Next migration is **072**.
+Founder-owned, unchanged: the Resend DNS records at Namecheap
+(invitation and recovery email upgrade the moment the domain verifies),
+the exposed Supabase access token, leaked-password protection
+(Pro-gated), and the deferred build list (Sentry → rate limiting →
+Resend → Stripe).
