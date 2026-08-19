@@ -62,6 +62,12 @@ export async function sendEmail(message: EmailMessage): Promise<EmailResult> {
 
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
+      // Logged as well as returned: the caller's toast reaches one person
+      // once, and a refused send is an operational fact worth finding in
+      // the server logs after the toast is gone.
+      console.error(
+        `[email] Resend refused (${response.status}) for ${message.to.join(", ")}: ${detail.slice(0, 500)}`
+      );
       return {
         sent: false,
         reason: "refused",
