@@ -6,7 +6,7 @@ import { BreadcrumbProvider } from "@/components/dashboard/breadcrumbs";
 import { Toaster } from "@/components/ui/sonner";
 import { CopilotPanel } from "@/components/copilot/copilot-panel";
 import { countNetworkPeople } from "@/lib/network/network-aggregator";
-import { parseRole } from "@/lib/auth/roles";
+import { isExternalRole, parseRole } from "@/lib/auth/roles";
 
 export default async function DashboardLayout({
   children,
@@ -52,9 +52,6 @@ export default async function DashboardLayout({
     );
   }
 
-  const displayName = profile?.full_name?.trim() || profile?.email || user.email || "Operator";
-  const email = profile?.email || user.email || "";
-
   // Parsed once here and passed down, rather than each chrome component
   // re-reading the column and forming its own opinion of what the string
   // means. The two status redirects above have already run, so anything
@@ -62,6 +59,18 @@ export default async function DashboardLayout({
   // value outside the vocabulary, and null shows the smallest possible rail
   // rather than the largest.
   const role = parseRole(profile?.role);
+
+  // An external principal's home is the portal, not the org dashboard.
+  // The proxy skips the role lookup on default (org:read) routes for
+  // speed, so this layout — which reads the profile anyway — is where the
+  // persona boundary is stated. RLS would show them an empty org
+  // regardless; a redirect is the honest version of that emptiness.
+  if (isExternalRole(role)) {
+    redirect("/portal");
+  }
+
+  const displayName = profile?.full_name?.trim() || profile?.email || user.email || "Operator";
+  const email = profile?.email || user.email || "";
 
   return (
     <BreadcrumbProvider>

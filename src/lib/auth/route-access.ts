@@ -109,6 +109,19 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { pattern: "/app/executive-intelligence/searches/new", capability: "mandates:write" },
 ];
 
+/**
+ * The client portal (`/portal`) — the externals' route tree, gated the
+ * same way `/app` is but on the external capabilities. The default here is
+ * `portal:read`, which no staff role holds, so the proxy's capability
+ * check runs on every portal navigation and bounces staff to no-access —
+ * the mirror image of externals holding no `org:read` for `/app`.
+ */
+export const PORTAL_DEFAULT_CAPABILITY: Capability = "portal:read";
+
+export const PORTAL_RULES: readonly RouteRule[] = [
+  { pattern: "/portal/people", capability: "client:manage-people", prefix: true },
+];
+
 /** Split a path into segments, ignoring empty ones from leading/trailing slashes. */
 function segments(path: string): string[] {
   return path.split("/").filter(Boolean);
@@ -138,6 +151,13 @@ function matches(rule: RouteRule, path: string): boolean {
  * hit.
  */
 export function capabilityForPath(pathname: string): Capability | null {
+  if (pathname === "/portal" || pathname.startsWith("/portal/")) {
+    for (const rule of PORTAL_RULES) {
+      if (matches(rule, pathname)) return rule.capability;
+    }
+    return PORTAL_DEFAULT_CAPABILITY;
+  }
+
   if (pathname !== "/app" && !pathname.startsWith("/app/")) return null;
 
   for (const rule of ROUTE_RULES) {

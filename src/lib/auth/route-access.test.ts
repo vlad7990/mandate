@@ -4,21 +4,25 @@ import { join } from "node:path";
 import {
   DEFAULT_CAPABILITY,
   NO_ACCESS_PATH,
+  PORTAL_DEFAULT_CAPABILITY,
+  PORTAL_RULES,
   ROUTE_RULES,
   capabilityForPath,
 } from "./route-access";
-import { CAPABILITIES, can, type Role } from "./roles";
+import { CAPABILITIES, EXTERNAL_ROLES, STAFF_ROLES, can, type Role } from "./roles";
 
 describe("capabilityForPath", () => {
-  it("ignores everything outside /app", () => {
+  it("ignores everything outside /app and /portal", () => {
     for (const path of [
       "/",
       "/pricing",
       "/executive-intelligence",
       "/auth/signin",
       "/hm/abc-token",
+      "/invite/abc-token", // redemption is public: the visitor has no account yet
       "/api/demo",
       "/application", // the prefix test must not match this
+      "/portfolio", // nor must /portal's
     ]) {
       expect(capabilityForPath(path)).toBeNull();
     }
@@ -92,6 +96,34 @@ describe("capabilityForPath", () => {
   });
 });
 
+describe("the client portal", () => {
+  // portal:read is held by no staff role, so unlike /app's org:read
+  // default, the proxy's capability check runs on EVERY portal navigation
+  // — which is exactly what bounces staff off the client surface.
+  it("gates every portal route on portal:read by default", () => {
+    expect(capabilityForPath("/portal")).toBe(PORTAL_DEFAULT_CAPABILITY);
+    expect(capabilityForPath("/portal/mandates/abc")).toBe(PORTAL_DEFAULT_CAPABILITY);
+    expect(PORTAL_DEFAULT_CAPABILITY).toBe("portal:read");
+  });
+
+  it("puts the people view behind client:manage-people", () => {
+    expect(capabilityForPath("/portal/people")).toBe("client:manage-people");
+    expect(capabilityForPath("/portal/people/invitations")).toBe("client:manage-people");
+  });
+
+  it("keeps the two surfaces disjoint per role", () => {
+    // An external can enter no /app route; a staff role can enter no
+    // /portal route. The pairing that makes the persona boundary hold.
+    for (const role of EXTERNAL_ROLES) {
+      expect(can(role, DEFAULT_CAPABILITY)).toBe(false);
+      expect(can(role, PORTAL_DEFAULT_CAPABILITY)).toBe(true);
+    }
+    for (const role of STAFF_ROLES) {
+      expect(can(role, PORTAL_DEFAULT_CAPABILITY)).toBe(false);
+    }
+  });
+});
+
 describe("the no-access destination", () => {
   // If this needed a capability the denied user lacked, the proxy would
   // redirect to it, evaluate the rule again, and redirect forever.
@@ -106,7 +138,7 @@ describe("the no-access destination", () => {
 
 describe("the rule table itself", () => {
   it("names only real capabilities", () => {
-    for (const rule of ROUTE_RULES) {
+    for (const rule of [...ROUTE_RULES, ...PORTAL_RULES]) {
       expect(CAPABILITIES).toContain(rule.capability);
     }
   });

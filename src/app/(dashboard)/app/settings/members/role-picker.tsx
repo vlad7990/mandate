@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { setMemberRoleAction } from "./actions";
-import { ROLES, ROLE_LABELS, type Role } from "@/lib/auth/roles";
+import { STAFF_ROLES, ROLE_LABELS, type Role } from "@/lib/auth/roles";
 import { IconRefresh } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 
@@ -79,7 +79,10 @@ export function RolePicker({
         onChange={(e) => setSelected(e.target.value as Role)}
         className="border border-outline-variant bg-surface-container-low px-2 py-1.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60"
       >
-        {ROLES.map((role) => (
+        {/* Staff roles only: the members screen administers the org's own
+            people, and an external role on a staff row is a contradiction
+            the 067 XOR CHECK would refuse anyway. */}
+        {STAFF_ROLES.map((role) => (
           <option key={role} value={role}>
             {ROLE_LABELS[role]}
           </option>

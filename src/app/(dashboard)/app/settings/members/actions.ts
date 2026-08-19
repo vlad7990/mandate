@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
-import { parseRole } from "@/lib/auth/roles";
+import { isExternalRole, parseRole } from "@/lib/auth/roles";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 
@@ -39,6 +39,16 @@ export async function setMemberRoleAction(
     const role = parseRole(nextRole);
     if (!role) {
       throw new Error(`Not a role: ${nextRole}`);
+    }
+
+    // The vocabulary now spans the client boundary (067). A staff member
+    // cannot become an external here — that transition is a different
+    // identity, not a promotion — and the XOR CHECK would refuse the row
+    // anyway; this states it in words instead of a constraint error.
+    if (isExternalRole(role)) {
+      throw new Error(
+        "Client-side roles are assigned by invitation, not from the members screen."
+      );
     }
 
     const supabase = await createServerSupabaseClient();

@@ -21,9 +21,35 @@
  * the waitlist.
  */
 
-export const ROLES = ["admin", "manager", "recruiter", "researcher", "viewer"] as const;
+/**
+ * The staff vocabulary: principals of a recruiting organisation. These
+ * roles carry `organization_id` and never `client_id` — the XOR CHECK in
+ * migration 067 enforces the split at the column level.
+ */
+export const STAFF_ROLES = ["admin", "manager", "recruiter", "researcher", "viewer"] as const;
+
+/**
+ * The external vocabulary: principals of a *client* company (migration
+ * 067, the External Identity programme). They carry `client_id` and never
+ * `organization_id`, hold no org capability at all — not even `org:read` —
+ * and live on `/portal`, not `/app`. They arrive by invitation only.
+ */
+export const EXTERNAL_ROLES = ["hiring_manager", "client_hr", "client_admin"] as const;
+
+export const ROLES = [...STAFF_ROLES, ...EXTERNAL_ROLES] as const;
 
 export type Role = (typeof ROLES)[number];
+export type StaffRole = (typeof STAFF_ROLES)[number];
+export type ExternalRole = (typeof EXTERNAL_ROLES)[number];
+
+/**
+ * Whether `role` belongs to the client side of the boundary. Takes the
+ * nullable form for the same reason `can()` does — the caller usually
+ * holds a parsed column, and null is neither staff nor external.
+ */
+export function isExternalRole(role: Role | null | undefined): role is ExternalRole {
+  return !!role && (EXTERNAL_ROLES as readonly string[]).includes(role);
+}
 
 /**
  * What a new non-founder account gets. Matches the column default and the
@@ -85,6 +111,15 @@ export const CAPABILITIES = [
   "skills:write",
   /** Org settings and member administration. */
   "org:manage",
+  /**
+   * The client portal: shared mandates, slates, attributed feedback. The
+   * externals' whole read surface — deliberately not `org:read`, because
+   * an external reads through SECURITY DEFINER RPCs (069), never the org's
+   * tables.
+   */
+  "portal:read",
+  /** Invite and suspend the client company's own people. The client_admin's one management act. */
+  "client:manage-people",
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];
@@ -114,6 +149,12 @@ const GRANTS: Record<Role, readonly Capability[]> = {
   recruiter: ["org:read", "candidates:write", "mandates:write", "clients:share", "fees:read"],
   researcher: ["org:read", "candidates:write"],
   viewer: ["org:read"],
+  // The client side of the boundary. No org capability appears below this
+  // line, and none ever should: an external who gained `org:read` would
+  // walk through every generated SELECT policy in migration 046.
+  hiring_manager: ["portal:read"],
+  client_hr: ["portal:read"],
+  client_admin: ["portal:read", "client:manage-people"],
 };
 
 /**
@@ -156,6 +197,9 @@ export const ROLE_LABELS: Record<Role, string> = {
   recruiter: "Recruiter",
   researcher: "Researcher",
   viewer: "Viewer",
+  hiring_manager: "Hiring Manager",
+  client_hr: "HR",
+  client_admin: "Client Admin",
 };
 
 /** One line on what the role can do, for the role picker and the member list. */
@@ -167,6 +211,12 @@ export const ROLE_SUMMARIES: Record<Role, string> = {
   researcher:
     "Sourcing and evaluation. Cannot open a mandate, publish a shortlist or contact a candidate. Sees fees only on placements they are credited on.",
   viewer: "Read-only across the org, excluding fees and revenue. Writes nothing anywhere.",
+  hiring_manager:
+    "Client-side. Sees the mandates individually shared with them and submits slate feedback. Nothing else.",
+  client_hr:
+    "Client-side. Sees every mandate shared with their company and submits slate feedback.",
+  client_admin:
+    "Client-side. Everything HR sees, plus inviting and suspending their own company's people.",
 };
 
 /** Human-readable name for a capability, for the settings matrix. */
@@ -179,4 +229,6 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
   "desk:manage": "Desk oversight and reassignment",
   "skills:write": "Skills studio",
   "org:manage": "Org settings and members",
+  "portal:read": "Client portal",
+  "client:manage-people": "Client company's people",
 };

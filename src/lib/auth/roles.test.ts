@@ -3,11 +3,14 @@ import {
   CAPABILITIES,
   DEFAULT_ROLE,
   ROLES,
+  STAFF_ROLES,
+  EXTERNAL_ROLES,
   ROLE_LABELS,
   ROLE_SUMMARIES,
   CAPABILITY_LABELS,
   can,
   capabilitiesOf,
+  isExternalRole,
   parseRole,
   type Capability,
   type Role,
@@ -29,6 +32,8 @@ const MATRIX: Record<Capability, readonly Role[]> = {
   "desk:manage": ["admin", "manager"],
   "skills:write": ["admin"],
   "org:manage": ["admin"],
+  "portal:read": ["hiring_manager", "client_hr", "client_admin"],
+  "client:manage-people": ["client_admin"],
 };
 
 describe("the capability matrix", () => {
@@ -47,9 +52,23 @@ describe("the capability matrix", () => {
 });
 
 describe("the shape of the roles", () => {
-  it("lets every role read", () => {
-    for (const role of ROLES) {
+  it("lets every staff role read the org, and no external ever", () => {
+    for (const role of STAFF_ROLES) {
       expect(can(role, "org:read")).toBe(true);
+    }
+    // The load-bearing negative of the External Identity programme: an
+    // external with org:read would walk through every generated SELECT
+    // policy in migration 046. If one of these flips, the boundary is gone.
+    for (const role of EXTERNAL_ROLES) {
+      expect(can(role, "org:read")).toBe(false);
+    }
+  });
+
+  it("keeps the portal from every staff role", () => {
+    // The mirror negative: the proxy bounces staff off /portal because no
+    // staff role holds portal:read.
+    for (const role of STAFF_ROLES) {
+      expect(can(role, "portal:read")).toBe(false);
     }
   });
 
@@ -57,8 +76,27 @@ describe("the shape of the roles", () => {
     expect(capabilitiesOf("viewer")).toEqual(["org:read"]);
   });
 
-  it("gives the admin everything", () => {
-    expect(capabilitiesOf("admin")).toEqual([...CAPABILITIES]);
+  it("gives the admin everything on the staff side and nothing on the client side", () => {
+    expect(capabilitiesOf("admin")).toEqual(
+      CAPABILITIES.filter((c) => c !== "portal:read" && c !== "client:manage-people")
+    );
+  });
+
+  it("splits the vocabulary cleanly", () => {
+    expect([...STAFF_ROLES, ...EXTERNAL_ROLES]).toEqual([...ROLES]);
+    for (const role of STAFF_ROLES) expect(isExternalRole(role)).toBe(false);
+    for (const role of EXTERNAL_ROLES) expect(isExternalRole(role)).toBe(true);
+    expect(isExternalRole(null)).toBe(false);
+    expect(isExternalRole(undefined)).toBe(false);
+  });
+
+  // The three limits that define the client side: the HM is
+  // mandate-scoped with no people powers, HR is client-scoped with no
+  // people powers, and only the client_admin manages their company.
+  it("keeps people management with the client admin alone", () => {
+    expect(can("hiring_manager", "client:manage-people")).toBe(false);
+    expect(can("client_hr", "client:manage-people")).toBe(false);
+    expect(can("client_admin", "client:manage-people")).toBe(true);
   });
 
   // The two limits that define the researcher, and the reason the role

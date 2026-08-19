@@ -15,7 +15,10 @@ import {
 // has no session, and the first version of this list bounced it to
 // /auth/signin with a 307, which a scheduler reads as success. Found by
 // curling the route, not by any test.
-const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/api/demo", "/api/cron/"];
+// /invite is the external-identity redemption page (068): the visitor has
+// no account yet by definition, and the token in the URL is the only
+// credential — same trust shape as /hm.
+const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/invite/", "/invite", "/api/demo", "/api/cron/"];
 
 // Public-facing pages that unauthenticated users SHOULD see. We still
 // run the session refresh on these so authenticated visitors can be
