@@ -3512,3 +3512,47 @@ access token, leaked-password protection (Pro-gated), the deferred
 build list (Sentry → rate limiting → Resend → Stripe, with portal +
 recovery + HM-submit rate limiting), and the one orphaned 331-byte
 storage object.
+
+---
+
+## 34. Ranker verdicts confirmed — the ranker slice is complete — 2026-08-20
+
+The founder confirmed all four §33 verdicts as drafted: the CV parser
+opens as slice three (the first conversion that must ADD grants —
+candidates UPDATE and the org-folder storage read, with the
+parse-but-never-delete negative pinned in its own invariants); the
+"scores as of" staleness banner deferred (the header's computed time
+and rank_changed_at already say what is true); /ops agent rows stay
+label-plain until the roster outgrows a screen; and the /ops
+"Reject / Approve" relabel to Suspend / Restore stays a founder-timed
+cosmetic, semantics correct today.
+
+The definition of done is met: the product's highest-volume writer no
+longer wears a human face. Every scoring run — the first visit's
+read-repair, the deliberate refresh, the background re-score after a
+network copy, the post-restore recompute — signs in as the Ranking
+Agent, works under the role's named grants, lands one trail event with
+its trigger named, and leaves no session behind. A refused ranker
+degrades one leaderboard refresh with a sentence a human reads; it
+never eats the click, the copy, or the restore that asked. The
+operator holds a kill switch per agent, proven live: ranking suspended
+while feedback interpretation ran untouched — one row's status, one
+agent's silence, nobody else's. Slice one built the shape; slice two
+proved the shape REPEATS — one small migration, one seam file, one
+account, one drive — which is the fact the remaining twelve
+conversions now rest on. Two quiet honesty dividends shipped with it:
+a viewer's first ranking-page visit can finally score lawfully, and
+the network-copy re-score stopped borrowing whatever cookies survived
+its after().
+
+**The agents-as-principals ranker slice is complete.** Two of fourteen
+agents now authenticate as principals; the pattern is proven
+repeatable. `NEXT-agent-ranker.md` deleted per its own instruction.
+Next migration is **076**; the CV parser's Phase 0 opens on the
+founder's word.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with portal + recovery + HM-submit rate limiting), and the one
+orphaned 331-byte storage object from §28's diagnosis.
