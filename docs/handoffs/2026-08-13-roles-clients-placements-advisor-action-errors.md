@@ -3136,3 +3136,177 @@ Founder-owned, unchanged: the Resend DNS records at Namecheap, the
 exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe), and
 the one orphaned 331-byte storage object from §28's diagnosis.
+
+---
+
+## 30. The first agent principal — built, proven live, awaiting verdict sign-off — 2026-08-20
+
+The agents-as-principals slice one, D1–D9 confirmed 2026-08-20 (plan in
+`NEXT-agents-as-principals.md`). The feedback interpreter — the service
+role's sharpest ambient trust, running inside the HM submit routes'
+`after()` — now authenticates as a principal: a users row with role
+`agent`, org-carried, credentialed, attributed, suspendable. One
+migration (**next is 075**):
+
+- **074 — role 'agent', the interpreter's grants, the boundary, the
+  trail door.** `agent` joins `users_role_check` (nine values) and gets
+  its own XOR branch: `organization_id NOT NULL` (an unattached agent is
+  meaningless — D1), never `client_id`. The grants are RLS policies
+  naming the role on exactly the pipeline's tables, enumerated from the
+  code (runHmFeedbackPipeline, applyRecalibration, computeAndStoreScores,
+  recordCalibrationSnapshot, loadActiveSkills — the §5h rule): projects
+  SELECT+UPDATE, feedback SELECT+UPDATE, candidates SELECT,
+  candidate_scores SELECT+INSERT+UPDATE, calibration_history INSERT,
+  skills SELECT. Nothing else — `agent` appears in NO existing predicate
+  (D2), and every policy resolves through `current_user_role()`, which
+  is active-only: suspension kills reach with no clause remembering to.
+  The privilege guard refuses role changes INTO and OUT OF `agent` below
+  the founder. The trail grows `feedback_interpreted` and
+  `record_agent_event` — narrower than `record_activity_event` in every
+  direction: one event type, callable only by an ACTIVE agent, org and
+  actor stamped from the session. App side: `agent` in the vocabulary
+  with an EMPTY `can()` grant (capabilities are for humans), parseRole
+  admits it, labels honest ("Autonomous agent. Signs in to work, never
+  to look…"); the members matrix iterates a new `HUMAN_ROLES` so the
+  agent gains no column in screens documenting what people can do, and
+  an agent row's role picker locks with "Agent principals are managed
+  from Platform ops".
+- **`agent_principal_invariants.sql`** — 8 invariants, clean pass: the
+  exact read/write reach (writes verified privileged), the negatives
+  each by name (zero placement_fees / fee_terms / clients /
+  hiring_manager_reviews / organizations / activity_events, a users read
+  returning only the self row, both portal RPCs empty, and
+  `record_activity_event` writing nothing for an agent), the trail event
+  attributed with the review named in detail, the guard boundary (admin
+  refused both directions, founder allowed), the suspended agent reading
+  zero rows and refused at its own trail door, the XOR, and cross-org
+  isolation. **Control run verified:** `can_read_org()` re-created with
+  'agent' slipped in aborted at INVARIANT-FAIL (3) — "the agent reads 1
+  clients rows" — with the positives still passing under the regression;
+  diff vs. the clean pass is the one function body, rollback residue-free.
+
+**The seam (`464f675`).** `src/lib/agents/session.ts` signs the
+interpreter in from env credentials (`AGENT_INTERPRETER_EMAIL` /
+`AGENT_INTERPRETER_PASSWORD`) on a throwaway client that persists
+nothing; the run ends with a signOut that revokes GoTrue's ledger entry.
+It verifies its own row is an ACTIVE agent before handing the session
+over — a suspended agent's password grant still succeeds at GoTrue, and
+running the pipeline blind would burn an Anthropic call on writes that
+land nowhere. When the secret is absent or the agent refused, it returns
+the reason and NOTHING else — there is deliberately no service-role
+fallback; the fallback is the bug this programme removed. Both submit
+doors' `after()` pipeline now runs under the agent's RLS with D5
+fail-soft (the review and feedback rows are persisted by the door before
+the agent is asked to think), records each landed interpretation via
+`record_agent_event` with the review id, feedback id, hm_label and
+recalibrated flag in detail, and threads the review id from
+`persistHmSubmission` (which now returns it). `/ops` accounts grew a
+third table — Agents, labelled, with §27's suspend/restore riding free.
+
+**A latent defect the seam closed:** the service-role `after()` could
+never build a client for the skill injector (`cookies()` is unavailable
+there), so `loadActiveSkills` caught, returned `[]`, and every
+recruiter-authored skill was SILENTLY STRIPPED from every HM-portal
+interpretation since Skills Studio shipped. The agent session is passed
+through `interpretFeedback`'s new options parameter (an options
+parameter, not a field of `input` — `input` is serialised wholesale into
+the model prompt) into the injector, whose `skills_agent_select` policy
+makes the read lawful. Skills reach HM-portal interpretations for the
+first time.
+
+### The interpreter account, created by operator hand — the recipe
+
+The §6 auth.users recipe (token columns `''`, `email_confirmed_at`,
+`crypt(...,gen_salt('bf'))`, matching `auth.identities` row), then the
+role flip in ONE privileged statement (the XOR demands role and org
+arrive together):
+
+```sql
+update public.users
+   set role = 'agent', organization_id = '<org>',
+       status = 'active', full_name = 'Feedback Interpreter'
+ where id = '<auth user id>';
+```
+
+Live account: `vbreygin+interpreter@gmail.com`, id `0b4b1b95-…`, org
+Mandate HQ, password minted with `openssl rand`, held ONLY as the env
+pair in Vercel production and `.env.local` (never committed). Rotation
+is founder territory: re-`crypt()` the auth.users row and update both
+env locations in one sitting. The users-count baseline is now **2** (the
+founder + the interpreter — a durable principal, not scratch); the
+baseline's 3 activity events are the interpreter's own creation trail.
+
+### Driven live on production (getmandate.io, deploy `464f675`)
+
+Scratch world INSIDE Mandate HQ — the interpreter is org-bound (D9:
+one real org, operator-hand provisioning), so a scratch org's
+submissions would sit outside its lawful reach by design: CTO Search
+(Interpreter Drive) → Perl Ashwood (candidate, fit seeded) → HM token
+for "Holt Verner". Operator: Orin Faulkes, a scratch is_founder
+account, never the real founder credentials. Three acts through the
+real token door:
+
+1. **Strong-yes with a stated preference shift** ("transformation over
+   regulatory") → interpretation landed with a real model summary,
+   recalibration moved the weights exactly as asked (regulatory 5→2,
+   transformation 5→8), scores re-ran, calibration_history's
+   `changed_by` is the AGENT, and the trail shows "Feedback Interpreter
+   — Interpreted hiring-manager feedback from Holt Verner and
+   recalibrated the search's weights" with the review named in detail.
+2. **Suspended from /ops by the operator's own click** (attributed in
+   the trail) → the second submission landed (review 2, feedback row
+   intact), its interpretation honestly skipped — the row stayed
+   `'{}'`, no event, no agent session left behind — and the skip reason
+   logged server-side by the seam's named refusal.
+3. **Restored from /ops** → the third submission interpreted again.
+
+Probe matrix with the agent's real JWT via PostgREST: the six D6
+surfaces answer; placement_fees, fee_terms, clients,
+hiring_manager_reviews, organizations, activity_events and the users
+roster (beyond the self row) all refuse by name; both portal RPCs answer
+empty; `record_activity_event` returns 204 and writes NOTHING. Teardown
+to the new baseline EXACTLY (1 org, 2 users, 2 auth users, 2 projects,
+1 client, 1 candidate + 1 score, 3 feedback, 4 hm_reviews, 3 hm_tokens,
+3 activity_events, 0 calibration_history, 0 sessions, 0 refresh tokens,
+5 skills), zero scratch residue — including the drive's member events,
+which do not cascade with a project and were removed by hand.
+
+One cosmetic observation, presented rather than fixed: /ops account
+actions read "Reject / Approve" (their waitlist-era names) even on an
+active agent, where the acts are suspend/restore. The founder may want
+the labels contextual; the semantics are correct today.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Conversion order for the remaining thirteen agents:** the ranker
+  and the CV parser next — the highest-volume writers currently wearing
+  the triggering human's face (right reach, wrong attribution) — then
+  the candidate review agent, then the rest by usage. Each conversion
+  enumerates its own grants from its own pipeline's code, per D6; none
+  begins without its own NEXT-file phase.
+- **Per-agent cost budgets and rate ceilings — deferred**, with one
+  named exception: the HM token door triggers a paid Anthropic call
+  anonymously, so the submit endpoint joins the pre-launch
+  rate-limiting item (with /auth/recover and the candidate portal).
+- **Secret rotation cadence — founder-hand, no fixed calendar** at one
+  org and one secret; rotate on suspicion, and fold a scheduled cadence
+  into the auth-hardening batch when it runs. The recipe above makes
+  rotation a two-minute act.
+- **Automated agent provisioning at org onboarding — deferred until the
+  second customer org** (D9 stands; the operator-hand recipe is the
+  provisioning story until then).
+- **The metrics agent as the first cron-shaped principal — deferred**;
+  D8 stands (mechanical cron stays an RPC), and when scheduled AI
+  judgment arrives it enters through this programme's door as its own
+  slice.
+
+Deploys `a025445` (074 + invariants) and `464f675` (the seam) live;
+migration 074 applied via MCP and checked in as the numbered file. The
+completion declaration for the agents-as-principals slice waits on the
+verdicts above and on the founder's written confirmation, and
+`NEXT-agents-as-principals.md` is deleted only after that confirmation.
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+joined by portal + recovery + HM-submit rate limiting), and the one
+orphaned 331-byte storage object from §28's diagnosis.

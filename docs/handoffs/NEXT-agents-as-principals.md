@@ -15,6 +15,16 @@ declared.
 gate is open; execution starts at Phase 1 (migration 074, the
 interpreter slice).
 
+**STATUS 2026-08-20 (later): Phases 1–3 BUILT AND PROVEN LIVE** —
+migration 074 + `agent_principal_invariants.sql` (control run
+verified), the session seam, the pipeline switch with D5 fail-soft,
+/ops agent labels, the live interpreter account, and the three-act
+production drive with probe matrix and exact teardown. Full record in
+the 2026-08-13 handoff §30, including the account recipe and the
+Phase 4 verdict drafts. **The slice's completion declaration — and
+this file's deletion — wait on the founder's written confirmation of
+the §30 verdicts and on nothing else.**
+
 ---
 
 ## Where this starts from (2026-08-20, HEAD `65fc3d8`)
