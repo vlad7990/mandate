@@ -3,8 +3,10 @@ import {
   CAPABILITIES,
   DEFAULT_ROLE,
   ROLES,
+  HUMAN_ROLES,
   STAFF_ROLES,
   EXTERNAL_ROLES,
+  AGENT_ROLES,
   ROLE_LABELS,
   ROLE_SUMMARIES,
   CAPABILITY_LABELS,
@@ -94,11 +96,26 @@ describe("the shape of the roles", () => {
   });
 
   it("splits the vocabulary cleanly", () => {
-    expect([...STAFF_ROLES, ...EXTERNAL_ROLES]).toEqual([...ROLES]);
+    expect([...STAFF_ROLES, ...AGENT_ROLES, ...EXTERNAL_ROLES]).toEqual([...ROLES]);
+    expect([...STAFF_ROLES, ...EXTERNAL_ROLES]).toEqual([...HUMAN_ROLES]);
     for (const role of STAFF_ROLES) expect(isExternalRole(role)).toBe(false);
     for (const role of EXTERNAL_ROLES) expect(isExternalRole(role)).toBe(true);
+    for (const role of AGENT_ROLES) expect(isExternalRole(role)).toBe(false);
     expect(isExternalRole(null)).toBe(false);
     expect(isExternalRole(undefined)).toBe(false);
+  });
+
+  // The agents-as-principals negative (074, D2): the agent's capability
+  // grant is EMPTY, deliberately and permanently. Capabilities gate
+  // screens and server actions; an agent signs in to work, never to
+  // look — its reach is the named RLS policies, and a capability
+  // appearing here would hand every agent a route tree. Every false in
+  // this loop IS the assertion, the platform:operate shape again.
+  it("grants the agent nothing at all", () => {
+    expect(capabilitiesOf("agent")).toEqual([]);
+    for (const capability of CAPABILITIES) {
+      expect(can("agent", capability)).toBe(false);
+    }
   });
 
   // The three limits that define the client side: the HM is

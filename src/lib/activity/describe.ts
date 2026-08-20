@@ -210,6 +210,16 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Reassigned the mandate from ${from} to ${to}`;
     }
 
+    case "feedback_interpreted": {
+      // The actor byline already names the agent; the sentence names the
+      // trigger — D4's whole point is that the two are different people.
+      const source = str(d, "hm_label");
+      const recalibrated = d.recalibrated === true;
+      return `Interpreted hiring-manager feedback${source ? ` from ${source}` : ""}${
+        recalibrated ? " and recalibrated the search's weights" : ""
+      }`;
+    }
+
     default: {
       // A row written by a migration this build predates. Render it rather
       // than crash the feed — an audit trail that goes blank on an

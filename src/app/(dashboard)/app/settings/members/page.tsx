@@ -8,7 +8,7 @@ import { RolePicker } from "./role-picker";
 import {
   CAPABILITIES,
   CAPABILITY_LABELS,
-  ROLES,
+  HUMAN_ROLES,
   ROLE_LABELS,
   ROLE_SUMMARIES,
   can,
@@ -143,7 +143,11 @@ export default async function MembersPage() {
                 const isSelf = member.id === access.userId;
                 // A founder's role is Mandate's to set; the action refuses it
                 // too, and the picker says why rather than failing on Apply.
-                const locked = member.is_founder;
+                // An agent principal's role moves only by founder hand (074's
+                // guard) and is administered from /ops, so its picker locks
+                // for the same reason with its own sentence.
+                const isAgent = role === "agent";
+                const locked = member.is_founder || isAgent;
 
                 return (
                   <tr
@@ -185,9 +189,11 @@ export default async function MembersPage() {
                         currentRole={role}
                         disabled={locked}
                         disabledReason={
-                          locked
-                            ? "Founder accounts are managed by Mandate"
-                            : undefined
+                          isAgent
+                            ? "Agent principals are managed from Platform ops"
+                            : locked
+                              ? "Founder accounts are managed by Mandate"
+                              : undefined
                         }
                       />
                     </td>
@@ -233,7 +239,7 @@ export default async function MembersPage() {
                 >
                   Capability
                 </th>
-                {ROLES.map((role) => (
+                {HUMAN_ROLES.map((role) => (
                   <th
                     key={role}
                     scope="col"
@@ -256,7 +262,7 @@ export default async function MembersPage() {
                   >
                     {CAPABILITY_LABELS[capability]}
                   </th>
-                  {ROLES.map((role) => {
+                  {HUMAN_ROLES.map((role) => {
                     const held = can(role, capability);
                     return (
                       <td key={role} className="px-4 py-2.5 text-center">
@@ -279,7 +285,7 @@ export default async function MembersPage() {
         </div>
 
         <dl className="space-y-1.5">
-          {ROLES.map((role) => (
+          {HUMAN_ROLES.map((role) => (
             <div key={role} className="flex flex-wrap gap-x-3 text-body-main">
               <dt className="font-mono-label text-mono-label uppercase tracking-widest text-on-surface">
                 {ROLE_LABELS[role]}

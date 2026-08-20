@@ -36,11 +36,35 @@ export const STAFF_ROLES = ["admin", "manager", "recruiter", "researcher", "view
  */
 export const EXTERNAL_ROLES = ["hiring_manager", "client_hr", "client_admin"] as const;
 
-export const ROLES = [...STAFF_ROLES, ...EXTERNAL_ROLES] as const;
+/**
+ * The agent vocabulary: AI principals of a recruiting organisation
+ * (migration 074, the agents-as-principals programme). One role, not
+ * fourteen — the agent KIND (interpreter, ranker, parser…) is
+ * attribution detail on every event, not authority. Agents carry
+ * `organization_id` (NOT NULL — the XOR) and never `client_id`, hold an
+ * EMPTY capability grant (their reach is named RLS policies, not
+ * capabilities — capabilities are for humans), and never navigate: the
+ * proxy bounces them off every route tree, and their one face in the
+ * product is /ops accounts, labelled, with suspend/restore.
+ */
+export const AGENT_ROLES = ["agent"] as const;
+
+export const ROLES = [...STAFF_ROLES, ...AGENT_ROLES, ...EXTERNAL_ROLES] as const;
+
+/**
+ * The roles a person can hold — what the members matrix and every
+ * human-facing role list iterate. `ROLES` exists so `parseRole` admits
+ * the agent (a row that parses to null loses its label, and an agent
+ * row must render honestly wherever it appears); this list exists so
+ * the agent does not gain a column in screens that document what
+ * PEOPLE can do.
+ */
+export const HUMAN_ROLES = [...STAFF_ROLES, ...EXTERNAL_ROLES] as const;
 
 export type Role = (typeof ROLES)[number];
 export type StaffRole = (typeof STAFF_ROLES)[number];
 export type ExternalRole = (typeof EXTERNAL_ROLES)[number];
+export type AgentRole = (typeof AGENT_ROLES)[number];
 
 /**
  * Whether `role` belongs to the client side of the boundary. Takes the
@@ -165,6 +189,12 @@ const GRANTS: Record<Role, readonly Capability[]> = {
   hiring_manager: ["portal:read"],
   client_hr: ["portal:read"],
   client_admin: ["portal:read", "client:manage-people"],
+  // The agent holds NOTHING here, deliberately and permanently (D2 of
+  // the agents-as-principals programme): capabilities gate screens and
+  // server actions, and an agent signs in to work, never to look. Its
+  // database reach is the named `*_agent_*` RLS policies in migration
+  // 074 — adding a capability here would hand every agent a route tree.
+  agent: [],
 };
 
 /**
@@ -210,6 +240,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   hiring_manager: "Hiring Manager",
   client_hr: "HR",
   client_admin: "Client Admin",
+  agent: "Agent",
 };
 
 /** One line on what the role can do, for the role picker and the member list. */
@@ -227,6 +258,8 @@ export const ROLE_SUMMARIES: Record<Role, string> = {
     "Client-side. Sees every mandate shared with their company and submits slate feedback.",
   client_admin:
     "Client-side. Everything HR sees, plus inviting and suspending their own company's people.",
+  agent:
+    "Autonomous agent. Signs in to work, never to look — no screens, no capabilities; its reach is the named database grants for its one job.",
 };
 
 /** Human-readable name for a capability, for the settings matrix. */

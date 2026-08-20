@@ -61,6 +61,13 @@ export const ACTIVITY_EVENT_TYPES = [
   "hm_portal_opened",
 
   "mandate_reassigned",
+
+  // Written by an agent principal through `record_agent_event` (074) —
+  // the one door narrower than `record_activity_event`: one event type,
+  // callable only by an active `agent` role, actor stamped from the
+  // session. The first trail row that can honestly say "the interpreter
+  // acted on the recruiter's submission" instead of wearing a human face.
+  "feedback_interpreted",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -167,6 +174,8 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   hm_portal_opened: "client",
 
   mandate_reassigned: "mandates",
+
+  feedback_interpreted: "mandates",
 };
 
 /**
