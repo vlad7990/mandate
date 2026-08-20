@@ -2968,3 +2968,122 @@ operator persona waits on the verdicts above and on nothing else.
 Founder-owned, unchanged: the Resend DNS records at Namecheap, the
 exposed Supabase access token, leaked-password protection (Pro-gated),
 and the deferred build list.
+
+---
+
+## 28. The candidate portal — built, proven live, awaiting verdict sign-off — 2026-08-20
+
+Persona 5 of 7, the B-slice of the final-personas programme (D7–D12
+confirmed). One migration plus three harness-found fixups (**next is
+074**):
+
+- **073 — the token door.** A candidate portal token anchors to
+  (organization_id, identity_key) — the SQL transcription of
+  candidate-identity.ts, now the third copy of that precedence, sync
+  hazard stated in all three — so one link covers every row of the
+  person in that org, across searches, present and future; one live
+  link per person per org, reissue returns the same one. Read RPCs are
+  the D8 truth table (identity and contact as held, source and notice
+  date, searches as role title + stage); write RPCs are the D9 acts
+  (contact correction across the whole group with the key-bearing
+  fields locked and email never self-service; withdrawal to the new
+  'withdrawn' stage — a withdrawal recorded as a rejection would be a
+  lie; erasure requests into a queue with one-open-per-person; CV
+  submission stored and trailed, with the parsed profile moving only by
+  the recruiter's own deliberate upload — re-running paid parsing from
+  an anonymous endpoint is an abuse surface, the D9 interpretation
+  presented below). Six trail event types; anon holds nothing but the
+  RPCs.
+- **The harness paid for itself three times before production could:**
+  `text[] || 'literal'` parses the literal as an array (array_append
+  now); `candidates.pipeline_stage` carries a CHECK the first grep
+  missed, so 'withdrawn' entered both vocabularies in one commit; and a
+  LIMIT after a set-returning function keeps one KEY, not one row — the
+  shape-pin assertion now limits rows before expanding keys.
+- **`candidate_portal_invariants.sql`** — 8 invariants, clean pass:
+  issuance at clients:share with the viewer refused and the same-link
+  rule pinned; the context and list shapes pinned by exact key-set
+  assertion (a leaked column fails by name — no client name, no score,
+  no review, no fee, no other candidate); zero anon table reach; the
+  group update landing on every row and never on org B's (D11: two
+  orgs, two links); withdrawal once and only where aimed; erasure once;
+  and the revoked-link tripwire, whose **control run** (validator
+  without the revoked_at check) aborted at INVARIANT-FAIL (8) exactly.
+
+**Surfaces (`903c9b1`, `f058273`).** `/candidate/[token]`, hard-public
+like /invite: identity card with the notice status spoken, searches
+with "the client behind each search stays confidential until the search
+team introduces you", contact form with anchor fields visibly locked,
+CV submission with the review sentence, withdrawal with a confirm, the
+erasure ask with its honest caveats, one dead screen for every
+dead-link state. Staff side: the portal-link affordance sits beside the
+notice machinery on the candidate detail page (D10 — the notice is the
+natural moment to hand over the window), one live link, copied to hand,
+nothing emailed. The erasure queue lights on /ops (resolve/decline
+close the ticket, not the data) and on the owning org's /app/settings
+while requests are open. 778 tests, tsc/lint/build green throughout.
+
+### Driven live on production
+
+Quillbrook Search (org) → Sela Quintrell (recruiter) → CPO + VP Design
+searches → Marlo **Fenwik** (typo'd on purpose; email-keyed, so the
+name is self-service) in both. The recruiter issued the link from the
+candidate page (copied, 30-day clock). The candidate, sessionless:
+renamed to "Marlo Fenwick" + phone + location, landing on BOTH rows and
+neither more; withdrew from VP Design only (CPO stayed shortlisted, a
+second withdrawal refused); submitted a CV (stored, trailed); filed
+erasure with a note. Trail: link_issued → self_updated → withdrew →
+cv_submitted → erasure_requested, in order. The recruiter's
+/app/settings showed "Erasure requests (1)"; the scratch founder's /ops
+queue showed it with org and note, and Resolve closed it with the
+founder and a resolution note on the row. A random token drew the one
+dead screen. Live negative probes with the real token: the searches RPC
+returns exactly added_at/project_id/role_title/stage; a second erasure
+refuses with its sentence; bare-anon table reach is empty.
+
+### Two defects found live, fixed in the drive (`f058273`)
+
+The teardown could not delete the CV's storage row by SQL (the storage
+protect trigger; the Storage API is the door), which exposed the real
+defect: the upload path sat OUTSIDE the org's storage folder, so the
+cvs_* policies gave the org's own staff neither read nor delete over a
+candidate's submitted CV — including for erasure execution. The context
+RPC now returns organization_id (shape pin updated) and the path keys
+on it, from the validated token only. Re-proven live end to end: the
+resubmitted CV landed under the org folder, the recruiter fetched the
+real bytes (200) and deleted them lawfully via the Storage API. One
+residue from the diagnosis itself: a SQL rename of the original
+mis-pathed row taught that storage bytes key on the name path — ~331
+bytes sit orphaned at `cvs/candidate-portal/fa9bc42f…` with no metadata
+row; harmless, invisible, purgeable from the dashboard's storage view
+whenever convenient. Scratch world otherwise torn down; every count
+verified to baseline exactly, the three new tables at zero.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **CV submissions are review-first, not parse-on-arrival** — the D9
+  interpretation, presented for confirmation rather than assumed: the
+  file lands and is trailed, the recruiter re-uploads deliberately.
+  Auto-parsing an anonymous endpoint is a paid-API abuse surface, and
+  updating cv_url without re-parsing would desync profile from file.
+- **Credentialed candidate login — deferred** per D7 as confirmed;
+  real usage decides, the HM token→login path in miniature.
+- **Client-name disclosure affordance — deferred** until a recruiter
+  asks; D8's default-hidden is live, and the portal states the
+  confidentiality plainly.
+- **Scheduling, messaging, candidate-visible feedback — declined** at
+  this scale, per D12.
+- **Token TTL (30 days) and notice cadence — deferred** on the current
+  defaults until they bother a real person; reissue is one click and
+  returns the same link.
+- **Portal rate limiting — joins the pre-launch rate-limiting item**
+  (with /auth/recover): the token endpoints are anon-reachable by
+  design; GoTrue does not cover them.
+
+Deploys `21a00dc`, `903c9b1`, `f058273` live; migration 073 (+ two
+fixups) applied via MCP and checked in. The completion declaration for
+the Candidate persona waits on the verdicts above — and §27's operator
+verdicts still await their own sign-off. Founder-owned, unchanged: the
+Resend DNS records at Namecheap, the exposed Supabase access token,
+leaked-password protection (Pro-gated), the deferred build list — plus
+the one orphaned 331-byte storage object above.
