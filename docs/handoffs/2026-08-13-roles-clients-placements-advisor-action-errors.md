@@ -3087,3 +3087,52 @@ verdicts still await their own sign-off. Founder-owned, unchanged: the
 Resend DNS records at Namecheap, the exposed Supabase access token,
 leaked-password protection (Pro-gated), the deferred build list — plus
 the one orphaned 331-byte storage object above.
+
+---
+
+## 29. Operator and Candidate verdicts confirmed — all seven personas served — 2026-08-20
+
+The founder confirmed both verdict sets as drafted. §27, the operator:
+allowlist UI declined (operators are added by reviewed code change);
+impersonation declined (it would make every trail attribution a lie);
+agents-as-principals deferred to its own programme with its own NEXT
+file; operator MFA first in line for the auth-hardening batch; org
+creation/rename/deletion from /ops deferred until needed twice. §28,
+the candidate: CV submissions stay review-first, not parse-on-arrival
+(the D9 interpretation stands as built); credentialed candidate login
+deferred per D7, decided by real usage; the client-name disclosure
+affordance deferred until a recruiter asks; scheduling, messaging and
+candidate-visible feedback declined at this scale; the 30-day token TTL
+and notice cadence stand until they bother a real person; portal rate
+limiting joins the pre-launch rate-limiting item.
+
+The operator's definition of done is met: the platform hat is a named
+tier (`platform:operate`, held by no role) with its own house at /ops,
+every operator act lands in the affected organisation's trail with the
+founder as actor — including the organisation move that previously left
+no record — the operator's reads stop at accounts and names (no
+recruiting-data policy may so much as mention the founder predicate,
+pinned mechanically), and every refusal below the tier names it.
+
+The candidate's definition of done is met: any person a search firm
+holds data on can be handed one link that shows them everything the
+firm holds, corrects what is theirs to correct across every search at
+once, submits a newer CV for deliberate review, withdraws from a search
+under its own honest name, and asks for erasure through a queue the
+owning org and the operator both see — while reading not one score,
+review, note, fee, other candidate, or undisclosed client name, pinned
+at the RPC layer by exact shape and proven live with a real token.
+
+**The Mandate app Admin and Candidate personas are complete. All seven
+personas are served.** The persona programme that began 2026-08-12 with
+the founder's statement — every page must know who is looking at it —
+closes with seven persona-scoped surfaces (recruiter portfolio, manager
+desk, HM portal, client-HR portal, client-admin People view, operator
+/ops, candidate token portal), each proven by invariants with control
+runs and driven live on production. `NEXT-final-personas.md` deleted
+per its own instruction. Next migration is **074**.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe), and
+the one orphaned 331-byte storage object from §28's diagnosis.
