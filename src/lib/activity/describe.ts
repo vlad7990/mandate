@@ -210,6 +210,13 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Reassigned the mandate from ${from} to ${to}`;
     }
 
+    case "candidate_evaluated": {
+      const trigger = str(d, "trigger");
+      return trigger === "regenerate"
+        ? "Re-evaluated the candidate against the role"
+        : "Evaluated the candidate against the role";
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from

@@ -230,11 +230,18 @@ export default async function CandidateProfilePage({
   // panel in the meantime.
   const evaluationState = await readCandidateEvaluation(candidate.id, project.id);
   if (evaluationState.status === "pending") {
-    // Built during render: `cookies()` is unavailable inside after().
-    const evaluationClient = await createServerSupabaseClient();
+    // Runs as the EVALUATION AGENT (077): the seam signs in per run, so
+    // the render-built client this branch used to thread through
+    // after() — the cookie caveat's fourth occurrence — is gone rather
+    // than worked around. Any visitor's cache-miss (a viewer included,
+    // who could never persist the write before) now generates lawfully;
+    // a refused evaluator logs inside the seam and the pending panel
+    // stands.
     after(async () => {
       try {
-        await ensureCandidateEvaluation(candidate.id, project.id, evaluationClient);
+        await ensureCandidateEvaluation(candidate.id, project.id, {
+          trigger: "profile_view",
+        });
       } catch (err) {
         // after() rejections are invisible to the request; log so a
         // failed first-visit generation is at least diagnosable. The

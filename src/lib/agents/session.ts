@@ -84,6 +84,19 @@ export async function signInCvParser(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the evaluation agent — slice four. Own credential, own kill
+ * switch; writes exactly one jsonb key, and never before it has
+ * something to write (D5).
+ */
+export async function signInEvaluator(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "evaluator",
+    email: process.env.AGENT_EVALUATOR_EMAIL,
+    password: process.env.AGENT_EVALUATOR_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

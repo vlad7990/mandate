@@ -9,6 +9,9 @@ Delete this file when the completion is declared.
 
 **Gate: no build work past Phase 0 until the founder confirms D1–D8.**
 
+**STATUS 2026-08-20: D1–D8 CONFIRMED by the founder as drafted.** The
+gate is open; execution starts at Phase 1 (migration 077).
+
 ---
 
 ## Where this starts from (2026-08-20, HEAD `4f10c6d`)

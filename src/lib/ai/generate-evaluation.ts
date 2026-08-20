@@ -1,6 +1,8 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropic } from "@/lib/anthropic";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { signInEvaluator } from "@/lib/agents/session";
 import {
   CANDIDATE_EVALUATION_SCHEMA,
   CANDIDATE_EVALUATION_SYSTEM_PROMPT,
@@ -86,9 +88,9 @@ type EvaluationInput = {
 export async function generateCandidateEvaluation(
   input: EvaluationInput,
   // Passed separately from `input`, which is JSON-stringified into the
-  // user prompt. Required when running inside `after()` — see
-  // ensureCandidateEvaluation.
-  client?: Awaited<ReturnType<typeof createServerSupabaseClient>>
+  // user prompt. The ensure gate passes the Evaluation Agent's session
+  // so the Skills Studio read runs under skills_agent_select.
+  client?: SupabaseClient
 ): Promise<CandidateEvaluation> {
   const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
@@ -199,16 +201,65 @@ export async function readCandidateEvaluation(
   return { status: "pending" };
 }
 
+export type EvaluationRunResult =
+  | { status: "ready"; evaluation: CandidateEvaluation }
+  /** Not eligible: candidate missing, wrong project, CV still parsing,
+   * or no parsed profile to evaluate against. */
+  | { status: "unavailable" }
+  /** The Evaluation Agent refused to sign in — suspended from /ops or
+   * credentials absent. Nothing was generated and NOTHING WAS DESTROYED
+   * (D5): any existing evaluation stands untouched. */
+  | { status: "agent_unavailable"; reason: string }
+  /** Generation or persistence failed; logged. */
+  | { status: "failed" };
+
 export async function ensureCandidateEvaluation(
   candidateId: string,
   projectId: string,
-  // Callers running inside `after()` must build the client during render
-  // and pass it in — `cookies()` (which createServerSupabaseClient calls)
-  // is not available inside an after() callback.
-  client?: Awaited<ReturnType<typeof createServerSupabaseClient>>
-): Promise<CandidateEvaluation | null> {
-  const supabase = client ?? (await createServerSupabaseClient());
+  options?: {
+    /** Regenerate even when a cached evaluation exists. Replaces the
+     * evaluation key in ONE spread-preserving write — there is no
+     * pre-clear step to destroy the old report before the new one
+     * exists (D5). */
+    force?: boolean;
+    /** Named in the trail event's detail (D4). */
+    trigger?: "profile_view" | "regenerate";
+  }
+): Promise<EvaluationRunResult> {
+  // The EVALUATION AGENT's session (077), signed in per run — not the
+  // page visitor's, and not a client threaded from render time. The
+  // after()-cookie caveat this function used to document is deleted
+  // rather than worked around, and a viewer's cache-miss can finally
+  // persist what it generated (candidates UPDATE was never theirs).
+  const session = await signInEvaluator();
+  if (!session.ok) {
+    console.error(
+      `[evaluation] generation skipped: ${session.reason}. ` +
+        "Any existing evaluation stands; the profile renders its pending panel."
+    );
+    return { status: "agent_unavailable", reason: session.reason };
+  }
+  const supabase = session.client;
 
+  try {
+    return await ensureUnderAgentSession(
+      supabase,
+      candidateId,
+      projectId,
+      options
+    );
+  } finally {
+    // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
+    await session.signOut();
+  }
+}
+
+async function ensureUnderAgentSession(
+  supabase: SupabaseClient,
+  candidateId: string,
+  projectId: string,
+  options?: { force?: boolean; trigger?: "profile_view" | "regenerate" }
+): Promise<EvaluationRunResult> {
   const { data: candidate, error: cErr } = await supabase
     .from("candidates")
     .select(
@@ -226,20 +277,20 @@ export async function ensureCandidateEvaluation(
       cv_processing: boolean;
     }>();
 
-  if (cErr || !candidate) return null;
-  if (candidate.project_id !== projectId) return null;
-  if (candidate.cv_processing) return null;
+  if (cErr || !candidate) return { status: "unavailable" };
+  if (candidate.project_id !== projectId) return { status: "unavailable" };
+  if (candidate.cv_processing) return { status: "unavailable" };
 
   const cvStructured = (candidate.cv_structured ?? {}) as CvStructuredWithEvaluation;
   const profile = cvStructured as Partial<CandidateProfile>;
 
   // Need at least the profile core to evaluate against.
-  if (!profile.fit_dimensions || !profile.summary) return null;
+  if (!profile.fit_dimensions || !profile.summary) return { status: "unavailable" };
 
-  // Cache hit — return existing report without re-running the agent.
+  // Cache hit — return existing report without re-running the model.
   const existing = cvStructured[EVALUATION_KEY];
-  if (existing && existing.schema_version === 1) {
-    return existing;
+  if (existing && existing.schema_version === 1 && !options?.force) {
+    return { status: "ready", evaluation: existing };
   }
 
   // Cache miss — build the input and call the agent.
@@ -258,7 +309,7 @@ export async function ensureCandidateEvaluation(
       organization_id: string | null;
     }>();
 
-  if (pErr || !project) return null;
+  if (pErr || !project) return { status: "unavailable" };
 
   // Subject's own score row (rank, tier, overall) for the comparison panel.
   const { data: subjectScore } = await supabase
@@ -353,11 +404,13 @@ export async function ensureCandidateEvaluation(
     },
   }, supabase);
 
-  if (!evaluation) return null;
+  if (!evaluation) return { status: "failed" };
 
   // Persist by spreading the existing JSON so we never clobber the
-  // parser-produced fields. The candidate may also have legacy keys we
-  // don't know about — the spread preserves them.
+  // parser-produced fields (the D6 pin — the evaluator writes ONE key).
+  // On a forced regenerate the same spread REPLACES the evaluation key:
+  // the old report exists until the moment the new one lands, which is
+  // the whole of D5.
   const next: CvStructuredWithEvaluation = {
     ...cvStructured,
     [EVALUATION_KEY]: evaluation,
@@ -377,17 +430,33 @@ export async function ensureCandidateEvaluation(
       candidateId,
       updateError
     );
-    // Still return the in-memory evaluation so the page renders it on
-    // this request — the next visit will retry persistence.
-    return evaluation;
+    return { status: "failed" };
   }
 
-  return evaluation;
+  // The trail (D4): one event per LANDED evaluation, the trigger named.
+  const { error: eventErr } = await supabase.rpc("record_agent_event", {
+    p_event_type: "candidate_evaluated",
+    p_project_id: projectId,
+    p_candidate_id: candidateId,
+    p_detail: {
+      agent_kind: "evaluator",
+      trigger: options?.trigger ?? "profile_view",
+    },
+  });
+  if (eventErr) {
+    console.error(
+      "[evaluation] failed to record the evaluation event",
+      candidateId,
+      eventErr
+    );
+  }
+
+  return { status: "ready", evaluation };
 }
 
 async function safeGenerate(
   input: EvaluationInput,
-  client?: Awaited<ReturnType<typeof createServerSupabaseClient>>
+  client?: SupabaseClient
 ): Promise<CandidateEvaluation | null> {
   try {
     return await generateCandidateEvaluation(input, client);

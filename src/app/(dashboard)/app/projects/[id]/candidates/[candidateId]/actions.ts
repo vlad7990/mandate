@@ -188,25 +188,24 @@ export async function regenerateEvaluationAction(
     await requireActiveUser();
     await assertCandidateBelongsToProject(candidateId, projectId);
 
-    // Clear the cached evaluation atomically via the RPC. This avoids the
-    // read-modify-write race where a concurrent inline edit could revive
-    // the deleted key by writing back stale JSON.
-    const supabase = await createServerSupabaseClient();
-    const { error: clearErr } = await supabase.rpc(
-      "update_cv_structured_field",
-      {
-        p_candidate_id: candidateId,
-        p_project_id: projectId,
-        p_key: EVALUATION_KEY,
-        p_value: null,
-      }
-    );
-    if (clearErr) {
-      throw new Error(`Failed to clear evaluation: ${clearErr.message}`);
-    }
+    // No pre-clear (077, D5): the old evaluation stands until the
+    // moment the Evaluation Agent's single spread-preserving write
+    // replaces it — a refused or failed regenerate destroys nothing.
+    // (The pre-clear this action used to run existed for a stale-revive
+    // race that only a deleted key could lose; with no deletion, there
+    // is no race.)
+    const result = await ensureCandidateEvaluation(candidateId, projectId, {
+      force: true,
+      trigger: "regenerate",
+    });
 
-    const fresh = await ensureCandidateEvaluation(candidateId, projectId);
-    if (!fresh) {
+    if (result.status === "agent_unavailable") {
+      throw new Error(
+        "The Evaluation Agent could not run — an operator has suspended it " +
+          "or its credentials are absent. The existing report stands."
+      );
+    }
+    if (result.status !== "ready") {
       throw new Error("Could not generate evaluation. Try again.");
     }
 
