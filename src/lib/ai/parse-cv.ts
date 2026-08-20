@@ -1,5 +1,6 @@
 import "server-only";
 import mammoth from "mammoth";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropic } from "@/lib/anthropic";
 import {
   CANDIDATE_PROFILE_SCHEMA,
@@ -24,6 +25,16 @@ export type ParseContext = {
   organizationId?: string | null;
 };
 
+export type ParseCvOptions = {
+  /**
+   * The Supabase client the skill injector should read with — the
+   * agent-parser seam passes the CV Parsing Agent's session so the
+   * skills read is lawful under its own grant. A separate parameter,
+   * not a ParseContext field, mirroring interpretFeedback's shape.
+   */
+  skillClient?: SupabaseClient;
+};
+
 /**
  * Run the combined parsing + review agent on a CV file.
  *
@@ -34,7 +45,8 @@ export type ParseContext = {
 export async function parseCv(
   fileBytes: Uint8Array,
   mimeType: string,
-  ctx: ParseContext
+  ctx: ParseContext,
+  options?: ParseCvOptions
 ): Promise<CandidateProfile> {
   if (mimeType !== PDF_MIME && mimeType !== DOCX_MIME) {
     throw new Error(`Unsupported MIME type for CV parse: ${mimeType}`);
@@ -45,6 +57,7 @@ export async function parseCv(
   const system = await applySkillsToPrompt(CV_PARSING_SYSTEM_PROMPT, {
     projectId: ctx.projectId ?? null,
     organizationId: ctx.organizationId ?? null,
+    client: options?.skillClient,
   });
 
   const response = await anthropic.messages.create({

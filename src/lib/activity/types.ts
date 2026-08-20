@@ -69,6 +69,7 @@ export const ACTIVITY_EVENT_TYPES = [
   // acted on the human's trigger" instead of wearing a human face.
   "feedback_interpreted",
   "candidates_ranked",
+  "candidate_parsed",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -178,6 +179,7 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
 
   feedback_interpreted: "mandates",
   candidates_ranked: "mandates",
+  candidate_parsed: "mandates",
 };
 
 /**

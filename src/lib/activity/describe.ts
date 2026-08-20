@@ -210,6 +210,22 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Reassigned the mandate from ${from} to ${to}`;
     }
 
+    case "candidate_parsed": {
+      // Same D4 split: the byline names the parser, the sentence names
+      // the trigger. The candidate link is rendered by the feed from
+      // candidate_id; repeating the name here would double it.
+      const trigger = str(d, "trigger");
+      const source =
+        trigger === "network_copy"
+          ? " from a network copy"
+          : trigger === "upload"
+            ? " from an upload"
+            : "";
+      return `Parsed the CV${source}${
+        d.identity_changed === true ? " and updated the candidate's details" : ""
+      }`;
+    }
+
     case "candidates_ranked": {
       // The byline names the ranker; the sentence names the trigger —
       // the same D4 split as feedback_interpreted.

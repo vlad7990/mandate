@@ -4,8 +4,11 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
-import { parseCv, PDF_MIME, DOCX_MIME } from "@/lib/ai/parse-cv";
-import type { CandidateProfile } from "@/lib/ai/cv-parsing";
+import { PDF_MIME, DOCX_MIME } from "@/lib/ai/parse-cv";
+import {
+  runCvParseAndPersist,
+  PARSER_UNAVAILABLE_MESSAGE,
+} from "@/lib/candidates/agent-parser";
 import {
   type CalibrationModel,
   type CompanyContext,
@@ -284,39 +287,43 @@ async function replicateCvAndReparse(args: {
     );
   }
 
-  // 3. Re-parse against the target project's calibration. This
-  //    produces fresh fit_dimensions calibrated to the new role.
-  const parsed = await parseCv(fileBytes, mimeType, {
-    calibration: args.calibration,
-    company: args.company,
+  // 3+4. The judgment runs as the CV PARSING AGENT (076): re-parse
+  //    against the target project's calibration and persist what it
+  //    concluded, under the agent's own session and trail name. The
+  //    storage copy above stays this human-session function's act; the
+  //    bytes go over as an argument, which is why the agent holds no
+  //    storage grant. Any pre-existing cv_structured carry-overs are
+  //    intentionally overwritten — the new project context produces a
+  //    more accurate read.
+  const result = await runCvParseAndPersist({
+    candidateId: args.newCandidateId,
     projectId: args.targetProjectId,
     organizationId: args.organizationId,
+    fileBytes,
+    mimeType,
+    cvPath: newPath,
+    calibration: args.calibration,
+    company: args.company,
+    trigger: "network_copy",
+    priorName: null,
   });
 
-  // 4. Persist the freshly parsed profile + cv_url. Any pre-existing
-  //    cv_structured carry-overs are intentionally overwritten — the
-  //    new project context produces a more accurate read.
-  const { error: updateErr } = await supabase
-    .from("candidates")
-    .update({
-      cv_url: newPath,
-      full_name: parsed.full_name || null,
-      email: parsed.email,
-      linkedin_url: parsed.linkedin_url,
-      current_title: parsed.current_title,
-      current_company: parsed.current_company,
-      archetype: parsed.archetype,
-      cv_structured: parsed as unknown as CandidateProfile,
-      cv_processing: false,
-      cv_parse_error: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", args.newCandidateId);
-
-  if (updateErr) {
-    throw new Error(
-      `Failed to persist re-parsed profile: ${updateErr.message}`
-    );
+  if (!result.ok) {
+    if (result.kind === "agent_unavailable") {
+      // D5: the copy stands; the profile says why it is empty. Written
+      // under this function's own session — the refused agent has none.
+      await supabase
+        .from("candidates")
+        .update({
+          cv_url: newPath,
+          cv_processing: false,
+          cv_parse_error: PARSER_UNAVAILABLE_MESSAGE,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", args.newCandidateId);
+      return;
+    }
+    throw new Error(`Failed to re-parse copied CV: ${result.reason}`);
   }
 }
 

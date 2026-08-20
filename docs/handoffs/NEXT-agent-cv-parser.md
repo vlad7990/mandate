@@ -10,6 +10,9 @@ declared.
 
 **Gate: no build work past Phase 0 until the founder confirms D1–D9.**
 
+**STATUS 2026-08-20: D1–D9 CONFIRMED by the founder as drafted.** The
+gate is open; execution starts at Phase 1 (migration 076).
+
 ---
 
 ## Where this starts from (2026-08-20, HEAD `6f0a06e`)

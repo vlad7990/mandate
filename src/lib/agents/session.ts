@@ -72,6 +72,18 @@ export async function signInRankingAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the CV parsing agent — slice three. Own credential, own
+ * kill switch; the seam hands it bytes, never storage.
+ */
+export async function signInCvParser(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "cv_parser",
+    email: process.env.AGENT_CVPARSER_EMAIL,
+    password: process.env.AGENT_CVPARSER_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

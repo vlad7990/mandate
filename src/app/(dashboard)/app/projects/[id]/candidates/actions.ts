@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
-import { parseCv, PDF_MIME, DOCX_MIME } from "@/lib/ai/parse-cv";
+import { PDF_MIME, DOCX_MIME } from "@/lib/ai/parse-cv";
+import {
+  runCvParseAndPersist,
+  PARSER_UNAVAILABLE_MESSAGE,
+} from "@/lib/candidates/agent-parser";
 import {
   PIPELINE_STAGES,
-  type CandidateProfile,
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
@@ -125,45 +128,38 @@ export async function uploadAndParseCv(
       throw new Error(`Upload failed: ${uploadError.message}`);
     }
 
-    // Parse — wrap in try/finally so cv_processing always clears.
-    let parsed: CandidateProfile;
-    try {
-      parsed = await parseCv(fileBytes, file.type, {
-        calibration: project.calibration_model ?? {},
-        company: project.company_context ?? {},
-        projectId,
-        organizationId,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "CV parsing failed.";
-      await markCandidateFailed(candidateId, message);
-      throw new Error(message);
-    }
+    // The judgment runs as the CV PARSING AGENT (076): the model call
+    // and the persistence of what it concluded — profile, fit, the
+    // identity columns — under the agent's own session and trail name.
+    // The recruiter's acts end here: the file is chosen, the row
+    // exists, the bytes are stored.
+    const result = await runCvParseAndPersist({
+      candidateId,
+      projectId,
+      organizationId,
+      fileBytes,
+      mimeType: file.type,
+      cvPath: storagePath,
+      calibration: project.calibration_model ?? {},
+      company: project.company_context ?? {},
+      trigger: "upload",
+      priorName: fallbackName,
+    });
 
-    // Persist parsed profile + typed columns.
-    const { error: updateError } = await supabase
-      .from("candidates")
-      .update({
-        cv_url: storagePath,
-        full_name: parsed.full_name || fallbackName,
-        email: parsed.email,
-        linkedin_url: parsed.linkedin_url,
-        current_title: parsed.current_title,
-        current_company: parsed.current_company,
-        archetype: parsed.archetype,
-        cv_structured: parsed,
-        cv_processing: false,
-        cv_parse_error: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", candidateId);
-
-    if (updateError) {
-      await markCandidateFailed(
-        candidateId,
-        `Failed to persist parsed profile: ${updateError.message}`
-      );
-      throw new Error(`Failed to persist parsed profile: ${updateError.message}`);
+    if (!result.ok) {
+      if (result.kind === "agent_unavailable") {
+        // D5: the upload SUCCEEDS — the file and the row stand; the
+        // profile says why it is empty, in the agent's name, and the
+        // candidate page's failure affordance offers the retry. Written
+        // here under the recruiter's session because the refused agent
+        // has none.
+        await markCandidateFailed(candidateId, PARSER_UNAVAILABLE_MESSAGE);
+        revalidatePath(`/app/projects/${projectId}/candidates`);
+        return { candidateId };
+      }
+      // A real parse failure keeps today's contract: the row carries the
+      // error (the seam wrote it) and the recruiter sees the sentence.
+      throw new Error(result.reason);
     }
 
     // userId reserved for a future audit-trail column on candidates.
