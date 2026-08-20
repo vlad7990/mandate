@@ -3679,3 +3679,47 @@ access token, leaked-password protection (Pro-gated), the deferred
 build list (Sentry → rate limiting → Resend → Stripe, with portal +
 recovery + HM-submit rate limiting), and the one orphaned 331-byte
 storage object.
+
+---
+
+## 36. CV-parser verdicts confirmed — the parser slice is complete — 2026-08-20
+
+The founder confirmed all four §35 verdicts as drafted: the Candidate
+Review / Evaluation agent opens as slice four (its Phase 0 enumerates
+from generate-evaluation's code when the founder says go); the
+one-click "Retry parse" on the failure banner is ACCEPTED as follow-up
+build — a small action re-reading the stored bytes under the
+recruiter's lawful storage read and handing them to the seam, so D5's
+sentence stops writing a cheque the UI doesn't cash (first act of
+slice four's session, or sooner on request); model/version stamping in
+agent event details deferred until an audit asks; the /ops
+Suspend/Restore relabel stays founder-timed.
+
+The definition of done is met: the judgment that reads a person's CV
+and writes their identity — their name, their email, what the firm
+believes about their fit — no longer wears the uploading recruiter's
+face. The parse signs in as its own principal, holds exactly one grant
+more than the pool had (candidates UPDATE, enumerated from code after
+the code corrected a confirmed verdict's guess — no storage, no
+delete, both pinned twice), lands one trail event per conclusion with
+its trigger named, and fails the D5 way: the file always lands, the
+profile says why it is empty in the agent's own name, and the human
+retries against a restored agent instead of a silent void. Three
+uploads on production proved the three states; the third principal's
+probe matrix held; the teardown caught and corrected its own filter's
+overreach against durable history, and the lesson is in the traps.
+
+**The agents-as-principals CV-parser slice is complete.** Three of
+fourteen agents now authenticate as principals — the interpreter, the
+ranker, the parser — each with its own credential, its own kill switch
+proven independent, and its own name in the trail. The pattern has
+now survived a slice that widens authority, not just one that reuses
+it. `NEXT-agent-cv-parser.md` deleted per its own instruction. Next
+migration is **077**; slice four's Phase 0 opens on the founder's
+word.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with portal + recovery + HM-submit rate limiting), and the one
+orphaned 331-byte storage object from §28's diagnosis.
