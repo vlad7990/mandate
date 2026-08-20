@@ -62,12 +62,13 @@ export const ACTIVITY_EVENT_TYPES = [
 
   "mandate_reassigned",
 
-  // Written by an agent principal through `record_agent_event` (074) —
-  // the one door narrower than `record_activity_event`: one event type,
-  // callable only by an active `agent` role, actor stamped from the
-  // session. The first trail row that can honestly say "the interpreter
-  // acted on the recruiter's submission" instead of wearing a human face.
+  // Written by agent principals through `record_agent_event` (074/075) —
+  // the door narrower than `record_activity_event`: an enumerated event
+  // list, callable only by an active `agent` role, actor stamped from
+  // the session. The first trail rows that can honestly say "the agent
+  // acted on the human's trigger" instead of wearing a human face.
   "feedback_interpreted",
+  "candidates_ranked",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -176,6 +177,7 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   mandate_reassigned: "mandates",
 
   feedback_interpreted: "mandates",
+  candidates_ranked: "mandates",
 };
 
 /**

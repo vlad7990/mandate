@@ -10,7 +10,7 @@ import {
   type CalibrationModel,
   type CompanyContext,
 } from "@/lib/ai/role-analysis";
-import { computeAndStoreScores } from "@/lib/ranking/scoring-engine";
+import { runRankerScoring } from "@/lib/ranking/agent-ranker";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 
@@ -193,9 +193,15 @@ export async function addPersonToProjectAction(
             company: target.company_context ?? {},
           });
           // Re-score the project after the new candidate's
-          // fit_dimensions land.
+          // fit_dimensions land — under the RANKER's session (075):
+          // this after() previously built a client from whatever the
+          // triggering recruiter's cookies gave it, so the run wore
+          // their face when it ran at all. The copy itself is already
+          // persisted; a refused ranker skips with the reason logged.
           try {
-            await computeAndStoreScores(targetProjectId);
+            await runRankerScoring(targetProjectId, {
+              trigger: { trigger: "new_candidate", candidate_id: inserted.id },
+            });
           } catch (err) {
             console.error("[network-copy] scoring re-run failed", err);
           }

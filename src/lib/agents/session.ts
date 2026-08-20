@@ -59,6 +59,19 @@ export async function signInFeedbackInterpreter(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the ranking agent — slice two. Its own credential and
+ * therefore its own /ops kill switch (D1): the operator can suspend
+ * ranking without touching feedback interpretation.
+ */
+export async function signInRankingAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "ranker",
+    email: process.env.AGENT_RANKER_EMAIL,
+    password: process.env.AGENT_RANKER_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

@@ -7,7 +7,7 @@ import {
   ARCHETYPES,
   type CandidateProfile,
 } from "@/lib/ai/cv-parsing";
-import { computeAndStoreScores } from "@/lib/ranking/scoring-engine";
+import { runRankerScoring } from "@/lib/ranking/agent-ranker";
 import { type Tier } from "@/lib/ranking/tiers";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
@@ -116,8 +116,15 @@ export default async function RankingPage({
     parsedCount > 0 && (existingScoresHead?.length ?? 0) === 0;
 
   if (needsInitialScore) {
+    // Under the RANKER's session (075), not the viewer's: before the
+    // conversion a viewer's first visit could never score at all —
+    // candidate_scores INSERT needs candidates:write, which org:read
+    // does not carry. The agent's named grant makes the read-repair
+    // lawful for any first visitor; a refused ranker (suspended,
+    // credential-less) logs inside runRankerScoring and the page
+    // renders whatever scores exist.
     try {
-      await computeAndStoreScores(id);
+      await runRankerScoring(id);
     } catch (err) {
       console.error("[ranking] initial scoring failed", err);
     }

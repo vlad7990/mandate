@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireActionContext } from "@/lib/auth/access";
-import { computeAndStoreScores } from "@/lib/ranking/scoring-engine";
+import { runRankerScoring } from "@/lib/ranking/agent-ranker";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 
@@ -23,7 +23,16 @@ async function requireAuth(): Promise<void> {
 export async function refreshScoresAction(projectId: string): Promise<ActionResult> {
   return runAction(SUBJECT, async () => {
     await requireAuth();
-    await computeAndStoreScores(projectId);
+    // The one place a human explicitly asks for a run, so the one place
+    // a refused ranker is surfaced rather than only logged (D5): the
+    // §11 action-error contract carries the sentence, agent named.
+    const result = await runRankerScoring(projectId);
+    if (!result.ok) {
+      throw new Error(
+        "The Ranking Agent could not run — an operator has suspended it " +
+          "or its credentials are absent. Existing scores stand."
+      );
+    }
     revalidatePath(`/app/projects/${projectId}/ranking`);
   });
 }

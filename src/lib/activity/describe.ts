@@ -210,6 +210,28 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Reassigned the mandate from ${from} to ${to}`;
     }
 
+    case "candidates_ranked": {
+      // The byline names the ranker; the sentence names the trigger —
+      // the same D4 split as feedback_interpreted.
+      const scored = num(d, "scored");
+      const moved = num(d, "moved");
+      const trigger = str(d, "trigger");
+      const why =
+        trigger === "weights_edit"
+          ? " after a calibration change"
+          : trigger === "new_candidate"
+            ? " for a new candidate"
+            : trigger === "feedback"
+              ? " after new feedback"
+              : trigger === "recalibration"
+                ? " after a recalibration"
+                : "";
+      const size =
+        scored != null ? ` — ${scored} candidate${scored === 1 ? "" : "s"}` : "";
+      const movement = moved != null && moved > 0 ? `, ${moved} moved` : "";
+      return `Scored the slate${why}${size}${movement}`;
+    }
+
     case "feedback_interpreted": {
       // The actor byline already names the agent; the sentence names the
       // trigger — D4's whole point is that the two are different people.

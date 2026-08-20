@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
-import { computeAndStoreScores } from "@/lib/ranking/scoring-engine";
+import { runRankerScoring } from "@/lib/ranking/agent-ranker";
 import { recordCalibrationSnapshot } from "@/lib/calibration/history";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import { runAction } from "@/lib/actions/run";
@@ -72,10 +72,12 @@ export async function restoreCalibrationSnapshotAction(
     }
 
     // Recompute scores under the restored weights so the leaderboard
-    // reflects the rollback. Movement chips will show why each candidate
-    // moved, citing the restore as trigger.
+    // reflects the rollback — under the RANKER's session (075), with
+    // the restore named as the trigger. The restore itself is already
+    // persisted above; a refused ranker skips with the reason logged
+    // and the leaderboard catches up on the next lawful run.
     try {
-      await computeAndStoreScores(projectId, undefined, {
+      await runRankerScoring(projectId, {
         trigger: {
           trigger: "weights_edit",
           summary: "Restored from calibration history",
