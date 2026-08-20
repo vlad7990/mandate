@@ -3387,3 +3387,128 @@ decision:
   provisioning at org onboarding" verdict (§30) comes due in the same
   slice: a purchase-minted org needs its agent principals minted with
   it.
+
+---
+
+## 33. The ranker becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-20
+
+Slice two of agents-as-principals (plan in `NEXT-agent-ranker.md`,
+D1–D8 confirmed 2026-08-20). The highest-volume writer wearing a human
+face — every scoring run executed in the triggering human's session —
+now runs as its own principal. One migration (**next is 076**):
+
+- **075 — the trail only.** `candidates_ranked` joins the vocabulary
+  and `record_agent_event`'s allowlist; per D2 the ranker adds NO table
+  grants — everything scoring touches was already named in 074's pool,
+  whose authority is identical across kinds by slice one's D1. The
+  allowlist is the forgery boundary.
+- **`agent_ranker_invariants.sql`** — 5 invariants, clean pass: the
+  ranker's attribution (actor, label, trigger named in detail), the
+  negative matrix re-run for a SECOND principal, the INDEPENDENT kill
+  switch (ranker suspended → ranker reads nothing and its door
+  refuses, while the interpreter still reads and still records — the
+  D1 proof), the forgery boundary (a recruiter refused by role, an
+  unknown event type refused by name), and two-distinct-actors +
+  cross-org isolation. One harness authoring error caught and kept as
+  a comment: the first draft expected the interpreter to read 2
+  projects where org A holds exactly 1 — bad arithmetic, not a
+  regression. **Control run verified:** `record_agent_event` re-created
+  WITHOUT its `is_agent()` gate aborted at INVARIANT-FAIL (4) — "a
+  recruiter recorded candidates_ranked" — with invariants 1–3 passing
+  under the regression; diff is the one function body, rollback
+  residue-free.
+
+**The seam (`2f53beb`).** `signInRankingAgent()` beside the
+interpreter's (shared core, its own env pair `AGENT_RANKER_EMAIL` /
+`AGENT_RANKER_PASSWORD` — D1's own kill switch). `runRankerScoring`
+(src/lib/ranking/agent-ranker.ts) signs in, scores under the role's
+named grants, records ONE `candidates_ranked` event per run that wrote
+something — trigger, scored/moved/new counts in detail — and signs out
+persisting nothing. All four human-session call sites converted:
+
+1. The ranking page's initial score — which, stated honestly, a
+   VIEWER's first visit could never lawfully run before (the
+   candidate_scores INSERT needs candidates:write, which org:read does
+   not carry; the silent catch hid it). Any first visitor now gets a
+   lawful score.
+2. The "Refresh scores" CTA — the one surface a human explicitly asks,
+   so the one surface a refused ranker speaks: the §11 action-error
+   contract carries "The Ranking Agent could not run — an operator has
+   suspended it or its credentials are absent. Existing scores stand."
+3. The network-copy `after()` re-score — previously built its client
+   from whatever the triggering recruiter's cookies gave that context
+   (D6's verification: Next 16 request APIs inside a server action's
+   after() bind to the human's session where they resolve at all), so
+   the run wore the recruiter's face when it ran. Now the ranker's,
+   with `new_candidate` as the named trigger.
+4. The calibration restore — trigger `weights_edit`, "Restored from
+   calibration history".
+
+Per D4's boundary, recalibration re-scoring stays under the
+INTERPRETER (its act, already named in `feedback_interpreted` detail —
+no double event). Live account: `vbreygin+ranker@gmail.com`, id
+`c11544db-…`, Mandate HQ, §30 recipe; credentials in Vercel production
+and `.env.local`. The durable users baseline is now **3** (founder,
+interpreter, ranker); the baseline trail is 6 events — both agents'
+creation records.
+
+### Driven live on production (getmandate.io, deploy `2f53beb`)
+
+Scratch world inside Mandate HQ: CRO Search (Ranker Drive) → Wren
+Calloway + Sable Norwich (fit seeded, NO score rows) → HM token →
+Orin Faulkes, scratch operator. Three acts:
+
+1. **First ranking-page visit** → both candidates scored under the
+   RANKER (Wren 6.4 / rank 1, Sable 6.2 / rank 2), one
+   `candidates_ranked` event with actor "Ranking Agent", trigger
+   scoring_run, scored 2 / new 2 — and zero agent sessions left
+   behind.
+2. **Suspended from /ops (the ranker's own row)** → the Refresh CTA
+   refused with the D5 sentence verbatim, captured from the browser
+   console's ActionFailure; nothing written, no event. Same breath:
+   an HM token submission → the INTERPRETER, untouched, interpreted
+   AND recalibrated (domain 5→8, technical 5→3, exactly the HM's
+   stated preference), its own re-score riding its own session per
+   D4 — kill-switch independence proven live, not just in the
+   harness.
+3. **Restored from /ops** → Refresh ran under the ranker, the second
+   event landed, and the leaderboard showed the recalibrated order
+   (Sable 6.42 over Wren 6.23).
+
+Probe matrix with the ranker's real JWT via PostgREST: the role's
+tables answer; placement_fees, fee_terms, clients,
+hiring_manager_reviews, organizations, activity_events and the roster
+beyond self all refuse; portal RPCs empty; `record_activity_event`
+204s and writes nothing. Teardown to the pre-drive baseline exactly —
+the one surviving session is the founder's own live browser sign-in,
+deliberately untouched.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The CV parser opens as slice three** — the first conversion that
+  must ADD grants: `candidates` UPDATE (writing cv_structured) and a
+  storage read under the org folder, each with its own enumeration and
+  invariants, including the negative that an agent can parse a CV but
+  never delete one.
+- **"Scores as of <time>" on the ranking page — deferred.** The header
+  already shows "Computed HH:MM UTC" and rank_changed_at dates every
+  movement; a staleness banner would invent urgency the data does not
+  claim. Revisit only if a suspended ranker confuses a real recruiter.
+- **/ops agent rows stay label-plain — deferred.** Two agents read
+  fine as two named rows; an agent_kind chip adds vocabulary the
+  operator doesn't need until the roster grows past a screen.
+- **The /ops action labels ("Reject / Approve" on active accounts) —
+  presented again**, unchanged from §30's observation, now twice as
+  visible with two agents: the acts are suspend/restore and the
+  buttons still wear waitlist-era names. One small relabel whenever
+  the founder wants it; semantics correct today.
+
+Deploy `2f53beb` live; migration 075 applied via MCP and checked in as
+the numbered file. The completion declaration for the ranker slice
+waits on the verdicts above and the founder's written confirmation;
+`NEXT-agent-ranker.md` is deleted only after that. Founder-owned,
+unchanged: the Resend DNS records at Namecheap, the exposed Supabase
+access token, leaked-password protection (Pro-gated), the deferred
+build list (Sentry → rate limiting → Resend → Stripe, with portal +
+recovery + HM-submit rate limiting), and the one orphaned 331-byte
+storage object.
