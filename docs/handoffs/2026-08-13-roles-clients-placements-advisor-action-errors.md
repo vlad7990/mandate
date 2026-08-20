@@ -3354,3 +3354,36 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 joined by portal + recovery + HM-submit rate limiting), and the one
 orphaned 331-byte storage object from §28's diagnosis.
+
+---
+
+## 32. Access provisioning — decided: admin-driven now, purchase-provisioned at self-serve launch — 2026-08-20
+
+Asked and decided before the ranker slice opened: should access be
+"driven from Supabase" with admins assigning it, or self-set-up at
+purchase? The answer is both, sequenced — and the sequencing is the
+decision:
+
+- **Now, and for the first clients: access stays admin-driven,
+  exactly as built.** All access lives in `users` rows (status, role,
+  the org/client XOR) enforced by RLS. The operator approves signups
+  and assigns organisations from /ops; each org's own admins promote
+  members from viewer upward; externals arrive by invitation only;
+  candidates by token only. Creating a customer org is founder SQL per
+  the §27 verdict (screen deferred until needed twice). At this scale
+  deliberate onboarding is a feature, and it is the model every
+  invariant pins.
+- **At self-serve launch (with Stripe): the purchase mints the org.**
+  The buyer's checkout creates the organisation and makes the buyer
+  its FIRST ADMIN — after which access within the org is admin-assigned
+  forever, same as today. Nobody buys their way into someone else's
+  org. Billing state belongs on `organizations` (a subscription column
+  gating at the proxy the way `status` gates today), never on
+  individual users.
+- **Ordering constraint, stated:** self-serve provisioning waits for
+  its floor — Stripe, rate limiting + captcha on the public forms,
+  Sentry, Resend — i.e. it is the far end of the deferred build list,
+  not a queue-jump. And when it lands, the deferred "automated agent
+  provisioning at org onboarding" verdict (§30) comes due in the same
+  slice: a purchase-minted org needs its agent principals minted with
+  it.
