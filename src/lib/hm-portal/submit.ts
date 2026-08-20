@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
+import { signInFeedbackInterpreter } from "@/lib/agents/session";
 import {
   HM_RATINGS,
   type HmRating,
@@ -127,6 +127,10 @@ export function composeFeedbackContent(
 export type PersistResult =
   | {
       ok: true;
+      /** The review row just written — the trigger the interpretation
+       * names in its trail event (D4). Null only if the insert's
+       * returning read failed, which is logged, not fatal. */
+      reviewId: string | null;
       insertedFeedback: Array<{ id: string; candidate_id: string }>;
     }
   | { ok: false; status: number; error: string };
@@ -166,16 +170,20 @@ export async function persistHmSubmission(args: {
     };
   }
 
-  const { error: reviewErr } = await supabase.from("hiring_manager_reviews").insert({
-    project_id: projectId,
-    organization_id: organizationId,
-    token_id: args.tokenId ?? null,
-    submitted_by_user_id: args.submittedByUserId ?? null,
-    candidate_ratings: ratingsObject,
-    top_concern: parsed.top_concern,
-    priority_order: parsed.priority_order,
-    hm_label: parsed.hm_label,
-  });
+  const { data: reviewRow, error: reviewErr } = await supabase
+    .from("hiring_manager_reviews")
+    .insert({
+      project_id: projectId,
+      organization_id: organizationId,
+      token_id: args.tokenId ?? null,
+      submitted_by_user_id: args.submittedByUserId ?? null,
+      candidate_ratings: ratingsObject,
+      top_concern: parsed.top_concern,
+      priority_order: parsed.priority_order,
+      hm_label: parsed.hm_label,
+    })
+    .select("id")
+    .single<{ id: string }>();
   if (reviewErr) {
     console.error("[hm/submit] failed to persist review", reviewErr);
     return { ok: false, status: 500, error: "Failed to save your feedback." };
@@ -211,26 +219,78 @@ export async function persistHmSubmission(args: {
     }
   }
 
-  return { ok: true, insertedFeedback };
+  return { ok: true, reviewId: reviewRow?.id ?? null, insertedFeedback };
 }
 
 /**
  * Background pipeline triggered by after() for HM portal submissions.
- * Runs interpretFeedback per row, persists the interpretation, and
- * (when flagged) recalibrates the project's calibration weights.
+ * Runs interpretFeedback per row, persists the interpretation, records
+ * the act in the activity trail under the agent's own name, and (when
+ * flagged) recalibrates the project's calibration weights.
  *
- * Uses the service-role client throughout because neither door has a
- * session by the time this fires — RLS would otherwise block both the
- * project read and the feedback updates.
+ * Runs as the FEEDBACK INTERPRETER AGENT — a real principal with role
+ * 'agent', signed in from env credentials — not the service role it
+ * rode from its first commit until the agents-as-principals programme
+ * (074). Its reach is exactly the named `*_agent_*` RLS policies, and
+ * the trail can finally say the interpreter acted on the submission
+ * rather than wearing a human's face or no face at all.
+ *
+ * Fails soft per D5: by the time this fires, the review and feedback
+ * rows are already persisted by the door that received them. If the
+ * agent cannot sign in — suspended from /ops, credentials absent —
+ * the interpretation is SKIPPED with the reason logged and the review
+ * left in its uninterpreted state. An agent outage degrades the
+ * product; it never eats a person's work. There is deliberately no
+ * service-role fallback: the fallback IS the bug this seam removed.
  */
 export async function runHmFeedbackPipeline(args: {
   projectId: string;
+  /** The hiring_manager_reviews row that triggered this run — named in
+   * the trail event's detail (D4: the actor is the agent, the trigger
+   * is named). */
+  reviewId: string | null;
   rows: Array<{ id: string; candidate_id: string }>;
   topConcern: string;
   hmLabel: string;
 }): Promise<void> {
-  const { projectId, rows, topConcern, hmLabel } = args;
-  const supabase = getServiceRoleSupabaseClient();
+  const { projectId, reviewId, rows, topConcern, hmLabel } = args;
+
+  const session = await signInFeedbackInterpreter();
+  if (!session.ok) {
+    console.error(
+      `[hm/submit/after] interpretation skipped: ${session.reason}. ` +
+        "The HM's review is saved and remains uninterpreted; a recruiter " +
+        "sees the raw feedback on the project's feedback page."
+    );
+    return;
+  }
+  const supabase = session.client;
+
+  try {
+    await interpretUnderAgentSession({
+      supabase,
+      projectId,
+      reviewId,
+      rows,
+      topConcern,
+      hmLabel,
+    });
+  } finally {
+    // Persist nothing (D3): the throwaway client holds the session in
+    // memory only, and this revokes it from GoTrue's ledger.
+    await session.signOut();
+  }
+}
+
+async function interpretUnderAgentSession(args: {
+  supabase: SupabaseClient;
+  projectId: string;
+  reviewId: string | null;
+  rows: Array<{ id: string; candidate_id: string }>;
+  topConcern: string;
+  hmLabel: string;
+}): Promise<void> {
+  const { supabase, projectId, reviewId, rows, topConcern, hmLabel } = args;
 
   const { data: project, error: projectErr } = await supabase
     .from("projects")
@@ -327,22 +387,31 @@ export async function runHmFeedbackPipeline(args: {
 
     let interpretation: FeedbackInterpretation | null = null;
     try {
-      interpretation = await interpretFeedback({
-        new_feedback: {
-          type: "hm_portal" as FeedbackType,
-          content: inserted.content,
-          candidate_id: row.candidate_id,
-          submitted_role: hmLabel || "hiring_manager",
+      interpretation = await interpretFeedback(
+        {
+          new_feedback: {
+            type: "hm_portal" as FeedbackType,
+            content: inserted.content,
+            candidate_id: row.candidate_id,
+            submitted_role: hmLabel || "hiring_manager",
+          },
+          prior_feedback,
+          calibration: project.calibration_model ?? {},
+          onboarding: project.onboarding_responses ?? {},
+          candidate,
+          skill_context: {
+            project_id: projectId,
+            organization_id: project.organization_id,
+          },
         },
-        prior_feedback,
-        calibration: project.calibration_model ?? {},
-        onboarding: project.onboarding_responses ?? {},
-        candidate,
-        skill_context: {
-          project_id: projectId,
-          organization_id: project.organization_id,
-        },
-      });
+        // The agent's session, so the skill injector can read the org's
+        // skills lawfully. Under the old service-role after(), no client
+        // could be built here (cookies() is unavailable) and every
+        // recruiter-authored skill was silently stripped from the run —
+        // the agent session is the first time skills reach an HM-portal
+        // interpretation at all.
+        { skillClient: supabase }
+      );
     } catch (err) {
       console.error(
         "[hm/submit/after] interpretation failed for feedback",
@@ -374,17 +443,52 @@ export async function runHmFeedbackPipeline(args: {
         .eq("id", row.id);
     }
 
+    let recalibrated = false;
     if (
       interpretation?.recalibration_needed &&
       interpretation.suggested_weight_adjustments.length > 0
     ) {
       try {
-        await applyRecalibration(projectId, row.id, interpretation, supabase);
+        const result = await applyRecalibration(
+          projectId,
+          row.id,
+          interpretation,
+          supabase
+        );
+        recalibrated = result.applied;
       } catch (err) {
         console.error(
           "[hm/submit/after] recalibration failed for feedback",
           row.id,
           err
+        );
+      }
+    }
+
+    // The trail (D4): the agent is the actor — record_agent_event
+    // stamps actor_id from the session and refuses any caller that is
+    // not an active agent — and the trigger is named in detail: the
+    // review, the feedback row, who submitted it, what followed.
+    // Written only for interpretations that actually landed; a failed
+    // interpretation is a log line, not history.
+    if (interpretation) {
+      const { error: eventErr } = await supabase.rpc("record_agent_event", {
+        p_event_type: "feedback_interpreted",
+        p_project_id: projectId,
+        p_candidate_id: row.candidate_id ?? undefined,
+        p_detail: {
+          agent_kind: "feedback_interpreter",
+          review_id: reviewId,
+          feedback_id: row.id,
+          hm_label: hmLabel || null,
+          recalibrated,
+        },
+      });
+      if (eventErr) {
+        console.error(
+          "[hm/submit/after] failed to record the interpretation event",
+          row.id,
+          eventErr
         );
       }
     }

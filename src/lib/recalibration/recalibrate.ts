@@ -40,8 +40,10 @@ export async function applyRecalibration(
   interpretation: FeedbackInterpretation,
   client?: SupabaseClient
 ): Promise<RecalibrationResult> {
-  // Optional client lets unauthenticated callers (HM portal after()
-  // callback) pass a service-role client; default path resolves the
+  // Optional client lets cookie-less callers pass their own session —
+  // the HM portal's after() pipeline passes the feedback interpreter
+  // AGENT's session (074), whose projects/feedback agent policies are
+  // exactly this function's reads and writes. Default path resolves the
   // SSR client bound to the recruiter's session.
   const supabase = client ?? (await createServerSupabaseClient());
 

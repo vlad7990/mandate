@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropic } from "@/lib/anthropic";
 import {
   FEEDBACK_INTERPRETATION_SCHEMA,
@@ -49,19 +50,33 @@ export type InterpretFeedbackInput = {
   };
 };
 
+export type InterpretFeedbackOptions = {
+  /**
+   * The Supabase client the skill injector should read with. Required
+   * where cookies() is unavailable (the HM portal's after() pipeline
+   * passes the agent session); omitted, the injector builds an SSR
+   * client from the caller's own session. A separate parameter, NOT a
+   * field of `input`, because `input` is serialised wholesale into the
+   * model prompt below.
+   */
+  skillClient?: SupabaseClient;
+};
+
 /**
  * Run the Feedback Interpretation Agent on one new feedback row.
  * Synchronous — the server action awaits the result before persisting
  * the row's `interpreted` JSONB and (optionally) recalibrating.
  */
 export async function interpretFeedback(
-  input: InterpretFeedbackInput
+  input: InterpretFeedbackInput,
+  options?: InterpretFeedbackOptions
 ): Promise<FeedbackInterpretation> {
   const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
   const system = await applySkillsToPrompt(FEEDBACK_INTERPRETATION_SYSTEM_PROMPT, {
     projectId: input.skill_context?.project_id ?? null,
     organizationId: input.skill_context?.organization_id ?? null,
+    client: options?.skillClient,
   });
 
   const response = await anthropic.messages.create({

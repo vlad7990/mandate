@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 // ────────────────────────────────────────────────────────────────────────
@@ -61,10 +62,12 @@ export type SkillLoadOptions = {
    */
   types?: SkillType[];
   /**
-   * Pre-built Supabase server client. Required when the caller runs
-   * inside `after()`, where `cookies()` is unavailable.
+   * Pre-built Supabase client. Required when the caller runs inside
+   * `after()`, where `cookies()` is unavailable — the HM feedback
+   * pipeline passes the interpreter agent's session, whose
+   * skills_agent_select policy (074) is what makes the read lawful.
    */
-  client?: Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  client?: SupabaseClient;
 };
 
 /**
@@ -221,8 +224,8 @@ export type AgentSkillContext = {
   clientId?: string | null;
   /** Restrict to specific skill types. Defaults to all. */
   types?: SkillType[];
-  /** Pre-built Supabase server client — required inside `after()`. */
-  client?: Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  /** Pre-built Supabase client — required inside `after()`. */
+  client?: SupabaseClient;
 };
 
 export async function applySkillsToPrompt(

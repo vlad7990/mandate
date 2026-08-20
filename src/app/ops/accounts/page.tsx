@@ -56,7 +56,11 @@ export default async function OpsAccountsPage() {
     )
   );
 
-  const staff = users.filter((u) => !u.client_id);
+  // Three principal classes, three tables: staff (org-carried humans),
+  // agents (org-carried AI principals, 074 — this list is their one face
+  // in the product, per D7), externals (client-carried humans).
+  const agents = users.filter((u) => !u.client_id && parseRole(u.role) === "agent");
+  const staff = users.filter((u) => !u.client_id && parseRole(u.role) !== "agent");
   const externals = users.filter((u) => u.client_id);
 
   return (
@@ -87,6 +91,17 @@ export default async function OpsAccountsPage() {
       />
 
       <AccountTable
+        title={`Agents (${agents.length})`}
+        note="Autonomous AI principals — they sign in to work, never to look. Suspend kills new sign-ins immediately and in-flight sessions at the predicate layer; the pipeline skips its work with the reason logged, and the human act that triggered it stands."
+        rows={agents}
+        place={(u) =>
+          u.organization_id
+            ? orgName.get(u.organization_id) ?? "unknown org"
+            : "no organisation"
+        }
+      />
+
+      <AccountTable
         title={`Externals (${externals.length})`}
         rows={externals}
         place={(u) => {
@@ -102,10 +117,12 @@ export default async function OpsAccountsPage() {
 
 function AccountTable({
   title,
+  note,
   rows,
   place,
 }: {
   title: string;
+  note?: string;
   rows: UserRow[];
   place: (u: UserRow) => string;
 }) {
@@ -114,6 +131,9 @@ function AccountTable({
       <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-tertiary">
         {title}
       </h2>
+      {note && (
+        <p className="text-body-main text-on-surface-variant">{note}</p>
+      )}
       {rows.length === 0 ? (
         <p className="border border-outline-variant bg-surface-container px-5 py-4 text-body-main text-on-surface-variant">
           None yet.

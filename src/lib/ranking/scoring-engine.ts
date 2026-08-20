@@ -71,11 +71,11 @@ export async function computeAndStoreScores(
   client?: SupabaseClient,
   options?: ScoringOptions
 ): Promise<ScoredCandidate[]> {
-  // Optional client lets unauthenticated server contexts (e.g. the
-  // public hiring-manager portal's after() callback) pass a
-  // service-role client. Default path resolves the SSR client tied to
-  // the caller's session, which is what every recruiter-facing flow
-  // expects.
+  // Optional client lets cookie-less server contexts pass their own
+  // session — the HM portal's after() pipeline passes the feedback
+  // interpreter agent's session (074). Default path resolves the SSR
+  // client tied to the caller's session, which is what every
+  // recruiter-facing flow expects.
   const supabase = client ?? (await createServerSupabaseClient());
 
   // Project context — calibration weights drive the overall score.

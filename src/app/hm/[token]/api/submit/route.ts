@@ -84,13 +84,17 @@ export async function POST(
   }
 
   // Background: interpretation + recalibration after the HM already has
-  // their 200. Errors are logged, never surfaced to the HM — they'll be
-  // visible to the recruiter on the project's feedback page.
+  // their 200 — run by the feedback interpreter AGENT under its own
+  // session (074), not the service role. Errors are logged, never
+  // surfaced to the HM; if the agent is suspended or credential-less
+  // the interpretation is skipped honestly and the review stands.
   if (persisted.insertedFeedback.length > 0) {
     const rows = persisted.insertedFeedback;
+    const reviewId = persisted.reviewId;
     after(async () => {
       await runHmFeedbackPipeline({
         projectId: verified.project_id,
+        reviewId,
         rows,
         topConcern: parsed.value.top_concern,
         hmLabel: parsed.value.hm_label,

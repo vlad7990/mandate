@@ -107,9 +107,11 @@ export async function POST(
 
   if (persisted.insertedFeedback.length > 0) {
     const rows = persisted.insertedFeedback;
+    const reviewId = persisted.reviewId;
     after(async () => {
       await runHmFeedbackPipeline({
         projectId,
+        reviewId,
         rows,
         topConcern: parsed.value.top_concern,
         hmLabel,
