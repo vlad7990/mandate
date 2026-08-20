@@ -3556,3 +3556,126 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with portal + recovery + HM-submit rate limiting), and the one
 orphaned 331-byte storage object from §28's diagnosis.
+
+---
+
+## 35. The CV parser becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-20
+
+Slice three of agents-as-principals (plan in `NEXT-agent-cv-parser.md`,
+D1–D9 confirmed 2026-08-20). The judgment that reads a person's CV and
+writes their identity now signs its own name. One migration (**next is
+077**):
+
+- **076 — the pool's first widening, by exactly one surface.**
+  `candidates_agent_update` (the parser persists what it concluded —
+  profile, fit, and the identity columns it overwrites), plus
+  `candidate_parsed` in the vocabulary and the `record_agent_event`
+  allowlist. NO storage policy, and none needed: both call sites hold
+  the file bytes in memory at parse time, so the seam takes bytes and
+  the agent never touches storage — the §33 storage-read guess,
+  corrected by the code at Phase 0 (the §5h rule doing its job on a
+  VERDICT for the first time).
+- **`agent_cv_parser_invariants.sql`** — 5 invariants, clean pass: the
+  parser's profile AND identity writes attributed with the trigger
+  named; the third principal's negative matrix; **parse-never-delete
+  pinned twice** — by effect (a DELETE landing on zero rows, zero
+  storage reach with a real object present) and mechanically (no
+  storage.objects policy may mention is_agent(), the §27 D5 shape, so
+  a future storage grant fails loudly); the allowlist at three; and
+  three-way kill-switch independence. **Control run verified:**
+  `can_write_candidates()` with 'agent' slipped in aborted at
+  INVARIANT-FAIL (3) — "the parser deleted a candidate" — the
+  write-side enumeration regression caught by the exact reach it would
+  smuggle in.
+
+**The seam (`d9a964b`).** `runCvParseAndPersist` splits at judgment
+(D2): the recruiter keeps the file choice, the placeholder row, and
+every storage act; the agent signs in, runs the model call with Skills
+Studio riding its own session, persists the conclusions, records one
+`candidate_parsed` event per landed parse, and signs out persisting
+nothing. D5 fail-soft: a refused parser leaves the upload SUCCEEDED —
+file stored, row standing, `cv_parse_error` carrying the agent-named
+sentence rendered by the candidate page's existing failure banner; a
+real parse failure keeps today's error contract, written by the agent
+that failed, with no trail event (a log line, not history). Both call
+sites converted; `parseCv` gained the `skillClient` options parameter
+(interpretFeedback's shape — never a field of the serialised input).
+Live account: `vbreygin+cvparser@gmail.com`, id `106a6551-…`, Mandate
+HQ, §30 recipe; credentials in Vercel production and `.env.local`.
+Durable baseline: **4 users**, **9 trail events** (three agents' full
+creation records).
+
+### Driven live on production (getmandate.io, deploy `d9a964b`)
+
+Scratch world inside Mandate HQ: CDO Search (Parser Drive) with
+calibration and company context; a hand-built fixture PDF (a fictional
+"Avery Penhallow" CV); Orin Faulkes, scratch operator. Three acts
+through the real upload form — whose copy, it turns out, already
+promised "The CV Parsing Agent will extract…" before the agent
+existed; the label is finally true:
+
+1. **Upload** → the model read the PDF and extracted the real identity
+   (Avery Penhallow, avery.penhallow@example.com, VP Data Platforms at
+   Meridian Grid, archetype "Transformer", fit_dimensions present),
+   the file landed under the org path, and the trail carried
+   `candidate_parsed` with actor "CV Parsing Agent", trigger upload,
+   identity_changed true. Zero agent sessions left behind.
+2. **Suspended from /ops** → the second upload SUCCEEDED as D5
+   promises: file stored, row standing under its filename fallback,
+   `cv_parse_error` carrying the exact sentence, rendered in the
+   failure banner (screenshot in the drive record), no profile, no
+   event — and in the same breath the RANKER scored the first
+   candidate on a ranking-page visit, three-way kill-switch
+   independence live.
+3. **Restored from /ops** → a third upload parsed fully; the second
+   `candidate_parsed` event landed.
+
+Probe matrix with the parser's real JWT via PostgREST: reads answer;
+the 076 UPDATE grant proven by a lawful PATCH; the DELETE landed on
+zero rows; clients, reviews, organizations, events, fees, the roster
+beyond self, and a storage list over a folder with real files all
+refused or answered empty. Teardown: the three drive CVs deleted
+lawfully via the Storage API as an org principal (the protect trigger
+refuses SQL, as designed), rows to baseline — with one teardown
+honesty note: the residue filter's time cutoff caught the parser's own
+CREATION status event (written at 14:41, inside the drive window) and
+deleted durable history; caught by the baseline diff, reconstructed by
+hand with the original timestamp and detail. The lesson, recorded:
+residue filters key on the drive's SCRATCH ids, never on a time
+window that can contain a durable row's birth.
+
+### One affordance gap, found live
+
+The parse-failure banner tells the recruiter to "retry when the agent
+is restored" — but offers no retry control; the only retry is a fresh
+upload. The sentence writes a cheque the UI doesn't cash. Presented as
+a verdict below rather than fixed unbidden.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Slice four: the Candidate Review / Evaluation agent** — the next
+  AI judgment wearing a human face (generate-evaluation runs in the
+  recruiter's session), and a read-mostly conversion by first look;
+  its Phase 0 enumerates as always. Alternative orderings (the digest
+  writer, the sourcing agents) wait unless the founder prefers one.
+- **A one-click "Retry parse" on the failure banner — recommended**
+  now that the failure can name a suspended agent and the file is
+  already stored: a small action that re-reads the stored bytes (the
+  recruiter's lawful storage read) and hands them to the seam. Without
+  it, D5's sentence promises a retry the UI makes the recruiter
+  re-upload for.
+- **Model/version stamping in agent event details — deferred** until
+  an audit asks; the trail names who and what, and the model id is one
+  grep away in the seam for any given deploy.
+- **The /ops Suspend/Restore relabel — standing**, third surfacing,
+  now visible on three agent rows.
+
+Deploy `d9a964b` live; migration 076 applied via MCP and checked in as
+the numbered file. The completion declaration for the CV parser slice
+waits on the verdicts above and the founder's written confirmation;
+`NEXT-agent-cv-parser.md` is deleted only after that. Founder-owned,
+unchanged: the Resend DNS records at Namecheap, the exposed Supabase
+access token, leaked-password protection (Pro-gated), the deferred
+build list (Sentry → rate limiting → Resend → Stripe, with portal +
+recovery + HM-submit rate limiting), and the one orphaned 331-byte
+storage object.
