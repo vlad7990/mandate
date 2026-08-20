@@ -7,6 +7,7 @@ import {
   EVALUATION_KEY,
   ensureCandidateEvaluation,
 } from "@/lib/ai/generate-evaluation";
+import { runCvParseAndPersist } from "@/lib/candidates/agent-parser";
 import {
   normaliseDimensionNotes,
   PRESENT_DECISIONS,
@@ -76,6 +77,93 @@ async function assertCandidateBelongsToProject(
   if (data.project_id !== projectId) {
     throw new Error("Candidate does not belong to the requested project.");
   }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Parse retry
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Re-run the CV parse from the STORED file — the §36-accepted follow-up
+ * to the parser slice's D5: the failure banner's sentence promised a
+ * retry, and this is the retry. The recruiter's session does what is
+ * lawfully the recruiter's — reading their org's stored CV bytes — and
+ * hands them to the CV Parsing Agent's seam, exactly like the upload
+ * path. No re-upload, no storage reach for the agent.
+ */
+export async function retryParseAction(
+  candidateId: string,
+  projectId: string
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    if (!candidateId || !projectId) {
+      throw new Error("Missing candidateId or projectId.");
+    }
+    const { organizationId } = await requireActiveUser();
+    await assertCandidateBelongsToProject(candidateId, projectId);
+
+    const supabase = await createServerSupabaseClient();
+    const { data: candidate, error: cErr } = await supabase
+      .from("candidates")
+      .select("id, full_name, cv_url")
+      .eq("id", candidateId)
+      .single<{ id: string; full_name: string; cv_url: string | null }>();
+    if (cErr || !candidate) throw new Error("Candidate not found.");
+    if (!candidate.cv_url) {
+      throw new Error("No stored CV file to retry from — upload one instead.");
+    }
+
+    const { data: project, error: pErr } = await supabase
+      .from("projects")
+      .select("calibration_model, company_context")
+      .eq("id", projectId)
+      .single<{
+        calibration_model: Record<string, unknown> | null;
+        company_context: Record<string, unknown> | null;
+      }>();
+    if (pErr || !project) throw new Error("Project not found.");
+
+    const { data: blob, error: dlErr } = await supabase.storage
+      .from("cvs")
+      .download(candidate.cv_url);
+    if (dlErr || !blob) {
+      throw new Error(
+        `Could not read the stored CV: ${dlErr?.message ?? "no file"}`
+      );
+    }
+
+    const mimeType = candidate.cv_url.toLowerCase().endsWith(".pdf")
+      ? "application/pdf"
+      : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+    const result = await runCvParseAndPersist({
+      candidateId,
+      projectId,
+      organizationId,
+      fileBytes: new Uint8Array(await blob.arrayBuffer()),
+      mimeType,
+      cvPath: candidate.cv_url,
+      calibration: project.calibration_model ?? {},
+      company: project.company_context ?? {},
+      trigger: "retry",
+      priorName: candidate.full_name,
+    });
+
+    if (!result.ok) {
+      // Either way the row already carries the honest state; the toast
+      // carries the sentence.
+      throw new Error(
+        result.kind === "agent_unavailable"
+          ? "The CV Parsing Agent is still unavailable — an operator has " +
+            "suspended it or its credentials are absent. The file is stored; " +
+            "retry when it is restored."
+          : result.reason
+      );
+    }
+
+    revalidatePath(`/app/projects/${projectId}/candidates/${candidateId}`);
+    revalidatePath(`/app/projects/${projectId}/candidates`);
+  });
 }
 
 // ────────────────────────────────────────────────────────────────────────

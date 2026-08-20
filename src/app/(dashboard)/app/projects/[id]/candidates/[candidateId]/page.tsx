@@ -78,6 +78,7 @@ import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-ag
 import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
 import type { Stakeholder } from "@/lib/ai/onboarding-analysis";
 import { RetryEvaluationButton } from "./retry-evaluation-button";
+import { RetryParseButton } from "./retry-parse-button";
 
 type ProjectRow = {
   id: string;
@@ -436,6 +437,12 @@ export default async function CandidateProfilePage({
             <p className="mt-1 text-[13px] leading-relaxed text-on-surface-variant">
               {parseError}
             </p>
+            {candidate.cv_url && (
+              <RetryParseButton
+                candidateId={candidate.id}
+                projectId={project.id}
+              />
+            )}
           </div>
         </div>
       )}

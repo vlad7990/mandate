@@ -47,7 +47,7 @@ export async function runCvParseAndPersist(args: {
   cvPath: string;
   calibration: Partial<CalibrationModel>;
   company: Partial<CompanyContext>;
-  trigger: "upload" | "network_copy";
+  trigger: "upload" | "network_copy" | "retry";
   /** The name the row carried before the parse (the filename fallback,
    * or the copied row's name) — for the identity_changed flag. */
   priorName?: string | null;
