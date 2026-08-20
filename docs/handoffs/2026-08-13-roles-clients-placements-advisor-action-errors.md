@@ -3310,3 +3310,47 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 joined by portal + recovery + HM-submit rate limiting), and the one
 orphaned 331-byte storage object from §28's diagnosis.
+
+---
+
+## 31. Agent-principal verdicts confirmed — the interpreter slice is complete — 2026-08-20
+
+The founder confirmed all five §30 verdicts as drafted: the ranker and
+CV parser convert next (each with its own grant enumeration and its own
+NEXT-file phase), per-agent budgets deferred with the HM submit
+endpoint joining the pre-launch rate-limiting item, secret rotation
+stays founder-hand with a cadence folded into the auth-hardening batch,
+automated provisioning waits for the second customer org, and the
+metrics agent's cron-shaped arrival waits for its own slice through
+this programme's door.
+
+The definition of done is met: the sharpest ambient trust in the
+product — an AI agent making judgments on the service role's master
+key — is gone. The feedback interpreter authenticates as a principal
+under the same role model as every human: a users row, org-carried,
+whose entire reach is six named policies enumerated from its
+pipeline's code; whose every act lands in the trail under its own
+name with its trigger named in detail; whose suspension is one
+operator click that kills sign-ins at GoTrue and in-flight sessions at
+the predicate layer while the human act that triggered it stands —
+proven by 8 invariants with a verified control run, a real-JWT probe
+matrix against production, and a three-act live drive torn down to
+baseline exactly. The role joins no existing enumeration, holds no
+capability, and navigates nowhere; the seam has no service-role
+fallback to quietly regress into. Along the way the slice closed a
+defect nobody had seen: recruiter-authored skills, silently stripped
+from every HM-portal interpretation since Skills Studio shipped, now
+reach the interpreter lawfully through its own grant.
+
+**The agents-as-principals interpreter slice is complete.** The
+founder's 2026-08-12 statement — agents authenticate as principals,
+not ambient trust — is no longer a plan; one of fourteen agents lives
+under it, and the other thirteen have a proven pattern to follow.
+`NEXT-agents-as-principals.md` deleted per its own instruction. Next
+migration is **075**.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+joined by portal + recovery + HM-submit rate limiting), and the one
+orphaned 331-byte storage object from §28's diagnosis.
