@@ -225,6 +225,19 @@ export function describeActivity(event: ActivityEventRow): string {
         : "Wrote the candidate's positioning kit";
     }
 
+    case "candidate_researched": {
+      // The byline names the researcher; the sentence names the trigger.
+      const trigger = str(d, "trigger");
+      const sources = num(d, "sources_count");
+      const base =
+        trigger === "re_research"
+          ? "Re-researched the candidate's public presence"
+          : "Researched the candidate's public presence";
+      return sources != null && sources > 0
+        ? `${base} — ${sources} source${sources === 1 ? "" : "s"}`
+        : base;
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from
