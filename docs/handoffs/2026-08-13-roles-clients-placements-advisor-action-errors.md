@@ -5001,3 +5001,44 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 54. Boolean-search verdicts confirmed — the slice is complete — 2026-08-21
+
+The founder confirmed all four §53 verdicts as drafted: the remaining
+agents (intake, onboarding, role spec — plus the shortlist and
+copilot read-shaped surfaces) queue by usage on the founder's word,
+the metrics agent's cron-shaped arrival still waiting for its own
+slice (§30, standing); target companies stands recorded as
+convertible-when-it-persists — a judgment that lands nothing has no
+trail event, and it converts on this slice's shape the day it does;
+the feedback-in-input-object observation stays surfaced and
+founder-timed — one line to wrapWithRecruiterContext whenever the
+prompt shapes should become uniform; long-action honesty stays
+deferred (~30s builds, zero drops).
+
+The definition of done is met. The judgment that writes the sourcing
+strings — six slots in one act, single slots on iteration — signs its
+own name; the brief it reads is read-only, the draft it iterates is
+its own lawful read, and the history it appends to is immutable to it
+by construction: no UPDATE, no DELETE, the recruiter's edit and
+restore acts untouched under their own policies. The first new grants
+in three slices arrived with their own novel proof — the control run
+regressed the ORG boundary on the very grant the migration minted,
+and the harness caught an agent's query landing in another tenant's
+project. The trail told the truth in both directions live: an empty
+feedback handover recorded false, a real one recorded true, and the
+recruiter's words never rode the trail either way.
+
+**The agents-as-principals boolean-search slice is complete.** Twelve
+of fourteen agents now authenticate as principals.
+`NEXT-agent-boolean.md` deleted per its own instruction. Next
+migration is **086**; the remaining queue opens on the founder's
+word.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
