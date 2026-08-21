@@ -137,6 +137,20 @@ export async function signInTriangulationAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the psychology agent — slice eight, closing the
+ * candidate-intelligence cluster. Own credential, own kill switch;
+ * reads human testimony (notes, recruiter context) and never authors
+ * it — its notes grant is SELECT-only by 081.
+ */
+export async function signInPsychologyAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "psychology",
+    email: process.env.AGENT_PSYCHOLOGY_EMAIL,
+    password: process.env.AGENT_PSYCHOLOGY_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

@@ -698,18 +698,13 @@ export async function generatePositioningAction(
 // Psychology Agent — generate behavioural / cultural-fit profile
 // ────────────────────────────────────────────────────────────────────────
 
-const PSYCHOLOGY_KEY = "psychology" as const;
-
 /**
- * Run the candidate psychology agent and persist the result onto
- * cv_structured.psychology via the atomic JSONB RPC. Returns the
- * generated profile so the panel renders immediately.
- *
- * Optional `recruiterContext` — free text the recruiter pastes into
- * the regenerate dialog ("confirmed directive in phone screen", etc.)
- * — is prepended to the agent's system prompt as informed prior
- * knowledge AND persisted to cv_structured.psychology_context so the
- * panel can show what shaped the read.
+ * Run the Psychology Agent for this candidate. The recruiter's
+ * session keeps the gate, the ownership assertion, and hands the
+ * optional recruiterContext through; the judgment — reads (including
+ * the SELECT-only notes grant), the context-wrapped model call, the
+ * psychology + psychology_context writes, the trail event — runs
+ * under the AGENT's own session (081).
  */
 export async function generatePsychologyAction(
   candidateId: string,
@@ -721,90 +716,31 @@ export async function generatePsychologyAction(
       throw new Error("Missing candidateId or projectId.");
     }
 
-    const auth = await requireActiveUser();
+    await requireActiveUser();
     await assertCandidateBelongsToProject(candidateId, projectId);
 
-    const supabase = await createServerSupabaseClient();
-
-    const [candidateQ, notesQ, projectQ] = await Promise.all([
-      supabase
-        .from("candidates")
-        .select(
-          "id, full_name, current_title, current_company, archetype, cv_structured"
-        )
-        .eq("id", candidateId)
-        .single<{
-          id: string;
-          full_name: string;
-          current_title: string | null;
-          current_company: string | null;
-          archetype: string | null;
-          cv_structured: unknown;
-        }>(),
-      supabase
-        .from("candidate_notes")
-        .select("note_type, content, created_at")
-        .eq("candidate_id", candidateId)
-        .order("created_at", { ascending: false })
-        .limit(10),
-      supabase
-        .from("projects")
-        .select("organization_id")
-        .eq("id", projectId)
-        .single<{ organization_id: string | null }>(),
-    ]);
-
-    if (candidateQ.error || !candidateQ.data) {
-      throw new Error("Candidate not found.");
-    }
-    if (projectQ.error || !projectQ.data) {
-      throw new Error("Project not found.");
-    }
-    if (projectQ.data.organization_id !== auth.organizationId) {
-      throw new Error("Project belongs to a different organisation.");
-    }
-
-    const { runPsychology } = await import("@/lib/ai/run-psychology");
-    const candidate = candidateQ.data;
-    const cv = (candidate.cv_structured ?? {}) as Record<string, unknown>;
-    type NoteRow = { note_type: string; content: string; created_at: string };
-    const notes = ((notesQ.data ?? []) as NoteRow[]).map((n) => ({
-      note_type: n.note_type,
-      content: n.content,
-      created_at: n.created_at,
-    }));
-
-    const profile = await runPsychology(
-      {
-        candidate: {
-          candidate_id: candidate.id,
-          full_name: candidate.full_name,
-          current_title: candidate.current_title,
-          current_company: candidate.current_company,
-          archetype: candidate.archetype,
-          profile: cv,
-          evaluation: cv["evaluation"] ?? null,
-        },
-        recruiter_notes: notes,
-      },
-      {
-        projectId,
-        organizationId: projectQ.data.organization_id,
-        recruiterContext,
-      }
-    );
-
-    await rpcSetCvField(candidateId, projectId, PSYCHOLOGY_KEY, profile);
-    // Persist the context the recruiter supplied (or clear if absent)
-    // so the panel can show what shaped this read.
-    await rpcSetCvField(
+    const { runPsychologyAndPersist } = await import("@/lib/ai/run-psychology");
+    const run = await runPsychologyAndPersist(
       candidateId,
       projectId,
-      "psychology_context",
-      recruiterContext?.trim() ? recruiterContext.trim() : null
+      recruiterContext
     );
+
+    if (run.status === "agent_unavailable") {
+      throw new Error(
+        "The Psychology Agent could not run — an operator has suspended it " +
+          "or its credentials are absent. The existing profile stands."
+      );
+    }
+    if (run.status === "unavailable") {
+      throw new Error("Candidate not found.");
+    }
+    if (run.status !== "ready") {
+      throw new Error("Could not generate the behavioural read. Try again.");
+    }
+
     revalidatePath(`/app/projects/${projectId}/candidates/${candidateId}`);
-    return profile;
+    return run.profile;
   });
 }
 
