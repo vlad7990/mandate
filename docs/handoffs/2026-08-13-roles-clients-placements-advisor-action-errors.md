@@ -4898,3 +4898,106 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 53. The Boolean Search Agent becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-21
+
+Slice twelve of agents-as-principals (plan in
+`NEXT-agent-boolean.md`, D1–D8 confirmed 2026-08-21) — the
+sourcing-side opener and the first NEW-GRANT slice since 082. One
+migration (**next is 086**):
+
+- **085 — three policies and the vocabulary**:
+  `job_specs_agent_select` (the brief is read-only),
+  `boolean_queries_agent_select` (the current draft IS model input on
+  the regen path) and `boolean_queries_agent_insert` (the versioned
+  append, WITH CHECK pinning the org). NO UPDATE, NO DELETE — the
+  version history is immutable to the agent; the recruiter's edit and
+  restore acts keep their human policies. `sourcing_queries_generated`
+  into the CHECK; allowlist at thirteen.
+  **`agent_boolean_invariants.sql`** — 5 invariants, clean pass: six
+  at v1 plus a regen at v2 land org-scoped; the version-history pin
+  (agent UPDATE/DELETE on landed queries land on zero rows); the
+  TENANT PIN; events carry the trigger, slot enum, counts, and a
+  has_recruiter_feedback boolean with the text provably absent;
+  history at thirteen by COUNT; kill switches independent at twelve.
+  The control run **rebuilt the freshly-minted INSERT grant with the
+  org conjunct dropped** ("is_agent() already gates it") — the
+  cross-tenant insert LANDED in another tenant's project and the
+  harness aborted at INVARIANT-FAIL (2); drift and harness in one
+  transaction, the abort rolling the rebuild back — residue-free by
+  construction. The first control run to regress the ORG boundary,
+  and the first to target a grant minted in the same migration.
+
+**The seam (`d13f27f`).** The interpreter's shape over three lawful
+reads — the projects row, the final spec, the current draft:
+`runSourcingGenerateAllAndPersist` and
+`runSourcingRegenerateAndPersist` sign in the twelfth principal; the
+actions keep the candidates:write gate, hand ids plus the
+request-only feedback string, and map the seam's statuses onto the
+surface's established messages (no-final-spec, already-generated)
+plus the D5 sentence. boolean_queries has no created_by column — the
+trail event is the sole attribution, and the schema was not widened.
+Live account: `vbreygin+boolean@gmail.com`, id `bd78e9f0-…`, Mandate
+HQ, §30 recipe; `AGENT_BOOLEAN_*` in Vercel production and
+`.env.local`. Durable baseline: **13 users, 36 trail events** (twelve
+agents' creation records).
+
+### Driven live on production (deploy `9n12h1o84` = `d13f27f`)
+
+Scratch world 0db inside Mandate HQ: an is_founder operator, a
+labelled scratch project with a seeded FINAL job spec. The acts:
+
+1. **Build Sourcing Queries** → landed in ~30s: six rows at version
+   1, one event (trigger generate_all, slots_count 6,
+   has_recruiter_feedback false, actor "Boolean Search Agent").
+2. **Suspended from /ops** → Regenerate refused with the D5 sentence
+   VERBATIM in ~600ms; every version stood.
+3. **Restored → regenerate** — twice, and the pair proved the
+   boolean honest in BOTH directions: a first attempt whose feedback
+   never reached the seam landed v2 with `has_recruiter_feedback:
+   false` (the trail told the truth about an empty handover — the
+   drive's mis-aimed textarea, not the product's defect), and the
+   corrected attempt landed v3 with the boolean TRUE and the
+   feedback text appearing ZERO times in the trail. Version history
+   append-only throughout; zero agent sessions after every run.
+
+Probe matrix with the agent's real JWT: the new lawful reads answer
+(job_specs 2, boolean_queries 8) beside the pool's (projects 3,
+feedback 3, candidates 1, skills 5, users self-only); clients,
+placements, organizations, activity_events, desk_digests all ZERO;
+the agent's UPDATE and DELETE on boolean_queries land on zero rows;
+the human door 204s writing nothing; a nonsense type refused by
+name. Sign-out revoked the probe session. **Teardown to baseline
+exactly on the first pass** — 36 events, the twelfth creation trail
+untouched, the durable job spec standing, the founder's session the
+only survivor.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The remaining agents** (intake, onboarding, role spec — plus the
+  shortlist and copilot read-shaped surfaces) queue by usage on the
+  founder's word; the metrics agent's cron-shaped arrival still
+  waits for its own slice (§30, standing).
+- **Target companies — recorded as convertible-when-it-persists**:
+  the judgment returns its report to the UI and lands nothing; the
+  day it persists, it converts on this slice's shape.
+- **The feedback-in-input-object observation — surfaced**: the regen
+  feedback rides the model-input JSON (predates the ctx/wrapper
+  doctrine); a one-line move to wrapWithRecruiterContext whenever
+  the founder wants the prompt shapes uniform. Not changed unbidden.
+- **Long-action honesty — deferred stands**: ~30s build, ~15–25s
+  regens, zero drops.
+
+Deploy `9n12h1o84` live; migration 085 applied via MCP and checked
+in; tsc/vitest 790/eslint/build green. The completion declaration for
+the boolean-search slice waits on the verdicts above and the
+founder's written confirmation; `NEXT-agent-boolean.md` is deleted
+only after it.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
