@@ -217,6 +217,14 @@ export function describeActivity(event: ActivityEventRow): string {
         : "Evaluated the candidate against the role";
     }
 
+    case "candidate_positioned": {
+      // The byline names the positioner; the sentence names the trigger.
+      const trigger = str(d, "trigger");
+      return trigger === "regenerate"
+        ? "Rewrote the candidate's positioning kit"
+        : "Wrote the candidate's positioning kit";
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from
