@@ -4857,3 +4857,44 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 52. Culture verdicts confirmed — the slice and the company-side grouping are complete — 2026-08-21
+
+The founder confirmed all three §51 verdicts as drafted: the
+remaining agents (intake, onboarding, role spec, boolean search —
+plus the shortlist and copilot read-shaped surfaces) queue by usage
+on the founder's word, the metrics agent's cron-shaped arrival still
+waiting for its own slice (§30, standing); the context-drawer
+pattern enters the traps as doctrine — panels whose header button
+toggles a drawer (psychology, culture) put the act on the drawer's
+"Run", and drives must click through; long-action honesty stays
+deferred with the evidence unchanged in kind (9–34s, zero drops).
+
+The definition of done is met twice over. The slice: the judgment
+that reads a company's culture from context, onboarding, and the
+feedback tail signs its own name; human testimony is read under a
+grant minted ten slices ago for the interpreter — reading is not
+authoring, and the human door still refuses the agent; the
+recruiter's stated context is carried honestly in both directions —
+verbatim on the column when given, the key DELETED when withheld,
+a boolean and counts in the trail, the text provably absent from it;
+and the control run recorded the programme's first regression of the
+people boundary itself, caught at the roster pin. The grouping:
+**the company-side grouping is COMPLETE** — company intelligence,
+the hiring-manager dossier, and culture; three judgments about the
+client side of a search, two principals, three kill switches proven
+live, every landed act carrying its trigger.
+
+**The agents-as-principals culture slice is complete.** Eleven of
+fourteen agents now authenticate as principals.
+`NEXT-agent-culture.md` deleted per its own instruction. Next
+migration is **085**; the remaining queue opens on the founder's
+word.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
