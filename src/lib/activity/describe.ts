@@ -329,6 +329,16 @@ export function describeActivity(event: ActivityEventRow): string {
         : "Built the sourcing queries";
     }
 
+    case "intake_analyzed": {
+      // The byline names the Intake Agent. The brief's TEXT never
+      // rides the trail — a length and a boolean do; the mandate link
+      // is rendered by the feed from project_id.
+      const chars = num(d, "input_chars");
+      return chars != null && chars > 0
+        ? `Analyzed the mandate brief — ${chars} characters`
+        : "Analyzed the mandate brief";
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from
