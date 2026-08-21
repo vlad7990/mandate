@@ -299,6 +299,19 @@ export function describeActivity(event: ActivityEventRow): string {
         : base;
     }
 
+    case "culture_profiled": {
+      // The byline names the Culture Agent; the sentence names the
+      // trigger and whether a recruiter's stated context shaped it —
+      // the context TEXT never enters the trail (it lives visibly in
+      // culture_context). The psychology describe shape.
+      const trigger = str(d, "trigger");
+      const withContext =
+        d.has_recruiter_context === true ? " with recruiter context" : "";
+      return trigger === "regenerate"
+        ? `Re-derived the culture profile${withContext}`
+        : `Derived the culture profile${withContext}`;
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from
