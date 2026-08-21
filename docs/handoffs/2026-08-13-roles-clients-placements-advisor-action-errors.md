@@ -3723,3 +3723,97 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with portal + recovery + HM-submit rate limiting), and the one
 orphaned 331-byte storage object from §28's diagnosis.
+
+---
+
+## 37. The evaluator becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-20/21
+
+Slice four of agents-as-principals (plan in `NEXT-agent-evaluator.md`,
+D1–D8 confirmed 2026-08-20). One migration (**next is 078**):
+
+- **077 — vocabulary only.** `candidate_evaluated` + its allowlist
+  admission; zero table grants (the 074/076 pool covers the pipeline).
+  **`agent_evaluator_invariants.sql`** — 4 invariants, clean pass: the
+  spread-preserving write with the PARSER's fields intact (the D6 pin,
+  asserted by effect where RLS cannot express jsonb-key discipline);
+  the fourth principal's negative matrix; the forgery boundary in BOTH
+  directions (the agent door refuses by role, the HUMAN door refuses
+  the agent's event type by name); four-way kill-switch independence.
+  **Control run verified:** `record_activity_event` admitting
+  `candidate_evaluated` aborted at INVARIANT-FAIL (3) — a recruiter
+  forging the evaluator's conclusion through the human intent door.
+
+**The seam (`b16560e`).** `ensureCandidateEvaluation` signs in the
+Evaluation Agent per run and returns a typed result; the profile
+page's render-built client and its after()-cookie caveat — the FOURTH
+occurrence — are deleted, not worked around, and any visitor's
+cache-miss (a viewer included, who could never persist the write
+before) now generates lawfully. Per D5 the regenerate flow lost its
+pre-clear: the old report stands until the single spread-preserving
+write replaces it. One event per LANDED evaluation, trigger named
+(profile_view / regenerate). Live account:
+`vbreygin+evaluator@gmail.com`, id `900ea788-…`, §30 recipe;
+credentials in Vercel production and `.env.local`. Durable baseline:
+**5 users, 12 trail events** (four agents' creation records).
+
+### Driven live on production (deploys `b16560e`, `66dbf74`)
+
+Scratch world inside Mandate HQ: CFO Search (Evaluator Drive) →
+Nerissa Coldwell (parser-shaped profile seeded) → Orin Faulkes,
+scratch operator. The acts:
+
+1. **Profile visit on a cache miss** → the evaluation generated in
+   after() under the EVALUATOR (a live agent session visible
+   mid-generation, gone after signOut), landed with parser fields
+   intact, event trigger profile_view. **Regenerate** → fresh
+   generated_at, second event, trigger regenerate.
+2. **Suspended from /ops** → Regenerate refused with its sentence
+   captured verbatim from the live toast ("…The existing report
+   stands.") and the report SURVIVED byte-identical (same
+   generated_at, no third event) — D5 proven live. **Restored** → the
+   regenerate landed (one observation: the browser's fetch dropped the
+   long-running action POST with "Failed to fetch" while the server
+   completed the work — the act landed, the toast lied by omission;
+   recorded as an observation on long server actions, not a defect of
+   the slice).
+3. **The D7 retry-parse acts — which caught a real defect.** The first
+   suspended-parser upload showed the D5 sentence but NO Retry button:
+   the refused-upload path never wrote `cv_url`, so the row didn't
+   know where its file was and the §35 gap had reopened one door down.
+   Fixed (`66dbf74`: the refusal branch records cv_url like the
+   network-copy branch always did), redeployed, re-driven end to end:
+   upload under a suspended parser → banner WITH the button → retry
+   refused with the "still unavailable" sentence → parser restored →
+   **Retry Parse parsed from the STORED file** — identity extracted,
+   error cleared, event trigger `retry`, exactly one storage object
+   (no re-upload). The button's promise, cashed and proven.
+
+Probe matrix with the evaluator's real JWT: pool reads answer;
+clients, reviews, organizations, events, fees, roster-beyond-self,
+candidates DELETE (zero rows), and portal RPCs all refuse. Teardown to
+baseline exactly ON THE FIRST PASS — residue keyed on scratch ids
+only, per the §35 lesson, and no durable history was touched.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Slice five: the candidate-intelligence cluster opens with the
+  Positioning agent** (runPositioning — the next judgment writing what
+  the firm says ABOUT a person to a client), with candidate research /
+  triangulation / psychology following in that cluster's own order;
+  the desk digest writer waits behind them.
+- **Long-action honesty — recommended small fix**: Regenerate (and any
+  ~90s action) can outlive the browser's patience; move the toast to
+  optimistic "Regenerating — this takes about a minute" or poll, so a
+  dropped fetch stops reading as failure while the work lands.
+- **Evaluation staleness note — deferred** until a recruiter asks;
+  generated_at is on the report and the Regenerate button is one
+  click.
+- **The /ops Suspend/Restore relabel — standing**, fourth surfacing.
+
+Deploys `b16560e` and `66dbf74` live; migration 077 applied via MCP
+and checked in. The completion declaration waits on the verdicts above
+and the founder's written confirmation; `NEXT-agent-evaluator.md` is
+deleted only after that. Founder-owned, unchanged: the Resend DNS
+records, the exposed Supabase access token, leaked-password protection,
+the deferred build list (with the rate-limiting bundle), and the
+orphaned 331-byte storage object.
