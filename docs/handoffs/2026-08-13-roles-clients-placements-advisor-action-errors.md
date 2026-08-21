@@ -3976,3 +3976,45 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 40. Positioner verdicts confirmed — the positioning slice is complete — 2026-08-21
+
+The founder confirmed all four §39 verdicts as drafted: candidate
+research opens as slice six (it feeds triangulation, so it leads the
+cluster's remaining order — triangulation then psychology, each with
+its own Phase 0); the positioning panel's long-action fix stays
+deferred until a drop is observed live; model/version stamping stays
+deferred until an audit asks; and the /ops Suspend/Restore relabel —
+standing since §30, surfaced five times — was TIMED with the same
+breath: "do the /ops relabel." It ships in this session as its own
+commit.
+
+The definition of done is met: the judgment that writes what the firm
+says ABOUT a person to a client — the pitches, the emails, the
+positioning summary — signs its own name. Every kit runs as the
+Positioning Agent under the pool's existing grants, lands one trail
+event with its trigger named, preserves every neighbouring field (the
+parser's profile, the evaluator's report — pinned by invariant), and
+fails the D5 way: a refused positioner surfaces its sentence and the
+existing kit stands byte-identical, proven live. The slice's novel
+surface — the first agent write mediated by an RPC — got its own
+control run: SECURITY DEFINER drift on `update_cv_structured_field`
+is caught by name the moment it lands. The drive closed clean, the
+first of the programme to find no defect, and the teardown hit
+baseline exactly on the first pass.
+
+**The agents-as-principals positioning slice is complete.** Five of
+fourteen agents now authenticate as principals — interpreter, ranker,
+parser, evaluator, positioner — with five independent kill switches
+proven live and a trail that names every judgment's author and
+trigger. `NEXT-agent-positioning.md` deleted per its own instruction.
+Next migration is **079**; candidate research's Phase 0 opens now on
+the founder's word ("proceed").
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
