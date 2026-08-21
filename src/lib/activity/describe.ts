@@ -270,6 +270,35 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Wrote the desk digest${size}`;
     }
 
+    case "company_researched": {
+      // The byline names the Company Intelligence Agent; the sentence
+      // names the trigger. Detail carries counts, never names — the
+      // report's contents are the recruiter's to read on the project.
+      const trigger = str(d, "trigger");
+      const sources = num(d, "sources_count");
+      const base =
+        trigger === "re_research"
+          ? "Re-researched the company"
+          : "Researched the company";
+      return sources != null && sources > 0
+        ? `${base} — ${sources} source${sources === 1 ? "" : "s"}`
+        : base;
+    }
+
+    case "hm_researched": {
+      // Same split as company_researched — and the hiring manager's
+      // NAME never rides the trail; it lives in the report body.
+      const trigger = str(d, "trigger");
+      const sources = num(d, "sources_count");
+      const base =
+        trigger === "re_research"
+          ? "Re-researched the hiring manager"
+          : "Researched the hiring manager";
+      return sources != null && sources > 0
+        ? `${base} — ${sources} source${sources === 1 ? "" : "s"}`
+        : base;
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from
