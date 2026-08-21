@@ -213,6 +213,43 @@ export async function regenerateEvaluationAction(
   });
 }
 
+/**
+ * The regenerate poll's read half. A ~90s regenerate can outlive the
+ * browser's fetch — the POST dies with "Failed to fetch" while the
+ * server finishes and lands the write (§37, observed live on the
+ * restore act). A dead fetch proves nothing about the outcome; this
+ * stamp does. The client compares it against the report it was looking
+ * at when it clicked.
+ */
+export async function evaluationStampAction(
+  candidateId: string,
+  projectId: string
+): Promise<ActionResult<string | null>> {
+  return runAction(SUBJECT, async () => {
+    if (!candidateId || !projectId) {
+      throw new Error("Missing candidateId or projectId.");
+    }
+
+    await requireActiveUser();
+    await assertCandidateBelongsToProject(candidateId, projectId);
+
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from("candidates")
+      .select("cv_structured")
+      .eq("id", candidateId)
+      .single<{ cv_structured: Record<string, unknown> | null }>();
+    if (error || !data) throw new Error("Candidate not found.");
+
+    const evaluation = (data.cv_structured ?? {})[EVALUATION_KEY];
+    const stamp =
+      evaluation && typeof evaluation === "object"
+        ? (evaluation as { generated_at?: unknown }).generated_at
+        : null;
+    return typeof stamp === "string" ? stamp : null;
+  });
+}
+
 // ────────────────────────────────────────────────────────────────────────
 // Inline contact-detail edits
 // ────────────────────────────────────────────────────────────────────────

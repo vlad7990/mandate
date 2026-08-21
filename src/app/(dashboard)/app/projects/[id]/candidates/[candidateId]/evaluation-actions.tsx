@@ -9,7 +9,7 @@ import {
   evaluationToEmailDraft,
   evaluationToMarkdown,
 } from "@/lib/ai/evaluation-export";
-import { regenerateEvaluationAction } from "./actions";
+import { regenerateWithHonestToast } from "./regenerate-evaluation";
 import {
   IconClose,
   IconCopy,
@@ -17,7 +17,6 @@ import {
   IconMail,
   IconRefresh,
 } from "@/components/icons";
-import { unwrap } from "@/lib/actions/result";
 
 type Props = {
   evaluation: CandidateEvaluation;
@@ -96,17 +95,14 @@ export function EvaluationActions({
 
   const handleRegenerate = () => {
     if (regenPending) return;
-    startRegen(async () => {
-      try {
-        unwrap(await regenerateEvaluationAction(candidateId, projectId));
-        toast.success("Evaluation regenerated");
-        router.refresh();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Regenerate failed.";
-        console.error("[evaluation] regenerate failed:", err);
-        toast.error(msg);
-      }
-    });
+    startRegen(() =>
+      regenerateWithHonestToast({
+        candidateId,
+        projectId,
+        baselineStamp: evaluation.generated_at,
+        onLanded: () => router.refresh(),
+      })
+    );
   };
 
   return (
