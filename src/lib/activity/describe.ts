@@ -246,6 +246,19 @@ export function describeActivity(event: ActivityEventRow): string {
         : "Triangulated the candidate against the role";
     }
 
+    case "candidate_profiled": {
+      // The byline names the psychology agent; the sentence names the
+      // trigger and whether a recruiter's stated context shaped it —
+      // the context TEXT never enters the trail (it lives visibly in
+      // psychology_context).
+      const trigger = str(d, "trigger");
+      const withContext =
+        d.has_recruiter_context === true ? " with recruiter context" : "";
+      return trigger === "regenerate"
+        ? `Rewrote the candidate's behavioural read${withContext}`
+        : `Wrote the candidate's behavioural read${withContext}`;
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from
