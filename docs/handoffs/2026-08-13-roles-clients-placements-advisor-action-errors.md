@@ -4714,3 +4714,46 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 50. Company-intelligence verdicts confirmed — the slice is complete — 2026-08-21
+
+The founder confirmed all four §49 verdicts as drafted: the remaining
+agents (intake, onboarding, role spec, boolean search — plus the
+shortlist and copilot read-shaped surfaces) queue by usage, each with
+its own Phase 0, the metrics agent's cron-shaped arrival still
+waiting for its own slice (§30, standing); the culture generator
+stands recorded as the nearest sibling — the third company_context
+writer on this slice's exact seam shape, a near-mechanical conversion
+whenever the founder queues it, not built unbidden; the HM override
+selector gap stays surfaced and founder-timed; long-action honesty
+stays deferred with its evidence extended to the product's longest
+calls (64–80s web-searching runs, zero drops).
+
+The definition of done is met. The judgment that researches a company
+in real time — and its pair, the hiring-manager dossier — signs its
+own name: one principal, two acts, one kill switch proven live to
+refuse BOTH at sign-in, before a single search is spent. The first
+zero-new-grant slice proved the pool doctrine carries: 083 touched
+only the vocabulary, and the identity remains the credential plus the
+allowlist entries while the grants stay shared. The first
+web-reaching principal keeps the web at arm's length — reach capped
+in code, sources server-extracted, the trail carrying counts and
+booleans while the hiring manager's name never leaves the report
+body. The control run recorded the programme's first
+boundary-REMOVED regression: the dropped CHECK caught only by the
+direct-insert probe at the table, the abort rolling the drift back
+itself.
+
+**The agents-as-principals company-intelligence slice is complete.**
+Ten of fourteen agents now authenticate as principals.
+`NEXT-agent-company-intel.md` deleted per its own instruction. Next
+migration is **084**; the remaining queue opens on the founder's
+word.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
