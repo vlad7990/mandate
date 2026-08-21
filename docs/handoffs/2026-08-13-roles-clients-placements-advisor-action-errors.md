@@ -4169,3 +4169,108 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 43. The triangulator becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-21
+
+Slice seven of agents-as-principals (plan in
+`NEXT-agent-triangulation.md`, D1–D8 confirmed 2026-08-21). The
+judgment that lines the company, the hiring manager and the person up
+against each other and writes the firm's synthesis now signs its own
+name. One migration (**next is 081**):
+
+- **080 — vocabulary only, the narrowest slice yet.**
+  `candidate_triangulated` + the allowlist at seven; zero table grants
+  (Phase 0's answer held: the company and HM reports live on
+  projects.company_context, inside 074's projects_agent_select).
+  **`agent_triangulation_invariants.sql`** — 5 invariants, clean pass:
+  the report landing with FOUR sibling agents' fields intact; the
+  history-intact COUNT at seven (§42 doctrine); the negative matrix;
+  the forgery boundary both directions; seven-way kill-switch
+  independence. **Control run verified (novel per slice), stronger
+  than designed:** `is_agent()` re-created as a direct role read
+  without the status='active' gate — the "simplification" drift —
+  aborted at INVARIANT-FAIL (5) one gate EARLIER than planned: "the
+  suspended triangulator reads 1 candidates". The agent SELECT
+  policies gate on is_agent() too (074's shape: org_id is not
+  status-gated; is_agent() IS the suspension kill), so the regression
+  disarms reads and door together and is caught at first touch.
+  Restored to the current_user_role() form, verified, clean pass
+  re-run, zero residue.
+
+**The seam (`ffb6234`).** `signInTriangulationAgent` beside the six
+existing. `runTriangulationAndPersist` splits at judgment; D5 carries
+TWO refusals with different owners: the agent refusal ("The
+Triangulation Agent could not run — … The existing report stands.")
+and the readiness refusal, returned as a typed `missing_inputs`
+result so the action renders today's exact human sentence
+("Triangulation needs all three base reports first. Missing: …").
+One `candidate_triangulated` event per landed report, trigger
+generate/regenerate. Live account:
+`vbreygin+triangulation@gmail.com`, id `107208f0-…`, Mandate HQ, §30
+recipe; credentials in Vercel production and `.env.local`. Durable
+baseline: **8 users, 21 trail events** (seven agents' creation
+records).
+
+### Driven live on production (deploy `9ych59qs1` = `ffb6234`)
+
+Scratch world inside Mandate HQ (harness `08000000`, drive `0d6`):
+COO Search (Triangulation Drive) → Sable Trentworth with all three
+base reports seeded → Orin Faulkes, scratch operator. One harness
+note, not a product defect: the first seed shaped
+candidate_intelligence too thinly and the candidate page's server
+render crashed on it — the panel legitimately expects the full report
+type (arrays it maps over); reseeded full-shape, page healthy. The
+acts:
+
+1. **Generate report** → the synthesis landed in 66s with all four
+   sibling keys intact, one `candidate_triangulated` event (actor
+   "Triangulation Agent", trigger generate), zero agent sessions.
+2. **Suspended from /ops** ("Triangulation Agent suspended." — the
+   relabeled verbs' second live proof) → Regenerate refused with the
+   D5 sentence verbatim, the report byte-identical, no event, no
+   session.
+3. **Restored** → Regenerate landed in 57s: fresh generated_at,
+   second event with trigger regenerate and replaced_existing true.
+
+Probe matrix with the triangulator's real JWT: pool answers; clients,
+reviews, organizations, events, fees, roster-beyond-self refuse;
+DELETE zero rows; portal RPC empty; the human door 204s writing
+nothing; an unknown type refused by name. Sign-out revoked the probe
+session. **Teardown to baseline exactly on the first pass** — 21
+events, the triangulator's creation trail untouched, the founder's
+own browser session the only survivor.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Slice eight: Psychology** (`generatePsychologyAction`) closes the
+  candidate-intelligence cluster. Its Phase 0 should note it carries
+  RECRUITER CONTEXT (free text prepended to the system prompt and
+  persisted to cv_structured.psychology_context) plus three
+  human-annotation keys (notes/flags/confidence overrides) that are
+  HUMAN writes and must stay human — the seam boundary will need one
+  more sentence than usual. The digest writer follows the cluster.
+- **The is_agent() discovery — recorded, no action needed**: the
+  suspension kill is a single point (is_agent() over
+  current_user_role()) by DESIGN, and the 080 control run now proves
+  a regression there is caught at first touch by every slice's
+  suspended-reads invariant. The redundancy is in the harnesses, not
+  the schema — which is where it belongs.
+- **Harness seeding — trap entry recommended**: scratch worlds that
+  seed agent-report keys must seed the FULL report type (the panels
+  map over its arrays server-side); an under-shaped seed crashes the
+  page and reads as a product defect until diffed.
+- **Long-action honesty — deferred, unchanged** (66s and 57s, no
+  drop observed).
+
+Deploy `9ych59qs1` live; migration 080 applied via MCP and checked
+in. The completion declaration for the triangulation slice waits on
+the verdicts above and the founder's written confirmation;
+`NEXT-agent-triangulation.md` is deleted only after that.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
