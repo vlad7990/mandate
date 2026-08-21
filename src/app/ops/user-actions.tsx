@@ -11,21 +11,33 @@ import { unwrap } from "@/lib/actions/result";
 type Props = {
   userId: string;
   fullName: string;
+  /** The row's current status. The verbs on these buttons follow it:
+   * a pending signup is approved or rejected; an existing account is
+   * suspended or restored. Same actions underneath — only the words
+   * stop wearing their waitlist-era names on rows where the act is
+   * something else (§30's observation, confirmed §40). */
+  status: string;
 };
 
-export function UserStatusActions({ userId, fullName }: Props) {
+export function UserStatusActions({ userId, fullName, status }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  const pending = status === "pending";
+  const downLabel = pending ? "Reject" : "Suspend";
+  const upLabel = pending ? "Approve" : "Restore";
+  const downToast = pending ? "rejected" : "suspended";
+  const upToast = pending ? "approved" : "restored";
 
   const run = (action: "approve" | "reject") => {
     startTransition(async () => {
       try {
         if (action === "approve") {
           unwrap(await approveUserAction(userId));
-          toast.success(`${fullName} approved.`);
+          toast.success(`${fullName} ${upToast}.`);
         } else {
           unwrap(await rejectUserAction(userId));
-          toast.success(`${fullName} rejected.`);
+          toast.success(`${fullName} ${downToast}.`);
         }
         router.refresh();
       } catch (err) {
@@ -46,7 +58,7 @@ export function UserStatusActions({ userId, fullName }: Props) {
         className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-error hover:text-error transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <IconClose size={14} />
-        Reject
+        {downLabel}
       </button>
       <button
         type="button"
@@ -62,7 +74,7 @@ export function UserStatusActions({ userId, fullName }: Props) {
         ) : (
           <IconCheck size={14} />
         )}
-        Approve
+        {upLabel}
       </button>
     </div>
   );

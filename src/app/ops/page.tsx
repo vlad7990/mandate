@@ -133,6 +133,7 @@ export default async function OpsOverviewPage() {
                   <UserStatusActions
                     userId={u.id}
                     fullName={u.full_name?.trim() || u.email}
+                    status={u.status}
                   />
                 </div>
               </li>

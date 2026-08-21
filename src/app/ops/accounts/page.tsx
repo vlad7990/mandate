@@ -176,6 +176,7 @@ function AccountTable({
                   <UserStatusActions
                     userId={u.id}
                     fullName={u.full_name?.trim() || u.email}
+                    status={u.status}
                   />
                 )}
               </li>
