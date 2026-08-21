@@ -4757,3 +4757,103 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 51. The Culture Agent becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-21
+
+Slice eleven of agents-as-principals (plan in `NEXT-agent-culture.md`,
+D1–D8 confirmed 2026-08-21) — the second of the company-side grouping
+and the second ZERO-NEW-GRANT slice: the projects row and the
+feedback tail are read under 074's grants (the feedback SELECT is the
+interpreter's, reused — human testimony read under a grant minted ten
+slices ago), the merge-write rides the pool's projects UPDATE. One
+migration (**next is 085**):
+
+- **084 — vocabulary only**: `culture_profiled` into the
+  CHECK (live pg_constraint list) and the allowlist at twelve.
+  **`agent_culture_invariants.sql`** — 5 invariants, clean pass: the
+  merge-write lands with the recruiter's context VERBATIM on
+  culture_context and every sibling surviving (intelligence_report,
+  hm_intelligence, culture_notes, culture_flags); the
+  DELETE-WHEN-EMPTY pin (a context-less regenerate REMOVES
+  culture_context — stale context must not outlive the read it
+  shaped); the context TEXT provably absent from the trail; history
+  intact at twelve by COUNT; kill switches independent at eleven.
+  The control run **ADDED a users_agent_select roster policy** ("so
+  agents can label people in reports") — the first regression of the
+  PEOPLE boundary itself, the programme's most-repeated refusal. The
+  harness aborted at INVARIANT-FAIL (2) reading three users rows
+  where one was lawful; drift and harness in one transaction, the
+  abort rolling the policy back — residue-free by construction.
+
+**The seam (`3b2e1ab`).** The interpreter's shape:
+`runCompanyCultureAndPersist` signs in the eleventh principal, reads
+the row and the feedback tail under its own grants, derives (skills
+ride the agent's session via skillClient; wrapWithRecruiterContext
+unchanged), merges culture_profile under its own name, carries the
+context verbatim or deletes the key, records the event with
+has_recruiter_context and feedback_count, signs out. The action keeps
+the mandates:write gate, the request-only context string handover,
+and the D5 sentence. Live account: `vbreygin+culture@gmail.com`, id
+`78b8eb2a-…`, Mandate HQ, §30 recipe; `AGENT_CULTURE_*` in Vercel
+production and `.env.local`. Durable baseline: **12 users, 33 trail
+events** (eleven agents' creation records).
+
+### Driven live on production (deploy `bkjwzi0ss` = `3b2e1ab`)
+
+Scratch world 0da inside Mandate HQ: an is_founder operator, a
+labelled scratch project, two seeded feedback rows. A drive lesson
+worth its line: the culture panel's header button only TOGGLES the
+context drawer — the act lives on the drawer's "Run" (the psychology
+trap, rediscovered on a second panel). The acts:
+
+1. **Analyse (no context)** → landed in ~34s: culture_profile on the
+   row, NO culture_context key, one `culture_profiled` event
+   (actor "Culture Agent", trigger analyse, has_recruiter_context
+   false, feedback_count 2).
+2. **Suspended from /ops** → Run refused with the D5 sentence
+   VERBATIM in ~900ms; nothing moved.
+3. **Restored → regenerate WITH context** → landed in ~14s, toast
+   "Profile regenerated with your context": the context verbatim on
+   culture_context (the drawer's prefill on the next open proved the
+   round-trip), the event's boolean TRUE, the text appearing ZERO
+   times in the trail.
+4. **Context-less regenerate** → landed in ~9s: culture_context
+   DELETED — the delete-when-empty honesty proven live; the third
+   event's boolean false; siblings intact through all three merges;
+   zero agent sessions after every run.
+
+Probe matrix with the agent's real JWT: lawful reads answer
+(projects 3, feedback 5, candidates 1, notes 3, skills 5, users
+self-only); clients, placements, organizations, activity_events,
+desk_digests all ZERO; the human door 204s writing nothing; a
+nonsense type refused by name. Sign-out revoked the probe session.
+**Teardown to baseline exactly on the first pass** — 33 events, the
+eleventh creation trail untouched, the founder's session the only
+survivor.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The company-side grouping is COMPLETE** — company intelligence,
+  the HM dossier, and culture all sign their own names. The remaining
+  agents (intake, onboarding, role spec, boolean search — plus the
+  shortlist and copilot read-shaped surfaces) queue by usage on the
+  founder's word; the metrics agent's cron-shaped arrival still waits
+  for its own slice (§30, standing).
+- **The context-drawer pattern — a recorded trap, second sighting**:
+  panels whose header button toggles a drawer (psychology, culture)
+  put the act on the drawer's "Run"; drives must click through.
+- **Long-action honesty — deferred stands**: 9–34s runs, zero drops.
+
+Deploy `bkjwzi0ss` live; migration 084 applied via MCP and checked
+in; tsc/vitest 790/eslint/build green. The completion declaration for
+the culture slice waits on the verdicts above and the founder's
+written confirmation; `NEXT-agent-culture.md` is deleted only after
+it.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
