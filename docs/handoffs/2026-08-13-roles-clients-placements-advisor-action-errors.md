@@ -5042,3 +5042,101 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 55. The Intake Agent becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-21
+
+Slice thirteen of agents-as-principals (plan in
+`NEXT-agent-intake.md`, D1–D8 confirmed 2026-08-21) — the
+fourteen-agent map's FIRST agent converted thirteenth, the third
+ZERO-NEW-GRANT slice, and the first FIRE-AND-FORGET conversion. One
+migration (**next is 087**):
+
+- **086 — vocabulary only**: `intake_analyzed` into the CHECK (live
+  pg_constraint list); allowlist at fourteen. NO policies touched —
+  074's projects S+U cover the judgment, and the clients registry
+  stays the recruiter's. **`agent_intake_invariants.sql`** — 5
+  invariants, clean pass: the judgment lands with the HUMAN's fields
+  surviving (one_line_input, created_by); the brief's text provably
+  absent from the trail; the clients registry refused in BOTH shapes
+  — the table reads zero AND the resolve_client RPC (SECURITY
+  INVOKER) gives birth to nothing under an agent; history at
+  fourteen by COUNT; kill switches independent at thirteen. The
+  control run **rewrote record_agent_event to INSERT into the trail
+  directly** ("skip the wrapper") — the act landed with a NULL
+  actor, wearing the system's blank face, and the harness aborted at
+  the SIGNATURE PIN; transactional DDL rolled the rewrite back —
+  residue-free by construction. The first control run to regress the
+  ATTRIBUTION itself.
+
+**The seam (`4b9d53b`).** The parser split, INVERTED: the recruiter's
+act (opening the mandate — the optimistic INSERT, the placeholders,
+the brief) lands first; inside after(), `runIntakeAnalysisAndPersist`
+signs in the thirteenth principal, judges the one-line brief, UPDATEs
+the mandate's shape under its own name (title, company, calibration,
+context — never client_id, never created_by), records the event, and
+RETURNS the analysis; the recruiter's cookie context then does the
+client bookkeeping the judgment enables — resolve_client, the link,
+the promotion — exactly as before. A refused run leaves the mandate
+honestly at "Analyzing…" with its brief intact; the D5 sentence
+lives in the server log (fire-and-forget has no toast to ride). Live
+account: `vbreygin+intake@gmail.com`, id `58d6103b-…`, Mandate HQ,
+§30 recipe; `AGENT_INTAKE_*` in Vercel production and `.env.local`.
+Durable baseline: **14 users, 39 trail events** (thirteen agents'
+creation records).
+
+### Driven live on production (deploy `79ufrd1sl` = `4b9d53b`)
+
+Three mandates opened through the REAL /app/projects/new form by the
+0dc operator. The acts:
+
+1. **Open a mandate** → the page landed instantly on the placeholder;
+   ~20s later the title resolved to "VP of Platform Engineering" /
+   "Drivecorp Photonics" — the SPLIT VISIBLE IN THE ROWS: the
+   intake_analyzed event under "Intake Agent" (input_chars 107,
+   company_identified true), the client row born under "Drive 0dc
+   Operator". One judgment, two signatures, each honest.
+2. **Suspended from /ops → second mandate** → stayed honestly at
+   "Analyzing…": brief intact, NO analysis, NO event, NO client
+   born, the D5 sentence in the server log.
+3. **Restored → third mandate** → analyzed and linked (second event,
+   second client row under the operator).
+
+Probe matrix with the agent's real JWT: projects 5 (the pool's
+lawful read, mid-drive), users self-only, skills 5; clients,
+placements, organizations, activity_events, desk_digests all ZERO —
+and the star probe: `resolve_client` under the agent's JWT refused
+BY NAME ("new row violates row-level security policy for table
+clients"). The human door 204s writing nothing; a nonsense type
+refused. Sign-out revoked the probe session. **Teardown to baseline
+exactly on the first pass** — 39 events, the thirteenth creation
+trail untouched, the founder's session the only survivor.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The remaining agents** (onboarding, role spec — plus the
+  shortlist and copilot read-shaped surfaces) queue by usage on the
+  founder's word; the metrics agent's cron-shaped arrival still
+  waits for its own slice (§30, standing).
+- **The stuck-mandate gap — surfaced**: a failed or refused intake
+  leaves "Analyzing…" forever, true before this slice and true
+  after; a retry surface or an honest failed-state title is product
+  work, founder-timed.
+- **The skills gap, second sighting — surfaced**: intake never sees
+  recruiter-authored skills; one seam line whenever the founder
+  wants intake steerable.
+- **Long-action honesty — nothing to defer**: the run is
+  fire-and-forget; the recruiter never waits on it.
+
+Deploy `79ufrd1sl` live; migration 086 applied via MCP and checked
+in; tsc/vitest 790/eslint/build green. The completion declaration for
+the intake slice waits on the verdicts above and the founder's
+written confirmation; `NEXT-agent-intake.md` is deleted only after
+it.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
