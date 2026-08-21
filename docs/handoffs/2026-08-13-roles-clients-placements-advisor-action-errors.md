@@ -4461,3 +4461,99 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 47. The digest writer becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-21
+
+Slice nine of agents-as-principals (plan in `NEXT-agent-digest.md`,
+D1–D8 confirmed 2026-08-21) — the first conversion outside the
+candidate cluster, and the §35 parser split generalised: the MANAGER
+builds the rollup under desk:manage and hands it over in memory; the
+agent judges, INSERTs, records, and sees nothing. One migration
+(**next is 083**):
+
+- **082 — one INSERT-only grant on the append-only record table**,
+  the mirror of 081's SELECT-only: `desk_digests_agent_insert` with
+  created_by PINNED to auth.uid() (a digest cannot land under a
+  human's name), plus `desk_digest_generated` (the first
+  non-candidate agent event) and the allowlist at nine.
+  **`agent_digest_invariants.sql`** — 5 invariants, clean pass, and
+  the control run returned a STRUCTURAL DISCOVERY in two acts: an
+  added agent UPDATE policy alone is INERT, because an UPDATE's WHERE
+  reads existing rows under SELECT policies and the no-archive pin
+  grants none — the archive-blindness IS the immutability. Only the
+  full drift (SELECT + UPDATE added together, "let the agent read its
+  archive and fix typos") landed a rewrite, and the harness aborted
+  at INVARIANT-FAIL (2). Related, from the first draft:
+  INSERT..RETURNING id is refused for the same reason — the seam
+  inserts BLIND, by design, and the harness documents both. The
+  first control run that regresses by ADDING policies.
+
+**The seam (`da39db3`).** `signInDeskDigestAgent` beside the eight
+existing. `runDeskDigestAndPersist` takes the manager-assembled
+input, runs the model call, inserts without read-back, records one
+event with counts (members, unassigned) and never names, signs out.
+D5 is structural: append-only means a refused or failed run has
+nothing it can destroy. Live account: `vbreygin+digest@gmail.com`,
+id `2e3b9603-…`, Mandate HQ, §30 recipe; credentials in Vercel
+production and `.env.local`. Durable baseline: **10 users, 27 trail
+events** (nine agents' creation records), desk_digests durable
+count 0.
+
+### Driven live on production (deploy `huxu02sig` = `da39db3`)
+
+No scratch world needed beyond the operator — the digest reads the
+REAL desk under Orin Faulkes (0d8). The acts:
+
+1. **Generate digest** → landed in 25s, the desk_digests row
+   `created_by` = the AGENT, one `desk_digest_generated` event
+   (actor "Desk Digest Agent", trigger generate, members_count 2,
+   unassigned 0), zero agent sessions.
+2. **Suspended from /ops** → Regenerate refused with the D5 sentence
+   verbatim ("…The previous digest stands."), the digest count
+   unchanged at 1 — nothing to destroy, nothing destroyed.
+3. **Restored** → Regenerate landed in 16s and APPENDED: two rows,
+   the first surviving untouched — append-only proven live — second
+   event with trigger regenerate.
+
+Probe matrix with the digest writer's real JWT: desk_digests SELECT
+empty (the writer cannot read the record it feeds); UPDATE and DELETE
+land on zero rows with both rows surviving; an INSERT with a forged
+human `created_by` 403s; clients, placements, organizations,
+activity_events, roster-beyond-self all refuse; the human door 204s
+writing nothing. Sign-out revoked the probe session. **Teardown to
+baseline exactly on the first pass** — the drive's digest rows and
+events keyed on the KNOWN-ZERO durable baseline (0 digests, 0 digest
+events before the drive), 27 events, the digest writer's creation
+trail untouched, the founder's session the only survivor.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The remaining five agents** (intake, company research,
+  onboarding, role spec, boolean search — plus shortlist and copilot
+  read-shaped surfaces) queue by usage on the founder's word, each
+  with its own Phase 0; the metrics agent's cron-shaped arrival still
+  waits for its own slice (§30, standing).
+- **The skills-injection gap on the digest — surfaced** (Phase 0
+  observation): the digest is the one model call recruiter-authored
+  skills cannot steer. One line in the seam whenever the founder
+  wants managerial tone steerable; not built unbidden.
+- **The RETURNING/SELECT-policy discovery — trap entry recommended**:
+  under RLS, INSERT..RETURNING and UPDATE/DELETE WHERE clauses read
+  rows under SELECT policies — a write-only principal inserts blind,
+  and a write policy added without SELECT is inert. Both directions
+  now proven by the 082 control run.
+- **Long-action honesty — deferred, strongest evidence yet** (25s
+  and 16s).
+
+Deploy `huxu02sig` live; migration 082 applied via MCP and checked
+in. The completion declaration for the digest slice waits on the
+verdicts above and the founder's written confirmation;
+`NEXT-agent-digest.md` is deleted only after that.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
