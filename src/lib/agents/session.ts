@@ -197,6 +197,22 @@ export async function signInCultureAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Boolean Search Agent — slice twelve, the sourcing-side
+ * opener and the first new-grant principal since 082: job_specs
+ * SELECT (the brief is read-only), boolean_queries SELECT (the
+ * current draft is model input) and INSERT (the versioned append) —
+ * no UPDATE or DELETE ever; the version history is immutable to it
+ * and the recruiter's edit/restore acts stay the human's own.
+ */
+export async function signInBooleanSearchAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "boolean_search",
+    email: process.env.AGENT_BOOLEAN_EMAIL,
+    password: process.env.AGENT_BOOLEAN_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

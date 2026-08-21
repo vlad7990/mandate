@@ -4,18 +4,14 @@ import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
 import {
-  generateAllSourcingQueries,
-  regenerateSingleQuery,
-  type GenerationContext,
+  runSourcingGenerateAllAndPersist,
+  runSourcingRegenerateAndPersist,
+  type SourcingRunResult,
 } from "@/lib/ai/generate-sourcing";
 import {
   SLOTS,
   type SlotKey,
 } from "@/lib/ai/sourcing-analysis";
-import {
-  normalizeSections,
-  type JobSpecSections,
-} from "@/lib/ai/job-spec-analysis";
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
 
 type AuthContext = {
@@ -27,71 +23,6 @@ async function requireAuth(): Promise<AuthContext> {
   return requireActionContext("candidates:write");
 }
 
-type ProjectRow = {
-  calibration_model: Partial<CalibrationModel> | null;
-  company_context: Partial<CompanyContext> | null;
-  organization_id: string | null;
-};
-
-type FinalSpecRow = {
-  version: number;
-  content_json: unknown;
-};
-
-/**
- * Pull the project's calibration model + company context + the FINAL job
- * spec sections. The sourcing AI calls require all three so the boolean
- * strings reflect the canonical hiring brief. Throws if the prerequisite
- * (final job spec) isn't present — the route also gates on this, but the
- * action validates defensively.
- */
-async function loadGenerationContext(
-  projectId: string
-): Promise<GenerationContext> {
-  const supabase = await createServerSupabaseClient();
-
-  const { data: project, error: projectError } = await supabase
-    .from("projects")
-    .select("calibration_model, company_context, organization_id")
-    .eq("id", projectId)
-    .single<ProjectRow>();
-
-  if (projectError || !project) {
-    throw new Error(
-      `Failed to load project: ${projectError?.message ?? "not found"}`
-    );
-  }
-
-  const { data: finalSpec, error: specError } = await supabase
-    .from("job_specs")
-    .select("version, content_json")
-    .eq("project_id", projectId)
-    .eq("is_final", true)
-    .maybeSingle<FinalSpecRow>();
-
-  if (specError) {
-    throw new Error(`Failed to load final job spec: ${specError.message}`);
-  }
-  if (!finalSpec) {
-    throw new Error(
-      "No finalised job spec for this project. Mark a version as final before generating sourcing queries."
-    );
-  }
-
-  const sections: JobSpecSections = normalizeSections(finalSpec.content_json);
-
-  return {
-    job_spec: sections,
-    job_spec_version: finalSpec.version,
-    calibration: project.calibration_model ?? {},
-    company: project.company_context ?? {},
-    skill_context: {
-      project_id: projectId,
-      organization_id: project.organization_id,
-    },
-  };
-}
-
 /**
  * First-time generation: produce all six sourcing strings in one Anthropic
  * call and INSERT one row per (project_id, query_type, search_type) at
@@ -100,49 +31,17 @@ async function loadGenerationContext(
  */
 export async function generateAllAction(projectId: string): Promise<ActionResult> {
   return runAction(SUBJECT, async () => {
-    const { userId, organizationId } = await requireAuth();
-    const supabase = await createServerSupabaseClient();
+    if (!projectId) throw new Error("Missing projectId.");
+    // The recruiter's session keeps only the gate (085, the
+    // interpreter's shape): the projects row, the final spec, and
+    // the existing-rows check are lawfully the BOOLEAN SEARCH
+    // AGENT's own reads, so the action hands an id and the agent
+    // reads, builds all six strings, appends version 1, and records
+    // the trail event.
+    await requireAuth();
 
-    const { count, error: countError } = await supabase
-      .from("boolean_queries")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", projectId);
-
-    if (countError) {
-      throw new Error(`Failed to check existing queries: ${countError.message}`);
-    }
-    if ((count ?? 0) > 0) {
-      throw new Error(
-        "Sourcing queries already exist for this project. Use 'Regenerate' on individual queries instead."
-      );
-    }
-
-    const ctx = await loadGenerationContext(projectId);
-    const queries = await generateAllSourcingQueries(ctx);
-    const now = new Date().toISOString();
-
-    const rows = SLOTS.map((slot) => ({
-      project_id: projectId,
-      organization_id: organizationId,
-      query_type: slot.query_type,
-      search_type: slot.search_type,
-      content: queries[slot.key] ?? "",
-      version: 1,
-      updated_at: now,
-    }));
-
-    const { error: insertError } = await supabase
-      .from("boolean_queries")
-      .insert(rows);
-
-    if (insertError) {
-      throw new Error(`Failed to persist queries: ${insertError.message}`);
-    }
-
-    // userId reserved for future audit trail (created_by isn't a column on
-    // boolean_queries — leaving the ref as documentation rather than a
-    // dropped binding).
-    void userId;
+    const run = await runSourcingGenerateAllAndPersist(projectId);
+    throwUnlessReady(run);
 
     revalidatePath(`/app/projects/${projectId}/sourcing`);
   });
@@ -160,50 +59,48 @@ export async function regenerateOneAction(
   feedback: string
 ): Promise<ActionResult> {
   return runAction(SUBJECT, async () => {
-    const { organizationId } = await requireAuth();
-    const supabase = await createServerSupabaseClient();
-
+    if (!projectId) throw new Error("Missing projectId.");
     const slot = SLOTS.find((s) => s.key === slotKey);
     if (!slot) {
       throw new Error(`Unknown slot: ${slotKey}`);
     }
+    // Same 085 seam, the regen act: the agent reads the current
+    // draft under its own SELECT and appends the next version; the
+    // recruiter's feedback string is the request-only human input —
+    // it shapes the prompt and never rides the trail.
+    await requireAuth();
 
-    // Latest version + current content for this slot. The current content
-    // is fed into the regen prompt so the model can iterate from it (and
-    // honour any inline edits the recruiter made before regenerating).
-    const { data: latest } = await supabase
-      .from("boolean_queries")
-      .select("version, content")
-      .eq("project_id", projectId)
-      .eq("query_type", slot.query_type)
-      .eq("search_type", slot.search_type)
-      .order("version", { ascending: false })
-      .limit(1)
-      .maybeSingle<{ version: number; content: string }>();
-
-    const current = latest?.content ?? "";
-    const nextVersion = (latest?.version ?? 0) + 1;
-
-    const ctx = await loadGenerationContext(projectId);
-    const newContent = await regenerateSingleQuery(slotKey, current, feedback, ctx);
-    const now = new Date().toISOString();
-
-    const { error } = await supabase.from("boolean_queries").insert({
-      project_id: projectId,
-      organization_id: organizationId,
-      query_type: slot.query_type,
-      search_type: slot.search_type,
-      content: newContent,
-      version: nextVersion,
-      updated_at: now,
-    });
-
-    if (error) {
-      throw new Error(`Failed to persist regenerated query: ${error.message}`);
-    }
+    const run = await runSourcingRegenerateAndPersist(projectId, slotKey, feedback);
+    throwUnlessReady(run);
 
     revalidatePath(`/app/projects/${projectId}/sourcing`);
   });
+}
+
+/** Map the seam's statuses onto the messages this surface has always
+ * spoken — plus the D5 sentence for the refused run. */
+function throwUnlessReady(run: SourcingRunResult): void {
+  switch (run.status) {
+    case "ready":
+      return;
+    case "agent_unavailable":
+      throw new Error(
+        "The Boolean Search Agent could not run — an operator has suspended " +
+          "it or its credentials are absent. The existing queries stand."
+      );
+    case "unavailable":
+      throw new Error("Project not found.");
+    case "no_final_spec":
+      throw new Error(
+        "No finalised job spec for this project. Mark a version as final before generating sourcing queries."
+      );
+    case "already_generated":
+      throw new Error(
+        "Sourcing queries already exist for this project. Use 'Regenerate' on individual queries instead."
+      );
+    default:
+      throw new Error("Sourcing generation failed. Try again.");
+  }
 }
 
 /**
