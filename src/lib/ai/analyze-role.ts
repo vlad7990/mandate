@@ -12,6 +12,7 @@ import {
   splitAnalysis,
   type RoleAnalysis,
 } from "./role-analysis";
+import { signInIntakeAgent } from "@/lib/agents/session";
 
 const ANALYSIS_MODEL = "claude-sonnet-4-6";
 
@@ -27,40 +28,151 @@ async function createReadOnlySupabaseClient() {
         },
         setAll() {
           // No-op: after() callbacks cannot mutate response cookies. Read-only is fine
-          // because the auth cookie is already valid for the duration of the AI call.
+          // because the auth cookie is already valid for the duration of the human half.
         },
       },
     }
   );
 }
 
+// ────────────────────────────────────────────────────────────────────────
+// The seam (086): the INTAKE AGENT's session, signed in per run — the
+// parser split, INVERTED. The recruiter's act (opening the mandate:
+// the optimistic INSERT, the placeholders, the brief) has already
+// landed before this runs. The agent judges the one-line brief,
+// UPDATEs the mandate row under its own name (title, company,
+// calibration, context — never client_id, never created_by), records
+// the event, signs out, and RETURNS the analysis — because the client
+// bookkeeping the judgment enables (resolve_client, the client_id
+// link, the context promotion) touches the CLIENTS registry the
+// negative matrix refuses to agents, and stays the recruiter's act in
+// the after() context below.
+// ────────────────────────────────────────────────────────────────────────
+
+export type IntakeRunResult =
+  | { status: "ready"; analysis: RoleAnalysis }
+  /** Not eligible: project missing or outside the agent's org-bound
+   * reach. */
+  | { status: "unavailable" }
+  /** The Intake Agent refused to sign in — suspended from /ops or
+   * credentials absent. Nothing was analyzed and NOTHING WAS
+   * DESTROYED (D5): the mandate keeps its placeholders and its
+   * one-line brief. Fire-and-forget — the sentence lives in the
+   * server log; the mandate stays honestly at "Analyzing…". */
+  | { status: "agent_unavailable"; reason: string }
+  /** Analysis or persistence failed; logged. */
+  | { status: "failed" };
+
+export async function runIntakeAnalysisAndPersist(
+  projectId: string,
+  oneLineInput: string
+): Promise<IntakeRunResult> {
+  const session = await signInIntakeAgent();
+  if (!session.ok) {
+    console.error(
+      `[analyze-role] The Intake Agent could not run — an operator has ` +
+        `suspended it or its credentials are absent. The mandate keeps its ` +
+        `one-line brief. (${session.reason})`
+    );
+    return { status: "agent_unavailable", reason: session.reason };
+  }
+
+  try {
+    const supabase = session.client;
+
+    const { data: project, error } = await supabase
+      .from("projects")
+      .select("id, organization_id")
+      .eq("id", projectId)
+      .maybeSingle<{ id: string; organization_id: string | null }>();
+    if (error || !project) return { status: "unavailable" };
+
+    let parsed: RoleAnalysis;
+    try {
+      const anthropic = getAnthropic();
+      const response = await anthropic.messages.create({
+        model: ANALYSIS_MODEL,
+        max_tokens: 1024,
+        system: ROLE_ANALYSIS_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: oneLineInput }],
+        output_config: {
+          format: {
+            type: "json_schema",
+            schema: ROLE_ANALYSIS_SCHEMA,
+          },
+        },
+      });
+      const textBlock = response.content.find((b) => b.type === "text");
+      if (!textBlock || textBlock.type !== "text") {
+        throw new Error("Anthropic response contained no text block");
+      }
+      parsed = JSON.parse(textBlock.text) as RoleAnalysis;
+    } catch (err) {
+      console.error("[analyze-role] agent analysis failed", err);
+      return { status: "failed" };
+    }
+
+    const { calibration_model, company_context } = splitAnalysis(parsed);
+
+    const { error: updateErr } = await supabase
+      .from("projects")
+      .update({
+        title: parsed.role_title,
+        company_name: parsed.company_name,
+        calibration_model,
+        // The mandate's frozen copy. The client gets the canonical one
+        // in the human half.
+        company_context,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", projectId);
+    if (updateErr) {
+      console.error("[analyze-role] failed to persist the analysis", updateErr);
+      return { status: "failed" };
+    }
+
+    // The trail (D4): a length and a boolean — the brief's text never
+    // rides the trail, and client resolution is NOT claimed here (it
+    // is the recruiter's subsequent act).
+    const { error: eventErr } = await supabase.rpc("record_agent_event", {
+      p_event_type: "intake_analyzed",
+      p_project_id: projectId,
+      p_detail: {
+        agent_kind: "intake",
+        trigger: "create",
+        input_chars: oneLineInput.length,
+        company_identified:
+          typeof parsed.company_name === "string" &&
+          parsed.company_name.trim().length > 0,
+      },
+    });
+    if (eventErr) {
+      console.error("[analyze-role] failed to record the intake event", eventErr);
+    }
+
+    return { status: "ready", analysis: parsed };
+  } finally {
+    // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
+    await session.signOut();
+  }
+}
+
+/**
+ * The full intake flow inside after(): the agent's judgment (above),
+ * then the HUMAN half — client resolution and promotion under the
+ * recruiter's own cookie session, exactly as before 086. A refused or
+ * failed agent run returns early: the mandate keeps its placeholders
+ * and its brief, and the client bookkeeping simply doesn't happen
+ * (a mandate with an unresolved client, not a failed mandate).
+ */
 export async function analyzeAndStoreRole(
   projectId: string,
   oneLineInput: string
 ): Promise<void> {
-  const anthropic = getAnthropic();
+  const run = await runIntakeAnalysisAndPersist(projectId, oneLineInput);
+  if (run.status !== "ready") return;
 
-  const response = await anthropic.messages.create({
-    model: ANALYSIS_MODEL,
-    max_tokens: 1024,
-    system: ROLE_ANALYSIS_SYSTEM_PROMPT,
-    messages: [{ role: "user", content: oneLineInput }],
-    output_config: {
-      format: {
-        type: "json_schema",
-        schema: ROLE_ANALYSIS_SCHEMA,
-      },
-    },
-  });
-
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Anthropic response contained no text block");
-  }
-
-  const parsed = JSON.parse(textBlock.text) as RoleAnalysis;
-  const { calibration_model, company_context } = splitAnalysis(parsed);
-
+  const parsed = run.analysis;
   const supabase = await createReadOnlySupabaseClient();
 
   // This is the moment the mandate stops being "Analyzing…" and acquires a
@@ -78,26 +190,18 @@ export async function analyzeAndStoreRole(
     createdBy: project?.created_by ?? null,
   });
 
-  const { error } = await supabase
-    .from("projects")
-    .update({
-      title: parsed.role_title,
-      company_name: parsed.company_name,
-      calibration_model,
-      // The mandate's frozen copy. The client gets the canonical one below.
-      company_context,
-      // Null when the name could not be resolved — the mandate keeps its
-      // company_name either way, so nothing downstream breaks.
-      ...(clientId ? { client_id: clientId } : {}),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", projectId);
-
-  if (error) {
-    throw new Error(`Failed to persist role analysis: ${error.message}`);
+  if (clientId) {
+    const { error } = await supabase
+      .from("projects")
+      .update({ client_id: clientId })
+      .eq("id", projectId);
+    if (error) {
+      console.error("[analyze-role] failed to link the client", error.message);
+    }
   }
 
   // Forward the research to the client so the next mandate here starts warm.
+  const { company_context } = splitAnalysis(parsed);
   await promoteCompanyContextToClient(supabase, {
     clientId,
     companyContext: company_context,

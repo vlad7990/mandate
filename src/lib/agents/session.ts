@@ -213,6 +213,23 @@ export async function signInBooleanSearchAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Intake Agent — slice thirteen, the fourteen-agent map's
+ * first agent converted thirteenth, and the third zero-new-grant
+ * principal. Its judgment touches ONE row of one table — the mandate
+ * being born — plus the trail door; the clients registry (the
+ * resolve_client find-or-create, the client_id link, the context
+ * promotion) stays the recruiter's act in the after() context: the
+ * parser split, inverted — the agent hands its analysis BACK.
+ */
+export async function signInIntakeAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "intake",
+    email: process.env.AGENT_INTAKE_EMAIL,
+    password: process.env.AGENT_INTAKE_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;
