@@ -4274,3 +4274,45 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 44. Triangulator verdicts confirmed — the triangulation slice is complete — 2026-08-21
+
+The founder confirmed all four §43 verdicts as drafted: Psychology
+opens as slice eight, closing the candidate-intelligence cluster
+(its Phase 0 must draw the seam boundary around the recruiter-context
+prepend and the three human-annotation keys, which stay human); the
+is_agent() finding stands recorded with no schema action — the
+single-point suspension kill is by design and the redundancy lives in
+the harnesses; the harness-seeding trap enters the list (scratch
+worlds seeding agent-report keys seed the FULL report type — panels
+map over its arrays server-side); long-action honesty stays deferred.
+
+The definition of done is met: the judgment that synthesises what the
+firm knows about the company, the hiring manager and the person into
+a decision-grade verdict signs its own name. Every synthesis runs
+under the pool's existing grants, preserves all four sibling agents'
+fields (pinned by invariant), lands one trail event with its trigger
+named, and fails the D5 way twice over — the agent refusal with its
+sentence and a byte-identical surviving report, and the readiness
+refusal carrying the recruiter's own unchanged "Missing: …" sentence
+through a typed result. The slice's control run gave the programme's
+central safety mechanism its first direct regression proof, and the
+proof came back stronger than designed: is_agent() without its status
+gate is caught at FIRST TOUCH, at the reads, by an invariant every
+slice already carries.
+
+**The agents-as-principals triangulation slice is complete.** Seven
+of fourteen agents now authenticate as principals — interpreter,
+ranker, parser, evaluator, positioner, researcher, triangulator —
+with seven independent kill switches proven live.
+`NEXT-agent-triangulation.md` deleted per its own instruction. Next
+migration is **081**; Psychology's Phase 0 opens now on the founder's
+word ("proceed with slice eight").
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
