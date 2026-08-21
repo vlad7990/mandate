@@ -5337,3 +5337,48 @@ the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), the one orphaned 331-byte storage
 object from §28's diagnosis, the stuck-mandate retry gap (§55), and
 the intake and digest skills gaps.
+
+---
+
+## 58. Search-health verdicts confirmed — the slice and the fourteen-agent map are complete — 2026-08-21
+
+The founder confirmed all four §57 verdicts as drafted: slice
+fourteen closes the map, with the onboarding and role-spec surfaces
+and the read-shaped shortlist/copilot conversions queued by usage
+outside it (§50/§52/§54/§56, standing); the scheduled sweep stands
+recorded as channel-blocked and READY — when Resend is provisioned it
+lands in `/api/cron/maintenance` with no new migration, this same
+principal signing in from the CRON_SECRET-gated route under the
+already-reserved `scheduled` trigger; the health-schema defect class
+stays surfaced and founder-timed — a smoke-run of rarely-driven AI
+surfaces after provider-side validation changes joins the pre-launch
+awareness list; long-action honesty stays deferred with the evidence
+unchanged in kind (~24–37s runs, zero drops).
+
+The definition of done is met twice over. The slice: the judgment
+that diagnoses a stalled search and the judgment that writes the
+client-facing weekly report both sign their own names; the health
+gate is the agent's own act, honest in both directions live; the
+report lands through a door that can never wear a human's name —
+generated_by pinned in the grant, the id minted in the seam, the
+insert blind — and the control run proved the pin by dropping it,
+catching the programme's first impersonation the way 086 caught its
+first anonymity. The map: **all fourteen agents of AGENTS.md now
+authenticate as principals** — fourteen users rows, fourteen
+credentials, fourteen independent kill switches, every judgment
+recorded in the trail under its own name with its trigger named in
+detail, and the service role's ambient trust gone from every AI
+surface in the product. The founder's 2026-08-12 statement — agents
+authenticate as principals, not ambient trust — is no longer a
+programme; it is the product's standing shape.
+
+**The agents-as-principals search-health slice is complete, and the
+fourteen-agent map is closed.** `NEXT-agent-metrics.md` deleted per
+its own instruction. Next migration is **088**.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), the one orphaned 331-byte storage
+object from §28's diagnosis, the stuck-mandate retry gap (§55), and
+the intake and digest skills gaps.
