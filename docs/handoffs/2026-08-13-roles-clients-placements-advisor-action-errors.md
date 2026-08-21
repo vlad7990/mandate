@@ -3858,3 +3858,121 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 39. The positioner becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-21
+
+Slice five of agents-as-principals (plan in
+`NEXT-agent-positioning.md`, D1–D8 confirmed 2026-08-21), opening the
+candidate-intelligence cluster. The session also shipped the
+§38-accepted long-action honesty fix first, as its own commit
+(`f54f1e7`): Regenerate-class actions now show an optimistic toast
+("Regenerating — this takes about a minute") and a transport-level
+drop (TypeError only — anything the server answered still reads as
+failure) switches to polling the evaluation's generated_at stamp, so
+a dropped fetch stops reading as failure while the work lands. One
+migration (**next is 079**):
+
+- **078 — vocabulary only, as Phase 0 predicted from the code.**
+  `candidate_positioned` + its allowlist admission (five types); zero
+  table grants — the 074/076 pool covers the whole pipeline, and the
+  kit write travels through `update_cv_structured_field` (021), which
+  is SECURITY INVOKER and resolves to the pool's candidates UPDATE
+  under the agent's own RLS. The CHECK rebuild carried the LIVE list
+  read from pg_constraint (identical to 077's file) plus the new value.
+  **`agent_positioning_invariants.sql`** — 5 invariants, clean pass:
+  the kit landing through the RPC with the parser's fields AND the
+  evaluator's report intact (the D7 pin); the RPC write org-bound
+  under the agent; the fifth principal's negative matrix; the forgery
+  boundary both directions; five-way kill-switch independence.
+  **Control run verified (novel per slice):**
+  `update_cv_structured_field` re-created as SECURITY DEFINER — the
+  realistic drift for the first RPC-mediated agent write — aborted at
+  INVARIANT-FAIL (2) "the cross-org RPC write did not raise under the
+  agent", with invariant 1 passing under the regression; restored,
+  `prosecdef` verified false, clean pass re-verified, residue-free.
+
+**The seam (`90f050f`).** `signInPositioningAgent` beside the four
+existing (own env pair `AGENT_POSITIONING_EMAIL` / `_PASSWORD` — D1's
+own kill switch). `runPositioningAndPersist` splits at judgment: the
+recruiter's action keeps the gate and the ownership assertion; the
+agent reads its inputs (projects, candidate, last-10 feedback), runs
+the skill-injected model call — the skill client rides
+`RunPositioningContext`, never the serialised input — persists
+`positioning_kit` through the RLS-bound RPC, records ONE
+`candidate_positioned` event with the trigger named
+(generate / regenerate) and `replaced_existing` in detail, and signs
+out persisting nothing. Per D5 there is no pre-clear anywhere: the
+old kit stands until the single key replace lands. Live account:
+`vbreygin+positioning@gmail.com`, id `b9597207-…`, Mandate HQ, §30
+recipe; credentials in Vercel production and `.env.local`. Durable
+baseline: **6 users, 15 trail events** (five agents' creation
+records).
+
+### Driven live on production (deploy `qzim1s394` = `90f050f`)
+
+Scratch world inside Mandate HQ (prefix `07800000` for the harness,
+`0d4` for the drive): CMO Search (Positioning Drive) → Maren Osgood
+(parser-shaped profile + evaluator report seeded, NO kit) → Orin
+Faulkes, scratch is_founder operator. Three acts:
+
+1. **Generate kit** → the model wrote a real kit (3 pitches, 3
+   emails) in ~60s; it landed with the EVALUATOR's report intact,
+   one `candidate_positioned` event with actor "Positioning Agent",
+   trigger generate, replaced_existing false — and zero agent
+   sessions left behind.
+2. **Suspended from /ops by the operator's own click** (attributed in
+   the trail) → Regenerate refused with the D5 sentence captured
+   verbatim from the live toast ("The Positioning Agent could not run
+   — an operator has suspended it or its credentials are absent. The
+   existing kit stands.") and the kit SURVIVED byte-identical (same
+   generated_at, no event, no session).
+3. **Restored from /ops** → Regenerate landed in 48s: fresh
+   generated_at, second event with trigger regenerate and
+   replaced_existing true, the evaluation still intact, zero
+   sessions.
+
+Probe matrix with the positioner's real JWT via PostgREST: the pool
+answers (projects, candidates, feedback, skills, candidate_scores);
+clients, hiring_manager_reviews, organizations, activity_events,
+placement_fees, fee_terms and the roster beyond self all refuse;
+candidates DELETE landed on zero rows with the row surviving;
+portal_context empty; `record_activity_event` 204'd and wrote
+NOTHING; an unknown event type refused by name at the agent door.
+Sign-out revoked the probe session. **Teardown to baseline exactly ON
+THE FIRST PASS** — residue keyed on scratch ids only (candidate,
+project, operator target/actor), the positioner's creation trail
+untouched, the one surviving session the founder's own live browser
+sign-in. No defect found live — the first drive of the programme to
+close clean.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Slice six: candidate research (`runCandidateResearch`) next** in
+  the candidate-intelligence cluster — it feeds triangulation, so it
+  goes first; triangulation then psychology follow, each with its own
+  Phase 0 on the founder's word. The digest writer stays behind the
+  cluster.
+- **Long-action honesty on the positioning panel — deferred.** The
+  drive's two generations ran 48–60s and no fetch dropped; the
+  f54f1e7 stamp-poll pattern extends naturally (the kit carries
+  generated_at) if a drop is ever observed live. Not built unbidden.
+- **The /ops Suspend/Restore relabel — standing, fifth surfacing**,
+  and the drive added a new face to it: suspending an active agent
+  toasts "Positioning Agent rejected." — the waitlist-era verb now
+  lives in the confirmation too, on five agent rows.
+- **Model/version stamping in agent event details — still deferred**
+  until an audit asks (unchanged from §35).
+
+Deploys `qzim1s394` (the seam) and `a7uqfytdq` (the long-action fix +
+Phase 0 doc) live; migration 078 applied via MCP and checked in as the
+numbered file. The completion declaration for the positioning slice
+waits on the verdicts above and the founder's written confirmation;
+`NEXT-agent-positioning.md` is deleted only after that.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
