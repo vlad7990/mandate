@@ -152,8 +152,20 @@ export async function uploadAndParseCv(
         // profile says why it is empty, in the agent's name, and the
         // candidate page's failure affordance offers the retry. Written
         // here under the recruiter's session because the refused agent
-        // has none.
-        await markCandidateFailed(candidateId, PARSER_UNAVAILABLE_MESSAGE);
+        // has none. cv_url is recorded too — the file IS stored, and
+        // the Retry Parse button keys on the row knowing where (found
+        // live in the evaluator drive: without it the banner promised a
+        // retry while hiding the button, the §35 gap reopened one door
+        // down).
+        await supabase
+          .from("candidates")
+          .update({
+            cv_url: storagePath,
+            cv_processing: false,
+            cv_parse_error: PARSER_UNAVAILABLE_MESSAGE,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", candidateId);
         revalidatePath(`/app/projects/${projectId}/candidates`);
         return { candidateId };
       }
