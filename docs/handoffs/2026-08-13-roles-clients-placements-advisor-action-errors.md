@@ -4424,3 +4424,40 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 46. Psychology verdicts confirmed — the slice and the candidate-intelligence cluster are complete — 2026-08-21
+
+The founder confirmed all four §45 verdicts as drafted: the desk
+digest writer opens as slice nine (its Phase 0 enumerates the
+cross-project reads a digest lawfully makes — the code decides); the
+/ops agent-roster grouping stays founder-timed with the re-present on
+record at eight rows; the harness-counting lesson enters the traps
+(post-reset counts scope on the harness org id); long-action honesty
+stays deferred with its strongest evidence yet.
+
+The definition of done is met twice over. The slice: the judgment
+that writes a behavioural read of a person signs its own name, reads
+human testimony through a SELECT-only grant that the control run
+proved cannot silently widen without an invariant naming the forged
+note, carries the recruiter's stated context honestly (verbatim on
+the profile, a boolean in the trail), and fails the D5 way with both
+of its keys standing byte-identical. The cluster: **the
+candidate-intelligence cluster is COMPLETE** — parse, evaluate,
+position, research, triangulate, profile; six judgments about a
+person, each authenticating as its own principal, each with its own
+kill switch proven live, each landing one trail event with its
+trigger named.
+
+**The agents-as-principals psychology slice is complete.** Eight of
+fourteen agents now authenticate as principals.
+`NEXT-agent-psychology.md` deleted per its own instruction. Next
+migration is **082**; the desk digest writer's Phase 0 opens now on
+the founder's word ("proceed with slice nine").
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
