@@ -182,6 +182,21 @@ export async function signInCompanyIntelAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Culture Agent — slice eleven, the second zero-new-grant
+ * principal: the projects row and the feedback tail it reads were in
+ * the pool from 074 (the interpreter's feedback grant, reused). The
+ * recruiter's optional context string is its one human-handed input —
+ * carried verbatim onto culture_context, a boolean in the trail.
+ */
+export async function signInCultureAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "culture",
+    email: process.env.AGENT_CULTURE_EMAIL,
+    password: process.env.AGENT_CULTURE_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

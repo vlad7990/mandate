@@ -13,7 +13,7 @@ import {
 import { runRoleAnalysis } from "@/lib/ai/run-role-analysis";
 import { runClientPsychology } from "@/lib/ai/run-client-psychology";
 import type { ClientPsychology } from "@/lib/ai/client-psychology-agent";
-import { runCompanyCulture } from "@/lib/ai/run-company-culture";
+import { runCompanyCultureAndPersist } from "@/lib/ai/run-company-culture";
 import type { CultureProfile } from "@/lib/ai/company-culture-agent";
 import { runCompanyIntelligenceAndPersist } from "@/lib/ai/run-company-intelligence";
 import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-agent";
@@ -361,91 +361,28 @@ export async function generateCompanyCultureAction(
 ): Promise<ActionResult<CultureProfile>> {
   return runAction(SUBJECT, async () => {
     if (!projectId) throw new Error("Missing projectId.");
-    const auth = await requireActiveUser();
-    const supabase = await createServerSupabaseClient();
+    // The recruiter's session keeps only the gate (084, the
+    // interpreter's shape): the projects row and the feedback tail
+    // are lawfully the CULTURE AGENT's own reads, so the action
+    // hands an id plus the one request-only human input — the
+    // recruiter's optional context string.
+    await requireActiveUser();
 
-    const { data: project, error: projectErr } = await supabase
-      .from("projects")
-      .select(
-        "id, company_context, onboarding_responses, organization_id"
-      )
-      .eq("id", projectId)
-      .single<{
-        id: string;
-        company_context: unknown;
-        onboarding_responses: unknown;
-        organization_id: string | null;
-      }>();
+    const run = await runCompanyCultureAndPersist(projectId, recruiterContext);
 
-    if (projectErr || !project) throw new Error("Project not found.");
-    if (project.organization_id !== auth.organizationId) {
-      throw new Error("Project belongs to a different organisation.");
-    }
-
-    const { data: feedback } = await supabase
-      .from("feedback")
-      .select("feedback_type, content, interpreted, created_at")
-      .eq("project_id", projectId)
-      .order("created_at", { ascending: false })
-      .limit(20);
-
-    type FbRow = {
-      feedback_type: string;
-      content: string;
-      interpreted: { summary?: string } | null;
-      created_at: string;
-    };
-    const feedback_summaries = ((feedback ?? []) as FbRow[]).map((f) => ({
-      feedback_type: f.feedback_type,
-      summary: f.interpreted?.summary ?? null,
-      content: f.content,
-      created_at: f.created_at,
-    }));
-
-    const result = await runCompanyCulture(
-      {
-        company: project.company_context ?? {},
-        onboarding: project.onboarding_responses ?? {},
-        feedback_summaries,
-      },
-      {
-        projectId,
-        organizationId: project.organization_id,
-        recruiterContext,
-      }
-    );
-
-    // Merge into existing company_context.{culture_profile, culture_context}.
-    const currentCompany = (project.company_context ?? {}) as Record<
-      string,
-      unknown
-    >;
-    const trimmedContext = recruiterContext?.trim() ?? "";
-    const nextCompany: Record<string, unknown> = {
-      ...currentCompany,
-      culture_profile: result,
-    };
-    if (trimmedContext.length > 0) {
-      nextCompany.culture_context = trimmedContext;
-    } else {
-      delete nextCompany.culture_context;
-    }
-
-    const { error: updateErr } = await supabase
-      .from("projects")
-      .update({
-        company_context: nextCompany,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", projectId);
-    if (updateErr) {
+    if (run.status === "agent_unavailable") {
       throw new Error(
-        `Failed to persist culture profile: ${updateErr.message}`
+        "The Culture Agent could not run — an operator has suspended it " +
+          "or its credentials are absent. The existing profile stands."
       );
+    }
+    if (run.status === "unavailable") throw new Error("Project not found.");
+    if (run.status !== "ready") {
+      throw new Error("Culture analysis failed. Try again.");
     }
 
     revalidatePath(`/app/projects/${projectId}`);
-    return result;
+    return run.profile;
   });
 }
 
