@@ -75,6 +75,7 @@ export const ACTIVITY_EVENT_TYPES = [
   "candidate_researched",
   "candidate_triangulated",
   "candidate_profiled",
+  "desk_digest_generated",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -190,6 +191,7 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   candidate_researched: "mandates",
   candidate_triangulated: "mandates",
   candidate_profiled: "mandates",
+  desk_digest_generated: "mandates",
 };
 
 /**

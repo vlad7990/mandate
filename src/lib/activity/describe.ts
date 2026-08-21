@@ -259,6 +259,17 @@ export function describeActivity(event: ActivityEventRow): string {
         : `Wrote the candidate's behavioural read${withContext}`;
     }
 
+    case "desk_digest_generated": {
+      // The byline names the digest writer; the detail carries counts,
+      // never people — the digest's contents are the manager's to read.
+      const members = num(d, "members_count");
+      const size =
+        members != null
+          ? ` across ${members} desk${members === 1 ? "" : "s"}`
+          : "";
+      return `Wrote the desk digest${size}`;
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from
