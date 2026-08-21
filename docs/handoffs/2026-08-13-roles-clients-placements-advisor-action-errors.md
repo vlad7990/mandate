@@ -4603,3 +4603,114 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 49. The Company Intelligence Agent becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-21
+
+Slice ten of agents-as-principals (plan in
+`NEXT-agent-company-intel.md`, D1–D8 confirmed 2026-08-21, two event
+kinds) — the first of the company-side grouping, the first
+ZERO-NEW-GRANT slice, and the first principal whose judgment reaches
+the public web. One principal holds both judgments: the Company
+Intelligence Report and the hiring-manager dossier. One migration
+(**next is 084**):
+
+- **083 — vocabulary only**: `company_researched` + `hm_researched`
+  into the CHECK (live pg_constraint list) and the allowlist at
+  eleven. NO policies created, widened, or touched — 074's projects
+  S+U and skills S already cover the whole judgment; the pool grant
+  is shared with the interpreter, and identity stays the credential
+  plus the allowlist entries. **`agent_companyintel_invariants.sql`**
+  — 5 invariants, clean pass: the merge-write lands with every
+  sibling key surviving byte-identical; the vocabulary boundary
+  pinned by a direct-insert probe at the TABLE (the only tripwire
+  that fires past the function allowlists); history intact at eleven
+  by COUNT; the negative matrix unchanged; kill switches independent
+  at ten with the suspended-reads-zero check. The control run
+  **DROPPED the CHECK constraint entirely** ("the app allowlists
+  make it redundant") — the first regression that REMOVES a boundary
+  rather than widening one. The forged insert landed and the harness
+  aborted at INVARIANT-FAIL (2); drift and harness ran in ONE
+  transaction, so the abort itself rolled the drop back —
+  residue-free by construction, the constraint verified live after.
+
+**The seam (`cdf6f52`).** The interpreter's shape, not the parser
+split: every read this judgment makes (one projects row) is lawfully
+the agent's own, so `runCompanyIntelligenceAndPersist` and
+`runHiringManagerResearchAndPersist` sign in the tenth principal,
+read the row under its own SELECT, run the web-searching model call
+(skills ride the agent's session via `skillClient` — no digest-style
+gap), merge the report into company_context under its own name,
+record the event with counts and booleans, and sign out persisting
+nothing. Stakeholder resolution moved into the HM seam — the
+identity lives on the row the agent lawfully reads. The recruiter's
+actions keep only the mandates:write gate and the D5 sentence. Live
+account: `vbreygin+companyintel@gmail.com`, id `ef5638ff-…`, Mandate
+HQ, §30 recipe; `AGENT_COMPANYINTEL_*` in Vercel production and
+`.env.local`. Durable baseline: **11 users, 30 trail events** (ten
+agents' creation records).
+
+### Driven live on production (deploy `88y56hua1` = `cdf6f52`)
+
+Scratch world 0d9 inside Mandate HQ: an is_founder operator and one
+labelled scratch project (Shopify — a real, researchable company;
+stakeholder Mikhail Parakhin, its public CTO). The acts:
+
+1. **Research company** → landed in ~80s: intelligence_report on the
+   row, 48 sources server-extracted, 7 leaders, one
+   `company_researched` event (actor "Company Intelligence Agent",
+   trigger research, counts in detail), siblings intact, zero agent
+   sessions after the run.
+2. **Suspended from /ops** → BOTH buttons refused with the D5
+   sentence VERBATIM in ~600ms — refused at sign-in, before any web
+   search was made or token spent; one kill switch covering both
+   acts. The report stood byte-identical; the event count did not
+   move.
+3. **Restored** → Re-research landed in ~64s (trigger `re_research`,
+   39 sources); **Research HM** landed in ~70s (27 sources,
+   `stakeholder_override` false) — the HM's name in the report the
+   recruiter renders, NEVER in the trail. Three merge-writes, every
+   sibling key surviving all three.
+
+Probe matrix with the agent's real JWT: the pool's lawful reads
+answer (projects 3, candidates 1, notes 3, skills 5, users
+self-only); clients, placements, organizations, activity_events,
+desk_digests all ZERO; the human door 204s writing nothing; a
+nonsense event type is refused by name; UPDATEs against refused
+tables land on zero rows. Sign-out revoked the probe session.
+**Teardown to baseline exactly on the first pass** — drive events
+(operator creation, suspend/restore, the three agent acts) swept on
+scratch keys; 30 events, the tenth creation trail untouched, the
+founder's session the only survivor.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The remaining agents** (intake, onboarding, role spec, boolean
+  search — plus shortlist and copilot read-shaped surfaces) queue by
+  usage on the founder's word; the metrics agent's cron-shaped
+  arrival still waits for its own slice (§30, standing).
+- **The culture generator, nearest sibling** (Phase 0 observation):
+  the third company_context writer shares this slice's exact seam
+  shape (same gate, same merge-write, no web search) — a
+  near-mechanical conversion whenever the founder queues it; not
+  built unbidden.
+- **The HM override selector — surfaced**: the action accepts a
+  stakeholder-name override the UI never passes; the first
+  stakeholder is always researched. A product gap, founder-timed.
+- **Long-action honesty — deferred, evidence extended**: the
+  web-searching runs are the product's longest (64–80s live) and all
+  three landed with zero transport drops; the f54f1e7 policy stands
+  — extend only if a drop is observed live.
+
+Deploy `88y56hua1` live; migration 083 applied via MCP and checked
+in; tsc/vitest 790/eslint/build green. The completion declaration
+for the company-intelligence slice waits on the verdicts above and
+the founder's written confirmation; `NEXT-agent-company-intel.md` is
+deleted only after it.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
