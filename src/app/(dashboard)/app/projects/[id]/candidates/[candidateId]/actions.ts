@@ -22,10 +22,8 @@ import type { PositioningResult } from "@/lib/ai/positioning-agent";
 import { runCandidateResearchAndPersist } from "@/lib/ai/run-candidate-research";
 import type { CandidateIntelligenceReport } from "@/lib/ai/candidate-research-agent";
 import type { CandidatePsychology } from "@/lib/ai/psychology-agent";
-import { runTriangulation } from "@/lib/ai/run-triangulation";
+import { runTriangulationAndPersist } from "@/lib/ai/run-triangulation";
 import type { TriangulationReport } from "@/lib/ai/triangulation-agent";
-import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-agent";
-import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 
@@ -999,8 +997,6 @@ export async function overridePsychologyConfidenceAction(
 // Candidate Web Research Agent — public-presence dossier via web_search
 // ────────────────────────────────────────────────────────────────────────
 
-const CANDIDATE_INTELLIGENCE_KEY = "candidate_intelligence" as const;
-
 /**
  * Run the Candidate Research Agent for this candidate. The recruiter's
  * session keeps the gate and the ownership assertion; the judgment —
@@ -1045,8 +1041,14 @@ export async function researchCandidateAction(
 // a decision-grade fit report. Gated on all three base reports existing.
 // ────────────────────────────────────────────────────────────────────────
 
-const TRIANGULATION_KEY = "triangulation_report" as const;
-
+/**
+ * Run the Triangulation Agent for this candidate. The recruiter's
+ * session keeps the gate and the ownership assertion; the judgment —
+ * reads, readiness check, synthesis, the triangulation_report write,
+ * the trail event — runs under the AGENT's own session (080). The
+ * missing-reports refusal is a human-facing precondition and keeps
+ * today's exact sentence.
+ */
 export async function generateTriangulationAction(
   candidateId: string,
   projectId: string
@@ -1056,99 +1058,30 @@ export async function generateTriangulationAction(
       throw new Error("Missing candidateId or projectId.");
     }
 
-    const auth = await requireActiveUser();
+    await requireActiveUser();
     await assertCandidateBelongsToProject(candidateId, projectId);
 
-    const supabase = await createServerSupabaseClient();
-    const [candidateQ, projectQ] = await Promise.all([
-      supabase
-        .from("candidates")
-        .select(
-          "id, full_name, current_title, current_company, archetype, cv_structured"
-        )
-        .eq("id", candidateId)
-        .single<{
-          id: string;
-          full_name: string;
-          current_title: string | null;
-          current_company: string | null;
-          archetype: string | null;
-          cv_structured: unknown;
-        }>(),
-      supabase
-        .from("projects")
-        .select(
-          "organization_id, company_name, calibration_model, company_context"
-        )
-        .eq("id", projectId)
-        .single<{
-          organization_id: string | null;
-          company_name: string;
-          calibration_model: { role_title?: string | null } | null;
-          company_context: Record<string, unknown> | null;
-        }>(),
-    ]);
+    const run = await runTriangulationAndPersist(candidateId, projectId);
 
-    if (candidateQ.error || !candidateQ.data) {
-      throw new Error("Candidate not found.");
-    }
-    if (projectQ.error || !projectQ.data) {
-      throw new Error("Project not found.");
-    }
-    if (projectQ.data.organization_id !== auth.organizationId) {
-      throw new Error("Project belongs to a different organisation.");
-    }
-
-    const cv = (candidateQ.data.cv_structured ?? {}) as Record<string, unknown>;
-    const candidateIntelligence = cv[CANDIDATE_INTELLIGENCE_KEY] as
-      | CandidateIntelligenceReport
-      | undefined;
-    const company = (projectQ.data.company_context ?? {}) as Record<
-      string,
-      unknown
-    >;
-    const companyIntelligence = company.intelligence_report as
-      | CompanyIntelligenceReport
-      | undefined;
-    const hmIntelligence = company.hm_intelligence as
-      | HiringManagerIntelligenceReport
-      | undefined;
-
-    const missing: string[] = [];
-    if (!companyIntelligence) missing.push("Company Intelligence");
-    if (!candidateIntelligence) missing.push("Candidate Intelligence");
-    if (!hmIntelligence) missing.push("Hiring Manager Intelligence");
-    if (missing.length > 0) {
+    if (run.status === "agent_unavailable") {
       throw new Error(
-        `Triangulation needs all three base reports first. Missing: ${missing.join(", ")}.`
+        "The Triangulation Agent could not run — an operator has suspended " +
+          "it or its credentials are absent. The existing report stands."
       );
     }
+    if (run.status === "missing_inputs") {
+      throw new Error(
+        `Triangulation needs all three base reports first. Missing: ${run.missing.join(", ")}.`
+      );
+    }
+    if (run.status === "unavailable") {
+      throw new Error("Candidate not found.");
+    }
+    if (run.status !== "ready") {
+      throw new Error("Could not generate the triangulation report. Try again.");
+    }
 
-    const report = await runTriangulation(
-      {
-        candidate: {
-          full_name: candidateQ.data.full_name,
-          current_title: candidateQ.data.current_title,
-          current_company: candidateQ.data.current_company,
-          archetype: candidateQ.data.archetype,
-        },
-        role: {
-          title: projectQ.data.calibration_model?.role_title ?? null,
-          company_name: projectQ.data.company_name,
-        },
-        company_intelligence: companyIntelligence!,
-        candidate_intelligence: candidateIntelligence!,
-        hm_intelligence: hmIntelligence!,
-      },
-      {
-        projectId,
-        candidateId,
-        organizationId: projectQ.data.organization_id,
-      }
-    );
-
-    await rpcSetCvField(candidateId, projectId, TRIANGULATION_KEY, report);
     revalidatePath(`/app/projects/${projectId}/candidates/${candidateId}`);
-    return report;
+    return run.report;
   });
 }

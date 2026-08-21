@@ -124,6 +124,19 @@ export async function signInCandidateResearchAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the triangulation agent — slice seven. Own credential, own
+ * kill switch; pure synthesis over three intelligence reports, no web
+ * search, one jsonb key through the RLS-bound RPC.
+ */
+export async function signInTriangulationAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "triangulator",
+    email: process.env.AGENT_TRIANGULATION_EMAIL,
+    password: process.env.AGENT_TRIANGULATION_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;
