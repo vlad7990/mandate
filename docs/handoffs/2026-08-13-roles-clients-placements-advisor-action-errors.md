@@ -4316,3 +4316,111 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 45. The psychology agent becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-21
+
+Slice eight of agents-as-principals (plan in
+`NEXT-agent-psychology.md`, D1–D8 confirmed 2026-08-21) — the
+candidate-intelligence cluster's closing slice. The judgment that
+writes a behavioural read of a person now signs its own name. One
+migration (**next is 082**):
+
+- **081 — the first pool widening since 076, and the narrowest
+  kind**: `candidate_notes_agent_select`, SELECT only, on a table
+  humans AUTHOR — the agent reads recruiter testimony as input and
+  can never write, edit, or delete it. Plus `candidate_profiled` and
+  the allowlist at eight. (Phase 0's §5h catch: the live notes
+  policies require can_read_org(), which excludes agents; the 020
+  file's blanket policy is superseded — pg_policies is ground truth.)
+  **`agent_psychology_invariants.sql`** — 5 invariants, clean pass:
+  the TWO-write shape (psychology + psychology_context); the widest
+  neighbours pin yet (five agent keys AND the three human annotation
+  keys survive); the notes boundary (read answers,
+  INSERT/UPDATE/DELETE refused against a live note); history COUNT at
+  eight; eight-way kill-switch independence including the notes read
+  dying with suspension. **Control run verified (novel per slice):**
+  the grant re-created FOR ALL — 020's old blanket drift — aborted at
+  INVARIANT-FAIL (2) "the agent wrote a candidate note (1 rows, 1
+  tampered/forged)": under the blanket policy the forged insert
+  landed AND the delete removed the human's original. Restored to FOR
+  SELECT, verified. One harness authoring error caught and kept as a
+  comment: an unscoped post-reset count read the DURABLE production
+  notes (4 where the harness org holds 1) — counts scope on the
+  harness org id, the §35 residue lesson's counting twin.
+
+**The seam (`cc5307c`).** `signInPsychologyAgent` beside the seven
+existing. `runPsychologyAndPersist` splits at judgment; the action
+hands `recruiterContext` through, and the agent reads candidate +
+last-10 notes + project, runs the context-wrapped skill-injected call
+(context and skill client both riding ctx), makes the two single-key
+writes (psychology, then psychology_context set-or-cleared — today's
+order and window), records one `candidate_profiled` event with the
+trigger and a `has_recruiter_context` BOOLEAN — the text never enters
+the trail; it lives visibly in psychology_context — and signs out
+persisting nothing. Live account: `vbreygin+psychology@gmail.com`,
+id `33b7586e-…`, Mandate HQ, §30 recipe; credentials in Vercel
+production and `.env.local`. Durable baseline: **9 users, 24 trail
+events** (eight agents' creation records).
+
+### Driven live on production (deploy `45e3il3i3` = `cc5307c`)
+
+Scratch world inside Mandate HQ (harness `08100000`, drive `0d7`):
+CPO Search (Psychology Drive) → Wren Alderbury with a seeded
+human-authored call note → Orin Faulkes, scratch operator. The acts:
+
+1. **Analyse, with recruiter context through the dialog** → the
+   profile landed in 32s; the context persisted VERBATIM to
+   psychology_context; the evaluator's report intact; one
+   `candidate_profiled` event (actor "Psychology Agent", trigger
+   generate, has_recruiter_context true); zero agent sessions. The
+   notes read fed the run under the 081 grant.
+2. **Suspended from /ops** ("Psychology Agent suspended.") →
+   Regenerate refused with the D5 sentence verbatim and BOTH keys
+   stood byte-identical — the two-write shape's refusal proven live.
+3. **Restored** → Regenerate landed in 19s (the fastest agent yet):
+   fresh generated_at, second event with trigger regenerate,
+   replaced_existing true, has_recruiter_context true.
+
+Probe matrix with the psychology agent's real JWT: candidate_notes
+ANSWERS (the 081 grant, org-wide as granted); notes INSERT 403; notes
+DELETE zero rows with the row surviving; the pool answers; clients,
+reviews, organizations, events, fees, roster-beyond-self refuse;
+candidates DELETE zero rows; portal RPC empty; the human door 204s
+writing nothing. Sign-out revoked the probe session. **Teardown to
+baseline exactly on the first pass** — 24 events, the psychology
+agent's creation trail untouched, the 3 durable notes intact, the
+founder's own browser session the only survivor.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The candidate-intelligence cluster is COMPLETE** on this slice's
+  confirmation: parse → evaluate → position → research → triangulate
+  → profile, six judgments about a person, each under its own name.
+  **Slice nine: the desk digest writer** opens next per the confirmed
+  queue — a manager-facing surface whose Phase 0 must enumerate what
+  a digest lawfully reads across projects (likely wider reads than
+  any candidate-scoped agent; the code decides).
+- **The /ops agent roster — re-presented** (§33 deferred it "until
+  the roster grows past a screen"): eight agent rows now sit under
+  AGENTS (8), on their way to fourteen. An agent-kind chip or a
+  two-column grouping is a small change whenever the founder calls
+  it; reading eight identical rows is still workable today.
+- **The harness-counting lesson — trap entry**: post-reset
+  verification counts scope on the harness org id, exactly as
+  residue filters scope on scratch ids; an unscoped count reads
+  durable production rows and fails honest invariants.
+- **Long-action honesty — deferred, strengthened again** (32s and
+  19s; the psychology agent is the fastest in the roster).
+
+Deploy `45e3il3i3` live; migration 081 applied via MCP and checked
+in. The completion declaration for the psychology slice waits on the
+verdicts above and the founder's written confirmation;
+`NEXT-agent-psychology.md` is deleted only after that.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
