@@ -339,6 +339,24 @@ export function describeActivity(event: ActivityEventRow): string {
         : "Analyzed the mandate brief";
     }
 
+    case "health_suggested": {
+      // The byline names the Search Health Agent; detail carries the
+      // status enum and a count — never the suggestion text. The
+      // trigger is on_demand today; 'scheduled' is reserved for the
+      // future cron sweep (D4).
+      const count = num(d, "suggestions_count");
+      return count != null && count > 0
+        ? `Suggested search-health fixes — ${count} suggestion${count === 1 ? "" : "s"}`
+        : "Suggested search-health fixes";
+    }
+
+    case "weekly_report_generated": {
+      // The byline names the Search Health Agent. Detail carries the
+      // week date and counts; the report body lives on
+      // project_reports, never in the trail.
+      return "Wrote the weekly report";
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from
