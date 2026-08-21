@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropic } from "@/lib/anthropic";
 import {
   COMPANY_INTELLIGENCE_SCHEMA,
@@ -6,6 +7,7 @@ import {
   type CompanyIntelligenceReport,
 } from "./company-intelligence-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
+import { signInCompanyIntelAgent } from "@/lib/agents/session";
 
 const COMPANY_INTELLIGENCE_MODEL = "claude-sonnet-4-6";
 // Cap server-side searches per run. 7 dimensions but we tell Claude to
@@ -32,6 +34,9 @@ export type RunCompanyIntelligenceInput = {
 export type RunCompanyIntelligenceContext = {
   projectId: string;
   organizationId: string | null;
+  /** Read recruiter-authored skills under this client — the agent's
+   * own session when the seam runs; defaults to the request session. */
+  skillClient?: SupabaseClient;
 };
 
 /**
@@ -93,6 +98,7 @@ export async function runCompanyIntelligence(
     {
       projectId: ctx.projectId,
       organizationId: ctx.organizationId,
+      client: ctx.skillClient,
     }
   );
 
@@ -142,4 +148,151 @@ export async function runCompanyIntelligence(
     generated_at: new Date().toISOString(),
     sources: extractSources(response.content),
   };
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// The seam (083): the COMPANY INTELLIGENCE AGENT's session, signed in
+// per run. The interpreter's shape, not the parser split — every read
+// this judgment makes (one projects row) is lawfully the agent's own
+// under the pool's 074 grants, so the recruiter's action keeps only
+// the gate and hands an id; the agent reads for itself, runs the
+// web-searching model call, merges the report into company_context
+// under its own name, records the event, and signs out persisting
+// nothing. No pre-clear anywhere (D5): the old report exists until
+// the moment the new one lands, and a refused run touches nothing.
+// ────────────────────────────────────────────────────────────────────────
+
+export type CompanyIntelligenceRunResult =
+  | { status: "ready"; report: CompanyIntelligenceReport }
+  /** Not eligible: project missing or outside the agent's org-bound
+   * reach. */
+  | { status: "unavailable" }
+  /** The Company Intelligence Agent refused to sign in — suspended
+   * from /ops or credentials absent. Nothing was generated, no web
+   * search was made, and NOTHING WAS DESTROYED (D5): any existing
+   * report stands untouched. */
+  | { status: "agent_unavailable"; reason: string }
+  /** Generation or persistence failed; logged. */
+  | { status: "failed" };
+
+type AgentProjectRow = {
+  id: string;
+  company_name: string;
+  calibration_model: { role_title?: string | null } | null;
+  company_context: Record<string, unknown> | null;
+  onboarding_responses: unknown;
+  organization_id: string | null;
+};
+
+export async function runCompanyIntelligenceAndPersist(
+  projectId: string
+): Promise<CompanyIntelligenceRunResult> {
+  const session = await signInCompanyIntelAgent();
+  if (!session.ok) {
+    console.error(
+      `[company-intelligence] research skipped: ${session.reason}. ` +
+        "Any existing report stands; the panel keeps rendering it."
+    );
+    return { status: "agent_unavailable", reason: session.reason };
+  }
+
+  try {
+    return await runUnderAgentSession(session.client, projectId);
+  } finally {
+    // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
+    await session.signOut();
+  }
+}
+
+async function runUnderAgentSession(
+  supabase: SupabaseClient,
+  projectId: string
+): Promise<CompanyIntelligenceRunResult> {
+  const { data: project, error } = await supabase
+    .from("projects")
+    .select(
+      "id, company_name, calibration_model, company_context, onboarding_responses, organization_id"
+    )
+    .eq("id", projectId)
+    .single<AgentProjectRow>();
+  if (error || !project) return { status: "unavailable" };
+
+  const company = (project.company_context ?? {}) as Record<string, unknown> & {
+    company_name?: string;
+    website?: string | null;
+    industry?: string | null;
+    business_model?: string | null;
+  };
+  const replacedExisting = "intelligence_report" in company;
+
+  let report: CompanyIntelligenceReport;
+  try {
+    report = await runCompanyIntelligence(
+      {
+        company: {
+          name: company.company_name ?? project.company_name,
+          website: company.website ?? null,
+        },
+        project: {
+          role_title: project.calibration_model?.role_title ?? null,
+          industry: company.industry ?? null,
+          business_model: company.business_model ?? null,
+          onboarding: project.onboarding_responses ?? {},
+          calibration: project.calibration_model ?? {},
+        },
+      },
+      {
+        projectId,
+        organizationId: project.organization_id,
+        skillClient: supabase,
+      }
+    );
+  } catch (err) {
+    console.error("[company-intelligence] agent research failed", err);
+    return { status: "failed" };
+  }
+
+  // The merge-write: one key lands, the siblings (culture_profile,
+  // hm_intelligence, annotations…) untouched — pinned by the 083
+  // invariants.
+  const nextCompany: Record<string, unknown> = {
+    ...company,
+    intelligence_report: report,
+  };
+  const { error: updateErr } = await supabase
+    .from("projects")
+    .update({
+      company_context: nextCompany,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+  if (updateErr) {
+    console.error(
+      "[company-intelligence] failed to persist the report",
+      updateErr
+    );
+    return { status: "failed" };
+  }
+
+  // The trail (D4): one event per LANDED report — counts, never names.
+  const { error: eventErr } = await supabase.rpc("record_agent_event", {
+    p_event_type: "company_researched",
+    p_project_id: projectId,
+    p_detail: {
+      agent_kind: "company_intel",
+      trigger: replacedExisting ? "re_research" : "research",
+      replaced_existing: replacedExisting,
+      sources_count: report.sources.length,
+      leadership_count: report.leadership_team.length,
+      recent_context_count: report.recent_context.length,
+    },
+  });
+  if (eventErr) {
+    console.error(
+      "[company-intelligence] failed to record the research event",
+      eventErr
+    );
+  }
+
+  return { status: "ready", report };
 }

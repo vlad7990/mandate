@@ -165,6 +165,23 @@ export async function signInDeskDigestAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Company Intelligence Agent — slice ten, the first of the
+ * company-side grouping and the first zero-new-grant principal: every
+ * read and write it makes was already in the pool (074's projects
+ * S+U, skills S). One identity holds both judgments — the company
+ * report and the hiring-manager dossier. Its model calls reach the
+ * public web through Anthropic's web_search tool; suspension refuses
+ * the run at sign-in, before any search is made.
+ */
+export async function signInCompanyIntelAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "company_intel",
+    email: process.env.AGENT_COMPANYINTEL_EMAIL,
+    password: process.env.AGENT_COMPANYINTEL_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

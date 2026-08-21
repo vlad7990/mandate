@@ -15,11 +15,10 @@ import { runClientPsychology } from "@/lib/ai/run-client-psychology";
 import type { ClientPsychology } from "@/lib/ai/client-psychology-agent";
 import { runCompanyCulture } from "@/lib/ai/run-company-culture";
 import type { CultureProfile } from "@/lib/ai/company-culture-agent";
-import { runCompanyIntelligence } from "@/lib/ai/run-company-intelligence";
+import { runCompanyIntelligenceAndPersist } from "@/lib/ai/run-company-intelligence";
 import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-agent";
-import { runHiringManagerResearch } from "@/lib/ai/run-hiring-manager-research";
+import { runHiringManagerResearchAndPersist } from "@/lib/ai/run-hiring-manager-research";
 import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
-import type { Stakeholder } from "@/lib/ai/onboarding-analysis";
 import { runSearchHealth } from "@/lib/ai/run-search-health";
 import type {
   HealthSuggestion,
@@ -922,74 +921,28 @@ export async function researchCompanyAction(
 ): Promise<ActionResult<CompanyIntelligenceReport>> {
   return runAction(SUBJECT, async () => {
     if (!projectId) throw new Error("Missing projectId.");
-    const auth = await requireActiveUser();
-    const supabase = await createServerSupabaseClient();
+    // The recruiter's session keeps only the gate (083, the
+    // interpreter's shape): every read this judgment makes is
+    // lawfully the AGENT's own, so the action hands an id and the
+    // Company Intelligence Agent reads, researches, merges the
+    // report under its own name, and records the trail event.
+    await requireActiveUser();
 
-    const { data: project, error: projectErr } = await supabase
-      .from("projects")
-      .select(
-        "id, company_name, calibration_model, company_context, onboarding_responses, organization_id"
-      )
-      .eq("id", projectId)
-      .single<{
-        id: string;
-        company_name: string;
-        calibration_model: Partial<CalibrationModel> | null;
-        company_context: Record<string, unknown> | null;
-        onboarding_responses: unknown;
-        organization_id: string | null;
-      }>();
+    const run = await runCompanyIntelligenceAndPersist(projectId);
 
-    if (projectErr || !project) throw new Error("Project not found.");
-    if (project.organization_id !== auth.organizationId) {
-      throw new Error("Project belongs to a different organisation.");
-    }
-
-    const company = (project.company_context ?? {}) as Partial<CompanyContext> & {
-      website?: string | null;
-    };
-
-    const result = await runCompanyIntelligence(
-      {
-        company: {
-          name: company.company_name ?? project.company_name,
-          website: company.website ?? null,
-        },
-        project: {
-          role_title: project.calibration_model?.role_title ?? null,
-          industry: company.industry ?? null,
-          business_model: company.business_model ?? null,
-          onboarding: project.onboarding_responses ?? {},
-          calibration: project.calibration_model ?? {},
-        },
-      },
-      {
-        projectId,
-        organizationId: project.organization_id,
-      }
-    );
-
-    // Merge into existing company_context blob alongside culture_profile.
-    const nextCompany: Record<string, unknown> = {
-      ...(project.company_context ?? {}),
-      intelligence_report: result,
-    };
-
-    const { error: updateErr } = await supabase
-      .from("projects")
-      .update({
-        company_context: nextCompany,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", projectId);
-    if (updateErr) {
+    if (run.status === "agent_unavailable") {
       throw new Error(
-        `Failed to persist intelligence report: ${updateErr.message}`
+        "The Company Intelligence Agent could not run — an operator has " +
+          "suspended it or its credentials are absent. The existing report stands."
       );
+    }
+    if (run.status === "unavailable") throw new Error("Project not found.");
+    if (run.status !== "ready") {
+      throw new Error("Company research failed. Try again.");
     }
 
     revalidatePath(`/app/projects/${projectId}`);
-    return result;
+    return run.report;
   });
 }
 
@@ -1008,93 +961,29 @@ export async function researchHiringManagerAction(
 ): Promise<ActionResult<HiringManagerIntelligenceReport>> {
   return runAction(SUBJECT, async () => {
     if (!projectId) throw new Error("Missing projectId.");
-    const auth = await requireActiveUser();
-    const supabase = await createServerSupabaseClient();
+    // Same 083 seam, the agent's second act: stakeholder resolution
+    // happens inside it — the HM's identity lives on the projects row
+    // the agent lawfully reads.
+    await requireActiveUser();
 
-    const { data: project, error: projectErr } = await supabase
-      .from("projects")
-      .select(
-        "id, company_name, calibration_model, company_context, onboarding_responses, organization_id"
-      )
-      .eq("id", projectId)
-      .single<{
-        id: string;
-        company_name: string;
-        calibration_model: Partial<CalibrationModel> | null;
-        company_context: Record<string, unknown> | null;
-        onboarding_responses: { stakeholders?: Stakeholder[] } | null;
-        organization_id: string | null;
-      }>();
-
-    if (projectErr || !project) throw new Error("Project not found.");
-    if (project.organization_id !== auth.organizationId) {
-      throw new Error("Project belongs to a different organisation.");
-    }
-
-    const stakeholders = (project.onboarding_responses?.stakeholders ?? []).filter(
-      (s): s is Stakeholder => Boolean(s && typeof s.name === "string" && s.name.trim())
+    const run = await runHiringManagerResearchAndPersist(
+      projectId,
+      hmNameOverride
     );
 
-    const targetName = hmNameOverride?.trim();
-    const hm = targetName
-      ? stakeholders.find(
-          (s) => s.name.trim().toLowerCase() === targetName.toLowerCase()
-        )
-      : stakeholders[0];
-
-    if (!hm) {
+    if (run.status === "agent_unavailable") {
       throw new Error(
-        stakeholders.length === 0
-          ? "No stakeholders captured in onboarding — add the hiring manager before researching them."
-          : `Stakeholder "${targetName}" not found in this project.`
+        "The Company Intelligence Agent could not run — an operator has " +
+          "suspended it or its credentials are absent. The existing report stands."
       );
     }
-
-    const company = (project.company_context ?? {}) as Partial<CompanyContext>;
-
-    const result = await runHiringManagerResearch(
-      {
-        hm: {
-          name: hm.name,
-          role: hm.role || null,
-          focus: hm.focus || null,
-        },
-        company: {
-          name: company.company_name ?? project.company_name,
-          industry: company.industry ?? null,
-          business_model: company.business_model ?? null,
-        },
-        project: {
-          role_title: project.calibration_model?.role_title ?? null,
-        },
-      },
-      {
-        projectId,
-        organizationId: project.organization_id,
-      }
-    );
-
-    // Merge into company_context alongside intelligence_report and
-    // culture_profile — keep the JSONB column shape consistent.
-    const nextCompany: Record<string, unknown> = {
-      ...(project.company_context ?? {}),
-      hm_intelligence: result,
-    };
-
-    const { error: updateErr } = await supabase
-      .from("projects")
-      .update({
-        company_context: nextCompany,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", projectId);
-    if (updateErr) {
-      throw new Error(
-        `Failed to persist HM intelligence: ${updateErr.message}`
-      );
+    if (run.status === "unavailable") throw new Error("Project not found.");
+    if (run.status === "no_stakeholder") throw new Error(run.message);
+    if (run.status !== "ready") {
+      throw new Error("Hiring-manager research failed. Try again.");
     }
 
     revalidatePath(`/app/projects/${projectId}`);
-    return result;
+    return run.report;
   });
 }
