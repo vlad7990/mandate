@@ -4018,3 +4018,110 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 41. The researcher becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-21
+
+Slice six of agents-as-principals (plan in `NEXT-agent-research.md`,
+D1–D8 confirmed 2026-08-21). The judgment that searches the public web
+for a person and writes a dossier about them now signs its own name.
+One migration (**next is 080**):
+
+- **080 is next; 079 shipped vocabulary only**, as Phase 0 predicted:
+  `candidate_researched` + the allowlist at six; zero table grants
+  (the pool covers the pipeline; the kit write rides the 021 RPC; the
+  web_search tool is Anthropic-side and adds no database authority).
+  **`agent_research_invariants.sql`** — 5 invariants, clean pass: the
+  dossier landing with ALL prior agents' fields intact; the
+  history-intact pin (all six agent event types recorded and COUNTED);
+  the sixth principal's negative matrix; the forgery boundary both
+  directions; six-way kill-switch independence. **Control run
+  verified (novel per slice), with a discovery:** the CHECK re-created
+  from 077's stale file plus the new value (candidate_positioned
+  silently dropped — the standing trap's exact drift) was NOT caught
+  by the exception gate, because `write_activity_event` never raises
+  by 053's design — under a stale CHECK, prior slices' events do not
+  error, they VANISH with only a server-side WARNING. The first
+  control-run draft omitted the count gate and the regression sailed
+  through — proof by demonstration. The count gate is therefore THE
+  tripwire, and the harness aborted at INVARIANT-FAIL (2) "5 of 6
+  history probes landed — the vocabulary lost a prior slice's event
+  type SILENTLY". Constraint restored and verified, clean pass re-run,
+  zero residue.
+
+**The seam (`117212f`).** `signInCandidateResearchAgent` beside the
+five existing (own env pair `AGENT_RESEARCH_EMAIL` / `_PASSWORD`).
+`runCandidateResearchAndPersist` splits at judgment: the recruiter's
+action keeps the gate and the ownership assertion; the agent reads
+the candidate and project, runs the web_search-carrying model call
+(max 7 searches; skill client rides ctx; suspension refuses at
+sign-in, BEFORE any web search or Anthropic spend), persists
+`candidate_intelligence` through the RLS-bound RPC, records one
+`candidate_researched` event with the trigger (research / re_research)
+and `sources_count` in detail, and signs out persisting nothing. Per
+D5 no pre-clear. Live account: `vbreygin+research@gmail.com`, id
+`f50705ea-…`, Mandate HQ, §30 recipe; credentials in Vercel
+production and `.env.local`. Durable baseline: **7 users, 18 trail
+events** (six agents' creation records).
+
+### Driven live on production (deploy `dl0v06spq` = `117212f`)
+
+Scratch world inside Mandate HQ (harness `07900000`, drive `0d5`):
+CTO Search (Research Drive) → Tobin Merrivale (fictional by design —
+the real web coming back thin IS the mechanics proven) → Orin
+Faulkes, scratch is_founder operator. Three acts:
+
+1. **Research candidate** → the model searched the live web and the
+   dossier landed in 41s with **31 real sources** attached
+   server-side, every neighbouring field intact, one
+   `candidate_researched` event (actor "Candidate Research Agent",
+   trigger research, sources_count 31), zero agent sessions.
+2. **Suspended from /ops — through the §40-relabeled buttons, their
+   first live use**: the row reads Suspend / Restore and the toast
+   said "Candidate Research Agent suspended." Re-research refused
+   with the D5 sentence captured verbatim ("…The existing dossier
+   stands."), the dossier byte-identical, no event, no session — and
+   no web search made, the refusal landing before any spend.
+3. **Restored** ("…restored." toast) → re-research landed in 38s:
+   fresh generated_at, second event with trigger re_research and
+   replaced_existing true.
+
+Probe matrix with the researcher's real JWT: pool answers; clients,
+reviews, organizations, events, fees, roster-beyond-self refuse;
+DELETE zero rows; portal RPC empty; the human door 204s writing
+nothing; an unknown type refused by name. Sign-out revoked the probe
+session. **Teardown to baseline exactly on the first pass** — 18
+events, the researcher's creation trail untouched, the founder's own
+browser session the only survivor. No defect found live — the second
+consecutive clean drive.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Slice seven: Triangulation** (`runTriangulation`) — next in the
+  cluster; it consumes the researcher's dossier, the company report
+  and the HM report, so its Phase 0 should enumerate whether those
+  reads widen the pool (company_context lives on projects — likely
+  covered; the §5h rule decides, not this guess). Psychology follows.
+- **The stale-CHECK discovery — recommended as a standing trap
+  entry**: a CHECK rebuilt from an old file makes agent trail events
+  vanish SILENTLY (053's swallow). Every future slice's invariants
+  should carry the history-intact count, and the trap list should say
+  why the count, not the exception, is the tripwire.
+- **Long-action honesty on the research panel — deferred, evidence
+  strengthened**: two live runs at 41s and 38s, no drop observed;
+  the f54f1e7 pattern extends if one ever is.
+- **Web-search spend ceilings — stays under the deferred per-agent
+  budgets verdict** (§30), noting the suspension gate now provably
+  sits BEFORE the spend.
+
+Deploy `dl0v06spq` live; migration 079 applied via MCP and checked in.
+The completion declaration for the research slice waits on the
+verdicts above and the founder's written confirmation;
+`NEXT-agent-research.md` is deleted only after that.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
