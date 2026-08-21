@@ -230,6 +230,24 @@ export async function signInIntakeAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Search Health Agent — slice fourteen, the LAST of the
+ * fourteen-agent map. One principal, two judgments: health
+ * suggestions (the pool's merge-UPDATE) and the weekly report (the
+ * one new door — an INSERT-only, generated_by-pinned blind insert on
+ * project_reports; the seam mints the id itself). When the scheduled
+ * sweep's channel exists it will be THIS principal signing in from
+ * the CRON_SECRET-gated route — same credential, same kill switch, a
+ * `scheduled` trigger in the same vocabulary (D7).
+ */
+export async function signInSearchHealthAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "search_health",
+    email: process.env.AGENT_METRICS_EMAIL,
+    password: process.env.AGENT_METRICS_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { type PipelineStage } from "@/lib/ai/cv-parsing";
 import {
@@ -25,9 +26,13 @@ const FOUR_WEEKS_MS = 4 * 7 * 24 * 60 * 60 * 1000;
  * semantics: each candidate has one current stage at any moment.
  */
 export async function computePipelineMetrics(
-  projectId: string
+  projectId: string,
+  client?: SupabaseClient
 ): Promise<PipelineMetrics> {
-  const supabase = await createServerSupabaseClient();
+  // Same optional-client seam as computeProjectHealth: the Search
+  // Health Agent runs this under its own session; humans keep the
+  // cookie client.
+  const supabase = client ?? (await createServerSupabaseClient());
 
   const { data: candidatesData } = await supabase
     .from("candidates")

@@ -19,13 +19,11 @@ import { runCompanyIntelligenceAndPersist } from "@/lib/ai/run-company-intellige
 import type { CompanyIntelligenceReport } from "@/lib/ai/company-intelligence-agent";
 import { runHiringManagerResearchAndPersist } from "@/lib/ai/run-hiring-manager-research";
 import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
-import { runSearchHealth } from "@/lib/ai/run-search-health";
+import { runHealthSuggestionsAndPersist } from "@/lib/ai/run-search-health";
 import type {
   HealthSuggestion,
   HealthSuggestionsBlob,
 } from "@/lib/ai/search-health-agent";
-import { computeProjectHealth } from "@/lib/metrics/health";
-import { computePipelineMetrics } from "@/lib/metrics/pipeline";
 import {
   type CalibrationModel,
   type CompanyContext,
@@ -535,129 +533,34 @@ export async function generateHealthSuggestionsAction(
 ): Promise<ActionResult<HealthSuggestionsBlob>> {
   return runAction(SUBJECT, async () => {
     if (!projectId) throw new Error("Missing projectId.");
-    const auth = await requireActiveUser();
-    const supabase = await createServerSupabaseClient();
+    await requireActiveUser();
 
-    const { data: project, error: projectErr } = await supabase
-      .from("projects")
-      .select(
-        "id, title, company_name, calibration_model, company_context, organization_id"
-      )
-      .eq("id", projectId)
-      .single<{
-        id: string;
-        title: string;
-        company_name: string;
-        calibration_model: unknown;
-        company_context: unknown;
-        organization_id: string | null;
-      }>();
-    if (projectErr || !project) throw new Error("Project not found.");
-    if (project.organization_id !== auth.organizationId) {
-      throw new Error("Project belongs to a different organisation.");
+    // The judgment runs under the SEARCH HEALTH AGENT's own session
+    // (087): the seam signs the fourteenth principal in, computes
+    // health and pipeline under its own reads, applies the health
+    // gate itself, judges, and lands the merge-UPDATE under its own
+    // name. The action keeps the gate and the cache invalidation.
+    const run = await runHealthSuggestionsAndPersist(projectId);
+
+    if (run.status === "agent_unavailable") {
+      throw new Error(
+        "The Search Health Agent could not run — an operator has suspended it " +
+          "or its credentials are absent. The existing suggestions stand."
+      );
     }
-
-    // Compute health + pipeline metrics fresh — the dashboard caches
-    // these but the agent should always run on the live state.
-    const [health, pipeline, queriesQ, feedbackQ] = await Promise.all([
-      computeProjectHealth(projectId),
-      computePipelineMetrics(projectId),
-      supabase
-        .from("boolean_queries")
-        .select("query_type, search_type, content, version")
-        .eq("project_id", projectId)
-        .order("version", { ascending: false }),
-      supabase
-        .from("feedback")
-        .select("feedback_type, content, interpreted, created_at")
-        .eq("project_id", projectId)
-        .order("created_at", { ascending: false })
-        .limit(10),
-    ]);
-
-    if (health.status === "healthy") {
+    if (run.status === "unavailable") throw new Error("Project not found.");
+    if (run.status === "healthy") {
       throw new Error(
         "Project health is healthy — suggestions are only generated when stalled or at-risk."
       );
     }
-
-    // Reduce queries to one row per slot (highest version wins).
-    type QueryRow = {
-      query_type: string;
-      search_type: string;
-      content: string;
-      version: number;
-    };
-    const seenSlots = new Set<string>();
-    const queries: SearchHealthQueryShape[] = [];
-    for (const row of (queriesQ.data ?? []) as QueryRow[]) {
-      const slot = slotKeyFor(row.query_type, row.search_type);
-      if (!slot || seenSlots.has(slot)) continue;
-      seenSlots.add(slot);
-      queries.push({
-        slot,
-        content: row.content,
-        version: row.version,
-        word_count: wordCount(row.content),
-      });
-    }
-
-    type FbRow = {
-      feedback_type: string;
-      content: string;
-      interpreted: { summary?: string } | null;
-      created_at: string;
-    };
-    const recent_feedback = ((feedbackQ.data ?? []) as FbRow[]).map((f) => ({
-      feedback_type: f.feedback_type,
-      summary: f.interpreted?.summary ?? null,
-      content: f.content,
-      created_at: f.created_at,
-    }));
-
-    const result = await runSearchHealth(
-      {
-        project: {
-          title: project.title,
-          company_name: project.company_name,
-          calibration: project.calibration_model ?? {},
-          company_context: project.company_context ?? {},
-        },
-        health,
-        pipeline_summary: {
-          active_pool_size: pipeline.activePoolSize,
-          rejected_count: pipeline.rejectedCount,
-          weekly_velocity: pipeline.weeklyVelocity,
-          funnel: pipeline.funnel.map((f) => ({
-            stage: f.stage,
-            count: f.count,
-          })),
-        },
-        boolean_queries: queries,
-        recent_feedback,
-      },
-      {
-        projectId,
-        organizationId: project.organization_id,
-      }
-    );
-
-    const { error: updateErr } = await supabase
-      .from("projects")
-      .update({
-        health_suggestions: result,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", projectId);
-    if (updateErr) {
-      throw new Error(
-        `Failed to persist suggestions: ${updateErr.message}`
-      );
+    if (run.status !== "ready") {
+      throw new Error("Health suggestions failed. Try again.");
     }
 
     revalidatePath(`/app/projects/${projectId}`);
     revalidatePath(`/app/projects/${projectId}/metrics`);
-    return result;
+    return run.blob;
   });
 }
 
@@ -811,13 +714,6 @@ export async function applySourcingSuggestionAction(
   });
 }
 
-type SearchHealthQueryShape = {
-  slot: string;
-  content: string;
-  version: number;
-  word_count: number;
-};
-
 const SLOT_META: Record<
   string,
   { query_type: string; search_type: string }
@@ -829,19 +725,6 @@ const SLOT_META: Record<
   google_xray: { query_type: "google_xray", search_type: "exact" },
   ats: { query_type: "ats", search_type: "exact" },
 };
-
-function slotKeyFor(query_type: string, search_type: string): string | null {
-  for (const [slot, meta] of Object.entries(SLOT_META)) {
-    if (meta.query_type === query_type && meta.search_type === search_type) {
-      return slot;
-    }
-  }
-  return null;
-}
-
-function wordCount(content: string): number {
-  return content.trim().split(/\s+/).filter(Boolean).length;
-}
 
 // ────────────────────────────────────────────────────────────────────────
 // Company Intelligence Agent — real-time research via Claude's

@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import type {
   HealthAlert,
@@ -40,9 +41,14 @@ type ScoreRow = {
  * is cleaner than a stored procedure.
  */
 export async function computeProjectHealth(
-  projectId: string
+  projectId: string,
+  client?: SupabaseClient
 ): Promise<ProjectHealthSummary> {
-  const supabase = await createServerSupabaseClient();
+  // The optional client lets the Search Health Agent compute health
+  // under its OWN session (the skillClient pattern applied to
+  // metrics); the cookie client stays the default for every human
+  // surface.
+  const supabase = client ?? (await createServerSupabaseClient());
   const now = Date.now();
   const sevenDaysAgo = new Date(now - SEVEN_DAYS_MS).toISOString();
   const fourteenDaysAgo = new Date(now - FOURTEEN_DAYS_MS).toISOString();
