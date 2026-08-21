@@ -4125,3 +4125,47 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 42. Researcher verdicts confirmed — the research slice is complete — 2026-08-21
+
+The founder confirmed all four §41 verdicts as drafted: Triangulation
+opens as slice seven (its Phase 0 checks whether the company_context
+reads widen the pool — the code decides); the stale-CHECK discovery
+becomes a standing trap entry (every future slice's invariants carry
+the history-intact COUNT, because write_activity_event's 053 swallow
+means a stale rebuild makes agent events vanish silently — the count,
+not the exception, is the tripwire); the research panel's long-action
+fix stays deferred with strengthened evidence; web-search spend stays
+under the deferred per-agent budgets verdict, the suspension gate
+provably ahead of the spend.
+
+The definition of done is met: the judgment that searches the public
+web for a person and writes a dossier about them signs its own name.
+Every research run works under the pool's existing grants, reaches
+the web only through Anthropic's tool with no database authority
+added, attaches its sources server-side, lands one trail event with
+its trigger and source count named, preserves every neighbouring
+field, and fails the D5 way — a refused researcher surfaces its
+sentence, spends nothing, and the existing dossier stands
+byte-identical, proven live. The slice's control run went further
+than designed and surfaced a latent audit hazard (silent event loss
+under a stale CHECK) plus the invariant shape that catches it, now
+standing doctrine. The drive was also the §40 relabel's first live
+proof: Suspend/Restore on the row, honest verbs in the toast.
+
+**The agents-as-principals research slice is complete.** Six of
+fourteen agents now authenticate as principals — interpreter, ranker,
+parser, evaluator, positioner, researcher — with six independent kill
+switches and a trail that names every judgment's author, trigger, and
+(for the researcher) its evidence base. `NEXT-agent-research.md`
+deleted per its own instruction. Next migration is **080**;
+Triangulation's Phase 0 opens now on the founder's word ("proceed
+with slice seven").
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
