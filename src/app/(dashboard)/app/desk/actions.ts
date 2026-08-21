@@ -75,7 +75,11 @@ export async function reassignMandateLeadAction(
 /**
  * Generate the desk digest — one Anthropic call across the whole desk
  * (never one per mandate; per-mandate depth is the weekly report's job).
- * Appends a desk_digests row; the newest is canonical.
+ * The MANAGER's session builds the rollup it lawfully holds under
+ * desk:manage and hands it to the DESK DIGEST AGENT's seam (082, the
+ * §35 parser split generalised); the agent judges, appends the
+ * desk_digests row under its own name, and records the event. The
+ * newest row is canonical.
  */
 export async function generateDeskDigestAction(): Promise<ActionResult> {
   return runAction("The desk digest", async () => {
@@ -84,46 +88,53 @@ export async function generateDeskDigestAction(): Promise<ActionResult> {
     const supabase = await createServerSupabaseClient();
 
     const { loadDeskRollup } = await import("@/lib/desk/rollup");
-    const { generateDeskDigest, DESK_DIGEST_MODEL } = await import(
+    const { runDeskDigestAndPersist } = await import(
       "@/lib/ai/desk-digest-agent"
     );
 
     const rollup = await loadDeskRollup(supabase);
-    const { data: org } = await supabase
-      .from("organizations")
-      .select("name")
-      .single<{ name: string }>();
+    const [{ data: org }, { count: priorDigests }] = await Promise.all([
+      supabase.from("organizations").select("name").single<{ name: string }>(),
+      supabase
+        .from("desk_digests")
+        .select("id", { count: "exact", head: true }),
+    ]);
 
-    const digest = await generateDeskDigest({
-      organization_name: org?.name ?? "the organization",
-      generated_for_week_of: new Date().toISOString().slice(0, 10),
-      members: rollup.desks.map((d) => ({
-        name: d.member.full_name || d.member.email,
-        role: d.member.role,
-        active_mandates: d.led.map((p) => ({
+    const run = await runDeskDigestAndPersist(
+      {
+        organization_name: org?.name ?? "the organization",
+        generated_for_week_of: new Date().toISOString().slice(0, 10),
+        members: rollup.desks.map((d) => ({
+          name: d.member.full_name || d.member.email,
+          role: d.member.role,
+          active_mandates: d.led.map((p) => ({
+            title: p.title,
+            company: p.company_name,
+            status: p.status,
+            candidate_count: rollup.candidateCountByProject.get(p.id) ?? 0,
+            health: null,
+          })),
+          placements_total: d.placementsTotal,
+          placements_started: d.placementsStarted,
+          last_activity_at: d.lastSeen,
+        })),
+        unassigned_mandates: rollup.unassigned.map((p) => ({
           title: p.title,
           company: p.company_name,
-          status: p.status,
-          candidate_count: rollup.candidateCountByProject.get(p.id) ?? 0,
-          health: null,
         })),
-        placements_total: d.placementsTotal,
-        placements_started: d.placementsStarted,
-        last_activity_at: d.lastSeen,
-      })),
-      unassigned_mandates: rollup.unassigned.map((p) => ({
-        title: p.title,
-        company: p.company_name,
-      })),
-    });
+      },
+      { replacedExisting: (priorDigests ?? 0) > 0 }
+    );
 
-    const { error } = await supabase.from("desk_digests").insert({
-      organization_id: access.organizationId,
-      content_json: digest,
-      model_version: DESK_DIGEST_MODEL,
-      created_by: access.userId,
-    });
-    if (error) throw new Error(`Failed to store the digest: ${error.message}`);
+    if (run.status === "agent_unavailable") {
+      throw new Error(
+        "The Desk Digest Agent could not run — an operator has suspended it " +
+          "or its credentials are absent. The previous digest stands."
+      );
+    }
+    if (run.status !== "ready") {
+      throw new Error("Could not generate the desk digest. Try again.");
+    }
 
     revalidatePath("/app/desk");
   });

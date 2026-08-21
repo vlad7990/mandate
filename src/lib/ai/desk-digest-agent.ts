@@ -113,3 +113,82 @@ export async function generateDeskDigest(input: DeskDigestInput): Promise<DeskDi
   }
   return JSON.parse(textBlock.text) as DeskDigest;
 }
+
+// ────────────────────────────────────────────────────────────────────────
+// The seam (082): the DESK DIGEST AGENT's session, signed in per run.
+// The manager's action keeps the gate and BUILDS the rollup under its
+// own lawful desk:manage reads (the §35 parser split, generalised);
+// the agent runs the model call, INSERTs the digest under its own
+// name, records the event, and signs out persisting nothing. The
+// insert is BLIND — no RETURNING, no read-back: the no-archive pin
+// means the agent cannot see desk_digests rows, its own included
+// (RETURNING reads the row under SELECT policies, of which it has
+// none — proven by the 082 control run).
+// ────────────────────────────────────────────────────────────────────────
+
+import { signInDeskDigestAgent } from "@/lib/agents/session";
+
+export type DeskDigestRunResult =
+  | { status: "ready"; digest: DeskDigest }
+  /** The Desk Digest Agent refused to sign in — suspended from /ops or
+   * credentials absent. Nothing was generated; the table being
+   * append-only, there is nothing a refused run can destroy — the
+   * previous digest stands (D5, structural). */
+  | { status: "agent_unavailable"; reason: string }
+  /** Generation or persistence failed; logged. */
+  | { status: "failed" };
+
+export async function runDeskDigestAndPersist(
+  input: DeskDigestInput,
+  opts: { replacedExisting: boolean }
+): Promise<DeskDigestRunResult> {
+  const session = await signInDeskDigestAgent();
+  if (!session.ok) {
+    console.error(
+      `[desk-digest] generation skipped: ${session.reason}. ` +
+        "The previous digest stands; the desk keeps rendering it."
+    );
+    return { status: "agent_unavailable", reason: session.reason };
+  }
+
+  try {
+    let digest: DeskDigest;
+    try {
+      digest = await generateDeskDigest(input);
+    } catch (err) {
+      console.error("[desk-digest] agent generation failed", err);
+      return { status: "failed" };
+    }
+
+    const { error: insertErr } = await session.client.from("desk_digests").insert({
+      organization_id: session.organizationId,
+      content_json: digest,
+      model_version: DESK_DIGEST_MODEL,
+      created_by: session.userId,
+    });
+    if (insertErr) {
+      console.error("[desk-digest] failed to persist the digest", insertErr);
+      return { status: "failed" };
+    }
+
+    // The trail (D4): one event per LANDED digest — counts, never names.
+    const { error: eventErr } = await session.client.rpc("record_agent_event", {
+      p_event_type: "desk_digest_generated",
+      p_detail: {
+        agent_kind: "digest",
+        trigger: opts.replacedExisting ? "regenerate" : "generate",
+        replaced_existing: opts.replacedExisting,
+        members_count: input.members.length,
+        unassigned_count: input.unassigned_mandates.length,
+      },
+    });
+    if (eventErr) {
+      console.error("[desk-digest] failed to record the digest event", eventErr);
+    }
+
+    return { status: "ready", digest };
+  } finally {
+    // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
+    await session.signOut();
+  }
+}

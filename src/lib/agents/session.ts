@@ -151,6 +151,20 @@ export async function signInPsychologyAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the desk digest agent — slice nine, the first principal
+ * outside the candidate cluster. Own credential, own kill switch; it
+ * sees nothing (the manager hands it the rollup pre-assembled) and
+ * its whole reach is one INSERT on the append-only record table.
+ */
+export async function signInDeskDigestAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "digest",
+    email: process.env.AGENT_DIGEST_EMAIL,
+    password: process.env.AGENT_DIGEST_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;
