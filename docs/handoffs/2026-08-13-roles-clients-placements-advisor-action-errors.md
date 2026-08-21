@@ -4557,3 +4557,49 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 48. Digest verdicts confirmed — the digest slice is complete — 2026-08-21
+
+The founder confirmed all four §47 verdicts as drafted: the remaining
+five agents (intake, company research, onboarding, role spec, boolean
+search — plus the shortlist and copilot read-shaped surfaces) queue by
+usage, each with its own Phase 0, the metrics agent's cron-shaped
+arrival still waiting for its own slice (§30, standing); the
+skills-injection gap on the digest stays surfaced, one seam line
+whenever managerial tone should become steerable, not built unbidden;
+the RETURNING/SELECT-policy discovery enters the traps as doctrine —
+under RLS, INSERT..RETURNING and UPDATE/DELETE WHERE clauses read rows
+under SELECT policies, so a write-only principal inserts blind and a
+write policy added without SELECT is inert, both directions proven by
+the 082 control run; long-action honesty stays deferred with its
+strongest evidence yet (25s and 16s, zero drops).
+
+The definition of done is met. The judgment that writes the
+Monday-morning read across every recruiter's desk signs its own name;
+the manager's session performs the rollup its capability lawfully
+holds and hands the assembled input to the seam in memory — the §35
+parser split generalised, the negative matrix seven invariant files
+pin left untouched; the agent judges, inserts blind into a table it
+cannot read, records one event carrying counts and never names, and
+fails the D5 way with nothing it can destroy — append-only made
+fail-soft structural. The 082 control run returned the programme's
+first regression-by-ADDING-policies: an agent UPDATE policy alone
+proved INERT (the WHERE clause found no rows to read), and only the
+full SELECT+UPDATE drift landed a rewrite the harness caught at the
+append-only pin.
+
+**The agents-as-principals digest slice is complete.** Nine of
+fourteen agents now authenticate as principals — and the first
+conversion outside the candidate-intelligence cluster proves the
+house shape carries. `NEXT-agent-digest.md` deleted per its own
+instruction. Next migration is **083**; slice ten's Phase 0 opens now
+on the founder's word — the company-side grouping, first judgment the
+Company Intelligence generator.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
