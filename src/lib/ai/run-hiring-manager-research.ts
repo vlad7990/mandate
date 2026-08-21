@@ -8,6 +8,7 @@ import {
 } from "./hiring-manager-research-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { signInCompanyIntelAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const HM_RESEARCH_MODEL = "claude-sonnet-4-6";
 const WEB_SEARCH_MAX_USES = 7;
@@ -171,7 +172,7 @@ export async function runHiringManagerResearchAndPersist(
 ): Promise<HmResearchRunResult> {
   const session = await signInCompanyIntelAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[hm-research] research skipped: ${session.reason}. ` +
         "Any existing dossier stands; the panel keeps rendering it."
     );
@@ -259,7 +260,7 @@ async function runUnderAgentSession(
       }
     );
   } catch (err) {
-    console.error("[hm-research] agent research failed", err);
+    captureSeamError("[hm-research] agent research failed", err);
     return { status: "failed" };
   }
 
@@ -276,7 +277,7 @@ async function runUnderAgentSession(
     })
     .eq("id", projectId);
   if (updateErr) {
-    console.error("[hm-research] failed to persist the dossier", updateErr);
+    captureSeamError("[hm-research] failed to persist the dossier", updateErr);
     return { status: "failed" };
   }
 
@@ -294,7 +295,7 @@ async function runUnderAgentSession(
     },
   });
   if (eventErr) {
-    console.error("[hm-research] failed to record the research event", eventErr);
+    captureSeamError("[hm-research] failed to record the research event", eventErr);
   }
 
   return { status: "ready", report };

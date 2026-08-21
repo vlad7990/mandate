@@ -8,6 +8,7 @@ import {
 } from "./company-intelligence-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { signInCompanyIntelAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const COMPANY_INTELLIGENCE_MODEL = "claude-sonnet-4-6";
 // Cap server-side searches per run. 7 dimensions but we tell Claude to
@@ -189,7 +190,7 @@ export async function runCompanyIntelligenceAndPersist(
 ): Promise<CompanyIntelligenceRunResult> {
   const session = await signInCompanyIntelAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[company-intelligence] research skipped: ${session.reason}. ` +
         "Any existing report stands; the panel keeps rendering it."
     );
@@ -248,7 +249,7 @@ async function runUnderAgentSession(
       }
     );
   } catch (err) {
-    console.error("[company-intelligence] agent research failed", err);
+    captureSeamError("[company-intelligence] agent research failed", err);
     return { status: "failed" };
   }
 
@@ -267,7 +268,7 @@ async function runUnderAgentSession(
     })
     .eq("id", projectId);
   if (updateErr) {
-    console.error(
+    captureSeamError(
       "[company-intelligence] failed to persist the report",
       updateErr
     );
@@ -288,7 +289,7 @@ async function runUnderAgentSession(
     },
   });
   if (eventErr) {
-    console.error(
+    captureSeamError(
       "[company-intelligence] failed to record the research event",
       eventErr
     );

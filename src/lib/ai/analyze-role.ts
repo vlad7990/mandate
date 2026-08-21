@@ -13,6 +13,7 @@ import {
   type RoleAnalysis,
 } from "./role-analysis";
 import { signInIntakeAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const ANALYSIS_MODEL = "claude-sonnet-4-6";
 
@@ -69,7 +70,7 @@ export async function runIntakeAnalysisAndPersist(
 ): Promise<IntakeRunResult> {
   const session = await signInIntakeAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[analyze-role] The Intake Agent could not run — an operator has ` +
         `suspended it or its credentials are absent. The mandate keeps its ` +
         `one-line brief. (${session.reason})`
@@ -108,7 +109,7 @@ export async function runIntakeAnalysisAndPersist(
       }
       parsed = JSON.parse(textBlock.text) as RoleAnalysis;
     } catch (err) {
-      console.error("[analyze-role] agent analysis failed", err);
+      captureSeamError("[analyze-role] agent analysis failed", err);
       return { status: "failed" };
     }
 
@@ -127,7 +128,7 @@ export async function runIntakeAnalysisAndPersist(
       })
       .eq("id", projectId);
     if (updateErr) {
-      console.error("[analyze-role] failed to persist the analysis", updateErr);
+      captureSeamError("[analyze-role] failed to persist the analysis", updateErr);
       return { status: "failed" };
     }
 
@@ -147,7 +148,7 @@ export async function runIntakeAnalysisAndPersist(
       },
     });
     if (eventErr) {
-      console.error("[analyze-role] failed to record the intake event", eventErr);
+      captureSeamError("[analyze-role] failed to record the intake event", eventErr);
     }
 
     return { status: "ready", analysis: parsed };
@@ -196,7 +197,7 @@ export async function analyzeAndStoreRole(
       .update({ client_id: clientId })
       .eq("id", projectId);
     if (error) {
-      console.error("[analyze-role] failed to link the client", error.message);
+      captureSeamError("[analyze-role] failed to link the client", error.message);
     }
   }
 

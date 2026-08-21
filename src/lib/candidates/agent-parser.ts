@@ -3,6 +3,7 @@ import { signInCvParser } from "@/lib/agents/session";
 import { parseCv } from "@/lib/ai/parse-cv";
 import type { CandidateProfile } from "@/lib/ai/cv-parsing";
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 /**
  * The CV Parsing Agent's one job, as a principal (076, slice three of
@@ -54,7 +55,7 @@ export async function runCvParseAndPersist(args: {
 }): Promise<CvParseRunResult> {
   const session = await signInCvParser();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[cv-parser] parse skipped: ${session.reason}. ` +
         "The file and the candidate row stand; cv_parse_error carries the sentence."
     );
@@ -91,7 +92,7 @@ export async function runCvParseAndPersist(args: {
         })
         .eq("id", args.candidateId);
       if (failErr) {
-        console.error(
+        captureSeamError(
           "[cv-parser] failed to persist the parse-failure state",
           args.candidateId,
           failErr
@@ -139,7 +140,7 @@ export async function runCvParseAndPersist(args: {
       },
     });
     if (eventErr) {
-      console.error(
+      captureSeamError(
         "[cv-parser] failed to record the parse event",
         args.candidateId,
         eventErr

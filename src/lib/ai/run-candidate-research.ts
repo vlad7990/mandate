@@ -8,6 +8,7 @@ import {
 } from "./candidate-research-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { signInCandidateResearchAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const CANDIDATE_RESEARCH_MODEL = "claude-sonnet-4-6";
 const WEB_SEARCH_MAX_USES = 7;
@@ -172,7 +173,7 @@ export async function runCandidateResearchAndPersist(
 ): Promise<CandidateResearchRunResult> {
   const session = await signInCandidateResearchAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[candidate-research] research skipped: ${session.reason}. ` +
         "Any existing dossier stands; the panel keeps rendering it."
     );
@@ -265,7 +266,7 @@ async function runUnderAgentSession(
       }
     );
   } catch (err) {
-    console.error("[candidate-research] agent research failed", err);
+    captureSeamError("[candidate-research] agent research failed", err);
     return { status: "failed" };
   }
 
@@ -279,7 +280,7 @@ async function runUnderAgentSession(
     p_value: report,
   });
   if (writeErr) {
-    console.error(
+    captureSeamError(
       "[candidate-research] failed to persist the dossier for candidate",
       candidateId,
       writeErr
@@ -300,7 +301,7 @@ async function runUnderAgentSession(
     },
   });
   if (eventErr) {
-    console.error(
+    captureSeamError(
       "[candidate-research] failed to record the research event",
       candidateId,
       eventErr

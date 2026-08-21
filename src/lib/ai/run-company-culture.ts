@@ -9,6 +9,7 @@ import {
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { wrapWithRecruiterContext } from "./recruiter-context";
 import { signInCultureAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const COMPANY_CULTURE_MODEL = "claude-sonnet-4-6";
 
@@ -106,7 +107,7 @@ export async function runCompanyCultureAndPersist(
 ): Promise<CompanyCultureRunResult> {
   const session = await signInCultureAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[company-culture] derivation skipped: ${session.reason}. ` +
         "The existing profile stands; the panel keeps rendering it."
     );
@@ -177,7 +178,7 @@ async function runUnderAgentSession(
       }
     );
   } catch (err) {
-    console.error("[company-culture] agent derivation failed", err);
+    captureSeamError("[company-culture] agent derivation failed", err);
     return { status: "failed" };
   }
 
@@ -205,7 +206,7 @@ async function runUnderAgentSession(
     })
     .eq("id", projectId);
   if (updateErr) {
-    console.error("[company-culture] failed to persist the profile", updateErr);
+    captureSeamError("[company-culture] failed to persist the profile", updateErr);
     return { status: "failed" };
   }
 
@@ -223,7 +224,7 @@ async function runUnderAgentSession(
     },
   });
   if (eventErr) {
-    console.error("[company-culture] failed to record the event", eventErr);
+    captureSeamError("[company-culture] failed to record the event", eventErr);
   }
 
   return { status: "ready", profile };

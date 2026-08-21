@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { IconAlert, IconRefresh, IconArrowLeft } from "@/components/icons";
 
 /**
@@ -29,7 +30,8 @@ export default function DashboardError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Until error monitoring lands, the console is the only record.
+    // The console record stays (NEXT-sentry D5); Sentry carries the copy.
+    Sentry.captureException(error);
     console.error("[dashboard] route error", error);
   }, [error]);
 

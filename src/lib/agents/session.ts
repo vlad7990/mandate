@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 /**
  * Agent sessions — how an AI agent authenticates as a principal.
@@ -319,7 +320,7 @@ async function signInAgent(args: {
       try {
         await client.auth.signOut();
       } catch (err) {
-        console.error(`[agents/session] ${kind} sign-out failed`, err);
+        captureSeamError(`[agents/session] ${kind} sign-out failed`, err);
       }
     },
   };

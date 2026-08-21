@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /**
  * Legacy product URLs.
@@ -40,4 +41,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry (NEXT-sentry D1/D2): source-map upload runs only when the
+// marketplace integration's auth token is present — without it the
+// wrapper changes nothing about the build, which is the same
+// fail-soft shape as the DSN-less SDK.
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: true,
+  telemetry: false,
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+});

@@ -9,6 +9,7 @@ import {
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { wrapWithRecruiterContext } from "./recruiter-context";
 import { signInPsychologyAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const PSYCHOLOGY_MODEL = "claude-sonnet-4-6";
 
@@ -116,7 +117,7 @@ export async function runPsychologyAndPersist(
 ): Promise<PsychologyRunResult> {
   const session = await signInPsychologyAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[psychology] generation skipped: ${session.reason}. ` +
         "Any existing profile stands; the panel keeps rendering it."
     );
@@ -207,7 +208,7 @@ async function runUnderAgentSession(
       }
     );
   } catch (err) {
-    console.error("[psychology] agent generation failed", err);
+    captureSeamError("[psychology] agent generation failed", err);
     return { status: "failed" };
   }
 
@@ -222,7 +223,7 @@ async function runUnderAgentSession(
     p_value: profile,
   });
   if (profileErr) {
-    console.error(
+    captureSeamError(
       "[psychology] failed to persist the profile for candidate",
       candidateId,
       profileErr
@@ -240,7 +241,7 @@ async function runUnderAgentSession(
   if (contextErr) {
     // The profile landed; a stale context is logged, not fatal — the
     // same window today's action carries.
-    console.error(
+    captureSeamError(
       "[psychology] failed to persist the recruiter context for candidate",
       candidateId,
       contextErr
@@ -261,7 +262,7 @@ async function runUnderAgentSession(
     },
   });
   if (eventErr) {
-    console.error(
+    captureSeamError(
       "[psychology] failed to record the profile event",
       candidateId,
       eventErr

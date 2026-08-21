@@ -11,6 +11,7 @@ import type { CompanyIntelligenceReport } from "./company-intelligence-agent";
 import type { CandidateIntelligenceReport } from "./candidate-research-agent";
 import type { HiringManagerIntelligenceReport } from "./hiring-manager-research-agent";
 import { signInTriangulationAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const TRIANGULATION_MODEL = "claude-sonnet-4-6";
 
@@ -130,7 +131,7 @@ export async function runTriangulationAndPersist(
 ): Promise<TriangulationRunResult> {
   const session = await signInTriangulationAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[triangulation] synthesis skipped: ${session.reason}. ` +
         "Any existing report stands; the panel keeps rendering it."
     );
@@ -235,7 +236,7 @@ async function runUnderAgentSession(
       }
     );
   } catch (err) {
-    console.error("[triangulation] agent synthesis failed", err);
+    captureSeamError("[triangulation] agent synthesis failed", err);
     return { status: "failed" };
   }
 
@@ -248,7 +249,7 @@ async function runUnderAgentSession(
     p_value: report,
   });
   if (writeErr) {
-    console.error(
+    captureSeamError(
       "[triangulation] failed to persist the report for candidate",
       candidateId,
       writeErr
@@ -268,7 +269,7 @@ async function runUnderAgentSession(
     },
   });
   if (eventErr) {
-    console.error(
+    captureSeamError(
       "[triangulation] failed to record the triangulation event",
       candidateId,
       eventErr

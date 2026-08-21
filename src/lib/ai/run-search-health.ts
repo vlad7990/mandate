@@ -13,6 +13,7 @@ import type { ProjectHealthSummary } from "@/lib/metrics/types";
 import { computeProjectHealth } from "@/lib/metrics/health";
 import { computePipelineMetrics } from "@/lib/metrics/pipeline";
 import { signInSearchHealthAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const HEALTH_MODEL = "claude-sonnet-4-6";
 
@@ -161,7 +162,7 @@ export async function runHealthSuggestionsAndPersist(
 ): Promise<SearchHealthRunResult> {
   const session = await signInSearchHealthAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[search-health] suggestions skipped: ${session.reason}. ` +
         "The existing suggestions stand; the panel keeps rendering them."
     );
@@ -280,7 +281,7 @@ async function runUnderAgentSession(
       }
     );
   } catch (err) {
-    console.error("[search-health] agent judgment failed", err);
+    captureSeamError("[search-health] agent judgment failed", err);
     return { status: "failed" };
   }
 
@@ -292,7 +293,7 @@ async function runUnderAgentSession(
     })
     .eq("id", projectId);
   if (updateErr) {
-    console.error("[search-health] failed to persist the suggestions", updateErr);
+    captureSeamError("[search-health] failed to persist the suggestions", updateErr);
     return { status: "failed" };
   }
 
@@ -310,7 +311,7 @@ async function runUnderAgentSession(
     },
   });
   if (eventErr) {
-    console.error("[search-health] failed to record the event", eventErr);
+    captureSeamError("[search-health] failed to record the event", eventErr);
   }
 
   return { status: "ready", blob };

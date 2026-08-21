@@ -10,6 +10,7 @@ import {
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import type { CandidateProfile } from "@/lib/ai/cv-parsing";
 import { signInSearchHealthAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const WEEKLY_REPORT_MODEL = "claude-sonnet-4-6";
 
@@ -140,7 +141,7 @@ export async function runWeeklyReportAndPersist(
 ): Promise<WeeklyReportRunResult> {
   const session = await signInSearchHealthAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[weekly-report] report skipped: ${session.reason}. ` +
         "The previous reports stand; the archive keeps rendering them."
     );
@@ -344,7 +345,7 @@ async function runReportUnderAgentSession(
       skillClient: supabase,
     }));
   } catch (err) {
-    console.error("[weekly-report] agent judgment failed", err);
+    captureSeamError("[weekly-report] agent judgment failed", err);
     return { status: "failed" };
   }
 
@@ -363,7 +364,7 @@ async function runReportUnderAgentSession(
     ai_model: model,
   });
   if (insertErr) {
-    console.error("[weekly-report] failed to persist the report", insertErr);
+    captureSeamError("[weekly-report] failed to persist the report", insertErr);
     return { status: "failed" };
   }
 
@@ -382,7 +383,7 @@ async function runReportUnderAgentSession(
     },
   });
   if (eventErr) {
-    console.error("[weekly-report] failed to record the event", eventErr);
+    captureSeamError("[weekly-report] failed to record the event", eventErr);
   }
 
   return { status: "ready", id: reportId };

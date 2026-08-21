@@ -8,6 +8,7 @@ import {
 } from "./positioning-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { signInPositioningAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const POSITIONING_MODEL = "claude-sonnet-4-6";
 
@@ -114,7 +115,7 @@ export async function runPositioningAndPersist(
 ): Promise<PositioningRunResult> {
   const session = await signInPositioningAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[positioning] generation skipped: ${session.reason}. ` +
         "Any existing kit stands; the panel keeps rendering it."
     );
@@ -223,7 +224,7 @@ async function runUnderAgentSession(
       skillClient: supabase,
     });
   } catch (err) {
-    console.error("[positioning] agent generation failed", err);
+    captureSeamError("[positioning] agent generation failed", err);
     return { status: "failed" };
   }
 
@@ -238,7 +239,7 @@ async function runUnderAgentSession(
     p_value: result,
   });
   if (writeErr) {
-    console.error(
+    captureSeamError(
       "[positioning] failed to persist the kit for candidate",
       candidateId,
       writeErr
@@ -258,7 +259,7 @@ async function runUnderAgentSession(
     },
   });
   if (eventErr) {
-    console.error(
+    captureSeamError(
       "[positioning] failed to record the positioning event",
       candidateId,
       eventErr

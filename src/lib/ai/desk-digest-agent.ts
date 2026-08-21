@@ -127,6 +127,7 @@ export async function generateDeskDigest(input: DeskDigestInput): Promise<DeskDi
 // ────────────────────────────────────────────────────────────────────────
 
 import { signInDeskDigestAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 export type DeskDigestRunResult =
   | { status: "ready"; digest: DeskDigest }
@@ -144,7 +145,7 @@ export async function runDeskDigestAndPersist(
 ): Promise<DeskDigestRunResult> {
   const session = await signInDeskDigestAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[desk-digest] generation skipped: ${session.reason}. ` +
         "The previous digest stands; the desk keeps rendering it."
     );
@@ -156,7 +157,7 @@ export async function runDeskDigestAndPersist(
     try {
       digest = await generateDeskDigest(input);
     } catch (err) {
-      console.error("[desk-digest] agent generation failed", err);
+      captureSeamError("[desk-digest] agent generation failed", err);
       return { status: "failed" };
     }
 
@@ -167,7 +168,7 @@ export async function runDeskDigestAndPersist(
       created_by: session.userId,
     });
     if (insertErr) {
-      console.error("[desk-digest] failed to persist the digest", insertErr);
+      captureSeamError("[desk-digest] failed to persist the digest", insertErr);
       return { status: "failed" };
     }
 
@@ -183,7 +184,7 @@ export async function runDeskDigestAndPersist(
       },
     });
     if (eventErr) {
-      console.error("[desk-digest] failed to record the digest event", eventErr);
+      captureSeamError("[desk-digest] failed to record the digest event", eventErr);
     }
 
     return { status: "ready", digest };

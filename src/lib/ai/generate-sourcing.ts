@@ -14,6 +14,7 @@ import type { CalibrationModel, CompanyContext } from "./role-analysis";
 import { normalizeSections, type JobSpecSections } from "./job-spec-analysis";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { signInBooleanSearchAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 const SOURCING_MODEL = "claude-sonnet-4-6";
 
@@ -214,7 +215,7 @@ export async function runSourcingGenerateAllAndPersist(
 ): Promise<SourcingRunResult> {
   const session = await signInBooleanSearchAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[sourcing] generation skipped: ${session.reason}. ` +
         "The existing queries stand; the editor keeps rendering them."
     );
@@ -238,7 +239,7 @@ export async function runSourcingGenerateAllAndPersist(
     try {
       queries = await generateAllSourcingQueries(loaded.ctx);
     } catch (err) {
-      console.error("[sourcing] agent generation failed", err);
+      captureSeamError("[sourcing] agent generation failed", err);
       return { status: "failed" };
     }
 
@@ -256,7 +257,7 @@ export async function runSourcingGenerateAllAndPersist(
       .from("boolean_queries")
       .insert(rows);
     if (insertError) {
-      console.error("[sourcing] failed to persist queries", insertError);
+      captureSeamError("[sourcing] failed to persist queries", insertError);
       return { status: "failed" };
     }
 
@@ -273,7 +274,7 @@ export async function runSourcingGenerateAllAndPersist(
       },
     });
     if (eventErr) {
-      console.error("[sourcing] failed to record the event", eventErr);
+      captureSeamError("[sourcing] failed to record the event", eventErr);
     }
 
     return { status: "ready" };
@@ -293,7 +294,7 @@ export async function runSourcingRegenerateAndPersist(
 
   const session = await signInBooleanSearchAgent();
   if (!session.ok) {
-    console.error(
+    captureSeamError(
       `[sourcing] regeneration skipped: ${session.reason}. ` +
         "The existing queries stand; the editor keeps rendering them."
     );
@@ -324,7 +325,7 @@ export async function runSourcingRegenerateAndPersist(
     try {
       newContent = await regenerateSingleQuery(slotKey, current, feedback, loaded.ctx);
     } catch (err) {
-      console.error("[sourcing] agent regeneration failed", err);
+      captureSeamError("[sourcing] agent regeneration failed", err);
       return { status: "failed" };
     }
 
@@ -338,7 +339,7 @@ export async function runSourcingRegenerateAndPersist(
       updated_at: new Date().toISOString(),
     });
     if (insertError) {
-      console.error("[sourcing] failed to persist regenerated query", insertError);
+      captureSeamError("[sourcing] failed to persist regenerated query", insertError);
       return { status: "failed" };
     }
 
@@ -356,7 +357,7 @@ export async function runSourcingRegenerateAndPersist(
       },
     });
     if (eventErr) {
-      console.error("[sourcing] failed to record the event", eventErr);
+      captureSeamError("[sourcing] failed to record the event", eventErr);
     }
 
     return { status: "ready" };

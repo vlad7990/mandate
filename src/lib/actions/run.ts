@@ -1,5 +1,9 @@
 import { ForbiddenError } from "@/lib/auth/access";
 import { agentErrorMessage, safeFailureMessage } from "@/lib/ai/agent-errors";
+import {
+  captureActionFault,
+  captureGuardTrip,
+} from "@/lib/observability/sentry";
 import { ActionFailure, type ActionResult } from "./result";
 
 /**
@@ -52,9 +56,18 @@ export async function runAction<T>(
     return { ok: true, data: await body() };
   } catch (err) {
     if (isNextSignal(err)) throw err;
-    if (err instanceof ForbiddenError) throw err;
+    if (err instanceof ForbiddenError) {
+      captureGuardTrip(err, subject);
+      throw err;
+    }
 
     console.error(`[action] ${subject} failed:`, err);
+    // Only FAULTS become Sentry events (NEXT-sentry D3): a plain
+    // `Error` is an authored outcome sentence and stays between the
+    // action and its reader.
+    if (!(err instanceof Error && err.constructor === Error) && !(err instanceof ActionFailure)) {
+      captureActionFault(err, subject);
+    }
     return { ok: false, error: readerMessage(err, subject) };
   }
 }
