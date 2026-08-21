@@ -3817,3 +3817,44 @@ deleted only after that. Founder-owned, unchanged: the Resend DNS
 records, the exposed Supabase access token, leaked-password protection,
 the deferred build list (with the rate-limiting bundle), and the
 orphaned 331-byte storage object.
+
+---
+
+## 38. Evaluator verdicts confirmed — the evaluator slice is complete — 2026-08-21
+
+The founder confirmed all four §37 verdicts as drafted: slice five
+opens with the Positioning agent, leading the candidate-intelligence
+cluster (research, triangulation, psychology follow in the cluster's
+own order; the digest writer waits behind them); the long-action
+honesty fix is ACCEPTED as follow-up build — an optimistic toast or
+poll on Regenerate-class actions so a dropped fetch stops reading as
+failure while the work lands (first act of slice five's session, or
+sooner on request); the evaluation-staleness note stays deferred until
+a recruiter asks; the /ops Suspend/Restore relabel stays founder-timed.
+
+The definition of done is met: the judgment that writes what the firm
+believes about a candidate signs its own name. Every evaluation — a
+visitor's cache-miss, a deliberate regenerate — runs as the Evaluation
+Agent under the pool's existing grants, lands one trail event with its
+trigger named, preserves every field the parser wrote, and fails the
+D5 way: a refused evaluator surfaces a sentence and destroys nothing,
+proven live with a byte-identical surviving report. The slice also
+deleted the after()-cookie caveat's fourth occurrence instead of
+working around it, let a viewer's visit persist an evaluation for the
+first time, and — through its D7 acts — caught, fixed and re-proved
+the Retry-parse button's missing cv_url key, so the §36-accepted
+affordance now works end to end from the stored file.
+
+**The agents-as-principals evaluator slice is complete.** Four of
+fourteen agents now authenticate as principals — interpreter, ranker,
+parser, evaluator — with four independent kill switches proven live
+and a trail that names every judgment's author and trigger.
+`NEXT-agent-evaluator.md` deleted per its own instruction. Next
+migration is **078**; the Positioning agent's Phase 0 opens on the
+founder's word.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
