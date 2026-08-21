@@ -110,6 +110,20 @@ export async function signInPositioningAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the candidate research agent — slice six. Own credential,
+ * own kill switch. Its model call reaches the public web through
+ * Anthropic's web_search tool; suspension refuses the run at sign-in,
+ * before any search is made.
+ */
+export async function signInCandidateResearchAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "researcher",
+    email: process.env.AGENT_RESEARCH_EMAIL,
+    password: process.env.AGENT_RESEARCH_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

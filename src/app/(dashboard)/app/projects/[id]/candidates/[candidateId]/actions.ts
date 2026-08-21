@@ -19,7 +19,7 @@ import {
 import type { Tier } from "@/lib/ranking/tiers";
 import { runPositioningAndPersist } from "@/lib/ai/run-positioning";
 import type { PositioningResult } from "@/lib/ai/positioning-agent";
-import { runCandidateResearch } from "@/lib/ai/run-candidate-research";
+import { runCandidateResearchAndPersist } from "@/lib/ai/run-candidate-research";
 import type { CandidateIntelligenceReport } from "@/lib/ai/candidate-research-agent";
 import type { CandidatePsychology } from "@/lib/ai/psychology-agent";
 import { runTriangulation } from "@/lib/ai/run-triangulation";
@@ -1001,6 +1001,12 @@ export async function overridePsychologyConfidenceAction(
 
 const CANDIDATE_INTELLIGENCE_KEY = "candidate_intelligence" as const;
 
+/**
+ * Run the Candidate Research Agent for this candidate. The recruiter's
+ * session keeps the gate and the ownership assertion; the judgment —
+ * reads, the web-searching model call, the candidate_intelligence
+ * write, the trail event — runs under the AGENT's own session (079).
+ */
 export async function researchCandidateAction(
   candidateId: string,
   projectId: string
@@ -1010,91 +1016,27 @@ export async function researchCandidateAction(
       throw new Error("Missing candidateId or projectId.");
     }
 
-    const auth = await requireActiveUser();
+    await requireActiveUser();
     await assertCandidateBelongsToProject(candidateId, projectId);
 
-    const supabase = await createServerSupabaseClient();
-    const [candidateQ, projectQ] = await Promise.all([
-      supabase
-        .from("candidates")
-        .select(
-          "id, full_name, current_title, current_company, location, linkedin_url, github_url, website_url, cv_structured"
-        )
-        .eq("id", candidateId)
-        .single<{
-          id: string;
-          full_name: string;
-          current_title: string | null;
-          current_company: string | null;
-          location: string | null;
-          linkedin_url: string | null;
-          github_url: string | null;
-          website_url: string | null;
-          cv_structured: unknown;
-        }>(),
-      supabase
-        .from("projects")
-        .select("organization_id")
-        .eq("id", projectId)
-        .single<{ organization_id: string | null }>(),
-    ]);
+    const run = await runCandidateResearchAndPersist(candidateId, projectId);
 
-    if (candidateQ.error || !candidateQ.data) {
+    if (run.status === "agent_unavailable") {
+      throw new Error(
+        "The Candidate Research Agent could not run — an operator has " +
+          "suspended it or its credentials are absent. The existing dossier " +
+          "stands."
+      );
+    }
+    if (run.status === "unavailable") {
       throw new Error("Candidate not found.");
     }
-    if (projectQ.error || !projectQ.data) {
-      throw new Error("Project not found.");
-    }
-    if (projectQ.data.organization_id !== auth.organizationId) {
-      throw new Error("Project belongs to a different organisation.");
+    if (run.status !== "ready") {
+      throw new Error("Could not research the candidate. Try again.");
     }
 
-    const c = candidateQ.data;
-    const cv = (c.cv_structured ?? {}) as Record<string, unknown>;
-    // Trim heavy CV fields before sending — the model needs narrative
-    // anchors for identity verification, not the full role history.
-    const cv_summary = {
-      summary: cv.summary,
-      domain: cv.domain,
-      scale: cv.scale,
-      years_experience: cv.years_experience,
-      archetype: cv.archetype,
-      tech_exposure: Array.isArray(cv.tech_exposure)
-        ? (cv.tech_exposure as unknown[]).slice(0, 8)
-        : undefined,
-      transformation_experience: Array.isArray(cv.transformation_experience)
-        ? (cv.transformation_experience as unknown[]).slice(0, 5)
-        : undefined,
-    };
-
-    const report = await runCandidateResearch(
-      {
-        candidate: {
-          full_name: c.full_name,
-          current_title: c.current_title,
-          current_company: c.current_company,
-          location: c.location,
-          linkedin_url: c.linkedin_url,
-          github_url: c.github_url,
-          website_url: c.website_url,
-          cv_summary,
-        },
-      },
-      {
-        projectId,
-        candidateId,
-        organizationId: projectQ.data.organization_id,
-      }
-    );
-
-    await rpcSetCvField(
-      candidateId,
-      projectId,
-      CANDIDATE_INTELLIGENCE_KEY,
-      report
-    );
     revalidatePath(`/app/projects/${projectId}/candidates/${candidateId}`);
-    return report;
+    return run.report;
   });
 }
 
