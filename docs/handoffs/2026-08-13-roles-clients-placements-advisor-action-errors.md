@@ -5140,3 +5140,44 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 56. Intake verdicts confirmed — the slice is complete — 2026-08-21
+
+The founder confirmed all four §55 verdicts as drafted: the remaining
+agents (onboarding, role spec — plus the shortlist and copilot
+read-shaped surfaces) queue by usage on the founder's word, the
+metrics agent's cron-shaped arrival still waiting for its own slice
+(§30, standing); the stuck-mandate gap stays surfaced and
+founder-timed — a failed or refused intake leaves "Analyzing…"
+forever, and the retry surface or honest failed-state title is
+product work; the skills gap's second sighting stays surfaced —
+intake becomes steerable with one seam line whenever wanted; and
+long-action honesty has nothing to defer on a fire-and-forget run.
+
+The definition of done is met. The judgment that turns a one-line
+brief into a structured mandate signs its own name — and the slice
+proved a new shape for the house: the parser split inverted, the
+agent handing its analysis BACK for the client bookkeeping only a
+human may do. The drive showed one judgment wearing two honest
+signatures in the same rows — the analysis event under the Intake
+Agent, the client row under the operator who asked — and the
+registry's boundary answered a live probe by name. The control run
+recorded the programme's first regression of attribution itself: an
+act stripped of its signature was caught by the pin that insists
+every agent act wears the agent's name.
+
+**The agents-as-principals intake slice is complete.** Thirteen of
+fourteen agents now authenticate as principals — every judgment the
+product runs on demand now signs its own name; only the metrics
+agent's cron-shaped arrival remains (§30, standing), with the
+onboarding and role-spec surfaces and the read-shaped
+shortlist/copilot queue behind it. `NEXT-agent-intake.md` deleted per
+its own instruction. Next migration is **087**.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), and the one orphaned 331-byte storage
+object from §28's diagnosis.
