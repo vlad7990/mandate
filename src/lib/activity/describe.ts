@@ -238,6 +238,14 @@ export function describeActivity(event: ActivityEventRow): string {
         : base;
     }
 
+    case "candidate_triangulated": {
+      // The byline names the triangulator; the sentence names the trigger.
+      const trigger = str(d, "trigger");
+      return trigger === "regenerate"
+        ? "Re-triangulated the candidate against the role"
+        : "Triangulated the candidate against the role";
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from
