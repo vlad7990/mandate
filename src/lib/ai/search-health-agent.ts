@@ -111,9 +111,13 @@ export const HEALTH_AGENT_SCHEMA = {
               "transformation",
             ],
           },
+          // additionalProperties must be false: the structured-output
+          // API refuses `true` on object types (400, found live in the
+          // 087 drive). The two named keys are the only ones the apply
+          // action reads anyway.
           applicable_payload: {
             type: "object",
-            additionalProperties: true,
+            additionalProperties: false,
             properties: {
               replacement: { type: "string" },
               delta: { type: "integer" },
