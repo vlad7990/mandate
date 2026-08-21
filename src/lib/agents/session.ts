@@ -97,6 +97,19 @@ export async function signInEvaluator(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the positioning agent — slice five, the first of the
+ * candidate-intelligence cluster. Own credential, own kill switch;
+ * writes exactly one jsonb key through the RLS-bound RPC.
+ */
+export async function signInPositioningAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "positioner",
+    email: process.env.AGENT_POSITIONING_EMAIL,
+    password: process.env.AGENT_POSITIONING_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;
