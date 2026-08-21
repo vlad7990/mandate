@@ -5181,3 +5181,159 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), and the one orphaned 331-byte storage
 object from §28's diagnosis.
+
+---
+
+## 57. The Search Health Agent becomes a principal — built, proven live, awaiting verdict sign-off — 2026-08-21
+
+Slice fourteen of agents-as-principals (plan in
+`NEXT-agent-metrics.md`, D1–D8 confirmed 2026-08-21) — **the LAST of
+the fourteen-agent map**: Metrics / Search Health, deferred since §30
+as "cron-shaped", converted now as what Phase 0 found it to be — two
+on-demand judgments that persist, with the scheduled sweep left as a
+documented socket (D8). One principal holds both judgments: health
+suggestions and the weekly report (the company-intelligence
+precedent). One migration (**next is 088**):
+
+- **087 — one grant and the vocabulary**:
+  `project_reports_agent_insert` — INSERT only, is_agent() + org +
+  **generated_by PINNED to auth.uid()**; NO SELECT (the seam mints
+  the row's id itself and inserts BLIND — 082's RETURNING doctrine
+  applied constructively), NO UPDATE, NO DELETE — landed reports are
+  the recruiter's records. The health judgment added ZERO grants:
+  every read is the pool's (074/085) and the merge rides 074's
+  projects UPDATE; `dismissHealthSuggestionAction` stays the
+  recruiter's overlay act. `health_suggested` +
+  `weekly_report_generated` into the CHECK (live pg_constraint list);
+  allowlist at sixteen; trigger `on_demand` with **`scheduled`
+  RESERVED** (D4). **`agent_metrics_invariants.sql`** — 5 invariants,
+  clean pass: the pool answers both judgments; the health merge lands
+  with sibling columns byte-identical; the blind insert lands with
+  the minted id under the agent's name; THE IMPERSONATION PIN; the
+  tenant conjunct beside it; INSERT..RETURNING refused (082 reproven
+  on this table); the agent's project_reports SELECT answering ZERO;
+  history at sixteen by COUNT; the negative matrix unchanged; the
+  landed-reports pin (agent UPDATE and DELETE on zero rows); forgery
+  both directions; kill switches independent at fourteen. The control
+  run **dropped the generated_by conjunct** ("we trust the app to
+  stamp it") — the agent's report LANDED UNDER A RECRUITER's NAME and
+  the harness aborted at INVARIANT-FAIL (2); drift and harness in one
+  transaction, the abort rolling the rebuild back — residue-free by
+  construction, all three conjuncts verified live after. Thirteen
+  slices bookended by the two faces of attribution fraud: 086 caught
+  anonymity, 087 catches impersonation.
+
+**The seam (`ea5e65b`).** The interpreter's shape twice over:
+`computeProjectHealth` and `computePipelineMetrics` gained an
+optional client (the skillClient pattern applied to metrics — the
+cookie client stays every human surface's default), and the
+fourteenth principal computes health and pipeline UNDER ITS OWN
+SESSION. `runHealthSuggestionsAndPersist` applies the HEALTH GATE
+itself — a healthy search returns before any token is spent — then
+judges (skills ride the agent's session), merge-UPDATEs the blob
+under its own name, and records the event with a status enum and a
+count. `runWeeklyReportAndPersist` assembles the Monday-aligned week
+deterministically from its own reads, judges, MINTS THE ROW's ID
+ITSELF, inserts blind with generated_by = its own identity, records
+the event with a date and counts, and hands the minted id back. The
+actions keep their gates (mandates:write; clients:share — the
+client-facing artifact's gate), the established healthy-gate message,
+revalidatePath, and the D5 sentences. Live account:
+`vbreygin+metrics@gmail.com`, id `a4b3f2ce-…`, Mandate HQ, §30
+recipe; `AGENT_METRICS_*` in Vercel production and `.env.local`.
+Durable baseline: **15 users, 42 trail events** (fourteen agents'
+creation records) — and the founder's own May demo report makes
+project_reports' durable count **1**.
+
+### Driven live on production (deploys `feduk2zo7` = `ea5e65b`, `12t02ic2m` = `7c072fd`)
+
+Scratch world 0dd inside Mandate HQ: an is_founder operator and one
+labelled scratch project (5 candidates, seeded feedback, one sourcing
+query), shaped HEALTHY first so the gate could be exercised both
+ways. The acts:
+
+1. **The healthy way** — the panel does not render at all on a
+   healthy project (no affordance, the honest tooltip on surfaces
+   that show the button); and the SERVER's own gate answered a
+   stale-UI race live: with suggestions already on screen, the
+   feedback freshened underneath and Refresh clicked without a
+   reload, the action refused in ~1.4s with the established message
+   VERBATIM — before any token was spent.
+2. **One defect found live, fixed in the drive (`7c072fd`)**: the
+   first generate attempt failed — the structured-output API refuses
+   `additionalProperties: true` on object types (400), so every
+   health-suggestions run had failed since the API tightened
+   validation; the panel predates the agents programme and had not
+   been driven since. D5 held through the failure: blob null, no
+   event, no session left behind. Schema fixed, redeployed.
+3. **Generate on the stalled project** → landed in ~30s: 5
+   suggestions on the row, siblings intact, one `health_suggested`
+   event (actor "Search Health Agent", trigger on_demand,
+   health_status stalled, suggestions_count 5).
+4. **Weekly report** → landed in ~37s: the row bearing the
+   SEAM-MINTED id with `generated_by` = the agent — the first
+   client-facing artifact row in the product that names an agent as
+   its author — and one event carrying the week date and counts
+   (candidates 5, feedback 0).
+5. **Suspended from /ops by the operator's click** → BOTH surfaces
+   refused with their D5 sentences VERBATIM in ~400–460ms — one kill
+   switch covering both judgments, refused at sign-in; the blob
+   byte-identical (md5-compared), the report table gaining nothing.
+6. **Restored → regenerate** → landed in ~24s: a fresh blob, the
+   second event, zero agent sessions after every run.
+
+Probe matrix with the agent's real JWT via PostgREST: the pool's
+lawful reads answer (projects 3, candidates 6, feedback 4,
+boolean_queries 1, candidate_scores 3, skills 5, users self-only);
+**project_reports SELECT answers ZERO** — the star probe, the blind
+insert's other face; clients, placements, organizations,
+activity_events, desk_digests all ZERO; INSERT..RETURNING refused by
+name (42501); a FORGED generated_by (the operator's id) refused by
+name — the impersonation pin answering live; the agent's UPDATE and
+DELETE on the landed report 204 onto zero rows, the row surviving
+un-rewritten; the human door 204s writing nothing; a nonsense type
+refused by name. Sign-out revoked the probe session. **Teardown to
+baseline exactly on the first pass** — the project cascade, the trail
+rows swept on scratch keys (they do not cascade), the operator's full
+auth chain removed with the `user_id::uuid` cast, the agent's revoked
+refresh tokens cleared; 42 events, the fourteenth creation trail
+untouched, the founder's session (and its own 4-token rotation
+chain) the only survivor.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Slice fourteen CLOSES THE MAP** — all fourteen agents of
+  AGENTS.md now authenticate as principals: every judgment the
+  product runs signs its own name, on demand, under its own kill
+  switch. The onboarding and role-spec surfaces and the read-shaped
+  shortlist/copilot conversions remain queued by usage outside the
+  map's scope (§50/§52/§54/§56, standing).
+- **The scheduled sweep — recorded as CHANNEL-BLOCKED, ready**: the
+  cron route's own comments refuse motion without automation, and the
+  channel (Resend) is a founder item. When it is provisioned, the
+  sweep lands in `/api/cron/maintenance` with NO new migration: the
+  CRON_SECRET-gated route signs in THIS SAME principal, the trigger
+  value `scheduled` is already reserved in the vocabulary, and the
+  kill switch already covers it (D7/D8).
+- **The health-schema defect class — surfaced**: `additionalProperties:
+  true` broke a surface silently for however long the API has
+  refused it; the other thirteen agents' schemas were grepped clean
+  this session, but a smoke-run of rarely-driven AI surfaces after
+  provider-side validation changes is worth a line in the pre-launch
+  checklist. Founder-timed.
+- **Long-action honesty — deferred stands**: ~24–37s runs, zero
+  transport drops, consistent with the f54f1e7 policy's evidence.
+
+Deploys `feduk2zo7` and `12t02ic2m` live; migration 087 applied via
+MCP and checked in; tsc / vitest 790 / eslint / build green. The
+completion declaration for the metrics slice — and for the
+fourteen-agent map it closes — waits on the verdicts above and the
+founder's written confirmation; `NEXT-agent-metrics.md` is deleted
+only after it.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the deferred build list (Sentry → rate limiting → Resend → Stripe,
+with the rate-limiting bundle), the one orphaned 331-byte storage
+object from §28's diagnosis, the stuck-mandate retry gap (§55), and
+the intake and digest skills gaps.

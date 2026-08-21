@@ -1,7 +1,12 @@
 # NEXT — The Search Health Agent becomes a principal (slice fourteen)
 
-Status: **Phase 0 complete — D1–D8 drafted, awaiting the founder's
-written D-confirmation. No build work past this file until then.**
+Status: **Phases 1–4 EXECUTED (2026-08-21, D1–D8 confirmed as
+drafted). Migration 087 + invariants applied and control-run
+verified; seam live (`ea5e65b` + `7c072fd`); the drive, probe
+matrix, and first-pass teardown are recorded in §57 of the main
+handoff, with verdicts DRAFTED. Awaiting the founder's written §57
+confirmation — no completion declaration until then; this file is
+deleted only after it.**
 
 Slice fourteen of agents-as-principals — the LAST of the
 fourteen-agent map: Metrics / Search Health, deferred since §30 as
