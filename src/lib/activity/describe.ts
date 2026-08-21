@@ -312,6 +312,23 @@ export function describeActivity(event: ActivityEventRow): string {
         : `Derived the culture profile${withContext}`;
     }
 
+    case "sourcing_queries_generated": {
+      // The byline names the Boolean Search Agent; the sentence names
+      // the trigger. Detail carries the slot enum, counts, and a
+      // has_recruiter_feedback boolean — the feedback TEXT never
+      // rides the trail.
+      const trigger = str(d, "trigger");
+      if (trigger === "regenerate_one") {
+        const withFeedback =
+          d.has_recruiter_feedback === true ? " with recruiter feedback" : "";
+        return `Regenerated a sourcing query${withFeedback}`;
+      }
+      const slots = num(d, "slots_count");
+      return slots != null && slots > 0
+        ? `Built the sourcing queries — ${slots} slot${slots === 1 ? "" : "s"}`
+        : "Built the sourcing queries";
+    }
+
     case "candidate_parsed": {
       // Same D4 split: the byline names the parser, the sentence names
       // the trigger. The candidate link is rendered by the feed from
