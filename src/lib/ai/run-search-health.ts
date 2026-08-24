@@ -157,8 +157,11 @@ export type SearchHealthRunResult =
   /** Generation or persistence failed; logged. */
   | { status: "failed" };
 
+export type AgentRunTrigger = "on_demand" | "scheduled";
+
 export async function runHealthSuggestionsAndPersist(
-  projectId: string
+  projectId: string,
+  opts?: { trigger?: AgentRunTrigger }
 ): Promise<SearchHealthRunResult> {
   const session = await signInSearchHealthAgent();
   if (!session.ok) {
@@ -170,7 +173,11 @@ export async function runHealthSuggestionsAndPersist(
   }
 
   try {
-    return await runUnderAgentSession(session.client, projectId);
+    return await runUnderAgentSession(
+      session.client,
+      projectId,
+      opts?.trigger ?? "on_demand"
+    );
   } finally {
     // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
     await session.signOut();
@@ -179,7 +186,8 @@ export async function runHealthSuggestionsAndPersist(
 
 async function runUnderAgentSession(
   supabase: SupabaseClient,
-  projectId: string
+  projectId: string,
+  trigger: AgentRunTrigger
 ): Promise<SearchHealthRunResult> {
   const { data: project, error } = await supabase
     .from("projects")
@@ -305,7 +313,9 @@ async function runUnderAgentSession(
     p_project_id: projectId,
     p_detail: {
       agent_kind: "search_health",
-      trigger: "on_demand",
+      // `scheduled` was RESERVED in 087 for the cron sweep (D4/D7);
+      // the reservation is spent by the Resend slice's D3.
+      trigger,
       health_status: blob.health_status,
       suggestions_count: blob.suggestions.length,
     },

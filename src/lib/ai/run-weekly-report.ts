@@ -10,6 +10,7 @@ import {
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import type { CandidateProfile } from "@/lib/ai/cv-parsing";
 import { signInSearchHealthAgent } from "@/lib/agents/session";
+import type { AgentRunTrigger } from "./run-search-health";
 import { captureSeamError } from "@/lib/observability/sentry";
 
 const WEEKLY_REPORT_MODEL = "claude-sonnet-4-6";
@@ -137,7 +138,8 @@ export type WeeklyReportRunResult =
   | { status: "failed" };
 
 export async function runWeeklyReportAndPersist(
-  projectId: string
+  projectId: string,
+  opts?: { trigger?: AgentRunTrigger }
 ): Promise<WeeklyReportRunResult> {
   const session = await signInSearchHealthAgent();
   if (!session.ok) {
@@ -152,7 +154,8 @@ export async function runWeeklyReportAndPersist(
     return await runReportUnderAgentSession(
       session.client,
       session.userId,
-      projectId
+      projectId,
+      opts?.trigger ?? "on_demand"
     );
   } finally {
     // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
@@ -163,7 +166,8 @@ export async function runWeeklyReportAndPersist(
 async function runReportUnderAgentSession(
   supabase: SupabaseClient,
   agentUserId: string,
-  projectId: string
+  projectId: string,
+  trigger: AgentRunTrigger
 ): Promise<WeeklyReportRunResult> {
   const { data: project, error } = await supabase
     .from("projects")
@@ -376,7 +380,8 @@ async function runReportUnderAgentSession(
     p_project_id: projectId,
     p_detail: {
       agent_kind: "search_health",
-      trigger: "on_demand",
+      // 087's reserved value, spent by the sweep (Resend D3).
+      trigger,
       week_starting: weekStartIso,
       candidates_count: candidates.length,
       feedback_count: feedback.length,

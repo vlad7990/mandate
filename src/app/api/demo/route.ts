@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { agentErrorMessage } from "@/lib/ai/agent-errors";
 import { getAnthropic } from "@/lib/anthropic";
+import { clientIpFrom, limitClosed } from "@/lib/rate-limit/server";
 
 /**
  * Public landing-page Intake demo. No auth. Calls Claude with the
@@ -33,16 +33,6 @@ const MAX_INPUT_LENGTH = 800;
 const RATE_LIMIT_PER_HOUR = 10;
 const GLOBAL_DAILY_LIMIT = 200;
 
-function getClientIp(req: Request): string {
-  // Vercel sets x-forwarded-for; fall back to x-real-ip; finally a
-  // string sentinel so unknown clients still get rate limited as one.
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]!.trim();
-  const real = req.headers.get("x-real-ip");
-  if (real) return real.trim();
-  return "anon";
-}
-
 type RateVerdict = {
   allowed: boolean;
   scope: "ok" | "ip" | "global" | "unavailable";
@@ -50,45 +40,22 @@ type RateVerdict = {
 };
 
 /**
- * Ask Postgres, not this process.
+ * The shared limiter (088's `check_rate_limit` via `limitClosed`) in
+ * this route's historical vocabulary. 089 retired the 061-era wrapper
+ * this function used to call; the caps (10/hr/IP, 200/day) are the
+ * `demo_ip` policy row, unchanged since 061.
  *
- * The previous limiter was a module-scoped Map, which on Vercel means "per
- * instance": instances scale out and reset on every deploy, so the stated
- * 10/hour was never the real ceiling. 061 moves both counters into the
- * database and adds a global daily cap, which is the one that actually
- * bounds spend — a per-IP limit is worthless against a caller with many
- * IPs, and rotating IPs is cheap.
- *
- * **Fails closed.** If the check cannot be reached we refuse rather than
- * calling Anthropic: an outage should cost nothing, and this endpoint is
- * unauthenticated, uses the billed web_search tool, and is the most
- * expensive thing a stranger can make the product do.
+ * **Fails closed** (Tier 1): this endpoint is unauthenticated, uses
+ * the billed web_search tool, and is the most expensive thing a
+ * stranger can make the product do — an outage should cost nothing.
  */
 async function checkRateLimit(ip: string): Promise<RateVerdict> {
-  try {
-    const supabase = await createServerSupabaseClient();
-    const { data, error } = await supabase
-      .rpc("check_demo_rate_limit", { p_ip: ip })
-      .maybeSingle<{
-        allowed: boolean;
-        scope: string;
-        retry_after_seconds: number;
-      }>();
-
-    if (error || !data) {
-      console.error("[demo] rate-limit check failed", error);
-      return { allowed: false, scope: "unavailable", retryAfterSeconds: 60 };
-    }
-
-    return {
-      allowed: data.allowed,
-      scope: (data.scope as RateVerdict["scope"]) ?? "ip",
-      retryAfterSeconds: data.retry_after_seconds ?? 60,
-    };
-  } catch (err) {
-    console.error("[demo] rate-limit check threw", err);
-    return { allowed: false, scope: "unavailable", retryAfterSeconds: 60 };
-  }
+  const verdict = await limitClosed("demo_ip", ip);
+  return {
+    allowed: verdict.allowed,
+    scope: verdict.reason === "key" ? "ip" : verdict.reason,
+    retryAfterSeconds: verdict.retryAfterSeconds,
+  };
 }
 
 const DEMO_SCHEMA = {
@@ -176,7 +143,7 @@ Hard rules:
 Speed matters — this is a live demo. Aim for fewer searches when the role is straightforward.`;
 
 export async function POST(req: Request): Promise<Response> {
-  const ip = getClientIp(req);
+  const ip = clientIpFrom(req.headers);
   const rate = await checkRateLimit(ip);
   if (!rate.allowed) {
     // Three different refusals, and the visitor should be able to tell them

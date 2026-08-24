@@ -24,9 +24,10 @@
 --       mode, not silently refuse); both tables answer ZERO rows to
 --       authenticated and anon (the zero-policy pin), and a direct
 --       INSERT is refused — the function is the entire API.
---    5. /api/demo's numbers survived the migration byte-for-byte
---       (10/hr/IP, 200/day) and the compat wrapper still answers in
---       the old vocabulary ('ok'/'ip'/'global').
+--    5. /api/demo's numbers survived byte-for-byte (10/hr/IP,
+--       200/day). (088's wrapper-compat pin retired with the wrapper
+--       in 089 — the route now calls check_rate_limit directly, and
+--       invariant 1 already exercises that path.)
 --
 -- On success: NOTICE 'ALL RATE-LIMIT INVARIANTS PASSED'.
 --
@@ -172,13 +173,17 @@ begin
   if v_count <> 1 then
     raise exception 'INVARIANT-FAIL (5): demo_ip''s caps are not 061''s (10/hr, 200/day)';
   end if;
-  execute 'set local role authenticated';
-
-  select r.allowed, r.scope into v_allowed, v_reason
-    from public.check_demo_rate_limit('hz-probe-ip') r;
-  if not v_allowed or v_reason is distinct from 'ok' then
-    raise exception 'INVARIANT-FAIL (5): the compat wrapper did not answer ok (allowed %, scope %)', v_allowed, v_reason;
+  -- 089's pins: the wrapper and the orphaned 061 table are GONE, and
+  -- must stay gone — a helpful re-CREATE would fork the counters.
+  select count(*) into v_count from pg_proc where proname = 'check_demo_rate_limit';
+  if v_count <> 0 then
+    raise exception 'INVARIANT-FAIL (5): the retired wrapper survives (089)';
   end if;
+  select count(*) into v_count from pg_class where relname = 'demo_rate_limit' and relkind = 'r';
+  if v_count <> 0 then
+    raise exception 'INVARIANT-FAIL (5): the orphaned 061 table survives (089)';
+  end if;
+  execute 'set local role authenticated';
 
   raise notice 'ALL RATE-LIMIT INVARIANTS PASSED';
 end

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { runScheduledSweep } from "@/lib/sweep/run-scheduled-sweep";
+import { isSweepDay } from "@/lib/sweep/digest";
 
 /**
  * Scheduled maintenance — the product's first scheduled path.
@@ -67,5 +69,37 @@ export async function GET(req: Request) {
   if (earned > 0) {
     console.log(`[cron/maintenance] guarantee instalments earned: ${earned}`);
   }
-  return NextResponse.json({ ok: true, guarantee_instalments_earned: earned });
+
+  // Agent 14's weekly sweep — the socket this route's own header
+  // documented, filled by the Resend slice's D3 (§58's promise kept:
+  // no new migration; the principal, the `scheduled` trigger, and the
+  // kill switch were staged in 087). Mondays only — the route runs
+  // daily; `?sweep=force` (still behind CRON_SECRET, above) exists so
+  // a drive can prove the path without waiting a week.
+  const now = new Date();
+  const force = new URL(req.url).searchParams.get("sweep") === "force";
+  let sweep: Record<string, unknown> = { ran: false, reason: "not sweep day" };
+  if (isSweepDay(now) || force) {
+    const result = await runScheduledSweep(now);
+    if (result.ran) {
+      console.log(
+        `[cron/maintenance] sweep ran: ${result.outcome.results.length} mandate(s), digest ${result.digest}`
+      );
+      sweep = {
+        ran: true,
+        mandates: result.outcome.results.length,
+        agent_refused: Boolean(result.outcome.agentRefusedReason),
+        digest: result.digest,
+      };
+    } else {
+      console.error(`[cron/maintenance] sweep did not run: ${result.reason}`);
+      sweep = { ran: false, reason: result.reason };
+    }
+  }
+
+  return NextResponse.json({
+    ok: true,
+    guarantee_instalments_earned: earned,
+    sweep,
+  });
 }

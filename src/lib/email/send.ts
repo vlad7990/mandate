@@ -1,4 +1,5 @@
 import "server-only";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 /**
  * The one door to Resend.
@@ -68,6 +69,12 @@ export async function sendEmail(message: EmailMessage): Promise<EmailResult> {
       console.error(
         `[email] Resend refused (${response.status}) for ${message.to.join(", ")}: ${detail.slice(0, 500)}`
       );
+      // The Sentry copy (Resend D4) carries a count and a status —
+      // never addresses, never bodies (§59's boundary). The §61-era
+      // 403s would have been in Sentry from day one had this existed.
+      captureSeamError(
+        `[email] Resend refused (${response.status}) for ${message.to.length} recipient(s)`
+      );
       return {
         sent: false,
         reason: "refused",
@@ -78,6 +85,10 @@ export async function sendEmail(message: EmailMessage): Promise<EmailResult> {
     const body = (await response.json().catch(() => null)) as { id?: string } | null;
     return { sent: true, id: body?.id ?? null };
   } catch (err) {
+    captureSeamError(
+      `[email] Resend unreachable for ${message.to.length} recipient(s)`,
+      err
+    );
     return {
       sent: false,
       reason: "network",
