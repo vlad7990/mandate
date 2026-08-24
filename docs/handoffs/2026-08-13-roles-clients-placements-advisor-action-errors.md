@@ -6468,3 +6468,22 @@ leaked-password protection (Pro-gated), the Turnstile keys (§61),
 Stripe (parked to product-development's end), the one orphaned
 331-byte storage object, and the "Capital Markets Investment Bank"
 client rename (editorial).
+
+---
+
+## 75. Calibration verdicts confirmed — the fifteenth principal is complete — 2026-08-24
+
+The founder confirmed all four §74 verdicts as drafted: the scoring
+model's judgment no longer runs on ambient human identity — it signs
+its own name in the blob's history, wears its own kill switch, is
+honest in refusal with the recruiter's answers safe, and reads the
+org's skills; the role-spec surface stands as the near-mechanical
+sibling, picked in the same breath; §73's uninjected-seam list
+shrinks to six, founder-timed; and long-action honesty has nothing
+new to defer.
+
+**The onboarding surface conversion is complete.**
+`NEXT-onboarding-agent.md` deleted per its own instruction. Next
+migration is **092**. The role-spec conversion's Phase 0 follows —
+NOT zero-new-grant this time (the agent needs a job_specs UPDATE
+door), so the full gate applies.
