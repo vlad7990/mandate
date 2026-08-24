@@ -7101,3 +7101,152 @@ migration is **096**. NINETEEN principals live. The remaining
 queue, by usage on the founder's word: §73's last two seams —
 candidate search and sourcing search — and behind them the
 pre-launch checklist.
+
+---
+
+## 84. The candidate search signs its own name — the twentieth principal, two judgments, built, proven live, awaiting verdict sign-off — 2026-08-24
+
+The closing slice (plan in `NEXT-search-agents.md`, D1–D8 confirmed
+2026-08-24) — the TWENTIETH principal, ONE identity holding TWO
+judgments, and the SIXTH zero-new-grant conversion. The Phase 0
+audit's decisive finding reshaped the slice: of §73's last two
+"seams", only candidate search was LIVE. `runSourcingSearch` had NO
+caller anywhere — no `source_connectors` table, no settings surface,
+no wiring into the sourcing-runs flow (which shipped manual-import
+by design) — latent code from `767735f`, not a seam. The confirmed
+D8 answer: the live seam converts on its page; the latent runner
+converts AT ITS CONTRACT. One migration (**next is 097**):
+
+- **096 — vocabulary only** (the 094 shape): TWO types into the
+  CHECK (rebuilt from the LIVE pg_constraint list, 62 → 64) and the
+  allowlist TWENTY-THREE → TWENTY-FIVE. `candidate_search_answered`
+  records live from this slice; `sourcing_search_executed` is
+  minted AHEAD of its channel (the slice-fourteen `scheduled`
+  precedent). **`agent_search_invariants.sql`** — 5 invariants,
+  clean pass: read coverage by COUNT on harness ids including the
+  SKILLS read (D6 is the slice's point, so its read is the coverage
+  pin's subject); both acts attributed with counts and a text-probe
+  proving no query text rides the trail; history intact at
+  twenty-five; the negative matrix (candidates INSERT refused — the
+  pool has no agent door into the pool's tables, S and U only;
+  clients/organizations/events zero; users self-only; the recruiter
+  refused at the agent door; unknown type refused); kill switches
+  independent at TWENTY. The control run TRIMMED
+  `candidate_search_answered` from the allowlist (091's drift
+  class, "the type is new") — the record refused BY NAME, the
+  harness aborted, drift and harness in one transaction,
+  residue-free by construction.
+
+**The seam (`bf9ff2c`).** TWO conversions, one principal:
+
+- **The pool search** — the page split (D2): the cookie session
+  stays the human door and keeps the DISPLAY reads; the judgment
+  moved into `runCandidateSearchAsAgent`, which signs the twentieth
+  principal in per queried render, re-reads the pool under ITS
+  session (never cookie-fetched rows handed sideways), applies the
+  same structural filters, judges with skills riding its session
+  (D6), records `candidate_search_answered` with COUNTS and filter
+  booleans — never the query's text — and signs out in a finally.
+  GET semantics made fail-soft trivial: the query and filters live
+  in the URL.
+- **The sourcing search, seam-bound (D8 as confirmed)** — the raw
+  runner is now UNEXPORTED; `runSourcingSearchAsAgent` is the only
+  door: the policy gate first (no usable source = hard stop, free),
+  sign-in second (a suspended agent refuses BEFORE any billed
+  search), skills riding the agent's session, the event with counts
+  (rounds, domain COUNT, leads — never a domain list, never a
+  person) on a landed run only. The compliance boundary survived
+  the seam untouched — allowed_domains scoped, LinkedIn blocked at
+  the tool parameters. Proven by EIGHT vitest tests (refusal
+  spending nothing, skills in the system prompt, the blocklist on
+  the tool call, counts-only trail, sign-out on every path) — the
+  latent judgment's drive, since no surface exists to drive. When
+  the connector surface ships, its search is born signed.
+
+Live account: `vbreygin+search@gmail.com`, id `541167be-…`, Mandate
+HQ, §30 recipe, sign-in smoke-tested and revoked; `AGENT_SEARCH_*`
+in Vercel production and `.env.local`. **New durable baseline: 21
+users, 61 events, 20 agents.**
+
+### Driven live on production (deploy `mandate-9ii8gw3vy` = `bf9ff2c`)
+
+Scratch world 0ea INSIDE Mandate HQ (the principal is org-bound):
+an is_founder operator (Perrin Oakhurst), a scratch mandate
+("0EA Director of Post-Trade Operations", fictional Thornfield
+Clearing), three seeded scored candidates. The acts:
+
+1. **A real query on the real page** ("post-trade settlement
+   leaders with FCA remediation experience who have run a T+1
+   migration") → parsed criteria + FOUR ranked matches with real
+   grounded reasoning (the seeded T+1 candidate at 95, the org's
+   one durable candidate ranked honestly last at 32); ONE
+   `candidate_search_answered` event under the agent's name —
+   counts 4/4/4, filter booleans, trigger `query`; zero agent
+   sessions after.
+2. **The text-probe** — the whole trail carries NO query text, NO
+   candidate name, NO company name.
+3. **Suspended from /ops → the search refused** with the D5
+   sentence VERBATIM ("The Candidate Search Agent could not run —
+   an operator has suspended it or its credentials are absent.
+   Your query and filters are safe in this page's address; search
+   again when it is restored."), the form and filters intact above
+   it, NO event recorded.
+4. **Restored → steering probe** — a `search_skill` authored
+   through the REAL Skills Studio, NAMING its target field per the
+   §82 guidance ("the parsed_criteria.intent field MUST begin
+   STEERED-0EA:") → the next search's intent began
+   **"STEERED-0EA:"** on production — a recruiter-authored skill
+   provably steering the twentieth principal's first rerun; the
+   second event landed, the text-probe still clean (not even the
+   steer token rode the trail).
+
+**Teardown to baseline exactly on the first pass** — 8 events swept
+by value keys (two answers by their known-zero type, the operator's
+four member events keyed by NAME, the agent's suspend/restore pair
+keyed by from/to VALUES — the creation trail's `from='pending'`
+stayed durable), the mandate, its three candidates and scores, the
+probe skill, the operator's chain. Final census: 21 users / 20
+agents / 61 events / 2 projects / 2 clients / 5 skills / 1
+job_spec / 0 scratch rows / the founder's session only. The
+teardown reconnaissance itself re-proved the doctrine: a 2-hour
+window caught the PREVIOUS slice's durable creation trail — time
+windows would have eaten §82's history.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The definition of done** — the judgment that answers "who in
+  our pool matches this?" no longer runs on ambient human identity:
+  it signs its own name in the trail, wears its own kill switch
+  proven refusing honestly with nothing destroyed and nothing
+  spent, reads the org's skills (proven steering on production),
+  and records counts, never content.
+- **The sourcing judgment is seam-bound, not driven** — there is no
+  surface to drive, so its proof is the eight-test vitest contract
+  plus the harness's minted-ahead vocabulary; the §-record states
+  plainly that the live drive covers the pool judgment only. When
+  the connector surface ships, the search arrives born signed
+  behind the same kill switch — and its live drive happens THEN,
+  on its own slice.
+- **§73's list EMPTIES** — every uninjected seam found by the
+  onboarding audit is closed: seven seams, six slices, principals
+  fifteen through twenty. The skills gap that §69 wrongly declared
+  dead in one sweep is now actually dead, with the correction and
+  the closure both in the record.
+- **Long-action honesty — nothing new to defer**: the pool search
+  answers inside the page render (~10–20s), inside the proven
+  range, zero drops observed.
+
+Deploy `mandate-9ii8gw3vy` live; migration 096 applied via MCP and
+checked in; tsc / vitest **828** (820 + the eight seam tests) /
+eslint / build green. Drive prefix 0ea spent; next is 0eb. The
+completion declaration waits on the verdicts above and the
+founder's written confirmation; `NEXT-search-agents.md` is deleted
+only after it.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, the "Capital Markets Investment Bank"
+client rename (editorial), the stale-poll refresh on the long
+executive surfaces (§82), and the Skills Studio help-text line on
+field-named steering skills (§82).
