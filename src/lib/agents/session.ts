@@ -304,6 +304,24 @@ export async function signInShortlistAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Copilot Agent — the EIGHTEENTH principal (AGENTS.md
+ * #13), the always-available surface's own identity and the fifth
+ * zero-new-grant conversion: every read its snapshot makes was
+ * already in the pool, 093's shortlists SELECT completing the
+ * coverage. It writes NOTHING but its trail event — conversation
+ * history stays client-side by design. The human door stays at the
+ * route's threshold: the caller's cookie session proves they may
+ * ask about the project BEFORE this principal exists.
+ */
+export async function signInCopilotAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "copilot",
+    email: process.env.AGENT_COPILOT_EMAIL,
+    password: process.env.AGENT_COPILOT_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

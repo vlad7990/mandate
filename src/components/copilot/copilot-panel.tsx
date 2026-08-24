@@ -150,6 +150,7 @@ function CopilotChat({
           body: JSON.stringify({
             projectId,
             candidateId,
+            pathname,
             messages: nextHistory.map<CopilotMessage>((m) => ({
               role: m.role,
               content: m.content,
@@ -228,7 +229,7 @@ function CopilotChat({
         abortRef.current = null;
       }
     },
-    [candidateId, messages, projectId, streaming]
+    [candidateId, messages, pathname, projectId, streaming]
   );
 
   const onSubmit = (e: React.FormEvent) => {

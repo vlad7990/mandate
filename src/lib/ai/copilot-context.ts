@@ -3,17 +3,14 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Build the structured project snapshot that the Copilot model sees on
- * every turn. Optimised for token economy: trim heavy fields, cap
- * arrays, drop large free-text columns the model doesn't need.
- *
- * Returns null when the user has no access to the project — the
- * caller should refuse to stream in that case.
+ * The HUMAN door (094: D2) — the caller's cookie session proves they
+ * may ask about this project BEFORE any agent session exists: an
+ * active member of the owning org whose own RLS reads the project
+ * row. Returns the org id for the skills scope, or null to 403.
  */
-export async function loadCopilotProjectContext(
-  projectId: string,
-  candidateId: string | null
-): Promise<Record<string, unknown> | null> {
+export async function authorizeCopilotAccess(
+  projectId: string
+): Promise<{ organizationId: string } | null> {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -33,6 +30,32 @@ export async function loadCopilotProjectContext(
     return null;
   }
 
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id, organization_id")
+    .eq("id", projectId)
+    .maybeSingle<{ id: string; organization_id: string | null }>();
+  if (!project || project.organization_id !== profile.organization_id) {
+    return null;
+  }
+
+  return { organizationId: profile.organization_id };
+}
+
+/**
+ * Build the structured project snapshot that the Copilot model sees on
+ * every turn. Optimised for token economy: trim heavy fields, cap
+ * arrays, drop large free-text columns the model doesn't need.
+ *
+ * Runs under the CLIENT the caller hands in — since 094 that is the
+ * Copilot Agent's own session (the human door has already answered
+ * in authorizeCopilotAccess; this is assembly, not authorization).
+ */
+export async function loadCopilotProjectContext(
+  projectId: string,
+  candidateId: string | null,
+  supabase: SupabaseClient
+): Promise<Record<string, unknown> | null> {
   const [projectQ, candidatesQ, scoresQ, feedbackQ, shortlistQ] =
     await Promise.all([
       supabase
@@ -63,9 +86,12 @@ export async function loadCopilotProjectContext(
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(8),
+      // 094: the dead `label` read repaired — the column never existed,
+      // PostgREST errored, and the copilot never saw a shortlist. These
+      // are the real columns.
       supabase
         .from("shortlists")
-        .select("candidate_ids, label, created_at")
+        .select("candidate_ids, slate_size, submitted_at, created_at")
         .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(1),
@@ -87,8 +113,9 @@ export async function loadCopilotProjectContext(
       }
     | null;
 
+  // Authorization happened at the human door; a null here means the
+  // project fell outside the agent's org-bound reach.
   if (!project) return null;
-  if (project.organization_id !== profile.organization_id) return null;
 
   type CandidateRow = {
     id: string;
@@ -236,5 +263,3 @@ function trimClientPsychology(p: unknown): unknown {
   // The client_psychology blob is already compact; pass through.
   return p;
 }
-
-export type _ClientReexport = SupabaseClient | null; // satisfy import linter
