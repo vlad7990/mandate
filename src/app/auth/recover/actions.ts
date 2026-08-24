@@ -1,9 +1,12 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { siteUrl } from "@/lib/email/send";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
+import { clientIpFrom, limitOpen } from "@/lib/rate-limit/server";
+import { normalizeEmailKey, retryPhrase } from "@/lib/rate-limit/core";
 
 /**
  * Request a recovery email. GoTrue does the sending (the built-in
@@ -23,6 +26,26 @@ export async function requestRecoveryAction(emailRaw: string): Promise<ActionRes
     const email = emailRaw.trim();
     if (!email || email.indexOf("@") < 1) {
       throw new Error("Enter the email address you sign in with.");
+    }
+
+    // Two keys (088): the IP, and the EMAIL — the address is the
+    // abused resource in a mail-bomb, and it must be limited whether
+    // or not the account exists (the sentence is the same either
+    // way; no enumeration). Identity door: fails OPEN.
+    const ip = clientIpFrom(await headers());
+    const ipVerdict = await limitOpen("recovery_ip", ip);
+    if (!ipVerdict.allowed) {
+      throw new Error(
+        "Too many recovery requests from this location. " +
+          `Try again in ${retryPhrase(ipVerdict.retryAfterSeconds)}.`
+      );
+    }
+    const emailVerdict = await limitOpen("recovery_email", normalizeEmailKey(email));
+    if (!emailVerdict.allowed) {
+      throw new Error(
+        "A reset link has already been requested for this address. " +
+          `Check your inbox, or try again in ${retryPhrase(emailVerdict.retryAfterSeconds)}.`
+      );
     }
 
     const supabase = await createServerSupabaseClient();

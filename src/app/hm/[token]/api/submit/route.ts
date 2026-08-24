@@ -5,6 +5,8 @@ import {
   persistHmSubmission,
   runHmFeedbackPipeline,
 } from "@/lib/hm-portal/submit";
+import { clientIpFrom, limitClosed } from "@/lib/rate-limit/server";
+import { retryPhrase } from "@/lib/rate-limit/core";
 
 // POST /hm/<token>/api/submit — the token door.
 //
@@ -27,6 +29,30 @@ export async function POST(
   const { token } = await context.params;
   if (!isUuid(token)) {
     return new NextResponse("Invalid token format.", { status: 400 });
+  }
+
+  // Rate limits before the token is even verified (088): a submission
+  // triggers a paid interpreter run in after(), which makes this the
+  // §30 verdict's endpoint — anonymous and billed, so it FAILS CLOSED.
+  // Two keys: the token (one hiring manager's one review — five an
+  // hour is already generous) and the caller's IP.
+  const tokenVerdict = await limitClosed("hm_submit_token", token);
+  const verdict = tokenVerdict.allowed
+    ? await limitClosed("hm_submit_ip", clientIpFrom(request.headers))
+    : tokenVerdict;
+  if (!verdict.allowed) {
+    const message =
+      verdict.reason === "key" && !tokenVerdict.allowed
+        ? "This review has already been submitted several times in the last " +
+          `hour. Your feedback is safe — try again in ${retryPhrase(verdict.retryAfterSeconds)}.`
+        : `Too many submissions right now. Try again in ${retryPhrase(verdict.retryAfterSeconds)}.`;
+    return NextResponse.json(
+      { ok: false, error: message },
+      {
+        status: 429,
+        headers: { "Retry-After": String(verdict.retryAfterSeconds) },
+      }
+    );
   }
 
   const supabase = getServiceRoleSupabaseClient();

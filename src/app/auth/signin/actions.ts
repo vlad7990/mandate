@@ -1,8 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { safeNextPath } from "@/lib/routes";
+import { clientIpFrom, limitOpen } from "@/lib/rate-limit/server";
+import { retryPhrase } from "@/lib/rate-limit/core";
 
 export async function signInAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
@@ -16,6 +19,19 @@ export async function signInAction(formData: FormData) {
 
   if (!email || !password) {
     redirect(`/auth/signin?error=${encodeURIComponent("Email and password are required.")}`);
+  }
+
+  // Credential stuffing runs at machine speed; a person retrying a
+  // password does not (088: 10/hr/IP, deliberately NO global cap —
+  // a global cap on sign-in is a self-inflicted outage). Identity
+  // door: fails OPEN.
+  const verdict = await limitOpen("sign_in_ip", clientIpFrom(await headers()));
+  if (!verdict.allowed) {
+    redirect(
+      `/auth/signin?error=${encodeURIComponent(
+        `Too many sign-in attempts from this location. Try again in ${retryPhrase(verdict.retryAfterSeconds)}.`
+      )}`
+    );
   }
 
   const supabase = await createServerSupabaseClient();

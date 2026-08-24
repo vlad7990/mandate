@@ -5,6 +5,8 @@ import { createClient } from "@supabase/supabase-js";
 import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
+import { limitOpen } from "@/lib/rate-limit/server";
+import { retryPhrase } from "@/lib/rate-limit/core";
 
 /**
  * The candidate portal's actions. The token IS the credential — every
@@ -14,6 +16,21 @@ import type { ActionResult } from "@/lib/actions/result";
  * this surface has no session, and giving it one would be a lie about
  * its trust shape.
  */
+
+/**
+ * One guard for all four write actions (088: 20/hr per token). The
+ * token is the credential, so it is also the honest key — hashed
+ * before it reaches a bucket. Identity door: fails OPEN.
+ */
+async function guardPortalWrite(token: string): Promise<void> {
+  const verdict = await limitOpen("candidate_portal_token", token);
+  if (!verdict.allowed) {
+    throw new Error(
+      "Too many changes in a short time. " +
+        `Your details are safe — try again in ${retryPhrase(verdict.retryAfterSeconds)}.`
+    );
+  }
+}
 
 function anonClient() {
   return createClient(
@@ -43,6 +60,7 @@ export async function updateContactAction(
   updates: ContactUpdates
 ): Promise<ActionResult> {
   return runAction("The update", async () => {
+    await guardPortalWrite(token);
     const { error } = await anonClient().rpc("candidate_portal_update_contact", {
       p_token: token,
       p_full_name: updates.full_name ?? null,
@@ -63,6 +81,7 @@ export async function withdrawAction(
   projectId: string
 ): Promise<ActionResult> {
   return runAction("The withdrawal", async () => {
+    await guardPortalWrite(token);
     const { error } = await anonClient().rpc("candidate_portal_withdraw", {
       p_token: token,
       p_project_id: projectId,
@@ -77,6 +96,7 @@ export async function requestErasureAction(
   note: string
 ): Promise<ActionResult> {
   return runAction("The erasure request", async () => {
+    await guardPortalWrite(token);
     const { error } = await anonClient().rpc("candidate_portal_request_erasure", {
       p_token: token,
       p_note: note || null,
@@ -97,6 +117,7 @@ export async function submitCvAction(
   formData: FormData
 ): Promise<ActionResult> {
   return runAction("The CV submission", async () => {
+    await guardPortalWrite(token);
     const file = formData.get("cv");
     if (!(file instanceof File) || file.size === 0) {
       throw new Error("Choose a PDF or DOCX file first.");

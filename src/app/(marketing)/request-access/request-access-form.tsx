@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Script from "next/script";
 import { toast } from "sonner";
 import { submitAccessRequestAction } from "./actions";
 import { unwrap } from "@/lib/actions/result";
+
+// Rendered only when the founder has provisioned the site key
+// (NEXT-rate-limiting D4). Inlined at build time; remember it must be
+// added `--no-sensitive` or it never reaches this bundle (§59's trap).
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export function RequestAccessForm() {
   const [pending, start] = useTransition();
@@ -21,6 +27,9 @@ export function RequestAccessForm() {
       role: String(fd.get("role") ?? "").trim(),
       referral_source: String(fd.get("referral_source") ?? "").trim(),
       use_case: String(fd.get("use_case") ?? "").trim(),
+      // The widget posts its token under this fixed field name.
+      turnstile_token:
+        String(fd.get("cf-turnstile-response") ?? "") || undefined,
     };
 
     if (!payload.full_name || !payload.email) {
@@ -69,6 +78,19 @@ export function RequestAccessForm() {
       </div>
       <Field label="How did you hear about us?" name="referral_source" />
       <Field label="What are you trying to solve?" name="use_case" rows={4} />
+      {TURNSTILE_SITE_KEY && (
+        <>
+          <Script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            strategy="lazyOnload"
+          />
+          <div
+            className="cf-turnstile"
+            data-sitekey={TURNSTILE_SITE_KEY}
+            data-theme="dark"
+          />
+        </>
+      )}
       <button
         type="submit"
         disabled={pending}

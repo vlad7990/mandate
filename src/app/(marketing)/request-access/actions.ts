@@ -1,9 +1,12 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { notifyFoundersOfWaitlistRequest } from "@/lib/waitlist/notify";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
+import { clientIpFrom, limitOpen } from "@/lib/rate-limit/server";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 /** Sentence subject for a failure this file did not author. See `runAction`. */
 const SUBJECT = "The access request";
@@ -15,6 +18,8 @@ export type AccessRequestPayload = {
   role: string;
   referral_source: string;
   use_case: string;
+  /** Present only when the Turnstile widget rendered (site key set). */
+  turnstile_token?: string;
 };
 
 /**
@@ -31,6 +36,28 @@ export async function submitAccessRequestAction(
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
       throw new Error("Enter a valid email.");
+    }
+
+    // The only door a new customer has (088: 3/hr/IP, 100/day
+    // global). Identity door: fails OPEN — and one honest sentence
+    // whichever cap tripped, because "how many others applied today"
+    // is not the applicant's business.
+    const ip = clientIpFrom(await headers());
+    const verdict = await limitOpen("access_request_ip", ip);
+    if (!verdict.allowed) {
+      throw new Error(
+        "We've already received a request from you. We'll be in touch."
+      );
+    }
+
+    // Turnstile (D4): enforced only when the founder has provisioned
+    // the keys; an outage fails open with a capture. A token that
+    // verifies as WRONG is a scripted submission and is refused.
+    const captcha = await verifyTurnstile(payload.turnstile_token, ip);
+    if (!captcha.ok) {
+      throw new Error(
+        "We couldn't confirm you're human. Reload the page and try again."
+      );
     }
 
     const supabase = await createServerSupabaseClient();

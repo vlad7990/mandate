@@ -1,9 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { isFounderEmail } from "@/lib/auth/founders";
 import { validatePassword } from "@/lib/auth/password-policy";
+import { clientIpFrom, limitOpen } from "@/lib/rate-limit/server";
+import { retryPhrase } from "@/lib/rate-limit/core";
 
 export async function signUpAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -23,6 +26,17 @@ export async function signUpAction(formData: FormData) {
   const passwordError = validatePassword(password);
   if (passwordError) {
     redirect(`/auth/signup?error=${encodeURIComponent(passwordError)}`);
+  }
+
+  // Account spam is cheap to send and expensive to triage (088:
+  // 5/hr/IP, 100/day global). Identity door: fails OPEN.
+  const verdict = await limitOpen("sign_up_ip", clientIpFrom(await headers()));
+  if (!verdict.allowed) {
+    redirect(
+      `/auth/signup?error=${encodeURIComponent(
+        `Too many sign-up attempts from this location. Try again in ${retryPhrase(verdict.retryAfterSeconds)}.`
+      )}`
+    );
   }
 
   const supabase = await createServerSupabaseClient();

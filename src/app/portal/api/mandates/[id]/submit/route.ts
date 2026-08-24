@@ -6,6 +6,8 @@ import {
   persistHmSubmission,
   runHmFeedbackPipeline,
 } from "@/lib/hm-portal/submit";
+import { clientIpFrom, limitClosed } from "@/lib/rate-limit/server";
+import { retryPhrase } from "@/lib/rate-limit/core";
 
 // POST /portal/api/mandates/<id>/submit — the signed-in door.
 //
@@ -37,6 +39,28 @@ export async function POST(
   } = await session.auth.getUser();
   if (!user) {
     return new NextResponse("Sign in to submit feedback.", { status: 401 });
+  }
+
+  // Rate limits after identity, before access (088): this door also
+  // triggers a paid interpreter run in after(), so it FAILS CLOSED.
+  // Keyed on the external identity (the signed-in HM) and the IP.
+  const identityVerdict = await limitClosed("portal_submit_token", user.id);
+  const verdict = identityVerdict.allowed
+    ? await limitClosed("portal_submit_ip", clientIpFrom(request.headers))
+    : identityVerdict;
+  if (!verdict.allowed) {
+    const message =
+      verdict.reason === "key" && !identityVerdict.allowed
+        ? "This review has already been submitted several times in the last " +
+          `hour. Your feedback is safe — try again in ${retryPhrase(verdict.retryAfterSeconds)}.`
+        : `Too many submissions right now. Try again in ${retryPhrase(verdict.retryAfterSeconds)}.`;
+    return NextResponse.json(
+      { ok: false, error: message },
+      {
+        status: 429,
+        headers: { "Retry-After": String(verdict.retryAfterSeconds) },
+      }
+    );
   }
 
   const { data: allowed, error: accessErr } = await session.rpc(
