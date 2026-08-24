@@ -285,6 +285,25 @@ export async function signInRoleSpecAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Shortlist Agent — the SEVENTEENTH principal (AGENTS.md
+ * #11), the read-shaped conversion. One judgment: the submission
+ * report over the recruiter's composed slate. 093 mints its two
+ * doors: shortlists SELECT (the slate row is the model input) and an
+ * UPDATE double-pinned on submitted_at — the agent can neither touch
+ * a SUBMITTED slate nor submit one; what was sent never silently
+ * changes, and submission stays the recruiter's editorial act
+ * forever. The slate reads (candidates, scores, project) were
+ * already in the pool.
+ */
+export async function signInShortlistAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "shortlist",
+    email: process.env.AGENT_SHORTLIST_EMAIL,
+    password: process.env.AGENT_SHORTLIST_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

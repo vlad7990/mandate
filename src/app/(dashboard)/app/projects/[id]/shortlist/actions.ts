@@ -4,12 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { recordActivity } from "@/lib/activity/record";
 import { requireActionContext } from "@/lib/auth/access";
-import {
-  generateShortlistReport,
-  type ShortlistGenerationInput,
-} from "@/lib/ai/generate-shortlist-report";
-import type { CandidateProfile } from "@/lib/ai/cv-parsing";
-import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
+import { runShortlistReportAndPersist } from "@/lib/ai/generate-shortlist-report";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 
@@ -200,7 +195,12 @@ export async function saveNarrativeAction(
 
 /**
  * Generate the submission-ready report from the current slate.
- * Synchronous Anthropic call (~5–10s); UI shows a pending state.
+ * Synchronous (~5–10s); UI shows a pending state. The recruiter's
+ * acts stop at the slate row (ensureShortlist, the composition, the
+ * narrative — all persisted before this runs); the judgment itself
+ * runs under the SHORTLIST AGENT's own session (093), which reads
+ * the slate it lawfully sees, merges only report_content through the
+ * submitted_at-pinned door, and records the event under its own name.
  */
 export async function generateReportAction(projectId: string): Promise<ActionResult> {
   return runAction(SUBJECT, async () => {
@@ -212,101 +212,31 @@ export async function generateReportAction(projectId: string): Promise<ActionRes
       );
     }
 
-    const supabase = await createServerSupabaseClient();
+    const run = await runShortlistReportAndPersist(projectId, sl.id);
 
-    // Pull project + slate context in parallel.
-    const [{ data: project }, { data: candidates }, { data: scores }] =
-      await Promise.all([
-        supabase
-          .from("projects")
-          .select(
-            "id, title, calibration_model, company_context"
-          )
-          .eq("id", projectId)
-          .single<{
-            id: string;
-            title: string;
-            calibration_model: Partial<CalibrationModel> | null;
-            company_context: Partial<CompanyContext> | null;
-          }>(),
-        supabase
-          .from("candidates")
-          .select("id, full_name, cv_structured")
-          .in("id", sl.candidate_ids),
-        supabase
-          .from("candidate_scores")
-          .select("candidate_id, rank_position, overall_score")
-          .eq("project_id", projectId)
-          .in("candidate_id", sl.candidate_ids),
-      ]);
-
-    if (!project) {
-      throw new Error("Failed to load project for report generation.");
-    }
-
-    const candidateMap = new Map(
-      (candidates ?? []).map((c) => [
-        c.id as string,
-        c as { id: string; full_name: string; cv_structured: unknown },
-      ])
-    );
-    const scoreMap = new Map(
-      (scores ?? []).map((s) => [
-        s.candidate_id as string,
-        s as {
-          candidate_id: string;
-          rank_position: number | null;
-          overall_score: number | null;
-        },
-      ])
-    );
-
-    // Build the slate input in the recruiter's chosen order.
-    const slate: ShortlistGenerationInput["slate"] = sl.candidate_ids
-      .map((cid) => {
-        const cand = candidateMap.get(cid);
-        const score = scoreMap.get(cid);
-        if (!cand) return null;
-        const profile = (cand.cv_structured ?? {}) as Partial<CandidateProfile>;
-        return {
-          candidate_id: cid,
-          full_name: cand.full_name,
-          rank: score?.rank_position ?? null,
-          overall_score: score?.overall_score ?? null,
-          profile,
-          fit_dimensions: profile.fit_dimensions ?? null,
-        };
-      })
-      .filter((x): x is NonNullable<typeof x> => x != null);
-
-    if (slate.length === 0) {
+    if (run.status === "agent_unavailable") {
       throw new Error(
-        "None of the slate candidates could be loaded — they may have been deleted."
+        "The Shortlist Agent could not run — an operator has suspended it " +
+          "or its credentials are absent. Your slate and narrative are " +
+          "saved; generate the report when it is restored."
       );
     }
-
-    const report = await generateShortlistReport({
-      role_context: {
-        title: project.title,
-        role_title: project.calibration_model?.role_title ?? null,
-        inferred_scope: project.calibration_model?.inferred_scope ?? null,
-        role_structure: project.calibration_model?.role_structure ?? null,
-      },
-      company_context: project.company_context ?? {},
-      calibration: project.calibration_model ?? {},
-      recruiter_narrative: sl.narrative.trim() || null,
-      slate,
-    });
-
-    const { error: updateError } = await supabase
-      .from("shortlists")
-      .update({
-        report_content: report,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", sl.id);
-    if (updateError) {
-      throw new Error(`Failed to persist report: ${updateError.message}`);
+    if (run.status === "submitted") {
+      throw new Error(
+        "This shortlist has been submitted — the submitted report is the " +
+          "record and cannot be regenerated."
+      );
+    }
+    if (run.status === "unavailable") {
+      throw new Error(
+        "The slate could not be loaded — its candidates may have been deleted."
+      );
+    }
+    if (run.status !== "ready") {
+      throw new Error(
+        "Report generation failed. Your slate and narrative are saved — " +
+          "try again, and tell an admin if it keeps happening."
+      );
     }
 
     revalidatePath(`/app/projects/${projectId}/shortlist`);
