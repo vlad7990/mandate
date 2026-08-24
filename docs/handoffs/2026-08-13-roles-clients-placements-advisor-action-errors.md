@@ -6590,3 +6590,25 @@ leaked-password protection (Pro-gated), the Turnstile keys (§61),
 Stripe (parked to product-development's end), the one orphaned
 331-byte storage object, and the "Capital Markets Investment Bank"
 client rename (editorial).
+
+---
+
+## 77. Role-spec verdicts confirmed — the sixteenth principal is complete — 2026-08-24
+
+The founder confirmed all four §76 verdicts as drafted: the job-spec
+judgment signs its own name with the editorial boundary a database
+pin proven live in both directions; AGENTS.md #1–#5 are all
+principals, with the read-shaped shortlist/copilot conversions and
+§73's six uninjected seams queued by usage; the version ledger's
+honesty stands as design; and long-action honesty has nothing new to
+defer.
+
+**The role-spec surface conversion is complete.**
+`NEXT-rolespec-agent.md` deleted per its own instruction. Next
+migration is **093**. The founder's same message picked the next
+slice — the shortlist conversion — and called the session boundary:
+this session ends here at the founder's word, the next one primed
+from this document and memory. Durable state at handoff: 17 users /
+49 events / 16 agents / 2 projects / 2 clients / 5 skills / 1
+job_spec; deploys through `mandate-kooae68g0`; main at the §77
+commit; tsc / vitest 820 / eslint / build green.
