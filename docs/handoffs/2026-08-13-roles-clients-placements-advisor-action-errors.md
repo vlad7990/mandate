@@ -6927,3 +6927,153 @@ deleted per its own instruction. Next migration is **095**.
 EIGHTEEN principals live. The remaining queue, by usage on the
 founder's word: §73's five uninjected seams — the three executive
 generators, candidate search, and sourcing search.
+
+---
+
+## 82. The executive intelligence signs its own name — the nineteenth principal, three judgments, built, proven live, awaiting verdict sign-off — 2026-08-24
+
+The executive-generator cluster (plan in `NEXT-execintel-agent.md`,
+D1–D8 confirmed 2026-08-24) — the NINETEENTH principal, ONE identity
+holding THREE judgments (the §50 companyintel precedent, scaled),
+closing three of §73's five uninjected seams in one slice. The
+LARGEST grant cluster since 074. One migration (**next is 096**):
+
+- **095 — nine policies, double-pinned twice, actor-pinned once.**
+  executive_searches S+U (the context blob's landing; intake-field
+  survival is the INVARIANTS' pin — the 074 projects precedent);
+  role_success_profiles and executive_interview_plans S+U each with
+  **`status = 'draft'` in BOTH USING and WITH CHECK** (the 092 pin,
+  twice: the agent can neither touch an approved artifact nor move
+  one out of draft — approval stays the recruiter's act forever);
+  both competency-library SELECTs (including the GLOBAL rows — the
+  grounding that stops hallucinated keys); and
+  executive_audit_events INSERT with **actor_id pinned to
+  auth.uid()** (the 087 impersonation pin, executive-ledger
+  edition). Vocabulary: THREE types (success_profile_generated,
+  interview_plan_generated, executive_context_researched), CHECK
+  59 → 62, allowlist TWENTY-THREE.
+  **`agent_execintel_invariants.sql`** — 6 invariants, clean pass.
+  **FINDING recorded in the harness**: approval immutability was
+  ALREADY a trigger boundary (guard_* triggers + GUC-passing
+  approve_*() functions) — 095's pins are the RLS layer of the same
+  boundary, and the harness DISARMS the trigger for its whole
+  transaction so every refusal it proves is the RLS pin's own:
+  defense-in-depth proven in isolation. The control run dropped the
+  WITH CHECK status conjunct (092's drift, third sighting) — with
+  the trigger disarmed, ONLY the pin stood, the drift removed it,
+  the agent APPROVED a draft profile, and the harness aborted at
+  INVARIANT-FAIL (5), self-rolling-back. Also recorded: the durable
+  global competency library holds 25 real rows — coverage pins
+  count on harness ids, never the durable set (§35 extended).
+
+**The seam (`734eb9d`).** Three generators, one conversion shape —
+the pre-092 cookie-SSR after() pattern replaced by the agent's
+session in each: `runAndStoreExecutiveCompanyContext` (web-reaching;
+suspension refuses at sign-in BEFORE any search is spent),
+`generateAndStoreSuccessProfile`, and
+`generateAndStoreInterviewPlan`, each signing the nineteenth
+principal in per run, judging with skills riding ITS session (D6 —
+three seams closed; §73's list is TWO), landing on the human's
+draft placeholder (or merging the context blob with the intake
+surviving), auditing the GENERATED event under the AGENT's id (the
+actor pin permits nothing else), recording the main-trail event
+with trigger and COUNTS, and signing out. FAILURE BOOKKEEPING STAYS
+HUMAN ×3 (090): the marks and the *_generation_failed ledger events
+keep the cookie session — under the agent session, a failed event
+signed with the clicker's id would be REFUSED by the very pin that
+protects the ledger, which is the doctrine enforcing itself. The
+actions thread `initial`/`regenerate` triggers. Live account:
+`vbreygin+execintel@gmail.com`, id `1e3dd291-…`, Mandate HQ, §30
+recipe, sign-in smoke-tested and revoked; `AGENT_EXECINTEL_*` in
+Vercel production and `.env.local`. **New durable baseline: 20
+users, 58 events, 19 agents.**
+
+### Driven live on production (deploy `mandate-231ccnmjf` = `734eb9d`)
+
+Scratch world 0e9: an is_founder operator (Ottoline Fairweather)
+drove the REAL executive intake — fictional Bellwether Custody
+Group, a digital-asset custodian mid-MiCA-conversion, hiring its
+first Chief Risk Officer. The acts:
+
+1. **The intake created the search** → the context judgment ran
+   web-reaching in after() (~2.5 min, the longest web run yet) →
+   status `ready`, 39 sources, the `executive_context_researched`
+   event under the agent, trigger `initial`, counts only.
+2. **Generate Success Profile** → V1 landed (~2.5 min, 22.5k chars,
+   8 weighted competencies from the real library), the main-trail
+   event AND the executive-ledger `profile_generated` entry BOTH
+   under the agent's name.
+3. **The recruiter approved V1** through the real confirm dialog
+   ("Approval is recorded with your name… this version becomes
+   immutable") — then a candidate joined and **Generate Interview
+   Plan** landed the third judgment (~4.5 min, 33k chars, 6 stages,
+   ZERO uncovered competencies).
+4. **Suspended from /ops → all three surfaces refused** with the
+   D5 sentence VERBATIM: profile V3 marked through the error view
+   with Retry; plan V2 marked identically; and a SECOND search
+   created through the real intake landed `company_context_status
+   = 'failed'` with the sentence and Retry — the initial trigger's
+   refusal, with NO web search spent.
+5. **Restored → the retry landed V4 (trigger `regenerate`) → the
+   steering probe landed V5**: `role_mission` begins
+   **"STEERED-0E9:"** — recruiter skills provably riding the
+   nineteenth principal's session. (The first probe draft, which
+   named no schema field, did NOT steer V4 — under strict
+   structured output a skill must name the field it targets;
+   recorded as skill-authoring guidance, not a seam defect.)
+6. **THE LIVE PIN PROBE** (the agent's real identity, production
+   rows, the trigger guard DISARMED so the RLS pin answered alone,
+   self-rolled-back): the approved profile's UPDATE touched ZERO
+   rows; approve-by-UPDATE refused on the draft profile AND the
+   draft plan; a FORGED-ACTOR ledger insert (the recruiter's id
+   under the agent's session) refused; artifact INSERT refused. A
+   text-probe of the whole main trail found NO company name, NO
+   candidate name, NO steer token, NO content fragment.
+
+**Teardown to baseline on the second census pass** — the first pass
+caught a residue: the executive intake RESOLVES A CLIENT ROW
+(fictional Bellwether was born into clients), now recorded in the
+teardown checklist for executive drives. Eleven events swept by
+value keys and the three types' known-zero baselines. Final: 58
+events / 20 users / 19 agents / 2 projects / 2 clients / 5 skills /
+1 job_spec / 0 executive rows / zero scratch sessions.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The definition of done** — the three judgments that define an
+  executive search (what the company is, what success looks like,
+  how to interview for it) no longer run on ambient human identity:
+  one principal, one kill switch proven refusing all three surfaces
+  honestly with no model or web spend, every act signed in BOTH
+  ledgers, and the editorial boundary (approval) a database pin
+  proven live in five faces on production rows.
+- **The approval boundary is now defense-in-depth by
+  construction** — the pre-existing trigger guard and 095's RLS
+  pins are two independent layers, and the harness proves the RLS
+  layer with the trigger deliberately disarmed; either survives
+  the other's loss.
+- **§73's list shrinks to TWO** — candidate search and sourcing
+  search, founder-timed.
+- **Long-action honesty — NEW EVIDENCE CLASS**: these are the
+  longest runs in the product (2.5–4.5 min behind polling
+  surfaces; one stale-page state observed where a landed V4 still
+  read "generating" until reload). Zero drops, terminal states
+  honest throughout — but the stale-poll window grows with run
+  length, and a poller refresh on these surfaces joins the
+  founder-timed awareness list.
+- **Skill-authoring guidance recorded**: under strict structured
+  output, a steering skill must NAME the output field it targets;
+  vague "first narrative field" instructions may not survive the
+  schema. Worth a line in Skills Studio's help text, founder-timed.
+
+Deploy `mandate-231ccnmjf` live; migration 095 applied via MCP and
+checked in; tsc / vitest 820 / eslint / build green. Drive prefix
+0e9 spent; next is 0ea. The completion declaration waits on the
+verdicts above and the founder's written confirmation;
+`NEXT-execintel-agent.md` is deleted only after it.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, and the "Capital Markets Investment Bank"
+client rename (editorial).
