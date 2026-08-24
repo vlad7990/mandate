@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { deriveAndStoreCalibration } from "@/lib/ai/derive-calibration";
+import { runCalibrationDerivationAndPersist } from "@/lib/ai/derive-calibration";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
 import {
   ANTI_PATTERNS_MAX,
@@ -101,7 +102,42 @@ export async function submitOnboarding(
       priority_signals: cleanPrioritySignals(responses.priority_signals),
     };
 
-    await deriveAndStoreCalibration(projectId, sanitized);
+    // The split (091: D2): the recruiter's answers are the recruiter's
+    // act — stored under their own session BEFORE the agent is asked to
+    // think. A refused or failed derivation leaves them saved (D5), and
+    // the wizard's "Re-run calibration" path is the retry.
+    const supabase = await createServerSupabaseClient();
+    const { error: saveError } = await supabase
+      .from("projects")
+      .update({
+        onboarding_responses: sanitized,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", projectId);
+    if (saveError) {
+      throw new Error(`Failed to save your answers: ${saveError.message}`);
+    }
+
+    // The judgment runs under the CALIBRATION AGENT's own session (091)
+    // — the fifteenth principal. The action keeps the gate and the
+    // cache invalidation; the seam owns the weights, the snapshot
+    // (changed_by = the agent), and the trail event.
+    const run = await runCalibrationDerivationAndPersist(projectId, sanitized);
+
+    if (run.status === "agent_unavailable") {
+      throw new Error(
+        "The Calibration Agent could not run — an operator has suspended it " +
+          "or its credentials are absent. Your answers are saved; re-run " +
+          "calibration when it is restored."
+      );
+    }
+    if (run.status === "unavailable") throw new Error("Project not found.");
+    if (run.status !== "ready") {
+      throw new Error(
+        "Calibration failed. Your answers are saved — try again, and tell " +
+          "an admin if it keeps happening."
+      );
+    }
 
     // Navigation is the client's job. redirect() from an action that both
     // revalidates and redirects came back as a 303 with an empty flight

@@ -249,6 +249,25 @@ export async function signInSearchHealthAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Calibration Agent — the FIFTEENTH principal, the first
+ * conversion outside the fourteen-agent map (§73's queue). One
+ * judgment: deriving the scoring model's dimension weights from the
+ * recruiter's onboarding answers. The fourth zero-new-grant
+ * principal — 074's pool covers the projects merge, the
+ * calibration_history snapshot (changed_by = this agent), and the
+ * skills read. Recalibration stays the interpreter's act; two
+ * principals lawfully write the same blob at different moments, each
+ * signing its own judgment.
+ */
+export async function signInCalibrationAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "calibration",
+    email: process.env.AGENT_CALIBRATION_EMAIL,
+    password: process.env.AGENT_CALIBRATION_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;
