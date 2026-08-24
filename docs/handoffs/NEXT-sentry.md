@@ -1,7 +1,12 @@
 # NEXT — Error monitoring lands (Sentry, the deferred list's first item)
 
-Status: **Phase 0 complete — D1–D8 drafted, awaiting the founder's
-written D-confirmation. No build work past this file until then.**
+Status: **Phases 1–4 EXECUTED (2026-08-24). D1–D8 confirmed
+2026-08-21; D2 AMENDED and re-confirmed 2026-08-24 (direct sentry.io
+provisioning after the marketplace terms wall). Wired, deployed, and
+proven live on both halves; the temporary probe is removed. Verdicts
+DRAFTED in §59 of the main handoff — awaiting the founder's written
+confirmation. No completion declaration until then; this file is
+deleted only after it.**
 
 First item of the deferred build list (Sentry → rate limiting →
 Resend → Stripe, founder-ordered 2026-08-12), opened on the founder's

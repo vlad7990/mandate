@@ -5382,3 +5382,145 @@ the deferred build list (Sentry → rate limiting → Resend → Stripe,
 with the rate-limiting bundle), the one orphaned 331-byte storage
 object from §28's diagnosis, the stuck-mandate retry gap (§55), and
 the intake and digest skills gaps.
+
+---
+
+## 59. Error monitoring lands — built, proven live, awaiting verdict sign-off — 2026-08-24
+
+First item of the deferred build list (Sentry → rate limiting →
+Resend → Stripe), opened on the founder's word after §58 closed the
+fourteen-agent map. Plan in `NEXT-sentry.md`, D1–D8 confirmed
+2026-08-21, **D2 amended and re-confirmed 2026-08-24**. **No
+migration — the database was not touched; the counter stays at 088.**
+
+The motivating evidence was one week old: §57's health-schema 400 had
+been failing SILENTLY on every run since the provider tightened
+validation, and `(dashboard)/error.tsx` said so in its own comment —
+"until error monitoring lands, the console is the only record."
+
+### What landed (`240af3b`, `16beba2`, `e5a7cc8`)
+
+`@sentry/nextjs` 10.70.0, hand-wired per D1 — **not** the wizard,
+which scaffolds example pages and rewrites config wholesale. Five
+files and one config wrapper, deliberately removable (D7):
+
+- **`instrumentation.ts`** — server init plus `onRequestError`: the
+  hook that catches what `runAction` never sees (server component
+  renders, the route handlers, the token doors, and the
+  fire-and-forget `after()` paths whose only record was a log line).
+- **`instrumentation-client.ts`** — client init, same doctrine.
+- **`app/global-error.tsx`** — NEW root boundary. A root-layout error
+  previously showed Next's unstyled page and recorded NOTHING
+  anywhere.
+- **`(dashboard)/error.tsx`** — keeps its console record, sends the copy.
+- **`lib/observability/sentry.ts`** — the one seam-side door.
+  `captureSeamError` is a drop-in for `console.error` that logs FIRST
+  (D5: Sentry is a copy, never a replacement) and derives its `seam`
+  tag from the house's own `[label]` convention;
+  `captureActionFault` / `captureGuardTrip` carry runAction's
+  EXISTING outcome-vs-fault discrimination into telemetry — authored
+  reader sentences never become events, provider payloads and
+  TypeErrors do, `ForbiddenError` rides as a warning. One line at one
+  seam covers all ~348 action throw sites.
+
+### Two corrections the phase made to itself
+
+- **A D3 violation, caught before any event was sent.** Phase 1's
+  mechanical `console.error` → `captureSeamError` swap was too broad:
+  it routed the **14 D5 REFUSAL logs** ("suggestions skipped — an
+  operator suspended it") to Sentry. A suspension is an operator's
+  act, not a fault. Those sites are console-only again; 40 genuine
+  fault sites remain captured.
+- **The PII boundary moved from inline config into a HARNESS**
+  (`lib/observability/scrub.ts` + `scrub.test.ts`, 11 tests) — the
+  house idiom, where a boundary is pinned by something that fails
+  loudly rather than by a one-time inspection. Phase 0 planned to
+  verify D4 by eyeballing one event in the Sentry UI; the harness
+  proves it on every commit, forever, and **it immediately found a
+  leak the plan had missed**: a 500-character cap limits VOLUME, not
+  CONTENT — a provider error quoting the serialised model input still
+  shipped the first candidates' names, CVs, and hiring-manager
+  feedback inside the cap. The scrub now redacts by KEY (the value
+  keys our own seams serialise become `[redacted]`; a bulk container
+  key truncates the message at that point) and a test pins the
+  counter-case: §57's own 400 body — "additionalProperties: true is
+  not supported" — passes through UNTOUCHED, because blanket
+  truncation would have hidden the very fault this slice was built in
+  response to.
+
+### D2 amended — the marketplace path abandoned
+
+As drafted: marketplace install with a founder-hand claim. As
+executed: the terms acceptance never registered for the team, through
+**three founder attempts and sixteen CLI retries**, while the
+dashboard reported success; the team's only marketplace installation
+remains Resend (2026-08-13). Amendment, founder-confirmed: **Sentry
+provisioned directly at sentry.io, the DSN set as env by hand** — the
+AGENT_* credential shape. Kill switch, PII boundary, fail-soft and
+removability all unchanged; only unified billing is forfeited, which
+at the free tier is nothing.
+
+### Driven live on production
+
+**The client half** (getmandate.io, browser): ingest returned **HTTP
+200**, event `57e7739c…`. The event AS SENT — read through the SDK's
+`afterSendEvent` hook, i.e. after `beforeSend` — carried a provider
+payload quoting two candidates, their CVs, their employers and a
+hiring manager's words, reduced to `"invalid schema for input {…
+[structured input redacted]"`. No user, no request data, no cookies,
+no headers; breadcrumbs navigation-only with zero data payloads.
+
+**The server half** (a temporary token-gated probe under
+`/api/cron/`, 404 without the token, **since deleted with its env
+token**): ingest returned **HTTP 200**, event `c527af61…`; options
+confirmed live as `enabled: true`, `tracesSampleRate: 0` (D6
+errors-only), `sendDefaultPii: false` (D4); the same redaction on the
+server's own bytes; and `tags: { seam: "search-health" }` — the
+derivation from the `[label]` convention proven, not assumed.
+
+**One platform trap, and it is the slice's own lesson.** The first
+DSN attempt shipped Sentry code to the browser **with no DSN**:
+Vercel marks new environment variables SENSITIVE by default, and a
+sensitive variable is never inlined into a client bundle. Server
+capture would have worked while browser capture silently did nothing
+— a half-blind monitor that looks healthy, which is precisely the
+failure class this slice exists to end. It was caught only because
+the probe reads BYTES rather than trusting a dashboard. Both gates
+were hardened in response (they key on `NODE_ENV` plus the DSN's
+presence, so a laptop's `.env.local` cannot ship events and a missing
+`NEXT_PUBLIC_VERCEL_ENV` cannot blind the browser half). Second
+trap, recorded: Sentry's transport caches the native `fetch` at
+init, so patching `window.fetch` cannot observe it — `afterSendEvent`
+is the honest observer.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Alert routing joins the Resend slice** (D8 stands): the Sentry UI
+  is the only channel today, which is right at one operator; email or
+  Slack routing lands when the channel exists, and it is the same
+  founder item that unblocks the §58 scheduled sweep.
+- **The health-schema defect class — now covered, and worth a
+  standing habit**: the monitor would have caught §57 on its first
+  failed click. Recommend a smoke-run of rarely-driven AI surfaces
+  after any provider-side validation change; Sentry makes it cheap
+  rather than mandatory.
+- **Source maps — deferred, not forgotten**: `withSentryConfig`
+  uploads only when `SENTRY_AUTH_TOKEN` exists, and it does not.
+  Server stack traces are readable without it; browser traces are
+  minified. A two-minute founder-hand token whenever a client-side
+  fault proves hard to read.
+- **Tracing and session replay stay OFF** (D6): the deferred list
+  said error monitoring, and performance tracing is its own decision.
+  Replay is refused on principle — it screenshots candidate data by
+  design.
+
+Deploys through `4hnz79y48` live; no migration; tsc / vitest **801**
+(11 new) / eslint / build green. The completion declaration for the
+error-monitoring slice waits on the verdicts above and the founder's
+written confirmation; `NEXT-sentry.md` is deleted only after it.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the remaining deferred build list (rate limiting → Resend → Stripe),
+the one orphaned 331-byte storage object from §28's diagnosis, the
+stuck-mandate retry gap (§55), and the intake and digest skills gaps.
