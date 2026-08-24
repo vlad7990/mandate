@@ -6908,3 +6908,22 @@ leaked-password protection (Pro-gated), the Turnstile keys (§61),
 Stripe (parked to product-development's end), the one orphaned
 331-byte storage object, and the "Capital Markets Investment Bank"
 client rename (editorial).
+
+---
+
+## 81. Copilot verdicts confirmed — the eighteenth principal is complete; the read-shaped queue is empty — 2026-08-24
+
+The founder confirmed all four §80 verdicts as drafted: the
+most-available AI surface signs its own name with its own kill
+switch and the human door intact at the threshold; the read-shaped
+queue is EMPTY, with every answering or persisting AI surface now
+one of eighteen principals; the dead shortlist read stands repaired
+with the pool-grant control run recorded as the pattern guarding
+inherited coverage; and the per-turn event stands as drafted, its
+thinning founder-timed if real usage ever warrants it.
+
+**The copilot conversion is complete.** `NEXT-copilot-agent.md`
+deleted per its own instruction. Next migration is **095**.
+EIGHTEEN principals live. The remaining queue, by usage on the
+founder's word: §73's five uninjected seams — the three executive
+generators, candidate search, and sourcing search.
