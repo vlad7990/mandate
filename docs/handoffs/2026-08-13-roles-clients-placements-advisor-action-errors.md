@@ -7319,3 +7319,65 @@ Gate green: tsc / vitest 828 / eslint / build.
 The re-skin the 2026-08-13 memory carried is DONE. Next, on the
 founder's word: the pre-launch checklist, then the founder-owned
 list.
+
+---
+
+## 87. The compass, the notch, and honest colors — the second cosmetic pass — 2026-08-24
+
+Four founder asks, one deploy (`mandate-bnfl0n1z4` = `08c70d6`):
+
+- **The compass logo adopted** (founder's artwork). The mark was
+  cropped from the source PNG (its plate is #010b21, sampled from
+  the pixels) into the full icon set — favicon 16/32, a
+  PNG-embedded ICO, apple-touch 180, mark 192/512 — plus the
+  dashboard rail, the marketing nav and footer, and the auth navs.
+  TRAP: Turbopack DECODES `src/app/favicon.ico` and refuses
+  non-RGBA PNGs inside ICO — the app-dir copy is deleted and the
+  static `public/favicon.ico` (served verbatim) carries it.
+- **The mandate notch.** The founder chose the notched corner from
+  the four drafted shapes: one 8px 45° clip, bottom-right — the
+  compass chevron embedded in the button plate. `.btn-notch` in
+  globals.css, applied to all 78 solid CTAs (the
+  `bg-primary-container text-on-primary-container` idiom — every
+  match audited as a real button). Solid fills only: clip-path
+  shears borders, so outlined/ghost buttons stay square.
+- **The copilot label repaired at the token layer** — the
+  --color-error defect class, fourth sighting: `--color-on-primary`
+  was never defined, so `text-on-primary` generated nothing in TEN
+  files, and the copilot's white-ish inherited text sat on the pale
+  periwinkle `--primary` fill. Fix: `--color-on-primary` → the navy
+  the shadcn slot already documents (7.7:1 on the pale fill), and
+  the copilot launcher moved to the standard accent-fill CTA
+  pairing (white on #2563eb, 5.2:1) with the notch.
+- **RAG colors, reversing the earlier restraint by founder's
+  word**: `--positive` #bec6e0 → green #4ade80, `--warning` →
+  text-grade amber #fbbf24 with a new `--color-warn` utility
+  (warn chips/accents had ALIASED tertiary/--info and rendered
+  blue-grey — a warning that didn't warn), `--danger` stays
+  #ffb4ab. All WCAG-checked 9.9–10.3:1 on the card surface; the
+  dataviz doctrine holds (status colors ship beside labels, never
+  color alone). Repointed the warn-semantic sites: status-chip +
+  kpi-tile warn tones, analytics stalled fill, metrics stalled
+  chip, health-suggestions medium, placements fell-through, the
+  AI-search 40–60 match band. Everything else (tiers, deltas,
+  active chips, chart fills) flowed green/red through the tokens.
+
+Verified live on production: the project surface shows the rail
+mark, the readable notched copilot, green COMPLETE/ACTIVE, red
+AT RISK/LOW PIPELINE. The impeccable detector's one advisory (the
+terminal-grid texture) is the product's committed signature — the
+brief wins. Gate green: tsc / vitest 828 / eslint / build.
+
+TRAP RE-PROVEN: mid-pass, `cd` into the job tmp dir reset the
+shell to the iCloud CLONE — reads after it hit a stale 127-line
+sidebar until the pwd check caught it. All edits verified landed
+in the live repo (absolute-path audit).
+
+**Baseline note:** durable events are now 62 — the founder's own
+`mandate_shared` act (21:37 UTC, their live session) landed during
+the pass. Founder-authored, durable, not residue. The scratch
+visual account was swept; 21 users / founder's session only.
+
+Cosmetic follow-ups, founder-timed: the OG card stays typographic
+(no old lettermark to contradict; compositing the compass into it
+is optional), and the auth "pending" page has no nav to mark.
