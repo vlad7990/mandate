@@ -182,6 +182,12 @@ export const NAV: readonly NavItem[] = [
   },
 
   {
+    href: "/app/agents",
+    label: "Agents",
+    icon: "intelligence",
+    group: "system",
+  },
+  {
     href: "/app/settings/skills",
     label: "Skills studio",
     icon: "skills",
