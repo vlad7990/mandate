@@ -305,7 +305,7 @@ export default async function ProjectPage({
   ];
 
   const weights = calibration.dimension_weights;
-  const stakeholder = primaryStakeholder(project.onboarding_responses);
+  const stakeholders = validStakeholders(project.onboarding_responses);
 
   const intakeFailed = !ready && Boolean(project.intake_error);
 
@@ -434,8 +434,7 @@ export default async function ProjectPage({
         {ready && (
           <HMIntelligencePanel
             projectId={project.id}
-            hmName={stakeholder?.name ?? null}
-            hmRole={stakeholder?.role ?? null}
+            stakeholders={stakeholders}
             initial={project.company_context?.hm_intelligence ?? null}
           />
         )}
@@ -478,11 +477,17 @@ export default async function ProjectPage({
   );
 }
 
-function primaryStakeholder(
+/**
+ * The valid stakeholders in captured order — the same filter the
+ * research seam applies, so the selector offers exactly the names the
+ * server will accept. The first is the default subject.
+ */
+function validStakeholders(
   onboarding: { stakeholders?: Stakeholder[] } | null
-): Stakeholder | null {
-  const list = onboarding?.stakeholders ?? [];
-  return list.find((s) => s && typeof s.name === "string" && s.name.trim()) ?? null;
+): Array<{ name: string; role: string | null }> {
+  return (onboarding?.stakeholders ?? [])
+    .filter((s) => s && typeof s.name === "string" && s.name.trim())
+    .map((s) => ({ name: s.name, role: s.role || null }));
 }
 
 function RecalibrationBanner({

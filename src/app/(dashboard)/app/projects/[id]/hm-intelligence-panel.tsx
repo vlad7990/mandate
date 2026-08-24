@@ -17,6 +17,7 @@ import {
   PanelMeta,
 } from "@/components/projects/panel";
 import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-research-agent";
+import { overrideFor } from "@/lib/ai/hm-override";
 import { researchHiringManagerAction } from "./actions";
 import { unwrap } from "@/lib/actions/result";
 
@@ -27,16 +28,17 @@ const HM_RESEARCH_STEPS = [
   "Synthesising",
 ] as const;
 
+export type HmStakeholder = { name: string; role: string | null };
+
 export function HMIntelligencePanel({
   projectId,
-  hmName,
-  hmRole,
+  stakeholders,
   initial,
 }: {
   projectId: string;
-  /** First stakeholder name from onboarding. Null when none captured. */
-  hmName: string | null;
-  hmRole: string | null;
+  /** Valid stakeholders from onboarding, in captured order — the first
+   * is the default subject. Empty when none captured. */
+  stakeholders: HmStakeholder[];
   initial: HiringManagerIntelligenceReport | null;
 }) {
   const router = useRouter();
@@ -47,14 +49,35 @@ export function HMIntelligencePanel({
   const [runId, setRunId] = useState(0);
   const [sourcesOpen, setSourcesOpen] = useState(false);
 
-  const noStakeholder = !hmName;
+  // Default the selection to the stored report's subject when it still
+  // matches a stakeholder — so "Re-research" refreshes the dossier the
+  // panel is showing — else the first stakeholder (today's behaviour).
+  const [selected, setSelected] = useState<string | null>(() => {
+    const subject = initial?.hm_name?.trim().toLowerCase();
+    const match = subject
+      ? stakeholders.find((s) => s.name.trim().toLowerCase() === subject)
+      : undefined;
+    return match?.name ?? stakeholders[0]?.name ?? null;
+  });
+
+  const noStakeholder = stakeholders.length === 0;
+  const target =
+    stakeholders.find((s) => s.name === selected) ?? stakeholders[0] ?? null;
 
   const handleResearch = () => {
     if (pending || noStakeholder) return;
     setRunId((r) => r + 1);
     start(async () => {
       try {
-        const next = unwrap(await researchHiringManagerAction(projectId));
+        const next = unwrap(
+          await researchHiringManagerAction(
+            projectId,
+            // The D3 rule: the name rides only when the selection
+            // differs from the default, so the trail's
+            // stakeholder_override keeps meaning "the recruiter chose".
+            overrideFor(selected, stakeholders)
+          )
+        );
         setReport(next);
         toast.success("HM intelligence refreshed");
         router.refresh();
@@ -72,7 +95,10 @@ export function HMIntelligencePanel({
       meta={
         <PanelMeta>
           {[
-            hmName,
+            // The REPORT's subject, not the default stakeholder — a
+            // dossier on the second HM must not wear the first's name
+            // (D4: replacement is a legible act).
+            report ? report.hm_name : target?.name ?? null,
             report ? `researched ${formatRelative(report.generated_at)}` : null,
             noStakeholder ? "No hiring manager on record" : null,
           ]
@@ -81,24 +107,42 @@ export function HMIntelligencePanel({
         </PanelMeta>
       }
       action={
-        <button
-          type="button"
-          onClick={handleResearch}
-          disabled={pending || noStakeholder}
-          title={
-            noStakeholder
-              ? "Add a hiring manager via onboarding before researching"
-              : undefined
-          }
-          className={PANEL_BUTTON}
-        >
-          {pending || report ? (
-            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
-          ) : (
-            <IconSpark size={14} />
+        <div className="flex flex-wrap items-center gap-2">
+          {stakeholders.length >= 2 && (
+            <select
+              value={selected ?? ""}
+              onChange={(e) => setSelected(e.target.value)}
+              disabled={pending}
+              aria-label="Stakeholder to research"
+              className="border border-outline-variant bg-surface-container-low px-2 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {stakeholders.map((s) => (
+                <option key={s.name} value={s.name}>
+                  {s.name}
+                  {s.role ? ` — ${s.role}` : ""}
+                </option>
+              ))}
+            </select>
           )}
-          {pending ? "Researching" : report ? "Re-research" : "Research HM"}
-        </button>
+          <button
+            type="button"
+            onClick={handleResearch}
+            disabled={pending || noStakeholder}
+            title={
+              noStakeholder
+                ? "Add a hiring manager via onboarding before researching"
+                : undefined
+            }
+            className={PANEL_BUTTON}
+          >
+            {pending || report ? (
+              <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+            ) : (
+              <IconSpark size={14} />
+            )}
+            {pending ? "Researching" : report ? "Re-research" : "Research HM"}
+          </button>
+        </div>
       }
     >
       {pending && <ProgressTracker key={runId} />}
@@ -114,9 +158,11 @@ export function HMIntelligencePanel({
         <div className={PANEL_BODY}>
           <p className="max-w-[70ch] text-[13px] leading-relaxed text-on-surface-variant">
             Run real-time web research on{" "}
-            <span className="text-on-surface font-semibold">{hmName}</span>
-            {hmRole && (
-              <span className="text-on-surface-variant"> ({hmRole})</span>
+            <span className="text-on-surface font-semibold">
+              {target?.name}
+            </span>
+            {target?.role && (
+              <span className="text-on-surface-variant"> ({target.role})</span>
             )}
             : reads career trajectory, leadership style signals, public
             priorities, and surfaces likely concerns, rapport-builders, and
