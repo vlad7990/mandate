@@ -5837,3 +5837,38 @@ last item), the Turnstile keys (§61), the one orphaned 331-byte
 storage object, the stuck-mandate retry gap (§55), and the intake
 and digest skills gaps. The Resend DNS item — carried since §7 —
 comes OFF the list.
+
+---
+
+## 64. Resend verdicts confirmed — the slice is complete; Stripe deferred to product-development's end — 2026-08-24
+
+The founder confirmed all §63 verdicts as drafted: next Monday's
+06:00 UTC run is the sweep's first natural pass (expected, not a
+surprise); the invitation and portal-link surfaces stand on the
+proven send door with first real use as their live proof,
+Sentry-visible on failure; the GoTrue SMTP switch and Sentry alert
+routing are unblocked and founder-timed; the two-accounts key trap
+enters doctrine.
+
+**One sequencing decision, made here**: Stripe — the deferred list's
+last item — is NOT next. The founder's call: Stripe lands as the
+LAST phase of product development, after the remaining product work,
+not before it. The infrastructure arc that began at §59 closes at
+three of four (Sentry ✓, rate limiting ✓, Resend ✓), with Stripe
+parked deliberately.
+
+The definition of done is met. The product can speak: three wired
+surfaces deliver, the fourteen-agent map's one scheduled judgment
+runs on its own clock under its own kill switch with 087's reserved
+vocabulary spent, delivery failures land in Sentry rather than only
+in grep, and the DNS item carried since §7 is off the founder's
+list.
+
+**The Resend slice is complete.** `NEXT-resend.md` deleted per its
+own instruction. Next migration is **090**.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, the stuck-mandate retry gap (§55), and the
+intake and digest skills gaps.
