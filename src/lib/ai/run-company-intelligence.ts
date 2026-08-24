@@ -190,7 +190,7 @@ export async function runCompanyIntelligenceAndPersist(
 ): Promise<CompanyIntelligenceRunResult> {
   const session = await signInCompanyIntelAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[company-intelligence] research skipped: ${session.reason}. ` +
         "Any existing report stands; the panel keeps rendering it."
     );

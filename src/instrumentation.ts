@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { scrubBreadcrumb, scrubEvent } from "@/lib/observability/scrub";
 
 /**
  * Server-side Sentry init (NEXT-sentry D1/D4/D6) — plus
@@ -16,21 +17,23 @@ import * as Sentry from "@sentry/nextjs";
  *
  * ## The PII boundary (D4)
  *
- * Errors only, production only, no request bodies, no cookies, no
- * emails. Provider error messages are length-capped in `beforeSend`
- * because a provider payload can embed the model input, and the
- * model input embeds candidate data — `safeFailureMessage`'s
- * paranoia, applied at the telemetry door. The only identity an
- * event may carry is the users-row uuid (the trail's own actor
- * shape), and nothing sets one today.
+ * Errors only, production only, and every event through
+ * `lib/observability/scrub` — the rules live there rather than
+ * inline because they are the safety property this slice rests on,
+ * and `scrub.test.ts` holds them to it.
  */
 
-const PROVIDER_MESSAGE_CAP = 500;
-
 export function register() {
+  const dsn = process.env.SENTRY_DSN ?? process.env.NEXT_PUBLIC_SENTRY_DSN;
+
   Sentry.init({
-    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN ?? process.env.SENTRY_DSN,
-    enabled: process.env.VERCEL_ENV === "production",
+    dsn,
+    // Same shape as the client gate: the DSN is the switch, NODE_ENV
+    // keeps a laptop's .env.local silent, and previews never report.
+    enabled:
+      Boolean(dsn) &&
+      process.env.NODE_ENV === "production" &&
+      process.env.VERCEL_ENV !== "preview",
     environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
 
     // Errors only (D6): no APM, no tracing, nothing sampled.
@@ -39,36 +42,8 @@ export function register() {
     // The PII boundary (D4).
     sendDefaultPii: false,
     maxBreadcrumbs: 30,
-    beforeBreadcrumb(breadcrumb) {
-      // Navigation and console categories only — and console lines
-      // capped, because our own seam logs pass provider payloads.
-      if (breadcrumb.category !== "navigation" && breadcrumb.category !== "console") {
-        return null;
-      }
-      if (typeof breadcrumb.message === "string") {
-        breadcrumb.message = breadcrumb.message.slice(0, 200);
-      }
-      delete breadcrumb.data;
-      return breadcrumb;
-    },
-    beforeSend(event) {
-      // Never a body, never a cookie, never a header set (D4).
-      if (event.request) {
-        delete event.request.data;
-        delete event.request.cookies;
-        delete event.request.headers;
-      }
-      delete event.user;
-      // Provider messages can embed the model input; cap every
-      // exception value at the same threshold the reader-facing
-      // backstop uses.
-      for (const ex of event.exception?.values ?? []) {
-        if (typeof ex.value === "string" && ex.value.length > PROVIDER_MESSAGE_CAP) {
-          ex.value = `${ex.value.slice(0, PROVIDER_MESSAGE_CAP)}… [capped at ${PROVIDER_MESSAGE_CAP}]`;
-        }
-      }
-      return event;
-    },
+    beforeBreadcrumb: scrubBreadcrumb,
+    beforeSend: scrubEvent,
   });
 }
 

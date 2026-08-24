@@ -145,7 +145,7 @@ export async function runDeskDigestAndPersist(
 ): Promise<DeskDigestRunResult> {
   const session = await signInDeskDigestAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[desk-digest] generation skipped: ${session.reason}. ` +
         "The previous digest stands; the desk keeps rendering it."
     );

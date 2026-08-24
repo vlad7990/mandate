@@ -107,7 +107,7 @@ export async function runCompanyCultureAndPersist(
 ): Promise<CompanyCultureRunResult> {
   const session = await signInCultureAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[company-culture] derivation skipped: ${session.reason}. ` +
         "The existing profile stands; the panel keeps rendering it."
     );

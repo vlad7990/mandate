@@ -115,7 +115,7 @@ export async function runPositioningAndPersist(
 ): Promise<PositioningRunResult> {
   const session = await signInPositioningAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[positioning] generation skipped: ${session.reason}. ` +
         "Any existing kit stands; the panel keeps rendering it."
     );

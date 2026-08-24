@@ -70,7 +70,7 @@ export async function runIntakeAnalysisAndPersist(
 ): Promise<IntakeRunResult> {
   const session = await signInIntakeAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[analyze-role] The Intake Agent could not run — an operator has ` +
         `suspended it or its credentials are absent. The mandate keeps its ` +
         `one-line brief. (${session.reason})`

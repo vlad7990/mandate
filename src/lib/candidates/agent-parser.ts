@@ -55,7 +55,7 @@ export async function runCvParseAndPersist(args: {
 }): Promise<CvParseRunResult> {
   const session = await signInCvParser();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[cv-parser] parse skipped: ${session.reason}. ` +
         "The file and the candidate row stand; cv_parse_error carries the sentence."
     );

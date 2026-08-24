@@ -215,7 +215,7 @@ export async function runSourcingGenerateAllAndPersist(
 ): Promise<SourcingRunResult> {
   const session = await signInBooleanSearchAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[sourcing] generation skipped: ${session.reason}. ` +
         "The existing queries stand; the editor keeps rendering them."
     );
@@ -294,7 +294,7 @@ export async function runSourcingRegenerateAndPersist(
 
   const session = await signInBooleanSearchAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[sourcing] regeneration skipped: ${session.reason}. ` +
         "The existing queries stand; the editor keeps rendering them."
     );

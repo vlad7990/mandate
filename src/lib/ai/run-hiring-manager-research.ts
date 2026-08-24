@@ -172,7 +172,7 @@ export async function runHiringManagerResearchAndPersist(
 ): Promise<HmResearchRunResult> {
   const session = await signInCompanyIntelAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[hm-research] research skipped: ${session.reason}. ` +
         "Any existing dossier stands; the panel keeps rendering it."
     );

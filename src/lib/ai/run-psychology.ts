@@ -117,7 +117,7 @@ export async function runPsychologyAndPersist(
 ): Promise<PsychologyRunResult> {
   const session = await signInPsychologyAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[psychology] generation skipped: ${session.reason}. ` +
         "Any existing profile stands; the panel keeps rendering it."
     );

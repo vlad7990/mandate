@@ -141,7 +141,7 @@ export async function runWeeklyReportAndPersist(
 ): Promise<WeeklyReportRunResult> {
   const session = await signInSearchHealthAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[weekly-report] report skipped: ${session.reason}. ` +
         "The previous reports stand; the archive keeps rendering them."
     );

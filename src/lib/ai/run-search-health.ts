@@ -162,7 +162,7 @@ export async function runHealthSuggestionsAndPersist(
 ): Promise<SearchHealthRunResult> {
   const session = await signInSearchHealthAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[search-health] suggestions skipped: ${session.reason}. ` +
         "The existing suggestions stand; the panel keeps rendering them."
     );

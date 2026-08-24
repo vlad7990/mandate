@@ -173,7 +173,7 @@ export async function runCandidateResearchAndPersist(
 ): Promise<CandidateResearchRunResult> {
   const session = await signInCandidateResearchAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[candidate-research] research skipped: ${session.reason}. ` +
         "Any existing dossier stands; the panel keeps rendering it."
     );

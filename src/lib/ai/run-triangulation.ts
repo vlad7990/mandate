@@ -131,7 +131,7 @@ export async function runTriangulationAndPersist(
 ): Promise<TriangulationRunResult> {
   const session = await signInTriangulationAgent();
   if (!session.ok) {
-    captureSeamError(
+    console.error(
       `[triangulation] synthesis skipped: ${session.reason}. ` +
         "Any existing report stands; the panel keeps rendering it."
     );
