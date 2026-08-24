@@ -6219,3 +6219,23 @@ leaked-password protection (Pro-gated), the Turnstile keys (§61),
 Stripe (parked to product-development's end), the one orphaned
 331-byte storage object, and the "Capital Markets Investment Bank"
 client rename (editorial). The skills gap list is now EMPTY.
+
+---
+
+## 70. Digest-skills verdicts confirmed — the slice is complete; the skills gap list is empty — 2026-08-24
+
+The founder confirmed all three §69 verdicts as drafted: the gap
+recorded at §47 has no remaining surface — every model call in the
+product reads recruiter-authored skills, and Skills Studio's
+count-free copy became true the moment the digest line landed; the
+digest's org-wide-only scope stands as design (no mandate, no
+client — role skills rightly silent); and the nonce-triggered
+steering probe enters the house pattern book — a cheap, surgical,
+teardown-clean proof that skills reach any seam, to be reused
+whenever a new seam joins.
+
+**The digest skills slice is complete.** No NEXT file existed for
+the one-liner; nothing to delete. Migration counter unchanged at
+**091**. The founder's same message picked the next slice: the HM
+override selector (§49) — Phase 0 run and D1–D8 drafted in
+`NEXT-hm-override.md`, the build gated on written confirmation.
