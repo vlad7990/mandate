@@ -40,7 +40,7 @@ export default async function SignInPage({
       </nav>
 
       <main className="z-10 w-full max-w-[420px] px-6">
-        <div className="bg-surface-container-low border border-outline-variant rounded shadow-2xl p-8 relative">
+        <div className="bg-surface-container-low border border-outline-variant p-8 relative">
           <div className="absolute -top-px left-0 w-full h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
 
           <header className="mb-8">
@@ -51,13 +51,13 @@ export default async function SignInPage({
           </header>
 
           {checkEmail && (
-            <div className="mb-6 border border-primary/40 bg-primary/10 px-4 py-3 rounded text-on-surface text-body-main">
+            <div className="mb-6 border border-primary/40 bg-primary/10 px-4 py-3 text-on-surface text-body-main">
               Check your inbox to confirm your email before signing in.
             </div>
           )}
 
           {error && (
-            <div className="mb-6 border border-error/40 bg-error-container/30 px-4 py-3 rounded text-error text-body-main">
+            <div className="mb-6 border border-error/40 bg-error-container/30 px-4 py-3 text-error text-body-main">
               {error}
             </div>
           )}
@@ -88,7 +88,7 @@ export default async function SignInPage({
                   autoComplete="email"
                   defaultValue={prefilledEmail}
                   placeholder="name@enterprise.com"
-                  className="w-full bg-surface-container-lowest border border-outline-variant rounded p-3 pl-10 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all outline-none placeholder:text-surface-container-highest"
+                  className="w-full bg-surface-container-lowest border border-outline-variant p-3 pl-10 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all outline-none placeholder:text-surface-container-highest"
                 />
               </div>
             </div>
@@ -120,14 +120,14 @@ export default async function SignInPage({
                   required
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className="w-full bg-surface-container-lowest border border-outline-variant rounded p-3 pl-10 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all outline-none placeholder:text-surface-container-highest"
+                  className="w-full bg-surface-container-lowest border border-outline-variant p-3 pl-10 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all outline-none placeholder:text-surface-container-highest"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-primary-container text-on-primary-container py-3 rounded hover:brightness-110 active:scale-[0.98] transition-all flex justify-center items-center gap-2 group font-h2 text-body-main"
+              className="w-full bg-primary-container text-on-primary-container py-3 hover:brightness-110 active:scale-[0.98] transition-all flex justify-center items-center gap-2 group font-h2 text-body-main"
             >
               Sign In
               <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
@@ -146,7 +146,7 @@ export default async function SignInPage({
           <button
             type="button"
             disabled
-            className="w-full bg-surface-container-lowest border border-outline-variant text-on-surface py-3 rounded transition-colors flex justify-center items-center gap-2 group opacity-60 cursor-not-allowed font-body-main"
+            className="w-full bg-surface-container-lowest border border-outline-variant text-on-surface py-3 transition-colors flex justify-center items-center gap-2 group opacity-60 cursor-not-allowed font-body-main"
             title="Enterprise SSO is coming soon."
           >
             <IconNetwork size={17} className="text-primary" />
@@ -176,7 +176,7 @@ export default async function SignInPage({
         </span>
         <div className="flex items-center gap-4 text-mono-label text-on-surface-variant font-mono-label uppercase tracking-widest">
           <span className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-1.5 h-1.5 bg-emerald-500 animate-pulse" />
             Node Status: Active
           </span>
           <span className="opacity-30">|</span>

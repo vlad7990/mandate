@@ -27,7 +27,7 @@ export default async function SignUpPage({
         >
           Mandate
         </Link>
-        <div className="flex items-center gap-2 px-2 py-1 bg-surface-container rounded border border-outline-variant">
+        <div className="flex items-center gap-2 px-2 py-1 bg-surface-container border border-outline-variant">
           <span className="text-mono-label font-mono-label uppercase text-on-surface-variant">
             System Mode
           </span>
@@ -38,7 +38,7 @@ export default async function SignUpPage({
         <section className="hidden lg:flex w-1/3 bg-surface-container-lowest border-r border-outline-variant relative flex-col justify-between p-loose overflow-hidden">
           <div className="absolute inset-0 terminal-grid opacity-20" />
           <div className="relative z-10 space-y-gutter">
-            <div className="inline-flex items-center px-2 py-1 bg-primary/10 border border-primary/20 rounded">
+            <div className="inline-flex items-center px-2 py-1 bg-primary/10 border border-primary/20">
               <IconShield size={13} className="mr-2 text-primary" />
               <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
                 Executive Intelligence
@@ -54,14 +54,14 @@ export default async function SignUpPage({
           </div>
 
           <div className="relative z-10">
-            <div className="bg-surface-container p-gutter border border-outline-variant rounded-lg space-y-tight">
+            <div className="bg-surface-container p-gutter border border-outline-variant space-y-tight">
               <div className="flex justify-between items-center mb-unit">
                 <span className="font-mono-label text-mono-label text-outline uppercase">
                   Network Integrity
                 </span>
                 <span className="font-data-point text-data-point text-primary">99.9%</span>
               </div>
-              <div className="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+              <div className="w-full bg-surface-container-highest h-1 overflow-hidden">
                 <div className="bg-primary h-full" style={{ width: "99.9%" }} />
               </div>
               <div className="flex gap-4 mt-gutter">
@@ -86,9 +86,9 @@ export default async function SignUpPage({
           <div className="w-full max-w-xl space-y-loose">
             <div className="space-y-tight">
               <div className="flex items-center gap-2">
-                <span className="w-8 h-1 bg-primary rounded-full" />
-                <span className="w-2 h-1 bg-surface-container-highest rounded-full" />
-                <span className="w-2 h-1 bg-surface-container-highest rounded-full" />
+                <span className="w-8 h-1 bg-primary" />
+                <span className="w-2 h-1 bg-surface-container-highest" />
+                <span className="w-2 h-1 bg-surface-container-highest" />
                 <span className="font-mono-label text-mono-label text-outline uppercase ml-2">
                   Step 1: Identity
                 </span>
@@ -100,7 +100,7 @@ export default async function SignUpPage({
             </div>
 
             {error && (
-              <div className="border border-error/40 bg-error-container/30 px-4 py-3 rounded text-error text-body-main">
+              <div className="border border-error/40 bg-error-container/30 px-4 py-3 text-error text-body-main">
                 {error}
               </div>
             )}
@@ -120,7 +120,7 @@ export default async function SignUpPage({
                   required
                   autoComplete="name"
                   placeholder="e.g. Marcus Thorne"
-                  className="w-full bg-surface-container border border-outline-variant focus:border-primary focus:ring-0 text-on-surface p-3 font-body-main transition-colors placeholder:text-outline/50 outline-none rounded"
+                  className="w-full bg-surface-container border border-outline-variant focus:border-primary focus:ring-0 text-on-surface p-3 font-body-main transition-colors placeholder:text-outline/50 outline-none"
                 />
               </div>
 
@@ -143,7 +143,7 @@ export default async function SignUpPage({
                     required
                     autoComplete="email"
                     placeholder="m.thorne@firm-mandate.com"
-                    className="w-full bg-surface-container border border-outline-variant focus:border-primary focus:ring-0 text-on-surface pl-10 p-3 font-body-main transition-colors placeholder:text-outline/50 outline-none rounded"
+                    className="w-full bg-surface-container border border-outline-variant focus:border-primary focus:ring-0 text-on-surface pl-10 p-3 font-body-main transition-colors placeholder:text-outline/50 outline-none"
                   />
                 </div>
               </div>
@@ -169,7 +169,7 @@ export default async function SignUpPage({
                     minLength={PASSWORD_MIN_LENGTH}
                     autoComplete="new-password"
                     placeholder="••••••••••••"
-                    className="w-full bg-surface-container border border-outline-variant focus:border-primary focus:ring-0 text-on-surface pl-10 p-3 font-body-main transition-colors placeholder:text-outline/50 outline-none rounded"
+                    className="w-full bg-surface-container border border-outline-variant focus:border-primary focus:ring-0 text-on-surface pl-10 p-3 font-body-main transition-colors placeholder:text-outline/50 outline-none"
                   />
                 </div>
               </div>
@@ -177,7 +177,7 @@ export default async function SignUpPage({
               <div className="pt-gutter flex flex-col gap-gutter">
                 <button
                   type="submit"
-                  className="w-full bg-primary-container hover:brightness-110 text-on-primary-container py-4 transition-all flex justify-center items-center gap-2 group font-h2 text-body-main rounded"
+                  className="w-full bg-primary-container hover:brightness-110 text-on-primary-container py-4 transition-all flex justify-center items-center gap-2 group font-h2 text-body-main"
                 >
                   Initialize Onboarding
                   <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
@@ -187,7 +187,7 @@ export default async function SignUpPage({
                     <IconLock size={13} />
                     SOC2 Type II Certified
                   </span>
-                  <span className="w-1 h-1 bg-outline-variant rounded-full" />
+                  <span className="w-1 h-1 bg-outline-variant" />
                   <span className="flex items-center gap-1">
                     <IconShield size={13} />
                     End-to-End Encrypted

@@ -135,9 +135,9 @@ export function Sidebar({ user, badges }: SidebarProps) {
           >
             <span
               aria-hidden
-              className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] border-primary"
+              className="flex h-[22px] w-[22px] shrink-0 items-center justify-center border-[1.5px] border-primary"
             >
-              <span className="h-1.5 w-1.5 rounded-[1px] bg-primary" />
+              <span className="h-1.5 w-1.5 bg-primary" />
             </span>
             <span className="font-heading text-[13px] font-bold tracking-[0.06em] text-on-surface md:hidden xl:inline">
               MANDATE

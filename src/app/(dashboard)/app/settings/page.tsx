@@ -1,19 +1,7 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { MastHead } from "@/components/ui/mast-head";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { can, parseRole } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
@@ -180,14 +168,17 @@ export default async function SettingsPage() {
       {/* Account — the caller's own profile, editable (071). Every staff
           role sees this, viewer included: the two self-service edits are
           not a privilege. */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <IconShield size={14} />
-            Account
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <section className="space-y-3">
+        <MastHead
+          tone="primary"
+          label={
+            <>
+              <IconShield size={14} />
+              Account
+            </>
+          }
+        />
+        <div className="border border-outline-variant bg-surface-container-low p-4">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="space-y-2">
               <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
@@ -211,18 +202,16 @@ export default async function SettingsPage() {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {!isFounder && (
-        <Card>
-          <CardContent className="py-4 text-body-main text-on-surface-variant">
-            You&rsquo;re viewing this workspace as a{" "}
-            <span className="text-on-surface">{profile.role ?? "member"}</span>.
-            Only founders can approve pending users or change the
-            organisation. Reach out to a founder if you need access changes.
-          </CardContent>
-        </Card>
+        <div className="border border-outline-variant bg-surface-container-low px-4 py-4 text-body-main text-on-surface-variant">
+          You&rsquo;re viewing this workspace as a{" "}
+          <span className="text-on-surface">{profile.role ?? "member"}</span>.
+          Only founders can approve pending users or change the
+          organisation. Reach out to a founder if you need access changes.
+        </div>
       )}
 
       {/* Erasure requests — candidates asking, from their portal, that
@@ -231,14 +220,18 @@ export default async function SettingsPage() {
           per the retention verdict, and the search team's part is to
           stop working the person meanwhile. */}
       {erasureRequests.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-mono-label text-mono-label text-error uppercase tracking-widest flex items-center gap-2">
-              <IconShield size={14} />
-              Erasure requests ({erasureRequests.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <section className="space-y-3">
+          <MastHead
+            tone="error"
+            label={
+              <>
+                <IconShield size={14} />
+                Erasure requests
+              </>
+            }
+            meta={<span className="tabular-nums">{erasureRequests.length}</span>}
+          />
+          <div className="space-y-3 border border-outline-variant bg-surface-container-low p-4">
             <ul className="divide-y divide-outline-variant border border-outline-variant">
               {erasureRequests.map((r) => (
                 <li
@@ -261,19 +254,22 @@ export default async function SettingsPage() {
               This person asked for their data to be erased. Stop working
               them; Mandate reviews and executes the request.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
 
       {/* Organisation */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <IconBuilding size={14} />
-            Organisation
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <section className="space-y-3">
+        <MastHead
+          tone="primary"
+          label={
+            <>
+              <IconBuilding size={14} />
+              Organisation
+            </>
+          }
+        />
+        <div className="border border-outline-variant bg-surface-container-low p-4">
           {org ? (
             <dl className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Field label="Name" value={org.name} />
@@ -290,99 +286,91 @@ export default async function SettingsPage() {
               needs to approve your access.
             </p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* Founders */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-            <IconShield size={14} />
-            Founders ({founders.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {founders.length === 0 ? (
-            <p className="text-body-main text-outline italic">
-              No founders configured.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {founders.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="text-on-surface">
-                      {u.full_name?.trim() || "—"}
-                    </TableCell>
-                    <TableCell className="font-mono-data text-on-surface-variant">
-                      {u.email}
-                    </TableCell>
-                    <TableCell>
-                      <StatusChip status={u.status} />
-                    </TableCell>
-                    <TableCell className="font-mono-data text-on-surface-variant">
-                      {u.created_at ? formatDate(u.created_at) : "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <section className="space-y-3">
+        <MastHead
+          tone="primary"
+          label={
+            <>
+              <IconShield size={14} />
+              Founders
+            </>
+          }
+          meta={<span className="tabular-nums">{founders.length}</span>}
+        />
+        {founders.length === 0 ? (
+          <p className="text-body-main text-outline italic">
+            No founders configured.
+          </p>
+        ) : (
+          <MemberTable
+            columns={["Name", "Email", "Status", "Joined"]}
+            rows={founders.map((u) => (
+              <tr
+                key={u.id}
+                className="border-b border-outline-variant/60 last:border-b-0"
+              >
+                <td className="px-4 py-3 text-body-main text-on-surface">
+                  {u.full_name?.trim() || "—"}
+                </td>
+                <td className="px-4 py-3 font-mono-data text-body-main text-on-surface-variant">
+                  {u.email}
+                </td>
+                <td className="px-4 py-3">
+                  <StatusChip status={u.status} />
+                </td>
+                <td className="px-4 py-3 font-mono-data text-body-main text-on-surface-variant">
+                  {u.created_at ? formatDate(u.created_at) : "—"}
+                </td>
+              </tr>
+            ))}
+          />
+        )}
+      </section>
 
       {/* Active members — only meaningful to founders / org admins.
           Approvals and suspensions moved to /ops: they are platform
           acts, and this screen is the organisation's. */}
       {activeMembers.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
-              <IconGroup size={14} />
-              Active members ({activeMembers.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {activeMembers.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="text-on-surface">
-                      {u.full_name?.trim() || "—"}
-                    </TableCell>
-                    <TableCell className="font-mono-data text-on-surface-variant">
-                      {u.email}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
-                        {u.role ?? "—"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-mono-data text-on-surface-variant">
-                      {u.created_at ? formatDate(u.created_at) : "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <section className="space-y-3">
+          <MastHead
+            tone="primary"
+            label={
+              <>
+                <IconGroup size={14} />
+                Active members
+              </>
+            }
+            meta={<span className="tabular-nums">{activeMembers.length}</span>}
+          />
+          <MemberTable
+            columns={["Name", "Email", "Role", "Joined"]}
+            rows={activeMembers.map((u) => (
+              <tr
+                key={u.id}
+                className="border-b border-outline-variant/60 last:border-b-0"
+              >
+                <td className="px-4 py-3 text-body-main text-on-surface">
+                  {u.full_name?.trim() || "—"}
+                </td>
+                <td className="px-4 py-3 font-mono-data text-body-main text-on-surface-variant">
+                  {u.email}
+                </td>
+                <td className="px-4 py-3">
+                  <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+                    {u.role ?? "—"}
+                  </span>
+                </td>
+                <td className="px-4 py-3 font-mono-data text-body-main text-on-surface-variant">
+                  {u.created_at ? formatDate(u.created_at) : "—"}
+                </td>
+              </tr>
+            ))}
+          />
+        </section>
       )}
 
       <footer className="pt-2 font-mono-label text-mono-label text-outline uppercase tracking-wider">
@@ -396,6 +384,40 @@ export default async function SettingsPage() {
         </Link>
         {" — "}Mandate approves their request from platform operations.
       </footer>
+    </div>
+  );
+}
+
+/**
+ * The members-page table idiom: bordered scroll container (the wrapper's
+ * `relative` is load-bearing — sr-only cells position against it, see
+ * /app/settings/members), collapse-bordered table, mono uppercase heads.
+ */
+function MemberTable({
+  columns,
+  rows,
+}: {
+  columns: string[];
+  rows: ReactNode;
+}) {
+  return (
+    <div className="relative min-w-0 max-w-full overflow-x-auto border border-outline-variant bg-surface-container-low">
+      <table className="w-full border-collapse sm:min-w-[720px]">
+        <thead>
+          <tr className="border-b border-outline-variant">
+            {columns.map((h) => (
+              <th
+                key={h}
+                scope="col"
+                className="px-4 py-2.5 text-left font-mono-label text-mono-label uppercase tracking-widest text-outline"
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{rows}</tbody>
+      </table>
     </div>
   );
 }

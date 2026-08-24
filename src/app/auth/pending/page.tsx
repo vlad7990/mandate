@@ -64,10 +64,10 @@ export default async function PendingPage() {
       </header>
 
       <main className="relative z-10 w-full max-w-[520px] px-6">
-        <div className="bg-surface-container-low border border-outline-variant rounded shadow-2xl p-10 relative">
+        <div className="bg-surface-container-low border border-outline-variant p-10 relative">
           <div className="absolute -top-px left-0 w-full h-px bg-gradient-to-r from-transparent via-tertiary to-transparent opacity-50" />
 
-          <div className="inline-flex items-center px-2 py-1 bg-tertiary/10 border border-tertiary/20 rounded mb-6">
+          <div className="inline-flex items-center px-2 py-1 bg-tertiary/10 border border-tertiary/20 mb-6">
             <IconClock size={14} className="text-tertiary mr-2 inline-block" />
             <span className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest">
               Provisioning In Review
@@ -102,7 +102,7 @@ export default async function PendingPage() {
           <form action="/auth/signout" method="post" className="mt-8">
             <button
               type="submit"
-              className="w-full bg-surface-container-lowest border border-outline-variant text-on-surface py-3 rounded hover:bg-surface-container-high transition-colors font-mono-label text-mono-label uppercase tracking-wider"
+              className="w-full bg-surface-container-lowest border border-outline-variant text-on-surface py-3 hover:bg-surface-container-high transition-colors font-mono-label text-mono-label uppercase tracking-wider"
             >
               Sign Out
             </button>
