@@ -5524,3 +5524,43 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the remaining deferred build list (rate limiting → Resend → Stripe),
 the one orphaned 331-byte storage object from §28's diagnosis, the
 stuck-mandate retry gap (§55), and the intake and digest skills gaps.
+
+---
+
+## 60. Error-monitoring verdicts confirmed — the slice is complete — 2026-08-24
+
+The founder confirmed all four §59 verdicts as drafted: alert routing
+joins the Resend slice (the Sentry UI is the right channel at one
+operator, and the same founder item unblocks §58's scheduled sweep);
+the smoke-run habit for rarely-driven AI surfaces after provider-side
+validation changes stands recorded, made cheap rather than mandatory
+by the monitor itself; source maps stay deferred pending a
+founder-hand `SENTRY_AUTH_TOKEN`, with server traces already readable
+without one; and tracing and session replay stay OFF — the deferred
+list said error monitoring, and replay is refused on principle
+because it screenshots candidate data by design.
+
+The definition of done is met. The product's faults now have a
+record that is not a terminal buffer: every server-action fault, both
+route boundaries, every route handler and `after()` path, and forty
+named agent-seam catch sites report under one removable dependency —
+five files and one config wrapper, with the 348 throw sites and the
+seams' log lines left Sentry-ignorant. What is recorded is honest in
+both directions: authored reader sentences and operator suspensions
+are NOT faults and never become events, while the provider payloads
+that used to vanish into a console now arrive tagged by seam. And the
+boundary that lets a recruiting product send telemetry to a third
+party at all is pinned by a harness rather than a promise — the same
+doctrine the fourteen agent slices used, applied to a vendor: eleven
+tests that failed loudly the first time they were run, catching a
+leak the plan itself had missed.
+
+**The error-monitoring slice is complete.** `NEXT-sentry.md` deleted
+per its own instruction. Next migration is still **088** — this slice
+never touched the database.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection (Pro-gated),
+the remaining deferred build list (rate limiting → Resend → Stripe),
+the one orphaned 331-byte storage object from §28's diagnosis, the
+stuck-mandate retry gap (§55), and the intake and digest skills gaps.
