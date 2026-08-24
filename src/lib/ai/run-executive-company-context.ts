@@ -8,6 +8,9 @@ import {
   EXECUTIVE_COMPANY_CONTEXT_SYSTEM_PROMPT,
   type ExecutiveCompanyContext,
 } from "./executive-company-context-agent";
+import { signInExecutiveIntelAgent } from "@/lib/agents/session";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
+import type { ExecutiveTrigger } from "./generate-executive-success-profile";
 import type { ExecutiveSearchRow } from "@/lib/executive/types";
 
 /**
@@ -71,16 +74,55 @@ function extractSources(content: ReadonlyArray<unknown>): string[] {
 }
 
 /**
+ * The refusal sentence (095: D5) — lands in company_context_error via
+ * the HUMAN half and is rendered verbatim with the Retry CTA.
+ */
+const EXECINTEL_UNAVAILABLE_SENTENCE =
+  "The Executive Intelligence Agent could not run — an operator has suspended it or its credentials are absent. Retry when it is restored.";
+
+/**
  * Generate the Company Operating Context for an executive search and persist
  * it onto the search row. The caller has already set
  * company_context_status='generating'; this function transitions the row to
  * 'ready' or 'failed' — never leaves it stuck on 'generating'.
+ *
+ * The seam (095): the EXECUTIVE INTELLIGENCE AGENT's session, signed in
+ * per run — the nineteenth principal's web-reaching judgment (the
+ * companyintel precedent: suspension refuses at sign-in, BEFORE any
+ * search is spent). The context merge lands through 095's
+ * executive_searches UPDATE; the intake fields stay the human's — the
+ * invariants pin their survival. FAILURE BOOKKEEPING STAYS HUMAN (090):
+ * markContextFailed keeps the recruiter's cookie session.
  */
 export async function runAndStoreExecutiveCompanyContext(
-  searchId: string
+  searchId: string,
+  trigger: ExecutiveTrigger = "regenerate"
 ): Promise<void> {
-  const supabase = await createReadOnlySupabaseClient();
+  const session = await signInExecutiveIntelAgent();
+  if (!session.ok) {
+    console.error(
+      `[executive-company-context] The Executive Intelligence Agent could ` +
+        `not run — an operator has suspended it or its credentials are ` +
+        `absent. The search row is marked; no web search was spent. ` +
+        `(${session.reason})`
+    );
+    await markContextFailed(searchId, EXECINTEL_UNAVAILABLE_SENTENCE);
+    return;
+  }
 
+  try {
+    await runContextUnderAgentSession(session.client, searchId, trigger);
+  } finally {
+    // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
+    await session.signOut();
+  }
+}
+
+async function runContextUnderAgentSession(
+  supabase: Awaited<ReturnType<typeof createReadOnlySupabaseClient>>,
+  searchId: string,
+  trigger: ExecutiveTrigger
+): Promise<void> {
   const { data: search, error: fetchError } = await supabase
     .from("executive_searches")
     .select(
@@ -131,13 +173,29 @@ export async function runAndStoreExecutiveCompanyContext(
     2
   );
 
+  // Skills ride the AGENT's session (095: D6). The search row itself
+  // carries the org — read it for the skills scope.
+  const { data: orgRow } = await supabase
+    .from("executive_searches")
+    .select("organization_id")
+    .eq("id", searchId)
+    .maybeSingle<{ organization_id: string | null }>();
+  const system = await applySkillsToPrompt(
+    EXECUTIVE_COMPANY_CONTEXT_SYSTEM_PROMPT,
+    {
+      projectId: null,
+      organizationId: orgRow?.organization_id ?? null,
+      client: supabase,
+    }
+  );
+
   let context: ExecutiveCompanyContext;
   try {
     const anthropic = getAnthropic();
     const response = await anthropic.messages.create({
       model: EXECUTIVE_COMPANY_CONTEXT_MODEL,
       max_tokens: 8000,
-      system: EXECUTIVE_COMPANY_CONTEXT_SYSTEM_PROMPT,
+      system,
       messages: [{ role: "user", content: userPrompt }],
       tools: [
         {
@@ -190,6 +248,23 @@ export async function runAndStoreExecutiveCompanyContext(
     const message = `Failed to persist company context: ${updateError.message}`;
     await markContextFailed(searchId, agentErrorMessage(updateError, SUBJECT));
     throw new Error(message);
+  }
+
+  // The main trail (095: D4): trigger and a sources COUNT — never the
+  // context's text, never the URLs. Best-effort after the landing.
+  const { error: eventErr } = await supabase.rpc("record_agent_event", {
+    p_event_type: "executive_context_researched",
+    p_detail: {
+      agent_kind: "execintel",
+      trigger,
+      sources: context.sources.length,
+    },
+  });
+  if (eventErr) {
+    console.error(
+      "[executive-company-context] failed to record the trail event",
+      eventErr
+    );
   }
 }
 

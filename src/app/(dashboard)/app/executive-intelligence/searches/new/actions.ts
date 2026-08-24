@@ -240,7 +240,7 @@ export async function createExecutiveSearchAction(formData: FormData) {
   // search workspace instantly; the page polls context status.
   after(async () => {
     try {
-      await runAndStoreExecutiveCompanyContext(inserted.id);
+      await runAndStoreExecutiveCompanyContext(inserted.id, "initial");
     } catch (err) {
       console.error(
         "[executive-company-context] failed for search",
@@ -300,7 +300,7 @@ export async function regenerateCompanyContextAction(
 
     after(async () => {
       try {
-        await runAndStoreExecutiveCompanyContext(searchId);
+        await runAndStoreExecutiveCompanyContext(searchId, "regenerate");
       } catch (err) {
         console.error(
           "[executive-company-context] retry failed for search",

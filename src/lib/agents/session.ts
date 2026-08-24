@@ -322,6 +322,26 @@ export async function signInCopilotAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Executive Intelligence Agent — the NINETEENTH principal,
+ * ONE identity holding THREE judgments (the companyintel precedent,
+ * scaled): the company operating context (web-reaching), the success
+ * profile, and the interview plan. 095's cluster is its reach: S+U on
+ * the search row, draft-only double-pinned UPDATEs on both artifact
+ * tables (approval stays the recruiter's act forever), the grounding
+ * library reads, and an executive-ledger INSERT pinned to its own
+ * actor_id — it can never sign a human's name there. Failure
+ * bookkeeping (generation_error, the failed context status) stays
+ * HUMAN per the 090 doctrine.
+ */
+export async function signInExecutiveIntelAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "execintel",
+    email: process.env.AGENT_EXECINTEL_EMAIL,
+    password: process.env.AGENT_EXECINTEL_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

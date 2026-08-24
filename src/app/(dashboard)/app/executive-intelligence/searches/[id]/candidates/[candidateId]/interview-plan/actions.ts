@@ -138,7 +138,8 @@ export async function requestInterviewPlanGeneration(
             inserted.planId,
             searchId,
             candidateId,
-            userId
+            userId,
+            inserted.version === 1 ? "initial" : "regenerate"
           );
         } catch (err) {
           console.error(

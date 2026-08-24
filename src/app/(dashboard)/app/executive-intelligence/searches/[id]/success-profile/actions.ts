@@ -119,7 +119,8 @@ export async function requestProfileGeneration(
           await generateAndStoreSuccessProfile(
             inserted.profileId,
             searchId,
-            userId
+            userId,
+            inserted.version === 1 ? "initial" : "regenerate"
           );
         } catch (err) {
           console.error(

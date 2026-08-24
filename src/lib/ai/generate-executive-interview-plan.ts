@@ -11,6 +11,9 @@ import {
   type InterviewPlanContent,
 } from "./executive-interview-architect-agent";
 import { recordExecutiveAuditEvent } from "@/lib/executive/audit";
+import { signInExecutiveIntelAgent } from "@/lib/agents/session";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
+import type { ExecutiveTrigger } from "./generate-executive-success-profile";
 
 /**
  * How this generator names itself in a failure a person reads. Whatever
@@ -18,6 +21,13 @@ import { recordExecutiveAuditEvent } from "@/lib/executive/audit";
  * outlives the request — see `agent-errors.ts`.
  */
 const SUBJECT = "Interview-plan generation";
+
+/**
+ * The refusal sentence (095: D5) — lands in generation_error via the
+ * HUMAN half and is rendered verbatim with the Retry CTA.
+ */
+const EXECINTEL_UNAVAILABLE_SENTENCE =
+  "The Executive Intelligence Agent could not run — an operator has suspended it or its credentials are absent. Retry when it is restored.";
 
 export const INTERVIEW_ARCHITECT_MODEL = "claude-sonnet-4-6";
 
@@ -83,10 +93,48 @@ export async function generateAndStoreInterviewPlan(
   planRowId: string,
   searchId: string,
   candidateId: string,
-  actorId: string | null
+  actorId: string | null,
+  trigger: ExecutiveTrigger = "regenerate"
 ): Promise<void> {
-  const supabase = await createReadOnlySupabaseClient();
+  // The seam (095): the nineteenth principal's third judgment, under
+  // its own session. The split stands as built; failure bookkeeping
+  // stays HUMAN (090 doctrine).
+  const session = await signInExecutiveIntelAgent();
+  if (!session.ok) {
+    console.error(
+      `[generate-interview-plan] The Executive Intelligence Agent could ` +
+        `not run — an operator has suspended it or its credentials are ` +
+        `absent. The placeholder is marked. (${session.reason})`
+    );
+    await markFailed(planRowId, EXECINTEL_UNAVAILABLE_SENTENCE);
+    return;
+  }
 
+  try {
+    await generatePlanUnderAgentSession(
+      session.client,
+      session.userId,
+      planRowId,
+      searchId,
+      candidateId,
+      actorId,
+      trigger
+    );
+  } finally {
+    // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
+    await session.signOut();
+  }
+}
+
+async function generatePlanUnderAgentSession(
+  supabase: Awaited<ReturnType<typeof createReadOnlySupabaseClient>>,
+  agentId: string,
+  planRowId: string,
+  searchId: string,
+  candidateId: string,
+  actorId: string | null,
+  trigger: ExecutiveTrigger
+): Promise<void> {
   const { data: search, error: searchError } = await supabase
     .from("executive_searches")
     .select(
@@ -205,13 +253,20 @@ export async function generateAndStoreInterviewPlan(
     2
   );
 
+  // Skills ride the AGENT's session (095: D6 — the §50 doctrine).
+  const system = await applySkillsToPrompt(INTERVIEW_ARCHITECT_SYSTEM_PROMPT, {
+    projectId: null,
+    organizationId: search.organization_id,
+    client: supabase,
+  });
+
   let content: InterviewPlanContent;
   try {
     const anthropic = getAnthropic();
     const response = await anthropic.messages.create({
       model: INTERVIEW_ARCHITECT_MODEL,
       max_tokens: 8000,
-      system: INTERVIEW_ARCHITECT_SYSTEM_PROMPT,
+      system,
       messages: [{ role: "user", content: userPrompt }],
       output_config: {
         format: { type: "json_schema", schema: INTERVIEW_PLAN_SCHEMA },
@@ -226,7 +281,10 @@ export async function generateAndStoreInterviewPlan(
   } catch (err) {
     const msg = err instanceof Error ? err.message : "AI call failed.";
     await markFailed(planRowId, agentErrorMessage(err, SUBJECT));
-    await recordExecutiveAuditEvent(supabase, {
+    // The FAILED event is the human half's bookkeeping (090 doctrine) —
+    // the cookie session, the clicker's id; 095's actor pin would
+    // refuse the agent signing anyone else's name.
+    await recordExecutiveAuditEvent(await createReadOnlySupabaseClient(), {
       organizationId: search.organization_id,
       searchId,
       planId: planRowId,
@@ -269,11 +327,13 @@ export async function generateAndStoreInterviewPlan(
     const uncovered = finalContent.competency_coverage.filter(
       (c) => c.covered_by.length === 0
     ).length;
+    // The generated event wears the AGENT's id — the judgment signs its
+    // own name in the executive ledger (095's actor pin enforces it).
     await recordExecutiveAuditEvent(supabase, {
       organizationId: search.organization_id,
       searchId,
       planId: planRowId,
-      actorId,
+      actorId: agentId,
       eventType: "interview_plan_generated",
       detail: {
         candidate_id: candidateId,
@@ -283,6 +343,31 @@ export async function generateAndStoreInterviewPlan(
         uncovered_competencies: uncovered,
       },
     });
+
+    // The main trail (095: D4): trigger, version, a stages count —
+    // never the plan's text. Best-effort after the landing.
+    const { data: planRow } = await supabase
+      .from("executive_interview_plans")
+      .select("version")
+      .eq("id", planRowId)
+      .maybeSingle<{ version: number }>();
+    const { error: eventErr } = await supabase.rpc("record_agent_event", {
+      p_event_type: "interview_plan_generated",
+      p_candidate_id: candidateId,
+      p_detail: {
+        agent_kind: "execintel",
+        trigger,
+        version: planRow?.version ?? null,
+        stages: finalContent.stages.length,
+        uncovered_competencies: uncovered,
+      },
+    });
+    if (eventErr) {
+      console.error(
+        "[generate-interview-plan] failed to record the trail event",
+        eventErr
+      );
+    }
   } catch (err) {
     await markFailed(planRowId, agentErrorMessage(err, SUBJECT));
     cleared = true;

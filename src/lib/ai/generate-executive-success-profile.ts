@@ -10,6 +10,8 @@ import {
   type SuccessProfileContent,
 } from "./executive-role-architect-agent";
 import { recordExecutiveAuditEvent } from "@/lib/executive/audit";
+import { signInExecutiveIntelAgent } from "@/lib/agents/session";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import type {
   ExecutiveCompetencyRow,
   ExecutiveSearchRow,
@@ -43,10 +45,31 @@ async function createReadOnlySupabaseClient() {
   );
 }
 
+/** How the run was asked for — the trail names it (095: D4). */
+export type ExecutiveTrigger = "initial" | "regenerate";
+
+/**
+ * The refusal sentence (095: D5) — lands in generation_error via the
+ * HUMAN half and is rendered verbatim with the Retry CTA.
+ */
+const EXECINTEL_UNAVAILABLE_SENTENCE =
+  "The Executive Intelligence Agent could not run — an operator has suspended it or its credentials are absent. Retry when it is restored.";
+
 /**
  * Generate the Executive Success Profile for a search and persist it onto an
  * existing placeholder row in role_success_profiles (the caller inserts the
  * placeholder via allocate_and_insert_success_profile and passes its id).
+ *
+ * The seam (095): the EXECUTIVE INTELLIGENCE AGENT's session, signed in
+ * per run — the nineteenth principal's second judgment. The split stands
+ * as built: the human allocated the versioned draft placeholder; the
+ * agent reads the search and the competency library it lawfully sees,
+ * judges with skills riding ITS session, and lands content on the draft
+ * through 095's status-pinned UPDATE (it can neither touch an approved
+ * profile nor approve one). The generated audit event wears the AGENT's
+ * id — 095's actor pin would refuse anything else. FAILURE BOOKKEEPING
+ * STAYS HUMAN (the 090 doctrine): markGenerationFailed and the failed
+ * audit event keep the recruiter's cookie session.
  *
  * Terminal-state discipline mirrors generate-job-spec.ts: every failure path
  * clears is_generating and writes generation_error so the polling UI always
@@ -55,10 +78,45 @@ async function createReadOnlySupabaseClient() {
 export async function generateAndStoreSuccessProfile(
   profileRowId: string,
   searchId: string,
-  actorId: string | null
+  actorId: string | null,
+  trigger: ExecutiveTrigger = "regenerate"
 ): Promise<void> {
-  const supabase = await createReadOnlySupabaseClient();
+  const session = await signInExecutiveIntelAgent();
+  if (!session.ok) {
+    console.error(
+      `[generate-success-profile] The Executive Intelligence Agent could ` +
+        `not run — an operator has suspended it or its credentials are ` +
+        `absent. The placeholder is marked. (${session.reason})`
+    );
+    // The marker is the HUMAN's bookkeeping — the agent has no session
+    // to sign with, which is the tell (090: D2).
+    await markGenerationFailed(profileRowId, EXECINTEL_UNAVAILABLE_SENTENCE);
+    return;
+  }
 
+  try {
+    await generateUnderAgentSession(
+      session.client,
+      session.userId,
+      profileRowId,
+      searchId,
+      actorId,
+      trigger
+    );
+  } finally {
+    // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
+    await session.signOut();
+  }
+}
+
+async function generateUnderAgentSession(
+  supabase: Awaited<ReturnType<typeof createReadOnlySupabaseClient>>,
+  agentId: string,
+  profileRowId: string,
+  searchId: string,
+  actorId: string | null,
+  trigger: ExecutiveTrigger
+): Promise<void> {
   const { data: search, error: fetchError } = await supabase
     .from("executive_searches")
     .select("*")
@@ -131,13 +189,21 @@ export async function generateAndStoreSuccessProfile(
     2
   );
 
+  // Skills ride the AGENT's session (095: D6 — the §50 doctrine). No
+  // project scope exists for an executive search; org-wide skills apply.
+  const system = await applySkillsToPrompt(ROLE_ARCHITECT_SYSTEM_PROMPT, {
+    projectId: null,
+    organizationId: search.organization_id,
+    client: supabase,
+  });
+
   let content: SuccessProfileContent;
   try {
     const anthropic = getAnthropic();
     const response = await anthropic.messages.create({
       model: ROLE_ARCHITECT_MODEL,
       max_tokens: 8000,
-      system: ROLE_ARCHITECT_SYSTEM_PROMPT,
+      system,
       messages: [{ role: "user", content: userPrompt }],
       output_config: {
         format: {
@@ -161,7 +227,10 @@ export async function generateAndStoreSuccessProfile(
     // the column a recruiter sees gets the mapped one.
     const message = err instanceof Error ? err.message : "AI call failed.";
     await markGenerationFailed(profileRowId, agentErrorMessage(err, SUBJECT));
-    await recordExecutiveAuditEvent(supabase, {
+    // The FAILED event is the human half's bookkeeping (090 doctrine) —
+    // and 095's actor pin would refuse the agent signing anyone else's
+    // name, so this insert rides the cookie session with the clicker's id.
+    await recordExecutiveAuditEvent(await createReadOnlySupabaseClient(), {
       organizationId: search.organization_id,
       searchId,
       profileId: profileRowId,
@@ -201,11 +270,13 @@ export async function generateAndStoreSuccessProfile(
     }
     cleared = true;
 
+    // The generated event wears the AGENT's id — the judgment signs its
+    // own name in the executive ledger (095's actor pin enforces it).
     await recordExecutiveAuditEvent(supabase, {
       organizationId: search.organization_id,
       searchId,
       profileId: profileRowId,
-      actorId,
+      actorId: agentId,
       eventType: "profile_generated",
       detail: {
         model_version: ROLE_ARCHITECT_MODEL,
@@ -213,6 +284,29 @@ export async function generateAndStoreSuccessProfile(
           filteredContent.recommended_competency_weights.length,
       },
     });
+
+    // The main trail (095: D4): trigger, version, a competency count —
+    // never the profile's text. Best-effort after the landing.
+    const { data: profRow } = await supabase
+      .from("role_success_profiles")
+      .select("version")
+      .eq("id", profileRowId)
+      .maybeSingle<{ version: number }>();
+    const { error: eventErr } = await supabase.rpc("record_agent_event", {
+      p_event_type: "success_profile_generated",
+      p_detail: {
+        agent_kind: "execintel",
+        trigger,
+        version: profRow?.version ?? null,
+        competencies: filteredContent.recommended_competency_weights.length,
+      },
+    });
+    if (eventErr) {
+      console.error(
+        "[generate-success-profile] failed to record the trail event",
+        eventErr
+      );
+    }
   } catch (err) {
     await markGenerationFailed(profileRowId, agentErrorMessage(err, SUBJECT));
     cleared = true;
