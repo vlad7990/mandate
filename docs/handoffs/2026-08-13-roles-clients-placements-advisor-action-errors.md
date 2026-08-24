@@ -6367,3 +6367,104 @@ of the record. The onboarding conversion (Phase 0 below, D1–D8
 drafted in `NEXT-onboarding-agent.md`) closes the first of the
 seven; the remaining six queue by usage, founder-timed, and the
 "skills gap list" reopens with exactly six entries.
+
+---
+
+## 74. The calibration signs its own name — the fifteenth principal, built, proven live, awaiting verdict sign-off — 2026-08-24
+
+The onboarding surface conversion (plan in `NEXT-onboarding-agent.md`,
+D1–D8 confirmed 2026-08-24) — the FIRST conversion outside the
+fourteen-agent map, and the fourth zero-new-grant principal. One
+migration (**next is 092**):
+
+- **091 — vocabulary only**: `calibration_derived` into the CHECK
+  (rebuilt from the LIVE pg_constraint list, 55 values) and the
+  record_agent_event allowlist at SEVENTEEN. 074's role-wide pool
+  covers the whole judgment: projects S+U, calibration_history
+  INSERT, skills S. **`agent_calibration_invariants.sql`** — 5
+  invariants, clean pass: the SPLIT lands honestly (the recruiter's
+  answers and the sibling calibration keys survive the agent's
+  merge); THE SNAPSHOT PIN (changed_by = the agent — derived weights
+  attributable forever, the §30 interpreter precedent) plus the
+  event's name-and-label pin; history intact at seventeen by COUNT;
+  the negative matrix unchanged (clients zero, resolve_client births
+  nothing, both trail doors refuse a recruiter, unknown type refused);
+  kill switches independent at FIFTEEN. The control run TRIMMED
+  `calibration_derived` from the allowlist ("the type is new, nobody
+  records it yet") — the seventeen-probe loop aborted at
+  INVARIANT-FAIL (3), drift and harness in one transaction, the
+  abort rolling the trim back; allowlist and CHECK verified intact
+  after.
+
+**The seam (`ce54f3c`).** The split (D2): `submitOnboarding` stores
+the sanitised answers under the RECRUITER's own session FIRST —
+their answers are their act, persisted before the agent is asked to
+think — then `runCalibrationDerivationAndPersist` signs the
+fifteenth principal in, reads the row it lawfully sees, judges with
+the org's skills in the prompt (D6 — the FIRST of §73's seven
+uninjected seams closed), merge-writes ONLY dimension_weights +
+weights_rationale, snapshots history under its own name, records
+`calibration_derived` with the trigger and COUNTS (never text), and
+signs out persisting nothing. Live account:
+`vbreygin+calibration@gmail.com`, id `1df9d3b6-…`, Mandate HQ, §30
+recipe; `AGENT_CALIBRATION_*` in Vercel production and `.env.local`.
+**New durable baseline: 16 users, 46 events** (the fifteenth's
+creation trail).
+
+### Driven live on production (deploy `mandate-3i7azj55m` = `ce54f3c`)
+
+Scratch world 0e5: an is_founder operator, an intake-shaped mandate
+("Director of Manufacturing Systems", fictional Kestrel Foundry),
+the REAL five-step onboarding wizard. The acts:
+
+1. **Submit the wizard** → landed in ~20s: five dimension weights on
+   the row, the sibling role_title untouched, the answers stored;
+   the snapshot's **changed_by = "Calibration Agent"**; ONE
+   `calibration_derived` event under the agent's name, trigger
+   `initial`, counts 3/1/1/3; a text-probe of the whole trail found
+   NEITHER the answers' text nor the stakeholder's name; zero agent
+   sessions after.
+2. **Suspended from /ops → resubmit** → the D5 sentence VERBATIM in
+   the toast ("…Your answers are saved; re-run calibration when it
+   is restored."), the answers surviving, no second event, no
+   snapshot, nothing destroyed.
+3. **Restored → steering probe → resubmit** → the rerun landed in
+   ~20s with `weights_rationale` beginning **"STEERED-0E5:"** — a
+   recruiter-authored skill provably steering the fifteenth
+   principal's judgment on its first rerun — the second event
+   carrying trigger `rerun`, the second snapshot under the agent.
+
+**Teardown to baseline exactly on the first pass** — 8 events swept
+(two calibration_derived, the suspend/restore pair, the flip's
+four), the mandate, its two snapshots, the probe skill, the
+operator's chain. Final: 46 events / 16 users / 15 agents /
+2 projects / 2 clients / 5 skills / 0 history rows / the founder's
+session.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The definition of done** — the judgment that sets the scoring
+  model every candidate is measured by no longer runs on ambient
+  human identity: it signs its own name in the model blob's history,
+  wears its own kill switch, is honest in refusal with the
+  recruiter's answers safe, and reads the org's skills.
+- **The role-spec surface is the nearest sibling** — the same file
+  family, near-mechanical after this shape; queued by usage on the
+  founder's word.
+- **§73's list shrinks to SIX** — the remaining uninjected seams
+  (three executive generators, shortlist report, candidate search,
+  sourcing search), founder-timed.
+- **Long-action honesty — nothing new to defer**: ~20s foreground
+  runs, inside the proven range, zero drops.
+
+Deploy `mandate-3i7azj55m` live; migration 091 applied via MCP and
+checked in; tsc / vitest 820 / eslint / build green. Drive prefix
+0e5 spent; next is 0e6. The completion declaration waits on the
+verdicts above and the founder's written confirmation;
+`NEXT-onboarding-agent.md` is deleted only after it.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, and the "Capital Markets Investment Bank"
+client rename (editorial).
