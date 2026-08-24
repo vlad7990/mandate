@@ -6612,3 +6612,151 @@ from this document and memory. Durable state at handoff: 17 users /
 49 events / 16 agents / 2 projects / 2 clients / 5 skills / 1
 job_spec; deploys through `mandate-kooae68g0`; main at the §77
 commit; tsc / vitest 820 / eslint / build green.
+
+---
+
+## 78. The shortlist report signs its own name — the seventeenth principal, built, proven live, awaiting verdict sign-off — 2026-08-24
+
+The shortlist conversion (plan in `NEXT-shortlist-agent.md`, D1–D8
+confirmed 2026-08-24 with D3's post-submit refusal included) — the
+SEVENTEENTH principal, the read-shaped conversion, and the second
+grant pinned on an EDITORIAL state. One migration (**next is 094**):
+
+- **093 — two policies, one door pinned, and the vocabulary.**
+  `shortlists_agent_select` (the slate row IS the model input, and
+  per the 082 doctrine an UPDATE without SELECT is INERT) and
+  `shortlists_agent_update` — UPDATE for is_agent() + org **with
+  `submitted_at IS NULL` in BOTH USING and WITH CHECK**: the agent
+  can neither touch a SUBMITTED slate nor submit one — what was
+  sent never silently changes, and submission stays the recruiter's
+  editorial act forever. NO INSERT (the row's allocation is the
+  human's act in ensureShortlist), NO DELETE.
+  `shortlist_report_generated` into the CHECK (rebuilt from the
+  live pg_constraint list, 57 → 58) and the allowlist at NINETEEN.
+  **`agent_shortlist_invariants.sql`** — 5 invariants, clean pass:
+  the judgment lands with the human's composition surviving
+  (candidate_ids, narrative, slate_size, created_by, submitted_at
+  still NULL); attribution pins; history at nineteen by COUNT; THE
+  SUBMITTED PIN both directions plus agent INSERT refused and the
+  negative matrix; kill switches independent at SEVENTEEN. The
+  control run dropped the WITH CHECK conjunct ("USING already
+  refuses submitted rows" — 092's exact drift, one table over) —
+  the agent SUBMITTED a slate and the harness aborted at
+  INVARIANT-FAIL (4), self-rolling-back. Both pins verified intact
+  live after.
+
+**The seam (`4a6f6d4`).** The split stood as composed — the slate,
+the narrative, the slate size, and Submit stay the recruiter's acts
+(persisted before the agent is asked to think; the builder even
+auto-saves a dirty narrative first), and the `clients:share` gate
+stays in the action (the §57 precedent). The judgment moved whole:
+`runShortlistReportAndPersist` signs the seventeenth principal in
+per run, reads the slate row and its context under ITS OWN session
+(093's SELECT plus the pool's candidates / candidate_scores /
+projects reads), judges with skills riding its session (D6 — the
+SECOND of §73's six uninjected seams closed; the list is FIVE),
+merge-writes ONLY report_content through the pinned door — with a
+`.select()` making a zero-row landing LOUD, so a submit racing past
+the read reports "submitted", never success — records
+`shortlist_report_generated` with trigger/slate/scenarios COUNTS,
+and signs out persisting nothing. The seam also answers the pin
+BEFORE the spend: a submitted slate refuses honestly without
+burning a model call. D5 is the foreground sentence through the
+existing toast; there is no row-marking bookkeeping because this
+surface has none to mark and needs none. Live account:
+`vbreygin+shortlist@gmail.com`, id `99ae9e2c-…`, Mandate HQ, §30
+recipe with a sign-in smoke test (session revoked after);
+`AGENT_SHORTLIST_*` in Vercel production and `.env.local`. **New
+durable baseline: 18 users, 52 events, 17 agents** (the
+seventeenth's creation trail is THREE member events — org/role/
+status; the §65 "four" includes the founder flip only when
+is_founder changes, which an agent's flip never touches).
+
+### Driven live on production (deploy `mandate-pzpl3rbut` = `4a6f6d4`)
+
+Scratch world 0e7 inside Mandate HQ: an is_founder operator (Odile
+Fairbrass), a seeded mandate ("Head of Market Surveillance",
+fictional Aldgate Clearing Partners) with three fully-shaped ranked
+candidates, plus a second mandate holding a fresh draft shortlist
+for the pin probe. The acts, all through the real UI:
+
+1. **Compose + Generate** → slate 02/03 through the pool buttons,
+   narrative typed, Generate clicked → the report landed (~20s)
+   with ONE event under "Shortlist Agent", trigger `initial`,
+   detail slate 2 / scenarios 4 — counts, never names; zero agent
+   sessions after.
+2. **Regenerate** → the second event, trigger `regenerate`.
+3. **Suspended from /ops by the operator's click → Regenerate** →
+   the D5 sentence VERBATIM in the foreground toast ("The Shortlist
+   Agent could not run — an operator has suspended it or its
+   credentials are absent. Your slate and narrative are saved;
+   generate the report when it is restored."), the prior report
+   still rendering below it, no third event, nothing destroyed,
+   refusal in ~4s with no model spend.
+4. **Restored → steering probe** → a nonce-triggered search_skill
+   planted, the nonce appended to the narrative, Regenerate → the
+   executive summary begins **"STEERED-0E7:"** — recruiter-authored
+   skills provably riding the seventeenth principal's own session.
+5. **The recruiter finalized the submission** (their toast, their
+   `shortlist_published` event, candidates advanced) — then the
+   LIVE PIN PROBE (the agent's real identity against the production
+   rows, self-rolled-back): its UPDATE on the SUBMITTED slate
+   touched ZERO rows (USING), its attempt to stamp `submitted_at`
+   on the fresh draft was REFUSED by name (WITH CHECK), and its
+   INSERT was refused — all three faces of 093 answering on
+   production rows. A text-probe of the whole trail found NO
+   candidate name, NO steer token, NO report text.
+
+**A finding for the record — the transport-drop mask.** The local
+network dropped TWICE mid-run (ERR_NETWORK_CHANGED); both times the
+client toast said "Failed to fetch" while the server run FINISHED
+HONESTLY — report landed, event recorded, session revoked. The §38
+evidence class (f54f1e7) extends to this surface: on a foreground
+seam with no poller, a transport TypeError can dress a LANDED
+report as a failure until reload. Recorded as evidence, not a
+defect of this slice — the server side never lied, and the drops
+were the operator's wifi, not the product.
+
+**Teardown to baseline exactly on the first pass** — 10 events
+swept by VALUE keys (the operator's four creation events, three
+report events, the publish, and the agent's suspend/restore pair
+keyed `from='active'/'suspended'` — which cannot collide with the
+durable `from='pending'` creation trail; the census also recorded
+that member events key by the member's NAME, not id). Final: 52
+events / 18 users / 17 agents / 2 projects / 2 clients / 5 skills /
+1 job_spec / 0 shortlists / zero scratch sessions.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The definition of done** — the judgment that writes the
+  client-facing submission narrative no longer runs on ambient
+  human identity: it signs its own name in the trail, wears its own
+  kill switch (proven live in ~4s, no model spend on refusal), is
+  honest in refusal with the slate, narrative, and prior report
+  untouched, and reads the org's skills under its own session.
+- **The submission boundary is a database pin, proven live in both
+  directions on production rows** — and the confirmed D3 refusal
+  held: a submitted slate's report can no longer be regenerated by
+  anyone's agent; the submitted report is the record. The seam
+  refuses BEFORE the model spend, and detects the race after it.
+- **§73's list shrinks to FIVE** — the remaining uninjected seams
+  (three executive generators, candidate search, sourcing search),
+  founder-timed. The read-shaped copilot conversion stays queued
+  behind this slice.
+- **Long-action honesty — evidence extended, nothing new to
+  defer**: ~20s foreground runs inside the proven range; the two
+  transport drops observed were local-network, with the server
+  completing honestly both times; the "Failed to fetch masks a
+  landed report until reload" note joins the §38 record.
+
+Deploy `mandate-pzpl3rbut` live; migration 093 applied via MCP and
+checked in; tsc / vitest 820 / eslint / build green. Drive prefix
+0e7 spent; next is 0e8. The completion declaration waits on the
+verdicts above and the founder's written confirmation;
+`NEXT-shortlist-agent.md` is deleted only after it.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, and the "Capital Markets Investment Bank"
+client rename (editorial).
