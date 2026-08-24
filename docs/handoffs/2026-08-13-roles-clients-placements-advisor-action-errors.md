@@ -7250,3 +7250,33 @@ Stripe (parked to product-development's end), the one orphaned
 client rename (editorial), the stale-poll refresh on the long
 executive surfaces (§82), and the Skills Studio help-text line on
 field-named steering skills (§82).
+
+---
+
+## 85. Candidate-search verdicts confirmed — the twentieth principal is complete; §73's list is EMPTY — 2026-08-24
+
+The founder confirmed all four §84 verdicts as drafted: the pool
+judgment signs its own name behind its own kill switch, proven
+refusing honestly with nothing destroyed and steering live on
+production; the sourcing judgment stands seam-bound with its
+eight-test vitest contract as the record plainly states, its live
+drive deferred to the slice that ships its connector surface; §73's
+uninjected-seam list is EMPTY — seven seams, six slices, principals
+fifteen through twenty, the correction and the closure both in the
+record; and long-action honesty stands with nothing new deferred.
+
+**The candidate-search conversion is complete.**
+`NEXT-search-agents.md` deleted per its own instruction. Next
+migration is **097**. TWENTY principals live — every AI judgment in
+the product authenticates as a principal, reads recruiter-authored
+skills, and signs its own name. The agents-as-principals programme's
+conversion queue is EMPTY.
+
+Ahead, on the founder's word: the pre-launch checklist (CLAUDE.md),
+and the founder-owned items — the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the orphaned 331-byte
+storage object, the "Capital Markets Investment Bank" rename
+(editorial), the stale-poll refresh on the long executive surfaces
+(§82), and the Skills Studio help-text line on field-named steering
+skills (§82).
