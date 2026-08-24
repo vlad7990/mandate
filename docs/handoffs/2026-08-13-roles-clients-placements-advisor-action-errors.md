@@ -7077,3 +7077,27 @@ leaked-password protection (Pro-gated), the Turnstile keys (§61),
 Stripe (parked to product-development's end), the one orphaned
 331-byte storage object, and the "Capital Markets Investment Bank"
 client rename (editorial).
+
+---
+
+## 83. Executive-intelligence verdicts confirmed — the nineteenth principal is complete — 2026-08-24
+
+The founder confirmed all five §82 verdicts as drafted: the three
+judgments that define an executive search sign one principal's name
+in both ledgers behind one kill switch, with the editorial boundary
+proven in five faces on production rows; the approval boundary
+stands as defense-in-depth by construction, each layer proven
+without the other; §73's uninjected-seam list shrinks to TWO
+(candidate search, sourcing search), founder-timed; the
+long-action evidence class extends to 2.5–4.5-minute runs with the
+stale-poll refresh joining the founder-timed awareness list; and
+the skill-authoring guidance (name the target field under strict
+structured output) stands recorded for Skills Studio's help text,
+founder-timed.
+
+**The executive-generator cluster conversion is complete.**
+`NEXT-execintel-agent.md` deleted per its own instruction. Next
+migration is **096**. NINETEEN principals live. The remaining
+queue, by usage on the founder's word: §73's last two seams —
+candidate search and sourcing search — and behind them the
+pre-launch checklist.
