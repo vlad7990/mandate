@@ -6344,3 +6344,26 @@ research; and long-action honesty stands with the evidence extended
 counter unchanged at **091**. The founder's same message picked the
 next slice: the onboarding surface conversion — Phase 0 to run,
 D1–D8 to draft, the build gated on written confirmation.
+
+---
+
+## 73. A correction to §69 — the "every model call" claim was overstated — 2026-08-24
+
+§69 (and §70's confirmation of it) declared the skills gap list
+empty: "every model call in the product reads recruiter-authored
+skills." The onboarding conversion's Phase 0 audit proved that claim
+WRONG. The true scope was "every AGENT-PRINCIPAL seam": seven seams
+still call the model with no skills injection —
+`derive-calibration` (the onboarding surface's own judgment, running
+under the recruiter's cookie session), the three executive-
+intelligence generators (`generate-executive-success-profile`,
+`generate-executive-interview-plan`, `run-executive-company-context`),
+`generate-shortlist-report`, `run-candidate-search`, and
+`run-sourcing-search`.
+
+The claim is corrected here rather than papered over: the §-record
+said something false for three sections and the correction is part
+of the record. The onboarding conversion (Phase 0 below, D1–D8
+drafted in `NEXT-onboarding-agent.md`) closes the first of the
+seven; the remaining six queue by usage, founder-timed, and the
+"skills gap list" reopens with exactly six entries.
