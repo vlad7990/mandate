@@ -5693,3 +5693,44 @@ exposed Supabase access token, leaked-password protection
 Turnstile keys (new, this slice), the one orphaned 331-byte storage
 object from §28's diagnosis, the stuck-mandate retry gap (§55), and
 the intake and digest skills gaps.
+
+---
+
+## 62. Rate-limiting verdicts confirmed — the slice is complete — 2026-08-24
+
+The founder confirmed all five §61 verdicts as drafted: the Turnstile
+keys stay the slice's one open founder item (the wiring live and
+honestly absent until they exist — the secret added normally, the
+site key `--no-sensitive`, no deploy); Tier 3 per-user ceilings stay
+deferred behind first-client usage data; the Vercel WAF stands
+recorded as later belt-and-braces, complementary to a limiter that
+can tell money from identity; the dead-surface defect class enters
+the record with its second data point (§57's schema 400, §61's
+toast-less marketing layout — smoke-run rarely-driven surfaces,
+because Sentry cannot see a toast that nothing throws); and the demo
+wrapper retires in 089 together with the orphaned 061 table, the
+route moving to the shared helper in the same change.
+
+The definition of done is met. Every unauthenticated door the
+product has now knocks against a counter whose caps are data, whose
+windows are keys, and whose only API is one SECURITY DEFINER
+function behind zero-policy RLS; no raw IP, email, or token ever
+reaches a bucket. The endpoint the §30 verdict named a programme ago
+— anonymous strangers triggering paid interpreter runs — refuses at
+its ceiling with an honest sentence and an honest Retry-After,
+proven live with real submissions through the real token door. And
+the slice's one genuinely novel decision — money fails closed,
+identity fails open — is not a design note but observed production
+behaviour: during a real forty-second limiter outage the billed door
+answered 429 spending nothing while sign-in passed through to the
+real credentials error, both fail paths captured under named scopes.
+
+**The rate-limiting slice is complete.** `NEXT-rate-limiting.md`
+deleted per its own instruction. Next migration is **089**.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection
+(Pro-gated), the remaining deferred build list (Resend → Stripe), the
+Turnstile keys (§61), the one orphaned 331-byte storage object from
+§28's diagnosis, the stuck-mandate retry gap (§55), and the intake
+and digest skills gaps.
