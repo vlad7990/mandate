@@ -5872,3 +5872,143 @@ leaked-password protection (Pro-gated), the Turnstile keys (§61),
 Stripe (parked to product-development's end), the one orphaned
 331-byte storage object, the stuck-mandate retry gap (§55), and the
 intake and digest skills gaps.
+
+---
+
+## 65. The stuck mandate learns to say so — retry surface built, proven live, and the gap's living victim found — 2026-08-24
+
+First slice of product development (the founder's queue, §64's
+sequencing standing). Plan in `NEXT-intake-retry.md`, Phase 0 run
+2026-08-24, D1–D8 confirmed in writing the same day. One migration
+(**next is 091**):
+
+- **090 — one nullable column, no policies, no grants.**
+  `projects.intake_error text` — NULL while analyzing and after
+  success; a sentence means the page owes the recruiter honesty.
+  Every write rides existing UPDATE policies. The trail needed NO
+  migration: `intake_analyzed` was already in the CHECK and
+  `record_agent_event` passes detail through — `trigger: "retry"`
+  is vocabulary, not schema.
+
+**What landed (`c3c1ef9`).** The job-spec failure arc, applied to
+the mandate row. Three writers, all honest: the seam's human half
+marks `failed` and `agent_unavailable` under the recruiter's cookie
+session (the markGenerationFailed precedent — the agent's writes
+stay judgment-only, and the refused case HAS no agent session to
+sign with, which is the tell that marking is human bookkeeping);
+the poller's window now MARKS instead of silently abandoning
+(`markIntakeTimedOut`, guarded on "analysis still absent AND no
+marker" so a landed run is never clobbered); and the agent's
+success UPDATE clears the marker atomically with the title landing,
+so a slow run arriving after a timeout marker leaves no stale
+sentence. The retry (`retryIntakeAnalysisAction`) is the
+recruiter's act through creation's own gate (mandates:write), with
+the MARKER AS THE LATCH: retry is only offered from the
+marked-failed state, and the guarded UPDATE that clears it decides
+who fires the paid call — double-clicks and concurrent tabs
+coalesce without a new index. The kill switch answers the CLICK: a
+fast sign-in pre-flight (~the seam's own 400ms refusal) turns a
+suspended agent into a thrown D5 sentence the button toasts —
+the retry click has a reader present, unlike the fire-and-forget
+create — at the deliberate cost of one extra GoTrue mint+revoke
+per retry click. Surfaces: the project page swaps the eternal
+skeleton for an honest failed block (the sentence verbatim, the
+brief intact, Retry capability-gated; title, breadcrumb, company
+line and agent-stack meta all stop echoing "Analyzing…"), and the
+Mandates list renders a marked row as "Analysis failed — open to
+retry". Sentences are authored constants in `lib/ai/intake-failure.ts`
+(no server-only, so the harness reaches them), pinned in BOTH
+directions per §59's doctrine: authored text passes
+`safeFailureMessage` untouched, the §57-shaped provider body is
+replaced. The poller re-arms its window when the effect re-arms —
+the component survives router.refresh(), and without the reset a
+retry's fresh run would have been timed out instantly by the old
+clock.
+
+### Driven live on production (deploy `mandate-lbb8vlj5l` = `c3c1ef9`)
+
+Scratch world 0e0 inside Mandate HQ: an is_founder operator
+(§30/§6 recipe), the Intake Agent suspended from /ops by the
+operator's click. The acts:
+
+1. **Open a mandate under the suspended agent** → the page landed
+   on the placeholder and turned HONEST in ~4s: h1 "Intake
+   analysis failed", company "—", the brief intact, the refusal
+   sentence VERBATIM in the alert, Retry present. The row: marker
+   set, zero events, zero clients, zero agent sessions (D5 held).
+2. **Retry while suspended** → the D5 sentence in a TOAST at click
+   time (the pre-flight refusing), the marker untouched, nothing
+   else moved.
+3. **Restore → retry** → "Retry started" toast, landed in ~22s:
+   title "VP of Data Platforms", client "Nerivane Systems" born
+   under the OPERATOR and linked, marker cleared by the success
+   UPDATE, ONE `intake_analyzed` event under "Intake Agent" with
+   **trigger "retry"**, input_chars 105, zero agent sessions after.
+   One judgment, two signatures — §55's split, now with the retry
+   named in the trail.
+4. **The timeout arc** — an SQL-crafted placeholder with no run in
+   flight: the poller waited its window out and MARKED it ("Intake
+   analysis timed out. Please retry."), the honest block rendered,
+   and the Mandates list showed "Analysis failed — open to retry"
+   over "—" while the analyzed row beside it showed its real title.
+
+**Teardown to baseline exactly** — with one new trap recorded: the
+§30 account flip's single UPDATE fires FOUR member-change trigger
+events (org, role, status, founder), actor NULL, member named in
+detail — the suspend/restore two-event rule generalises to the
+creation flip, sweep on `detail->>'member'`. Also reconfirmed: a
+data-modifying CTE cannot see a same-statement trigger's insert
+(the §30 flip must be its own statement), and counts read inside a
+deleting statement read the pre-delete snapshot — verify with a
+fresh statement. Final state: 42 events, 15/15 users, 2 projects,
+1 client, 1 report, 0 marked rows, the founder's session and
+5-token chain the only survivors.
+
+### The drive's real find: the gap's living victim
+
+The Mandates list showed a THIRD "Analyzing…" row that was nobody's
+scratch: **`2fc2bad8-…`, the founder's own mandate, opened
+2026-08-12** — "Head of Prime Brokerage IT in Capital Markets
+Investment Banking" — stuck at the placeholder for twelve days,
+since before the intake agent conversion. Phase 0's D8 claim ("the
+durable baseline carries no stuck mandate") was WRONG; the drive
+corrected it. The row was left UNTOUCHED — it is the founder's
+record, and the surface now handles it without backfill: opening
+its page lets the window close, the marker lands, and Retry
+appears.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The definition of done** — a failed or refused intake now says
+  so on every surface that used to lie, the retry is proven in both
+  directions live, and the trail names retries. Confirmation closes
+  the slice.
+- **The found mandate `2fc2bad8-…` is the founder's act**: open it
+  and let the surface mark it, then Retry (the brief is intact) —
+  or close it. Recommended as the slice's first real use; nothing
+  was done to it this session.
+- **The pre-flight cost stands recorded**: one GoTrue mint+revoke
+  per retry click buys the kill switch a voice at click time.
+  Cheap at this volume; revisit only if retries somehow become hot.
+- **The latch's concurrency claim is design-and-test-pinned, not
+  driven**: a single browser cannot honestly race itself; the
+  guarded-UPDATE shape is the job-spec `wasExisting` precedent and
+  the second click's `started: false` path is exercised in code
+  review terms only. Recorded, not hidden.
+- **Deferred stands**: the intake skills-injection one-liner stays
+  its own queue item (`applySkillsToPrompt`, the job-spec seam's
+  precedent); no cron sweep of stuck mandates — the poller plus
+  marker close the loop without one.
+
+Deploy `mandate-lbb8vlj5l` live on getmandate.io; migration 090
+applied via MCP and checked in; tsc / vitest **815** (3 new) /
+eslint / build green. Drive prefix 0e0 spent; next is 0e1. The
+completion declaration waits on the verdicts above and the
+founder's written confirmation; `NEXT-intake-retry.md` is deleted
+only after it.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, the stuck mandate `2fc2bad8-…` awaiting
+the founder's own retry, and the intake and digest skills gaps.

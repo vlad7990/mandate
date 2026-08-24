@@ -1,9 +1,14 @@
 # NEXT — the stuck-mandate retry surface
 
 The §55/§56 standing gap, first of the product-development queue.
-**Phase 0 complete 2026-08-24. D1–D8 DRAFTED below — the build is
-GATED on the founder's written confirmation. Nothing past Phase 0 has
-been touched.**
+**D1–D8 confirmed in writing 2026-08-24. Phases 1–4 COMPLETE the
+same day: built (`c3c1ef9`), migration 090 applied, driven live on
+production (deploy `mandate-lbb8vlj5l`, scratch world 0e0, teardown
+to baseline exact). §65 verdicts DRAFTED — the completion
+declaration and this file's deletion wait on the founder's written
+confirmation. One find for the founder: `2fc2bad8-…`, their own
+mandate from 2026-08-12, is the gap's living victim — untouched,
+retryable through the new surface.**
 
 ## The gap, as recorded
 
