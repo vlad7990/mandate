@@ -5734,3 +5734,106 @@ exposed Supabase access token, leaked-password protection
 Turnstile keys (§61), the one orphaned 331-byte storage object from
 §28's diagnosis, the stuck-mandate retry gap (§55), and the intake
 and digest skills gaps.
+
+---
+
+## 63. The channel opens — Resend built, proven live, awaiting verdict sign-off — 2026-08-24
+
+Third item of the deferred list (plan in `NEXT-resend.md`, D1–D8
+confirmed 2026-08-24). Migration **089** (§62's confirmed cleanup)
+rode along; **next is 090**. Phase 0's reframe held: the channel was
+already BUILT — client code, key, and marketplace install all
+predated the slice — and the entire blocker was DNS.
+
+### The gate, as it actually closed (three rounds, each diagnosed)
+
+1. First check: only DKIM in the zone — the SPF TXT and MX on host
+   `send` absent at Namecheap's AUTHORITATIVE server (not
+   propagation; the source answering directly). 2. Records landed on
+   the second attempt — verified by dig against the authoritative NS
+   — but Resend still 403'd: its verification state lagged the zone.
+   3. With DNS provably green and the dashboard reading Verified,
+   the 403 persisted — **the 115-day-old production API key belonged
+   to a DIFFERENT Resend account than the newly-verified domain.** A
+   fresh key from the verified account, rotated into env, opened the
+   channel on the first probe. Recorded as doctrine: a key sends
+   only from domains verified in ITS OWN account; "the dashboard
+   says verified" and "this key can send" are different facts.
+
+### What landed (`0a042e6` and the drive)
+
+- **The scheduled sweep — §58's promise kept, no migration.** The
+  cron route's documented socket filled: Mondays UTC (the schedule's
+  own clock), `?sweep=force` behind CRON_SECRET for drives. The
+  sweep signs in THE SEARCH HEALTH AGENT, enumerates active mandates
+  under the agent's OWN RLS, runs both judgments per mandate
+  sequentially (a parallel burst is a bill spike) with **trigger
+  `scheduled` — 087's reserved value, spent at last** — and sends
+  the founder allowlist one digest whose honesty rules have their
+  own 6-test harness: every mandate listed once whatever happened,
+  failures say FAILED, a suspended agent still produces a digest
+  saying so.
+- **089**: demo wrapper + orphaned 061 table dropped; `/api/demo` on
+  the shared limiter; invariants re-ran clean and gained retirement
+  pins.
+- **send.ts joined Sentry (D4)**: refused/network sends capture with
+  recipient COUNTS and status codes only — proven live the same day
+  by the slice's own 403s.
+- Both on-demand seams gained the trigger parameter (mechanical).
+
+### Driven live on production (deploy `mqtqs5pf6`)
+
+1. **First delivery in the product's history**: the waitlist ping —
+   submitted through the real form, `POST /request-access` flipping
+   from `error` to `info` in the same log that had recorded 403s all
+   day. Three founder inboxes received it.
+2. **The forced sweep**: one scratch active mandate → `{ran: true,
+   mandates: 1, digest: "sent"}`; the report row under the agent's
+   name, the suggestions blob landed (at_risk — the empty pipeline's
+   honest reading), BOTH events under "Search Health Agent" with
+   `trigger: scheduled`, zero agent sessions after.
+3. **The suspended sweep**: agent suspended → `{mandates: 0,
+   agent_refused: true, digest: "sent"}` — no judgments, no writes
+   (events and reports counts unmoved), and the SKIPPED digest still
+   delivered: the kill switch covers the scheduled face, and the
+   monitor does not go silent when its subject is down.
+4. **Rotations recorded**: RESEND_API_KEY (the cross-account fix)
+   and CRON_SECRET (needed for the drive; Vercel Cron reads the env
+   var, so rotation is free) — both in Vercel production and
+   `.env.local`.
+
+**Teardown to baseline exactly** — scratch project cascade, drive
+events, probe waitlist rows, buckets, the agent's session chain, the
+durable projects' statuses restored (paused during the drive so the
+sweep saw only scratch), and the SQL suspend/restore's two
+member_status_changed rows swept by hand; 15 users / 42 events / 1
+report, the founder's session the only survivor.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Next Monday is the sweep's first natural run** (06:00 UTC): both
+  durable mandates judged, one digest. Nothing to do; stated so it
+  is expected rather than a surprise.
+- **The invitation and portal-link surfaces** share the now-proven
+  send door and their product logic was proven in their own slices;
+  they were not re-driven end-to-end. First real use will be their
+  live proof, now observable in Sentry if it fails.
+- **The GoTrue SMTP switch** stays surfaced, founder-hand (Supabase
+  dashboard), unblocked as of today.
+- **Sentry alert routing** (§60) is now unblocked — Sentry-side
+  config, founder-timed.
+- **The two-accounts trap enters doctrine**: provider keys and
+  provider resources must be verified to live in the SAME account;
+  age of a working-looking key proves nothing.
+
+Migration 089 applied via MCP and checked in; tsc / vitest 812 /
+eslint / build green. Completion waits on the verdicts above and the
+founder's written confirmation; `NEXT-resend.md` is deleted only
+after it.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), Stripe (the deferred list's
+last item), the Turnstile keys (§61), the one orphaned 331-byte
+storage object, the stuck-mandate retry gap (§55), and the intake
+and digest skills gaps. The Resend DNS item — carried since §7 —
+comes OFF the list.

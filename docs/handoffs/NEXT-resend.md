@@ -1,7 +1,11 @@
 # NEXT — Resend: the channel opens (the deferred list's third item)
 
-Status: **Phase 0 complete — D1–D8 drafted, awaiting the founder's
-written D-confirmation. No build work past this file until then.**
+Status: **Phases 1–4 EXECUTED (2026-08-24, D1–D8 confirmed). The
+channel is OPEN — first delivery in the product's history; the
+scheduled sweep proven live in both faces (running and
+agent-suspended), events carrying 087's reserved `scheduled`
+trigger. §63 verdicts DRAFTED — awaiting the founder's written
+confirmation; this file is deleted only after it.**
 
 Third item of the deferred build list (Sentry ✓ §60 → rate limiting ✓
 §62 → **Resend** → Stripe), opened on the founder's word 2026-08-24.
