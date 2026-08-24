@@ -9,6 +9,7 @@ import {
   type AgentTileKey,
   type AgentTileState,
 } from "@/components/projects/agent-tiles";
+import { IntakeFailedBanner } from "./intake-failed-banner";
 
 /**
  * The mandate workspace — comp 08, on real data.
@@ -58,6 +59,14 @@ export type ProjectVm = {
   statusLabel: string;
   statusTone: ChipTone;
   ready: boolean;
+  /**
+   * Terminal intake failure sentence (090) — non-null only while
+   * `ready` is false. Swaps the pulsing skeleton for the honest failed
+   * block with its retry CTA.
+   */
+  intakeError: string | null;
+  /** Whether the viewer may fire the retry (mandates:write). */
+  canRetryIntake: boolean;
   calibrated: boolean;
   /**
    * The search at a glance. Every segment is computed from a row that
@@ -149,6 +158,13 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
               <h1 className="text-[22px] font-bold leading-tight tracking-tight text-on-surface sm:text-[28px]">
                 {vm.title}
               </h1>
+            ) : vm.intakeError ? (
+              /* The honest failed title (090: D6) — the row still says
+                 "Analyzing…", which stopped being true when the marker
+                 landed. */
+              <h1 className="text-[22px] font-bold leading-tight tracking-tight text-on-surface sm:text-[28px]">
+                Intake analysis failed
+              </h1>
             ) : (
               <div
                 className="h-9 w-72 animate-pulse bg-surface-container-high"
@@ -212,6 +228,14 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
           )}
         </div>
       </div>
+
+      {!vm.ready && vm.intakeError && (
+        <IntakeFailedBanner
+          projectId={vm.projectId}
+          sentence={vm.intakeError}
+          canRetry={vm.canRetryIntake}
+        />
+      )}
 
       {vm.ready && vm.modules.length > 0 && (
         <nav

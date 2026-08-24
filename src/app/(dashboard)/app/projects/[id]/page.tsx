@@ -21,6 +21,8 @@ import {
   type DimensionKey,
 } from "@/lib/ai/onboarding-analysis";
 import { computeProjectHealth } from "@/lib/metrics/health";
+import { getAccess } from "@/lib/auth/access";
+import { can } from "@/lib/auth/roles";
 import {
   HEALTH_LABELS,
   type HealthAlert,
@@ -72,6 +74,8 @@ type ProjectRow = {
   one_line_input: string;
   status: string | null;
   created_at: string | null;
+  /** Terminal intake failure sentence (090) — NULL while analyzing and after success. */
+  intake_error: string | null;
   calibration_model: Partial<CalibrationModel> | null;
   company_context:
     | (Partial<CompanyContext> & {
@@ -161,7 +165,7 @@ export default async function ProjectPage({
   const { data, error } = await supabase
     .from("projects")
     .select(
-      "id, title, company_name, client_id, one_line_input, status, created_at, calibration_model, company_context, recalibration_summary, client_psychology, health_suggestions, onboarding_responses"
+      "id, title, company_name, client_id, one_line_input, status, created_at, intake_error, calibration_model, company_context, recalibration_summary, client_psychology, health_suggestions, onboarding_responses"
     )
     .eq("id", id)
     .single();
@@ -173,6 +177,11 @@ export default async function ProjectPage({
 
   const project = data as ProjectRow;
   const ready = isAnalysisReady(project);
+  // The failed block's Retry button is gated like the create act itself
+  // (090: D6) — readers without the capability get the sentence, not
+  // the button.
+  const access = await getAccess();
+  const canRetryIntake = can(access?.role, "mandates:write");
   const calibrated = hasCalibrationWeights(project);
   const calibration = (project.calibration_model ?? {}) as Partial<CalibrationModel>;
   const company = (project.company_context ?? {}) as Partial<CompanyContext>;
@@ -298,15 +307,23 @@ export default async function ProjectPage({
   const weights = calibration.dimension_weights;
   const stakeholder = primaryStakeholder(project.onboarding_responses);
 
+  const intakeFailed = !ready && Boolean(project.intake_error);
+
   const vm: ProjectVm = {
     projectId: project.id,
-    title: project.title,
-    companyName: project.company_name,
+    // A marked row still says the literal "Analyzing…" — swap it out
+    // everywhere the vm feeds (h1 fallback, breadcrumb, company line).
+    title: intakeFailed ? "Analysis failed" : project.title,
+    companyName: intakeFailed ? "—" : project.company_name,
     clientId: project.client_id ?? null,
     oneLineInput: project.one_line_input,
     statusLabel: projectStatus,
     statusTone,
     ready,
+    // `ready` wins over a marker in a race: success clears the sentence
+    // atomically, so a ready mandate never renders a stale failure.
+    intakeError: ready ? null : project.intake_error,
+    canRetryIntake,
     calibrated,
     stages,
     agentStates: tileStates(project, spec),
@@ -314,7 +331,9 @@ export default async function ProjectPage({
     // Four agents run on this surface. The comp badges seventeen.
     agentMeta: ready
       ? `4 agents · ${calibrated ? "calibrated" : "calibration pending"}`
-      : "Live analysis in progress",
+      : intakeFailed
+        ? "Intake failed — retry to continue"
+        : "Live analysis in progress",
     modules: ready
       ? PROJECT_MODULES.map((m) => ({ href: m.href(project.id), label: m.label }))
       : [],
@@ -324,7 +343,12 @@ export default async function ProjectPage({
       { label: "Function", value: calibration.role_structure?.function ?? "—" },
     ],
     companyFields: [
-      { label: "Name", value: company.company_name ?? project.company_name },
+      {
+        label: "Name",
+        value:
+          company.company_name ??
+          (intakeFailed ? "—" : project.company_name),
+      },
       { label: "Industry", value: company.industry ?? "—" },
       { label: "Business model", value: company.business_model ?? "—" },
     ],
@@ -444,7 +468,11 @@ export default async function ProjectPage({
 
   return (
     <>
-      <ProjectPoller analysisReady={ready} />
+      <ProjectPoller
+        projectId={project.id}
+        analysisReady={ready}
+        intakeFailed={Boolean(project.intake_error)}
+      />
       <ProjectView vm={vm} />
     </>
   );

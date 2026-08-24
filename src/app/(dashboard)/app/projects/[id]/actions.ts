@@ -1,8 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
+import { analyzeAndStoreRole } from "@/lib/ai/analyze-role";
+import {
+  INTAKE_AGENT_UNAVAILABLE_SENTENCE,
+  INTAKE_TIMED_OUT_SENTENCE,
+} from "@/lib/ai/intake-failure";
+import { signInIntakeAgent } from "@/lib/agents/session";
 import {
   ROLE_ANALYSIS_MAX,
   ROLE_ANALYSIS_MIN,
@@ -805,5 +812,129 @@ export async function researchHiringManagerAction(
 
     revalidatePath(`/app/projects/${projectId}`);
     return run.report;
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// The stuck-mandate retry surface (090). A failed or refused intake
+// leaves projects.intake_error set; these two actions are the marker's
+// only human doors — the poller writes the timeout, the recruiter
+// retries from the marked state. The analysis itself stays the Intake
+// Agent's fire-and-forget act, exactly as at creation.
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Retry a failed intake analysis. The recruiter's act, through the same
+ * capability gate as creation (mandates:write).
+ *
+ * The marker is the latch (D3): retry is only offered from the
+ * marked-failed state, and the guarded UPDATE that clears it decides who
+ * fires the paid call. A double-click or concurrent tab finds the marker
+ * already cleared, takes `started: false`, and does NOT launch a second
+ * Anthropic call — the job-spec `wasExisting` shape without a new index.
+ *
+ * The kill switch answers at click time (D5): a fast sign-in pre-flight
+ * — the same ~400ms refusal the seam would hit — turns a suspended
+ * agent into a thrown sentence the retry button can toast, instead of a
+ * silent no-op the recruiter would only discover a poll cycle later.
+ * The run in after() signs in again on its own; a suspension landing in
+ * the gap between pre-flight and run is caught there and re-marked.
+ */
+export async function retryIntakeAnalysisAction(
+  projectId: string
+): Promise<ActionResult<{ started: boolean }>> {
+  return runAction(SUBJECT, async () => {
+    if (!projectId) throw new Error("Missing projectId.");
+    await requireActiveUser();
+    const supabase = await createServerSupabaseClient();
+
+    const { data: project, error } = await supabase
+      .from("projects")
+      .select("id, one_line_input, intake_error, calibration_model")
+      .eq("id", projectId)
+      .maybeSingle<{
+        id: string;
+        one_line_input: string | null;
+        intake_error: string | null;
+        calibration_model: Partial<CalibrationModel> | null;
+      }>();
+    if (error || !project) throw new Error("Project not found.");
+    if (project.calibration_model?.role_title) {
+      throw new Error(
+        "This mandate is already analyzed — there is nothing to retry."
+      );
+    }
+    if (!project.one_line_input?.trim()) {
+      throw new Error(
+        "This mandate has no one-line brief to analyze. Open a new mandate instead."
+      );
+    }
+    const oneLineInput = project.one_line_input;
+
+    const probe = await signInIntakeAgent();
+    if (!probe.ok) {
+      console.error(`[analyze-role] retry refused at pre-flight (${probe.reason})`);
+      throw new Error(INTAKE_AGENT_UNAVAILABLE_SENTENCE);
+    }
+    await probe.signOut();
+
+    const { data: latched, error: latchErr } = await supabase
+      .from("projects")
+      .update({ intake_error: null, updated_at: new Date().toISOString() })
+      .eq("id", projectId)
+      .not("intake_error", "is", null)
+      .select("id");
+    if (latchErr) {
+      throw new Error(`Could not start the retry: ${latchErr.message}`);
+    }
+    if (!latched || latched.length === 0) {
+      // Someone else's click already cleared the marker; their after()
+      // callback owns the run. Refresh and watch it land.
+      return { started: false };
+    }
+
+    after(async () => {
+      try {
+        await analyzeAndStoreRole(projectId, oneLineInput, "retry");
+      } catch (err) {
+        console.error("[analyze-role] retry failed for project", projectId, err);
+      }
+    });
+
+    revalidatePath(`/app/projects/${projectId}`);
+    return { started: true };
+  });
+}
+
+/**
+ * Mark a mandate's intake as timed out when the poller has waited past
+ * its window without the analysis landing. Guarded twice (D2): only
+ * while the analysis is still absent AND no marker is already there —
+ * a landed run or an earlier sentence is never clobbered. The
+ * job_specs markGenerationTimedOut shape, applied to the mandate row.
+ */
+export async function markIntakeTimedOut(
+  projectId: string
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    if (!projectId) throw new Error("Missing projectId.");
+    await requireActiveUser();
+    const supabase = await createServerSupabaseClient();
+
+    const { error } = await supabase
+      .from("projects")
+      .update({
+        intake_error: INTAKE_TIMED_OUT_SENTENCE,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", projectId)
+      .is("calibration_model->>role_title", null)
+      .is("intake_error", null);
+
+    if (error) {
+      throw new Error(`Failed to mark the intake as timed out: ${error.message}`);
+    }
+
+    revalidatePath(`/app/projects/${projectId}`);
   });
 }

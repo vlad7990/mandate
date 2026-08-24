@@ -102,7 +102,7 @@ export default async function MandatesPage({
   const { from, to } = rangeFor(params);
   let query = supabase
     .from("projects")
-    .select("id, title, company_name, status, created_at")
+    .select("id, title, company_name, status, created_at, intake_error")
     .order(params.sort ?? "created_at", { ascending: params.dir === "asc" })
     .range(from, to);
 
@@ -241,11 +241,15 @@ export default async function MandatesPage({
                           href={`/app/projects/${p.id}`}
                           className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                         >
+                          {/* A marked row's title is still the literal
+                              "Analyzing…" (090) — say what is true instead. */}
                           <span className="block text-[13px] font-medium text-on-surface">
-                            {p.title}
+                            {p.intake_error
+                              ? "Analysis failed — open to retry"
+                              : p.title}
                           </span>
                           <span className="block text-xs text-outline">
-                            {p.company_name}
+                            {p.intake_error ? "—" : p.company_name}
                           </span>
                         </Link>
                       </td>
