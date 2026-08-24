@@ -82,11 +82,20 @@ lands; source-map upload only if the build stays green.
 
 ### D2 — Provisioning and the kill switch
 
-Marketplace install (`vercel integration add sentry`), the claim
-handshake founder-hand; `SENTRY_AUTH_TOKEN` (source maps) as a Vercel
-secret, DSN in Vercel production and `.env.local`. Unset DSN = SDK
-no-ops = telemetry off with zero code change: the kill switch is the
-env pair, same shape as every agent credential.
+**AMENDED 2026-08-24, founder-confirmed.** As drafted: marketplace
+install with a founder-hand claim. As executed: the marketplace path
+was abandoned after three founder attempts — the terms acceptance
+never registered for team vn-mn-product-group (the API answered
+`integration_terms_acceptance_required` through sixteen retries while
+the dashboard reported success; the team's only marketplace
+installation is Resend, 2026-08-13). Amendment: **Sentry provisioned
+directly at sentry.io, founder-hand; the DSN handed over and set as
+env by hand** — the same shape as every AGENT_* credential minting.
+`SENTRY_AUTH_TOKEN` (source maps) optional, added the same way if
+provided. Everything else stands unchanged: unset DSN = SDK no-ops =
+telemetry off with zero code change; the kill switch is the env pair.
+Marketplace billing is forfeited at the free tier; if the marketplace
+install ever reconciles, the env source swaps with no code change.
 
 ### D3 — What is captured (and what is NOT)
 
