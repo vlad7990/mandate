@@ -6487,3 +6487,106 @@ new to defer.
 migration is **092**. The role-spec conversion's Phase 0 follows —
 NOT zero-new-grant this time (the agent needs a job_specs UPDATE
 door), so the full gate applies.
+
+---
+
+## 76. The job spec signs its own name — the sixteenth principal, built, proven live, awaiting verdict sign-off — 2026-08-24
+
+The role-spec surface conversion (plan in `NEXT-rolespec-agent.md`,
+D1–D8 confirmed 2026-08-24) — the FIRST NEW-GRANT conversion since
+087, and the first grant pinned on an EDITORIAL state. One migration
+(**next is 093**):
+
+- **092 — one grant, double-pinned, and the vocabulary.**
+  `job_specs_agent_update` — UPDATE for is_agent() + org **with
+  `is_final = false` in BOTH USING and WITH CHECK**: the agent can
+  neither touch a finalized spec nor finalize one; the canonical
+  version stays the recruiter's editorial act forever. NO INSERT
+  (the versioned placeholder is the human's allocation), NO DELETE.
+  `job_spec_generated` into the CHECK (rebuilt from the live list,
+  56 values) and the allowlist at EIGHTEEN.
+  **`agent_rolespec_invariants.sql`** — 5 invariants, clean pass:
+  the judgment lands on the human's placeholder with the allocation
+  surviving (version, created_by); attribution pins; history at
+  eighteen by COUNT; THE IS_FINAL PIN both directions plus agent
+  INSERT refused and the negative matrix; kill switches independent
+  at SIXTEEN. The control run DROPPED the WITH CHECK conjunct
+  ("USING already refuses finalized rows") — the agent FINALIZED a
+  draft and the harness aborted at INVARIANT-FAIL (4); the two
+  conjuncts guard different faces, and dropping either is the
+  drift. Both pins verified intact live after.
+
+**The seam (`616ffe3`).** The split stood as built — only the
+judgment's identity moved: `generateAndStoreJobSpec` signs the
+sixteenth principal in per run, reads the project and placeholder it
+lawfully sees, judges with skills riding ITS session (no longer
+borrowing the recruiter's cookies inside after()), lands the draft
+through 092's pinned door, and records `job_spec_generated` with
+trigger/version/sections count — never the spec's text. FAILURE
+BOOKKEEPING STAYS HUMAN (the 090 doctrine): a refused agent lands
+its D5 sentence in generation_error via the cookie session — the
+refused case HAS no agent session to sign with, which is the tell.
+Live account: `vbreygin+rolespec@gmail.com`, id `ec4d9072-…`,
+Mandate HQ, §30 recipe; `AGENT_ROLESPEC_*` in Vercel production and
+`.env.local`. **New durable baseline: 17 users, 49 events.**
+
+### Driven live on production (deploy `mandate-kooae68g0` = `616ffe3`)
+
+Scratch world 0e6: a calibrated mandate ("Head of Treasury
+Technology", fictional Marlowe Clearing). The acts:
+
+1. **Generate Job Spec** → V01 landed in ~55s (6.2k chars), the
+   event under "Role Spec Agent", trigger `initial`, version 1,
+   sections 5, no text leak.
+2. **Suspended from /ops → Re-run AI** → the error view rendered
+   "V02 generation failed" with the D5 sentence VERBATIM and Retry —
+   the human bookkeeping marked the row while V01's draft stood
+   untouched below.
+3. **Restored → Retry** → V03 landed clean (V02 keeps its honest
+   failure record — versions never lie), the second event carrying
+   trigger `regenerate`, version 3.
+4. **The recruiter finalized V03** through the real confirm dialog —
+   then the LIVE PIN PROBE (the agent's identity against the live
+   rows, rolled back): its UPDATE on the finalized V03 landed
+   NOWHERE, and its attempt to finalize the V01 draft landed
+   NOWHERE — both faces of 092's pin answering on production rows.
+5. **The steering probe** → V04's overview begins **"STEERED-0E6:"**
+   — recruiter skills provably riding the agent's OWN session.
+
+**Teardown to baseline exactly on the first pass** — with one
+refinement recorded: a mid-drive SQL restore (instead of /ops) wrote
+a NULL-actor member_status_changed naming the AGENT; the sweep keyed
+it by VALUE (`from = 'suspended'`), which cannot collide with the
+durable creation trail (`from = 'pending'`) — value keys, never time
+windows, extended to trigger-written residue. Final: 49 events /
+17 users / 16 agents / 2 projects / 2 clients / 5 skills / 1 spec
+(the founder's May demo) / the founder's session.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The definition of done** — the job-spec judgment signs its own
+  name with its own kill switch, and the editorial boundary is a
+  database pin proven live in both directions, not an app-side
+  promise: no agent can touch or author the canonical version.
+- **AGENTS.md #1–#5 are now all principals** — intake, company
+  research, onboarding/calibration, role spec, and the map's
+  original fourteen. The remaining conversions (read-shaped
+  shortlist/copilot) and §73's six uninjected seams queue by usage,
+  founder-timed.
+- **The version ledger's honesty stands**: a failed V02 keeps its
+  failure record rather than being reused — versions never lie
+  about what happened; recorded as design, not waste.
+- **Long-action honesty — evidence extended**: ~55s spec runs
+  behind the polling skeleton, zero drops; f54f1e7 unchanged.
+
+Deploy `mandate-kooae68g0` live; migration 092 applied via MCP and
+checked in; tsc / vitest 820 / eslint / build green. Drive prefix
+0e6 spent; next is 0e7. The completion declaration waits on the
+verdicts above and the founder's written confirmation;
+`NEXT-rolespec-agent.md` is deleted only after it.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, and the "Capital Markets Investment Bank"
+client rename (editorial).
