@@ -13,6 +13,7 @@ import {
   type RoleAnalysis,
 } from "./role-analysis";
 import { signInIntakeAgent } from "@/lib/agents/session";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { captureSeamError } from "@/lib/observability/sentry";
 import { safeFailureMessage } from "./agent-errors";
 import {
@@ -96,13 +97,27 @@ export async function runIntakeAnalysisAndPersist(
       .maybeSingle<{ id: string; organization_id: string | null }>();
     if (error || !project) return { status: "unavailable" };
 
+    // The skills gap's third sighting, closed (§56's standing one-liner):
+    // recruiter-authored skills reach intake for the first time. The
+    // agent's own session is the client — inside after() there are no
+    // cookies, and omitting it silently strips every skill (§30's
+    // lesson); skills_agent_select (074) makes the read lawful. At
+    // intake time the mandate has no client_id yet, so client-scoped
+    // skills stay quiet by design — search skills and this project's
+    // role skills fire.
+    const system = await applySkillsToPrompt(ROLE_ANALYSIS_SYSTEM_PROMPT, {
+      projectId,
+      organizationId: project.organization_id,
+      client: supabase,
+    });
+
     let parsed: RoleAnalysis;
     try {
       const anthropic = getAnthropic();
       const response = await anthropic.messages.create({
         model: ANALYSIS_MODEL,
         max_tokens: 1024,
-        system: ROLE_ANALYSIS_SYSTEM_PROMPT,
+        system,
         messages: [{ role: "user", content: oneLineInput }],
         output_config: {
           format: {
