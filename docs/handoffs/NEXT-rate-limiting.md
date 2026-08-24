@@ -1,7 +1,13 @@
 # NEXT — Rate limiting (the deferred list's second item)
 
-Status: **Phase 0 complete — D1–D8 drafted, awaiting the founder's
-written D-confirmation. No build work past this file until then.**
+Status: **Phases 1–4 EXECUTED (2026-08-24, D1–D8 confirmed as
+drafted). Migration 088 + invariants applied and control-run
+verified; guards live on every enumerated door; the drive, the live
+outage simulation, and first-pass teardown are recorded in §61 of
+the main handoff, with verdicts DRAFTED. Turnstile wired env-gated —
+the keys are the founder's one open item. Awaiting the founder's
+written §61 confirmation — no completion declaration until then;
+this file is deleted only after it.**
 
 Second item of the deferred build list (Sentry ✓ §60 → **rate
 limiting** → Resend → Stripe), opened on the founder's word

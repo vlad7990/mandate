@@ -5564,3 +5564,132 @@ exposed Supabase access token, leaked-password protection (Pro-gated),
 the remaining deferred build list (rate limiting → Resend → Stripe),
 the one orphaned 331-byte storage object from §28's diagnosis, the
 stuck-mandate retry gap (§55), and the intake and digest skills gaps.
+
+---
+
+## 61. Rate limiting lands — built, proven live, awaiting verdict sign-off — 2026-08-24
+
+Second item of the deferred build list (Sentry ✓ §60 → **rate
+limiting** → Resend → Stripe). Plan in `NEXT-rate-limiting.md`, D1–D8
+confirmed 2026-08-24. One migration (**next is 089**) — the first
+since the fourteen-agent map closed.
+
+### What landed (`b6878d5`, `c3730df`, `6cebce0`)
+
+- **088 — 061 generalised, not replaced.** `rate_limit_policy` holds
+  the caps as DATA (a ceiling is an UPDATE, not a deploy): eleven
+  scopes across three tiers. `rate_limit` shares 061's
+  bucket-key-carries-the-window design; both tables RLS-on with ZERO
+  policies — the SECURITY DEFINER `check_rate_limit(scope, key)` is
+  the entire API. Keys arrive PRE-HASHED (D6): the database never
+  learns a caller's address, email, or token. An unknown scope RAISES
+  rather than refusing, routing a typo'd door through the app's D3
+  split. `/api/demo` migrated with its numbers byte-for-byte;
+  `check_demo_rate_limit` stays as a thin wrapper for one release.
+- **`rate_limit_invariants.sql`** — 5 invariants, clean pass: the
+  per-key window refuses with an honest retry_after; the window is a
+  DELETE (expiry re-admits, the prune sweeps); THE GLOBAL PIN; the
+  mechanism's own boundary (unknown-scope raise, zero-policy pin both
+  roles, direct INSERT refused); demo's caps unchanged. **Control run
+  verified**: the function rebuilt WITHOUT the global branch — the
+  fresh key's check LANDED with the day spent and the harness aborted
+  at INVARIANT-FAIL (3), "the spend is unbounded"; drift and harness
+  in one transaction, the abort rolling the rebuild back, the live
+  function verified intact after.
+- **The guards.** `lib/rate-limit/core.ts` (pure — the salted-hash
+  boundary, its own 5-test harness: a raw IP, email, or token never
+  reaches a bucket key) and `server.ts` (the D3 split and nothing
+  else). Tier 1 fails CLOSED with 429 + Retry-After: the HM token
+  door — rate-checked BEFORE the token is verified, keyed on token
+  AND ip — and the portal door keyed on the external identity; the
+  §30 verdict's endpoint, finally closed. Tier 2 fails OPEN with
+  authored D5 sentences (outcomes, never Sentry events, per §59-D3):
+  request-access, recovery (keyed on IP AND email hash — the same
+  sentence whether or not the account exists), sign-in (no global
+  cap by design), sign-up, and the candidate portal's four writes
+  behind one token-keyed guard. Every fail-open path captures to
+  Sentry, so "the limiter was down" is a fact held, not assumed.
+- **Turnstile (D4)** — wired env-gated end to end on
+  `/request-access`: no keys → no widget, no verification; an outage
+  fails open with a capture; a wrong token is refused. **The keys are
+  the founder's one open item on this slice** — provision at
+  Cloudflare, add the secret normally and the SITE key
+  `--no-sensitive` (§59's trap), and the captcha is live with no
+  deploy.
+
+### Driven live on production
+
+1. **The HM door end-to-end**: two real submissions through the real
+   token door landed (reviews persisted, the interpreter's runs
+   landing under its own name, the counters at 3 with a
+   parser-refused attempt honestly counted); the bucket pre-loaded to
+   its ceiling → the third submission refused **429** with the D5
+   sentence VERBATIM and `Retry-After: 2237` matching its own "38
+   minutes"; the reviews count did not move; the bucket deleted (what
+   expiry does) → the next submission landed. The window rolls live.
+2. **Sign-in**: three real bad-password attempts counted against the
+   IP hash — the SAME hash as the HM door's ip bucket, one caller
+   one identity across scopes — then refused at the ceiling with the
+   sentence verbatim.
+3. **Recovery, both keys separately**: the IP key's sentence on a
+   fresh address once the location was spent; the EMAIL key's
+   enumeration-safe sentence on the spent address — and the probe
+   submitted the address IN DIFFERENT CASE, landing in the same
+   bucket: `normalizeEmailKey` proven live.
+4. **Access request**: a real application landed; the refusal
+   sentence rendered verbatim; the global cap tripped live (a fresh
+   key refused `reason: global` with an honest until-midnight retry).
+5. **THE OUTAGE, simulated live** (~40s, EXECUTE revoked then
+   restored): the money door answered **429 spending nothing**; the
+   identity door passed THROUGH to the real credentials error — never
+   the rate sentence; both fail paths captured with named scopes
+   (`[rate-limit] check unreachable for sign_in_ip / hm_submit_token`).
+   D3's split is not a design note; it is observed production
+   behaviour.
+6. **One defect found live, fixed in the drive (`6cebce0`)**: the
+   marketing layout mounted NO Toaster — every toast.error on
+   /request-access, the rate refusal included, rendered NOWHERE while
+   the server-side refusal held. The §57 defect class again: a
+   rarely-driven error path, silently broken since the form shipped.
+   Sentry could not have seen this one (nothing threw); only driving
+   the surface did.
+
+**Teardown to baseline exactly on the first pass** — the scratch
+project cascade, the drive's trail events, the scratch waitlist rows,
+every drive bucket, and the interpreter's session chain; 15 users /
+42 events / 1 report / `rate_limit` EMPTY, the founder's session the
+only survivor.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Turnstile keys — the slice's one open founder item**: the wiring
+  is live and honestly absent until the keys exist. Five minutes at
+  Cloudflare whenever wanted; no deploy needed.
+- **Tier 3 (copilot, agent surfaces) stays deferred** (D8): every
+  request has a name and every agent a kill switch; queue per-user
+  ceilings behind first-client usage data.
+- **The Vercel WAF as later belt-and-braces** (D8 stands): a coarse
+  outer layer that drops floods before they reach a function;
+  plan-gated, founder-hand, complementary — not a replacement for a
+  limiter that can tell money from identity.
+- **The toast-less marketing layout — surfaced as a class**: two
+  slices, two silently-dead error surfaces (§57's schema 400, §61's
+  toaster). The standing habit from §59 — smoke-run rarely-driven
+  surfaces — earns its second data point.
+- **The demo wrapper retires in 089**: `check_demo_rate_limit` and
+  the orphaned `demo_rate_limit` table drop together once this
+  release has settled; the route moves to the shared helper in the
+  same change.
+
+Deploys through `4awxher94` live; migration 088 applied via MCP and
+checked in; tsc / vitest 806 (5 new) / eslint / build green. The
+completion declaration waits on the verdicts above and the founder's
+written confirmation; `NEXT-rate-limiting.md` is deleted only after
+it.
+
+Founder-owned, unchanged: the Resend DNS records at Namecheap, the
+exposed Supabase access token, leaked-password protection
+(Pro-gated), the remaining deferred build list (Resend → Stripe), the
+Turnstile keys (new, this slice), the one orphaned 331-byte storage
+object from §28's diagnosis, the stuck-mandate retry gap (§55), and
+the intake and digest skills gaps.
