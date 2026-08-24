@@ -46,7 +46,7 @@ const HEALTH_CHIP: Record<HealthStatus, ChipTone> = {
 
 const HEALTH_FILL: Record<HealthStatus, string> = {
   healthy: "var(--color-secondary-fixed-dim)",
-  stalled: "var(--color-tertiary)",
+  stalled: "var(--color-warn)",
   at_risk: "var(--color-error)",
 };
 

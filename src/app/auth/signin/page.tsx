@@ -33,8 +33,10 @@ export default async function SignInPage({
         <Link
           href="/"
           aria-label="Mandate home"
-          className="text-lg font-bold tracking-tighter text-on-surface uppercase font-h1 hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          className="flex items-center gap-2.5 text-lg font-bold tracking-tighter text-on-surface uppercase font-h1 hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/mark.png" alt="" aria-hidden className="h-[22px] w-[22px]" />
           Mandate
         </Link>
       </nav>
@@ -127,7 +129,7 @@ export default async function SignInPage({
 
             <button
               type="submit"
-              className="w-full bg-primary-container text-on-primary-container py-3 hover:brightness-110 active:scale-[0.98] transition-all flex justify-center items-center gap-2 group font-h2 text-body-main"
+              className="w-full btn-notch bg-primary-container text-on-primary-container py-3 hover:brightness-110 active:scale-[0.98] transition-all flex justify-center items-center gap-2 group font-h2 text-body-main"
             >
               Sign In
               <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />

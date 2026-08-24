@@ -23,8 +23,10 @@ export default async function SignUpPage({
         <Link
           href="/"
           aria-label="Mandate home"
-          className="text-lg font-bold tracking-tighter text-on-surface uppercase font-h1 hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          className="flex items-center gap-2.5 text-lg font-bold tracking-tighter text-on-surface uppercase font-h1 hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/mark.png" alt="" aria-hidden className="h-[22px] w-[22px]" />
           Mandate
         </Link>
         <div className="flex items-center gap-2 px-2 py-1 bg-surface-container border border-outline-variant">

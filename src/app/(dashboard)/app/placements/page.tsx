@@ -467,7 +467,7 @@ function SamplePlacementRows({ baseCurrency }: { baseCurrency: string }) {
               </td>
               <td
                 className={`px-4 py-3 font-mono-label text-[11px] uppercase tracking-[0.08em] ${
-                  p.status === "FELL THROUGH" ? "text-tertiary" : "text-on-surface-variant"
+                  p.status === "FELL THROUGH" ? "text-warn" : "text-on-surface-variant"
                 }`}
               >
                 {p.status}

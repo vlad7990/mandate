@@ -38,6 +38,17 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  /* REPAIR (2026-08-24, the --color-error class of defect): ten files
+     use `text-on-primary` on `bg-primary` fills, but --color-on-primary
+     was never defined, so the utility generated nothing and the text
+     inherited near-white onto the pale periwinkle fill — invisible.
+     The pale primary fill carries dark navy ink, same pairing the
+     shadcn --primary-foreground slot already documents (7.7:1). */
+  --color-on-primary: var(--primary-foreground);
+  /* Warning role, text-grade on the dark surfaces (10.3:1 on cards).
+     `warn` chips and accents previously aliased tertiary/--info and
+     rendered blue-grey — a warning that didn't warn. */
+  --color-warn: var(--warning);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -187,14 +198,16 @@
   --fg-on-accent: #eeefff;
 
   /* ── Semantic states ────────────────────────────────────────────
-     --positive and --info keep the existing muted palette rather than
-     conventional green/amber, because the product's visual language
-     is deliberately restrained. Renaming them by role (was
-     "secondary-fixed-dim" / "tertiary") is the point: the old names
-     described a Material slot, not a meaning. */
-  --positive: #bec6e0;
+     Founder's call 2026-08-24 (reversing the earlier restraint):
+     progress, risk and state read in conventional RAG — green for
+     good/active, amber for warning, red for danger. --info stays a
+     cool neutral for genuinely informational accents. All three
+     state colors are text-grade on every dark surface (9.9–10.3:1
+     on cards, WCAG-checked), and they always ship beside a label —
+     never color alone. */
+  --positive: #4ade80;
   --info: #b9c7e0;
-  --warning: #f59e0b;
+  --warning: #fbbf24;
   --danger: #ffb4ab;
   --danger-surface: #93000a;
   --fg-on-danger: #ffdad6;
@@ -281,6 +294,20 @@
   .glass-panel {
     backdrop-filter: blur(8px);
     background: rgba(17, 19, 27, 0.8);
+  }
+  /* The mandate notch (founder's call 2026-08-24): solid primary CTAs
+     carry one 45° clipped corner, bottom-right — the compass logo's
+     chevron embedded in the button plate. SOLID FILLS ONLY: clip-path
+     clips borders with the box, so outlined/ghost buttons stay square
+     rather than showing a sheared border. */
+  .btn-notch {
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - 8px),
+      calc(100% - 8px) 100%,
+      0 100%
+    );
   }
 }
 

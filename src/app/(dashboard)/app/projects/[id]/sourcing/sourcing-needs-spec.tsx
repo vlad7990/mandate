@@ -74,7 +74,7 @@ export function SourcingNeedsSpec({
           <Link
             href={`/app/projects/${projectId}`}
             prefetch={false}
-            className="px-8 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
+            className="px-8 py-3 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
           >
             Back to mandate
           </Link>

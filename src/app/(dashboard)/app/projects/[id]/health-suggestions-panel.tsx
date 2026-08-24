@@ -25,7 +25,7 @@ import { unwrap } from "@/lib/actions/result";
 
 const PRIORITY_TONE: Record<HealthSuggestion["priority"], string> = {
   high: "border-error/60 bg-error/10 text-error",
-  medium: "border-tertiary/60 bg-tertiary/10 text-tertiary",
+  medium: "border-warn/60 bg-warn/10 text-warn",
   low: "border-outline-variant bg-surface-container-high text-on-surface-variant",
 };
 

@@ -48,7 +48,7 @@ export function RetryEvaluationButton({
       className={cn(
         "px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-1.5 transition-[filter,colors,transform] disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
         variant === "primary"
-          ? "bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.98]"
+          ? "btn-notch bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.98]"
           : "border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary"
       )}
     >

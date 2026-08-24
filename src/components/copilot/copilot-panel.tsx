@@ -50,8 +50,12 @@ export function CopilotPanel() {
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 bg-primary text-on-primary border border-primary shadow-lg hover:brightness-110 active:scale-[0.98] transition-[filter,transform] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-          open && "ring-2 ring-on-primary/30"
+          // The accent-fill CTA pairing, not bg-primary: --primary is the
+          // pale interactive-text periwinkle, and a fill made of it left
+          // this label unreadable (the token comment in globals.css owns
+          // the why — white needs the darker --accent-fill).
+          "btn-notch fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.98] transition-[filter,transform] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+          open && "ring-2 ring-on-primary-container/40"
         )}
       >
         {open ? <IconClose size={17} /> : <IconCopilot size={17} />}

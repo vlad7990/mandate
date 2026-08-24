@@ -21,9 +21,13 @@ export function SiteFooter() {
             {/* Was an empty rounded blue square. The nav mark carries an
                 M; the footer mark carried nothing, so the site signed
                 off with a blank chip. */}
-            <div className="m-footer__mark" aria-hidden>
-              M
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/mark.png"
+              alt=""
+              aria-hidden
+              className="m-footer__mark"
+            />
             <span className="m-footer__wordmark">Mandate</span>
             <p className="m-footer__blurb">
               An AI operating system for executive search.

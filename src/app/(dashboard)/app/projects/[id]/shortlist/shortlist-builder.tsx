@@ -322,7 +322,7 @@ export function ShortlistBuilder({
                 slate.length === 0 || submitPending || mutationPending
               }
               aria-busy={submitPending ? true : undefined}
-              className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {submitPending ? (
                 <IconRefresh size={14} className="animate-spin" />
@@ -867,7 +867,7 @@ function ReportPreview({
         <button
           type="button"
           onClick={onCopy}
-          className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shrink-0"
+          className="px-4 py-2 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shrink-0"
         >
           <IconCopy size={14} />
           Copy Report

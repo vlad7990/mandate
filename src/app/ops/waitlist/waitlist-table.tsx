@@ -51,7 +51,7 @@ export function WaitlistTable({ rows }: { rows: WaitlistRow[] }) {
             className={cn(
               "flex-1 px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary",
               filter === s
-                ? "bg-primary-container text-on-primary-container"
+                ? "btn-notch bg-primary-container text-on-primary-container"
                 : "bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
             )}
           >
@@ -198,7 +198,7 @@ function RequestCard({ row }: { row: WaitlistRow }) {
                 type="button"
                 onClick={saveNotes}
                 disabled={pending}
-                className="px-3 py-1 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] disabled:opacity-60"
+                className="px-3 py-1 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] disabled:opacity-60"
               >
                 Save
               </button>
@@ -229,7 +229,7 @@ function RequestCard({ row }: { row: WaitlistRow }) {
             type="button"
             onClick={approve}
             disabled={pending}
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+            className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
           >
             <IconCheck size={14} />
             Approve

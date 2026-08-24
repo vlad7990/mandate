@@ -62,7 +62,7 @@ export function LinkCandidateButton({
           toast.success(`${candidateName} linked to this search.`);
         })
       }
-      className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+      className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {isPending ? (
         <IconRefresh size={15} className="animate-spin" />

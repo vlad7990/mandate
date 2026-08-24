@@ -20,7 +20,7 @@ export type KpiAccent = "primary" | "secondary" | "warn" | "danger" | "neutral";
 const ACCENT_BAR: Record<KpiAccent, string> = {
   primary: "bg-primary",
   secondary: "bg-secondary-fixed-dim",
-  warn: "bg-tertiary",
+  warn: "bg-warn",
   danger: "bg-error",
   neutral: "bg-outline-variant",
 };
@@ -28,7 +28,7 @@ const ACCENT_BAR: Record<KpiAccent, string> = {
 const ACCENT_VALUE: Record<KpiAccent, string> = {
   primary: "text-primary",
   secondary: "text-secondary-fixed-dim",
-  warn: "text-tertiary",
+  warn: "text-warn",
   danger: "text-error",
   neutral: "text-on-surface",
 };

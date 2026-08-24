@@ -38,13 +38,13 @@ type ProjectRow = {
 
 const HEALTH_TONES: Record<HealthStatus, string> = {
   healthy: "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim",
-  stalled: "border-tertiary/60 bg-tertiary/10 text-tertiary",
+  stalled: "border-warn/60 bg-warn/10 text-warn",
   at_risk: "border-error/60 bg-error/10 text-error",
 };
 
 const HEALTH_BARS: Record<HealthStatus, string> = {
   healthy: "bg-secondary-fixed-dim",
-  stalled: "bg-tertiary",
+  stalled: "bg-warn",
   at_risk: "bg-error",
 };
 

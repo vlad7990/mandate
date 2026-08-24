@@ -180,7 +180,7 @@ export function CoveragePanel({
             type="button"
             onClick={refine}
             disabled={pending}
-            className="px-2 py-1 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+            className="px-2 py-1 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
           >
             {pending ? (
               <IconRefresh size={12} className="animate-spin" />

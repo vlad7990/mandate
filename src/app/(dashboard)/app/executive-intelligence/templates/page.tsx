@@ -91,7 +91,7 @@ export default async function ExecutiveTemplatesPage() {
                   </span>
                   <Link
                     href={`/app/executive-intelligence/searches/new?template=${encodeURIComponent(t.key)}`}
-                    className="bg-primary-container text-on-primary-container px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5"
+                    className="btn-notch bg-primary-container text-on-primary-container px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5"
                   >
                     Use Template
                     <IconArrowRight size={15} />

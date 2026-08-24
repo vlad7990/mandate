@@ -227,7 +227,7 @@ export default async function ExecutiveIntelligencePage() {
           <CapabilityGate capability="mandates:write">
             <Link
               href="/app/executive-intelligence/searches/new"
-              className="bg-primary-container text-on-primary-container px-6 py-3 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
+              className="btn-notch bg-primary-container text-on-primary-container px-6 py-3 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
             >
               <IconPlus size={18} />
               New Executive Search

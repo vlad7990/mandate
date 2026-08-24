@@ -309,7 +309,7 @@ function NoteComposer({
             onClick={handleSave}
             disabled={pending || content.trim().length === 0}
             aria-busy={pending ? true : undefined}
-            className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             {pending ? <IconRefresh size={14} className="animate-spin" /> : <IconCheck size={14} />}
             {pending ? "Saving" : "Save Note"}
@@ -481,7 +481,7 @@ function NoteItem({
                 type="button"
                 onClick={handleSaveEdit}
                 disabled={pending}
-                className="px-3 py-1 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+                className="px-3 py-1 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
               >
                 {pending ? <IconRefresh size={14} className="animate-spin" /> : <IconCheck size={14} />}
                 {pending ? "Saving" : "Save"}
@@ -742,7 +742,7 @@ function LiveCallNotesModal({
               type="button"
               onClick={handleSave}
               disabled={pending || content.trim().length === 0}
-              className="px-3 py-1.5 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {pending ? <IconRefresh size={14} className="animate-spin" /> : <IconCheck size={14} />}
               {pending ? "Saving" : "End Call & Save Notes"}

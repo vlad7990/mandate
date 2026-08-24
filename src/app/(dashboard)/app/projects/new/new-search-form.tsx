@@ -11,7 +11,7 @@ function SubmitButton() {
       type="submit"
       disabled={pending}
       aria-busy={pending}
-      className="bg-primary-container text-on-primary-container px-6 py-3 rounded-none font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+      className="btn-notch bg-primary-container text-on-primary-container px-6 py-3 rounded-none font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
     >
       {pending ? (
         <>

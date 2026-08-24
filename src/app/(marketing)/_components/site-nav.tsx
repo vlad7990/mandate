@@ -29,9 +29,13 @@ export function SiteNav({ active }: { active?: NavKey }) {
       <header className="m-nav">
         <div className="m-container m-nav__inner">
           <Link href="/" className="m-nav__brand" aria-label="Mandate home">
-            <span aria-hidden className="m-nav__mark">
-              M
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/mark.png"
+              alt=""
+              aria-hidden
+              className="m-nav__mark"
+            />
             <span className="m-nav__wordmark">Mandate</span>
             <span aria-hidden className="m-nav__beta">
               BETA

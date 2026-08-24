@@ -37,9 +37,9 @@ const CHIP_PRESETS: Record<ChipTone, Record<ChipIntensity, string>> = {
     strong: "border-tertiary bg-tertiary/20 text-tertiary",
   },
   warn: {
-    soft: "border-tertiary/40 text-tertiary",
-    filled: "border-tertiary/60 bg-tertiary/10 text-tertiary",
-    strong: "border-tertiary bg-tertiary/20 text-tertiary",
+    soft: "border-warn/40 text-warn",
+    filled: "border-warn/60 bg-warn/10 text-warn",
+    strong: "border-warn bg-warn/20 text-warn",
   },
   danger: {
     soft: "border-error/40 text-error",
@@ -58,7 +58,7 @@ const DOT_TONES: Record<ChipTone, string> = {
   primary: "bg-primary",
   secondary: "bg-secondary-fixed-dim",
   tertiary: "bg-tertiary",
-  warn: "bg-tertiary",
+  warn: "bg-warn",
   danger: "bg-error",
   neutral: "bg-outline",
 };

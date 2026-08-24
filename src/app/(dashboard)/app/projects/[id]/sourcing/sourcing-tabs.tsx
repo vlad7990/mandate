@@ -60,7 +60,7 @@ export function SourcingTabs({
                 className={cn(
                   "px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-1.5 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary",
                   isActive
-                    ? "bg-primary-container text-on-primary-container"
+                    ? "btn-notch bg-primary-container text-on-primary-container"
                     : "bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
                 )}
               >

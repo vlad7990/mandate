@@ -611,7 +611,7 @@ function TabButton({
       className={cn(
         "px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest transition-colors",
         active
-          ? "bg-primary-container text-on-primary-container"
+          ? "btn-notch bg-primary-container text-on-primary-container"
           : "text-outline hover:text-on-surface hover:bg-surface-container-low"
       )}
     >
@@ -639,7 +639,7 @@ function ActionButton({
     "px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed";
   const palette =
     tone === "primary"
-      ? "bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.98]"
+      ? "btn-notch bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.98]"
       : "border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary";
   return (
     <button

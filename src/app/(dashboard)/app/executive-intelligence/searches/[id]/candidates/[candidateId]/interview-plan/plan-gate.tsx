@@ -50,7 +50,7 @@ export function PlanGate({
           </div>
           <Link
             href={`/app/executive-intelligence/searches/${searchId}/success-profile`}
-            className="px-8 py-3 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
+            className="px-8 py-3 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
           >
             <IconTarget size={16} />
             Go to Success Profile

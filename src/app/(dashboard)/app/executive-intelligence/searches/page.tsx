@@ -77,7 +77,7 @@ export default async function ExecutiveSearchesPage() {
           <CapabilityGate capability="mandates:write">
             <Link
               href="/app/executive-intelligence/searches/new"
-              className="bg-primary-container text-on-primary-container px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
+              className="btn-notch bg-primary-container text-on-primary-container px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
             >
               <IconPlus size={16} />
               New Search
@@ -110,7 +110,7 @@ export default async function ExecutiveSearchesPage() {
               <CapabilityGate capability="mandates:write">
                 <Link
                   href="/app/executive-intelligence/searches/new"
-                  className="bg-primary-container text-on-primary-container px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all"
+                  className="btn-notch bg-primary-container text-on-primary-container px-5 py-2.5 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all"
                 >
                   Start Blank
                 </Link>

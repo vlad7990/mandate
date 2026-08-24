@@ -1567,16 +1567,10 @@ details[open] > .m-faq__btn .m-faq__icon {
 }
 
 .m-nav__mark {
+  /* The compass mark image carries its own #010b21 plate. */
   width: 26px;
   height: 26px;
-  border: 1px solid var(--accent);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), transparent);
-  display: grid;
-  place-items: center;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
+  display: block;
 }
 
 .m-nav__wordmark {
@@ -2721,17 +2715,10 @@ details[open] > .m-faq__btn .m-faq__icon {
    beside the wordmark while the nav mark two thousand pixels up had an
    M in it. */
 .m-footer__mark {
+  /* The compass mark image carries its own #010b21 plate. */
   width: 22px;
   height: 22px;
-  border: 1.5px solid var(--accent);
-  border-radius: 6px;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--accent);
+  display: block;
 }
 
 .m-footer__wordmark {

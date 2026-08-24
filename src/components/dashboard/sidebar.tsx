@@ -133,12 +133,16 @@ export function Sidebar({ user, badges }: SidebarProps) {
             aria-label="Mandate — portfolio"
             className="flex items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
           >
-            <span
+            {/* The compass mark (founder's artwork, 2026-08-24). The
+                source PNG carries its own #010b21 plate, which reads as
+                a logo tile on the rail — no border needed. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/mark.png"
+              alt=""
               aria-hidden
-              className="flex h-[22px] w-[22px] shrink-0 items-center justify-center border-[1.5px] border-primary"
-            >
-              <span className="h-1.5 w-1.5 bg-primary" />
-            </span>
+              className="h-[22px] w-[22px] shrink-0"
+            />
             <span className="font-heading text-[13px] font-bold tracking-[0.06em] text-on-surface md:hidden xl:inline">
               MANDATE
             </span>

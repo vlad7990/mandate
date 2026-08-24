@@ -284,7 +284,7 @@ function SearchForm({
         />
         <button
           type="submit"
-          className="px-4 py-2 bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="px-4 py-2 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           <IconSearch size={14} />
           Search
@@ -477,7 +477,7 @@ function SearchResults({
                             : m.match_score >= 60
                               ? "text-primary"
                               : m.match_score >= 40
-                                ? "text-tertiary"
+                                ? "text-warn"
                                 : "text-error"
                         )}
                       >

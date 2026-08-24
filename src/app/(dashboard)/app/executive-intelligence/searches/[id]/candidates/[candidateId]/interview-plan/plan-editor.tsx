@@ -530,7 +530,7 @@ function RailButton({
       disabled={disabled}
       className={`w-full flex items-center gap-2 px-3 py-2 font-mono-label text-mono-label uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
         emphasis
-          ? "bg-primary-container text-on-primary-container hover:brightness-110"
+          ? "btn-notch bg-primary-container text-on-primary-container hover:brightness-110"
           : "border border-outline-variant text-on-surface-variant hover:bg-surface-container"
       }`}
     >

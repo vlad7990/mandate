@@ -42,7 +42,7 @@ export function AddToSearchButton({
         className={cn(
           "px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
           variant === "primary"
-            ? "bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.98] transition-[filter,transform]"
+            ? "btn-notch bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.98] transition-[filter,transform]"
             : "border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary"
         )}
       >

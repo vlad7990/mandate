@@ -116,7 +116,7 @@ export function SourcingEditor({
                       className={cn(
                         "px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest border transition-colors",
                         linkedinTab === key
-                          ? "bg-primary-container text-on-primary-container border-primary-container"
+                          ? "btn-notch bg-primary-container text-on-primary-container border-primary-container"
                           : "border-outline-variant text-outline hover:text-on-surface hover:border-outline"
                       )}
                     >
@@ -419,7 +419,7 @@ function ActionButton({
     "px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed";
   const palette =
     tone === "primary"
-      ? "bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.98]"
+      ? "btn-notch bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.98]"
       : "border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary";
   return (
     <button
