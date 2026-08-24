@@ -6065,3 +6065,77 @@ Stripe (parked to product-development's end), the one orphaned
 client rename (editorial, whenever), and the intake and digest
 skills gaps — the intake one-liner now the queue's likely next
 head.
+
+---
+
+## 67. Intake becomes steerable — the skills gap's third sighting closed, proven by a steered title — 2026-08-24
+
+The queue's head on the founder's word (§66). The design was
+pre-confirmed doctrine, not a new decision: §56 recorded "intake
+becomes steerable with one seam line whenever wanted," and the line's
+shape is §30/§50 standing — `applySkillsToPrompt` riding the AGENT's
+OWN session client, because inside `after()` there are no cookies and
+omitting the client silently strips every skill (the §30 latent
+defect this injector's own comment warns about). No migration; the
+counter stays at 091. The intake agent's skills read was lawful since
+086 (074's `skills_agent_select` — the §55 probe matrix already
+showed skills 5).
+
+**What landed (`c6ab31a`, copy fix `2bfec59`).** One seam line plus
+its import in `runIntakeAnalysisAndPersist`: the system prompt now
+carries the org's active skills. At intake time the mandate has no
+client_id yet, so client-scoped skills stay quiet BY DESIGN — search
+skills and the project's role skills fire (a role skill for a mandate
+being born can only exist on a retry, which is now a real path). And
+one honesty rider: Skills Studio's copy claimed skills reach "all six
+AI agents" in three places — stale long before this slice and wronger
+after it. The copy now says what stays true without a number
+("injected into every AI agent run").
+
+### Driven live on production (deploy `mandate-3rn3xdmh9` = `c6ab31a`)
+
+Scratch world 0e2: an is_founder operator authored a skill through
+the REAL Skills Studio form — "0e2 Steering Probe", search_skill,
+trigger gated on the nonce token `zephyrline`, instruction "set
+role_title to exactly 'Director of Platform Reliability (Steered)',
+leave every other field faithful" — then opened a mandate through the
+real form whose brief SAID "Head of Site Operations for Bramwell
+Foundry … zephyrline …". The analysis landed in ~25s reading
+**"Director of Platform Reliability (Steered)"** — the recruiter's
+sentence overrode the brief's stated title — while company_name and
+the client row stayed faithful ("Bramwell Foundry", born under the
+operator): the steer was surgical, not a blast radius. The nonce
+trigger kept the skill inert for any other run. Teardown to baseline
+exactly on the first pass (skill, mandate, client, operator chain,
+the flip's four member events; 43 events / 15 users / 2 projects /
+2 clients / 5 skills / founder's session).
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The definition of done** — the third sighting closes: intake now
+  reads the same recruiter-authored skills as every other judgment,
+  under the same session-client doctrine, proven by a live steer
+  through the product's own surfaces end to end.
+- **Client-scoped silence at intake stands as design**: no client is
+  known while the mandate is being born; a client skill that should
+  shape intake can be authored as a search skill with a trigger.
+  Recorded, not a gap.
+- **The digest one-liner is now the skills gap's last sighting**
+  (§47 standing: the digest writer is the one model call without
+  injection) — same shape, founder-timed.
+- **The Skills Studio copy is now count-free** — the enumerated
+  "six agents" card had been wrong for eleven slices; a count in UI
+  copy is a dead-surface defect waiting to happen, and the fix is to
+  stop counting.
+
+Deploys `mandate-3rn3xdmh9` and `mandate-o33hkfly3` live; no
+migration; tsc / vitest 815 / eslint / build green. Drive prefix 0e2
+spent; next is 0e3. The completion declaration waits on the verdicts
+above and the founder's written confirmation.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, the "Capital Markets Investment Bank"
+client rename (editorial), and the digest skills gap — the last of
+its kind.
