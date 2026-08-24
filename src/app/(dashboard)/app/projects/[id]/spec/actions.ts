@@ -203,9 +203,12 @@ export async function requestRegenerate(
     // original after() callback is still pending — adding another would
     // duplicate spend and could race the persist step.
     if (!inserted.wasExisting) {
+      // The trail names how the run was asked for (092: D4): the first
+      // version is the initial draft, everything after a regenerate.
+      const trigger = inserted.version === 1 ? "initial" : "regenerate";
       after(async () => {
         try {
-          await generateAndStoreJobSpec(inserted.specId, projectId);
+          await generateAndStoreJobSpec(inserted.specId, projectId, trigger);
         } catch (err) {
           console.error("[generate-job-spec] failed for spec", inserted.specId, err);
         }

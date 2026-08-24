@@ -268,6 +268,23 @@ export async function signInCalibrationAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Role Spec Agent — the SIXTEENTH principal (AGENTS.md
+ * #4). One judgment: drafting the job spec onto the recruiter's
+ * versioned placeholder. The first NEW-GRANT principal since 087:
+ * 092's job_specs UPDATE is double-pinned on is_final — the agent
+ * can neither touch a finalized spec nor finalize one; the canonical
+ * version stays the recruiter's editorial act forever. Failure
+ * bookkeeping (generation_error, the timeout marker) stays HUMAN.
+ */
+export async function signInRoleSpecAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "rolespec",
+    email: process.env.AGENT_ROLESPEC_EMAIL,
+    password: process.env.AGENT_ROLESPEC_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

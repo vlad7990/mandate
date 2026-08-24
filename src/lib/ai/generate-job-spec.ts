@@ -1,7 +1,10 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { getAnthropic } from "@/lib/anthropic";
+import { signInRoleSpecAgent } from "@/lib/agents/session";
+import { captureSeamError } from "@/lib/observability/sentry";
 import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
 import {
   JOB_SPEC_SCHEMA,
@@ -52,22 +55,65 @@ type ProjectContext = {
   onboarding_responses: Partial<OnboardingResponses> | null;
 };
 
+/** How the run was asked for — the trail names it (092: D4). */
+export type JobSpecTrigger = "initial" | "regenerate";
+
+/**
+ * The refusal sentence (092: D5) — lands in generation_error via the
+ * HUMAN half and is rendered verbatim with the Retry CTA.
+ */
+const ROLESPEC_UNAVAILABLE_SENTENCE =
+  "The Role Spec Agent could not run — an operator has suspended it or its credentials are absent. Write the spec by hand, or retry when it is restored.";
+
 /**
  * Generate a job spec for a project and persist it onto an existing
  * placeholder row in `job_specs` (caller is responsible for inserting the
  * placeholder and passing its id, so the editor can poll a known row).
  *
- * Marks `is_generating=false` once content is written, even on error —
- * a failed row keeps content_json='{}' so the editor renders an empty
- * spec the recruiter can fill manually rather than getting stuck on a
- * spinner.
+ * The seam (092): the ROLE SPEC AGENT's session, signed in per run —
+ * the sixteenth principal. The split stands as built: the recruiter's
+ * action allocated the versioned placeholder (their act, the
+ * idempotence latch); the agent reads the project and the placeholder
+ * it lawfully sees, judges with skills riding ITS session, and lands
+ * content + is_generating:false on the row through 092's double-pinned
+ * UPDATE (it can neither touch a finalized spec nor finalize one).
+ * FAILURE BOOKKEEPING STAYS HUMAN (the 090 doctrine):
+ * markGenerationFailed keeps the recruiter's cookie session, so a
+ * failed row keeps content_json='{}' and the editor renders an empty
+ * spec the recruiter can fill manually rather than a stuck spinner.
  */
 export async function generateAndStoreJobSpec(
   specRowId: string,
-  projectId: string
+  projectId: string,
+  trigger: JobSpecTrigger = "regenerate"
 ): Promise<void> {
-  const supabase = await createReadOnlySupabaseClient();
+  const session = await signInRoleSpecAgent();
+  if (!session.ok) {
+    console.error(
+      `[generate-job-spec] The Role Spec Agent could not run — an operator ` +
+        `has suspended it or its credentials are absent. The placeholder is ` +
+        `marked; the recruiter can write the spec by hand. (${session.reason})`
+    );
+    // The marker is the HUMAN's bookkeeping — the agent has no session
+    // to sign with, which is the tell (090: D2).
+    await markGenerationFailed(specRowId, ROLESPEC_UNAVAILABLE_SENTENCE);
+    return;
+  }
 
+  try {
+    await generateUnderAgentSession(session.client, specRowId, projectId, trigger);
+  } finally {
+    // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
+    await session.signOut();
+  }
+}
+
+async function generateUnderAgentSession(
+  supabase: SupabaseClient,
+  specRowId: string,
+  projectId: string,
+  trigger: JobSpecTrigger
+): Promise<void> {
   const { data: project, error: fetchError } = await supabase
     .from("projects")
     .select(
@@ -98,9 +144,12 @@ export async function generateAndStoreJobSpec(
   let sections: JobSpecSections;
   try {
     const anthropic = getAnthropic();
+    // Skills ride the AGENT's session (092: D6 — §50 doctrine), no
+    // longer borrowing the recruiter's cookies inside after().
     const system = await applySkillsToPrompt(JOB_SPEC_SYSTEM_PROMPT, {
       projectId,
       organizationId: project.organization_id,
+      client: supabase,
     });
     const response = await anthropic.messages.create({
       model: JOB_SPEC_MODEL,
@@ -152,6 +201,30 @@ export async function generateAndStoreJobSpec(
       throw new Error(`Failed to persist generated job spec: ${updateError.message}`);
     }
     cleared = true;
+
+    // The trail (092: D4): the trigger, the version, a sections count
+    // — never the spec's text. Best-effort after the landing.
+    const { data: specRow } = await supabase
+      .from("job_specs")
+      .select("version")
+      .eq("id", specRowId)
+      .maybeSingle<{ version: number }>();
+    const { error: eventErr } = await supabase.rpc("record_agent_event", {
+      p_event_type: "job_spec_generated",
+      p_project_id: projectId,
+      p_detail: {
+        agent_kind: "rolespec",
+        trigger,
+        version: specRow?.version ?? null,
+        sections: Object.keys(sections).length,
+      },
+    });
+    if (eventErr) {
+      captureSeamError(
+        "[generate-job-spec] failed to record the spec event",
+        eventErr
+      );
+    }
   } catch (err) {
     await markGenerationFailed(specRowId, agentErrorMessage(err, SUBJECT));
     cleared = true;
