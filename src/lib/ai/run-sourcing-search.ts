@@ -12,6 +12,9 @@ import {
   type SourceConnector,
   resolveAllowedDomains,
 } from "@/lib/sourcing/source-policy";
+import { signInCandidateSearchAgent } from "@/lib/agents/session";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 export const SOURCING_SEARCH_MODEL = "claude-sonnet-4-6";
 export { SOURCING_SEARCH_PROMPT_VERSION };
@@ -64,10 +67,15 @@ type ContentBlock = { type: string; [k: string]: unknown };
  * Returns null when the org has no usable source configured. That is a
  * deliberate hard stop rather than a fallback to unscoped search, which
  * would both violate the policy above and return directory spam.
+ *
+ * NOT exported (096, D8): this judgment is seam-bound to the Candidate
+ * Search Agent — `runSourcingSearchAsAgent` below is the only door, so
+ * the search can never run headless when its connector surface ships.
  */
-export async function runSourcingSearch(
+async function runSourcingSearch(
   brief: SourcingSearchBrief,
-  connectors: readonly SourceConnector[]
+  connectors: readonly SourceConnector[],
+  system: string
 ): Promise<SourcingSearchResult | null> {
   const allowedDomains = resolveAllowedDomains(connectors);
   if (!allowedDomains) return null;
@@ -106,14 +114,14 @@ export async function runSourcingSearch(
   let finalText: string | null = null;
 
   try {
-    const combined = await runToolLoop(anthropic, userPrompt, allowedDomains, true);
+    const combined = await runToolLoop(anthropic, userPrompt, allowedDomains, true, system);
     searchRounds = combined.searchRounds;
     finalText = combined.text;
   } catch (err) {
     if (!isFormatToolConflict(err)) throw err;
-    const searched = await runToolLoop(anthropic, userPrompt, allowedDomains, false);
+    const searched = await runToolLoop(anthropic, userPrompt, allowedDomains, false, system);
     searchRounds = searched.searchRounds;
-    finalText = searched.text === null ? null : await structureFindings(anthropic, searched.text);
+    finalText = searched.text === null ? null : await structureFindings(anthropic, searched.text, system);
   }
 
   // No terminal turn, or nothing to structure — better to report nothing
@@ -147,7 +155,8 @@ async function runToolLoop(
   anthropic: ReturnType<typeof getAnthropic>,
   userPrompt: string,
   allowedDomains: string[],
-  structured: boolean
+  structured: boolean,
+  system: string
 ): Promise<{ text: string | null; searchRounds: number }> {
   const messages: Array<{ role: "user" | "assistant"; content: unknown }> = [
     { role: "user", content: userPrompt },
@@ -158,7 +167,7 @@ async function runToolLoop(
     const response = await anthropic.messages.create({
       model: SOURCING_SEARCH_MODEL,
       max_tokens: 8000,
-      system: SOURCING_SEARCH_SYSTEM_PROMPT,
+      system,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       messages: messages as any,
       tools: [
@@ -204,13 +213,14 @@ async function runToolLoop(
  */
 async function structureFindings(
   anthropic: ReturnType<typeof getAnthropic>,
-  findings: string
+  findings: string,
+  system: string
 ): Promise<string | null> {
   const response = await anthropic.messages.create({
     model: SOURCING_SEARCH_MODEL,
     max_tokens: 8000,
     system:
-      SOURCING_SEARCH_SYSTEM_PROMPT +
+      system +
       "\n\nYou are now formatting findings you already gathered. Use ONLY the names and URLs present in the input. Do not add a person, and do not add or complete a URL.",
     messages: [{ role: "user", content: findings }],
     output_config: {
@@ -262,4 +272,90 @@ function countSearchRounds(blocks: readonly ContentBlock[]): number {
     if (Array.isArray(b.content)) n += 1;
   }
   return n;
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// The seam (096, D8): the CANDIDATE SEARCH AGENT's session, and the
+// ONLY door to the sourcing judgment. This runner had no caller when
+// it was converted — the connector surface is unbuilt — so the bind
+// happens at the contract instead of a surface: the raw runner above
+// is unexported, sign-in is the first act (a suspended agent refuses
+// BEFORE any billed search is spent — the web-reaching precedent),
+// skills ride the agent's session (D6), and a landed run records
+// `sourcing_search_executed` with COUNTS — rounds and how many
+// domains were in scope, never a domain list, never a person. When
+// the surface ships, its search is born signed.
+// ────────────────────────────────────────────────────────────────────────
+
+export type SourcingSearchRun =
+  | { status: "ready"; result: SourcingSearchResult }
+  /** No active connector survived the policy filter — a deliberate
+   * hard stop, never a fallback to unscoped search. */
+  | { status: "no_source" }
+  /** The Candidate Search Agent refused to sign in — suspended from
+   * /ops or credentials absent. NO search was spent (D5). */
+  | { status: "agent_unavailable"; reason: string }
+  /** The search ran but produced no structurable result, or threw. */
+  | { status: "failed"; error: unknown };
+
+export async function runSourcingSearchAsAgent(
+  brief: SourcingSearchBrief,
+  connectors: readonly SourceConnector[],
+  opts: { projectId: string | null }
+): Promise<SourcingSearchRun> {
+  // The policy gate first: with no usable source there is nothing to
+  // sign in FOR, and the refusal costs nothing.
+  if (!resolveAllowedDomains(connectors)) return { status: "no_source" };
+
+  const session = await signInCandidateSearchAgent();
+  if (!session.ok) {
+    console.error(
+      `[sourcing-search] The Candidate Search Agent could not run — an ` +
+        `operator has suspended it or its credentials are absent. No ` +
+        `search was spent. (${session.reason})`
+    );
+    return { status: "agent_unavailable", reason: session.reason };
+  }
+
+  try {
+    // Skills ride the AGENT's session (D6).
+    const system = await applySkillsToPrompt(SOURCING_SEARCH_SYSTEM_PROMPT, {
+      projectId: opts.projectId,
+      organizationId: session.organizationId,
+      client: session.client,
+    });
+
+    let result: SourcingSearchResult | null;
+    try {
+      result = await runSourcingSearch(brief, connectors, system);
+    } catch (err) {
+      captureSeamError("[sourcing-search] agent judgment failed", err);
+      return { status: "failed", error: err };
+    }
+    if (!result) return { status: "failed", error: null };
+
+    // The trail (D4): counts only.
+    const { error: eventErr } = await session.client.rpc("record_agent_event", {
+      p_event_type: "sourcing_search_executed",
+      p_project_id: opts.projectId,
+      p_detail: {
+        agent_kind: "candidate_search",
+        trigger: "run",
+        search_rounds: result.search_rounds,
+        domains: result.searched_domains.length,
+        leads: result.content.leads.length,
+      },
+    });
+    if (eventErr) {
+      captureSeamError(
+        "[sourcing-search] failed to record the search event",
+        eventErr
+      );
+    }
+
+    return { status: "ready", result };
+  } finally {
+    // Persist nothing (D3): revoke the run's session from GoTrue's ledger.
+    await session.signOut();
+  }
 }

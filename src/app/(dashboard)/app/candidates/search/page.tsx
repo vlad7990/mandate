@@ -7,16 +7,12 @@ import {
   PIPELINE_LABELS,
   PIPELINE_STAGES,
   type Archetype,
-  type CandidateProfile,
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import { TIER_BANDS, TIER_ORDER, type Tier } from "@/lib/ranking/tiers";
-import { runCandidateSearch } from "@/lib/ai/run-candidate-search";
+import { runCandidateSearchAsAgent } from "@/lib/ai/run-candidate-search";
 import { agentErrorMessage } from "@/lib/ai/agent-errors";
-import type {
-  CandidateSearchInputCandidate,
-  CandidateSearchResult,
-} from "@/lib/ai/candidate-search";
+import type { CandidateSearchResult } from "@/lib/ai/candidate-search";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import {
   IconChevronRight,
@@ -115,9 +111,10 @@ export default async function CandidateSearchPage({
   const scoreById = new Map<string, ScoreLite>();
   for (const s of scores) scoreById.set(s.candidate_id, s);
 
-  // Apply structural filters first so the AI agent only ranks the
-  // already-shortlisted set. Filters narrow the haystack; the AI ranks
-  // what's left.
+  // The page's own view of the structural narrowing — used for display
+  // stitching, the sample gate, and the empty short-circuit. The AGENT
+  // re-reads and re-filters the pool under its own session (the seam's
+  // split): both sessions are org-scoped, so the two views agree.
   const filtered = candidates.filter((c) => {
     if (filterProject && c.project_id !== filterProject) return false;
     if (filterArchetype && c.archetype !== filterArchetype) return false;
@@ -129,61 +126,56 @@ export default async function CandidateSearchPage({
     return true;
   });
 
-  const inputCandidates: CandidateSearchInputCandidate[] = filtered.map((c) => {
-    const profile = (c.cv_structured ?? {}) as Partial<CandidateProfile>;
-    const score = scoreById.get(c.id);
-    const signals = [
-      profile.domain,
-      profile.scale,
-      ...(profile.tech_exposure ?? []).slice(0, 6),
-      ...(profile.transformation_experience ?? []).slice(0, 3),
-    ]
-      .filter((s): s is string => !!s)
-      .join(", ");
-    const headline = profile.summary?.split(/(?<=[.!?])\s/)[0]?.trim() ?? null;
-
-    return {
-      id: c.id,
-      full_name: c.full_name,
-      current_title: c.current_title,
-      current_company: c.current_company,
-      archetype: c.archetype,
-      pipeline_stage: c.pipeline_stage,
-      project_id: c.project_id,
-      project_title: c.project_id
-        ? projectById.get(c.project_id) ?? null
-        : null,
-      overall_score: score?.overall_score ?? null,
-      tier: score?.tier ?? null,
-      signals,
-      headline,
-    };
-  });
+  const emptyPoolResult: CandidateSearchResult = {
+    parsed_criteria: {
+      intent: "No candidates match the structural filters.",
+      must_haves: [],
+      nice_to_haves: [],
+    },
+    matches: [],
+  };
 
   let searchResult: CandidateSearchResult | null = null;
   let searchError: string | null = null;
+  let poolSearched = 0;
 
   if (query.length > 0) {
-    if (inputCandidates.length === 0) {
-      searchResult = {
-        parsed_criteria: {
-          intent: "No candidates match the structural filters.",
-          must_haves: [],
-          nice_to_haves: [],
-        },
-        matches: [],
-      };
+    if (filtered.length === 0) {
+      // Nothing to judge — answered honestly with no sign-in and no spend.
+      searchResult = emptyPoolResult;
     } else {
-      try {
-        searchResult = await runCandidateSearch(query, inputCandidates);
-      } catch (err) {
-        // Not `err.message`: that rendered the provider's raw JSON body —
-        // vendor name, billing advice and a request id — straight into the
-        // page. Harmless while this route was unreachable except by typing
-        // the URL; a real screen the moment it was linked into the rail.
-        // See `agent-errors.ts`. The console still gets the whole thing.
-        searchError = agentErrorMessage(err, "The search agent");
-        console.error("[candidates/search] agent failed", err);
+      const run = await runCandidateSearchAsAgent(query, {
+        projectId: filterProject || null,
+        archetype: filterArchetype || null,
+        stage: filterStage || null,
+        tier: filterTier || null,
+      });
+      switch (run.status) {
+        case "ready":
+          searchResult = run.result;
+          poolSearched = run.poolSize;
+          break;
+        case "empty_pool":
+          searchResult = emptyPoolResult;
+          break;
+        case "agent_unavailable":
+          // D5: honest refusal, nothing destroyed — the query and
+          // filters are still in the URL.
+          searchError =
+            "The Candidate Search Agent could not run — an operator has " +
+            "suspended it or its credentials are absent. Your query and " +
+            "filters are safe in this page's address; search again when " +
+            "it is restored.";
+          break;
+        case "failed":
+          // Not `err.message`: that rendered the provider's raw JSON body —
+          // vendor name, billing advice and a request id — straight into the
+          // page. Harmless while this route was unreachable except by typing
+          // the URL; a real screen the moment it was linked into the rail.
+          // See `agent-errors.ts`. The console still gets the whole thing.
+          searchError = agentErrorMessage(run.error, "The Candidate Search Agent");
+          console.error("[candidates/search] agent failed", run.error);
+          break;
       }
     }
   }
@@ -195,7 +187,7 @@ export default async function CandidateSearchPage({
   // it rather than off the project count.
   const dismissed = (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
   const showSample = shouldShowSample({
-    hasRealData: inputCandidates.length > 0,
+    hasRealData: filtered.length > 0,
     dismissed,
   });
 
@@ -248,7 +240,7 @@ export default async function CandidateSearchPage({
           candidatesById={candidateById}
           scoresById={scoreById}
           projectsById={projectById}
-          poolSize={inputCandidates.length}
+          poolSize={poolSearched}
         />
       ) : null}
     </div>

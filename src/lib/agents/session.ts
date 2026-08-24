@@ -342,6 +342,25 @@ export async function signInExecutiveIntelAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Candidate Search Agent — the TWENTIETH principal, the
+ * sixth zero-new-grant conversion: both judgments' reads (candidates,
+ * scores, projects, skills) were already in the pool. One identity,
+ * TWO judgments (the companyintel precedent): ranking the org's OWN
+ * pool against a natural-language query (live), and the seam-bound
+ * sourcing search over configured web sources (minted ahead of its
+ * connector surface — D8). It writes NOTHING but its trail events.
+ * The sourcing judgment is web-reaching; suspension refuses at
+ * sign-in, before any billed search is spent.
+ */
+export async function signInCandidateSearchAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "candidate_search",
+    email: process.env.AGENT_SEARCH_EMAIL,
+    password: process.env.AGENT_SEARCH_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;
