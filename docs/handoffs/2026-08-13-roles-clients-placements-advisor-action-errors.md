@@ -7280,3 +7280,42 @@ storage object, the "Capital Markets Investment Bank" rename
 (editorial), the stale-poll refresh on the long executive surfaces
 (§82), and the Skills Studio help-text line on field-named steering
 skills (§82).
+
+---
+
+## 86. The terminal re-skin closes — one language, product-wide — 2026-08-24
+
+The founder's 2026-08-13 call ("terminal wins, everywhere") reached
+its last holdouts. The audit found the ~12 soft pages of that date
+already converted by the intervening arcs — the true remainder was
+one page, three auth surfaces, and residue:
+
+- **`/app/settings`** — the LAST shadcn Card/Table page, converted
+  to the members-page idiom (MastHead sections, square bordered
+  containers, the relative-wrapper scroll table with its sr-only
+  containing-block fix carried over).
+- **The auth trio** (signin, signup, pending) — already terminal in
+  voice, squared in form: every `rounded`/`rounded-lg`/
+  `rounded-full` stripped, the static card `shadow-2xl` removed
+  (the kpi-tile doctrine: no rounded corners, no dropshadow). The
+  first surface a buyer meets off the terminal marketing site now
+  matches it.
+- **Residue squared**: the sidebar logo mark (5px/1px radii), the
+  chart legend/tooltip swatches (2px).
+- **Eight orphaned soft primitives DELETED** — card, table, dialog,
+  badge, select, tabs, sheet, button (a closed dependency cluster,
+  zero external importers after the settings conversion; ~1,100
+  lines gone). Nobody can reach for a soft component again.
+
+`rounded-none` overrides and prose containing "g**rounded**" were
+the audit's false positives; the one floating dropdown keeps its
+functional shadow. Verified live on production (deploy
+`mandate-5wgcbbed7` = `7cc0589`): signin square edge to edge,
+settings rendering the full terminal idiom with the twenty agents
+in the roster table. The scratch visual account (Vesper Quill)
+swept to baseline — 21 users / 61 events / founder's session only.
+Gate green: tsc / vitest 828 / eslint / build.
+
+The re-skin the 2026-08-13 memory carried is DONE. Next, on the
+founder's word: the pre-launch checklist, then the founder-owned
+list.
