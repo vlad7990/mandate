@@ -6781,3 +6781,130 @@ migration is **094**. SEVENTEEN principals live. Remaining queue:
 the read-shaped copilot conversion and §73's five uninjected seams
 (three executive generators, candidate search, sourcing search),
 by usage on the founder's word.
+
+---
+
+## 80. The copilot signs its own name — the eighteenth principal, built, proven live, awaiting verdict sign-off — 2026-08-24
+
+The copilot conversion (plan in `NEXT-copilot-agent.md`, D1–D8
+confirmed 2026-08-24) — the EIGHTEENTH principal (AGENTS.md #13),
+the queue's last read-shaped conversion, and the FIFTH zero-new-grant
+slice: every read the snapshot makes was already in the pool, 093's
+shortlists SELECT completing the coverage. One migration (**next is
+095**):
+
+- **094 — vocabulary only.** `copilot_answered` into
+  the CHECK (rebuilt from the live pg_constraint list, 58 → 59) and
+  the allowlist at TWENTY. **`agent_copilot_invariants.sql`** — 5
+  invariants, clean pass: READ COVERAGE by count (the slice's
+  distinctive pin — feedback tail, shortlists, candidates, scores,
+  the project row all visible to the agent); the act's attribution
+  and counts-only detail; history at twenty by COUNT; the negative
+  matrix including 093's submitted-pin answering under the
+  eighteenth's session; kill switches independent at EIGHTEEN. The
+  control run minted a NEW SHAPE: it regressed a POOL grant ANOTHER
+  slice minted — `feedback_agent_select` (074) dropped in the
+  harness transaction — and the coverage pin aborted at
+  INVARIANT-FAIL (1) reading 0 of 2 feedback rows, self-rolling-back.
+  The harness guards INHERITED coverage, not just its own migration,
+  because a pool policy dropped in a future RLS cleanup is exactly
+  how an assembled context dies silently.
+
+**The defect §-recorded at Phase 0, repaired here:** the shortlist
+context read selected a `label` column that never existed —
+PostgREST errored from the day it shipped, the code swallowed it as
+`shortlist: null`, and the copilot NEVER SAW A SHORTLIST. The §57
+silently-dead class, third sighting. The read now selects the real
+columns, and the drive proved the repair by content.
+
+**The seam (`a92f3dd`).** The split (D2): the HUMAN DOOR stays at
+the threshold — `authorizeCopilotAccess` proves the caller may ask
+about the project under THEIR OWN cookie session (active member,
+org match, the project readable by their RLS) before any agent
+exists. Then `signInCopilotAgent` signs the eighteenth principal in
+per request; the snapshot assembles under ITS session; skills ride
+its session (D6); the model streams; ONE `copilot_answered` event
+lands AFTER the stream completes (a failed or aborted stream
+records nothing — no judgment landed) carrying the page-context
+string and COUNTS, never the question or the answer; and signOut
+revokes the session as the stream closes. The panel threads its
+pathname so the event can say WHERE the recruiter was asking from.
+Live account: `vbreygin+copilot@gmail.com`, id `4fdc3416-…`,
+Mandate HQ, §30 recipe, sign-in smoke-tested and revoked;
+`AGENT_COPILOT_*` in Vercel production and `.env.local`. **New
+durable baseline: 19 users, 55 events, 18 agents** (the three-event
+creation trail, the §78 count holding).
+
+### Driven live on production (deploy `mandate-2uhi2n3p0` = `a92f3dd`)
+
+Scratch world 0e8 inside Mandate HQ: an is_founder operator
+(Casimir Ledbrook), a seeded mandate ("VP of Payments
+Infrastructure", fictional Harwick Ledger Systems) with two ranked
+candidates, one HM feedback row, and a one-candidate draft slate.
+The acts, all through the real panel:
+
+1. **"Who is on the shortlist right now, and is the slate
+   balanced?"** → the answer opened "**Current shortlist: Wren
+   Halloway only (1 of 3 slots filled)**" and reasoned from the
+   actual slate, the actual weights, and the live HM feedback — the
+   REPAIRED READ PROVEN BY CONTENT: no prior copilot could have
+   said any of that. The event landed under "Copilot Agent",
+   context `project`, messages 1, candidates 2 — counts only; zero
+   agent sessions after.
+2. **Suspended from /ops → asked again** → the D5 sentence VERBATIM
+   in the panel's "⚠" bubble ("The Copilot Agent could not run — an
+   operator has suspended it or its credentials are absent. Your
+   conversation is safe on this device; ask again when it is
+   restored."), refusal in seconds with no model spend, no event,
+   the history intact on the device.
+3. **Restored → steering probe from the RANKING page** → a
+   nonce-triggered skill planted, the nonce typed into the question
+   → the answer began **"STEERED-0E8:"** — recruiter-authored
+   skills provably riding the eighteenth principal's session — and
+   the second event carried context `ranking` (the pathname
+   threading proven live), messages 5.
+4. **The probe matrix** (the agent's real identity against
+   production rows, self-rolled-back): clients 0, organizations 0,
+   activity_events 0, users self-only, shortlists INSERT refused. A
+   text-probe of the whole trail found NO candidate name, NO nonce,
+   NO steer token, NO fragment of any question or answer.
+
+**Teardown to baseline exactly on the first pass** — 8 events swept
+by VALUE keys (the operator's four, the two answers, the agent's
+suspend/restore pair keyed `from='active'/'suspended'`). Final: 55
+events / 19 users / 18 agents / 2 projects / 2 clients / 5 skills /
+1 job_spec / 0 shortlists / zero scratch sessions.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The definition of done** — the product's most-available AI
+  surface no longer runs on ambient human identity: every answer
+  signs the Copilot Agent's name with WHERE it was asked from,
+  wears its own kill switch (proven live in the panel, no model
+  spend on refusal), and reads the org's skills under its own
+  session, with the human door intact at the threshold.
+- **The read-shaped queue is EMPTY** — shortlist and copilot were
+  its last two entries. Every AI surface in the product that
+  persists OR answers now authenticates as a principal: EIGHTEEN
+  identities, eighteen kill switches. What remains is §73's five
+  uninjected seams (three executive generators, candidate search,
+  sourcing search), founder-timed.
+- **The dead shortlist read is repaired and its class has a
+  harness answer** — the pool-grant control run is the first
+  guard aimed at inherited coverage; recorded as a pattern for
+  future zero-new-grant slices.
+- **The per-turn event stands as drafted** — two turns wrote two
+  events with honest counts; if real usage proves the trail too
+  chatty, thinning is its own founder-timed slice.
+
+Deploy `mandate-2uhi2n3p0` live; migration 094 applied via MCP and
+checked in; tsc / vitest 820 / eslint / build green. Drive prefix
+0e8 spent; next is 0e9. The completion declaration waits on the
+verdicts above and the founder's written confirmation;
+`NEXT-copilot-agent.md` is deleted only after it.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, and the "Capital Markets Investment Bank"
+client rename (editorial).
