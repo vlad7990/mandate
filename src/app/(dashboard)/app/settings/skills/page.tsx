@@ -141,7 +141,7 @@ export default async function SkillsStudioPage() {
               {String(totalActive).padStart(2, "0")}
             </span>{" "}
             active · {String(skills.length).padStart(2, "0")} total · injected
-            into all six AI agents
+            into every AI agent run
           </p>
         </div>
         <CapabilityGate capability="skills:write">
@@ -168,7 +168,7 @@ export default async function SkillsStudioPage() {
           />
           <PrincipleBlock
             title="Where does it run?"
-            body="Six agents: CV parsing, candidate evaluation, job spec, sourcing, feedback interpretation, and side-by-side comparison."
+            body="Every judgment that reads a mandate or candidate — intake, CV parsing, evaluation, job spec, sourcing, feedback interpretation, comparison, and the intelligence agents."
           />
           <PrincipleBlock
             title="Precedence"

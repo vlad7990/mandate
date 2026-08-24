@@ -45,8 +45,8 @@ export default async function NewSkillPage() {
       <header className="space-y-2">
         <TerminalTitle>NEW_SKILL</TerminalTitle>
         <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
-          Compose a behavioural override that all six AI agents will pick up
-          on their next invocation.
+          Compose a behavioural override that every AI agent picks up on its
+          next invocation.
         </p>
       </header>
 
