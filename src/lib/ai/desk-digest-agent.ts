@@ -1,5 +1,7 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropic } from "@/lib/anthropic";
+import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
 /**
  * The desk digest — the manager's Monday-morning read, one Anthropic call.
@@ -95,12 +97,29 @@ Grounding rules, absolute:
 
 Return one JSON object conforming to the schema — no preamble.`;
 
-export async function generateDeskDigest(input: DeskDigestInput): Promise<DeskDigest> {
+export async function generateDeskDigest(
+  input: DeskDigestInput,
+  skillCtx?: { organizationId: string | null; client?: SupabaseClient }
+): Promise<DeskDigest> {
   const anthropic = getAnthropic();
+  // The skills gap's LAST sighting, closed (§47 standing): the digest
+  // was the one model call recruiter-authored skills never reached.
+  // projectId is null by nature — a desk digest belongs to no mandate —
+  // so org-wide search skills (and pre-049 null-client client skills)
+  // fire while role skills stay silent by design. The agent's own
+  // session is the client (§30: after() has no cookies; 074's
+  // skills_agent_select makes the read lawful).
+  const system = skillCtx
+    ? await applySkillsToPrompt(DESK_DIGEST_SYSTEM_PROMPT, {
+        projectId: null,
+        organizationId: skillCtx.organizationId,
+        client: skillCtx.client,
+      })
+    : DESK_DIGEST_SYSTEM_PROMPT;
   const response = await anthropic.messages.create({
     model: DESK_DIGEST_MODEL,
     max_tokens: 2048,
-    system: DESK_DIGEST_SYSTEM_PROMPT,
+    system,
     messages: [{ role: "user", content: JSON.stringify(input, null, 2) }],
     output_config: {
       format: { type: "json_schema", schema: DESK_DIGEST_SCHEMA },
@@ -155,7 +174,10 @@ export async function runDeskDigestAndPersist(
   try {
     let digest: DeskDigest;
     try {
-      digest = await generateDeskDigest(input);
+      digest = await generateDeskDigest(input, {
+        organizationId: session.organizationId,
+        client: session.client,
+      });
     } catch (err) {
       captureSeamError("[desk-digest] agent generation failed", err);
       return { status: "failed" };
