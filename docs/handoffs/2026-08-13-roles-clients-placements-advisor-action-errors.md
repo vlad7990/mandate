@@ -6325,3 +6325,22 @@ leaked-password protection (Pro-gated), the Turnstile keys (§61),
 Stripe (parked to product-development's end), the one orphaned
 331-byte storage object, and the "Capital Markets Investment Bank"
 client rename (editorial).
+
+---
+
+## 72. HM-override verdicts confirmed — the slice is complete — 2026-08-24
+
+The founder confirmed all four §71 verdicts as drafted: any
+stakeholder is researchable with the report naming its subject and
+the trail's override flag meaning what it says, proven in both
+directions live; the one-slot report stands with replacement legible
+and per-stakeholder storage deferred on usage; the stale-selection
+face stays the seam's sentence — never a quiet wrong-person
+research; and long-action honesty stands with the evidence extended
+(~80–95s, zero drops) and the f54f1e7 policy unchanged.
+
+**The HM override selector slice is complete.**
+`NEXT-hm-override.md` deleted per its own instruction. Migration
+counter unchanged at **091**. The founder's same message picked the
+next slice: the onboarding surface conversion — Phase 0 to run,
+D1–D8 to draft, the build gated on written confirmation.
