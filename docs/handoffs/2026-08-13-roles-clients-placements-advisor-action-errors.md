@@ -6012,3 +6012,56 @@ leaked-password protection (Pro-gated), the Turnstile keys (§61),
 Stripe (parked to product-development's end), the one orphaned
 331-byte storage object, the stuck mandate `2fc2bad8-…` awaiting
 the founder's own retry, and the intake and digest skills gaps.
+
+---
+
+## 66. Retry verdicts confirmed — the slice is complete, and the gap's living victim is analyzed — 2026-08-24
+
+The founder confirmed all five §65 verdicts as drafted, and in the
+same breath delegated the found mandate's retry. Both are done.
+
+**The retry of `2fc2bad8-…`, driven through the product's own
+surface** (scratch operator 0e1, torn down after): opening the page
+armed the poller; the window closed and the surface marked the
+twelve-day-old row honestly ("Intake analysis timed out. Please
+retry."); the Retry click landed the analysis in ~25s. The mandate
+now reads **"Head of Prime Brokerage IT"**, the trail carries its
+first event — `intake_analyzed` under the Intake Agent with
+**trigger "retry"** — and a client row was born: **"Capital Markets
+Investment Bank", created_by the FOUNDER**, because the seam hands
+`resolveClientId` the MANDATE's creator, not the clicker; the
+delegated click produced exactly the rows the founder's own click
+would have. The client's name is the brief's generic descriptor
+(the model judged company_identified true) — renaming it to the
+real bank in /app/clients is the founder's editorial act, noted,
+not a defect. Teardown swept the operator's chain and the creation
+flip's four member events (the §65 trap, applied); the durable rows
+stayed.
+
+**New durable baseline: 43 events** (the retry event is the
+founder's mandate's first) **and 2 clients** ("Capital Markets
+Investment Bank" joins). 15/15 users, 2 projects, 1 report, the
+founder's session — and, for the first time since 2026-08-12,
+**zero mandates stuck at "Analyzing…" and zero marked rows** in the
+product.
+
+The definition of done is met, twice over. The slice: a failed or
+refused intake now says so everywhere it used to lie — the marker,
+the block, the list line, the toast — and the retry is the
+recruiter's own gated act, latched against double-spend, with the
+kill switch answering the click itself. The proof: the §55 gap's
+oldest real victim — the founder's own mandate — was recovered
+through nothing but the shipped surface: no SQL touched the row;
+the poller marked it, the button retried it, the agent signed it.
+
+**The stuck-mandate retry slice is complete.**
+`NEXT-intake-retry.md` deleted per its own instruction. Next
+migration is **091**; next drive prefix is 0e2; next handoff § is 67.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, the "Capital Markets Investment Bank"
+client rename (editorial, whenever), and the intake and digest
+skills gaps — the intake one-liner now the queue's likely next
+head.
