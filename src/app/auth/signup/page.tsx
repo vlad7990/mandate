@@ -179,7 +179,7 @@ export default async function SignUpPage({
               <div className="pt-gutter flex flex-col gap-gutter">
                 <button
                   type="submit"
-                  className="w-full bg-primary-container hover:brightness-110 text-on-primary-container py-4 transition-all flex justify-center items-center gap-2 group font-h2 text-body-main"
+                  className="btn-notch w-full bg-primary-container hover:brightness-110 text-on-primary-container py-4 transition-all flex justify-center items-center gap-2 group font-h2 text-body-main"
                 >
                   Initialize Onboarding
                   <IconArrowRight size={16} className="transition-transform group-hover:translate-x-1" />

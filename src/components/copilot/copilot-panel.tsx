@@ -364,7 +364,7 @@ function CopilotChat({
           type="submit"
           disabled={streaming || !input.trim()}
           aria-label="Send"
-          className="px-3 py-2 bg-primary text-on-primary border border-primary hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="btn-notch px-3 py-2 bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           <IconArrowRight size={17} />
         </button>

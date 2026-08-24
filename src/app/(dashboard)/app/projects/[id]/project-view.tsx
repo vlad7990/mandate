@@ -212,7 +212,7 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
                 className={
                   vm.calibrated
                     ? "flex items-center gap-2 border border-outline-variant px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    : "flex items-center gap-2 bg-primary-container px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    : "btn-notch flex items-center gap-2 bg-primary-container px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 }
               >
                 {vm.calibrated ? "Re-run calibration" : "Start onboarding"}

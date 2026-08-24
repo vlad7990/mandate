@@ -222,7 +222,7 @@ export function humanizeTerminalTitle(token: string): string {
  * separate because the paddings differ, not the voice.
  */
 export const PRIMARY_ACTION =
-  "inline-flex items-center gap-2 border border-primary-container bg-primary-container px-4 font-mono-label text-mono-label uppercase tracking-widest text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60";
+  "btn-notch inline-flex items-center gap-2 border border-primary-container bg-primary-container px-4 font-mono-label text-mono-label uppercase tracking-widest text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60";
 
 /** The quiet counterpart — secondary navigation and cancel-shaped actions. */
 export const QUIET_ACTION =

@@ -486,6 +486,15 @@ html:has(.marketing-root) {
   --btn-bg: var(--accent-fill);
   --btn-line: var(--accent-fill);
   --btn-glow: var(--accent-glow);
+  /* The mandate notch — the compass chevron cut, matching the app's
+     .btn-notch on every solid CTA. Solid fills only; ghosts stay square. */
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    0 100%
+  );
 }
 
 .m-btn--primary:hover {
