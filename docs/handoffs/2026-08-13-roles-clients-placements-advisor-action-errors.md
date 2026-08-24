@@ -6239,3 +6239,89 @@ the one-liner; nothing to delete. Migration counter unchanged at
 **091**. The founder's same message picked the next slice: the HM
 override selector (§49) — Phase 0 run and D1–D8 drafted in
 `NEXT-hm-override.md`, the build gated on written confirmation.
+
+---
+
+## 71. The HM override gets its selector — §49's gap closed, both trail faces driven — 2026-08-24
+
+The §49/§50 standing gap (plan in `NEXT-hm-override.md`, D1–D8
+confirmed 2026-08-24). A UI-threading slice exactly as drafted: no
+migration (the counter stays **091**), no grants, no seam change —
+the server boundary was built and proven refusing at §49; this slice
+gave it the surface it was built for.
+
+**What landed (`9dbd3bc`).** The page threads the FULL valid
+stakeholder list (the seam's own filter, so the selector offers
+exactly the names the server will accept); the panel grows a
+house-styled select that appears only when there is a choice (2+
+stakeholders — byte-identical to before with 0 or 1), defaulting to
+the stored report's subject when it still matches; the meta line
+finally renders `report.hm_name` — the field placed on the report at
+083 precisely so a dossier stays attributable, rendered nowhere until
+now; and the D3 rule rides a pure helper (`overrideFor`, 5 tests):
+the override name is passed ONLY when the selection differs from the
+default, so the trail's `stakeholder_override: true` keeps meaning
+"the recruiter chose".
+
+### Driven live on production (deploy `mandate-rk1u7ydsf` = `9dbd3bc`)
+
+Scratch world 0e4: a ready mandate ("Head of Quality Engineering",
+fictional Vantrell Instruments) with TWO fictional stakeholders. The
+acts:
+
+1. **Research the default** (Corwin Aldenberg — CTO) → landed in
+   ~95s: the meta line named the subject, and the event carried
+   trigger `research`, **stakeholder_override false** — the §49
+   face, unchanged by the selector's existence.
+2. **Select the second and re-research** (Ilse Vantroska — VP
+   Quality) → landed in ~80s: the subject FLIPPED on the meta line,
+   the report replaced (one slot, a legible act), and the event
+   carried trigger `re_research`, **stakeholder_override TRUE — the
+   face §49 never drove, driven**. Both events under "Company
+   Intelligence Agent"; a text-probe of the trail found NEITHER
+   stakeholder name in any detail blob.
+3. **The stale-name refusal** — the second stakeholder renamed by
+   SQL while still selected on the open page → Re-research refused
+   in ~1s with the seam's authored sentence VERBATIM in the toast
+   ("Stakeholder "Ilse Vantroska" not found in this project."), NO
+   third event, no session left behind.
+
+Research-quality footnote, expected and honest: both dossiers led
+with the agent's IDENTITY DISAMBIGUATION WARNING — fictional names
+have no public footprint, and the agent said so rather than
+inventing one (35 sources on the first run, all conservative
+archetype reads). The drive proves the threading and the trail, not
+the fiction.
+
+**Teardown to baseline exactly on the first pass** — 6 events swept
+(two hm_researched + the flip's four member events), the mandate,
+the operator's chain; 43 events / 15 users / 2 projects / 2 clients
+/ 5 skills / the founder's session.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The definition of done** — a mandate with three stakeholders can
+  now get a dossier on any of them; the report names its subject;
+  the trail's override flag means what it says, proven in both
+  directions live.
+- **The one-slot report stands** (D4/D8 as confirmed): replacement
+  is legible, not silent; per-stakeholder dossier STORAGE waits on
+  usage.
+- **The stale-selection face is the seam's sentence, kept**: a
+  renamed stakeholder refuses by name at the toast — no silent
+  fallback to the first stakeholder, which would research the wrong
+  person quietly.
+- **Long-action honesty — evidence extended, policy unchanged**:
+  ~80–95s web runs, zero transport drops, consistent with f54f1e7.
+
+Deploy `mandate-rk1u7ydsf` live; no migration; tsc / vitest **820**
+(5 new) / eslint / build green. Drive prefix 0e4 spent; next is 0e5.
+The completion declaration waits on the verdicts above and the
+founder's written confirmation; `NEXT-hm-override.md` is deleted
+only after it.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, and the "Capital Markets Investment Bank"
+client rename (editorial).
