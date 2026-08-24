@@ -7381,3 +7381,26 @@ visual account was swept; 21 users / founder's session only.
 Cosmetic follow-ups, founder-timed: the OG card stays typographic
 (no old lettermark to contradict; compositing the compass into it
 is optional), and the auth "pending" page has no nav to mark.
+
+---
+
+## 88. The agent registry page — the twenty principals, on the record for the user — 2026-08-24
+
+`/app/agents` (deploy `mandate-97vpfkvrr` = `b852a94`), "Agents" in
+the system rail. A server component in the full terminal idiom:
+static registry (five groups, each principal's judgment in one
+sentence plus its "stays human" line) joined to LIVE status from
+the users table — keyed by the principal's exact full_name, the
+same name the trail records, so a suspended agent reads SUSPENDED
+the moment an operator flips it. Honest edges: a provisioned agent
+missing from the registry renders under "Undocumented principals"
+rather than vanishing; a documented agent missing from the DB reads
+NOT PROVISIONED. The RAG tokens carry the chips (active green,
+suspended red). Founders see the /ops kill-switch note. Also this
+pass: the notch-completeness commit (`2e6fac8`) — two shared button
+constants, signup submit, project-view CTA, copilot send, and
+marketing's m-btn--primary; proven programmatically on production
+(every solid fill reports a clip-path). OPERATOR NOTE, surfaced to
+the founder: the Mac's data volume hit 100% mid-build (406/460Gi
+used); regenerable .next caches were cleared (~1GB freed) but the
+disk itself is the founder's to triage.
