@@ -6139,3 +6139,83 @@ Stripe (parked to product-development's end), the one orphaned
 331-byte storage object, the "Capital Markets Investment Bank"
 client rename (editorial), and the digest skills gap — the last of
 its kind.
+
+---
+
+## 68. Intake-skills verdicts confirmed — the slice is complete — 2026-08-24
+
+The founder confirmed all four §67 verdicts as drafted: the third
+sighting closes with intake reading recruiter-authored skills under
+the standing session-client doctrine, proven by a live steer;
+client-scoped silence at intake stands as design; the digest
+one-liner is the skills gap's last sighting, founder-timed; and the
+Skills Studio copy stays count-free — UI counts are dead-surface
+defects, and the fix is to stop counting.
+
+**The intake skills-injection slice is complete.** No NEXT file
+existed for a one-liner whose design was §56's standing verdict;
+nothing to delete. Migration counter unchanged at **091**.
+
+---
+
+## 69. The digest reads the recruiter's skills — the gap's LAST sighting closed, proven by a steered headline — 2026-08-24
+
+On the founder's word in the same breath as §68's confirmation. The
+same standing doctrine, the last surface: §47 recorded the digest as
+"the one model call without skills injection" — true through eleven
+subsequent slices, closed now. No migration; the counter stays at
+**091**. The digest agent's skills read was lawful all along —
+`skills_agent_select` (074) gates on `is_agent()` role-wide, not
+per-principal; what was missing was only the seam line.
+
+**What landed (`e831732`).** `generateDeskDigest` gains an optional
+skills context threaded from `runDeskDigestAndPersist`: the agent's
+own session as the client (§30's after()-has-no-cookies lesson), and
+`projectId: null` BY NATURE — a desk digest belongs to no mandate,
+so org-wide search skills (and pre-049 null-client client skills)
+fire while role skills stay silent by design. The pure generator
+stays callable without context, which is what keeps it testable.
+
+### Driven live on production (deploy `mandate-fwp130lz6` = `e831732`)
+
+Scratch world 0e3: an is_founder operator authored "0e3 Digest
+Steering Probe" through the real Skills Studio form — search_skill,
+trigger "ONLY when composing a desk digest", instruction "begin the
+headline with exactly 'STEERED-0E3:'" — then clicked Generate digest
+on the real desk. The digest landed in ~25s with its headline
+reading **"STEERED-0E3: The desk carries 2 active mandates…"** — the
+recruiter's sentence at the head of the agent's document, the rest
+faithful to the rollup (2 mandates, both the founder's, zero
+placements — no motion manufactured). The row under "Desk Digest
+Agent", the event under the same name with trigger "generate", zero
+agent sessions after. Teardown to baseline exactly on the first pass
+(the digest row and its event both keyed on KNOWN-ZERO baselines —
+0 digests, 0 digest events; the skill, the operator chain, the
+flip's four member events): 43 events / 15 users / 2 projects /
+2 clients / 5 skills / 0 digests / the founder's session.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The definition of done** — every model call in the product now
+  reads recruiter-authored skills: the gap recorded at §47 and
+  sighted at §55 and §56 has no remaining surface. Skills Studio's
+  count-free copy ("every AI agent run") became true the moment this
+  landed.
+- **The digest's org-wide-only scope stands as design**: a desk
+  digest belongs to no mandate and no client; role skills silent,
+  search skills authoritative. Recorded, not a gap.
+- **The steering probes are now a house pattern**: a nonce-triggered
+  search skill plus one real run is a cheap, surgical, teardown-clean
+  proof that skills reach any seam — worth reusing when the next
+  seam joins.
+
+Deploy `mandate-fwp130lz6` live; no migration; tsc / vitest 815 /
+eslint / build green. Drive prefix 0e3 spent; next is 0e4. The
+completion declaration waits on the verdicts above and the founder's
+written confirmation.
+
+Founder-owned, unchanged: the exposed Supabase access token,
+leaked-password protection (Pro-gated), the Turnstile keys (§61),
+Stripe (parked to product-development's end), the one orphaned
+331-byte storage object, and the "Capital Markets Investment Bank"
+client rename (editorial). The skills gap list is now EMPTY.
