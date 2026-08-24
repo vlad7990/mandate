@@ -1,4 +1,5 @@
 import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import "./marketing.css";
 
 const fraunces = Fraunces({
@@ -49,6 +50,11 @@ export default function MarketingLayout({
       <div className="marketing-grid" aria-hidden />
       <div className="marketing-noise" aria-hidden />
       {children}
+      {/* Every other toast-calling surface mounts its own Toaster; this
+          one was missing, so the request-access form's errors — a
+          refused rate limit included — rendered nowhere. Found live in
+          the 088 drive. */}
+      <Toaster richColors position="top-right" />
     </div>
   );
 }
