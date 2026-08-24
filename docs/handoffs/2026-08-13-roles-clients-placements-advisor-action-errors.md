@@ -6760,3 +6760,24 @@ leaked-password protection (Pro-gated), the Turnstile keys (§61),
 Stripe (parked to product-development's end), the one orphaned
 331-byte storage object, and the "Capital Markets Investment Bank"
 client rename (editorial).
+
+---
+
+## 79. Shortlist verdicts confirmed — the seventeenth principal is complete — 2026-08-24
+
+The founder confirmed all four §78 verdicts as drafted: the
+submission narrative's judgment signs its own name with its own
+kill switch, honest in refusal with nothing destroyed; the
+submission boundary is a database pin proven live in both
+directions on production rows, with the confirmed D3 refusal
+standing as design — the submitted report is the record; §73's
+uninjected-seam list shrinks to five, founder-timed; and
+long-action honesty has nothing new to defer, with the
+transport-drop mask joining the §38 record as evidence.
+
+**The shortlist conversion is complete.**
+`NEXT-shortlist-agent.md` deleted per its own instruction. Next
+migration is **094**. SEVENTEEN principals live. Remaining queue:
+the read-shaped copilot conversion and §73's five uninjected seams
+(three executive generators, candidate search, sourcing search),
+by usage on the founder's word.
