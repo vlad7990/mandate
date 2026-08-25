@@ -83,19 +83,24 @@ export async function runCvParseAndPersist(args: {
       const message = err instanceof Error ? err.message : "CV parsing failed.";
       // The honest failure state, written by the agent that failed. No
       // trail event — a failed parse is a log line, not history (D4).
-      const { error: failErr } = await session.client
+      // A zero-row write is a FAILURE, not a success: RLS filters silently,
+      // so the caller must fall back to its own session (§128 F-1).
+      const { error: failErr, count: failCount } = await session.client
         .from("candidates")
-        .update({
-          cv_processing: false,
-          cv_parse_error: message,
-          updated_at: new Date().toISOString(),
-        })
+        .update(
+          {
+            cv_processing: false,
+            cv_parse_error: message,
+            updated_at: new Date().toISOString(),
+          },
+          { count: "exact" }
+        )
         .eq("id", args.candidateId);
-      if (failErr) {
+      if (failErr || (failCount ?? 0) === 0) {
         captureSeamError(
           "[cv-parser] failed to persist the parse-failure state",
           args.candidateId,
-          failErr
+          failErr ?? new Error("zero rows written")
         );
       }
       return { ok: false, kind: "parse_failed", reason: message };
@@ -104,21 +109,24 @@ export async function runCvParseAndPersist(args: {
     const identityChanged =
       (parsed.full_name ?? null) !== (args.priorName ?? null);
 
-    const { error: updateError } = await session.client
+    const { error: updateError, count: updateCount } = await session.client
       .from("candidates")
-      .update({
-        cv_url: args.cvPath,
-        full_name: parsed.full_name || args.priorName || "Untitled candidate",
-        email: parsed.email,
-        linkedin_url: parsed.linkedin_url,
-        current_title: parsed.current_title,
-        current_company: parsed.current_company,
-        archetype: parsed.archetype,
-        cv_structured: parsed,
-        cv_processing: false,
-        cv_parse_error: null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(
+        {
+          cv_url: args.cvPath,
+          full_name: parsed.full_name || args.priorName || "Untitled candidate",
+          email: parsed.email,
+          linkedin_url: parsed.linkedin_url,
+          current_title: parsed.current_title,
+          current_company: parsed.current_company,
+          archetype: parsed.archetype,
+          cv_structured: parsed,
+          cv_processing: false,
+          cv_parse_error: null,
+          updated_at: new Date().toISOString(),
+        },
+        { count: "exact" }
+      )
       .eq("id", args.candidateId);
 
     if (updateError) {
@@ -126,6 +134,17 @@ export async function runCvParseAndPersist(args: {
         ok: false,
         kind: "parse_failed",
         reason: `Failed to persist parsed profile: ${updateError.message}`,
+      };
+    }
+    if ((updateCount ?? 0) === 0) {
+      // RLS filtered the write to zero rows and PostgREST calls that
+      // success — the 0fa stall (§128 F-1). Refuse loudly so the caller
+      // persists the honest failure under its own session.
+      return {
+        ok: false,
+        kind: "parse_failed",
+        reason:
+          "The CV Parsing Agent could not persist the profile: the write matched no row the agent may update.",
       };
     }
 

@@ -171,7 +171,11 @@ export async function uploadAndParseCv(
         return { candidateId };
       }
       // A real parse failure keeps today's contract: the row carries the
-      // error (the seam wrote it) and the recruiter sees the sentence.
+      // error and the recruiter sees the sentence. Written here as well as
+      // in the seam because the agent's own failure write can itself land
+      // zero rows (§128 F-1) — the recruiter's session always reaches this
+      // row, so the retry affordance never silently vanishes.
+      await markCandidateFailed(candidateId, result.reason);
       throw new Error(result.reason);
     }
 
