@@ -8403,3 +8403,79 @@ any adopted slices get their own D-gates. Numbers: next migration
 103, next § 102, next drive 0f1; durable baseline 25 users / 24
 agents / 74 events / 5 skills / 1 network_profile / 1
 org_comms_policy.
+
+---
+
+## 102. The Skill Creator hardening slice — 2026-08-25 — DRAFT
+
+The §101-tabled analysis adopted in its narrow form on the founder's
+written scope (version table now, provenance when Scout lands),
+built the same session (commit `bc21e96`, deploy `mandate-c5uhdotuo`).
+**This § is a DRAFT: no completion is declared until the founder
+confirms these verdicts.**
+
+**Migration 103 — `skill_versions`** (MCP + numbered file):
+append-only history fed by a SECURITY DEFINER trigger on skills
+INSERT/UPDATE — the 098 resolver doctrine, every write path covered,
+no app code to remember. NO foreign key to skills: **history
+survives deletion of the current row** (the org FK stays and
+cascades — tenant-erasure scope). Scope columns are plain uuids so a
+deleted project/client cannot rewrite what the scope WAS. Actor =
+`changed_by` (auth.uid(), NULL for owner-side writes, honestly) plus
+denormalized `changed_by_label` (the 053 actor_label doctrine).
+APPEND-ONLY by construction: SELECT (can_read_org) is the only
+policy anyone holds; rows are born definer-side; no agent face — an
+agent reads the ACTIVE skill through 074's grant, never the archive.
+**Backfill**: the five durable skills received v1 'created'
+snapshots (actor NULL — the migration wrote them), so the first
+future edit of an existing skill still leaves its prior text
+reconstructable. New durable baseline: **5 skill_versions** joins
+the count set.
+
+**The harness** (`supabase/tests/skill_version_invariants.sql`,
+rolled back): create → v1 'created' actor-stamped with the label;
+edit → v2 carrying the new text while v1 KEEPS THE OLD; pause and
+reactivate reconstructable (v3 false / v4 true); append-only both
+faces (the admin's rewrite and delete of history land nowhere);
+**deleting the skill deletes nothing of its history** (4 of 4
+survive the row); org boundary (a second org reads zero) and the
+agent reads zero. **Control run verified**: the trigger DROPPED
+in-transaction ("the app records versions anyway") → the edit
+produced NO v2, the prior text became unrecoverable, abort at
+INVARIANT-FAIL (1); drift rolled back, trigger verified live after.
+
+**Injector observability**: both load-failure paths now reach
+Sentry through `captureSeamError` — fail-OPEN to the base prompt
+preserved (a run never blocks on skills), fail-LOUD added (a silent
+load failure is how every recruiter skill quietly stopped applying
+once before — the §30 after()/cookies() class).
+
+**Injector unit proofs** (`skill-injector.test.ts`, 10 tests,
+vitest 881 → 891): deterministic scope filtering — active injects,
+paused never, wrong-project role skill never, wrong-client client
+skill never, null-client client skill fires org-wide (the pre-049
+rule, pinned); XML/meta-characters cannot close the wrapper (exactly
+one `</skill>` and one `</active_skills>` — the wrapper's own);
+attribute quotes escaped; multiple skills serialize
+deterministically in LOAD ORDER, once each (no semantic-precedence
+claim — the model resolves conflicts and the UI says so); load
+failure preserves the base prompt with the seam evented.
+
+**AGENTS.md** gains the five-concept architecture vocabulary —
+Agent / Capability / Skill / Deterministic Policy / Workflow — with
+the §20 decision rule (name which one it is before writing code).
+
+**Deviation from the tabled scope, reported**: the v1 BACKFILL was
+added (the spec did not ask for it) — without it, the first edit to
+a pre-103 skill would have produced a v1 of the NEW text and the
+prior wording would be unrecoverable, defeating the table's purpose.
+
+**Deferred per the confirmed scope**: run-provenance (applied skill
+ids/versions on agent events — Scout-era), per-run token budgets and
+count caps, capability targeting, structured skills, history UI,
+safety-preview UX, CAPABILITY.md rollout.
+
+Green gate: tsc clean / vitest 891 / eslint clean / build clean.
+Numbers: next migration 104, next § 103, next drive 0f1; durable
+baseline 25 users / 24 agents / 74 events / 5 skills / 5
+skill_versions / 1 network_profile / 1 org_comms_policy.
