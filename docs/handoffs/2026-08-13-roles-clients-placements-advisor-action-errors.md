@@ -7404,3 +7404,31 @@ marketing's m-btn--primary; proven programmatically on production
 the founder: the Mac's data volume hit 100% mid-build (406/460Gi
 used); regenerable .next caches were cleared (~1GB freed) but the
 disk itself is the founder's to triage.
+
+---
+
+## 89. The Engage arc approved — Scout as workflow, four new principals queued — 2026-08-24
+
+The founder approved the Mandate Scout / Engage design spec
+(`docs/superpowers/specs/2026-08-24-mandate-scout-engagement-design.md`,
+committed `965668e`) as written, including its defaults: org autonomy
+cap defaults to Level 1; a deploy-time ceiling holds every org ≤ Level
+2 until the §12 counsel questions clear; every outreach strategy is
+human-approved at every level; slice-one sender identity is
+noreply@getmandate.io with the recruiter named in the body; counsel
+raised when #22 nears. Scout is a WORKFLOW (mission state +
+orchestration + surface), never a principal. Candidate Search #13 and
+Ranking #4 stay as built. The Agents page carries the funnel taxonomy
+(Understand / Discover / Evaluate / Deliver / Assist; Engage appears
+with its first principal).
+
+**The arc, in order, each slice gated on its own D1–D8 confirmation:**
+097 #21 Outreach Strategy (+ outreach_strategies, org_comms_policy;
+zero new infra; scout_missions/scout_actions may land in
+Assist/Discover form) → 098 #24 Candidate Relationship
+(network_profiles + resolver + durable DNC before any autonomous
+send) → 099–100 comms service + #22 Engagement (the infrastructure
+slice; inbound email is the arc's largest genuine gap) → 101 #23
+Pre-Screen (two evidence tracks, no verdict key — harness-pinned).
+The founder chose to begin the arc NEXT; the pre-launch checklist
+queues behind it.

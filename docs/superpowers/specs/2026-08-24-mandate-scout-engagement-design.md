@@ -1,6 +1,12 @@
 # Mandate Scout — Autonomous Candidate Search & Outreach: design spec
 
-Status: **DESIGN — awaiting founder approval. Nothing here is built.**
+Status: **APPROVED by the founder 2026-08-24 (written, §89) — with the
+spec's defaults confirmed: org autonomy cap default Level 1, deploy-time
+ceiling ≤2 until §12 counsel clears, human approval of every outreach
+strategy at every level, noreply sender identity for slice one, counsel
+questions raised when #22 nears. Implementation order 21 → 24 → 22 → 23.
+Nothing is built yet; each slice runs the proven ladder with its own
+D1–D8 confirmation.**
 Date: 2026-08-24. Grounded in the repository at `b852a94` (twenty
 principals live, §85; terminal re-skin §86–87; agent registry §88).
 
