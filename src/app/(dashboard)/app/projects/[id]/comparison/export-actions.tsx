@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { openMailDraft } from "@/lib/mail-draft";
 import {
   IconClose,
   IconCopy,
@@ -179,9 +180,13 @@ function EmailDraftDialog({
     }
   };
 
-  const handleMailto = () => {
-    const url = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = url;
+  const handleMailto = async () => {
+    const outcome = await openMailDraft({ subject, body });
+    if (outcome === "opened_body_on_clipboard") {
+      toast.success("Draft too long for a mail link — body copied, paste it into the email.");
+    } else if (outcome === "too_long_clipboard_unavailable") {
+      toast.error("Draft too long for a mail link and the clipboard is unavailable — use Copy instead.");
+    }
   };
 
   return (

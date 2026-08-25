@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { openMailDraft } from "@/lib/mail-draft";
 import {
   IconCheckCircle,
   IconMail,
@@ -85,12 +86,7 @@ export function OutreachStrategyPanel({
   const isDraft = strategy?.status === "draft";
   const isApproved = strategy?.status === "approved";
 
-  const mailtoHref =
-    candidateEmail && content.draft_subject != null
-      ? `mailto:${candidateEmail}?subject=${encodeURIComponent(
-          content.draft_subject ?? ""
-        )}&body=${encodeURIComponent(content.draft_body ?? "")}`
-      : null;
+  const canMailto = Boolean(candidateEmail && content.draft_subject != null);
 
   return (
     <section className="bg-surface-container-low border border-outline-variant">
@@ -306,14 +302,26 @@ export function OutreachStrategyPanel({
                   )}
                   Send via Mandate
                 </button>
-                {mailtoHref && (
-                  <a
-                    href={mailtoHref}
+                {canMailto && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const outcome = await openMailDraft({
+                        to: candidateEmail ?? undefined,
+                        subject: content.draft_subject ?? "",
+                        body: content.draft_body ?? "",
+                      });
+                      if (outcome === "opened_body_on_clipboard") {
+                        toast.success("Draft too long for a mail link — body copied, paste it into the email.");
+                      } else if (outcome === "too_long_clipboard_unavailable") {
+                        toast.error("Draft too long for a mail link and the clipboard is unavailable — use Copy draft instead.");
+                      }
+                    }}
                     className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container-high transition-colors flex items-center gap-1.5"
                   >
                     <IconMail size={14} />
                     Open in mail client
-                  </a>
+                  </button>
                 )}
                 <button
                   type="button"

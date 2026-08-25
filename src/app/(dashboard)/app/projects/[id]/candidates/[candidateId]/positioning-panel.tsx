@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { openMailDraft } from "@/lib/mail-draft";
 import {
   IconCopy,
   IconMail,
@@ -343,9 +344,13 @@ function EmailView({
         </button>
         <button
           type="button"
-          onClick={() => {
-            const url = `mailto:?subject=${encodeURIComponent(email.subject)}&body=${encodeURIComponent(email.body)}`;
-            window.location.href = url;
+          onClick={async () => {
+            const outcome = await openMailDraft({ subject: email.subject, body: email.body });
+            if (outcome === "opened_body_on_clipboard") {
+              toast.success("Draft too long for a mail link — body copied, paste it into the email.");
+            } else if (outcome === "too_long_clipboard_unavailable") {
+              toast.error("Draft too long for a mail link and the clipboard is unavailable — use Copy Body instead.");
+            }
           }}
           className={PANEL_BUTTON}
         >
