@@ -103,6 +103,7 @@ export async function POST(
     organizationId: verified.organization_id,
     parsed: parsed.value,
     tokenId: tokenRow?.id ?? null,
+    fallbackHmLabel: verified.label,
   });
 
   if (!persisted.ok) {
@@ -123,7 +124,7 @@ export async function POST(
         reviewId,
         rows,
         topConcern: parsed.value.top_concern,
-        hmLabel: parsed.value.hm_label,
+        hmLabel: persisted.hmLabel,
       });
     });
   }

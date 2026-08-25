@@ -132,6 +132,11 @@ export type PersistResult =
        * returning read failed, which is logged, not fatal. */
       reviewId: string | null;
       insertedFeedback: Array<{ id: string; candidate_id: string }>;
+      /** The label the review was stamped with — the body's, or the
+       * token's issuance label when the body carried none (§128 F-4).
+       * Callers reuse it so the interpretation pipeline names the same
+       * person the review row does. */
+      hmLabel: string;
     }
   | { ok: false; status: number; error: string };
 
@@ -150,8 +155,15 @@ export async function persistHmSubmission(args: {
   parsed: ParsedSubmission;
   tokenId?: string | null;
   submittedByUserId?: string | null;
+  /** The share link's issuance label ("Jane Smith @ Acme"). The portal
+   * form asks for no name, so without this fallback every token-door
+   * review lands label-less and the desk cannot tell WHICH hiring
+   * manager answered when two links are live (§128 F-4). */
+  fallbackHmLabel?: string | null;
 }): Promise<PersistResult> {
   const { supabase, projectId, organizationId, parsed } = args;
+  const hmLabel =
+    parsed.hm_label.trim() || (args.fallbackHmLabel ?? "").trim();
 
   const ratingsObject: Record<string, { rating: HmRating; feedback: string }> = {};
   for (const [cid, rating] of Object.entries(parsed.candidate_ratings)) {
@@ -180,7 +192,7 @@ export async function persistHmSubmission(args: {
       candidate_ratings: ratingsObject,
       top_concern: parsed.top_concern,
       priority_order: parsed.priority_order,
-      hm_label: parsed.hm_label,
+      hm_label: hmLabel,
     })
     .select("id")
     .single<{ id: string }>();
@@ -198,7 +210,7 @@ export async function persistHmSubmission(args: {
       entry.rating,
       entry.feedback,
       parsed.top_concern,
-      parsed.hm_label
+      hmLabel
     ),
     interpreted: {},
     triggered_recalibration: false,
@@ -219,7 +231,7 @@ export async function persistHmSubmission(args: {
     }
   }
 
-  return { ok: true, reviewId: reviewRow?.id ?? null, insertedFeedback };
+  return { ok: true, reviewId: reviewRow?.id ?? null, insertedFeedback, hmLabel };
 }
 
 /**
