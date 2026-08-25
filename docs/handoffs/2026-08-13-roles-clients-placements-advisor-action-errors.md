@@ -8922,3 +8922,120 @@ precedent); BUILD on the founder's written word against the drafted
 gate. Numbers: next migration 107, next § 114, next drive 0f6;
 vitest 904; durable baseline unchanged (25/24/74/5/5/1/1/2/2/1/1,
 tasks 0); allowlist 29, activity CHECK 78, intent door 12.
+
+---
+
+## 114. The OKR/KPI programme, slice one — the objectives domain — 2026-08-25 — DRAFT
+
+Slice one on the founder's confirmed D1–D9 and all four rulings as
+recommended (D2 = okrs:write to recruiter/manager/admin, admins
+excluded from surfaces and from OWNING — the guard refuses an admin
+owner; D8's rider = the TS mirror reconciled). The gate document
+itself is committed: docs/superpowers/specs/2026-08-25-okr-kpi-design.md.
+Commits `ebd7ffc` + `78bc536`, deploy `mandate-4yb1toinm`, migration
+107, drive 0f6. **This § is a DRAFT: no completion is declared;
+NEXT-okr-programme.md stands until the founder confirms.**
+
+**Built.** 107 = `objectives` (org conventions; owner NOT NULL;
+period NOT NULL with ordering CHECK; coherence CHECKs closed ⇔
+stamped ⇔ signed; abandoned unstamped — the walk-away) +
+`objective_key_results` (kind CHECK financial/quantitative/
+qualitative; the metric vocabulary as a CHECK — nine quantitative
+slugs + two financial; target⇔kind, currency⇔financial,
+attestation⇔qualitative biconditionals; **NO candidate column — R2
+structural**) + guard_objective_owner_changes() on the 064 model
+(author immutable; only the desk hands an objective to someone else;
+owner must be an ACTIVE manager or recruiter — ADMIN REFUSED BY NAME,
+R4; predicates COALESCED) + 097-shape RLS (org-wide SELECT with the
+FEES-TIER clause on financial rows — `kind <> 'financial' OR
+can_read_fees()`, the 053/054 tiered-row precedent, R1; okr-writer
+INSERT with created_by pinned; owner-or-desk UPDATE with the close
+pin AND the attestation pin — nobody signs another's close or
+attestation; NO DELETE for anyone on either table, R3) +
+objective_created/objective_closed (CHECK 78→80 rebuilt from
+pg_constraint; intent door 12→14, both gated can_write_okrs inside
+the RPC; grants re-declared; detail carries titles/scopes/outcomes —
+NEVER amounts).
+
+Surfaces: `okrs:write` in roles.ts (recruiter/manager/admin);
+/app/objectives (org:read view, no ROUTE_RULES entry — the Kanban
+shape, controls behind okrs:write: create with the desk-only owner
+picker filtered to active managers+recruiters, per-objective KR
+composer with kind-driven fields, attest, close met/missed, abandon
+behind window.confirm); Analytics gains the OBJECTIVES section
+(non-financial KRs only — financial rows not even fetched, R1);
+Placements gains the financial-objective strip under the existing
+seesFees; `computeObjectiveProgress` (src/lib/okrs/) computes LIVE —
+stage-derived metrics read the `candidate_stage_changed` EVENT STREAM
+(the honest Kanban tie; pipeline.ts's own "until a stage-history
+table exists" caveat answered with the history that already exists),
+financial metrics sum whatever fee lines RLS returned (the
+Placements-page doctrine). D8 rider: ACTIVITY_EVENT_TYPES reconciled
+46→80 (the 067-era external block + the 091–101 agent events had
+drifted; the feed rendered them as raw slugs) with describe
+sentences for all 34. vitest 904→929.
+
+**Deviations from the gate, recorded:** (a) the `current_value`
+snapshot column was dropped — progress is computed at read time,
+never stored (§13's same-thing-twice family; the metrics machinery's
+settled answer); (b) no `unit` column — currency covers financial
+and the metric slug implies the rest; (c) the credited-placement
+exception does NOT extend to financial KR reads — a KR aggregates a
+period's book, so no single placement's credit could honestly anchor
+it; can_read_fees() alone gates the row.
+
+**Harness** (okr_invariants.sql, live, rolled back): twelve
+invariants — recruiter self-creates with created_by pinned / manager
+desk-sets for another / recruiter refused setting another's owner /
+ADMIN, VIEWER and AGENT refused as owners BY NAME / researcher and
+viewer refused creation / non-owner update lands ZERO rows +
+non-desk handoff refused + author rewrite refused / close pin both
+faces / THE MONEY BOUNDARY: viewer and researcher read ZERO
+financial rows while reading the quantitative one, fees:read
+recruiter reads it / attestation pin both faces + non-owner KR edit
+zero rows / the three structural CHECKs refuse currencyless money, a
+scored milestone, a rogue metric / intent door three faces
+(researcher insufficient_privilege; recruiter's event wears the
+right face; agent door refuses the human type) / §42 exact counts +
+org containment. CONTROL RUN: the financial clause dropped from the
+KR SELECT policy → the VIEWER read the money row → INVARIANT-FAIL
+(8), self-rolled-back; live policy verified intact after.
+
+**Drive 0f6** (scratch manager Maren Callow + scratch recruiter
+Tobias Wrenfield, both torn down): Tobias created "Q3 fintech
+delivery" (whole book, Aug–Oct) — no owner picker on the
+recruiter's form — then all three KR kinds: submissions 0/12 AT
+RISK, fees_earned US$0/US$250,000 AT RISK, qualitative milestone
+PENDING → Attest landed "attested · Tobias Wrenfield" and read MET;
+Analytics OBJECTIVES section showed the quantitative and qualitative
+rows and NO MONEY ANYWHERE; **0f6 FINDING: with zero real placements
+the Placements page's sample short-circuit HID the real financial
+strip — a real fees_earned target suppressed by a gate keyed on
+placements alone; fixed (`78bc536`, the strip escapes the ternary,
+seesFees + RLS still the boundary) and redeployed mid-drive**, after
+which the strip rendered US$0 / US$250,000 with the owner and
+period; Maren's form DID show the owner picker with exactly the
+legal vocabulary (Myself / Maren Callow / Tobias Wrenfield — no
+admin, no viewer, no agent), desk-set an objective OWNED by Tobias
+scoped to the IT Operations mandate, and closed it MISSED under her
+own signature (owner Tobias, author+closer Maren, stamp biconditional
+verified in the DB); the trail read all three sentences under the
+right faces ("Set the objective … for Tobias Wrenfield" ×2, "Closed
+the objective … — missed"). Teardown by VALUE: the three objective
+events by title, the two objectives and three KRs by title/label,
+the scratch pair by email (public.users before auth.users —
+users_id_fkey is NO ACTION), and the SIX member-audit trigger rows
+the provisioning wrote (member_org/role/status_changed ×2, swept by
+member name — a 0f6 lesson for every future scratch-operator drive).
+Baseline EXACT: 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 +
+key_results 0 + auth 25. Screenshots (.playwright-mcp):
+okr-0f6-board-three-kinds, okr-0f6-milestone-attested,
+okr-0f6-analytics-section, okr-0f6-placements-strip,
+okr-0f6-desk-set-owner, okr-0f6-closed-missed, okr-0f6-trail-events.
+
+Green gate: tsc / vitest 929 / eslint / build. Numbers: next
+migration 108, next § 115, next drive 0f7; activity CHECK 80,
+intent door 14, agent allowlist 29 (untouched — agents hold no
+goals). On confirmation the programme proceeds per D9: researcher →
+viewer → externals (own gates) → admins never; after the programme,
+THE PRE-LAUNCH CHECKLIST (standing order).
