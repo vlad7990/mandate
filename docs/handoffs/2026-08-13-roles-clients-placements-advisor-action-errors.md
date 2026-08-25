@@ -9222,3 +9222,58 @@ intent door leaves nothing on the trail. The gate is drafted at
 docs/superpowers/specs/2026-08-25-okr-externals-gate.md; execution
 gated on written confirmation against it. Numbers: next migration
 109 (none proposed), next § 120, next drive 0f9 (none proposed).
+
+---
+
+## 120. The OKR programme, slice four — THE EXTERNALS — and the programme's completion claim — 2026-08-25 — DRAFT
+
+Slice four on the founder's confirmed externals gate (D1–D4 +
+R1–R3, D2 as recommended: nothing of the programme is ever rendered
+to an external; client-visible "commitments" deferred OUT of the
+programme behind their own future gate). Gate:
+docs/superpowers/specs/2026-08-25-okr-externals-gate.md. No
+migration, no capability change, no portal change, no drive, no
+deploy — the app untouched. **This § is a DRAFT: no completion is
+declared; NEXT-okr-programme.md stands until the founder confirms —
+and on THIS §'s confirmation the file is DELETED and the programme
+CLOSES.**
+
+**Built: one invariant.** okr_invariants.sql gains **(14) THE
+EXTERNAL BOUNDARY** — the harness org acquires a client and an
+external hiring_manager principal (the 067 XOR: client_id set, org
+NULL), and the invariant pins BY NAME what Phase 0 probed: the
+external reads ZERO objectives and ZERO key results (structurally —
+the org-match predicate is never true for a NULL org, and
+can_read_org() is false for every external role), is refused
+creation, and leaves NOTHING at the intent door. Full harness —
+FOURTEEN invariants over eight faces (manager, two recruiters,
+researcher, viewer, admin, agent, external) — run live and green,
+rolled back; durable baseline verified untouched after
+(25/24/74/…, objectives 0, key_results 0).
+
+**D1 as doctrine, recorded:** clients hold no org goals — beside
+"agents hold no goals" and "admins are support, not subjects" as the
+programme's three permanent exclusions.
+
+**The completion claim, for the founder's verdict.** The roster the
+§113 brief named is covered, each persona behind its own confirmed
+gate: RECRUITER/MANAGER measured (§114 — the domain, migration 107);
+RESEARCHER measured (§116 — migration 108, placements_sourced, the
+D3 double refusal); VIEWER reads (§118 — verification, the boundary
+probe); EXTERNALS see nothing (this §); ADMINS NEVER (the brief's
+own word — the exclusion is the ruling, enforced in the owner guard
+since 107 and asserted by name in the harness since day one); agents
+hold no goals throughout. Financial metrics live on Placements
+behind the unmoved fees tier; quantitative and qualitative metrics
+enhance Analytics; the whole is tied to the Kanban board's REAL
+stage-event stream; strategy creation stands enabled on top —
+deferred as its own future work per the slice-one gate (D6).
+
+Gate: vitest 929 (unchanged — no TS touched); the diff is one SQL
+test file. Numbers: next migration 109, next § 121, next drive 0f9;
+activity CHECK 80; intent door 14; agent allowlist 29. On
+confirmation: NEXT-okr-programme.md deleted per doctrine, THE
+PROGRAMME CLOSES, and THE PRE-LAUNCH CHECKLIST takes the slot
+(CLAUDE.md standing order: advisor sweep, Turnstile, key rotation,
+RLS review, FK indexes, first-client testing, onboarding docs,
+status page, Lighthouse audit, simulator verification).

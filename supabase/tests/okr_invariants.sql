@@ -40,6 +40,13 @@
 --       the recruiter AND the researcher wearing their own faces;
 --       the agent door refuses the human type.
 --   13. §42: probe counts EXACT; nothing escapes the harness org.
+--   14. THE EXTERNAL BOUNDARY (§119 gate, the programme's last):
+--       an external HIRING_MANAGER principal — client-side of the
+--       067 XOR, org NULL — reads ZERO objectives and ZERO key
+--       results (structurally: the org-match predicate is never
+--       true and can_read_org() is false), is refused creation, and
+--       leaves nothing at the intent door. Clients hold no org
+--       goals, and see none.
 --
 -- On success: NOTICE 'ALL OKR INVARIANTS PASSED'.
 --
@@ -54,6 +61,9 @@ begin;
 insert into public.organizations (id, name, slug) values
   ('01070000-0000-4000-8000-0000000000d0', 'OKR Org A', 'okr-org-a');
 
+insert into public.clients (id, organization_id, name) values
+  ('01070000-0000-4000-8000-0000000000dc', '01070000-0000-4000-8000-0000000000d0', 'OKR Client A');
+
 insert into auth.users (id, email) values
   ('01070000-0000-4000-8000-0000000000d1', 'okr-manager@test.local'),
   ('01070000-0000-4000-8000-0000000000d2', 'okr-rec-a@test.local'),
@@ -61,7 +71,8 @@ insert into auth.users (id, email) values
   ('01070000-0000-4000-8000-0000000000d4', 'okr-viewer@test.local'),
   ('01070000-0000-4000-8000-0000000000d5', 'okr-researcher@test.local'),
   ('01070000-0000-4000-8000-0000000000d6', 'okr-admin@test.local'),
-  ('01070000-0000-4000-8000-0000000000db', 'okr-agent@test.local');
+  ('01070000-0000-4000-8000-0000000000db', 'okr-agent@test.local'),
+  ('01070000-0000-4000-8000-0000000000dd', 'okr-hm@test.local');
 
 update public.users set organization_id = '01070000-0000-4000-8000-0000000000d0',
        status = 'active', role = 'manager', full_name = 'OKR Manager'
@@ -84,6 +95,10 @@ update public.users set organization_id = '01070000-0000-4000-8000-0000000000d0'
 update public.users set organization_id = '01070000-0000-4000-8000-0000000000d0',
        status = 'active', role = 'agent', full_name = 'OKR Agent'
  where id = '01070000-0000-4000-8000-0000000000db';
+update public.users set organization_id = null,
+       client_id = '01070000-0000-4000-8000-0000000000dc',
+       status = 'active', role = 'hiring_manager', full_name = 'OKR External HM'
+ where id = '01070000-0000-4000-8000-0000000000dd';
 
 do $checks$
 declare
@@ -94,6 +109,7 @@ declare
   v_researcher uuid := '01070000-0000-4000-8000-0000000000d5';
   v_admin      uuid := '01070000-0000-4000-8000-0000000000d6';
   v_agent      uuid := '01070000-0000-4000-8000-0000000000db';
+  v_external   uuid := '01070000-0000-4000-8000-0000000000dd';
   v_org        uuid := '01070000-0000-4000-8000-0000000000d0';
   v_obj        uuid;
   v_obj2       uuid;
@@ -497,6 +513,44 @@ begin
    where detail->>'probe' = 'okr-107' and organization_id <> v_org;
   if v_count <> 0 then
     raise exception 'INVARIANT-FAIL (13): % probe event(s) escaped the harness org', v_count;
+  end if;
+
+  ------------------------------------------------------------------------
+  -- (14) The external boundary (§119, the programme's last ruling).
+  ------------------------------------------------------------------------
+  execute 'set local role authenticated';
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_external, 'role', 'authenticated')::text, true);
+  select count(*) into v_count from public.objectives;
+  if v_count <> 0 then
+    raise exception 'INVARIANT-FAIL (14): the EXTERNAL read % objective row(s)', v_count;
+  end if;
+  select count(*) into v_count from public.objective_key_results;
+  if v_count <> 0 then
+    raise exception 'INVARIANT-FAIL (14): the EXTERNAL read % key-result row(s)', v_count;
+  end if;
+  v_raised := false;
+  begin
+    insert into public.objectives
+      (organization_id, owner_user_id, title, period_start, period_end, created_by)
+    values
+      (v_org, v_external, 'OKR external forged objective',
+       current_date, current_date + 30, v_external);
+  exception when others then v_raised := true; end;
+  if not v_raised then
+    raise exception 'INVARIANT-FAIL (14): the EXTERNAL created an objective';
+  end if;
+  begin
+    perform public.record_activity_event(
+      'objective_created', null, null, null,
+      jsonb_build_object('title', 'OKR external forged', 'probe', 'okr-ext'));
+  exception when others then null; end;
+  execute 'reset role';
+  perform set_config('request.jwt.claims', '', true);
+  select count(*) into v_count from public.activity_events
+   where detail->>'probe' = 'okr-ext';
+  if v_count <> 0 then
+    raise exception 'INVARIANT-FAIL (14): the EXTERNAL''s event landed on the trail';
   end if;
 
   raise notice 'ALL OKR INVARIANTS PASSED';
