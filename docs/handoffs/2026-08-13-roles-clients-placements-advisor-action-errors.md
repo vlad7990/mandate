@@ -8265,3 +8265,22 @@ one remaining session is the founder's.
   inbound gate as their own future D-gated slices.
 - **`.env.local` appends stay founder-hand** (all four Engage
   pairs); production is live without them.
+
+---
+
+## 99. §98 confirmed — THE ENGAGE ARC IS COMPLETE; Skills Studio review opens — 2026-08-25
+
+The founder confirmed §98 in writing 2026-08-25. The Pre-Screen
+Agent (#23) is complete: the twenty-fourth principal, the no-verdict
+record with its terminal pin, the counsel boundary held. §98's
+drafted verdicts stand as confirmed and NEXT-prescreen-agent.md is
+DELETED. **The Engage arc — #21, #24, the comms service, #22, #23 —
+is COMPLETE at level ≤1**; Scout's mission system and the inbound
+gate remain deferred behind their own future D-gates, and the §12
+counsel items gate level ≥3. Founder-hand items open: Resend
+dashboard webhook + RESEND_WEBHOOK_SECRET (+ redeploy); the four
+Engage `.env.local` pairs. Numbers: next migration 102, next
+handoff § 100, next drive prefix 0f0; durable baseline 25 users /
+24 agents / 74 events / 1 network_profile / 1 org_comms_policy.
+Next on the founder's word: a review of Skills Studio and the
+skill-creation process.
