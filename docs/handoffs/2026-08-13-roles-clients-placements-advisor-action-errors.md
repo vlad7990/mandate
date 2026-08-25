@@ -8494,3 +8494,44 @@ board) — the analysis and the continuation prompt close this
 session. Numbers: next migration 104, next § 104, next drive 0f1;
 durable baseline 25 users / 24 agents / 74 events / 5 skills / 5
 skill_versions / 1 network_profile / 1 org_comms_policy.
+
+---
+
+## 104. The naming pass — de-AI'd surfaces, the copilot becomes MANDY — 2026-08-25 — DRAFT
+
+Product-pass slice one (NEXT-product-pass.md item 1 + item 4's UI
+half), on the founder's word with the persona name picked: MANDY.
+Commit `04a06a1`-line (`git log`: the naming commit), deploy
+`mandate-irvvgqsdo`. **This § is a DRAFT: no completion is declared
+and NEXT-product-pass.md is not deleted until the founder confirms
+the product pass's slices.**
+
+**De-AI'd names**: nav "AI search" → "Pool search" (nav-model +
+test), the search page's breadcrumb/title/intro ("AI_CANDIDATE_
+SEARCH" → "POOL_SEARCH"; "The AI parses" → "The Candidate Search
+Agent parses"; "Sorted by AI match score" → "Sorted by match
+score"), the registry's prose to agent language, Skills Studio
+"every AI agent run" → "every agent run". THE DISCLOSURE BOUNDARY
+STANDS UNTOUCHED: the pre-screen invitation's AI-disclosure block
+and the §12.1 always-disclose pre-commitment are law, not naming.
+The marketing title ("AI Executive Search Operating System") was
+left as the founder's own call — say the word and it changes.
+
+**Mandy**: the copilot persona renamed across the floating button,
+panel header, message byline, aria labels, confirm and error
+sentences. The PRINCIPAL stays "Copilot Agent" in the database and
+registry (the trail join key and history's honesty); Mandy is
+introduced in its registry line. localStorage history key and API
+routes unchanged — existing conversations survive the rename.
+
+**Verified live (drive 0f1, scratch operator Hattie Cormorant,
+teardown exact 25/74/1)**: Pool search in nav and page with zero
+AI-named strings; the Mandy button and panel on a real mandate; the
+only remaining "Copilot" on the page is the RSC payload's internal
+component name, not visible text. Screenshots:
+naming-0f1-pool-search, naming-0f1-mandy-panel. Green gate: tsc /
+vitest 891 (nav test updated with the label) / eslint / build.
+
+Next per NEXT-product-pass.md: slice two, the candidate pipeline
+Kanban board. Numbers: next migration 104, next § 105, next drive
+0f2.
