@@ -121,8 +121,11 @@ harness + D-gate; do NOT smuggle it into (a). Recommended order:
    (commit e90537d, deploy mandate-ctfo5k204, migrations 104+105 —
    105 = the FK delete-backstop finding; the stage-event rider
    proven live on the board).
-4. **Optimizer (#3)** — Phase 0 enumeration first, then its gate.
-5. **Kanban (b)** — the task domain, its own gate.
+4. **Optimizer (#3)** — DONE, confirmed §110/§111 (commit fbfcf94,
+   deploy mandate-nozp9um59; zero migration; calibration apply live
+   with human provenance).
+5. **Kanban (b)** — the task domain, its own gate. Phase 0 opened
+   §111; migration 106.
 6. Then back to the standing order: THE PRE-LAUNCH CHECKLIST
    (CLAUDE.md — advisor sweep, Turnstile, key rotation, RLS review,
    FK indexes).
