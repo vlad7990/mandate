@@ -9987,3 +9987,73 @@ is provisioned, in parallel with the founder's testing sessions.
 Numbers: next migration 113 (claimed by D1 on confirmation), next
 § 135, next drive 0ff (claimed by D5); vitest 933; the gate awaits
 the founder's written word.
+
+## 135. §134 confirmed — ADMIN MEMBER MANAGEMENT BUILT; drive 0ff green end to end — 2026-08-25
+
+The founder confirmed the §134 gate in writing 2026-08-25, R5 as
+recommended (build now, in parallel with the founder's testing
+sessions, ahead of the first client's organisation). The slice
+shipped and was proven live the same day.
+
+**Migration 113 — staff_invitations.** The invitation shape COPIED
+from the external family, never shared (invitations.client_id is
+NOT NULL; that table stays closed): org-scoped, staff-vocabulary
+CHECK (agent and every external role excluded by whitelist), token
+single-use with a live-per-email-per-org partial unique index,
+14-day expiry. Issuance/revocation are RLS-ANCHORED writes from the
+admin's own session (org-match + is_org_admin OR founder — anchored
+per §126 R2). Two definer doors only: `verify_staff_invitation`,
+the anon token door — THE TWELFTH NAMED LOAD-BEARING ANON GRANT,
+recorded in the migration's comments at birth — and
+`redeem_staff_invitation`, service-role-only on the
+redeem_invitation precedent, which stamps org + role + ACTIVE and
+spends the token. The invite IS the approval (R1): redeemed staff
+never touch the /ops pending queue.
+
+**The members screen** gains the invite panel (name, email, staff
+role picker; nothing emailed — the admin hands the /join link over,
+the HM-token contract; open invitations listed with revoke) and the
+STATUS VERBS beside the role picker. The lockout invariants live as
+a PURE RULE (src/lib/members/status-rules.ts, six new tests): never
+the founder, never an agent (the kill switch stays /ops — the two
+consoles never merge, R2), never yourself, never the last active
+admin. The action carries the .select() read-back discipline.
+
+**/join/[token]** mirrors /invite/[token]: anon verify renders the
+invitation's face (inviter's name, org, role, expiry); every dead
+state collapses to one honest screen; redemption = admin-API
+account with email pre-confirmed → service-role redeem → sign-in →
+/app/home, half-made accounts deleted on refusal.
+
+**/ops loses the silent founder-org default (D4):** approving an
+org-less signup now requires an explicit organisation choice, with
+the picker in the pending queue. The founder console keeps every
+power; it stops filing strangers into HQ by omission.
+
+**Drive 0ff (scratch org, prod):** admin Petra Ashvale issued a
+recruiter invitation for Rowan Ashcombe through the real panel; the
+/join page rendered Petra's face and the role; Rowan set a password
+and landed at /app/home ACTIVE, recruiter, in the probe org, the
+invitation stamped spent by exactly that account; the SPENT link
+then showed the dead screen (single-use honesty); Petra suspended
+Rowan (status flipped, confirm dialog carrying the honest sentence)
+and restored him. One nit found and fixed inline within the slice:
+the join page's title doubled the "· Mandate" suffix (3e5ad87).
+Teardown by value — 1 invitation, 10 member-audit/trail events, both
+scratch principals public-before-auth, org, rate buckets; baseline
+EXACT in a fresh statement (25/25/74/1 org/0 staff_invitations).
+
+Green gate: tsc / vitest 939 (933 + 6) / eslint / build · commits
+ee9730d + 3e5ad87 · deployed (mandate-hm528zofj). Screenshot:
+.playwright-mcp/amm-0ff-members-screen.png.
+
+**Admins can now set up and maintain their organisation's roster
+end to end: invite (create), promote/demote (role), suspend/restore
+(status) — with the founder console reserved for the open door and
+the platform itself.** Remaining on the checklist: the founder's
+testing half (§128), onboarding docs, status page, Lighthouse +
+mobile audits, simulator verification; then Stripe; then the
+Interviewer programme (§125 R5). Numbers: next migration 114, next
+§ 136, next drive 100 (hex rolls over); vitest 939; activity CHECK
+80; intent door 14; agent allowlist 29; durable baseline unchanged.
+This section is DRAFTED; the founder's word closes the slice.
