@@ -10057,3 +10057,25 @@ Interviewer programme (§125 R5). Numbers: next migration 114, next
 § 136, next drive 100 (hex rolls over); vitest 939; activity CHECK
 80; intent door 14; agent allowlist 29; durable baseline unchanged.
 This section is DRAFTED; the founder's word closes the slice.
+
+## 136. §135 confirmed — ADMIN MEMBER MANAGEMENT CLOSES — 2026-08-25
+
+The founder confirmed §135 in writing 2026-08-25. The slice closes
+as built: migration 113 stands, the twelfth anon grant
+(verify_staff_invitation) joins the ruled load-bearing set, the
+invite-is-approval doctrine (R1), the two-consoles separation (R2),
+the never-merge rule for the two invitation families (R3), and the
+lockout-proof refusals (R4) are law. Admins set up and maintain
+their own organisation's roster end to end; the founder console
+keeps the open door and the platform.
+
+The checklist now stands at: the founder's testing half of §128
+(real CVs, real HM, mail-client check, real erasure exercise, D2
+disposition ruling) · onboarding docs · status page · Lighthouse +
+mobile audits · simulator verification. Founder-owned stack
+unchanged. Stripe last, then the Interviewer programme (§125 R5).
+
+Numbers: next migration 114, next § 137, next drive 100; vitest
+939; activity CHECK 80; intent door 14; agent allowlist 29; durable
+baseline 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 +
+key_results 0.
