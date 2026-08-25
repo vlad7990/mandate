@@ -361,6 +361,21 @@ export async function signInCandidateSearchAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Outreach Strategy Agent — the twenty-first principal,
+ * the Engage arc's first (097). One judgment: decide how this person
+ * should be approached, and draft it. The draft is born status
+ * 'draft' under the agent's own name; approving, editing, declining
+ * and sending stay the recruiter's acts forever (the double pin).
+ */
+export async function signInOutreachStrategyAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "outreach_strategy",
+    email: process.env.AGENT_OUTREACH_STRATEGY_EMAIL,
+    password: process.env.AGENT_OUTREACH_STRATEGY_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

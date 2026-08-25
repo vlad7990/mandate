@@ -79,6 +79,10 @@ import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-re
 import type { Stakeholder } from "@/lib/ai/onboarding-analysis";
 import { RetryEvaluationButton } from "./retry-evaluation-button";
 import { RetryParseButton } from "./retry-parse-button";
+import {
+  OutreachStrategyPanel,
+  type OutreachStrategyRow,
+} from "./strategy-panel";
 
 type ProjectRow = {
   id: string;
@@ -279,6 +283,19 @@ export default async function CandidateProfilePage({
     .order("occurred_at", { ascending: false });
 
   const outreach = (outreachRows ?? []) as OutreachEntry[];
+
+  // The latest outreach strategy (#21, 097) — the draft source for the
+  // outreach flow. Latest version wins; the panel renders its status.
+  const { data: strategyRow } = await supabase
+    .from("outreach_strategies")
+    .select("id, status, version, content, created_at, approved_at")
+    .eq("candidate_id", candidate.id)
+    .eq("project_id", projectId)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const strategy = (strategyRow ?? null) as OutreachStrategyRow | null;
 
   // Notes feed for the candidate. Pinned first, then newest. RLS scopes
   // by org, so the SELECT is implicitly safe across orgs.
@@ -722,6 +739,12 @@ export default async function CandidateProfilePage({
             label: "Outreach",
             content: (
               <>
+                <OutreachStrategyPanel
+                  projectId={projectId}
+                  candidateId={candidate.id}
+                  candidateEmail={candidate.email}
+                  strategy={strategy}
+                />
                 <OutreachPanel
                   projectId={projectId}
                   candidateId={candidate.id}

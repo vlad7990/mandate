@@ -122,6 +122,17 @@ const REGISTRY: AgentGroup[] = [
     ],
   },
   {
+    label: "Engage",
+    tone: "tertiary",
+    agents: [
+      {
+        name: "Outreach Strategy Agent",
+        does: "Decides how a specific person should be approached about a specific mandate — angle, career hook, disclosure lines, talking points, and a ready-to-edit draft message — from the evidence and the contact history, clamped to the org's communication policy.",
+        staysHuman: "Approving, editing, declining and sending are the recruiter's acts forever — the draft cannot leave 'draft' by the agent's hand, and the approved message goes out from the recruiter's own mail client.",
+      },
+    ],
+  },
+  {
     label: "Deliver",
     tone: "primary",
     agents: [
@@ -311,7 +322,7 @@ export default async function AgentsPage() {
         {profile?.is_founder && (
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
             Suspend or restore any principal from Platform ops — each kill
-            switch is independent of the other nineteen.
+            switch is independent of the other twenty.
           </p>
         )}
       </footer>
