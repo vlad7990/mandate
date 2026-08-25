@@ -9202,3 +9202,23 @@ the EXTERNALS gate (what an OKR means for HM/client personas through
 the portal's SECURITY DEFINER reads) — then admins never, the
 programme closes, and THE PRE-LAUNCH CHECKLIST takes the slot
 (standing order).
+
+---
+
+## 119. §118 confirmed — the viewer slice COMPLETE; the externals Phase 0 opens — 2026-08-25
+
+The founder confirmed §118 in writing 2026-08-25. Slice three stands
+(the viewer's read positive pinned, drive 0f8's boundary probe).
+NEXT-okr-programme.md marks slice three DONE; the file stands until
+the programme closes. Per D9 the programme reaches its LAST open
+question: the EXTERNALS. Phase 0 verified: the portal's whole read
+surface is five SECURITY DEFINER RPCs (portal_context/list_mandates/
+get_mandate/list_my_reviews/list_grants, 069) — objectives appear in
+none of them; and a live forged-JWT probe (rolled back) proved the
+boundary already holds STRUCTURALLY — an external hiring_manager
+reads ZERO objective and key-result rows (org NULL ⇒ the org-match
+predicate never true, and no org:read), cannot create, and the
+intent door leaves nothing on the trail. The gate is drafted at
+docs/superpowers/specs/2026-08-25-okr-externals-gate.md; execution
+gated on written confirmation against it. Numbers: next migration
+109 (none proposed), next § 120, next drive 0f9 (none proposed).
