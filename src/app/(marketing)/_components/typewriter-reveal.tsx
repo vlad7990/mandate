@@ -119,9 +119,28 @@ export function TypewriterReveal({
       */}
       <span className="m-sr-only">{text}</span>
       <span aria-hidden="true">{text.slice(0, visible)}</span>
+      {/*
+        The untyped remainder stays IN the layout, just invisible — the
+        headline's box (and every line break in it) is final from first
+        paint, so nothing below shifts as characters appear. Rendering
+        the remainder away entirely was CLS 0.197 on mobile Lighthouse:
+        the hero grew line by line and pushed the lede down each tick.
+        The cursor is out of flow for the same reason — anchored to a
+        zero-width span so it adds no width to the line it blinks on.
+      */}
       {(phase === "typing" || phase === "cursor") && (
-        <span className="m-typewriter-cursor" aria-hidden>
-          ▌
+        <span aria-hidden style={{ position: "relative" }}>
+          <span
+            className="m-typewriter-cursor"
+            style={{ position: "absolute", left: 0 }}
+          >
+            ▌
+          </span>
+        </span>
+      )}
+      {visible < text.length && (
+        <span aria-hidden="true" style={{ visibility: "hidden" }}>
+          {text.slice(visible)}
         </span>
       )}
     </span>
