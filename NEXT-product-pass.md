@@ -117,9 +117,10 @@ harness + D-gate; do NOT smuggle it into (a). Recommended order:
 
 1. **Naming pass (#1 + #4 UI half)** — DONE, confirmed §105.
 2. **Kanban (a)** — DONE, confirmed §106/§107.
-3. **Role-template creator (#2)** — migration 104, D-gated; 104
-   ALSO carries the candidate_stage_changed vocabulary + the
-   recordActivity call (founder's ruling at §106 confirmation).
+3. **Role-template creator (#2)** — DONE, confirmed §108/§109
+   (commit e90537d, deploy mandate-ctfo5k204, migrations 104+105 —
+   105 = the FK delete-backstop finding; the stage-event rider
+   proven live on the board).
 4. **Optimizer (#3)** — Phase 0 enumeration first, then its gate.
 5. **Kanban (b)** — the task domain, its own gate.
 6. Then back to the standing order: THE PRE-LAUNCH CHECKLIST
