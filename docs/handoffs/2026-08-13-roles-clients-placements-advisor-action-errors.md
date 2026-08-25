@@ -9817,3 +9817,42 @@ report PDF) not covered · F-4 (HM review drops token label) · F-5
 open. Numbers: next migration 113, next § 131, next drive 0fc;
 vitest 933; activity CHECK 80; intent door 14; agent allowlist 29;
 durable baseline unchanged.
+
+## 131. F-4 FIXED — token-door HM reviews carry the share link's name; drive 0fc light green — 2026-08-25
+
+The founder ordered the F-4 fix 2026-08-25. Shipped and proven live
+the same day.
+
+**The fix.** The token door's submit route always HELD the answer —
+`verify_hm_token` returns the share link's issuance label ("Jane
+Smith @ Acme") — and never used it; the portal form asks for no
+name, so every token-door review landed with hm_label ''. Now
+`persistHmSubmission` takes a `fallbackHmLabel`: the body's label
+wins when present, the token's issuance label otherwise, and the
+resolved label is returned so the interpretation pipeline names the
+SAME person the review row does (the mirrored feedback content's
+"From:" line included). The /portal door needed nothing — it already
+derives its label from the signed-in profile, which is the pattern
+this fix extends to the token door. One copy, two doors, per §13.
+
+**Drive 0fc (light, curl-level — no browser, no scratch user):**
+minimal 0fc scaffold (org / client / project / candidate / token
+labelled "F4 Probe HM @ Halcyon"), then a POST through the live
+token door WITHOUT hm_label in the body. The review landed with
+`hm_label = 'F4 Probe HM @ Halcyon'`, token_id linked, and the
+mirrored feedback opened "HM PORTAL — YES / From: F4 Probe HM @
+Halcyon". In passing, the interpreter's trail event landed IN THE
+SUBJECT ORG — §129's platform-agents fix observed working from a
+second angle. Teardown by value, exact; baseline verified
+(25/25 auth/74 events/1 org/1 candidate/1 profile/2 projects/2
+clients/rate_limit 0).
+
+Green gate: tsc / vitest 933 / eslint / build · commit 5866d64 ·
+deployed (mandate-nb3b5ysls). No DB surface — no migration.
+
+Punch list state: F-1 CLOSED (§129) · F-2 CLOSED (§130) · F-4
+CLOSED (this) · F-3 (EI report PDF) not covered · F-5 (hydration
+mismatch /hiring-manager) · F-6 ("Top 1 Candidates") open. Numbers:
+next migration 113, next § 132, next drive 0fd; vitest 933;
+activity CHECK 80; intent door 14; agent allowlist 29; durable
+baseline unchanged.
