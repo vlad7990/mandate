@@ -28,7 +28,16 @@ live in memory (mandate-personas.md and siblings).
 
 ## The five items — analysis verdicts (founder's direction 2026-08-25)
 
-**1. De-AI the names.** Founder's word: stop naming surfaces "AI x" —
+**1. De-AI the names — DONE, CONFIRMED §104/§105 (2026-08-25,
+commit `febf40d`, deploy `mandate-irvvgqsdo`, drive 0f1).** Pool
+search everywhere, agent language in registry/Skills copy, the
+copilot persona is MANDY (principal stays "Copilot Agent" in
+DB/registry — the trail join key). Disclosure boundary untouched.
+Marketing title left as the founder's call. Item 4's UI half is done
+with this; only a founder-ordered PRINCIPAL rename would reopen it.
+The original analysis, kept for reference:
+
+**1. (original analysis) De-AI the names.** Founder's word: stop naming surfaces "AI x" —
 "you are as much human as I am, except much smarter." Surfaces found:
 nav "AI search" (`nav-model.ts:150`), breadcrumb "AI Search"
 (`candidates/search/page.tsx:199`), the agents-registry sentence
@@ -98,8 +107,7 @@ harness + D-gate; do NOT smuggle it into (a). Recommended order:
 
 ## Recommended order (for the founder to confirm at each gate)
 
-1. **Naming pass (#1 + #4 UI half)** — small, copy-level, one slice,
-   one visual drive. Founder must pick the copilot name first.
+1. **Naming pass (#1 + #4 UI half)** — DONE, confirmed §105.
 2. **Kanban (a)** — the pipeline board.
 3. **Role-template creator (#2)** — migration 104, D-gated.
 4. **Optimizer (#3)** — Phase 0 enumeration first, then its gate.

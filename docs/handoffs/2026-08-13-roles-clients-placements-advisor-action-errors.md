@@ -8535,3 +8535,19 @@ vitest 891 (nav test updated with the label) / eslint / build.
 Next per NEXT-product-pass.md: slice two, the candidate pipeline
 Kanban board. Numbers: next migration 104, next § 105, next drive
 0f2.
+
+---
+
+## 105. §104 confirmed — the naming pass COMPLETE; Kanban board next — 2026-08-25
+
+The founder confirmed §104 in writing 2026-08-25. Pool search, agent
+language, and Mandy stand. The session closes at the context ceiling;
+the product pass continues in the next session per
+NEXT-product-pass.md: slice two = the candidate pipeline Kanban
+board (columns from the twelve pipeline_stage values, drag = an
+evented stage change under the human's session, NO migration), then
+the role-template creator (migration 104, D-gated), Optimizer Phase
+0, the task domain, then the pre-launch checklist. Numbers: next
+migration 104, next § 106, next drive 0f2; durable baseline 25 users
+/ 24 agents / 74 events / 5 skills / 5 skill_versions / 1
+network_profile / 1 org_comms_policy.
