@@ -7769,3 +7769,124 @@ ships before any inbound. Founder-hand items open: both Engage
 `.env.local` pairs. Numbers: next migration 099, next handoff § 94,
 next drive prefix 0ed; durable baseline 23 users / 22 agents / 68
 events / 1 network_profile / 1 org_comms_policy.
+
+---
+
+## 94. Engage slice three — the Candidate Communication Service (099, stage one of the confirmed pair) — 2026-08-25 — DRAFT, awaiting the founder's written confirmation
+
+D1–D8 confirmed in writing 2026-08-25 (NEXT-comms-engagement.md,
+committed `1dff6bc`); stage one built and driven the same night.
+**This § is a DRAFT: no completion is declared, stage two (100 #22)
+does not start, and NEXT-comms-engagement.md is not deleted until the
+founder confirms these verdicts.**
+
+**The headline: MANDATE SENT ITS FIRST CANDIDATE EMAIL — and the
+record was whole.** The 0ed drive's send landed at
+`vbreygin+0ed-candidate@gmail.com` (founder-controlled mailbox, real
+delivery) with the outreach row 'sent' + Resend's reference +
+`includes_privacy_notice true` + thread_key + strategy-scoped
+idempotency key, the `candidate_notifications` row (art14-v1,
+provider-ref'd), and **`subject_notified_at` STAMPED — the Art. 14
+discharge the outreach panel has promised since 044, provider-
+confirmed for the first time in the product's history.**
+
+**Migration 099** (MCP + `supabase/migrations/099_comms_service.sql`,
+commits `0c46b8b`/`9abc6e8`): deterministic infrastructure only — no
+principal, no model call, NO vocabulary. candidate_outreach provider
+extensions (all nullable, manual logs and mailto untouched;
+idempotency UNIQUE where present; provider-coherence CHECKs);
+`email_suppressions` (admin-manual-insert only — a by-hand 'bounce'
+is refused, an agent is refused and blind; removal founder-hand);
+**`complete_candidate_send`** — the atomic completion (provider ref +
+notification + stamp through 044's own `record_notification_sent`,
+REUSED); `record_email_delivery_event` — the webhook door, inert
+without a provider-named row, forward-only (a late 'delivered'
+cannot erase a bounce), suppressing the bounced address org-scoped
+and lowercased. **A real 044 rule surfaced by the harness's first
+run**: `candidate_notifications_one_sent_idx` permits ONE sent
+notification per candidate EVER — so a second notice-carrying send
+SKIPS the statutory record rather than failing a send the provider
+already made; the completion encodes that and the harness pins it.
+
+**The harness** (`supabase/tests/comms_service_invariants.sql`):
+queued-before-provider idempotency; THE ATOMIC COMPLETION; completes
+exactly once; agent refused by name at the RPC; the direct stamp
+still guard-refused; the one-sent rule; the webhook door's whole
+matrix under role anon; suppression policy faces; the extensions
+open no agent surface. **Control run verified**: the completion
+rebuilt with the notification half dropped ("the outreach row
+already says the notice went") — the record came apart and the
+harness aborted at INVARIANT-FAIL (2). The 043 two-writes doctrine,
+proven at three.
+
+**The service** (`src/lib/comms/`): `send-candidate-message.ts`
+walks spec §5's ladder in order with every branch a NAMED refusal;
+the ladder decisions are PURE (`send-policy.ts`, 13 vitest contracts
+— vitest 856) with the service as thin IO; the send-time disclosure
+clamp reuses strategy-policy.ts (095's two-layer precedent
+completes); the provider adapter is the only file that knows Resend
+exists, through lib/email/send.ts; replyTo is the sending
+recruiter's real address (D8f as confirmed — thread_key minted for
+the future inbound gate); agent actors refused by construction.
+"Send via Mandate" leads on approved strategies with mailto demoted
+beside it.
+
+**A defect found and fixed mid-drive, the /api/cron class exactly:**
+the proxy 307-bounced Resend's sessionless webhook POST to sign-in —
+found by curling the route, as the proxy's own comment says the cron
+bounce was. `/api/webhooks/` joined ALWAYS_PUBLIC_PREFIXES (the
+route's own svix gate fails closed); the route now answers its
+honest 503 dormancy on production until the founder wires the
+dashboard secret (`RESEND_WEBHOOK_SECRET`).
+
+### Driven live on production (deploys `mandate-70j9nkm3c` = `0c46b8b`, then `9abc6e8`)
+
+Scratch world 0ed INSIDE Mandate HQ: operator Tamsin Elsworth
+(is_founder admin), mandate "0ED Head of Fund Operations" (fictional
+Wexford Crest Partners), one sourced candidate whose address was the
+founder-controlled mailbox. The acts, each verified in the database:
+
+1. **#21 drafted → approved → SEND VIA MANDATE** → the real send,
+   the whole record (above); toast "Sent — the contact record is
+   stamped"; the Art. 14 banner flipped to NOTIFIED.
+2. **Idempotency** — a second click: "This strategy was already sent
+   — the contact log has the record." No second email.
+3. **Send-time DNC refusal** (v2 approved first, then the person
+   suppressed by hand): "This person is marked do-not-contact (Asked
+   for no further contact this quarter (0ed drive)) — nothing was
+   sent. Only a founder-level act with a recorded reason clears the
+   suppression." Verbatim, naming the recorded reason.
+4. **Founder clear**, then **the org daily cap at 1** (one send
+   already made): "The organisation's daily send cap (1) is reached —
+   nothing was sent today." Cap restored to NULL after.
+5. **Webhook honesty**: 307 found → fixed → deployed → 503
+   "webhook not configured" (dormant-safe, reachable).
+
+Screenshots (`.playwright-mcp/`): comms-0ed-approved-send-button,
+comms-0ed-sent-notified, comms-0ed-send-dnc-refusal,
+comms-0ed-cap-refusal.
+
+Teardown on scratch ids and known-zero baselines to the durable
+baseline EXACTLY (23 users / 22 agents / 68 events / 1 profile /
+zeros across outreach, notifications, suppressions, strategies; cap
+NULL; the founder's session only). The drive's one real email stands
+in the founder's own inbox as evidence.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **Level ≤1 candidate email is LIVE end to end**: draft (#21) →
+  human approval → the service's ladder → Resend → the atomic
+  record with the Art. 14 duty provider-confirmed. The mailto flow
+  stands beside it, untouched.
+- **Founder-hand to activate delivery tracking**: create the webhook
+  in the Resend dashboard pointing at
+  `https://getmandate.io/api/webhooks/resend` (events: delivered,
+  bounced, complained) and set `RESEND_WEBHOOK_SECRET` in Vercel
+  production (+ redeploy). Until then sends work and the status
+  honestly stays 'sent'.
+- **Stage two next on this confirmation: 100 — #22 Candidate
+  Engagement Agent** (engagement_states with the escalated-row pin
+  and the draft column per D8b, the thread view, vocabulary
+  `engagement_updated`), its own harness + control + 0ee drive +
+  §95 draft.
+- **`.env.local` pairs remain founder-hand** (both Engage agents).

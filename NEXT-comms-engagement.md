@@ -4,9 +4,17 @@
 Opened on the founder's word 2026-08-25 (§93 confirmed slice two; the
 §89 order stands: 097 #21 ✓ → 098 #24 ✓ → **099–100 comms + #22** →
 101 #23). Spec §5 (the service), §9 (#22), §6 (inbound — designed,
-gated). **Phase 0 complete 2026-08-25. D1–D8 DRAFTED below — the
-build is GATED on the founder's written confirmation. Nothing past
-Phase 0 has been touched.**
+gated). **D1–D8 CONFIRMED in writing 2026-08-25. STAGE ONE (099)
+built and driven the same night: the migration + atomicity control
+run, the service with its 13-branch vitest ladder, Send via Mandate
+live — MANDATE'S FIRST CANDIDATE EMAIL sent with the whole record
+(provider ref + notification + Art. 14 stamp, the 044 promise kept);
+the webhook 307 defect found by curl and fixed (deploys
+`mandate-70j9nkm3c`, then `9abc6e8`); teardown exact. §94 verdicts
+are DRAFTED — STAGE TWO (100, #22) does NOT start and this file is
+not deleted until the founder confirms §94. Founder-hand: wire the
+Resend dashboard webhook + RESEND_WEBHOOK_SECRET; both Engage
+`.env.local` pairs.**
 
 ## The surface, as found — the infrastructure slice is smaller than
 ## it looked
