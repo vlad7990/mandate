@@ -9955,3 +9955,35 @@ Numbers: next migration 113, next § 134, next drive 0ff; vitest
 933; activity CHECK 80; intent door 14; agent allowlist 29; durable
 baseline 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 +
 key_results 0.
+
+## 134. ADMIN MEMBER MANAGEMENT — Phase 0 run, gate DRAFTED — 2026-08-25
+
+The founder asked whether admins can set up and maintain staff
+accounts; Phase 0 answered in code and the gate is drafted at
+docs/superpowers/specs/2026-08-25-admin-member-management-gate.md.
+
+The answer, in one breath: admins can EDIT roles
+(/app/settings/members, setMemberRoleAction — the product's one
+users.role writer, with founder/cross-org/external refusals in
+words and the .select() read-back that pre-dates the F-1 lesson) —
+but CREATION and STATUS are founder-only, and the /ops approval of
+an org-less signup files them into THE FOUNDER'S org by silent
+default. Under §129's first-client-gets-their-own-org ruling, a
+client organisation cannot onboard a single recruiter by itself —
+the same single-tenant assumption class as F-1, one layer up.
+
+The gate's shape: D1 staff_invitations (new table on the proven
+external-invitation pattern — invitations.client_id is NOT NULL, so
+that table is structurally external and stays closed; the verify
+door becomes the TWELFTH named load-bearing anon grant), D2 the
+invite IS the approval (/join/[token]; invited staff never touch
+the pending queue), D3 admins gain suspend/restore with
+lockout-proof refusals (never self, never the last active admin,
+never the founder, never an agent — the kill switch stays /ops),
+D4 /ops loses the silent founder-org default. R5 requests the
+sequencing ruling: recommend building BEFORE the first client's org
+is provisioned, in parallel with the founder's testing sessions.
+
+Numbers: next migration 113 (claimed by D1 on confirmation), next
+§ 135, next drive 0ff (claimed by D5); vitest 933; the gate awaits
+the founder's written word.
