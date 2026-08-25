@@ -7604,7 +7604,7 @@ next handoff § 92, next drive prefix 0ec; durable baseline 22 users /
 
 ---
 
-## 92. Engage slice two — the Candidate Relationship Agent (#24), the twenty-second principal — 2026-08-25 — DRAFT, awaiting the founder's written confirmation
+## 92. Engage slice two — the Candidate Relationship Agent (#24), the twenty-second principal — 2026-08-25 — CONFIRMED §93
 
 D1–D8 confirmed in writing 2026-08-25 (NEXT-relationship-agent.md,
 committed `3f2f877`); built and driven the same night. **This § is a
@@ -7750,3 +7750,22 @@ which also heals §90's wound.
   valve, and the first real withdrawal will test the ergonomics.
 - **`.env.local` appends stay founder-hand** (both Engage pairs);
   production is live without them.
+
+---
+
+## 93. §92 confirmed — Engage slice two COMPLETE; 099–100 opens next — 2026-08-25
+
+The founder confirmed §92 in writing 2026-08-25. The Candidate
+Relationship Agent (#24) is complete: the twenty-second principal,
+the durable person live with enforceable RPC-only DNC, and the
+Engage arc's policy substrate finished ahead of the comms service.
+NEXT-relationship-agent.md deleted on the confirmation, per doctrine.
+§92's drafted verdicts stand as confirmed: next is **099–100 — the
+Candidate Communication Service + #22 Engagement**, the arc's
+infrastructure slice (outreach extensions, suppression, inbound
+machinery behind its own gate, engagement_states, caps as data),
+opening with its own Phase 0 and D1–D8 gate; outbound-only Level 2
+ships before any inbound. Founder-hand items open: both Engage
+`.env.local` pairs. Numbers: next migration 099, next handoff § 94,
+next drive prefix 0ed; durable baseline 23 users / 22 agents / 68
+events / 1 network_profile / 1 org_comms_policy.
