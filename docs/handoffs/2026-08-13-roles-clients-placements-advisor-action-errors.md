@@ -9057,3 +9057,75 @@ attributed candidate metrics would need new machinery; placements
 carry `sourced_by_user_id` (050 — "often a researcher", the reason
 the fee-read exception exists). Numbers: next migration 108, next
 § 116, next drive 0f7; durable baseline unchanged.
+
+---
+
+## 116. The OKR programme, slice two — THE RESEARCHER — 2026-08-25 — DRAFT
+
+Slice two on the founder's confirmed D1–D6 + R1–R3 (D4 as
+recommended — placements_sourced admitted, the founder's line:
+staff delivery yes, candidates as people never). Gate:
+docs/superpowers/specs/2026-08-25-okr-researcher-gate.md. Commit
+`9e96bdb`, deploy `mandate-phjj6z2mv`, migration 108, drive 0f7.
+**This § is a DRAFT: no completion is declared; NEXT-okr-programme.md
+stands until the founder confirms.**
+
+**Built.** 108 = can_write_okrs() and the owner guard widened to
+researcher (D1) + **the D3 refusal in the database, BOTH faces**:
+guard_financial_key_results() (new trigger, 064 model, coalesced)
+refuses a financial key result whose parent objective's owner holds
+no fees tier by role, and the owner guard gains the second face — a
+financial-CARRYING objective cannot be HANDED to a researcher (the
+desk reassigning ownership must not turn the money dark for its own
+subject) + the metric CHECK rebuilt with **placements_sourced** (D4):
+the vocabulary's tenth quantitative slug and its first
+OWNER-attributed metric — placements the objective's owner sourced,
+from 050's sourced_by_user_id, status started, start_date in period,
+COUNTS ONLY. TS: okrs:write += researcher in roles.ts (the first
+role holding OKR authoring WITHOUT fees:read — the divergence 054's
+commentary predicted, now real and database-refused);
+ROLE_SUMMARIES.researcher names their objectives; the desk's owner
+picker widens; computeObjectiveProgress takes the owner and counts
+the sourced placements. No new routes, events, or door widening —
+the objective events ride can_write_okrs, so the researcher passes
+automatically. vitest 929 (matrix combinatorics absorb the new
+grant).
+
+**Harness** (okr_invariants.sql rewritten to THIRTEEN invariants,
+live, rolled back): the researcher LANDS everywhere they were
+refused (desk-set as owner in (4); self-create with a
+placements_sourced key result in (5); their objective_created wears
+their own face at the door in (12)); the VIEWER becomes every
+refused face; **D3 pinned BY NAME in (11)** — the manager's
+financial key result on the researcher-owned objective refused by
+the trigger, AND the handoff of the financial-carrying objective to
+the researcher refused by the guard; admin/viewer/agent owner
+refusals, the money-boundary reads, the close and attestation pins,
+the structural CHECKs and §42 exact counts (4 objectives / 4 key
+results) all stand. The 107 control run remains the documented
+drift-catch.
+
+**Drive 0f7** (scratch manager Hesper Aldane + scratch researcher
+Cassian Veld, both torn down): Cassian's /app/objectives rendered
+the CREATE FORM (D1 live) with NO owner picker (not desk); created
+"Source the shortlist bench" (whole book, Aug–Oct) and added the
+placements_sourced key result 0/2 (the metric present in the
+picker); THE D3 REFUSAL AT THE SURFACE: Cassian's attempted
+financial key result died with the database's own sentence in the
+toast — "Failed to add the key result: a financial key result needs
+an owner who can read it — researchers hold no fees tier" — and no
+row landed; Hesper's owner picker read exactly Myself | Cassian
+Veld | Hesper Aldane (the researcher admitted, no admin, no viewer,
+no agent). Teardown by VALUE, EXACT FIRST PASS — the 0f6 lesson
+applied inline: the six member-audit provisioning rows swept by
+member name in the same statement as the domain rows; baseline
+25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 + key_results 0 +
+auth 25. Screenshots (.playwright-mcp): okr-0f7-researcher-board,
+okr-0f7-desk-picker-researcher.
+
+Green gate: tsc / vitest 929 / eslint / build. Numbers: next
+migration 109, next § 117, next drive 0f8; activity CHECK 80 and
+intent door 14 (both untouched); agent allowlist 29. On
+confirmation the programme proceeds per D9: viewer → externals (own
+gates) → admins never; after the programme, THE PRE-LAUNCH CHECKLIST
+(standing order).
