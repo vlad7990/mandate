@@ -7772,7 +7772,7 @@ events / 1 network_profile / 1 org_comms_policy.
 
 ---
 
-## 94. Engage slice three — the Candidate Communication Service (099, stage one of the confirmed pair) — 2026-08-25 — DRAFT, awaiting the founder's written confirmation
+## 94. Engage slice three — the Candidate Communication Service (099, stage one of the confirmed pair) — 2026-08-25 — CONFIRMED §95
 
 D1–D8 confirmed in writing 2026-08-25 (NEXT-comms-engagement.md,
 committed `1dff6bc`); stage one built and driven the same night.
@@ -7890,3 +7890,25 @@ in the founder's own inbox as evidence.
   `engagement_updated`), its own harness + control + 0ee drive +
   §95 draft.
 - **`.env.local` pairs remain founder-hand** (both Engage agents).
+
+---
+
+## 95. §94 confirmed — the comms service COMPLETE; stage two (100, #22) unlocked — 2026-08-25
+
+The founder confirmed §94 in writing 2026-08-25. Stage one of the
+099–100 pair is complete: the Candidate Communication Service live at
+level ≤1 end to end, the first candidate email sent with the whole
+record, the Art. 14 discharge provider-confirmed. §94's drafted
+verdicts stand as confirmed. NEXT-comms-engagement.md SURVIVES (it
+covers the pair) with stage one marked confirmed; **stage two — 100,
+the #22 Candidate Engagement Agent, the twenty-third principal —
+runs next** per the confirmed D4: engagement_states (escalated-row
+pin BOTH faces; the `draft` jsonb column per D8b), the thread view in
+the outreach panel (direction + delivery status + sender honesty),
+vocabulary `engagement_updated` (allowlist TWENTY-EIGHT, CHECK 69),
+its own harness + escalated-pin control + 0ee drive + §96 verdicts
+drafted. Founder-hand items open: Resend dashboard webhook +
+RESEND_WEBHOOK_SECRET (+ redeploy); both Engage `.env.local` pairs.
+Numbers: next migration 100, next handoff § 96, next drive prefix
+0ee; durable baseline 23 users / 22 agents / 68 events / 1
+network_profile / 1 org_comms_policy.

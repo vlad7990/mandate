@@ -10,11 +10,12 @@ run, the service with its 13-branch vitest ladder, Send via Mandate
 live — MANDATE'S FIRST CANDIDATE EMAIL sent with the whole record
 (provider ref + notification + Art. 14 stamp, the 044 promise kept);
 the webhook 307 defect found by curl and fixed (deploys
-`mandate-70j9nkm3c`, then `9abc6e8`); teardown exact. §94 verdicts
-are DRAFTED — STAGE TWO (100, #22) does NOT start and this file is
-not deleted until the founder confirms §94. Founder-hand: wire the
-Resend dashboard webhook + RESEND_WEBHOOK_SECRET; both Engage
-`.env.local` pairs.**
+`mandate-70j9nkm3c`, then `9abc6e8`); teardown exact. **STAGE ONE
+CONFIRMED §95 (2026-08-25). STAGE TWO (100, #22 — the twenty-third
+principal) is UNLOCKED and runs next per the confirmed D4; this file
+is deleted only after the founder confirms stage two's §96 verdicts.**
+Founder-hand: wire the Resend dashboard webhook +
+RESEND_WEBHOOK_SECRET (+ redeploy); both Engage `.env.local` pairs.**
 
 ## The surface, as found — the infrastructure slice is smaller than
 ## it looked
