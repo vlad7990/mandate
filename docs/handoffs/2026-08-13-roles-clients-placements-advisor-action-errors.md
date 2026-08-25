@@ -8100,3 +8100,168 @@ dashboard webhook + RESEND_WEBHOOK_SECRET (+ redeploy); all three
 Engage `.env.local` pairs. Numbers: next migration 101, next handoff
 § 98, next drive prefix 0ef; durable baseline 24 users / 23 agents /
 71 events / 1 network_profile / 1 org_comms_policy.
+
+---
+
+## 98. Engage slice five — the Pre-Screen Agent (#23), the twenty-fourth principal — 2026-08-25 — DRAFT
+
+D1–D8 confirmed in writing 2026-08-25 (NEXT-prescreen-agent.md);
+built and driven the same session. **This § is a DRAFT: no
+completion is declared and NEXT-prescreen-agent.md is not deleted
+until the founder confirms these verdicts.**
+
+**Migration 101** (MCP + `supabase/migrations/101_agent_prescreen.sql`,
+commit `d74450e`): `prescreens` — one LIVE row per candidate+project
+lane (partial UNIQUE where status <> 'abandoned' — an abandoned
+pre-screen is history, and the lane may be re-proposed); the
+confirmed D3 deviations `question_set` jsonb and `escalation_reason`
+with 100's bidirectional coherence CHECK; completion-stamp coherence
+((status='complete') = (completed_at IS NOT NULL)). RLS per the
+confirmed D5: org S; human U (can_write_candidates — invited on
+send, abandon, resolve); **#23 INSERT pinned status='proposed' (born
+a PROPOSAL — a birth at any other status refused, proven) and
+UPDATE double-pinned BOTH faces: USING admits only
+proposed/invited/in_progress — a COMPLETE pre-screen is TERMINAL to
+the agent (what the candidate said never silently changes) and
+abandoned/escalated rows are the human's; WITH CHECK refuses
+'abandoned' (walking away is a human act).** NO DELETE for anyone.
+Vocabulary `prescreen_updated` (counts only); CHECK rebuilt from the
+LIVE list, 69 → 70; allowlist TWENTY-NINE.
+
+**The harness** (`supabase/tests/agent_prescreen_invariants.sql`):
+read coverage; the birth pin both ways; counts-only attributed
+trail, question-text probe clean; history at twenty-nine by COUNT;
+THE PINS all faces (unstamped completion refused; the COMPLETE row
+dead to the agent — rewrite AND reopen land nowhere; the stamp
+coherence binding even the owner; agent abandonment refused;
+reasonless escalation refused; the escalated row the human's; the
+human's resolve and abandon landing; re-propose admitted, duplicate
+refused; **the NO-VERDICT probe scanning every landed jsonb for
+/score|pass|verdict|qualif/i and finding nothing**); negative
+matrix; kill switches at TWENTY-FOUR. **Control run verified**:
+`prescreens_agent_update` rebuilt with the USING status conjunct
+dropped ("the seam refuses terminal rows anyway") — the agent
+REOPENED A COMPLETED PRE-SCREEN and rewrote its evidence; abort at
+INVARIANT-FAIL (4c); drift and harness in ONE transaction, rolled
+back; live pin verified intact after.
+
+**The principal.** Live account `vbreygin+prescreen@gmail.com`, id
+`82cce3bc-…`, Mandate HQ, §30 recipe, the flip its own statement;
+smoke-tested and revoked; `AGENT_PRESCREEN_*` in Vercel production.
+`.env.local` stays founder-hand (FOUR Engage-arc pairs now
+outstanding). **New durable baseline: 25 users / 24 agents / 74
+events** (the +3 creation trail keyed by member name); 1 profile / 1
+policy / 2 projects / 2 clients / 1 candidate / 5 skills / 1
+job_spec unchanged; every send/lane/pre-screen class zero.
+
+**The counsel boundary, held (D2).** Nothing §12-gated shipped: the
+agent COMPUTES the evidence gap — `evidence-coverage.ts`, a PURE
+function over cv_structured × the five calibration dimensions that
+deliberately never reads the score-shaped fit_dimensions — DRAFTS
+the invitation and one question per unknown, and STRUCTURES the
+answers; humans conduct the conversation and send every message
+through the 099 service. §12 items 1–3 stay OPEN and gate level ≥3;
+the mitigations shipped here by construction: human-conducted,
+no-verdict (three layers: no column, the clamp's recursive
+`stripVerdictKeys`, the harness probe), recruiter-ready DERIVED in
+code and never stored. The invitation carries the SYSTEM-CONTROLLED
+AI-disclosure block (`prescreenDisclosure` — appended by the send
+action after the questions, outside anyone's edit; §12.1's
+always-disclose pre-commitment, wording open for counsel).
+
+**The seam + surfaces** (`run-prescreen.ts`, `prescreen.ts`,
+`prescreen-merge.ts` + `evidence-coverage.ts` + 13 vitest → 881,
+`prescreen-actions.ts`, `prescreen-panel.tsx`, `session.ts` kind
+`prescreen`): project-scoped skills (a pre-screen IS a mandate's
+act); the spec-§10 hard gates SHARED with #22 — one lexicon, one
+rule, run before any model spend; the transcript copied from the
+thread DETERMINISTICALLY (never the model's to write from memory);
+`applyCommsPolicy` reused a FOURTH time on the proposed questions
+(097 draft-time, 100 proposal-time, 099 send-time, 101
+question-time); a suppressed person and a terminal record refused
+before spend; the review panel renders the coverage chips, the two
+tracks side by side, and the derived recruiter-ready line — never a
+grade. The registry's ENGAGE chapter carries FOUR principals; the
+footer counts twenty-three siblings.
+
+### Driven live on production (deploy `mandate-e0ax67ffr` = `d74450e`)
+
+Scratch world 0ef INSIDE Mandate HQ: operator Ingrid Kaslow
+(is_founder admin, never the real founder), mandate "0EF Head of
+Platform" (fictional Bellwether Clearing Group), two sourced
+candidates (founder-controlled test addresses) — one with a rich CV
+(3 dimensions evidenced, regulatory + transformation unknown), one
+nearly blank with a "rather speak to a real person" reply already
+logged. The acts, each verified in the database as it landed:
+
+1. **The coverage chips rendered from the pure function** — 3 strong
+   / 2 unknown, no model call, sources on hover.
+2. **Start pre-screen** → born a PROPOSAL exactly per the gap: TWO
+   questions (regulatory, transformation), 3 dimensions already
+   validated from the CV, interest honestly `unknown` (no
+   conversation yet); counts-only event; verdict probe ZERO; zero
+   agent sessions after.
+3. **Send invitation via Mandate — the human's act**: provider
+   `resend` + ref, notice carried, notification + Art. 14 stamp
+   atomic, `sent_by_principal` FALSE, the NUMBERED QUESTIONS and the
+   SYSTEM DISCLOSURE BLOCK verifiably in the sent body; the
+   pre-screen marked INVITED under the operator's session.
+4. **The candidate's reply captured** (hand-logged inbound with
+   EMIR/CFTC and consolidation answers, strong interest,
+   three-month notice) → **Update pre-screen**: regulatory
+   VALIDATED with the answer verbatim and its source; transformation
+   graded conservatively PARTIAL; interest `strong`, notice "Three
+   months"; the transcript's 2 turns copied deterministically;
+   status COMPLETE with the stamp; **the derived Recruiter-ready
+   chip appeared — evidence beside it, no grade anywhere**; verdict
+   probe ZERO on the live row; the agent's button dead on the
+   terminal record (proven disabled).
+5. **Steering probe** — a Skills-Studio-authored, PROJECT-scoped
+   skill naming its target schema field: the captured
+   interest_profile.motivation began **"STEERED-0EF:"** on
+   production.
+6. **The hard gate on the second lane**: Start pre-screen against
+   the "rather speak to a real person" reply → ESCALATED
+   deterministically ("the candidate asked for a human",
+   `hard_gate: true`, no model spend, no questions drafted); the
+   human resolved it to ABANDONED — both human-only acts proven in
+   the drive as in the harness.
+7. **Suspended from /ops → D5 VERBATIM** ("The Pre-Screen Agent
+   could not run — an operator has suspended it or its credentials
+   are absent. The pre-screen record is untouched. Try again when it
+   is restored."), captured by MutationObserver; restored.
+8. **/app/agents** — 24 principals, ENGAGE carries four, the footer
+   counts twenty-three siblings.
+
+Screenshots (`.playwright-mcp/`): prescreen-0ef-coverage,
+prescreen-0ef-proposal, prescreen-0ef-complete-tracks,
+prescreen-0ef-escalated-hardgate, prescreen-0ef-suspended-d5,
+agents-0ef-engage-four.
+
+Teardown on scratch ids and KNOWN-ZERO baselines, the
+suspend/restore residue keyed by VALUE with the creation trail
+untouched, the operator's session revoked by the operator's own
+deletion — no global signout. Durable baseline landed EXACTLY; the
+one remaining session is the founder's.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **THE ENGAGE ARC IS BUILT.** All four §89 principals live — #21
+  Outreach Strategy, #24 Relationship, #22 Engagement, #23
+  Pre-Screen — plus the comms service beneath them. The confirmed
+  order 097→098→099-100→101 is complete end to end at level ≤1:
+  every message a human's send, every suppression enforced in the
+  database, every artifact verdict-free, every escalation a human's
+  to resolve.
+- **The counsel gate (§12) was never touched**: no AI-conducted
+  conversation, no autonomous send, no level ≥3 — those stay behind
+  counsel and Scout's mission system (both explicitly deferred).
+- **Inbound stays designed-NOT-built** (spec §6): every inbound in
+  this drive was hand-logged; the thread_key routing and the
+  webhook door wait behind their own gate.
+- **After the arc, per the standing order: the pre-launch
+  checklist** (CLAUDE.md) — advisor sweep, Turnstile, key rotation,
+  RLS review, FK indexes — with Scout's mission system and the
+  inbound gate as their own future D-gated slices.
+- **`.env.local` appends stay founder-hand** (all four Engage
+  pairs); production is live without them.

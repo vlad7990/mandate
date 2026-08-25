@@ -5,7 +5,13 @@ Opened on the founder's word 2026-08-25 (§97 confirmed the 099–100
 pair; the §89 order stands: 097 #21 ✓ → 098 #24 ✓ → 099–100 comms +
 #22 ✓ → **101 #23**). Spec §9 (#23), §11 (prescreens RLS row), §12
 (the counsel gate), §13 ("Pre-screen review" surface). **D1–D8
-below are DRAFTED — the build is GATED on written confirmation.**
+CONFIRMED in writing 2026-08-25 and BUILT + DRIVEN the same session
+(commit `d74450e`, deploy `mandate-e0ax67ffr`, drive 0ef): the
+terminal pin control-verified, the no-verdict probe zero on live
+rows, the invitation sent with the system disclosure block, the
+hard gate and D5 verbatim, teardown exact (baseline 25 / 24 / 74 /
+1). §98 verdicts DRAFTED — this file is deleted only on the
+founder's written confirmation of §98.**
 
 ## The surface, as found
 
