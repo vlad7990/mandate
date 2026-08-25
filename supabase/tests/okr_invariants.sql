@@ -302,6 +302,13 @@ begin
   if v_count <> 1 then
     raise exception 'INVARIANT-FAIL (8): the VIEWER should read the quantitative row (% rows)', v_count;
   end if;
+  -- The viewer's POSITIVE (§117 gate, D2): visibility is the role's
+  -- whole OKR experience, so it is a named invariant, not a side
+  -- effect — the viewer reads every objective on the board.
+  select count(*) into v_count from public.objectives where organization_id = v_org;
+  if v_count <> 4 then
+    raise exception 'INVARIANT-FAIL (8): the VIEWER reads % of 4 objectives — visibility is the role''s purpose', v_count;
+  end if;
 
   perform set_config('request.jwt.claims',
     json_build_object('sub', v_researcher, 'role', 'authenticated')::text, true);

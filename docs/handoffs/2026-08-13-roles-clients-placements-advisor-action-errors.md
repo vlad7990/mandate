@@ -9152,3 +9152,53 @@ is drafted at docs/superpowers/specs/2026-08-25-okr-viewer-gate.md —
 a VERIFICATION-ONLY slice proposal; BUILD (such as it is) GATED on
 written confirmation against it. Numbers: next migration 109 (none
 proposed by this gate), next § 118, next drive 0f8.
+
+---
+
+## 118. The OKR programme, slice three — THE VIEWER, verification-only — 2026-08-25 — DRAFT
+
+Slice three on the founder's confirmed viewer gate (D1–D3 + R1–R3:
+the viewer is a reader of the programme, never an author and never a
+subject — the ruling IS the slice). Gate:
+docs/superpowers/specs/2026-08-25-okr-viewer-gate.md. No migration
+(109 stays next), no capability change, no deploy — the app is
+untouched; the slice's deliverable is proof. Drive 0f8. **This § is
+a DRAFT: no completion is declared; NEXT-okr-programme.md stands
+until the founder confirms.**
+
+**The harness gains the viewer's POSITIVE.** Invariant (8) extended:
+the viewer reads every objective on the board (4 of 4) — visibility
+is the role's whole OKR experience, so it is now a NAMED invariant,
+not a side effect of the KR-count assertions. Full harness (thirteen
+invariants, 38 assertions) re-run live and green, rolled back.
+
+**Drive 0f8** (scratch manager Odile Vantrease + scratch viewer Wren
+Halloway, both torn down): Odile seeded "Q3 book health" (whole
+book, Aug–Oct) with a quantitative KR (candidates_added 0/10) and a
+FINANCIAL KR (fees_earned US$100,000); then Wren's face, surface by
+surface — /app/objectives subhead read "read-only", the section held
+ZERO forms and ZERO buttons, the card showed title/owner/period/
+status and the quantitative KR at 0/10 AT RISK, and the financial
+row was ABSENT ENTIRELY (not redacted — never sent); Analytics
+showed the quantitative line and no money; Placements showed the
+"Fees restricted" panel, NO financial-objective strip, and no
+sample-revenue block (the sample gate keys on seesFees). **THE
+BOUNDARY PROBE, UI bypassed:** from Wren's own live session, a raw
+PostgREST INSERT against objectives (anon key + her bearer token)
+died 400 with the guard's OWN sentence — "only the desk sets an
+objective's owner to someone else" — no row landed, while the same
+session's raw READ returned exactly the board (["Q3 book health"]):
+refusal on write, visibility on read, both at the database, both in
+production. Teardown by VALUE, EXACT first pass (member-audit rows
+swept by name inline — the 0f6 lesson now routine): baseline
+25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 + key_results 0 +
+auth 25. Screenshots (.playwright-mcp):
+okr-0f8-viewer-readonly-board, okr-0f8-viewer-placements-restricted.
+
+Gate: vitest 929 (unchanged — no TS touched); the diff is one SQL
+test file. Numbers: next migration 109, next § 119, next drive 0f9.
+On confirmation the programme reaches ITS LAST OPEN QUESTION per D9:
+the EXTERNALS gate (what an OKR means for HM/client personas through
+the portal's SECURITY DEFINER reads) — then admins never, the
+programme closes, and THE PRE-LAUNCH CHECKLIST takes the slot
+(standing order).
