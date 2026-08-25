@@ -329,7 +329,7 @@ describe("the vocabulary", () => {
    * drift, the app either loses an event type it thinks it can write or
    * gains the ability to fabricate a money entry.
    */
-  it("keeps the app-recordable set to the four intent events", () => {
+  it("keeps the app-recordable set to the intent events", () => {
     expect([...APP_RECORDABLE_EVENTS]).toEqual([
       "shortlist_published",
       "report_exported",
@@ -337,11 +337,21 @@ describe("the vocabulary", () => {
       // 065: the desk's reassignment action. The one intent event that is
       // not client-facing — it files under the mandates group.
       "mandate_reassigned",
+      // 102: the Skills Studio's five human acts — admin-gated inside the
+      // RPC, and they file under mandates because skills change how every
+      // search scores.
+      "skill_created",
+      "skill_updated",
+      "skill_paused",
+      "skill_activated",
+      "skill_deleted",
     ]);
     for (const type of APP_RECORDABLE_EVENTS) {
-      expect(ACTIVITY_GROUP_OF[type]).toBe(
-        type === "mandate_reassigned" ? "mandates" : "client"
-      );
+      const expected =
+        type === "mandate_reassigned" || type.startsWith("skill_")
+          ? "mandates"
+          : "client";
+      expect(ACTIVITY_GROUP_OF[type]).toBe(expected);
     }
   });
 

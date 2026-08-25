@@ -27,12 +27,18 @@ type SkillRecord = {
   instructions: string;
   is_active: boolean;
   applies_to_project_id: string | null;
+  applies_to_client_id: string | null;
   updated_at: string;
 };
 
 type ProjectLite = {
   id: string;
   title: string;
+};
+
+type ClientLite = {
+  id: string;
+  name: string;
 };
 
 const SKILL_TYPE_META: Record<
@@ -49,7 +55,7 @@ const SKILL_TYPE_META: Record<
     label: "Client Skills",
     tone: "secondary",
     blurb:
-      "Org-wide rules captured from a client's recurring preferences. Same scope as search skills today; the type tags intent.",
+      "A client's recurring preferences. Scoped to that client's mandates when one is picked; org-wide when left blank.",
   },
   role_skill: {
     label: "Role Skills",
@@ -78,22 +84,28 @@ export default async function SkillsStudioPage() {
     redirect("/app/settings");
   }
 
-  const [skillsQ, projectsQ] = await Promise.all([
+  const [skillsQ, projectsQ, clientsQ] = await Promise.all([
     supabase
       .from("skills")
       .select(
-        "id, name, description, skill_type, trigger_conditions, instructions, is_active, applies_to_project_id, updated_at"
+        "id, name, description, skill_type, trigger_conditions, instructions, is_active, applies_to_project_id, applies_to_client_id, updated_at"
       )
       .order("created_at", { ascending: true }),
     supabase
       .from("projects")
       .select("id, title")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("clients")
+      .select("id, name")
+      .order("name", { ascending: true }),
   ]);
 
   const skills = (skillsQ.data ?? []) as SkillRecord[];
   const projects = (projectsQ.data ?? []) as ProjectLite[];
+  const clients = (clientsQ.data ?? []) as ClientLite[];
   const projectById = new Map(projects.map((p) => [p.id, p.title]));
+  const clientById = new Map(clients.map((c) => [c.id, c.name]));
 
   const grouped: Record<SkillType, SkillRowData[]> = {
     search_skill: [],
@@ -106,6 +118,9 @@ export default async function SkillsStudioPage() {
       ...s,
       applies_to_project_title: s.applies_to_project_id
         ? projectById.get(s.applies_to_project_id) ?? null
+        : null,
+      applies_to_client_name: s.applies_to_client_id
+        ? clientById.get(s.applies_to_client_id) ?? null
         : null,
     });
   }
@@ -168,7 +183,7 @@ export default async function SkillsStudioPage() {
           />
           <PrincipleBlock
             title="Where does it run?"
-            body="Every judgment that reads a mandate or candidate — intake, CV parsing, evaluation, job spec, sourcing, feedback interpretation, comparison, and the intelligence agents."
+            body="Every agent run. Each principal reads the active skills for its scope at the moment it judges — org-wide skills always, project skills only for their mandate."
           />
           <PrincipleBlock
             title="Precedence"

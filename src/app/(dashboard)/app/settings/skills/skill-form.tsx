@@ -53,7 +53,7 @@ const TYPE_OPTIONS: Array<{
     value: "client_skill",
     label: "Client Skill",
     blurb:
-      "Org-wide rule that captures a recurring client preference. Same scope as a search skill.",
+      "A client's recurring preference. Scope it to one client below, or leave it org-wide.",
   },
   {
     value: "role_skill",

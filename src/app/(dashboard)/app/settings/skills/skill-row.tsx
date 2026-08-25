@@ -24,6 +24,8 @@ export type SkillRowData = {
   is_active: boolean;
   applies_to_project_id: string | null;
   applies_to_project_title: string | null;
+  applies_to_client_id: string | null;
+  applies_to_client_name: string | null;
   updated_at: string;
 };
 
@@ -100,6 +102,22 @@ export function SkillRow({ skill }: { skill: SkillRowData }) {
             {skill.applies_to_project_title && (
               <span className="px-2 py-0.5 border border-primary-container/60 bg-primary-container/10 text-primary font-mono-label text-mono-label uppercase tracking-widest">
                 Project · {skill.applies_to_project_title}
+              </span>
+            )}
+            {/* Scope honesty (§99 finding #2): a client skill's reach is
+                visible where you look for it — the row, not the edit form. */}
+            {skill.skill_type === "client_skill" && (
+              <span
+                className={cn(
+                  "px-2 py-0.5 border font-mono-label text-mono-label uppercase tracking-widest",
+                  skill.applies_to_client_id
+                    ? "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim"
+                    : "border-outline-variant text-outline"
+                )}
+              >
+                {skill.applies_to_client_id
+                  ? `Client · ${skill.applies_to_client_name ?? "one client"}`
+                  : "Every client"}
               </span>
             )}
           </div>

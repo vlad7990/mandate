@@ -62,6 +62,15 @@ export const ACTIVITY_EVENT_TYPES = [
 
   "mandate_reassigned",
 
+  // 102: Skills Studio's five human acts — the one control surface
+  // that changes every agent's behaviour writes its own record.
+  // Admin-gated inside `record_activity_event`.
+  "skill_created",
+  "skill_updated",
+  "skill_paused",
+  "skill_activated",
+  "skill_deleted",
+
   // Written by agent principals through `record_agent_event` (074/075) —
   // the door narrower than `record_activity_event`: an enumerated event
   // list, callable only by an active `agent` role, actor stamped from
@@ -117,6 +126,15 @@ export const APP_RECORDABLE_EVENTS = [
   "report_exported",
   "hm_portal_opened",
   "mandate_reassigned",
+  // 102 — the Skills Studio's five human acts. Admin-gated INSIDE the
+  // RPC: only the role that can change a skill can claim to have
+  // changed one. The detail carries the skill's name, type and scope —
+  // never the instructions' text.
+  "skill_created",
+  "skill_updated",
+  "skill_paused",
+  "skill_activated",
+  "skill_deleted",
 ] as const;
 
 export type AppRecordableEvent = (typeof APP_RECORDABLE_EVENTS)[number];
@@ -189,6 +207,13 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   hm_portal_opened: "client",
 
   mandate_reassigned: "mandates",
+
+  // Skills change how every search scores — they file under mandates.
+  skill_created: "mandates",
+  skill_updated: "mandates",
+  skill_paused: "mandates",
+  skill_activated: "mandates",
+  skill_deleted: "mandates",
 
   feedback_interpreted: "mandates",
   candidates_ranked: "mandates",

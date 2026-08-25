@@ -210,6 +210,19 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Reassigned the mandate from ${from} to ${to}`;
     }
 
+    // 102: the Skills Studio's five acts. The detail carries the
+    // skill's NAME, type and scope — never the instructions' text.
+    case "skill_created":
+      return `Created the skill "${str(d, "skill") ?? "unnamed"}"${skillScopeSuffix(d)}`;
+    case "skill_updated":
+      return `Updated the skill "${str(d, "skill") ?? "unnamed"}"${skillScopeSuffix(d)}`;
+    case "skill_paused":
+      return `Paused the skill "${str(d, "skill") ?? "unnamed"}"`;
+    case "skill_activated":
+      return `Activated the skill "${str(d, "skill") ?? "unnamed"}"`;
+    case "skill_deleted":
+      return `Deleted the skill "${str(d, "skill") ?? "unnamed"}"`;
+
     case "candidate_evaluated": {
       const trigger = str(d, "trigger");
       return trigger === "regenerate"
@@ -425,6 +438,13 @@ export function describeActivity(event: ActivityEventRow): string {
  */
 function contactName(d: Record<string, unknown>): string {
   return str(d, "name") ?? "a contact";
+}
+
+/** " (project-scoped)" / " (client-scoped)" / "" — the reach in one word. */
+function skillScopeSuffix(d: Record<string, unknown>): string {
+  if (d.project_scoped === true) return " (project-scoped)";
+  if (d.client_scoped === true) return " (client-scoped)";
+  return "";
 }
 
 function termsSuffix(d: Record<string, unknown>): string {
