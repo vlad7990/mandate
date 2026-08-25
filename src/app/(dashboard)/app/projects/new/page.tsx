@@ -49,8 +49,11 @@ export default async function NewProjectPage({
               <IconCopilot size={14} />
               Agent Stack — Stand-by
             </h2>
+            {/* Counted from the tiles below, not the full registry — the
+                roster grows (14 → 24 → …) and a hardcoded denominator here
+                already went stale once. */}
             <span className="font-mono-label text-mono-label text-outline">
-              4 / 14 agents will activate on submit
+              {AGENT_TILES.length} agents will activate on submit
             </span>
           </div>
           <AgentTiles states={IDLE_STATES} />
