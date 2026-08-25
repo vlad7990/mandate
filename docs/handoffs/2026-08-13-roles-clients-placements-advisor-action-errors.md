@@ -8751,3 +8751,63 @@ the Positioning Agent's ADVISORY lane — the record is never
 rewritten; the no-verdict doctrine untouched. Numbers: next
 migration 106, next § 110, next drive 0f4; durable baseline
 unchanged.
+
+---
+
+## 110. The Optimizer — product-pass slice four — 2026-08-25 — DRAFT
+
+Slice four on the founder's confirmed D1–D8 with all three rulings
+(human provenance on the calibration apply; the advisory set stays
+advisory; zero migration with a stop-and-re-gate clause — the D3
+live read passed: calibration_history_role_insert admits humans
+under can_write_mandates, so the clause never fired). Commit
+`fbfcf94`, deploy `mandate-nozp9um59`, drive 0f4. NO migration, NO
+principal, NO new vocabulary. **This § is a DRAFT: no completion is
+declared; NEXT-optimizer.md and NEXT-product-pass.md stand until
+the founder confirms.**
+
+**Built.** `/app/projects/[id]/optimize` (module strip after
+Metrics) — composition, not relocation: the health-suggestions
+panel, the coverage panel and the existing quick acts (spec
+regenerate, generate-all where lawful) are the same components and
+server actions their home surfaces use. Rule-based HealthAlerts
+render as advisory signal rows. The honest healthy state per D4:
+the page exists, says the search is healthy, keeps the quick acts.
+THE ONE NEW ACT (D2): `applyCalibrationSuggestionAction` — the
+`applicable_payload` contract §103's inventory found half-wired is
+now finished. Pure bridge `bridgeCalibrationSuggestion` (8 vitest →
+901): ±3 band REFUSED not clamped, [0,10] clamp with the EFFECTIVE
+delta reported, bound no-ops refused, no-baseline refusal mirrors
+applyRecalibration's skip. The panel offers Apply only when a
+preview can say before → after; the confirm names the re-score;
+weights + suggestion dismissal land in ONE update so a repeat click
+cannot double-apply; the history snapshot wears the RECRUITER's
+face with the suggestion id in change_reason; gated
+mandates:write — the same predicate the RLS INSERT enforces.
+
+**Drive 0f4** (scratch recruiter Wren Calloway; stalled mandate +
+healthy control, torn down): the at-risk face (chip, two alert
+rows, panel offering); a REAL agent run (~35s) dealt every face
+unprompted — 3 sourcing with replacements, 1 advisory feedback
+(Dismiss only, correctly), 1 calibration (transformation +1);
+preview verbatim "transformation 8 → 9 · Applying re-scores every
+candidate"; confirm sentence exact; applied → weights 8→9 with
+nothing else moved, suggestion dismissed, history snapshot
+change_type recalibration / changed_by THE OPERATOR / reason naming
+the suggestion id — the provenance ruling proven live; the sourcing
+apply landed linkedin_exact v1 on the same surface; the healthy
+control (after the seed was topped to 5 candidates + feedback — the
+first thin seed was honestly AT RISK by the live rules, a seeding
+lesson, not a defect) rendered the honest healthy line with zero
+alerts and the panel absent by its own gate. Re-score note: the
+scratch candidates carry no parsed profiles, so computeAndStoreScores
+ran over zero scoreable rows — the failure-tolerant contract held
+(weights kept). Teardown EXACT first pass to
+25/24/74/5/5/1/1/2/2/1/1 + queries 0 + calibration_history 0.
+Screenshots: optimize-0f4-at-risk, optimize-0f4-weight-preview,
+optimize-0f4-applied, optimize-0f4-healthy.
+
+Green gate: tsc / vitest 901 / eslint / build. Numbers: next
+migration 106, next § 111, next drive 0f5. Next per the pass after
+confirmation: Kanban (b) — the task domain, its own gate — then the
+pre-launch checklist.
