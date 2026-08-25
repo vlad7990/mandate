@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useHydrated } from "@/lib/use-hydrated";
 import { generateHmTokenAction, revokeHmTokenAction } from "./actions";
 import { IconLink, IconRefresh, IconShare } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
@@ -33,13 +34,16 @@ export function ShareLinkCard({
   contacts: Array<{ id: string; full_name: string; title: string | null }>;
 }) {
   const router = useRouter();
+  const hydrated = useHydrated();
   const [label, setLabel] = useState("");
   const [contactId, setContactId] = useState("");
   const [pending, start] = useTransition();
   const [revoking, startRevoke] = useTransition();
 
-  const baseUrl =
-    typeof window !== "undefined" ? window.location.origin : "";
+  // Gated on hydration, not on `typeof window`: the client's FIRST render
+  // must match the server's markup exactly (React #418, §128 F-5) — the
+  // origin and the "Xm ago" phrases fill in after mount.
+  const baseUrl = hydrated ? window.location.origin : "";
 
   const handleGenerate = () => {
     if (pending) return;
@@ -211,7 +215,8 @@ export function ShareLinkCard({
                   <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
                     Expires {formatDate(t.expires_at)} · Created{" "}
                     {formatDate(t.created_at)}
-                    {t.last_used_at && ` · Last used ${formatRelative(t.last_used_at)}`}
+                    {t.last_used_at &&
+                      ` · Last used ${hydrated ? formatRelative(t.last_used_at) : formatDate(t.last_used_at)}`}
                     {t.revoked_at && ` · Revoked ${formatDate(t.revoked_at)}`}
                   </div>
                 </li>
@@ -252,10 +257,13 @@ function StatusPill({ status }: { status: Status }) {
 }
 
 function formatDate(iso: string): string {
+  // Pinned to UTC so the server render and the client's hydration agree
+  // even when the viewer's timezone sits across midnight from the server.
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "2-digit",
+    timeZone: "UTC",
   });
 }
 

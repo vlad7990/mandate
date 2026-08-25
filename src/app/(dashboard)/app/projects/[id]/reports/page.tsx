@@ -187,7 +187,7 @@ function ReportBody({ report }: { report: WeeklyReport }) {
         </p>
       </Section>
 
-      <Section title={`Top ${report.top_candidates.length} Candidates`}>
+      <Section title="Top Candidates">
         {report.top_candidates.length === 0 ? (
           <p className="font-mono-label text-mono-label text-outline italic uppercase tracking-widest">
             No ranked candidates yet.

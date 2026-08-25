@@ -30,7 +30,7 @@ export function weeklyReportToMarkdown(
   lines.push(report.executive_summary);
   lines.push("");
 
-  lines.push("## Top 3 Candidates");
+  lines.push("## Top Candidates");
   lines.push("");
   if (report.top_candidates.length === 0) {
     lines.push("_No ranked candidates yet._");
