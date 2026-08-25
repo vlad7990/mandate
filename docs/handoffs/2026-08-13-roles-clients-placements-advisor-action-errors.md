@@ -8079,3 +8079,24 @@ baseline landed EXACTLY; the one remaining session is the founder's.
   own NEXT file and D-gate.
 - **`.env.local` appends stay founder-hand** (all three Engage
   pairs); production is live without them.
+
+---
+
+## 97. §96 confirmed — the Engage pair 099–100 COMPLETE; 101 #23 Pre-Screen opens Phase 0 — 2026-08-25
+
+The founder confirmed §96 in writing 2026-08-25. The Candidate
+Engagement Agent (#22) is complete: the twenty-third principal, the
+conversation lane durable with the escalated pin, the D8b loop
+proven live (agent proposes, human sends through the service), the
+hard gates deterministic-first with the model layer observed
+catching what the lexicon deliberately passes. §96's drafted
+verdicts stand as confirmed and NEXT-comms-engagement.md is DELETED —
+the 099–100 pair is closed. **Next per the confirmed §89 order: 101
+#23 Pre-Screen, opening with its own Phase 0 and D1–D8 gate**; the
+spec-§12 counsel gate stands BEFORE any level ≥3 conduct, and
+inbound stays designed-NOT-built (spec §6) — the slice must be
+scoped to the shipped ceiling. Founder-hand items open: Resend
+dashboard webhook + RESEND_WEBHOOK_SECRET (+ redeploy); all three
+Engage `.env.local` pairs. Numbers: next migration 101, next handoff
+§ 98, next drive prefix 0ef; durable baseline 24 users / 23 agents /
+71 events / 1 network_profile / 1 org_comms_policy.
