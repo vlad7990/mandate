@@ -119,6 +119,11 @@ const REGISTRY: AgentGroup[] = [
         does: "One identity, three judgments for executive searches: the web-grounded company operating context, the success profile, and the interview plan.",
         staysHuman: "It touches drafts only — approval is pinned to humans in the database itself, and it can never sign a human's name in the executive ledger.",
       },
+      {
+        name: "Interviewer Agent",
+        does: "Drafts the interview plan for any mandate — stages, questions, evidence to listen for, red flags — from the job spec, the calibration and the candidate's own record. Dimension coverage is computed by the app, never taken from its claims.",
+        staysHuman: "Decision support, never a verdict. Its drafts bind nothing until a person approves them through the database's own door, and an approved plan is out of its reach.",
+      },
     ],
   },
   {
@@ -337,7 +342,7 @@ export default async function AgentsPage() {
         {profile?.is_founder && (
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
             Suspend or restore any principal from Platform ops — each kill
-            switch is independent of the other twenty-three.
+            switch is independent of the other twenty-four.
           </p>
         )}
       </footer>

@@ -424,6 +424,25 @@ export async function signInPrescreenAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Interviewer — the twenty-fifth principal, the
+ * Interviewer programme's first (116, gate §125). One judgment: turn
+ * the mandate's own record — job spec, calibration weights, the
+ * candidate's profile — into a draft interview plan: stages,
+ * questions, evidence to listen for, red flags. Dimension coverage is
+ * computed server-side against the calibration, never taken from the
+ * agent's own claims; the plan is decision support, never a verdict,
+ * and it binds nothing until a person approves it through the RPC
+ * door. It writes only its own drafts (double-pinned in RLS).
+ */
+export async function signInInterviewer(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "interviewer",
+    email: process.env.AGENT_INTERVIEWER_EMAIL,
+    password: process.env.AGENT_INTERVIEWER_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

@@ -151,6 +151,14 @@ export const ACTIVITY_EVENT_TYPES = [
   // the trail is org-visible).
   "objective_created",
   "objective_closed",
+
+  // 116: the mainstream interview-plan lifecycle's three HUMAN acts,
+  // mandate-writer-gated inside the RPC. The agent's own act reuses
+  // `interview_plan_generated` above (EI's since 037) with
+  // detail.agent_kind telling the two principals apart.
+  "interview_plan_generation_requested",
+  "interview_plan_generation_failed",
+  "interview_plan_approved",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -204,6 +212,11 @@ export const APP_RECORDABLE_EVENTS = [
   // 107 — the OKR domain: both okr-writer-gated inside the RPC.
   "objective_created",
   "objective_closed",
+  // 116 — the interview-plan lifecycle: all three mandate-writer-gated
+  // inside the RPC.
+  "interview_plan_generation_requested",
+  "interview_plan_generation_failed",
+  "interview_plan_approved",
 ] as const;
 
 export type AppRecordableEvent = (typeof APP_RECORDABLE_EVENTS)[number];
@@ -343,6 +356,10 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
 
   objective_created: "mandates",
   objective_closed: "mandates",
+
+  interview_plan_generation_requested: "mandates",
+  interview_plan_generation_failed: "mandates",
+  interview_plan_approved: "mandates",
 };
 
 /**

@@ -28,6 +28,7 @@ import { sampleCandidate, sampleMandate } from "@/lib/sample";
 const TABS = [
   "Overview",
   "Evaluation",
+  "Interview plan",
   "Triangulation",
   "Positioning",
   "Notes & activity",
@@ -292,6 +293,70 @@ export function SampleCandidateDetail({
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </Panel>
+            )}
+
+            {tab === "Interview plan" && (
+              <Panel
+                title="Interview plan"
+                meta="Approved v2 // sample data"
+              >
+                <div className="space-y-4">
+                  <p className="text-[13px] leading-relaxed text-on-surface-variant">
+                    Three stages, sequenced from regulated-delivery depth to
+                    board-level judgment — the two heaviest calibration
+                    dimensions each get a dedicated stage.
+                  </p>
+                  {[
+                    {
+                      n: "01",
+                      name: "Regulated delivery deep-dive",
+                      who: "Peer CTO · 90m",
+                      q: "Walk through the clinical safety case you owned — what did the regulator push back on, and what changed?",
+                      listen:
+                        "Names the framework, the finding, and the remediation — not just the outcome.",
+                    },
+                    {
+                      n: "02",
+                      name: "Transformation under constraint",
+                      who: "Programme sponsor · 60m",
+                      q: "The £48m records replacement landed — what did you cut to keep the date, and who disagreed?",
+                      listen:
+                        "Owns a trade-off with a name and a consequence attached.",
+                    },
+                    {
+                      n: "03",
+                      name: "Board and stakeholder judgment",
+                      who: "CEO · 45m",
+                      q: "Tell us about a board review that went badly — what did you change before the next one?",
+                      listen:
+                        "Specific meeting, specific correction; no borrowed war stories.",
+                    },
+                  ].map((s) => (
+                    <div
+                      key={s.n}
+                      className="border border-outline-variant bg-surface-container-lowest p-4 space-y-2"
+                    >
+                      <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                        <span className="text-[13px] font-medium text-on-surface">
+                          <span className="font-mono-data text-outline mr-2">{s.n}</span>
+                          {s.name}
+                        </span>
+                        <span className="font-mono-label text-[10px] uppercase tracking-[0.08em] text-outline">
+                          {s.who}
+                        </span>
+                      </div>
+                      <p className="text-xs leading-snug text-on-surface-variant">{s.q}</p>
+                      <p className="text-xs leading-snug text-outline">
+                        Listen for: {s.listen}
+                      </p>
+                    </div>
+                  ))}
+                  <p className="font-mono-label text-[10px] uppercase tracking-[0.08em] text-outline">
+                    Decision support — never a recommendation. The plan
+                    gathers evidence; humans decide.
+                  </p>
                 </div>
               </Panel>
             )}

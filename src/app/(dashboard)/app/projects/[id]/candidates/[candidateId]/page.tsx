@@ -88,6 +88,10 @@ import {
   type EngagementLaneRow,
 } from "./engagement-panel";
 import { PrescreenPanel, type PrescreenRow } from "./prescreen-panel";
+import {
+  InterviewPlanPanel,
+  type InterviewPlanRow,
+} from "./interview-plan-panel";
 import { computeEvidenceCoverage } from "@/lib/candidates/evidence-coverage";
 
 type ProjectRow = {
@@ -226,6 +230,19 @@ export default async function CandidateProfilePage({
     profile.fit_dimensions,
     project.calibration_model?.dimension_weights ?? null
   );
+
+  // The interview plan (116) — latest version, whatever its status; the
+  // chip on the panel tells the truth about which state it is in.
+  const { data: interviewPlanRow } = await supabase
+    .from("interview_plans")
+    .select(
+      "id, version, status, content_json, is_generating, generation_error, approved_at"
+    )
+    .eq("project_id", projectId)
+    .eq("candidate_id", candidate.id)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle<InterviewPlanRow>();
 
   // Executive evaluation. This is a CACHE READ — it never calls the
   // agent, so the dossier renders at query speed whether or not a report
@@ -701,6 +718,20 @@ export default async function CandidateProfilePage({
         tabs={[
           { id: "overview", label: "Overview", content: overview },
           { id: "evaluation", label: "Evaluation", content: evaluationTab },
+          {
+            id: "interview",
+            label: "Interview plan",
+            content: (
+              <InterviewPlanPanel
+                projectId={projectId}
+                candidateId={candidate.id}
+                initial={interviewPlanRow ?? null}
+                hasCalibration={Boolean(
+                  project.calibration_model?.dimension_weights
+                )}
+              />
+            ),
+          },
           { id: "triangulation", label: "Triangulation", content: triangulation },
           {
             id: "positioning",

@@ -557,6 +557,20 @@ export function describeActivity(event: ActivityEventRow): string {
         ? `Wrote the interview plan — ${stages} stage${stages === 1 ? "" : "s"}`
         : "Wrote the interview plan";
     }
+    case "interview_plan_generation_requested": {
+      const version = num(d, "version");
+      return version != null && version > 1
+        ? `Requested a new interview plan (v${version})`
+        : "Requested an interview plan";
+    }
+    case "interview_plan_generation_failed":
+      return "An interview plan generation failed";
+    case "interview_plan_approved": {
+      const version = num(d, "version");
+      return version != null
+        ? `Approved the interview plan (v${version})`
+        : "Approved the interview plan";
+    }
     case "executive_context_researched": {
       const trigger = str(d, "trigger");
       const sources = num(d, "sources");

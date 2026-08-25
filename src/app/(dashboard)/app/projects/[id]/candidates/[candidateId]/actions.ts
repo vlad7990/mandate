@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
+import { generateAndStoreProjectInterviewPlan } from "@/lib/ai/generate-interview-plan";
 import {
   EVALUATION_KEY,
   ensureCandidateEvaluation,
@@ -1019,5 +1021,141 @@ export async function generateTriangulationAction(
 
     revalidatePath(`/app/projects/${projectId}/candidates/${candidateId}`);
     return run.report;
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Interview plan (116, gate §125 slice one)
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Request a plan generation — a mandate-writer's act (the RPC door
+ * gates the trail event the same way). Allocation is atomic and
+ * idempotent in the database: a second click while a generation runs
+ * returns the running row instead of minting a rival.
+ */
+export async function requestInterviewPlanAction(
+  candidateId: string,
+  projectId: string
+): Promise<ActionResult<{ version: number; wasExisting: boolean }>> {
+  return runAction("The interview plan", async () => {
+    if (!candidateId || !projectId) {
+      throw new Error("Missing candidateId or projectId.");
+    }
+
+    const actor = await requireActionContext("mandates:write");
+    await assertCandidateBelongsToProject(candidateId, projectId);
+
+    const supabase = await createServerSupabaseClient();
+
+    // The plan is scored against the calibration; without one there is
+    // nothing to plan against — said here before a row exists.
+    const { data: project } = await supabase
+      .from("projects")
+      .select("calibration_model")
+      .eq("id", projectId)
+      .maybeSingle<{
+        calibration_model: { dimension_weights?: Record<string, number> } | null;
+      }>();
+    if (!project?.calibration_model?.dimension_weights) {
+      throw new Error(
+        "This mandate has no calibration yet — run intake and the onboarding wizard first."
+      );
+    }
+
+    const { data: allocated, error: allocError } = await supabase
+      .rpc("allocate_and_insert_project_interview_plan", {
+        p_project_id: projectId,
+        p_candidate_id: candidateId,
+        p_organization_id: actor.organizationId,
+        p_source_spec_id: null,
+        p_content_json: {},
+        p_is_generating: true,
+        p_created_by: actor.userId,
+        p_prompt_version: null,
+        p_model_version: null,
+      })
+      .single<{ id: string; version: number; was_existing: boolean }>();
+
+    if (allocError || !allocated) {
+      throw new Error(
+        allocError?.message ?? "Could not allocate an interview-plan row."
+      );
+    }
+
+    if (!allocated.was_existing) {
+      const { error: eventError } = await supabase.rpc("record_activity_event", {
+        p_event_type: "interview_plan_generation_requested",
+        p_project_id: projectId,
+        p_candidate_id: candidateId,
+        p_detail: { version: allocated.version },
+      });
+      if (eventError) {
+        console.error("[interview-plan] request event refused", eventError);
+      }
+
+      after(() =>
+        generateAndStoreProjectInterviewPlan(
+          allocated.id,
+          projectId,
+          candidateId,
+          allocated.version === 1 ? "initial" : "regenerate"
+        )
+      );
+    }
+
+    revalidatePath(`/app/projects/${projectId}/candidates/${candidateId}`);
+    return { version: allocated.version, wasExisting: allocated.was_existing };
+  });
+}
+
+/**
+ * Approve a draft plan. Promotion is RPC-only — the guard trigger
+ * refuses a bare status write for every role — and archive-then-promote
+ * keeps at most one approved plan per (project, candidate).
+ */
+export async function approveInterviewPlanAction(
+  planId: string,
+  candidateId: string,
+  projectId: string
+): Promise<ActionResult> {
+  return runAction("The interview plan", async () => {
+    if (!planId || !candidateId || !projectId) {
+      throw new Error("Missing planId, candidateId or projectId.");
+    }
+
+    await requireActionContext("mandates:write");
+    await assertCandidateBelongsToProject(candidateId, projectId);
+
+    const supabase = await createServerSupabaseClient();
+    const { error: approveError } = await supabase.rpc(
+      "approve_project_interview_plan",
+      {
+        p_plan_id: planId,
+        p_project_id: projectId,
+        p_candidate_id: candidateId,
+      }
+    );
+    if (approveError) {
+      throw new Error(approveError.message);
+    }
+
+    const { data: approved } = await supabase
+      .from("interview_plans")
+      .select("version")
+      .eq("id", planId)
+      .maybeSingle<{ version: number }>();
+
+    const { error: eventError } = await supabase.rpc("record_activity_event", {
+      p_event_type: "interview_plan_approved",
+      p_project_id: projectId,
+      p_candidate_id: candidateId,
+      p_detail: { version: approved?.version ?? null },
+    });
+    if (eventError) {
+      console.error("[interview-plan] approve event refused", eventError);
+    }
+
+    revalidatePath(`/app/projects/${projectId}/candidates/${candidateId}`);
   });
 }

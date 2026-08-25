@@ -382,6 +382,12 @@ describe("the vocabulary", () => {
       // Goals measure the desk's searches, so they file under mandates.
       "objective_created",
       "objective_closed",
+      // 116: the interview-plan lifecycle — mandate-writer-gated inside
+      // the RPC. Plans score against the calibration, so they file
+      // under mandates.
+      "interview_plan_generation_requested",
+      "interview_plan_generation_failed",
+      "interview_plan_approved",
     ]);
     for (const type of APP_RECORDABLE_EVENTS) {
       const expected =
@@ -389,7 +395,8 @@ describe("the vocabulary", () => {
         type === "candidate_stage_changed" ||
         type.startsWith("skill_") ||
         type.startsWith("task_") ||
-        type.startsWith("objective_")
+        type.startsWith("objective_") ||
+        type.startsWith("interview_plan_")
           ? "mandates"
           : "client";
       expect(ACTIVITY_GROUP_OF[type]).toBe(expected);
@@ -399,13 +406,12 @@ describe("the vocabulary", () => {
   /**
    * 107's rider: the TS mirror had drifted to 46 entries against the
    * live CHECK's 78 — the external block and the later agent events
-   * rendered as raw slugs. The count pins the reconciliation: 80 is
-   * the live `activity_events_type_known` literal count (pg_constraint
-   * read 2026-08-25, 78) plus the two objective events.
+   * rendered as raw slugs. The count pins the reconciliation: 80 was
+   * 107's rebuild; 116 adds the three interview-plan human acts = 83.
    */
-  it("mirrors the live CHECK's eighty event types", () => {
-    expect(ACTIVITY_EVENT_TYPES).toHaveLength(80);
-    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(80);
+  it("mirrors the live CHECK's eighty-three event types", () => {
+    expect(ACTIVITY_EVENT_TYPES).toHaveLength(83);
+    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(83);
   });
 
   it("describes the OKR acts with titles and outcomes, never amounts", () => {
