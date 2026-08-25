@@ -48,6 +48,9 @@ export function SiteFooter() {
             <Link href="/handbook" className="m-footer__link">
               Handbook
             </Link>
+            <Link href="/status" className="m-footer__link">
+              Status
+            </Link>
             <Link href="/request-access" className="m-footer__link">
               Request access
             </Link>

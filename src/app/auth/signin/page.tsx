@@ -177,10 +177,15 @@ export default async function SignInPage({
           © 2026 Mandate Intelligence. All rights reserved.
         </span>
         <div className="flex items-center gap-4 text-mono-label text-on-surface-variant font-mono-label uppercase tracking-widest">
-          <span className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-emerald-500 animate-pulse" />
-            Node Status: Active
-          </span>
+          {/* §139 D5: the old "Node Status: Active" was a status claim
+              read from nowhere. The link points at the page that reads. */}
+          <a
+            href="/status"
+            className="flex items-center gap-2 hover:text-primary transition-colors"
+          >
+            <span className="w-1.5 h-1.5 bg-primary animate-pulse" />
+            System Status
+          </a>
           <span className="opacity-30">|</span>
           <span className="flex items-center gap-2">
             V2.4.0-STABLE

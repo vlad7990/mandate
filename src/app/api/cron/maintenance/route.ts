@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
+import { CRON_HEARTBEAT_NAME } from "@/lib/status/heartbeat";
 import { runScheduledSweep } from "@/lib/sweep/run-scheduled-sweep";
 import { isSweepDay } from "@/lib/sweep/digest";
 
@@ -95,6 +97,27 @@ export async function GET(req: Request) {
       console.error(`[cron/maintenance] sweep did not run: ${result.reason}`);
       sweep = { ran: false, reason: result.reason };
     }
+  }
+
+  // The heartbeat (§139 D3, migration 115): the stamp says "the cron
+  // executed", not "everything it attempted succeeded" — the sweep's own
+  // outcome travels in detail. Best-effort: a failed stamp must not fail
+  // the run it is trying to report on, but it is logged, because a cron
+  // that cannot say it ran is the exact silence this row exists to end.
+  try {
+    const service = getServiceRoleSupabaseClient();
+    const stamp = new Date().toISOString();
+    const { error: heartbeatError } = await service.from("ops_heartbeats").upsert({
+      name: CRON_HEARTBEAT_NAME,
+      last_ok_at: stamp,
+      detail: { guarantee_instalments_earned: earned, sweep },
+      updated_at: stamp,
+    });
+    if (heartbeatError) {
+      console.error("[cron/maintenance] heartbeat stamp failed", heartbeatError);
+    }
+  } catch (err) {
+    console.error("[cron/maintenance] heartbeat stamp failed", err);
   }
 
   return NextResponse.json({

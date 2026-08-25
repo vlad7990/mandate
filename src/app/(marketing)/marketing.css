@@ -4858,3 +4858,95 @@ details[open] > .m-faq__btn .m-faq__icon {
 }
 
 .m-handbook__section strong { color: var(--fg); font-weight: 600; }
+
+/* ────────────────────────────────────────────────────────────────────
+   The status page (§139 D2). A dot plus a word, never colour alone;
+   every light is a live check or a persisted heartbeat.
+   ──────────────────────────────────────────────────────────────────── */
+
+.m-status {
+  max-width: 40rem;
+}
+
+.m-status__headline {
+  font-family: var(--font-display);
+  font-weight: 360;
+  font-variation-settings: "opsz" 96, "SOFT" 0;
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--fg);
+  text-wrap: balance;
+  margin-top: 0.875rem;
+}
+
+.m-status__stamp {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin-top: 1rem;
+}
+
+.m-status__list {
+  margin-top: 2.5rem;
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+.m-status__row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+.m-status__row + .m-status__row {
+  border-top: 1px solid var(--line);
+}
+
+.m-status__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.m-status__dot--ok { background: #34d399; }
+.m-status__dot--degraded { background: #f59e0b; }
+
+.m-status__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+.m-status__label {
+  color: var(--fg);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.m-status__caption {
+  color: var(--fg-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.m-status__word {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.m-status__word--ok { color: #34d399; }
+.m-status__word--degraded { color: #f59e0b; }
+
+.m-status__honesty {
+  margin-top: 2rem;
+  color: var(--fg-soft);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  border-left: 2px solid var(--line);
+  padding-left: 1.25rem;
+}
