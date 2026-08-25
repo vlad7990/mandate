@@ -8501,7 +8501,7 @@ skill_versions / 1 network_profile / 1 org_comms_policy.
 
 Product-pass slice one (NEXT-product-pass.md item 1 + item 4's UI
 half), on the founder's word with the persona name picked: MANDY.
-Commit `04a06a1`-line (`git log`: the naming commit), deploy
+Commit `febf40d`, deploy
 `mandate-irvvgqsdo`. **This § is a DRAFT: no completion is declared
 and NEXT-product-pass.md is not deleted until the founder confirms
 the product pass's slices.**
