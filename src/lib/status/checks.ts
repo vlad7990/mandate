@@ -64,9 +64,13 @@ async function probeDb(): Promise<CheckState> {
 async function probeAuth(): Promise<CheckState> {
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!url) return "degraded";
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !anonKey) return "degraded";
+    // The hosted gateway 401s health without an apikey (proven in
+    // drive 101) — the anon key is the publishable one, not a secret.
     const res = await fetch(`${url}/auth/v1/health`, {
       cache: "no-store",
+      headers: { apikey: anonKey },
       signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
     });
     return res.ok ? "ok" : "degraded";
