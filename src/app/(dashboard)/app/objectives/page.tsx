@@ -115,12 +115,17 @@ export default async function ObjectivesPage() {
   const active = objectives.filter((o) => o.status === "active").length;
   const closed = objectives.filter((o) => o.status === "closed").length;
 
-  // The only legal owners (the 107 guard): active managers and
-  // recruiters. Offered only to the desk — everyone else creates for
-  // themselves and the picker would be a refusal waiting to happen.
+  // The only legal owners (the 108 guard): active managers,
+  // recruiters and researchers. Offered only to the desk — everyone
+  // else creates for themselves and the picker would be a refusal
+  // waiting to happen.
   const ownerOptions = isDesk
     ? members
-        .filter((m) => m.status === "active" && (m.role === "manager" || m.role === "recruiter"))
+        .filter(
+          (m) =>
+            m.status === "active" &&
+            (m.role === "manager" || m.role === "recruiter" || m.role === "researcher")
+        )
         .map((m) => ({ id: m.id, label: m.full_name || m.email }))
     : [];
 

@@ -49,7 +49,7 @@ function dayAfter(date: string): string {
 }
 
 export async function computeObjectiveProgress(
-  objective: Pick<ObjectiveRow, "project_id" | "period_start" | "period_end">,
+  objective: Pick<ObjectiveRow, "project_id" | "period_start" | "period_end" | "owner_user_id">,
   keyResults: KeyResultRow[],
   client?: Supabase
 ): Promise<KeyResultProgress[]> {
@@ -70,6 +70,7 @@ export async function computeObjectiveProgress(
     sources.has("hires");
   const wantsFeedback = sources.has("feedback_captured");
   const wantsPlacements = sources.has("placements_started");
+  const wantsSourced = sources.has("placements_sourced");
   const wantsFeeLines = sources.has("fees_earned") || sources.has("fees_billed_forecast");
 
   const candidatesQ = wantsCandidates
@@ -122,6 +123,23 @@ export async function computeObjectiveProgress(
       })()
     : Promise.resolve({ count: 0 });
 
+  // 108, D4: the one owner-attributed metric — placements the
+  // objective's OWNER sourced (050's sourced_by_user_id), started in
+  // the period. A count, never an amount.
+  const sourcedQ = wantsSourced
+    ? (() => {
+        let q = supabase
+          .from("placements")
+          .select("id", { count: "exact", head: true })
+          .eq("sourced_by_user_id", objective.owner_user_id)
+          .eq("status", "started")
+          .gte("start_date", from)
+          .lt("start_date", toExclusive);
+        if (projectId) q = q.eq("project_id", projectId);
+        return q;
+      })()
+    : Promise.resolve({ count: 0 });
+
   type FeeLineLite = {
     base_amount: number;
     status: string;
@@ -141,17 +159,13 @@ export async function computeObjectiveProgress(
           .returns<FeeLineLite[]>()
     : Promise.resolve({ data: [] as FeeLineLite[] });
 
-  const [candidatesR, stageEventsR, feedbackR, placementsR, feeLinesR] = await Promise.all([
-    candidatesQ,
-    stageEventsQ,
-    feedbackQ,
-    placementsQ,
-    feeLinesQ,
-  ]);
+  const [candidatesR, stageEventsR, feedbackR, placementsR, sourcedR, feeLinesR] =
+    await Promise.all([candidatesQ, stageEventsQ, feedbackQ, placementsQ, sourcedQ, feeLinesQ]);
 
   const candidatesAdded = ("count" in candidatesR ? candidatesR.count : 0) ?? 0;
   const feedbackCaptured = ("count" in feedbackR ? feedbackR.count : 0) ?? 0;
   const placementsStarted = ("count" in placementsR ? placementsR.count : 0) ?? 0;
+  const placementsSourced = ("count" in sourcedR ? sourcedR.count : 0) ?? 0;
 
   const stageEvents = ("data" in stageEventsR ? stageEventsR.data : []) ?? [];
   const movesTo = new Map<string, number>();
@@ -211,6 +225,9 @@ export async function computeObjectiveProgress(
         break;
       case "placements_started":
         current = placementsStarted;
+        break;
+      case "placements_sourced":
+        current = placementsSourced;
         break;
       case "feedback_captured":
         current = feedbackCaptured;

@@ -198,7 +198,11 @@ const GRANTS: Record<Role, readonly Capability[]> = {
     "fees:read",
     "okrs:write",
   ],
-  researcher: ["org:read", "candidates:write"],
+  // 108: the first role holding okrs:write WITHOUT fees:read — the
+  // divergence the CAPABILITIES header predicted. The database keeps
+  // it coherent: a financial key result cannot land on, or be handed
+  // to, a researcher-owned objective.
+  researcher: ["org:read", "candidates:write", "okrs:write"],
   viewer: ["org:read"],
   // The client side of the boundary. No org capability appears below this
   // line, and none ever should: an external who gained `org:read` would
@@ -267,7 +271,7 @@ export const ROLE_SUMMARIES: Record<Role, string> = {
     "Runs the desk — every recruiter's mandates, pipeline and fees, and reassigns leads. Cannot administer members or author skills.",
   recruiter: "Runs mandates end to end — sourcing, evaluation, shortlists, client exports and outreach.",
   researcher:
-    "Sourcing and evaluation. Cannot open a mandate, publish a shortlist or contact a candidate. Sees fees only on placements they are credited on.",
+    "Sourcing and evaluation, with their own delivery objectives. Cannot open a mandate, publish a shortlist or contact a candidate. Sees fees only on placements they are credited on.",
   viewer: "Read-only across the org, excluding fees and revenue. Writes nothing anywhere.",
   hiring_manager:
     "Client-side. Sees the mandates individually shared with them and submits slate feedback. Nothing else.",

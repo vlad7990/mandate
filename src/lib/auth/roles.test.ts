@@ -32,10 +32,13 @@ const MATRIX: Record<Capability, readonly Role[]> = {
   "clients:share": ["admin", "manager", "recruiter"],
   "fees:read": ["admin", "manager", "recruiter"],
   "desk:manage": ["admin", "manager"],
-  // 107: the people the programme measures, plus the admin's repair
-  // power — the database guard refuses an admin as an OWNER, so this
-  // never makes an admin a subject.
-  "okrs:write": ["admin", "manager", "recruiter"],
+  // 107/108: the people the programme measures, plus the admin's
+  // repair power — the database guard refuses an admin as an OWNER,
+  // so this never makes an admin a subject. The researcher (108) is
+  // the first holder WITHOUT fees:read; the database refuses the
+  // mismatch (no financial key result on a researcher-owned
+  // objective).
+  "okrs:write": ["admin", "manager", "recruiter", "researcher"],
   "skills:write": ["admin"],
   "org:manage": ["admin"],
   "portal:read": ["hiring_manager", "client_hr", "client_admin"],

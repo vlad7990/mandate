@@ -14,7 +14,7 @@ describe("the metric vocabulary", () => {
    * either side grows without the other, a key result the form offers
    * is one the database refuses — or the reverse.
    */
-  it("matches the 107 CHECK, slug for slug", () => {
+  it("matches the 108 CHECK, slug for slug", () => {
     expect([...QUANTITATIVE_METRICS]).toEqual([
       "candidates_added",
       "stage_moves",
@@ -23,6 +23,7 @@ describe("the metric vocabulary", () => {
       "offers",
       "hires",
       "placements_started",
+      "placements_sourced",
       "feedback_captured",
       "weekly_velocity",
     ]);
@@ -36,11 +37,13 @@ describe("the metric vocabulary", () => {
   });
 
   /**
-   * R2, asserted where the vocabulary lives: no metric takes a person
-   * as its subject. Every slug aggregates the search, the desk or the
-   * book — a slug naming a candidate would be the doctrine breaking.
+   * R2, asserted where the vocabulary lives: no metric takes a
+   * CANDIDATE as its subject. `placements_sourced` (108, D4) is
+   * owner-attributed — it measures a staff member's delivery, which
+   * is what the founder asked OKRs to measure — and that is the line:
+   * staff delivery yes, candidates as people never.
    */
-  it("holds no per-person metric", () => {
+  it("holds no per-candidate metric", () => {
     for (const metric of [...QUANTITATIVE_METRICS, ...FINANCIAL_METRICS]) {
       expect(metric).not.toMatch(/candidate_(?!s_added)/);
       expect(metric).not.toMatch(/person|individual/);

@@ -1,5 +1,6 @@
--- OKR-domain invariants (migration 107: objectives, key results, the
--- owner rules, the money boundary, and the two new intent-door types).
+-- OKR-domain invariants (migrations 107 + 108: objectives, key
+-- results, the owner rules, the money boundary, the researcher slice,
+-- and the intent-door types).
 --
 -- Rolled back; forged-JWT assertions per the house pattern:
 --
@@ -9,39 +10,44 @@
 --       the desk's act, lands.
 --    3. A recruiter setting the owner to someone ELSE is refused
 --       (guard: only the desk hands an objective to someone else).
---    4. The guard refuses forbidden owners BY NAME: an ADMIN (R4 —
---       support, not subjects), a VIEWER, an AGENT (agents hold no
---       goals).
---    5. A RESEARCHER and a VIEWER cannot create at all (okrs:write).
+--    4. The guard refuses forbidden owners BY NAME — an ADMIN (R4),
+--       a VIEWER, an AGENT — and ADMITS a RESEARCHER (108, D1).
+--    5. A RESEARCHER creates their OWN objective with a
+--       placements_sourced key result (108, D1 + D4); a VIEWER
+--       cannot create at all.
 --    6. A NON-owner recruiter's update lands ZERO rows (RLS USING);
 --       a non-desk owner handoff is refused (guard); the author
 --       never changes (guard).
 --    7. The owner closes their own objective — stamped and signed;
 --       a close signed with ANOTHER's name is refused (WITH CHECK
 --       pin: nobody signs another's close).
---    8. R1, the money boundary: a FINANCIAL key result lands for the
---       owner (who holds fees:read); the VIEWER and the RESEARCHER
---       read ZERO financial rows while both still read the
---       quantitative one; a fellow recruiter (fees:read) reads it.
+--    8. R1, the money boundary: a FINANCIAL key result lands for a
+--       fees-tier owner; the VIEWER and the RESEARCHER read ZERO
+--       financial rows while both still read the quantitative one; a
+--       fellow recruiter (fees:read) reads it.
 --    9. Qualitative attestation: the owner attests their own — lands
 --       with the pin; an attestation signed with ANOTHER's name is
 --       refused; a NON-owner's key-result update lands ZERO rows.
 --   10. The structural CHECKs: financial without currency refused;
 --       qualitative with a target refused; a metric outside the
 --       vocabulary refused.
---   11. The intent door: objective_created refused for a researcher
+--   11. D3 (108), both faces BY NAME: a financial key result on a
+--       RESEARCHER-owned objective is refused by the trigger; the
+--       desk handing a financial-carrying objective TO a researcher
+--       is refused by the owner guard.
+--   12. The intent door: objective_created refused for a VIEWER
 --       (insufficient_privilege — the okr-writer gate); lands for
---       the recruiter wearing the right face; the agent door refuses
---       the human type.
---   12. §42: probe counts EXACT; nothing escapes the harness org.
+--       the recruiter AND the researcher wearing their own faces;
+--       the agent door refuses the human type.
+--   13. §42: probe counts EXACT; nothing escapes the harness org.
 --
 -- On success: NOTICE 'ALL OKR INVARIANTS PASSED'.
 --
--- Control run (2026-08-25): okr_key_results_role_select rebuilt with
--- the financial clause dropped to plain org-read ("org members are
--- trusted") — the VIEWER read the money row and the harness aborted
--- at INVARIANT-FAIL (8); drift and harness in ONE transaction, the
--- abort rolling the drift back.
+-- Control run (2026-08-25, 107): okr_key_results_role_select rebuilt
+-- with the financial clause dropped to plain org-read — the VIEWER
+-- read the money row and the harness aborted at INVARIANT-FAIL (8);
+-- drift and harness in ONE transaction, the abort rolling the drift
+-- back.
 
 begin;
 
@@ -91,6 +97,8 @@ declare
   v_org        uuid := '01070000-0000-4000-8000-0000000000d0';
   v_obj        uuid;
   v_obj2       uuid;
+  v_obj3       uuid;
+  v_obj4       uuid;
   v_kr_fin     uuid;
   v_kr_qual    uuid;
   v_count      int;
@@ -149,7 +157,7 @@ begin
   end if;
 
   ------------------------------------------------------------------------
-  -- (4) Forbidden owners, by name: admin, viewer, agent.
+  -- (4) Forbidden owners by name — and the researcher admitted (108).
   ------------------------------------------------------------------------
   perform set_config('request.jwt.claims',
     json_build_object('sub', v_manager, 'role', 'authenticated')::text, true);
@@ -183,22 +191,34 @@ begin
   if not v_raised then
     raise exception 'INVARIANT-FAIL (4): an AGENT became an objective owner';
   end if;
+  insert into public.objectives
+    (organization_id, owner_user_id, title, period_start, period_end, created_by)
+  values
+    (v_org, v_researcher, 'OKR probe: desk-set researcher goal', current_date, current_date + 60, v_manager)
+  returning id into v_obj3;
+  if v_obj3 is null then
+    raise exception 'INVARIANT-FAIL (4): a RESEARCHER could not be desk-set as owner (108 D1)';
+  end if;
 
   ------------------------------------------------------------------------
-  -- (5) A researcher and a viewer cannot create at all.
+  -- (5) The researcher self-creates with placements_sourced (D1 + D4);
+  --     the viewer cannot create at all.
   ------------------------------------------------------------------------
   perform set_config('request.jwt.claims',
     json_build_object('sub', v_researcher, 'role', 'authenticated')::text, true);
-  v_raised := false;
-  begin
-    insert into public.objectives
-      (organization_id, owner_user_id, title, period_start, period_end, created_by)
-    values
-      (v_org, v_rec_a, 'OKR illegal researcher create', current_date, current_date + 30, v_researcher);
-  exception when others then v_raised := true; end;
-  if not v_raised then
-    raise exception 'INVARIANT-FAIL (5): a RESEARCHER created an objective';
+  insert into public.objectives
+    (organization_id, owner_user_id, title, period_start, period_end, created_by)
+  values
+    (v_org, v_researcher, 'OKR probe: researcher sourcing', current_date, current_date + 90, v_researcher)
+  returning id into v_obj4;
+  if v_obj4 is null then
+    raise exception 'INVARIANT-FAIL (5): the researcher''s own objective did not land (108 D1)';
   end if;
+  insert into public.objective_key_results
+    (organization_id, objective_id, kind, label, metric_source, target_value)
+  values
+    (v_org, v_obj4, 'quantitative', 'Two placements sourced', 'placements_sourced', 2);
+
   perform set_config('request.jwt.claims',
     json_build_object('sub', v_viewer, 'role', 'authenticated')::text, true);
   v_raised := false;
@@ -372,10 +392,33 @@ begin
   end if;
 
   ------------------------------------------------------------------------
-  -- (11) The intent door, three faces.
+  -- (11) D3 (108), both faces by name.
   ------------------------------------------------------------------------
   perform set_config('request.jwt.claims',
-    json_build_object('sub', v_researcher, 'role', 'authenticated')::text, true);
+    json_build_object('sub', v_manager, 'role', 'authenticated')::text, true);
+  v_raised := false;
+  begin
+    insert into public.objective_key_results
+      (organization_id, objective_id, kind, label, metric_source, target_value, currency)
+    values
+      (v_org, v_obj4, 'financial', 'OKR money on a researcher', 'fees_earned', 50000, 'USD');
+  exception when others then v_raised := true; end;
+  if not v_raised then
+    raise exception 'INVARIANT-FAIL (11): a financial key result landed on a RESEARCHER-owned objective';
+  end if;
+  v_raised := false;
+  begin
+    update public.objectives set owner_user_id = v_researcher where id = v_obj;
+  exception when others then v_raised := true; end;
+  if not v_raised then
+    raise exception 'INVARIANT-FAIL (11): a financial-carrying objective was HANDED to a researcher';
+  end if;
+
+  ------------------------------------------------------------------------
+  -- (12) The intent door, four faces.
+  ------------------------------------------------------------------------
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_viewer, 'role', 'authenticated')::text, true);
   v_raised := false;
   begin
     perform public.record_activity_event(
@@ -383,7 +426,7 @@ begin
       jsonb_build_object('title', 'OKR forged', 'probe', 'okr-107'));
   exception when insufficient_privilege then v_raised := true; end;
   if not v_raised then
-    raise exception 'INVARIANT-FAIL (11): a RESEARCHER recorded an objective act';
+    raise exception 'INVARIANT-FAIL (12): a VIEWER recorded an objective act';
   end if;
 
   perform set_config('request.jwt.claims',
@@ -391,18 +434,24 @@ begin
   perform public.record_activity_event(
     'objective_created', null, null, null,
     jsonb_build_object('title', 'OKR probe: Q3 delivery', 'probe', 'okr-107'));
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_researcher, 'role', 'authenticated')::text, true);
+  perform public.record_activity_event(
+    'objective_created', null, null, null,
+    jsonb_build_object('title', 'OKR probe: researcher sourcing', 'probe', 'okr-107'));
   execute 'reset role';
   perform set_config('request.jwt.claims', '', true);
   select count(*) into v_count from public.activity_events
    where detail->>'probe' = 'okr-107';
-  if v_count <> 1 then
-    raise exception 'INVARIANT-FAIL (11): % of 1 objective events landed — vanished SILENTLY (§42)', v_count;
+  if v_count <> 2 then
+    raise exception 'INVARIANT-FAIL (12): % of 2 objective events landed — vanished SILENTLY (§42)', v_count;
   end if;
   select actor_id, actor_label into v_uuid, v_text
     from public.activity_events
-   where event_type = 'objective_created' and detail->>'probe' = 'okr-107';
-  if v_uuid is distinct from v_rec_a or v_text is distinct from 'OKR Recruiter A' then
-    raise exception 'INVARIANT-FAIL (11): the event wears the wrong face (% / %)', v_uuid, v_text;
+   where event_type = 'objective_created' and detail->>'probe' = 'okr-107'
+     and actor_id = v_researcher;
+  if v_uuid is distinct from v_researcher or v_text is distinct from 'OKR Researcher' then
+    raise exception 'INVARIANT-FAIL (12): the researcher''s event wears the wrong face (% / %)', v_uuid, v_text;
   end if;
   execute 'set local role authenticated';
 
@@ -413,34 +462,34 @@ begin
     perform public.record_agent_event('objective_created');
   exception when others then v_raised := true; end;
   if not v_raised then
-    raise exception 'INVARIANT-FAIL (11): the AGENT door accepted the human type';
+    raise exception 'INVARIANT-FAIL (12): the AGENT door accepted the human type';
   end if;
 
   ------------------------------------------------------------------------
-  -- (12) Nothing escapes the harness org.
+  -- (13) Nothing escapes the harness org.
   ------------------------------------------------------------------------
   execute 'reset role';
   perform set_config('request.jwt.claims', '', true);
   select count(*) into v_count from public.objectives where organization_id <> v_org;
   if v_count <> 0 then
-    raise exception 'INVARIANT-FAIL (12): % objective row(s) outside the harness org', v_count;
+    raise exception 'INVARIANT-FAIL (13): % objective row(s) outside the harness org', v_count;
   end if;
   select count(*) into v_count from public.objective_key_results where organization_id <> v_org;
   if v_count <> 0 then
-    raise exception 'INVARIANT-FAIL (12): % key-result row(s) outside the harness org', v_count;
+    raise exception 'INVARIANT-FAIL (13): % key-result row(s) outside the harness org', v_count;
   end if;
   select count(*) into v_count from public.objectives where organization_id = v_org;
-  if v_count <> 2 then
-    raise exception 'INVARIANT-FAIL (12): % of 2 objectives in the harness org', v_count;
+  if v_count <> 4 then
+    raise exception 'INVARIANT-FAIL (13): % of 4 objectives in the harness org', v_count;
   end if;
   select count(*) into v_count from public.objective_key_results where organization_id = v_org;
-  if v_count <> 3 then
-    raise exception 'INVARIANT-FAIL (12): % of 3 key results in the harness org', v_count;
+  if v_count <> 4 then
+    raise exception 'INVARIANT-FAIL (13): % of 4 key results in the harness org', v_count;
   end if;
   select count(*) into v_count from public.activity_events
    where detail->>'probe' = 'okr-107' and organization_id <> v_org;
   if v_count <> 0 then
-    raise exception 'INVARIANT-FAIL (12): % probe event(s) escaped the harness org', v_count;
+    raise exception 'INVARIANT-FAIL (13): % probe event(s) escaped the harness org', v_count;
   end if;
 
   raise notice 'ALL OKR INVARIANTS PASSED';

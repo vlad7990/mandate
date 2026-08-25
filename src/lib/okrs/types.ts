@@ -50,6 +50,11 @@ export const QUANTITATIVE_METRICS = [
   "offers",
   "hires",
   "placements_started",
+  // 108, D4 (founder's ruling): the first OWNER-attributed metric —
+  // placements the objective's owner personally sourced, from 050's
+  // sourced_by_user_id. Counts only, never amounts; delivery, never
+  // a candidate.
+  "placements_sourced",
   "feedback_captured",
   "weekly_velocity",
 ] as const;
@@ -69,6 +74,7 @@ export const METRIC_LABELS: Record<MetricSource, string> = {
   offers: "Offers",
   hires: "Hires",
   placements_started: "Placements started",
+  placements_sourced: "Placements sourced (own)",
   feedback_captured: "Feedback captured",
   weekly_velocity: "Weekly velocity",
   fees_earned: "Fees earned",
