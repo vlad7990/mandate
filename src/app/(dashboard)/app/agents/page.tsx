@@ -34,7 +34,7 @@ type AgentGroup = {
 
 const REGISTRY: AgentGroup[] = [
   {
-    label: "Candidate pipeline",
+    label: "Understand",
     tone: "primary",
     agents: [
       {
@@ -42,6 +42,53 @@ const REGISTRY: AgentGroup[] = [
         does: "Turns a one-line role input into a structured mandate — role fields, inferred scope, and the missing-information list.",
         staysHuman: "The client registry: resolving and linking a client is always the recruiter's act.",
       },
+      {
+        name: "Company Intelligence Agent",
+        does: "One identity, two judgments: the company intelligence report and the hiring-manager dossier, both web-grounded.",
+        staysHuman: "One kill switch covers both judgments.",
+      },
+      {
+        name: "Culture Agent",
+        does: "Profiles culture fit from the mandate and the feedback tail, carrying your context verbatim — and flagging that it did.",
+        staysHuman: "If the evidence contradicts your prior, it surfaces the gap rather than rubber-stamping.",
+      },
+      {
+        name: "Calibration Agent",
+        does: "Derives the scoring model's dimension weights from your onboarding answers; every derived weight is attributable to it in calibration history.",
+        staysHuman: "Your answers are stored under your own session first — they are your act, not its input residue.",
+      },
+      {
+        name: "Role Spec Agent",
+        does: "Drafts the job spec onto your versioned placeholder, ready for your edit.",
+        staysHuman: "It can neither touch a finalized spec nor finalize one — the canonical version is always yours.",
+      },
+    ],
+  },
+  {
+    label: "Discover",
+    tone: "tertiary",
+    agents: [
+      {
+        name: "Boolean Search Agent",
+        does: "Generates the LinkedIn, Google X-Ray, and ATS query set — exact, broad, and adjacent variants.",
+        staysHuman: "Query history is append-only to it: your edits and restores are never overwritten.",
+      },
+      {
+        name: "Candidate Search Agent",
+        does: "Ranks your own pool against a plain-English query on the AI Search page, and holds the sourcing search over configured web sources for candidates not yet in the pool.",
+        staysHuman: "The sourcing side searches only domains your organisation has configured — never LinkedIn, by policy baked into the tool call.",
+      },
+      {
+        name: "Candidate Research Agent",
+        does: "Builds the public-web dossier on a candidate using web search, with sources cited.",
+        staysHuman: "Suspension refuses the run before any search is spent — it never searches unsupervised.",
+      },
+    ],
+  },
+  {
+    label: "Evaluate",
+    tone: "secondary",
+    agents: [
       {
         name: "CV Parsing Agent",
         does: "Converts an uploaded CV into a structured profile — roles, domain, scale, tech exposure, archetype.",
@@ -58,21 +105,6 @@ const REGISTRY: AgentGroup[] = [
         staysHuman: "The scoring model it applies is set by calibration — and recalibration follows your feedback.",
       },
       {
-        name: "Feedback Interpreter",
-        does: "Reads recruiter and hiring-manager feedback, interprets preference shifts, flags bias patterns and contradictions, and drives recalibration.",
-        staysHuman: "Your feedback is persisted under your own name before the agent is ever asked to think about it.",
-      },
-      {
-        name: "Positioning Agent",
-        does: "For a candidate being submitted: narrative improvement, perception analysis, and gap identification.",
-        staysHuman: "What is actually sent to a client is always your submission.",
-      },
-      {
-        name: "Candidate Research Agent",
-        does: "Builds the public-web dossier on a candidate using web search, with sources cited.",
-        staysHuman: "Suspension refuses the run before any search is spent — it never searches unsupervised.",
-      },
-      {
         name: "Triangulation Agent",
         does: "Synthesises the three intelligence reports into the Triangulation Report. Pure synthesis — no web access.",
         staysHuman: "It reasons only over reports already in the record.",
@@ -82,69 +114,26 @@ const REGISTRY: AgentGroup[] = [
         does: "Profiles motivation and working style from human testimony — notes and recruiter context.",
         staysHuman: "Its access to notes is read-only by policy: it can never author testimony.",
       },
-    ],
-  },
-  {
-    label: "Company intelligence",
-    tone: "secondary",
-    agents: [
       {
-        name: "Company Intelligence Agent",
-        does: "One identity, two judgments: the company intelligence report and the hiring-manager dossier, both web-grounded.",
-        staysHuman: "One kill switch covers both judgments.",
-      },
-      {
-        name: "Culture Agent",
-        does: "Profiles culture fit from the mandate and the feedback tail, carrying your context verbatim — and flagging that it did.",
-        staysHuman: "If the evidence contradicts your prior, it surfaces the gap rather than rubber-stamping.",
+        name: "Executive Intelligence Agent",
+        does: "One identity, three judgments for executive searches: the web-grounded company operating context, the success profile, and the interview plan.",
+        staysHuman: "It touches drafts only — approval is pinned to humans in the database itself, and it can never sign a human's name in the executive ledger.",
       },
     ],
   },
   {
-    label: "Sourcing & search",
-    tone: "tertiary",
-    agents: [
-      {
-        name: "Boolean Search Agent",
-        does: "Generates the LinkedIn, Google X-Ray, and ATS query set — exact, broad, and adjacent variants.",
-        staysHuman: "Query history is append-only to it: your edits and restores are never overwritten.",
-      },
-      {
-        name: "Candidate Search Agent",
-        does: "Ranks your own pool against a plain-English query on the AI Search page, and holds the sourcing search over configured web sources for candidates not yet in the pool.",
-        staysHuman: "The sourcing side searches only domains your organisation has configured — never LinkedIn, by policy baked into the tool call.",
-      },
-    ],
-  },
-  {
-    label: "Spec & calibration",
+    label: "Deliver",
     tone: "primary",
     agents: [
       {
-        name: "Calibration Agent",
-        does: "Derives the scoring model's dimension weights from your onboarding answers; every derived weight is attributable to it in calibration history.",
-        staysHuman: "Your answers are stored under your own session first — they are your act, not its input residue.",
+        name: "Positioning Agent",
+        does: "For a candidate being submitted: narrative improvement, perception analysis, and gap identification.",
+        staysHuman: "What is actually sent to a client is always your submission.",
       },
-      {
-        name: "Role Spec Agent",
-        does: "Drafts the job spec onto your versioned placeholder, ready for your edit.",
-        staysHuman: "It can neither touch a finalized spec nor finalize one — the canonical version is always yours.",
-      },
-    ],
-  },
-  {
-    label: "Delivery & oversight",
-    tone: "secondary",
-    agents: [
       {
         name: "Shortlist Agent",
         does: "Writes the submission-ready shortlist report over the slate you composed, with trade-off analysis.",
         staysHuman: "It can neither modify a submitted slate nor submit one — what was sent never silently changes.",
-      },
-      {
-        name: "Desk Digest Agent",
-        does: "Writes the manager's desk digest — what moved, what stalled, what to do about it.",
-        staysHuman: "It sees nothing itself: the rollup arrives pre-assembled, and its whole reach is one append-only record.",
       },
       {
         name: "Search Health Agent",
@@ -152,14 +141,25 @@ const REGISTRY: AgentGroup[] = [
         staysHuman: "A healthy search gets no suggestions — the agent applies that gate itself.",
       },
       {
+        name: "Desk Digest Agent",
+        does: "Writes the manager's desk digest — what moved, what stalled, what to do about it.",
+        staysHuman: "It sees nothing itself: the rollup arrives pre-assembled, and its whole reach is one append-only record.",
+      },
+    ],
+  },
+  {
+    label: "Assist",
+    tone: "secondary",
+    agents: [
+      {
+        name: "Feedback Interpreter",
+        does: "Reads recruiter and hiring-manager feedback, interprets preference shifts, flags bias patterns and contradictions, and drives recalibration.",
+        staysHuman: "Your feedback is persisted under your own name before the agent is ever asked to think about it.",
+      },
+      {
         name: "Copilot Agent",
         does: "The always-available chat: answers questions over the project snapshot and explains decisions.",
         staysHuman: "Your session proves you may ask before the agent exists; conversation history stays on your device.",
-      },
-      {
-        name: "Executive Intelligence Agent",
-        does: "One identity, three judgments for executive searches: the web-grounded company operating context, the success profile, and the interview plan.",
-        staysHuman: "It touches drafts only — approval is pinned to humans in the database itself, and it can never sign a human's name in the executive ledger.",
       },
     ],
   },
