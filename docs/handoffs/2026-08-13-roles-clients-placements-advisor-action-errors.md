@@ -10284,3 +10284,52 @@ Numbers: next migration 116; next § 141; next drive 102; vitest
 ops_heartbeats 1 (now 25/24/74/5/5/1/1/2/2/1/1/0/0 + heartbeats 1).
 Remaining per checklist: Lighthouse + mobile-animation audits ·
 simulator verification · the founder's testing half of §128.
+
+## 141. LIGHTHOUSE + MOBILE-ANIMATION AUDITS RUN — the typewriter CLS killed — 2026-08-25
+
+The founder called both checklist audits. Lighthouse mobile (prod /,
+simulated throttle) BEFORE: perf 0.66, FCP/LCP 4.0 s, **CLS 0.197 —
+failing** — and the shift log named one culprit five times over:
+p.m-lede in the hero, pushed down 0.03–0.06 per tick. The mechanism
+was in TypewriterReveal: it rendered only text.slice(0, visible), so
+the H1's box grew character by character and everything below it —
+lede, CTAs, trust row — moved on every keystroke of the animation.
+Exactly the defect class the checklist line predicted.
+
+THE FIX (335b57d, deployed mandate-k2uq663ih): the untyped remainder
+stays in the layout with visibility:hidden — the headline's box and
+every line break in it are final from first paint — and the cursor
+is anchored to a zero-width position:relative span and positioned
+absolute, so it adds no width to the line it blinks on. Order
+matters: visible slice · cursor anchor · hidden remainder, so the
+cursor blinks at the typing boundary. SSR/no-JS/reduced-motion
+behaviour unchanged (full text, no cursor).
+
+AFTER, same audit: perf 0.66 → **0.83**, CLS 0.197 → **0.009**, LCP
+4.0 → 3.5 s, TBT 90 ms. Live browser confirm: buffered CLS across
+the full typing run 0.0268, remaining entries all the moving cursor
+itself (sub-threshold, green). Desktop for the record: perf **0.99**,
+LCP 0.8 s, CLS 0.01.
+
+RESIDUAL, named honestly: mobile LCP 3.5 s sits in the
+needs-improvement band and is NOT animation-caused — FCP equals LCP,
+so it is page weight under 4× throttle (fonts + bundle), out of this
+checklist line's scope. A named candidate for a later perf slice,
+not a blocker the checklist recognises.
+
+Mobile-animation audit (prod, Playwright at 390×844 and 360×780):
+zero horizontal overflow at both widths (flagged right-edge elements
+are mid-reveal transforms inside clipped containers — the page never
+scrolls sideways); prefers-reduced-motion coverage is comprehensive
+(the big CSS reduce block spans particles/stream/shimmer/scanline/
+radar/chip-pop; TerminalCursor and TypewriterReveal check
+matchMedia in JS); ~20 concurrent hero animations, TBT 90 ms — the
+damped-at-640px particle design (marketing.css header note) is
+doing its job. Screenshot audit-102-mobile-hero-360.png. No further
+defects; both checklist lines CLOSE.
+
+Numbers: vitest 970 unchanged (no pure rule touched); next
+migration 116; next § 142; next drive 102 (101 spent on status, the
+audits ran as audits, not drives). Remaining per checklist:
+simulator verification · the founder's testing half of §128.
+D4 external monitor still founder-owned/open.
