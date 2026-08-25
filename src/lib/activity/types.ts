@@ -55,12 +55,35 @@ export const ACTIVITY_EVENT_TYPES = [
   "member_role_changed",
   "member_status_changed",
   "member_founder_changed",
+  "member_org_changed",
 
   "shortlist_published",
   "report_exported",
   "hm_portal_opened",
 
   "mandate_reassigned",
+
+  // 067–073: the External Identity programme — invitations, shares,
+  // grants and the candidate portal, all written by triggers and
+  // SECURITY DEFINER functions on the client side of the boundary.
+  // (107's rider: these were live in the CHECK long before this
+  // mirror caught up — the feed rendered them as raw slugs.)
+  "external_invited",
+  "external_invitation_revoked",
+  "external_invitation_resent",
+  "external_joined",
+  "external_role_changed",
+  "external_status_changed",
+  "mandate_shared",
+  "mandate_unshared",
+  "external_access_granted",
+  "external_access_revoked",
+  "candidate_portal_link_issued",
+  "candidate_portal_link_revoked",
+  "candidate_self_updated",
+  "candidate_withdrew",
+  "candidate_erasure_requested",
+  "candidate_cv_submitted",
 
   // 102: Skills Studio's five human acts — the one control surface
   // that changes every agent's behaviour writes its own record.
@@ -104,6 +127,30 @@ export const ACTIVITY_EVENT_TYPES = [
   "intake_analyzed",
   "health_suggested",
   "weekly_report_generated",
+  // 091–101: the later agent principals, in door order (107's rider —
+  // same catch-up as the external block above).
+  "calibration_derived",
+  "job_spec_generated",
+  "shortlist_report_generated",
+  "copilot_answered",
+  "success_profile_generated",
+  "interview_plan_generated",
+  "executive_context_researched",
+  "candidate_search_answered",
+  "sourcing_search_executed",
+  "outreach_strategy_drafted",
+  "relationship_updated",
+  "network_dnc_set",
+  "network_dnc_cleared",
+  "engagement_updated",
+  "prescreen_updated",
+
+  // 107: the OKR domain's two human acts. Okr-writer-gated inside
+  // `record_activity_event`; the detail carries titles, scopes and
+  // outcomes — never amounts (the financial rows are fees-tier and
+  // the trail is org-visible).
+  "objective_created",
+  "objective_closed",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -154,6 +201,9 @@ export const APP_RECORDABLE_EVENTS = [
   // completion.
   "task_assigned",
   "task_completed",
+  // 107 — the OKR domain: both okr-writer-gated inside the RPC.
+  "objective_created",
+  "objective_closed",
 ] as const;
 
 export type AppRecordableEvent = (typeof APP_RECORDABLE_EVENTS)[number];
@@ -220,6 +270,25 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   member_role_changed: "members",
   member_status_changed: "members",
   member_founder_changed: "members",
+  member_org_changed: "members",
+
+  external_invited: "client",
+  external_invitation_revoked: "client",
+  external_invitation_resent: "client",
+  external_joined: "client",
+  external_role_changed: "client",
+  external_status_changed: "client",
+  mandate_shared: "client",
+  mandate_unshared: "client",
+  external_access_granted: "client",
+  external_access_revoked: "client",
+  candidate_portal_link_issued: "client",
+  candidate_portal_link_revoked: "client",
+  candidate_self_updated: "client",
+  // A withdrawal moves the pipeline, so it files with the search.
+  candidate_withdrew: "mandates",
+  candidate_erasure_requested: "client",
+  candidate_cv_submitted: "client",
 
   shortlist_published: "client",
   report_exported: "client",
@@ -255,6 +324,25 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   intake_analyzed: "mandates",
   health_suggested: "mandates",
   weekly_report_generated: "mandates",
+
+  calibration_derived: "mandates",
+  job_spec_generated: "mandates",
+  shortlist_report_generated: "mandates",
+  copilot_answered: "mandates",
+  success_profile_generated: "mandates",
+  interview_plan_generated: "mandates",
+  executive_context_researched: "mandates",
+  candidate_search_answered: "mandates",
+  sourcing_search_executed: "mandates",
+  outreach_strategy_drafted: "mandates",
+  relationship_updated: "mandates",
+  network_dnc_set: "mandates",
+  network_dnc_cleared: "mandates",
+  engagement_updated: "mandates",
+  prescreen_updated: "mandates",
+
+  objective_created: "mandates",
+  objective_closed: "mandates",
 };
 
 /**

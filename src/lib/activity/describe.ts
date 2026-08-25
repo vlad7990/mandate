@@ -447,6 +447,178 @@ export function describeActivity(event: ActivityEventRow): string {
       }`;
     }
 
+    // 072: the platform operator moving a member between orgs. The
+    // detail carries org NAMES snapshotted at write time.
+    case "member_org_changed": {
+      const who = str(d, "member") ?? "a member";
+      const from = str(d, "from");
+      const to = str(d, "to");
+      if (from && to) return `Moved ${who} from ${from} to ${to}`;
+      return `Moved ${who} to another organization`;
+    }
+
+    // 067–070: the External Identity programme. Names and emails are
+    // snapshots on the detail — the invitation row outlives nobody.
+    case "external_invited": {
+      const who = str(d, "invitee") ?? str(d, "email") ?? "someone";
+      return `Invited ${who} as ${role(d.role)}`;
+    }
+    case "external_invitation_revoked": {
+      const who = str(d, "invitee") ?? str(d, "email") ?? "someone";
+      return `Revoked ${who}'s invitation`;
+    }
+    case "external_invitation_resent": {
+      const who = str(d, "invitee") ?? str(d, "email") ?? "someone";
+      return `Resent ${who}'s invitation`;
+    }
+    case "external_joined": {
+      const who = str(d, "member") ?? str(d, "email") ?? "Someone";
+      return `${who} accepted the invitation and joined the portal`;
+    }
+    case "external_role_changed": {
+      const who = str(d, "member") ?? "a portal member";
+      return `Changed ${who} from ${role(d.from)} to ${role(d.to)}`;
+    }
+    case "external_status_changed": {
+      const who = str(d, "member") ?? "a portal member";
+      return `Changed ${who}'s portal account from ${str(d, "from") ?? "unknown"} to ${str(d, "to") ?? "unknown"}`;
+    }
+    // The feed renders the mandate and client links from the row's ids;
+    // the sentence only has to say which direction the door swung.
+    case "mandate_shared":
+      return "Shared the mandate with the client";
+    case "mandate_unshared":
+      return "Unshared the mandate from the client";
+    case "external_access_granted":
+      return `Granted ${str(d, "member") ?? "a portal member"} access to the mandate`;
+    case "external_access_revoked":
+      return `Revoked ${str(d, "member") ?? "a portal member"}'s access to the mandate`;
+
+    // 073: the candidate portal. `person` is the recipient label
+    // snapshotted at issue time.
+    case "candidate_portal_link_issued":
+      return `Issued ${str(d, "person") ?? "the candidate"} a portal link`;
+    case "candidate_portal_link_revoked":
+      return `Revoked ${str(d, "person") ?? "the candidate"}'s portal link`;
+    case "candidate_self_updated": {
+      const who = str(d, "person") ?? "The candidate";
+      const fields = Array.isArray(d.fields) ? d.fields.length : null;
+      return `${who} updated their own details${
+        fields != null && fields > 0 ? ` — ${fields} field${fields === 1 ? "" : "s"}` : ""
+      }`;
+    }
+    case "candidate_withdrew": {
+      const who = str(d, "person") ?? "The candidate";
+      const from = str(d, "from_stage");
+      return `${who} withdrew from the search${from ? ` at ${pipelineStage(from)}` : ""}`;
+    }
+    case "candidate_erasure_requested":
+      return `${str(d, "person") ?? "The candidate"} requested erasure of their data`;
+    case "candidate_cv_submitted":
+      return `${str(d, "person") ?? "The candidate"} submitted a CV through the portal`;
+
+    // 091–101: the later agent principals. The byline names the agent;
+    // the sentence names the trigger — the D4 split throughout. Details
+    // carry counts and enums, never generated text.
+    case "calibration_derived": {
+      const trigger = str(d, "trigger");
+      return trigger === "rerun"
+        ? "Re-derived the scoring calibration from onboarding"
+        : "Derived the scoring calibration from onboarding";
+    }
+    case "job_spec_generated": {
+      const version = num(d, "version");
+      const trigger = str(d, "trigger");
+      const base = trigger === "regenerate" ? "Rewrote the job spec" : "Wrote the job spec";
+      return version != null ? `${base} (v${version})` : base;
+    }
+    case "shortlist_report_generated": {
+      const slate = num(d, "slate");
+      const trigger = str(d, "trigger");
+      const base =
+        trigger === "regenerate" ? "Rewrote the shortlist report" : "Wrote the shortlist report";
+      return slate != null && slate > 0
+        ? `${base} — ${slate} candidate${slate === 1 ? "" : "s"}`
+        : base;
+    }
+    case "copilot_answered":
+      return d.focused === true
+        ? "Answered a question about the candidate"
+        : "Answered a question about the search";
+    case "success_profile_generated": {
+      const version = num(d, "version");
+      return version != null
+        ? `Wrote the success profile (v${version})`
+        : "Wrote the success profile";
+    }
+    case "interview_plan_generated": {
+      const stages = num(d, "stage_count");
+      return stages != null && stages > 0
+        ? `Wrote the interview plan — ${stages} stage${stages === 1 ? "" : "s"}`
+        : "Wrote the interview plan";
+    }
+    case "executive_context_researched": {
+      const trigger = str(d, "trigger");
+      const sources = num(d, "sources");
+      const base =
+        trigger === "re_research"
+          ? "Re-researched the company context"
+          : "Researched the company context";
+      return sources != null && sources > 0
+        ? `${base} — ${sources} source${sources === 1 ? "" : "s"}`
+        : base;
+    }
+    case "candidate_search_answered": {
+      const matches = num(d, "matches");
+      return matches != null
+        ? `Searched the candidate pool — ${matches} match${matches === 1 ? "" : "es"}`
+        : "Searched the candidate pool";
+    }
+    case "sourcing_search_executed": {
+      const leads = num(d, "leads");
+      return leads != null
+        ? `Ran a sourcing search — ${leads} lead${leads === 1 ? "" : "s"}`
+        : "Ran a sourcing search";
+    }
+    case "outreach_strategy_drafted": {
+      const version = num(d, "version");
+      return version != null
+        ? `Drafted the outreach strategy (v${version})`
+        : "Drafted the outreach strategy";
+    }
+    case "relationship_updated":
+      return "Updated the relationship read";
+    case "network_dnc_set": {
+      const who = str(d, "person") ?? "the person";
+      const reason = str(d, "reason");
+      return `Marked ${who} do-not-contact${reason ? ` — ${reason}` : ""}`;
+    }
+    case "network_dnc_cleared":
+      return `Cleared ${str(d, "person") ?? "the person"}'s do-not-contact`;
+    case "engagement_updated":
+      return "Updated the engagement thread";
+    case "prescreen_updated":
+      return "Updated the pre-screen";
+
+    // 107: the OKR domain. Titles, scopes and outcomes only — the
+    // money on a financial key result never rides the org-visible
+    // trail (R1).
+    case "objective_created": {
+      const title = str(d, "title");
+      const owner = str(d, "owner_label");
+      const base = title ? `Set the objective "${title}"` : "Set an objective";
+      return owner ? `${base} for ${owner}` : base;
+    }
+    case "objective_closed": {
+      const title = str(d, "title");
+      const outcome = str(d, "outcome");
+      if (outcome === "abandoned") {
+        return title ? `Abandoned the objective "${title}"` : "Abandoned an objective";
+      }
+      const base = title ? `Closed the objective "${title}"` : "Closed an objective";
+      return outcome ? `${base} — ${outcome}` : base;
+    }
+
     default: {
       // A row written by a migration this build predates. Render it rather
       // than crash the feed — an audit trail that goes blank on an

@@ -131,6 +131,14 @@ export const CAPABILITIES = [
   "fees:read",
   /** The desk: cross-recruiter oversight, and reassigning a mandate's lead. */
   "desk:manage",
+  /**
+   * Set and close objectives and key results (107). Held by the people
+   * the programme measures — recruiter, manager — plus the admin, who
+   * keeps the REPAIR power without ever being a subject: the database
+   * guard refuses an admin as an objective's owner, so the capability
+   * lets support fix a typo'd target and nothing more.
+   */
+  "okrs:write",
   /** Author skills, competencies and role templates — they change how every search scores. */
   "skills:write",
   /** Org settings and member administration. */
@@ -166,6 +174,7 @@ const GRANTS: Record<Role, readonly Capability[]> = {
     "clients:share",
     "fees:read",
     "desk:manage",
+    "okrs:write",
     "skills:write",
     "org:manage",
   ],
@@ -179,8 +188,16 @@ const GRANTS: Record<Role, readonly Capability[]> = {
     "clients:share",
     "fees:read",
     "desk:manage",
+    "okrs:write",
   ],
-  recruiter: ["org:read", "candidates:write", "mandates:write", "clients:share", "fees:read"],
+  recruiter: [
+    "org:read",
+    "candidates:write",
+    "mandates:write",
+    "clients:share",
+    "fees:read",
+    "okrs:write",
+  ],
   researcher: ["org:read", "candidates:write"],
   viewer: ["org:read"],
   // The client side of the boundary. No org capability appears below this
@@ -270,6 +287,7 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
   "clients:share": "Shortlists, exports and outreach",
   "fees:read": "Placement fees and revenue",
   "desk:manage": "Desk oversight and reassignment",
+  "okrs:write": "Objectives and key results",
   "skills:write": "Skills & templates",
   "org:manage": "Org settings and members",
   "portal:read": "Client portal",

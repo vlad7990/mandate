@@ -29,6 +29,16 @@ import {
   type PlacementRow,
   type PlacementStatus,
 } from "@/lib/fees/types";
+import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
+import { computeObjectiveProgress } from "@/lib/okrs/progress";
+import {
+  KEY_RESULT_COLUMNS,
+  KEY_RESULT_STATUS_LABELS,
+  OBJECTIVE_COLUMNS,
+  type KeyResultRow,
+  type KeyResultStatus,
+  type ObjectiveRow,
+} from "@/lib/okrs/types";
 
 /**
  * The revenue book — the screen that answers "what did we bill this
@@ -61,6 +71,14 @@ type PlacementListRow = PlacementRow & {
   candidates: { full_name: string } | null;
   projects: { title: string } | null;
   clients: { name: string } | null;
+};
+
+const OKR_CHIP: Record<KeyResultStatus, ChipTone> = {
+  on_track: "secondary",
+  met: "primary",
+  behind: "warn",
+  at_risk: "danger",
+  pending: "neutral",
 };
 
 const STATUS_TONE: Record<PlacementStatus, string> = {
@@ -101,6 +119,59 @@ export default async function PlacementsPage() {
           .maybeSingle<{ base_currency: string }>()
       : Promise.resolve({ data: null }),
   ]);
+
+  // The financial-objective strip (107, D4). The KR rows are the
+  // fees-tier: RLS returns them only under fees:read, so this arrives
+  // empty for exactly the roles the "Fees restricted" panel addresses.
+  const [{ data: objectiveRows }, { data: financialKrRows }, { data: okrMemberRows }] =
+    await Promise.all([
+      supabase
+        .from("objectives")
+        .select(OBJECTIVE_COLUMNS)
+        .eq("status", "active")
+        .order("period_end", { ascending: true })
+        .returns<ObjectiveRow[]>(),
+      supabase
+        .from("objective_key_results")
+        .select(KEY_RESULT_COLUMNS)
+        .eq("kind", "financial")
+        .order("created_at", { ascending: true })
+        .returns<KeyResultRow[]>(),
+      supabase.from("users").select("id, full_name, email"),
+    ]);
+
+  const okrMemberLabel = new Map(
+    (okrMemberRows ?? []).map((m: { id: string; full_name: string | null; email: string }) => [
+      m.id,
+      m.full_name || m.email,
+    ])
+  );
+  const financialByObjective = new Map<string, KeyResultRow[]>();
+  for (const kr of financialKrRows ?? []) {
+    const bucket = financialByObjective.get(kr.objective_id);
+    if (bucket) bucket.push(kr);
+    else financialByObjective.set(kr.objective_id, [kr]);
+  }
+  const okrObjectives = (objectiveRows ?? []).filter((o) => financialByObjective.has(o.id));
+  const okrProgress = await Promise.all(
+    okrObjectives.map((o) =>
+      computeObjectiveProgress(o, financialByObjective.get(o.id) ?? [], supabase)
+    )
+  );
+  const financialLines = okrObjectives.flatMap((o, i) => {
+    const progress = new Map(okrProgress[i].map((p) => [p.keyResultId, p]));
+    return (financialByObjective.get(o.id) ?? []).map((kr) => ({
+      id: kr.id,
+      label: kr.label,
+      objectiveTitle: o.title,
+      ownerLabel: okrMemberLabel.get(o.owner_user_id) ?? "unknown",
+      periodEnd: o.period_end,
+      currency: kr.currency ?? orgRow?.base_currency ?? "USD",
+      target: kr.target_value === null ? 0 : Number(kr.target_value),
+      current: progress.get(kr.id)?.current ?? 0,
+      status: progress.get(kr.id)?.status ?? ("pending" as KeyResultStatus),
+    }));
+  });
 
   const placements = placementRows ?? [];
   const lines = lineRows ?? [];
@@ -220,6 +291,45 @@ export default async function PlacementsPage() {
               </table>
             </div>
           </ListPanel>
+
+          {financialLines.length > 0 && (
+            <ListPanel>
+              <div className="flex items-center justify-between border-b border-outline-variant px-[18px] py-[15px]">
+                <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+                  Financial objectives
+                </h2>
+                <Link
+                  href="/app/objectives"
+                  prefetch={false}
+                  className="font-mono-label text-mono-label uppercase tracking-widest text-outline transition-colors hover:text-primary"
+                >
+                  All objectives
+                </Link>
+              </div>
+              <div className="divide-y divide-outline-variant/40">
+                {financialLines.map((line) => (
+                  <div
+                    key={line.id}
+                    className="flex flex-wrap items-center gap-x-4 gap-y-2 px-[18px] py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="text-body-s text-on-surface">{line.label}</span>
+                      <span className="ml-2 font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
+                        {line.objectiveTitle} · {line.ownerLabel} · to {line.periodEnd}
+                      </span>
+                    </div>
+                    <span className="font-mono-label text-mono-label tabular-nums text-on-surface">
+                      {formatMoney(line.current, line.currency)}
+                      <span className="text-outline"> / {formatMoney(line.target, line.currency)}</span>
+                    </span>
+                    <StatusChip tone={OKR_CHIP[line.status]} dot pulse={line.status === "at_risk"}>
+                      {KEY_RESULT_STATUS_LABELS[line.status]}
+                    </StatusChip>
+                  </div>
+                ))}
+              </div>
+            </ListPanel>
+          )}
         </>
       ) : (
         <div className="border border-outline-variant bg-surface-container-low px-[18px] py-4">

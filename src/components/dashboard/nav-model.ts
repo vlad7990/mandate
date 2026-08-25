@@ -97,6 +97,20 @@ export const NAV: readonly NavItem[] = [
   },
 
   /**
+   * Deliberately not gated on `okrs:write`, for the Placements
+   * reasoning: the page is readable by every active role — goals the
+   * desk is measured by are visible work — and only the authoring
+   * controls are capability-gated, inside the page.
+   */
+  {
+    href: "/app/objectives",
+    label: "Objectives",
+    icon: "analytics",
+    group: "workspace",
+    matchPrefix: true,
+  },
+
+  /**
    * Deliberately not gated on `fees:read`. The page is readable by every
    * active role — it shows the placements and says plainly that the money
    * is restricted — and hiding it would leave a researcher unable to see

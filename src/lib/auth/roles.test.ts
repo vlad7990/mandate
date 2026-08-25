@@ -32,6 +32,10 @@ const MATRIX: Record<Capability, readonly Role[]> = {
   "clients:share": ["admin", "manager", "recruiter"],
   "fees:read": ["admin", "manager", "recruiter"],
   "desk:manage": ["admin", "manager"],
+  // 107: the people the programme measures, plus the admin's repair
+  // power — the database guard refuses an admin as an OWNER, so this
+  // never makes an admin a subject.
+  "okrs:write": ["admin", "manager", "recruiter"],
   "skills:write": ["admin"],
   "org:manage": ["admin"],
   "portal:read": ["hiring_manager", "client_hr", "client_admin"],
@@ -156,6 +160,7 @@ describe("the shape of the roles", () => {
       "mandates:write",
       "clients:share",
       "fees:read",
+      "okrs:write",
     ]);
   });
 });

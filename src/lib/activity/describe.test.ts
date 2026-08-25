@@ -378,17 +378,69 @@ describe("the vocabulary", () => {
       // completion actor-stamped. Desk work files under mandates.
       "task_assigned",
       "task_completed",
+      // 107: the OKR domain — both okr-writer-gated inside the RPC.
+      // Goals measure the desk's searches, so they file under mandates.
+      "objective_created",
+      "objective_closed",
     ]);
     for (const type of APP_RECORDABLE_EVENTS) {
       const expected =
         type === "mandate_reassigned" ||
         type === "candidate_stage_changed" ||
         type.startsWith("skill_") ||
-        type.startsWith("task_")
+        type.startsWith("task_") ||
+        type.startsWith("objective_")
           ? "mandates"
           : "client";
       expect(ACTIVITY_GROUP_OF[type]).toBe(expected);
     }
+  });
+
+  /**
+   * 107's rider: the TS mirror had drifted to 46 entries against the
+   * live CHECK's 78 — the external block and the later agent events
+   * rendered as raw slugs. The count pins the reconciliation: 80 is
+   * the live `activity_events_type_known` literal count (pg_constraint
+   * read 2026-08-25, 78) plus the two objective events.
+   */
+  it("mirrors the live CHECK's eighty event types", () => {
+    expect(ACTIVITY_EVENT_TYPES).toHaveLength(80);
+    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(80);
+  });
+
+  it("describes the OKR acts with titles and outcomes, never amounts", () => {
+    expect(
+      describeActivity(
+        event("objective_created", {
+          title: "Close the fintech book",
+          scope: "book",
+          owner_label: "Rae Recruiter",
+        })
+      )
+    ).toBe('Set the objective "Close the fintech book" for Rae Recruiter');
+    expect(
+      describeActivity(event("objective_closed", { title: "Close the fintech book", outcome: "met" }))
+    ).toBe('Closed the objective "Close the fintech book" — met');
+    expect(
+      describeActivity(
+        event("objective_closed", { title: "Close the fintech book", outcome: "abandoned" })
+      )
+    ).toBe('Abandoned the objective "Close the fintech book"');
+    expect(describeActivity(event("objective_created", {}))).toBe("Set an objective");
+  });
+
+  it("describes the reconciled external block by its snapshot names", () => {
+    expect(
+      describeActivity(
+        event("external_invited", { invitee: "Priya Shah", email: "p@client.test", role: "hiring_manager" })
+      )
+    ).toBe("Invited Priya Shah as Hiring Manager");
+    expect(
+      describeActivity(event("candidate_withdrew", { person: "Jon Doe", from_stage: "interviewed" }))
+    ).toBe("Jon Doe withdrew from the search at interviewed");
+    expect(describeActivity(event("member_org_changed", { member: "Rae", from: "Org A", to: "Org B" }))).toBe(
+      "Moved Rae from Org A to Org B"
+    );
   });
 
   it("narrows untrusted values and rejects anything else", () => {

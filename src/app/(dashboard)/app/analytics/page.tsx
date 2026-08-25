@@ -32,6 +32,15 @@ import {
 import { cookies } from "next/headers";
 import { SAMPLE_DISMISSED_COOKIE, shouldShowSample } from "@/lib/sample";
 import { SampleAnalytics } from "@/components/sample/sample-reports";
+import { computeObjectiveProgress } from "@/lib/okrs/progress";
+import {
+  KEY_RESULT_COLUMNS,
+  KEY_RESULT_STATUS_LABELS,
+  OBJECTIVE_COLUMNS,
+  type KeyResultRow,
+  type KeyResultStatus,
+  type ObjectiveRow,
+} from "@/lib/okrs/types";
 
 type CandidateLite = {
   pipeline_stage: string | null;
@@ -50,17 +59,72 @@ const HEALTH_FILL: Record<HealthStatus, string> = {
   at_risk: "var(--color-error)",
 };
 
+const OKR_CHIP: Record<KeyResultStatus, ChipTone> = {
+  on_track: "secondary",
+  met: "primary",
+  behind: "warn",
+  at_risk: "danger",
+  pending: "neutral",
+};
+
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export default async function PortfolioAnalyticsPage() {
   const supabase = await createServerSupabaseClient();
 
-  const [metrics, candidatesQ] = await Promise.all([
+  const [metrics, candidatesQ, objectivesQ, keyResultsQ, membersQ] = await Promise.all([
     computePortfolioMetrics(),
     supabase.from("candidates").select("pipeline_stage, created_at"),
+    supabase
+      .from("objectives")
+      .select(OBJECTIVE_COLUMNS)
+      .eq("status", "active")
+      .order("period_end", { ascending: true })
+      .returns<ObjectiveRow[]>(),
+    // R1: Analytics never shows amounts, so the financial rows are not
+    // even fetched — they live on Placements, behind fees:read.
+    supabase
+      .from("objective_key_results")
+      .select(KEY_RESULT_COLUMNS)
+      .neq("kind", "financial")
+      .order("created_at", { ascending: true })
+      .returns<KeyResultRow[]>(),
+    supabase.from("users").select("id, full_name, email"),
   ]);
 
   const candidates = (candidatesQ.data ?? []) as CandidateLite[];
+
+  const activeObjectives = objectivesQ.data ?? [];
+  const okrMemberLabel = new Map(
+    (membersQ.data ?? []).map((m: { id: string; full_name: string | null; email: string }) => [
+      m.id,
+      m.full_name || m.email,
+    ])
+  );
+  const krsByObjective = new Map<string, KeyResultRow[]>();
+  for (const kr of keyResultsQ.data ?? []) {
+    const bucket = krsByObjective.get(kr.objective_id);
+    if (bucket) bucket.push(kr);
+    else krsByObjective.set(kr.objective_id, [kr]);
+  }
+  const okrProgress = await Promise.all(
+    activeObjectives.map((o) =>
+      computeObjectiveProgress(o, krsByObjective.get(o.id) ?? [], supabase)
+    )
+  );
+  const objectiveLines = activeObjectives.flatMap((o, i) => {
+    const progress = new Map(okrProgress[i].map((p) => [p.keyResultId, p]));
+    return (krsByObjective.get(o.id) ?? []).map((kr) => ({
+      id: kr.id,
+      objectiveTitle: o.title,
+      ownerLabel: okrMemberLabel.get(o.owner_user_id) ?? "unknown",
+      label: kr.label,
+      kind: kr.kind,
+      current: progress.get(kr.id)?.current ?? null,
+      target: kr.target_value === null ? null : Number(kr.target_value),
+      status: progress.get(kr.id)?.status ?? ("pending" as KeyResultStatus),
+    }));
+  });
 
   // Portfolio analytics over an empty portfolio is four zeroes and three
   // empty charts, which teaches nothing about the one question the page
@@ -248,6 +312,57 @@ export default async function PortfolioAnalyticsPage() {
           />
         </ChartCard>
       </div>
+
+      {objectiveLines.length > 0 && (
+        <section className="space-y-2">
+          <MastHead
+            tone="primary"
+            label="Objectives"
+            meta={
+              <span className="tabular-nums">
+                {String(objectiveLines.length).padStart(2, "0")} key result
+                {objectiveLines.length === 1 ? "" : "s"} · active periods
+              </span>
+            }
+          />
+          <ul className="bg-surface-container-low border border-outline-variant divide-y divide-outline-variant/40">
+            {objectiveLines.map((line) => (
+              <li key={line.id}>
+                <Link
+                  href="/app/objectives"
+                  prefetch={false}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-high transition-colors group focus-visible:outline-none focus-visible:bg-surface-container-high focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
+                >
+                  <StatusChip
+                    tone={OKR_CHIP[line.status]}
+                    dot
+                    pulse={line.status === "at_risk"}
+                  >
+                    {KEY_RESULT_STATUS_LABELS[line.status]}
+                  </StatusChip>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-on-surface text-body-main font-semibold truncate">
+                      {line.label}
+                    </div>
+                    <div className="font-mono-data text-body-main text-on-surface-variant truncate">
+                      {line.objectiveTitle} · {line.ownerLabel}
+                    </div>
+                  </div>
+                  {line.target !== null && (
+                    <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
+                      {line.current ?? 0} / {line.target}
+                    </span>
+                  )}
+                  <IconChevronRight
+                    size={18}
+                    className="text-outline group-hover:text-primary transition-colors shrink-0"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {metrics.attentionList.length > 0 && (
         <section className="space-y-2">

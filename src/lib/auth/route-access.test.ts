@@ -32,6 +32,10 @@ describe("capabilityForPath", () => {
     expect(capabilityForPath("/app/home")).toBe(DEFAULT_CAPABILITY);
     expect(capabilityForPath("/app/analytics")).toBe(DEFAULT_CAPABILITY);
     expect(capabilityForPath("/app/candidates/network")).toBe(DEFAULT_CAPABILITY);
+    // 107: deliberately unlisted — the objectives board is readable by
+    // every active role, and the authoring controls gate themselves on
+    // okrs:write inside the page (the Kanban-board shape).
+    expect(capabilityForPath("/app/objectives")).toBe(DEFAULT_CAPABILITY);
   });
 
   it("matches a :segment against exactly one segment", () => {
