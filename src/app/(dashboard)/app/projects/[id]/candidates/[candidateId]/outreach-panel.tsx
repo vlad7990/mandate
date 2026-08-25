@@ -32,6 +32,12 @@ export type OutreachEntry = {
   body: string | null;
   includes_privacy_notice: boolean;
   occurred_at: string;
+  // 100 — the thread view's honesty columns: a provider-carrying row
+  // was SENT BY MANDATE and carries the delivery fact; a bare row is
+  // a hand-logged record. sent_by_principal stays false until Scout.
+  provider: string | null;
+  delivery_status: string | null;
+  sent_by_principal: boolean;
 };
 
 /**
@@ -192,6 +198,37 @@ export function OutreachPanel({
                   <span className="text-outline tabular-nums">
                     {formatStamp(e.occurred_at)}
                   </span>
+                  {e.provider ? (
+                    <>
+                      <span className="text-primary">
+                        {e.sent_by_principal
+                          ? "sent by agent"
+                          : "sent via Mandate"}
+                      </span>
+                      {e.delivery_status && (
+                        <span
+                          className={cn(
+                            "px-1.5 py-0 border tabular-nums",
+                            (e.delivery_status === "delivered" ||
+                              e.delivery_status === "sent") &&
+                              "border-secondary-fixed-dim/50 text-secondary-fixed-dim",
+                            e.delivery_status === "queued" &&
+                              "border-tertiary/50 text-tertiary",
+                            (e.delivery_status === "bounced" ||
+                              e.delivery_status === "complained" ||
+                              e.delivery_status === "failed") &&
+                              "border-error/50 text-error"
+                          )}
+                        >
+                          {e.delivery_status}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    e.direction === "outbound" && (
+                      <span className="text-outline">logged by hand</span>
+                    )
+                  )}
                   {e.includes_privacy_notice && (
                     <span className="text-tertiary flex items-center gap-1">
                       <IconCheckCircle size={12} />

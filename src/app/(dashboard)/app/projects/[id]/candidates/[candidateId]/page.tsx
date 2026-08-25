@@ -83,6 +83,10 @@ import {
   OutreachStrategyPanel,
   type OutreachStrategyRow,
 } from "./strategy-panel";
+import {
+  EngagementPanel,
+  type EngagementLaneRow,
+} from "./engagement-panel";
 
 type ProjectRow = {
   id: string;
@@ -277,12 +281,23 @@ export default async function CandidateProfilePage({
   const { data: outreachRows } = await supabase
     .from("candidate_outreach")
     .select(
-      "id, channel, direction, subject, body, includes_privacy_notice, occurred_at"
+      "id, channel, direction, subject, body, includes_privacy_notice, occurred_at, provider, delivery_status, sent_by_principal"
     )
     .eq("candidate_id", candidate.id)
     .order("occurred_at", { ascending: false });
 
   const outreach = (outreachRows ?? []) as OutreachEntry[];
+
+  // The engagement lane (#22, 100) — the conversation's durable state,
+  // maintained by the agent, decided by humans.
+  const { data: laneRow } = await supabase
+    .from("engagement_states")
+    .select("id, state, escalation_reason, next_follow_up_at, draft, updated_at")
+    .eq("candidate_id", candidate.id)
+    .eq("project_id", projectId)
+    .maybeSingle();
+
+  const engagementLane = (laneRow ?? null) as EngagementLaneRow | null;
 
   // The latest outreach strategy (#21, 097) — the draft source for the
   // outreach flow. Latest version wins; the panel renders its status.
@@ -744,6 +759,11 @@ export default async function CandidateProfilePage({
                   candidateId={candidate.id}
                   candidateEmail={candidate.email}
                   strategy={strategy}
+                />
+                <EngagementPanel
+                  projectId={projectId}
+                  candidateId={candidate.id}
+                  lane={engagementLane}
                 />
                 <OutreachPanel
                   projectId={projectId}

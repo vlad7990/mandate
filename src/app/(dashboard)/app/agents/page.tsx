@@ -135,6 +135,11 @@ const REGISTRY: AgentGroup[] = [
         does: "Maintains the durable relationship record for each person in the network — state, structured disposition, and follow-ups — from the appearances, contact history, and evidence that already exist.",
         staysHuman: "It can never set or clear do-not-contact, and never moves a relationship into or out of that state — suppression is the human's and the erasure system's alone, and only a founder-level act with a recorded reason clears it.",
       },
+      {
+        name: "Candidate Engagement Agent",
+        does: "Keeps each conversation lane honest — reads the thread, judges where it stands and when the next touch is owed, and drafts the follow-up for your approval. Hard gates run before any model turn: a candidate asking for a human, privacy language, or legal phrasing escalates deterministically.",
+        staysHuman: "It sends nothing — the communication service refuses every agent actor, and its proposed draft leaves only under your name. An escalated lane is pinned shut to it in the database: it can raise an escalation, never touch or resolve one.",
+      },
     ],
   },
   {
@@ -327,7 +332,7 @@ export default async function AgentsPage() {
         {profile?.is_founder && (
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
             Suspend or restore any principal from Platform ops — each kill
-            switch is independent of the other twenty-one.
+            switch is independent of the other twenty-two.
           </p>
         )}
       </footer>

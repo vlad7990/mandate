@@ -391,6 +391,23 @@ export async function signInOutreachStrategyAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Candidate Engagement Agent — the twenty-third
+ * principal, the Engage arc's fourth (100). One judgment: manage the
+ * conversation within policy — maintain the engagement lane and
+ * draft the next move for the human. It sends nothing (the comms
+ * service refuses every agent actor), and an escalated lane is not
+ * its to touch — resolution is the human's act, pinned in the
+ * database.
+ */
+export async function signInEngagementAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "engagement",
+    email: process.env.AGENT_ENGAGEMENT_EMAIL,
+    password: process.env.AGENT_ENGAGEMENT_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;
