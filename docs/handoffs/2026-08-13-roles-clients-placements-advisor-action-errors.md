@@ -8551,3 +8551,80 @@ the role-template creator (migration 104, D-gated), Optimizer Phase
 migration 104, next § 106, next drive 0f2; durable baseline 25 users
 / 24 agents / 74 events / 5 skills / 5 skill_versions / 1
 network_profile / 1 org_comms_policy.
+
+---
+
+## 106. The pipeline Kanban board — product-pass slice two — 2026-08-25 — DRAFT
+
+Product-pass slice two (NEXT-product-pass.md item 5a), per the
+confirmed scope: per-mandate board, columns = the twelve
+`pipeline_stage` values, drag = a stage change under the HUMAN's
+cookie session through existing machinery; NO migration, NO new
+principal, NO task domain. Commit `1cede08`, deploy
+`mandate-kf4b3huac`, drive 0f2. **This § is a DRAFT: no completion
+is declared and NEXT-product-pass.md is not edited until the founder
+confirms.**
+
+**The build**: `/app/projects/[id]/pipeline` — twelve columns in
+funnel order (live CHECK read at session start, not the file), each
+with a stage-toned accent bar, count, and terminal grammar
+(`font-mono-label` headers, square borders, `tabular-nums`). Cards
+move two ways, both through the EXISTING `updatePipelineStage`
+server action (`candidates:write`, RLS `candidates_role_update`
+behind it): pointer drag, hand-rolled on pointer events
+(mouse-only BY DESIGN — a touch drag would kill board scroll; no
+DnD dependency added), and a per-card stage `<select>` — the
+keyboard and touch path, mirroring the detail page's control.
+Optimistic overlay with revert-on-refusal and adjust-during-render
+reconciliation (a stale overlay can never mask a change made from
+another surface). Read-only board for roles without
+`candidates:write` (route open like the candidate list; the meta
+line says "read-only"). "Pipeline" joins the mandate module strip
+after Candidates; the action's revalidate list gains the board
+path. Sample ids land on `SampleNotBuilt` and the module is named
+in `SAMPLE_MODULES_PENDING` — that list's own doctrine ("the next
+module the product grows should land here before it lands in the
+sample"). `STAGE_ACCENTS` is a parallel record over
+`PipelineStage`, drift-tested (vitest 891 → 892).
+
+**THE EVENTING FINDING — a founder call at this gate.** The
+analysis line "(evented via existing machinery)" assumed machinery
+that does not exist: live reads show `record_activity_event`'s
+allowlist carries NINE human intent types, none stage-shaped, and
+the CHECK's 75 types have no human candidate-stage event
+(`candidate_withdrew` is the candidate portal's own act;
+`placement_status_changed` is placements). A recruiter's stage
+change — the dropdown that shipped months ago AND the new drag —
+records NOTHING in the trail. `updatePipelineStage` even carries
+the comment "userId reserved for a future audit-trail column".
+Eventing it requires a vocabulary migration (CHECK rebuild +
+intent-door allowlist + TS vocab + describe sentence — the
+`placement_status_changed` from/to shape is the template), which
+the confirmed scope excluded and 104 is reserved. The drive
+verified the stage change LANDS under the human's session (the
+record is the row, honestly stamped); the trail silence is
+pre-existing, now documented. OPTIONS: ride `candidate_stage_changed`
+into migration 104 alongside the role-template work, or accept the
+silence until the task domain (5b) forces the question.
+
+**Verified live (drive 0f2, scratch operator Quill Farrow,
+recruiter)**: board renders 12 columns with six seeded candidates in
+their stages; drag Found → Reviewed landed (toast "Tamsin Reece →
+Reviewed", card moved, row at `reviewed` with `updated_at` stamped
+at drag time); drag into an EMPTY Finalist column landed ("Nadia
+Okafor → Finalist"); the select path landed Interviewed → Offer
+("Petr Havel → Offer"); activity_events on all three moves: ZERO
+(the finding above, proven live). Teardown EXACT first pass — the
+candidate birth trigger minted 6 network_profiles from name-only
+seeds (`name:<person>|<company>` identity keys — no email needed;
+noted for future seeding), all swept by id; member events by
+member name; auth family by user id, own rows only. Baseline
+restored 25 users / 24 agents / 74 events / 5 skills / 5
+skill_versions / 1 network_profile / 1 org_comms_policy / 2
+projects / 2 clients / 1 candidate / 1 job_spec / 25 auth.
+Screenshots: pipeline-0f2-board, pipeline-0f2-moved.
+
+Green gate: tsc / vitest 892 / eslint / build (route in the table).
+Next per NEXT-product-pass.md after confirmation: slice three, the
+role-template creator (migration 104, its own D-gate). Numbers:
+next migration 104, next § 107, next drive 0f3.
