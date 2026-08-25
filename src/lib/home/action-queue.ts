@@ -27,21 +27,27 @@ import {
 export const ACTION_KINDS = [
   "notification_overdue",
   "notification_due",
+  "task_overdue",
   "import_undecided",
   "run_never_executed",
+  "task_due",
 ] as const;
 
 export type ActionKind = (typeof ACTION_KINDS)[number];
 
 /**
  * Ordering. Lower sorts first, and it is by CONSEQUENCE rather than by volume:
- * a missed statutory deadline is not comparable to an unfinished chore.
+ * a missed statutory deadline is not comparable to an unfinished chore. A
+ * task someone asked of you and is now late sits below the statutory rows
+ * and above the chores; one merely due today closes the list.
  */
 const KIND_RANK: Record<ActionKind, number> = {
   notification_overdue: 0,
   notification_due: 1,
-  import_undecided: 2,
-  run_never_executed: 3,
+  task_overdue: 2,
+  import_undecided: 3,
+  run_never_executed: 4,
+  task_due: 5,
 };
 
 export type ActionSeverity = "urgent" | "attention" | "routine";
@@ -49,15 +55,19 @@ export type ActionSeverity = "urgent" | "attention" | "routine";
 const KIND_SEVERITY: Record<ActionKind, ActionSeverity> = {
   notification_overdue: "urgent",
   notification_due: "attention",
+  task_overdue: "attention",
   import_undecided: "attention",
   run_never_executed: "routine",
+  task_due: "routine",
 };
 
 export type ActionItem = {
   kind: ActionKind;
   severity: ActionSeverity;
-  project_id: string;
-  project_title: string;
+  /** Null on rows that are not project work — 106's tasks (053's
+   * nullable-real-FK argument, carried to the type). */
+  project_id: string | null;
+  project_title: string | null;
   count: number;
   /** Imperative, and specific enough to act on without opening anything. */
   label: string;
@@ -73,6 +83,8 @@ export type ActionQueueInput = {
   runs: ReadonlyArray<{ id: string; project_id: string; status: string }>;
   /** Staged result rows still awaiting a promote/skip decision. */
   undecidedResults: ReadonlyArray<{ run_id: string }>;
+  /** The VIEWER's open tasks (106) — mine, not the org's. */
+  myTasks: ReadonlyArray<{ id: string; title: string; due_on: string | null }>;
 };
 
 function plural(n: number, one: string, many: string): string {
@@ -166,11 +178,42 @@ export function buildActionQueue(
     });
   }
 
+  // The viewer's tasks, aggregated: one row for the late ones, one for
+  // today's. The MY TASKS panel lists them; these rows are the nudge.
+  const today = now.toISOString().slice(0, 10);
+  const overdueTasks = input.myTasks.filter(
+    (t) => t.due_on !== null && t.due_on < today
+  );
+  const dueTasks = input.myTasks.filter((t) => t.due_on === today);
+
+  if (overdueTasks.length > 0) {
+    items.push({
+      kind: "task_overdue",
+      severity: KIND_SEVERITY.task_overdue,
+      project_id: null,
+      project_title: null,
+      count: overdueTasks.length,
+      label: `${overdueTasks.length} of your ${plural(overdueTasks.length, "task is", "tasks are")} past due`,
+      href: "#my-tasks",
+    });
+  }
+  if (dueTasks.length > 0) {
+    items.push({
+      kind: "task_due",
+      severity: KIND_SEVERITY.task_due,
+      project_id: null,
+      project_title: null,
+      count: dueTasks.length,
+      label: `${dueTasks.length} of your ${plural(dueTasks.length, "task is", "tasks are")} due today`,
+      href: "#my-tasks",
+    });
+  }
+
   items.sort(
     (a, b) =>
       KIND_RANK[a.kind] - KIND_RANK[b.kind] ||
       b.count - a.count ||
-      a.project_title.localeCompare(b.project_title)
+      (a.project_title ?? "").localeCompare(b.project_title ?? "")
   );
 
   return items;

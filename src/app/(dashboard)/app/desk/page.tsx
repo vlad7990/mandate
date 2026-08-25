@@ -4,6 +4,7 @@ import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { SampleBanner } from "@/components/sample/sample-banner";
 import { ReassignControl } from "./reassign-control";
 import { DigestPanel } from "./digest-panel";
+import { TasksPanel } from "./tasks-panel";
 import { loadDeskRollup } from "@/lib/desk/rollup";
 
 /**
@@ -23,7 +24,7 @@ import { loadDeskRollup } from "@/lib/desk/rollup";
 
 export default async function DeskPage() {
   const supabase = await createServerSupabaseClient();
-  const { desks, activeProjects, unassigned, candidateCountByProject } =
+  const { desks, activeProjects, unassigned, candidateCountByProject, openTasks } =
     await loadDeskRollup(supabase);
 
   const { data: digestRows } = await supabase
@@ -33,10 +34,20 @@ export default async function DeskPage() {
     .limit(1);
   const latestDigest = digestRows?.[0] ?? null;
 
-  const reassignTargets = desks.map((d) => ({
+  // 106 widened the roster to researchers (they hold tasks); a mandate
+  // LEAD stays admin/manager/recruiter — the 064 trigger refuses the
+  // rest, so the picker never offers them.
+  const reassignTargets = desks
+    .filter((d) => ["admin", "manager", "recruiter"].includes(d.member.role))
+    .map((d) => ({
+      id: d.member.id,
+      label: d.member.full_name || d.member.email,
+    }));
+  const taskAssignees = desks.map((d) => ({
     id: d.member.id,
     label: d.member.full_name || d.member.email,
   }));
+  const today = new Date().toISOString().slice(0, 10);
   const hasRealData = activeProjects.length > 0;
 
   return (
@@ -70,11 +81,12 @@ export default async function DeskPage() {
                     <th scope="col" className="px-4 py-3 text-right">Active mandates</th>
                     <th scope="col" className="px-4 py-3 text-right">Candidates</th>
                     <th scope="col" className="px-4 py-3 text-right">Placements (started)</th>
+                    <th scope="col" className="px-4 py-3 text-right">Open tasks (overdue)</th>
                     <th scope="col" className="px-4 py-3 text-right">Last activity</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {desks.map(({ member, led, candidateCount, placementsTotal, placementsStarted, lastSeen }) => (
+                  {desks.map(({ member, led, candidateCount, placementsTotal, placementsStarted, lastSeen, openTasks: memberOpen, overdueTasks }) => (
                     <tr key={member.id} className="border-b border-outline-variant/40 last:border-b-0 align-top">
                       <th scope="row" className="px-4 py-3 font-normal">
                         <span className="block text-on-surface">{member.full_name || member.email}</span>
@@ -86,6 +98,9 @@ export default async function DeskPage() {
                       <td className="px-4 py-3 text-right font-mono-data tabular-nums">{candidateCount}</td>
                       <td className="px-4 py-3 text-right font-mono-data tabular-nums">
                         {placementsTotal} ({placementsStarted})
+                      </td>
+                      <td className={overdueTasks > 0 ? "px-4 py-3 text-right font-mono-data tabular-nums text-error" : "px-4 py-3 text-right font-mono-data tabular-nums"}>
+                        {memberOpen} ({overdueTasks})
                       </td>
                       <td className="px-4 py-3 text-right font-mono-data tabular-nums text-on-surface-variant">
                         {lastSeen ? new Date(lastSeen).toISOString().slice(0, 10) : "—"}
@@ -125,6 +140,13 @@ export default async function DeskPage() {
                 ))}
               </div>
             </section>
+
+            <TasksPanel
+              tasks={openTasks}
+              members={taskAssignees}
+              projects={activeProjects.map((p) => ({ id: p.id, title: p.title }))}
+              today={today}
+            />
 
             <DigestPanel latest={latestDigest} />
           </>

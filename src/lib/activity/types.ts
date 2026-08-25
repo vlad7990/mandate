@@ -76,6 +76,13 @@ export const ACTIVITY_EVENT_TYPES = [
   // inside `record_activity_event` on can_write_candidates().
   "candidate_stage_changed",
 
+  // 106: the task domain. Assigning is the desk's act (gated
+  // can_manage_desk inside the RPC); completing rides the actor
+  // stamp — the RLS pin already proved the right. Labels snapshot
+  // at write time; titles are operational, never judgments.
+  "task_assigned",
+  "task_completed",
+
   // Written by agent principals through `record_agent_event` (074/075) —
   // the door narrower than `record_activity_event`: an enumerated event
   // list, callable only by an active `agent` role, actor stamped from
@@ -143,6 +150,10 @@ export const APP_RECORDABLE_EVENTS = [
   // 104 — the pipeline move (dropdown or board drag). Writer-gated
   // inside the RPC on can_write_candidates().
   "candidate_stage_changed",
+  // 106 — the task domain: desk-gated assignment, actor-stamped
+  // completion.
+  "task_assigned",
+  "task_completed",
 ] as const;
 
 export type AppRecordableEvent = (typeof APP_RECORDABLE_EVENTS)[number];
@@ -224,6 +235,9 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   skill_deleted: "mandates",
 
   candidate_stage_changed: "mandates",
+
+  task_assigned: "mandates",
+  task_completed: "mandates",
 
   feedback_interpreted: "mandates",
   candidates_ranked: "mandates",

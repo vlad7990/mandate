@@ -40,6 +40,19 @@ describe("describeActivity", () => {
     );
   });
 
+  it("describes task assignment and completion, and survives bare rows", () => {
+    expect(
+      describeActivity(
+        event("task_assigned", { task_title: "Chase the reference", to_label: "Rae Recruiter" })
+      )
+    ).toBe('Assigned "Chase the reference" to Rae Recruiter');
+    expect(describeActivity(event("task_assigned", {}))).toBe("Assigned a task");
+    expect(
+      describeActivity(event("task_completed", { task_title: "Chase the reference" }))
+    ).toBe('Completed "Chase the reference"');
+    expect(describeActivity(event("task_completed", {}))).toBe("Completed a task");
+  });
+
   it("describes a candidate pipeline move with its stage labels", () => {
     expect(
       describeActivity(
@@ -361,12 +374,17 @@ describe("the vocabulary", () => {
       // can_write_candidates(), and it files under mandates like the
       // rest of the candidate events.
       "candidate_stage_changed",
+      // 106: the task domain — assignment desk-gated inside the RPC,
+      // completion actor-stamped. Desk work files under mandates.
+      "task_assigned",
+      "task_completed",
     ]);
     for (const type of APP_RECORDABLE_EVENTS) {
       const expected =
         type === "mandate_reassigned" ||
         type === "candidate_stage_changed" ||
-        type.startsWith("skill_")
+        type.startsWith("skill_") ||
+        type.startsWith("task_")
           ? "mandates"
           : "client";
       expect(ACTIVITY_GROUP_OF[type]).toBe(expected);

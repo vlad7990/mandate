@@ -27,6 +27,7 @@ function input(over: Partial<ActionQueueInput> = {}): ActionQueueInput {
     candidates: [],
     runs: [],
     undecidedResults: [],
+    myTasks: [],
     ...over,
   };
 }
@@ -228,5 +229,45 @@ describe("actionSummary", () => {
 
   test("an empty queue is all zeroes", () => {
     expect(actionSummary([])).toEqual({ urgent: 0, attention: 0, routine: 0 });
+  });
+});
+
+describe("the viewer's tasks (106)", () => {
+  const NOW = new Date("2026-08-25T09:00:00Z");
+
+  test("overdue tasks aggregate into one attention row above the chores", () => {
+    const items = buildActionQueue(
+      input({
+        runs: [{ id: "r1", project_id: "p1", status: "draft" }],
+        myTasks: [
+          { id: "t1", title: "Chase the reference", due_on: "2026-08-20" },
+          { id: "t2", title: "Renew the seat", due_on: "2026-08-24" },
+          { id: "t3", title: "No due date", due_on: null },
+        ],
+      }),
+      NOW
+    );
+    const kinds = items.map((i) => i.kind);
+    expect(kinds).toEqual(["task_overdue", "run_never_executed"]);
+    const row = items[0];
+    expect(row.count).toBe(2);
+    expect(row.severity).toBe("attention");
+    expect(row.project_id).toBeNull();
+    expect(row.href).toBe("#my-tasks");
+  });
+
+  test("a task due today is a routine row at the end; none due, no rows", () => {
+    const dueToday = buildActionQueue(
+      input({ myTasks: [{ id: "t1", title: "Prep the panel", due_on: "2026-08-25" }] }),
+      NOW
+    );
+    expect(dueToday.map((i) => i.kind)).toEqual(["task_due"]);
+    expect(dueToday[0].severity).toBe("routine");
+
+    const none = buildActionQueue(
+      input({ myTasks: [{ id: "t1", title: "Someday", due_on: null }] }),
+      NOW
+    );
+    expect(none).toEqual([]);
   });
 });

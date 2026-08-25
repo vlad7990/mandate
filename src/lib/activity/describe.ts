@@ -90,6 +90,19 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Moved the candidate from ${from} to ${to}`;
     }
 
+    case "task_assigned": {
+      const title = str(d, "task_title");
+      const to = str(d, "to_label");
+      if (title && to) return `Assigned "${title}" to ${to}`;
+      if (title) return `Created the task "${title}"`;
+      return "Assigned a task";
+    }
+
+    case "task_completed": {
+      const title = str(d, "task_title");
+      return title ? `Completed "${title}"` : "Completed a task";
+    }
+
     case "placement_signoff_changed": {
       const from = str(d, "from");
       const to = str(d, "to");

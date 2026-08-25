@@ -13,6 +13,7 @@ import {
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { ActionQueuePanel } from "./action-queue-panel";
+import { MyTasksPanel } from "./my-tasks-panel";
 import { SampleBanner } from "@/components/sample/sample-banner";
 import { IconArrowRight, IconCopilot, IconInfo } from "@/components/icons";
 import { PageShell, PRIMARY_ACTION, QUIET_ACTION } from "@/components/ui/page-shell";
@@ -104,9 +105,12 @@ export default async function DashboardHomePage() {
         heading. Every other block on this page already opens with `mt-5`.
       */}
       {!showSample && (
-        <div className="mt-5 mb-6">
+        <div className="mt-5 mb-6 space-y-6">
           <Suspense fallback={<SkeletonCard />}>
             <ActionQueuePanel />
+          </Suspense>
+          <Suspense fallback={null}>
+            <MyTasksPanel />
           </Suspense>
         </div>
       )}

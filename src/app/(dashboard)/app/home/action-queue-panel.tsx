@@ -37,7 +37,11 @@ const MAX_VISIBLE = 8;
 export async function ActionQueuePanel() {
   const supabase = await createServerSupabaseClient();
 
-  const [projectsQ, candidatesQ, runsQ, undecidedQ] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [projectsQ, candidatesQ, runsQ, undecidedQ, myTasksQ] = await Promise.all([
     supabase.from("projects").select("id, title"),
     supabase
       .from("candidates")
@@ -48,6 +52,11 @@ export async function ActionQueuePanel() {
       .from("sourcing_run_results")
       .select("run_id")
       .is("promoted_candidate_id", null),
+    supabase
+      .from("tasks")
+      .select("id, title, due_on")
+      .eq("status", "open")
+      .eq("assignee_id", user?.id ?? ""),
   ]);
 
   const items = buildActionQueue(
@@ -62,6 +71,11 @@ export async function ActionQueuePanel() {
         status: string;
       }>,
       undecidedResults: (undecidedQ.data ?? []) as Array<{ run_id: string }>,
+      myTasks: (myTasksQ.data ?? []) as Array<{
+        id: string;
+        title: string;
+        due_on: string | null;
+      }>,
     },
     new Date()
   );
@@ -130,7 +144,7 @@ function ActionRow({ item }: { item: ActionItem }) {
         <div className="flex-1 min-w-0">
           <p className="text-body-main text-on-surface">{item.label}</p>
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest truncate">
-            {item.project_title}
+            {item.project_title ?? "your desk"}
           </p>
         </div>
         <IconArrowRight

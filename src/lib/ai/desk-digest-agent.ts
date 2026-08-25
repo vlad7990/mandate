@@ -34,6 +34,9 @@ export type DeskDigestInput = {
     placements_total: number;
     placements_started: number;
     last_activity_at: string | null;
+    /** 106: open tasks on this desk, and how many are past due. */
+    open_tasks: number;
+    overdue_tasks: number;
   }>;
   unassigned_mandates: Array<{ title: string; company: string }>;
 };

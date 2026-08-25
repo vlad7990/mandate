@@ -28,6 +28,17 @@ export type DeskProject = {
   updated_at: string | null;
 };
 
+export type DeskTask = {
+  id: string;
+  title: string;
+  detail: string;
+  status: string;
+  due_on: string | null;
+  assignee_id: string | null;
+  project_id: string | null;
+  created_at: string;
+};
+
 export type MemberDesk = {
   member: DeskMember;
   led: DeskProject[];
@@ -35,6 +46,8 @@ export type MemberDesk = {
   placementsTotal: number;
   placementsStarted: number;
   lastSeen: string | null;
+  openTasks: number;
+  overdueTasks: number;
 };
 
 export type DeskRollup = {
@@ -43,16 +56,21 @@ export type DeskRollup = {
   unassigned: DeskProject[];
   candidateCountByProject: Map<string, number>;
   desks: MemberDesk[];
+  /** Every open task on the desk, unassigned ones included (106). */
+  openTasks: DeskTask[];
 };
 
 export async function loadDeskRollup(supabase: Supabase): Promise<DeskRollup> {
-  const [{ data: members }, { data: projects }, { data: candidates }, { data: placements }, { data: lastActivity }] =
+  const [{ data: members }, { data: projects }, { data: candidates }, { data: placements }, { data: lastActivity }, { data: tasks }] =
     await Promise.all([
+      // 106 widened the roster to researchers — they hold tasks. The
+      // mandate-reassign picker filters back to lead-capable roles at
+      // the page; the 064 trigger would refuse a researcher lead.
       supabase
         .from("users")
         .select("id, full_name, email, role, status")
         .eq("status", "active")
-        .in("role", ["admin", "manager", "recruiter"])
+        .in("role", ["admin", "manager", "recruiter", "researcher"])
         .order("full_name"),
       supabase
         .from("projects")
@@ -65,6 +83,12 @@ export async function loadDeskRollup(supabase: Supabase): Promise<DeskRollup> {
         .select("actor_id, created_at")
         .order("created_at", { ascending: false })
         .limit(500),
+      supabase
+        .from("tasks")
+        .select("id, title, detail, status, due_on, assignee_id, project_id, created_at")
+        .eq("status", "open")
+        .order("due_on", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: true }),
     ]);
 
   const memberList = (members ?? []) as (DeskMember & { status: string })[];
@@ -95,9 +119,15 @@ export async function loadDeskRollup(supabase: Supabase): Promise<DeskRollup> {
   const activeProjects = projectList.filter((p) => p.status !== "archived");
   const unassigned = activeProjects.filter((p) => !p.lead_recruiter_id);
 
+  const openTasks = (tasks ?? []) as DeskTask[];
+  // due_on is a DATE; "overdue" means strictly before today, computed
+  // the same way here and on /app/home so the two never disagree.
+  const today = new Date().toISOString().slice(0, 10);
+
   const desks: MemberDesk[] = memberList.map((m) => {
     const led = activeProjects.filter((p) => p.lead_recruiter_id === m.id);
     const pl = placementsByOwner.get(m.id) ?? { total: 0, started: 0 };
+    const mine = openTasks.filter((t) => t.assignee_id === m.id);
     return {
       member: { id: m.id, full_name: m.full_name, email: m.email, role: m.role },
       led,
@@ -105,8 +135,10 @@ export async function loadDeskRollup(supabase: Supabase): Promise<DeskRollup> {
       placementsTotal: pl.total,
       placementsStarted: pl.started,
       lastSeen: lastSeenByActor.get(m.id) ?? null,
+      openTasks: mine.length,
+      overdueTasks: mine.filter((t) => t.due_on !== null && t.due_on < today).length,
     };
   });
 
-  return { members: desks.map((d) => d.member), activeProjects, unassigned, candidateCountByProject, desks };
+  return { members: desks.map((d) => d.member), activeProjects, unassigned, candidateCountByProject, desks, openTasks };
 }

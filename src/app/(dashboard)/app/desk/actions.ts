@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { assertCapability } from "@/lib/auth/access";
+import { assertCapability, requireActionContext } from "@/lib/auth/access";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { recordActivity } from "@/lib/activity/record";
 import { runAction } from "@/lib/actions/run";
@@ -117,6 +117,8 @@ export async function generateDeskDigestAction(): Promise<ActionResult> {
           placements_total: d.placementsTotal,
           placements_started: d.placementsStarted,
           last_activity_at: d.lastSeen,
+          open_tasks: d.openTasks,
+          overdue_tasks: d.overdueTasks,
         })),
         unassigned_mandates: rollup.unassigned.map((p) => ({
           title: p.title,
@@ -137,5 +139,211 @@ export async function generateDeskDigestAction(): Promise<ActionResult> {
     }
 
     revalidatePath("/app/desk");
+  });
+}
+
+// ── The task domain (106) ────────────────────────────────────────────
+//
+// Creation and (re)assignment are the desk's acts (R4); completion
+// belongs to the assignee or the desk — the RLS pin and the guard
+// trigger are the boundary, and these actions surface their sentences.
+// Labels snapshot at write time (the reassignment precedent above).
+
+const TASK_TITLE_MAX = 140;
+const TASK_DETAIL_MAX = 1_000;
+
+async function memberLabel(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  userId: string | null
+): Promise<string | null> {
+  if (!userId) return null;
+  const { data } = await supabase
+    .from("users")
+    .select("full_name, email")
+    .eq("id", userId)
+    .maybeSingle<{ full_name: string | null; email: string }>();
+  return data?.full_name || data?.email || null;
+}
+
+export async function createTaskAction(formData: FormData): Promise<ActionResult> {
+  return runAction("The task", async () => {
+    const access = await assertCapability("desk:manage");
+    const title = String(formData.get("title") ?? "").trim();
+    const detail = String(formData.get("detail") ?? "").trim();
+    const dueOnRaw = String(formData.get("due_on") ?? "").trim();
+    const assigneeRaw = String(formData.get("assignee_id") ?? "").trim();
+    const projectRaw = String(formData.get("project_id") ?? "").trim();
+
+    if (!title) throw new Error("Title is required.");
+    if (title.length > TASK_TITLE_MAX) {
+      throw new Error(`The title is over ${TASK_TITLE_MAX} characters — shorten it.`);
+    }
+    if (detail.length > TASK_DETAIL_MAX) {
+      throw new Error(`The detail is over ${TASK_DETAIL_MAX} characters.`);
+    }
+    const assigneeId = assigneeRaw === "" ? null : assigneeRaw;
+    const projectId = projectRaw === "" ? null : projectRaw;
+    const dueOn = dueOnRaw === "" ? null : dueOnRaw;
+
+    const supabase = await createServerSupabaseClient();
+    const { data: born, error } = await supabase
+      .from("tasks")
+      .insert({
+        organization_id: access.organizationId,
+        project_id: projectId,
+        title,
+        detail,
+        due_on: dueOn,
+        assignee_id: assigneeId,
+        created_by: access.userId,
+      })
+      .select("id")
+      .maybeSingle<{ id: string }>();
+    if (error || !born) {
+      throw new Error(`Failed to create task: ${error?.message ?? "nothing was saved"}`);
+    }
+
+    if (assigneeId) {
+      await recordActivity(supabase, {
+        eventType: "task_assigned",
+        projectId,
+        detail: {
+          task_title: title,
+          to_user_id: assigneeId,
+          to_label: await memberLabel(supabase, assigneeId),
+        },
+      });
+    }
+
+    revalidatePath("/app/desk");
+    revalidatePath("/app/home");
+  });
+}
+
+export async function reassignTaskAction(
+  taskId: string,
+  newAssigneeId: string | null
+): Promise<ActionResult> {
+  return runAction("The task", async () => {
+    await assertCapability("desk:manage");
+    const supabase = await createServerSupabaseClient();
+
+    const { data: task } = await supabase
+      .from("tasks")
+      .select("id, title, project_id, assignee_id, status")
+      .eq("id", taskId)
+      .maybeSingle<{
+        id: string;
+        title: string;
+        project_id: string | null;
+        assignee_id: string | null;
+        status: string;
+      }>();
+    if (!task) throw new Error("Task not found.");
+    if (task.status !== "open") {
+      throw new Error(`This task is ${task.status} — reopen work is not a thing; create a new task.`);
+    }
+    if (task.assignee_id === newAssigneeId) return;
+
+    const { data: landed, error } = await supabase
+      .from("tasks")
+      .update({ assignee_id: newAssigneeId, updated_at: new Date().toISOString() })
+      .eq("id", taskId)
+      .select("id")
+      .maybeSingle<{ id: string }>();
+    if (error || !landed) {
+      throw new Error(`Failed to reassign: ${error?.message ?? "nothing was saved"}`);
+    }
+
+    if (newAssigneeId) {
+      await recordActivity(supabase, {
+        eventType: "task_assigned",
+        projectId: task.project_id,
+        detail: {
+          task_title: task.title,
+          to_user_id: newAssigneeId,
+          to_label: await memberLabel(supabase, newAssigneeId),
+        },
+      });
+    }
+
+    revalidatePath("/app/desk");
+    revalidatePath("/app/home");
+  });
+}
+
+/**
+ * Complete a task — the assignee's act, or the desk's. No capability
+ * beyond membership: the RLS USING (assignee or desk) decides, the
+ * WITH CHECK pins completed_by to the actor, and a zero-row landing
+ * is LOUD.
+ */
+export async function completeTaskAction(taskId: string): Promise<ActionResult> {
+  return runAction("The task", async () => {
+    const access = await requireActionContext("org:read");
+    const supabase = await createServerSupabaseClient();
+
+    const { data: task } = await supabase
+      .from("tasks")
+      .select("id, title, project_id, status")
+      .eq("id", taskId)
+      .maybeSingle<{ id: string; title: string; project_id: string | null; status: string }>();
+    if (!task) throw new Error("Task not found.");
+    if (task.status !== "open") {
+      throw new Error(`This task is already ${task.status}.`);
+    }
+
+    const { data: landed, error } = await supabase
+      .from("tasks")
+      .update({
+        status: "done",
+        completed_at: new Date().toISOString(),
+        completed_by: access.userId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", taskId)
+      .select("id")
+      .maybeSingle<{ id: string }>();
+    if (error || !landed) {
+      throw new Error(
+        error
+          ? `Failed to complete: ${error.message}`
+          : "Nothing was saved — only the task's assignee or the desk can complete it."
+      );
+    }
+
+    await recordActivity(supabase, {
+      eventType: "task_completed",
+      projectId: task.project_id,
+      detail: { task_title: task.title },
+    });
+
+    revalidatePath("/app/desk");
+    revalidatePath("/app/home");
+  });
+}
+
+export async function cancelTaskAction(taskId: string): Promise<ActionResult> {
+  return runAction("The task", async () => {
+    await assertCapability("desk:manage");
+    const supabase = await createServerSupabaseClient();
+
+    const { data: landed, error } = await supabase
+      .from("tasks")
+      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .eq("id", taskId)
+      .eq("status", "open")
+      .select("id")
+      .maybeSingle<{ id: string }>();
+    if (error || !landed) {
+      throw new Error(
+        error
+          ? `Failed to cancel: ${error.message}`
+          : "Nothing was cancelled — the task is not open, or it does not exist."
+      );
+    }
+
+    revalidatePath("/app/desk");
+    revalidatePath("/app/home");
   });
 }
