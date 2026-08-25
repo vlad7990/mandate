@@ -4,6 +4,12 @@
 # drafted with named rulings, and BUILD waits on the founder's
 # written confirmation of the DRAFTED gate (§112's process
 # precedent: no pre-draft confirmations attach).
+#
+# SLICE ONE (Recruiter/Manager) DONE — §114 confirmed 2026-08-25
+# (migration 107, /app/objectives, Analytics + Placements, drive
+# 0f6; gate: docs/superpowers/specs/2026-08-25-okr-kpi-design.md).
+# NEXT: the RESEARCHER slice, its own Phase 0 + gate. This file
+# stands until the whole programme closes.
 
 ## The founder's words (2026-08-25)
 

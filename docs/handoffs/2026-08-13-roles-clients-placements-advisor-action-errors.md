@@ -9039,3 +9039,21 @@ intent door 14, agent allowlist 29 (untouched — agents hold no
 goals). On confirmation the programme proceeds per D9: researcher →
 viewer → externals (own gates) → admins never; after the programme,
 THE PRE-LAUNCH CHECKLIST (standing order).
+
+---
+
+## 115. §114 confirmed — OKR slice one COMPLETE; the researcher slice Phase 0 opens — 2026-08-25
+
+The founder confirmed §114 in writing 2026-08-25. Slice one of the
+OKR/KPI programme stands (migration 107, /app/objectives, Analytics +
+Placements integration, the mirror reconciliation, drive 0f6).
+NEXT-okr-programme.md marks slice one DONE; the file stands until the
+whole programme closes (the NEXT-product-pass precedent). Per D9 the
+programme proceeds to the RESEARCHER slice: Phase 0 first, the D-gate
+drafted and presented, BUILD GATED on written confirmation against
+the drafted document. Phase 0 facts verified live: candidates carry
+NO actor attribution (only `source`, a channel string) — owner-
+attributed candidate metrics would need new machinery; placements
+carry `sourced_by_user_id` (050 — "often a researcher", the reason
+the fee-read exception exists). Numbers: next migration 108, next
+§ 116, next drive 0f7; durable baseline unchanged.
