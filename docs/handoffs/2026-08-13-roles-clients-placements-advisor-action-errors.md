@@ -10189,3 +10189,10 @@ mobile-animation audits · simulator verification · the founder's
 testing half of §128 (real CVs, real HM, mail-client check, real
 erasure, D2 disposition ruling). The "4 / 14 agents" stale string
 is now a named loose end.
+
+Postscript, same day: the "4 / 14 agents" loose end is CLOSED
+(f323722, deployed mandate-cc39h3lbk). The count now derives from
+AGENT_TILES.length with no roster denominator at all — the 14 was
+the AGENTS.md-era number, and any hardcoded denominator would go
+stale again the day the Interviewer principal lands. Next migration
+115 / § 139 / drive 101 stand.
