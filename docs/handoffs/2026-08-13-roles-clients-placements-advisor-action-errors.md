@@ -8628,3 +8628,22 @@ Green gate: tsc / vitest 892 / eslint / build (route in the table).
 Next per NEXT-product-pass.md after confirmation: slice three, the
 role-template creator (migration 104, its own D-gate). Numbers:
 next migration 104, next § 107, next drive 0f3.
+
+---
+
+## 107. §106 confirmed — the Kanban board COMPLETE; the eventing ruled into 104 — 2026-08-25
+
+The founder confirmed §106 in writing 2026-08-25 and ruled the
+eventing finding: `candidate_stage_changed` RIDES MIGRATION 104
+with the role-template slice — the vocabulary (CHECK rebuild from
+the live 75-type list + the intent-door allowlist + TS
+ACTIVITY_EVENT_TYPES/APP_RECORDABLE_EVENTS + a describe sentence on
+the placement_status_changed from/to shape) and the recordActivity
+call in `updatePipelineStage` (from-stage read before the update,
+counts-and-stages detail, never free text). NEXT-product-pass.md
+marks slice two DONE; the file stands until the whole pass closes.
+Next: role-template creator Phase 0 (live schema reads first per
+doctrine), D-gate drafted, BUILD GATED on written confirmation.
+Numbers: next migration 104, next § 108, next drive 0f3; durable
+baseline unchanged 25 users / 24 agents / 74 events / 5 skills / 5
+skill_versions / 1 network_profile / 1 org_comms_policy.

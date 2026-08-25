@@ -95,10 +95,18 @@ honest, but the feed will show both names across time; say so in
 the D-gate.
 
 **5. Kanban board.** VERDICT: split in two, gate separately.
-(a) CANDIDATE PIPELINE BOARD — the data exists (candidates.
-pipeline_stage, 12-stage CHECK): a per-mandate board with columns =
-stages, drag = stage change under the human's session (evented via
-existing machinery); moderate UI slice, no migration. (b) WORK
+(a) CANDIDATE PIPELINE BOARD — DONE, CONFIRMED §106/§107
+(2026-08-25, commit `1cede08`, deploy `mandate-kf4b3huac`, drive
+0f2). Twelve columns over the live CHECK, drag + per-card select
+both through the existing updatePipelineStage under the human's
+session; no migration, no principal. THE EVENTING FINDING ruled by
+the founder at confirmation: human stage changes record no trail
+event today (pre-existing); `candidate_stage_changed` RIDES
+MIGRATION 104 with the role-template slice (CHECK rebuild +
+intent-door allowlist + TS vocab + describe + the recordActivity
+call in updatePipelineStage). The original analysis, kept:
+a per-mandate board with columns = stages, drag = stage change
+under the human's session; moderate UI slice, no migration. (b) WORK
 ASSIGNMENT (Agile tasks: assign work, manager view) — a NEW DOMAIN:
 tasks table, assignees, status, RLS (org S / assignee+desk U),
 desk-page integration, member-facing views; its own migration +
@@ -108,8 +116,10 @@ harness + D-gate; do NOT smuggle it into (a). Recommended order:
 ## Recommended order (for the founder to confirm at each gate)
 
 1. **Naming pass (#1 + #4 UI half)** — DONE, confirmed §105.
-2. **Kanban (a)** — the pipeline board.
-3. **Role-template creator (#2)** — migration 104, D-gated.
+2. **Kanban (a)** — DONE, confirmed §106/§107.
+3. **Role-template creator (#2)** — migration 104, D-gated; 104
+   ALSO carries the candidate_stage_changed vocabulary + the
+   recordActivity call (founder's ruling at §106 confirmation).
 4. **Optimizer (#3)** — Phase 0 enumeration first, then its gate.
 5. **Kanban (b)** — the task domain, its own gate.
 6. Then back to the standing order: THE PRE-LAUNCH CHECKLIST
