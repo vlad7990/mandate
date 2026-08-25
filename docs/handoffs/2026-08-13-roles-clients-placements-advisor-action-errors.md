@@ -7435,7 +7435,7 @@ queues behind it.
 
 ---
 
-## 90. Engage slice one — the Outreach Strategy Agent (#21), the twenty-first principal — 2026-08-24 — DRAFT, awaiting the founder's written confirmation
+## 90. Engage slice one — the Outreach Strategy Agent (#21), the twenty-first principal — 2026-08-24 — CONFIRMED §91
 
 D1–D8 confirmed in writing 2026-08-24 (NEXT-outreach-strategy.md,
 committed `70cfcd5`); built and driven the same evening. **This § is a
@@ -7582,3 +7582,22 @@ browser profile.
 - **`.env.local` append is founder-hand** (the pair is in the job
   report); production is already live without it — local dev refuses
   honestly until it lands.
+
+---
+
+## 91. §90 confirmed — Engage slice one COMPLETE; 098 #24 opens next — 2026-08-25
+
+The founder confirmed §90 in writing 2026-08-25. The Outreach
+Strategy Agent (#21) is complete: the twenty-first principal, the
+ENGAGE chapter open, level ≤1 outreach live end to end (agent drafts,
+human decides, the recruiter's own mail client sends).
+NEXT-outreach-strategy.md deleted on the confirmation, per doctrine.
+§90's drafted verdicts stand as confirmed: next slice is **098 #24
+Candidate Relationship** (network_profiles + resolver + durable DNC
+before any autonomous send), opening with its own Phase 0 and D1–D8
+gate; the org_comms_policy settings surface waits for the approvals
+queue; the clamp stays conservative. Founder-hand items open:
+`.env.local` pair append, and one fresh sign-in on the founder's own
+browser (the §90 global-signout wound). Numbers: next migration 098,
+next handoff § 92, next drive prefix 0ec; durable baseline 22 users /
+21 agents / 65 events / 1 org_comms_policy row.
