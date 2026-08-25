@@ -91,6 +91,9 @@ export type ProjectVm = {
     alerts: { label: string; critical: boolean }[];
   } | null;
   missingInformation: string[];
+  /** The client-interview panel (117) — rendered in the left column
+   * right after the "Information required" rail it feeds from. */
+  clientInterview?: React.ReactNode;
   /** Rendered above the grid: recalibration, sourcing CTA. */
   banners?: React.ReactNode;
   /** Rendered full-width below the grid: search + intelligence panels. */
@@ -392,6 +395,8 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
               </ul>
             </Panel>
           )}
+
+          {vm.clientInterview}
         </div>
 
         <div className="flex flex-col gap-[18px]">

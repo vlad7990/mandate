@@ -159,6 +159,17 @@ export const ACTIVITY_EVENT_TYPES = [
   "interview_plan_generation_requested",
   "interview_plan_generation_failed",
   "interview_plan_approved",
+
+  // 117: the client-interview lifecycle. The three human acts are
+  // mandate-writer-gated inside the RPC; `client_interview_answered`
+  // is the sessionless act — it enters only via the SECURITY DEFINER
+  // record_client_interview_answered (063's shape), never the door.
+  // The Interviewer's own composing act reuses
+  // `interview_plan_generated` with detail.plan_scope.
+  "client_interview_generation_requested",
+  "client_interview_generation_failed",
+  "client_interview_approved",
+  "client_interview_answered",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -217,6 +228,12 @@ export const APP_RECORDABLE_EVENTS = [
   "interview_plan_generation_requested",
   "interview_plan_generation_failed",
   "interview_plan_approved",
+  // 117 — the client-interview lifecycle: same gate. The answered
+  // event is NOT here — it has no session and rides its own definer
+  // entry point.
+  "client_interview_generation_requested",
+  "client_interview_generation_failed",
+  "client_interview_approved",
 ] as const;
 
 export type AppRecordableEvent = (typeof APP_RECORDABLE_EVENTS)[number];
@@ -360,6 +377,11 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   interview_plan_generation_requested: "mandates",
   interview_plan_generation_failed: "mandates",
   interview_plan_approved: "mandates",
+
+  client_interview_generation_requested: "mandates",
+  client_interview_generation_failed: "mandates",
+  client_interview_approved: "mandates",
+  client_interview_answered: "mandates",
 };
 
 /**

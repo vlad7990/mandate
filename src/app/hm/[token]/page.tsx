@@ -14,6 +14,7 @@ import {
 import {
   PortalContent,
   buildPortalCandidate,
+  buildPortalClientInterview,
   type PortalCandidate,
   type PortalProgress,
 } from "@/app/(dashboard)/app/projects/[id]/hiring-manager/portal-content";
@@ -105,8 +106,9 @@ export default async function HiringManagerPublicPage({
     });
 
   // Token is valid. Fetch the project + shortlist + candidates +
-  // scores scoped to the verified project_id.
-  const [projectQ, shortlistQ, candidatesQ, scoresQ] = await Promise.all([
+  // scores + the approved client-interview set (117; drafts never
+  // reach the portal), scoped to the verified project_id.
+  const [projectQ, shortlistQ, candidatesQ, scoresQ, interviewQ] = await Promise.all([
     supabase
       .from("projects")
       .select("id, title, company_name, status, calibration_model")
@@ -129,6 +131,12 @@ export default async function HiringManagerPublicPage({
         "candidate_id, rank_position, overall_score, tier, technical_score, domain_score, leadership_score, regulatory_score, transformation_score"
       )
       .eq("project_id", verified.project_id),
+    supabase
+      .from("client_interviews")
+      .select("id, version, content_json")
+      .eq("project_id", verified.project_id)
+      .eq("status", "approved")
+      .maybeSingle<{ id: string; version: number; content_json: unknown }>(),
   ]);
 
   if (projectQ.error || !projectQ.data) {
@@ -179,6 +187,8 @@ export default async function HiringManagerPublicPage({
       mode="hiring_manager"
       submitHandle={token}
       evidenceGrid={evidenceGrid}
+      clientInterview={buildPortalClientInterview(interviewQ.data ?? null)}
+      interviewAnswerToken={token}
     />
   );
 }

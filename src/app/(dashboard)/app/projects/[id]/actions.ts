@@ -35,6 +35,8 @@ import {
   type CalibrationModel,
   type CompanyContext,
 } from "@/lib/ai/role-analysis";
+import { computeMandateGaps } from "@/lib/ai/client-interview-agent";
+import { generateAndStoreClientInterview } from "@/lib/ai/generate-client-interview";
 import type { CandidateProfile } from "@/lib/ai/cv-parsing";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { runAction } from "@/lib/actions/run";
@@ -1059,5 +1061,141 @@ export async function markIntakeTimedOut(
     }
 
     revalidatePath(`/app/projects/${projectId}`);
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Client interview (117, client-interview slice)
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Request a client-interview question set — a mandate-writer's act (the
+ * RPC door gates the trail event the same way). Allocation is atomic
+ * and idempotent in the database: a second click while a generation
+ * runs returns the running row instead of minting a rival. The refusal
+ * when there is nothing to ask is said HERE, before a row exists —
+ * the pipeline re-checks so a race cannot slip past it.
+ */
+export async function requestClientInterviewAction(
+  projectId: string
+): Promise<ActionResult<{ version: number; wasExisting: boolean }>> {
+  return runAction("The client interview", async () => {
+    if (!projectId) throw new Error("Missing projectId.");
+
+    const actor = await requireActiveUser();
+
+    const supabase = await createServerSupabaseClient();
+    const { data: project } = await supabase
+      .from("projects")
+      .select("calibration_model, onboarding_responses")
+      .eq("id", projectId)
+      .maybeSingle<{
+        calibration_model: Partial<CalibrationModel> | null;
+        onboarding_responses: Record<string, unknown> | null;
+      }>();
+    if (!project?.calibration_model) {
+      throw new Error(
+        "This mandate has no calibration yet — run intake first."
+      );
+    }
+    const gaps = computeMandateGaps(
+      project.calibration_model,
+      project.onboarding_responses
+    );
+    if (gaps.length === 0) {
+      throw new Error(
+        "This mandate has no provable gaps — intake left no missing information and the calibration is established. There is nothing to ask the client."
+      );
+    }
+
+    const { data: allocated, error: allocError } = await supabase
+      .rpc("allocate_and_insert_client_interview", {
+        p_project_id: projectId,
+        p_organization_id: actor.organizationId,
+        p_content_json: {},
+        p_is_generating: true,
+        p_created_by: actor.userId,
+        p_prompt_version: null,
+        p_model_version: null,
+      })
+      .single<{ id: string; version: number; was_existing: boolean }>();
+
+    if (allocError || !allocated) {
+      throw new Error(
+        allocError?.message ?? "Could not allocate a client-interview row."
+      );
+    }
+
+    if (!allocated.was_existing) {
+      const { error: eventError } = await supabase.rpc("record_activity_event", {
+        p_event_type: "client_interview_generation_requested",
+        p_project_id: projectId,
+        p_detail: { version: allocated.version, gap_count: gaps.length },
+      });
+      if (eventError) {
+        console.error("[client-interview] request event refused", eventError);
+      }
+
+      after(() =>
+        generateAndStoreClientInterview(
+          allocated.id,
+          projectId,
+          allocated.version === 1 ? "initial" : "regenerate"
+        )
+      );
+    }
+
+    revalidatePath(`/app/projects/${projectId}`);
+    return { version: allocated.version, wasExisting: allocated.was_existing };
+  });
+}
+
+/**
+ * Approve a draft question set. Promotion is RPC-only — the guard
+ * trigger refuses a bare status write for every role — and
+ * archive-then-promote keeps at most one approved set per mandate.
+ * Approval is THE human gate (R2): only an approved set renders on the
+ * client's portal.
+ */
+export async function approveClientInterviewAction(
+  interviewId: string,
+  projectId: string
+): Promise<ActionResult> {
+  return runAction("The client interview", async () => {
+    if (!interviewId || !projectId) {
+      throw new Error("Missing interviewId or projectId.");
+    }
+
+    await requireActiveUser();
+
+    const supabase = await createServerSupabaseClient();
+    const { error: approveError } = await supabase.rpc(
+      "approve_client_interview",
+      {
+        p_interview_id: interviewId,
+        p_project_id: projectId,
+      }
+    );
+    if (approveError) {
+      throw new Error(approveError.message);
+    }
+
+    const { data: approved } = await supabase
+      .from("client_interviews")
+      .select("version")
+      .eq("id", interviewId)
+      .maybeSingle<{ version: number }>();
+
+    const { error: eventError } = await supabase.rpc("record_activity_event", {
+      p_event_type: "client_interview_approved",
+      p_project_id: projectId,
+      p_detail: { version: approved?.version ?? null },
+    });
+    if (eventError) {
+      console.error("[client-interview] approve event refused", eventError);
+    }
+
+    revalidatePath(`/app/projects/${projectId}`);
+    revalidatePath(`/app/projects/${projectId}/hiring-manager`);
   });
 }

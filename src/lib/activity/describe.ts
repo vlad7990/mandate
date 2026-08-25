@@ -552,6 +552,14 @@ export function describeActivity(event: ActivityEventRow): string {
         : "Wrote the success profile";
     }
     case "interview_plan_generated": {
+      // The Interviewer's two faces share this type (117): plan_scope
+      // tells a per-candidate plan from a client question set.
+      if (str(d, "plan_scope") === "client_interview") {
+        const questions = num(d, "question_count");
+        return questions != null && questions > 0
+          ? `Wrote the client question set — ${questions} question${questions === 1 ? "" : "s"}`
+          : "Wrote the client question set";
+      }
       const stages = num(d, "stage_count");
       return stages != null && stages > 0
         ? `Wrote the interview plan — ${stages} stage${stages === 1 ? "" : "s"}`
@@ -570,6 +578,31 @@ export function describeActivity(event: ActivityEventRow): string {
       return version != null
         ? `Approved the interview plan (v${version})`
         : "Approved the interview plan";
+    }
+    case "client_interview_generation_requested": {
+      const version = num(d, "version");
+      return version != null && version > 1
+        ? `Requested a new client question set (v${version})`
+        : "Requested a client question set";
+    }
+    case "client_interview_generation_failed":
+      return "A client question set generation failed";
+    case "client_interview_approved": {
+      const version = num(d, "version");
+      return version != null
+        ? `Approved the client question set (v${version})`
+        : "Approved the client question set";
+    }
+    case "client_interview_answered": {
+      const label = str(d, "label");
+      const answered = num(d, "answered_count");
+      const counted =
+        answered != null && answered > 0
+          ? ` — ${answered} answer${answered === 1 ? "" : "s"}`
+          : "";
+      return label
+        ? `${label} answered the client interview${counted}`
+        : `The client answered the interview questions${counted}`;
     }
     case "executive_context_researched": {
       const trigger = str(d, "trigger");

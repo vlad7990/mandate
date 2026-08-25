@@ -388,6 +388,12 @@ describe("the vocabulary", () => {
       "interview_plan_generation_requested",
       "interview_plan_generation_failed",
       "interview_plan_approved",
+      // 117: the client-interview lifecycle — same gate, same group.
+      // The answered event is absent on purpose: it is sessionless and
+      // enters via its own SECURITY DEFINER entry point, never the door.
+      "client_interview_generation_requested",
+      "client_interview_generation_failed",
+      "client_interview_approved",
     ]);
     for (const type of APP_RECORDABLE_EVENTS) {
       const expected =
@@ -396,7 +402,8 @@ describe("the vocabulary", () => {
         type.startsWith("skill_") ||
         type.startsWith("task_") ||
         type.startsWith("objective_") ||
-        type.startsWith("interview_plan_")
+        type.startsWith("interview_plan_") ||
+        type.startsWith("client_interview_")
           ? "mandates"
           : "client";
       expect(ACTIVITY_GROUP_OF[type]).toBe(expected);
@@ -407,11 +414,13 @@ describe("the vocabulary", () => {
    * 107's rider: the TS mirror had drifted to 46 entries against the
    * live CHECK's 78 — the external block and the later agent events
    * rendered as raw slugs. The count pins the reconciliation: 80 was
-   * 107's rebuild; 116 adds the three interview-plan human acts = 83.
+   * 107's rebuild; 116 added the three interview-plan human acts = 83;
+   * 117 adds the three client-interview human acts + the sessionless
+   * answered event = 87.
    */
-  it("mirrors the live CHECK's eighty-three event types", () => {
-    expect(ACTIVITY_EVENT_TYPES).toHaveLength(83);
-    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(83);
+  it("mirrors the live CHECK's eighty-seven event types", () => {
+    expect(ACTIVITY_EVENT_TYPES).toHaveLength(87);
+    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(87);
   });
 
   it("describes the OKR acts with titles and outcomes, never amounts", () => {

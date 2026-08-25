@@ -259,9 +259,12 @@ export async function runHmFeedbackPipeline(args: {
   projectId: string;
   /** The hiring_manager_reviews row that triggered this run — named in
    * the trail event's detail (D4: the actor is the agent, the trigger
-   * is named). */
+   * is named). Null on the client-interview door, whose trigger is the
+   * `client_interview_answered` trail event instead. */
   reviewId: string | null;
-  rows: Array<{ id: string; candidate_id: string }>;
+  /** candidate_id is null for mandate-level rows (117: the client's
+   * interview answers have no candidate axis). */
+  rows: Array<{ id: string; candidate_id: string | null }>;
   topConcern: string;
   hmLabel: string;
 }): Promise<void> {
@@ -298,7 +301,7 @@ async function interpretUnderAgentSession(args: {
   supabase: SupabaseClient;
   projectId: string;
   reviewId: string | null;
-  rows: Array<{ id: string; candidate_id: string }>;
+  rows: Array<{ id: string; candidate_id: string | null }>;
   topConcern: string;
   hmLabel: string;
 }): Promise<void> {
@@ -322,15 +325,16 @@ async function interpretUnderAgentSession(args: {
   const rowIds = rows.map((r) => r.id);
   const { data: insertedRowsRaw } = await supabase
     .from("feedback")
-    .select("id, candidate_id, content")
+    .select("id, candidate_id, content, feedback_type")
     .in("id", rowIds);
-  const insertedById = new Map<string, { content: string }>();
+  const insertedById = new Map<string, { content: string; feedback_type: string }>();
   for (const r of (insertedRowsRaw ?? []) as Array<{
     id: string;
-    candidate_id: string;
+    candidate_id: string | null;
     content: string;
+    feedback_type: string;
   }>) {
-    insertedById.set(r.id, { content: r.content });
+    insertedById.set(r.id, { content: r.content, feedback_type: r.feedback_type });
   }
 
   const { data: priorRows } = await supabase
@@ -402,7 +406,10 @@ async function interpretUnderAgentSession(args: {
       interpretation = await interpretFeedback(
         {
           new_feedback: {
-            type: "hm_portal" as FeedbackType,
+            // The row's own type — 'hm_portal' from the review doors,
+            // 'client_interview' from the answers door (117). Both are
+            // machine types outside the manual-entry union, hence cast.
+            type: inserted.feedback_type as FeedbackType,
             content: inserted.content,
             candidate_id: row.candidate_id,
             submitted_role: hmLabel || "hiring_manager",

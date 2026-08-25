@@ -19,6 +19,17 @@ export const FEEDBACK_TYPE_LABELS: Record<FeedbackType, string> = {
 };
 
 /**
+ * Machine-written types that never appear in the manual-entry form —
+ * the portal review mirror (025) and the client-interview answers
+ * (117). Kept out of FEEDBACK_TYPES so the form cannot offer them;
+ * the feedback page labels them from here.
+ */
+export const MACHINE_FEEDBACK_TYPE_LABELS: Record<string, string> = {
+  hm_portal: "HM portal",
+  client_interview: "Client interview",
+};
+
+/**
  * Suggested per-dimension delta. The server clamps the resulting weight
  * to [0, 10] before persisting, so the model can suggest large swings
  * without breaking the schema's bounds.

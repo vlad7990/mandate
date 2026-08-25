@@ -54,6 +54,11 @@ import {
   normaliseFlagArray,
 } from "@/lib/intelligence/overlays";
 import { ProjectPoller } from "./project-poller";
+import { computeMandateGaps } from "@/lib/ai/client-interview-agent";
+import {
+  ClientInterviewPanel,
+  type ClientInterviewRow as ClientInterviewRowShape,
+} from "./client-interview-panel";
 
 type RecalibrationSummary = {
   feedback_id?: string;
@@ -221,6 +226,35 @@ export default async function ProjectPage({
     .from("feedback")
     .select("id", { count: "exact", head: true })
     .eq("project_id", project.id);
+
+  // Client interview (117): the latest question set and how many answer
+  // submissions have landed. The gap list is computed here — the same
+  // pure function the pipeline uses, so the panel and the agent can
+  // never disagree about what the mandate lacks.
+  const [{ data: clientInterviewRows }, { count: clientAnswerCount }] =
+    await Promise.all([
+      supabase
+        .from("client_interviews")
+        .select(
+          "id, version, status, content_json, is_generating, generation_error, approved_at"
+        )
+        .eq("project_id", project.id)
+        .order("version", { ascending: false })
+        .limit(1),
+      supabase
+        .from("feedback")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", project.id)
+        .eq("feedback_type", "client_interview"),
+    ]);
+  const clientInterviewRow =
+    (clientInterviewRows?.[0] as ClientInterviewRowShape | undefined) ?? null;
+  const mandateGapCount = project.calibration_model
+    ? computeMandateGaps(
+        project.calibration_model,
+        (project.onboarding_responses ?? null) as Record<string, unknown> | null
+      ).length
+    : 0;
 
   const specAction: AgentTileAction = {
     label: spec.hasAny ? "Open Job Spec" : "Build Job Spec",
@@ -400,6 +434,15 @@ export default async function ProjectPage({
       ready && Array.isArray(calibration.missing_information)
         ? calibration.missing_information
         : [],
+    clientInterview: ready ? (
+      <ClientInterviewPanel
+        projectId={project.id}
+        initial={clientInterviewRow}
+        hasCalibration={Boolean(project.calibration_model)}
+        gapCount={mandateGapCount}
+        answeredCount={clientAnswerCount ?? 0}
+      />
+    ) : undefined,
     banners: (
       <>
         {project.recalibration_summary?.summary && (

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   FEEDBACK_TYPE_LABELS,
+  MACHINE_FEEDBACK_TYPE_LABELS,
   type FeedbackInterpretation,
   type FeedbackType,
 } from "@/lib/ai/feedback-analysis";
@@ -273,7 +274,10 @@ function FeedbackEntry({
   const submitterRole = submitter?.role ?? null;
 
   const ftype = row.feedback_type as FeedbackType;
-  const ftypeLabel = FEEDBACK_TYPE_LABELS[ftype] ?? row.feedback_type;
+  const ftypeLabel =
+    FEEDBACK_TYPE_LABELS[ftype] ??
+    MACHINE_FEEDBACK_TYPE_LABELS[row.feedback_type] ??
+    row.feedback_type;
   // More visually distinct chips: each type gets a filled background +
   // its own icon so the recruiter can tell them apart at a glance,
   // without the chips becoming louder than the body content.

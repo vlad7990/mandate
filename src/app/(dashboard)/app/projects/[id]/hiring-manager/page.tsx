@@ -9,6 +9,7 @@ import { can } from "@/lib/auth/roles";
 import {
   PortalContent,
   buildPortalCandidate,
+  buildPortalClientInterview,
   type PortalCandidate,
   type PortalProgress,
 } from "./portal-content";
@@ -163,6 +164,16 @@ export default async function HiringManagerPortalFounderPage({
   const portalCandidates = shapeSlate(shortlist, allCandidates, scores);
   const progress = computeProgress(allCandidates, shortlist);
 
+  // The approved client-interview set (117) — the preview shows exactly
+  // what the client sees, read-only: answers enter through the share
+  // link, not from the desk.
+  const { data: interviewRow } = await supabase
+    .from("client_interviews")
+    .select("id, version, content_json")
+    .eq("project_id", id)
+    .eq("status", "approved")
+    .maybeSingle<{ id: string; version: number; content_json: unknown }>();
+
   return (
     <div className="px-6 py-6 space-y-5 max-w-[1400px] mx-auto">
       <SetBreadcrumbs
@@ -195,6 +206,7 @@ export default async function HiringManagerPortalFounderPage({
         progress={progress}
         mode="founder"
         submitHandle="preview"
+        clientInterview={buildPortalClientInterview(interviewRow ?? null)}
       />
     </div>
   );

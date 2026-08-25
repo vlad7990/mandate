@@ -6,7 +6,12 @@ import { type CandidateEvaluation } from "@/lib/ai/candidate-evaluation";
 import { type RecruiterAssessment } from "@/lib/recruiter-assessment";
 import type { ComparisonGrid } from "@/lib/comparison/evidence-index";
 import { EvidenceGrid } from "../comparison/evidence-grid";
+import { normalizeClientInterview } from "@/lib/ai/client-interview-agent";
 import { HmFeedbackForm, type HmFeedbackCandidate } from "./feedback-form";
+import {
+  ClientInterviewSection,
+  type PortalClientInterview,
+} from "./client-interview-section";
 import { IconChevronRight } from "@/components/icons";
 
 // Shared client-facing portal content. Used by:
@@ -65,6 +70,17 @@ export type PortalProps = {
    * recruiter's tier and not their fit_notes.
    */
   evidenceGrid?: ComparisonGrid | null;
+  /**
+   * The mandate's APPROVED client-interview question set (117) — drafts
+   * never reach the portal. Null/absent hides the section entirely.
+   */
+  clientInterview?: PortalClientInterview | null;
+  /**
+   * The share token, present ONLY on the /hm/[token] door — the one
+   * path answers can enter through. Absent ⇒ the section is read-only
+   * (founder preview, signed-in /portal).
+   */
+  interviewAnswerToken?: string | null;
 };
 
 export function PortalContent({
@@ -76,6 +92,8 @@ export function PortalContent({
   submitHandle,
   submitPath,
   evidenceGrid,
+  clientInterview,
+  interviewAnswerToken,
 }: PortalProps) {
   const formCandidates: HmFeedbackCandidate[] = candidates.map((c) => ({
     id: c.id,
@@ -99,6 +117,15 @@ export function PortalContent({
           give a verdict on it. */}
       {evidenceGrid && evidenceGrid.candidates.length > 0 && (
         <EvidenceGrid grid={evidenceGrid} variant="client" />
+      )}
+      {/* Before the feedback form: the search team's questions are the
+          mandate's own unknowns, and the client should meet them before
+          being asked for verdict-shaped ratings on the slate. */}
+      {clientInterview && clientInterview.questions.length > 0 && (
+        <ClientInterviewSection
+          interview={clientInterview}
+          answerToken={interviewAnswerToken}
+        />
       )}
       <HmFeedbackForm
         candidates={formCandidates}
@@ -353,6 +380,30 @@ function formatRelative(iso: string): string {
   const day = Math.round(hr / 24);
   if (day < 30) return `${day}d ago`;
   return `${Math.round(day / 30)}mo ago`;
+}
+
+/**
+ * Shape an APPROVED client_interviews row for the portal section —
+ * shared by all three doors so they render the identical set. Gap ids
+ * and labels are deliberately dropped: they are the desk's machinery,
+ * not the client's page.
+ */
+export function buildPortalClientInterview(
+  row: { id: string; version: number; content_json: unknown } | null
+): PortalClientInterview | null {
+  if (!row) return null;
+  const content = normalizeClientInterview(row.content_json);
+  if (content.questions.length === 0) return null;
+  return {
+    id: row.id,
+    version: row.version,
+    intro: content.intro,
+    questions: content.questions.map((q) => ({
+      id: q.id,
+      question: q.question,
+      why_it_matters: q.why_it_matters,
+    })),
+  };
 }
 
 // Build a PortalCandidate from raw row data (called from both the
