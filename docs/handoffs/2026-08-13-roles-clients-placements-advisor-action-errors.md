@@ -8734,3 +8734,20 @@ Green gate: tsc / vitest 893 / eslint / build. Numbers: next
 migration 106, next § 109, next drive 0f4. Next per the pass after
 confirmation: Optimizer Phase 0, then the task domain, then the
 pre-launch checklist.
+
+---
+
+## 109. §108 confirmed — slice three COMPLETE; Optimizer Phase 0 opens — 2026-08-25
+
+The founder confirmed §108 in writing 2026-08-25. Org-authored role
+templates, the stage-event rider, and the 105 backstop stand;
+NEXT-role-templates.md deleted per doctrine. The product pass moves
+to slice four: THE OPTIMIZER — Phase 0 first (enumerate which
+optimizations EXIST vs which need NEW judgments, per the §103
+analysis and the AGENTS.md §20 test: a UI feature unifying existing
+capabilities, NOT a new principal), then its gate; BUILD GATED on
+written confirmation. Hard boundary restated: presentation polish is
+the Positioning Agent's ADVISORY lane — the record is never
+rewritten; the no-verdict doctrine untouched. Numbers: next
+migration 106, next § 110, next drive 0f4; durable baseline
+unchanged.
