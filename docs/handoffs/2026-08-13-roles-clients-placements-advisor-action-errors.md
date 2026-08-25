@@ -9907,3 +9907,51 @@ founder half unchanged: real CVs, real HM, mail-client check, D2
 disposition ruling. Numbers: next migration 113, next § 133, next
 drive 0fe; vitest 933; activity CHECK 80; intent door 14; agent
 allowlist 29; durable baseline unchanged.
+
+## 133. F-3 COVERED — the EI report compiled, printed, and proven; THE PUNCH LIST CLOSES — 2026-08-25
+
+The founder ordered the F-3 coverage 2026-08-25. Drive 0fe ran the
+full scaffold the same day. No code changed — this was pure
+verification of the one export no drive had exercised.
+
+**The discovery that reframed the test:** the EI report's "PDF" is
+not @react-pdf — it is the PRINT path (`window.print()`, the
+document column already print-styled). So the test is: the compiled
+report renders whole from real data, and the print output is a
+valid PDF.
+
+**Drive 0fe (scratch org, full EI scaffold):** search "Chief
+Technology Officer @ Halcyon Logistics", candidate Avery Penhallow
+linked at 'advanced', THREE org competencies with weights 9/8/6,
+and the three source artifacts with faithful content — success
+profile, three-stage interview plan (stages assigned to the
+competency keys), human-authored assessment (strong/strong/moderate
+with stage provenance). TWO incidental proofs along the way: the
+immutability guards REFUSED approved-at-birth inserts ("Profiles
+are created as drafts. Use approve_success_profile()") — 037's
+machinery holding exactly as designed — so all three artifacts went
+draft-first and were approved through the real RPCs under the
+scratch operator's forged JWT, approval stamps verified. The
+candidate-stage CHECK also refused an out-of-vocabulary stage.
+
+**The verdict:** the report page rendered the COMPILED document —
+"01 What the role requires / 02 Evidence coverage / 03 Evidence
+recorded / 04 Where evidence is thin" — with NO gate shown and the
+"Print or save as PDF" affordance present; the print path produced
+a valid 2-page A4 PDF (207KB, PDF 1.4). Artifacts:
+.playwright-mcp/fct-0fe-ei-report-compiled.png +
+fct-0fe-ei-report.pdf. Teardown by value including the EI stack
+(assessment/plan/profile/weights/competencies/link/search);
+baseline verified exact in a fresh statement.
+
+**THE §128 PUNCH LIST IS FULLY CLOSED: F-1 (§129), F-2 (§130), F-4
+(§131), F-5 + F-6 (§132), F-3 (this).** What remains of
+first-client testing is EXACTLY the founder's half: the 8–10 real
+CVs through the loop, the real hiring manager, the mail-client
+check, the real erasure exercise, and the D2 disposition ruling.
+The mechanical ground is fully cleared.
+
+Numbers: next migration 113, next § 134, next drive 0ff; vitest
+933; activity CHECK 80; intent door 14; agent allowlist 29; durable
+baseline 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 +
+key_results 0.
