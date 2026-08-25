@@ -8647,3 +8647,90 @@ doctrine), D-gate drafted, BUILD GATED on written confirmation.
 Numbers: next migration 104, next § 108, next drive 0f3; durable
 baseline unchanged 25 users / 24 agents / 74 events / 5 skills / 5
 skill_versions / 1 network_profile / 1 org_comms_policy.
+
+---
+
+## 108. The role-template creator + the stage-event rider — 2026-08-25 — DRAFT
+
+Product-pass slice three on the founder's confirmed D1–D8 (D3(b) =
+the exec ledger, founder's word). Commit `e90537d`, deploy
+`mandate-ctfo5k204`, migrations 104 AND 105, drive 0f3. **This § is
+a DRAFT: no completion is declared; NEXT-role-templates.md and
+NEXT-product-pass.md stand until the founder confirms.**
+
+**Built.** 104: `candidate_stage_changed` into the activity CHECK
+(live 75→76) and into record_activity_event WITH the writer gate
+(`can_write_candidates()` — the 102 skill_% precedent; a viewer
+cannot forge a stage move); `template_created/updated/deleted` into
+the exec ledger's CHECK (30→33); `created_by` on
+executive_role_templates (updated_at stays app-stamped — the
+D-gate's "house trigger" turned out not to exist; every surface
+stamps in the action, so this one does too — deviation recorded).
+The seam: updatePipelineStage reads the prior stage and records
+{from, to} on every REAL move (no-ops record nothing) — the §106
+silence closed for the dropdown and the board in one call site.
+Creator surface: New/Edit/Delete on the templates page behind
+skills:write (label now "Skills & templates"), shared TemplateForm
+(auto-slug key, SHADOW WARNING when the key matches a global,
+19 intake-default fields — the form's own names, nothing else
+lands — and the 24-competency weight list), in-use delete refusal
+with the count sentence, .select() zero-row honesty, exec-ledger
+events (key/title/shadows_global — never the defaults' text),
+ROUTE_RULES ×2, the stale "nothing to set up here" copy corrected.
+
+**THE 105 FINDING — the harness caught a boundary that never
+held.** Assertion 5 (delete backstop) FAILED on first run, and the
+failure was REAL: 032's original single-column FK was ON DELETE
+SET NULL — deleting a referenced template silently DETACHED every
+referencing search (NULLing template_id), which MATCH SIMPLE-
+exempted 056's two composite NO ACTION constraints. The guarantee
+056's own commentary states ("a template referenced by any search
+cannot be deleted") never held; provenance was one superuser
+mistake from vanishing. 105 rebuilt the FK NO ACTION; the
+assertion now passes and pins it. The record does not lose its
+pointer because somebody deleted the template.
+
+**Harness** (role_template_invariants.sql, live, rolled back):
+admin authors + created_by pinned / recruiter refused / global
+UPDATE lands zero rows / coherence CHECK refuses org-claiming-
+global / referenced delete refused (post-105) / intent door three
+faces (viewer refused insufficient_privilege, recruiter's event
+lands with the right face, agent door refuses the human type) /
+§42 exact-count. CONTROL RUN: the writer gate dropped → the
+VIEWER's forged stage event LANDED → INVARIANT-FAIL (6a),
+self-rolled-back; live door verified intact after.
+
+**Drive 0f3** (scratch admin Perrin Ashgrove + scratch recruiter
+Sable Winterton, both torn down): 8 global cards + New Template /
+form with live shadow warning on `cto_seed_saas` / org row landed
+(org-scoped, is_global false, created_by = operator, 2 weights) /
+ledger `template_created` shadows_global TRUE / THE OVERRIDE AT
+THE SURFACE: ?template=cto_seed_saas resolved the ORG row — chip
+named the shadow, defaults prefilled from it / search created from
+it: tier pair (template_is_global false, template_org_id
+generated), 2 competency rows source "template", search_created in
+the ledger / referenced delete REFUSED with the count sentence
+verbatim / edit round-trip (prefill exact, template_updated) /
+disposable template created + deleted clean (template_deleted) /
+THE RIDER ON THE BOARD: drag found→reviewed landed
+candidate_stage_changed under the operator with {from, to} and the
+feed rendered "Moved the candidate from found to reviewed" /
+recruiter face: all nine cards readable, ZERO authoring
+affordances. UNPLANNED FINDING: creating the search AUTO-RAN the
+Executive Intelligence Agent's context research (15 sources,
+trigger "initial", counts-only event) — §82's machinery working
+unprompted; template-drive teardowns must sweep that event and the
+intake-resolved client, and both were (the §82 checklist held).
+Teardown EXACT first pass: durable baseline 25 users / 24 agents /
+74 events / 5 skills / 5 skill_versions / 1 network_profile / 1
+org_comms_policy / 2 projects / 2 clients / 1 candidate / 1
+job_spec / 25 auth, AND the exec side at 8 templates / 0 searches
+/ 0 competency rows / 0 ledger rows / 0 profiles. Screenshots:
+templates-0f3-list-with-new, templates-0f3-shadow-warning,
+templates-0f3-override-prefill, templates-0f3-delete-refusal,
+templates-0f3-stage-event-feed, templates-0f3-recruiter-readonly.
+
+Green gate: tsc / vitest 893 / eslint / build. Numbers: next
+migration 106, next § 109, next drive 0f4. Next per the pass after
+confirmation: Optimizer Phase 0, then the task domain, then the
+pre-launch checklist.
