@@ -9856,3 +9856,54 @@ mismatch /hiring-manager) · F-6 ("Top 1 Candidates") open. Numbers:
 next migration 113, next § 132, next drive 0fd; vitest 933;
 activity CHECK 80; intent door 14; agent allowlist 29; durable
 baseline unchanged.
+
+## 132. F-5 and F-6 FIXED — the hydration gate and the counted heading; drive 0fd light green — 2026-08-25
+
+The founder ordered both fixes 2026-08-25. Shipped and verified the
+same day.
+
+**F-5 — the hydration mismatch had TWO sources on the share-link
+card, and the bigger one was not the timestamp.**
+`baseUrl = typeof window !== "undefined" ? window.location.origin : ""`
+rendered every token URL path-only on the server and origin-full on
+the client — a guaranteed text mismatch on ANY render of the token
+list, which is why §128 caught React #418 so reliably. The second
+source was `formatRelative`'s Date.now() ("3m ago" server vs "4m
+ago" a moment later). The fix is a shared primitive:
+`src/lib/use-hydrated.ts` — `useHydrated()` on useSyncExternalStore
+(the lint-clean canonical form; the first draft's setState-in-effect
+was refused by react-hooks/set-state-in-effect and rewritten). The
+card gates both the origin and the relative phrases on it, with the
+absolute date as the server-matching fallback, and `formatDate` is
+pinned to UTC so a viewer across midnight from the server still
+hydrates identically. portal-share-card was checked clean;
+portal-content is a SERVER component and cannot hydration-mismatch.
+THE CLASS IS WIDER THAN THE PAGE: Date.now()-derived render text
+appears in ~10 other client components — recorded as a named sweep
+candidate, not swept (D3).
+
+**F-6 — the heading stops counting itself.** "Top 1 Candidates" on
+/reports becomes "Top Candidates" — and the markdown export turned
+out to carry the same defect INVERTED, a hardcoded "## Top 3
+Candidates" regardless of the actual list. Both now read "Top
+Candidates" and the list speaks for itself.
+
+**Drive 0fd (light):** scratch org + operator + project + one token
+with last_used_at three minutes back — the exact §128 repro shape.
+/hiring-manager loaded in prod: ZERO console errors, "Last used 3m
+ago" present post-hydration, the token URL rendering with its
+origin. Teardown by value (the CTE lesson of the day: sibling CTE
+reads see the pre-delete snapshot — "after" counts must be a fresh
+statement); baseline verified exact
+(25/25/74/1 org/2 projects/rate_limit 0).
+
+Green gate: tsc / vitest 933 / eslint / build · commit 0b6ee80 ·
+deployed (mandate-lels23blm).
+
+**THE PUNCH LIST STANDS AT: F-1, F-2, F-4, F-5, F-6 CLOSED; F-3 (EI
+report PDF) open** — the one drive-uncovered export, waiting on a
+full EI scaffold or the founder's real EI session. §128's remaining
+founder half unchanged: real CVs, real HM, mail-client check, D2
+disposition ruling. Numbers: next migration 113, next § 133, next
+drive 0fe; vitest 933; activity CHECK 80; intent door 14; agent
+allowlist 29; durable baseline unchanged.
