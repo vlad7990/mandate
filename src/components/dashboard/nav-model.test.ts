@@ -42,7 +42,7 @@ describe("isNavItemActive", () => {
   it("distinguishes the candidate destinations", () => {
     expect(activeLabels("/app/candidates")).toEqual(["Candidates"]);
     expect(activeLabels("/app/candidates/network")).toEqual(["Network"]);
-    expect(activeLabels("/app/candidates/search")).toEqual(["AI search"]);
+    expect(activeLabels("/app/candidates/search")).toEqual(["Pool search"]);
   });
 
   it("lights Executive Intelligence for its own page only", () => {

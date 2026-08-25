@@ -156,7 +156,7 @@ export default async function SkillsStudioPage() {
               {String(totalActive).padStart(2, "0")}
             </span>{" "}
             active · {String(skills.length).padStart(2, "0")} total · injected
-            into every AI agent run
+            into every agent run
           </p>
         </div>
         <CapabilityGate capability="skills:write">
@@ -179,7 +179,7 @@ export default async function SkillsStudioPage() {
         <div className="relative px-5 py-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-on-surface">
           <PrincipleBlock
             title="What is a skill?"
-            body="A reusable instruction block recruiters write once and the AI applies whenever its trigger conditions match."
+            body="A reusable instruction block recruiters write once and the agents apply whenever its trigger conditions match."
           />
           <PrincipleBlock
             title="Where does it run?"

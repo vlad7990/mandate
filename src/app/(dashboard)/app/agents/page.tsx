@@ -7,7 +7,7 @@ import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { IconIntelligence } from "@/components/icons";
 
 // ────────────────────────────────────────────────────────────────────────
-// The agent registry — every AI judgment in Mandate authenticates as a
+// The agent registry — every agent judgment in Mandate authenticates as a
 // principal: its own database identity, its own credential, its own
 // kill switch in Platform ops, its own name in the activity trail.
 //
@@ -75,7 +75,7 @@ const REGISTRY: AgentGroup[] = [
       },
       {
         name: "Candidate Search Agent",
-        does: "Ranks your own pool against a plain-English query on the AI Search page, and holds the sourcing search over configured web sources for candidates not yet in the pool.",
+        does: "Ranks your own pool against a plain-English query on the Pool search page, and holds the sourcing search over configured web sources for candidates not yet in the pool.",
         staysHuman: "The sourcing side searches only domains your organisation has configured — never LinkedIn, by policy baked into the tool call.",
       },
       {
@@ -184,7 +184,7 @@ const REGISTRY: AgentGroup[] = [
       },
       {
         name: "Copilot Agent",
-        does: "The always-available chat: answers questions over the project snapshot and explains decisions.",
+        does: "Mandy — the always-available chat: answers questions over the project snapshot and explains decisions.",
         staysHuman: "Your session proves you may ask before the agent exists; conversation history stays on your device.",
       },
     ],
@@ -241,7 +241,7 @@ export default async function AgentsPage() {
           {suspended > 0 ? ` // ${suspended} suspended` : ""}
         </p>
         <p className="text-body-main text-on-surface-variant max-w-3xl">
-          Every AI judgment in Mandate runs as a principal: its own
+          Every agent judgment in Mandate runs as a principal: its own
           identity in the database, its own credential, its own kill
           switch, and its own name in the activity trail. No agent acts as
           you, and none can cross the editorial lines below — those are

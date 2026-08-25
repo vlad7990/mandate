@@ -196,18 +196,16 @@ export default async function CandidateSearchPage({
       <SetBreadcrumbs
         crumbs={[
           { label: "Candidates", href: "/app/candidates" },
-          { label: "AI Search" },
+          { label: "Pool search" },
         ]}
       />
 
       <header className="space-y-2">
-        {/* Derivation would give "Ai candidate search". */}
-        <TerminalTitle label="AI candidate search">
-          AI_CANDIDATE_SEARCH
-        </TerminalTitle>
+        <TerminalTitle label="Pool search">POOL_SEARCH</TerminalTitle>
         <p className="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest">
-          Type what you&rsquo;re looking for in plain English. The AI parses
-          intent, scores the pool, and ranks the matches with reasoning.
+          Type what you&rsquo;re looking for in plain English. The Candidate
+          Search Agent parses intent, scores the pool, and ranks the
+          matches with reasoning.
         </p>
       </header>
 
@@ -445,7 +443,7 @@ function SearchResults({
             }
             meta={
               <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-                Sorted by AI match score
+                Sorted by match score
               </span>
             }
           />

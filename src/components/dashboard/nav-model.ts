@@ -147,7 +147,7 @@ export const NAV: readonly NavItem[] = [
    */
   {
     href: "/app/candidates/search",
-    label: "AI search",
+    label: "Pool search",
     icon: "search",
     group: "search",
     child: true,

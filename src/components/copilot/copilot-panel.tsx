@@ -46,7 +46,7 @@ export function CopilotPanel() {
     <>
       <button
         type="button"
-        aria-label={open ? "Close Copilot" : "Open Copilot"}
+        aria-label={open ? "Close Mandy" : "Open Mandy"}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={cn(
@@ -60,7 +60,7 @@ export function CopilotPanel() {
       >
         {open ? <IconClose size={17} /> : <IconCopilot size={17} />}
         <span className="font-mono-label text-mono-label uppercase tracking-widest">
-          {open ? "Close" : "Copilot"}
+          {open ? "Close" : "Mandy"}
         </span>
       </button>
 
@@ -166,7 +166,7 @@ function CopilotChat({
         if (!response.ok || !response.body) {
           const errBody = await response
             .json()
-            .catch(() => ({ error: `Copilot request failed (${response.status})` }));
+            .catch(() => ({ error: `Mandy could not answer (${response.status})` }));
           throw new Error(errBody.error || `HTTP ${response.status}`);
         }
 
@@ -217,7 +217,7 @@ function CopilotChat({
       } catch (err) {
         if ((err as { name?: string }).name === "AbortError") return;
         const msg =
-          err instanceof Error ? err.message : "Copilot stream failed.";
+          err instanceof Error ? err.message : "Mandy's reply was interrupted.";
         setMessages((prev) => [
           ...prev,
           {
@@ -244,7 +244,7 @@ function CopilotChat({
   const clearHistory = () => {
     if (
       messages.length > 0 &&
-      !window.confirm("Clear this Copilot conversation?")
+      !window.confirm("Clear this conversation with Mandy?")
     ) {
       return;
     }
@@ -259,14 +259,14 @@ function CopilotChat({
   return (
     <aside
       role="dialog"
-      aria-label="Recruiter Copilot"
+      aria-label="Mandy — recruiter copilot"
       className="fixed top-0 right-0 z-30 h-screen w-full max-w-[400px] bg-surface-container border-l border-outline-variant flex flex-col shadow-2xl"
     >
       <header className="bg-surface-container-high px-4 py-3 border-b border-outline-variant flex items-center justify-between gap-2">
         <div className="space-y-0.5 min-w-0">
           <div className="font-mono-label text-mono-label text-primary uppercase tracking-widest flex items-center gap-2">
             <IconCopilot size={13} />
-            Copilot
+            Mandy
           </div>
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest truncate">
             Project · {projectId.slice(0, 8)}
@@ -391,7 +391,7 @@ function MessageBubble({
       )}
     >
       <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest mb-1">
-        {isUser ? "You" : "Copilot"}
+        {isUser ? "You" : "Mandy"}
         {streaming && (
           <span className="ml-2 text-primary animate-pulse">▌</span>
         )}
