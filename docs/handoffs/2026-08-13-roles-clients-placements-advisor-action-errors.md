@@ -9532,3 +9532,48 @@ Numbers: next migration 111, next § 126, next drive 0fa; vitest 929;
 activity CHECK 80; intent door 14; agent allowlist 29; durable
 baseline 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 +
 key_results 0.
+
+## 126. THE RLS REVIEW PASS ran — Phase 0 complete, verdict NULL RESULT — 2026-08-25 — DRAFT
+
+Checklist slice three (per §125's order) ran as a read-only Phase 0
+— live pg_policies / pg_class / security advisor, never files. The
+full record is
+docs/superpowers/specs/2026-08-25-rls-review-pass.md; the findings
+in one breath:
+
+All FIFTY-SEVEN public tables carry RLS; deny-by-default holds; the
+three single-SELECT-policy tables (activity_events, skill_versions,
+invitations) take writes only through named definer doors and the
+two zero-policy tables (rate_limit, rate_limit_policy) are the
+deny-all limiter pair, by design. Exactly ONE anon-writable surface
+exists in the whole schema — waitlist_anon_insert, the
+/request-access front door, limiter-fronted (0f9) with Turnstile the
+founder-pending second lock. The only predicates without org/
+identity/client anchors are the FOUR founder-console families, all
+gated is_current_user_founder() by name. The money boundary is
+intact where it was born (can_read_fees OR is_placement_credited on
+reads, can_write_mandates on writes, org-confined throughout). The
+advisor holds NOTHING new — its 33 authenticated-definer count even
+fell from 42, migration 110 visible from the outside.
+
+Verdict: NOTHING MOVES. No migration, no policy edit, no drive — a
+read-only pass changes no behaviour, so there is nothing to
+smoke-test that 0f9 and this week's harness runs have not already
+proven. Migration 111 and drive 0fa stay unclaimed. Three named
+rulings requested with the closure: null results are results (the
+sweeps were structural, not sampled); the founder console's four
+families are the ONLY legal cross-org predicates, any future
+unanchored non-founder policy is a defect by definition; the
+deny-all pair never gains a session-role policy.
+
+On confirmation, next per §122: first-client testing (search loop,
+HM portal, Triangulation Report, PDFs, email drafts), then
+onboarding docs, status page, Lighthouse/mobile audits, simulator
+verification. Founder-owned stack unchanged. Stripe last, then the
+Interviewer programme (§125 R5).
+
+Numbers: next migration 111, next § 127, next drive 0fa; vitest 929;
+activity CHECK 80; intent door 14; agent allowlist 29; durable
+baseline 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 +
+key_results 0. This section is DRAFTED; the checklist item closes
+only on the founder's written word.
