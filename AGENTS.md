@@ -92,3 +92,33 @@ Output: Versioned per-candidate interview plan — stages with objective, interv
 All agents read from and write to Supabase.
 No direct agent-to-agent calls in MVP.
 Orchestration is handled by the application layer.
+## Architecture Vocabulary (doctrine, 2026-08-25)
+
+Five concepts, kept distinct. When building something new, name which
+one it is before writing code — do not create a new Skill when the
+need is a service or capability, and never add a principal merely to
+implement a reusable function.
+
+- **Agent** — a bounded AI principal: its own database identity,
+  credential, RLS reach, kill switch, and name in the activity
+  trail. An agent defines WHO is judging and what it may touch.
+- **Capability** — an engineering-owned function an agent performs:
+  inputs, outputs, allowed reads/writes, tools, deterministic
+  constraints, human gates. Defined in code and migrations, proven
+  by harnesses; never customer-editable.
+- **Skill** — an admin-authored runtime instruction (Skills Studio).
+  Skills may steer judgment — tone, emphasis, framing, criteria.
+  Skills may NEVER expand authority: no new data access, no new
+  tools, no wider disclosure, no bypassed gate. Scope filtering is
+  deterministic; trigger conditions are model-interpreted and the UI
+  says so. Every skill change is evented and versioned
+  (skill_versions, append-only).
+- **Deterministic Policy** — application/database enforcement that
+  neither agents nor skills can override: RLS, org scope, DNC and
+  suppression, disclosure and compensation clamps, Art. 14
+  machinery, editorial pins, autonomy limits, human approval gates.
+  Policy always outranks model instructions.
+- **Workflow** — application-layer orchestration across agents and
+  capabilities (the future Mandate Scout). Agents do not call
+  agents; skills do not trigger workflows; the application owns
+  progression and every gate crossing.

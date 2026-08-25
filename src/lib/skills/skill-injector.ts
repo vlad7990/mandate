@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { captureSeamError } from "@/lib/observability/sentry";
 
 // ────────────────────────────────────────────────────────────────────────
 // Skills Studio injection layer.
@@ -120,7 +121,11 @@ export async function loadActiveSkills(
     const { data, error } = await query;
 
     if (error) {
-      console.error("[skill-injector] failed to load skills:", error);
+      // Fail OPEN to the base prompt — a run must never block on
+      // skills — but fail LOUD: a silent load failure is how every
+      // recruiter-authored rule quietly stopped applying once before
+      // (the §30 after()/cookies() defect class).
+      captureSeamError("[skill-injector] failed to load skills", error);
       return [];
     }
 
@@ -145,7 +150,7 @@ export async function loadActiveSkills(
       return s.applies_to_project_id == null;
     });
   } catch (err) {
-    console.error("[skill-injector] unexpected error loading skills:", err);
+    captureSeamError("[skill-injector] unexpected error loading skills", err);
     return [];
   }
 }
