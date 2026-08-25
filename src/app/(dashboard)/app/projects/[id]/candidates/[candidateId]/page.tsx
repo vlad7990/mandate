@@ -87,6 +87,8 @@ import {
   EngagementPanel,
   type EngagementLaneRow,
 } from "./engagement-panel";
+import { PrescreenPanel, type PrescreenRow } from "./prescreen-panel";
+import { computeEvidenceCoverage } from "@/lib/candidates/evidence-coverage";
 
 type ProjectRow = {
   id: string;
@@ -298,6 +300,23 @@ export default async function CandidateProfilePage({
     .maybeSingle();
 
   const engagementLane = (laneRow ?? null) as EngagementLaneRow | null;
+
+  // The pre-screen (#23, 101) — the live lane (an abandoned one is
+  // history), plus the coverage gap computed from the CV in code.
+  const { data: prescreenRow } = await supabase
+    .from("prescreens")
+    .select(
+      "id, status, question_set, professional_evidence, interest_profile, escalation_reason, completed_at, updated_at"
+    )
+    .eq("candidate_id", candidate.id)
+    .eq("project_id", projectId)
+    .neq("status", "abandoned")
+    .maybeSingle();
+
+  const prescreen = (prescreenRow ?? null) as PrescreenRow | null;
+  const evidenceCoverage = computeEvidenceCoverage(
+    (candidate.cv_structured ?? null) as Record<string, unknown> | null
+  );
 
   // The latest outreach strategy (#21, 097) — the draft source for the
   // outreach flow. Latest version wins; the panel renders its status.
@@ -764,6 +783,12 @@ export default async function CandidateProfilePage({
                   projectId={projectId}
                   candidateId={candidate.id}
                   lane={engagementLane}
+                />
+                <PrescreenPanel
+                  projectId={projectId}
+                  candidateId={candidate.id}
+                  prescreen={prescreen}
+                  coverage={evidenceCoverage}
                 />
                 <OutreachPanel
                   projectId={projectId}

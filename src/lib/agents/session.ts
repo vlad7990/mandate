@@ -408,6 +408,22 @@ export async function signInEngagementAgent(): Promise<AgentSession> {
   });
 }
 
+/**
+ * Sign in the Pre-Screen Agent — the twenty-fourth principal, the
+ * Engage arc's fifth (101). One judgment: resolve the named
+ * unknowns, capture evidence and interest — two tracks, no verdict,
+ * ever. It computes, drafts and structures; humans conduct the
+ * conversation and send every message, and a COMPLETE pre-screen is
+ * terminal to it in the database.
+ */
+export async function signInPrescreenAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "prescreen",
+    email: process.env.AGENT_PRESCREEN_EMAIL,
+    password: process.env.AGENT_PRESCREEN_PASSWORD,
+  });
+}
+
 async function signInAgent(args: {
   kind: string;
   email: string | undefined;

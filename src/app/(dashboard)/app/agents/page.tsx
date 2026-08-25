@@ -140,6 +140,11 @@ const REGISTRY: AgentGroup[] = [
         does: "Keeps each conversation lane honest — reads the thread, judges where it stands and when the next touch is owed, and drafts the follow-up for your approval. Hard gates run before any model turn: a candidate asking for a human, privacy language, or legal phrasing escalates deterministically.",
         staysHuman: "It sends nothing — the communication service refuses every agent actor, and its proposed draft leaves only under your name. An escalated lane is pinned shut to it in the database: it can raise an escalation, never touch or resolve one.",
       },
+      {
+        name: "Pre-Screen Agent",
+        does: "Computes what the record does not show — the evidence gap across the five calibration dimensions — drafts one question per unknown for your approval, and structures the answers into two tracks: professional evidence with sources, and the candidate's own interest. Every invitation carries an AI-disclosure line, appended by the system.",
+        staysHuman: "There is no verdict, no score, no pass — anywhere, by construction. You conduct the conversation and send every message; a completed pre-screen is final to the agent in the database, and the decision its evidence informs is yours alone.",
+      },
     ],
   },
   {
@@ -332,7 +337,7 @@ export default async function AgentsPage() {
         {profile?.is_founder && (
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
             Suspend or restore any principal from Platform ops — each kill
-            switch is independent of the other twenty-two.
+            switch is independent of the other twenty-three.
           </p>
         )}
       </footer>
