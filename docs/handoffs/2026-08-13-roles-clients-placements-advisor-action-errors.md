@@ -7912,3 +7912,170 @@ RESEND_WEBHOOK_SECRET (+ redeploy); both Engage `.env.local` pairs.
 Numbers: next migration 100, next handoff § 96, next drive prefix
 0ee; durable baseline 23 users / 22 agents / 68 events / 1
 network_profile / 1 org_comms_policy.
+
+---
+
+## 96. Engage slice four — the Candidate Engagement Agent (#22), the twenty-third principal — 2026-08-25 — DRAFT
+
+Stage two of the confirmed 099–100 pair (D4/D8b, confirmed in
+writing 2026-08-25), built and driven the same night. **This § is a
+DRAFT: no completion is declared and NEXT-comms-engagement.md is not
+deleted until the founder confirms these verdicts.**
+
+**Migration 100** (MCP + `supabase/migrations/100_agent_engagement.sql`,
+commit `b1f4983`): `engagement_states` — one row per candidate+project
+LANE (UNIQUE), the 8-state CHECK exactly as confirmed
+(awaiting_reply|replied|responding|timing_follow_up|declined|
+interested|escalated|closed), `next_follow_up_at`, and `draft` jsonb —
+the D8b column: the proposed follow-up the human approves and sends
+through the service, or it dies unsent. **The escalation-coherence
+CHECK is bidirectional** — `(state = 'escalated') =
+(escalation_reason IS NOT NULL)`: an escalation without a reason is
+not a record, and a reason cannot outlive its escalation (the resolve
+clears both in one act). RLS per spec §11: org S; human U
+(can_write_candidates — resolution, dismissal, closure); **#22 S+I+U
+with THE ESCALATED PIN both faces**: USING refuses the agent any
+escalated row (it can raise an escalation, never touch or resolve
+one — resolution is the human's act), WITH CHECK restates
+raise-must-carry-its-reason. NO human INSERT (a lane exists because
+the agent judged a thread); NO DELETE for anyone. Vocabulary:
+`engagement_updated` (counts only); CHECK rebuilt from the LIVE
+pg_constraint list, 68 → 69; allowlist TWENTY-EIGHT.
+
+**The harness** (`supabase/tests/agent_engagement_invariants.sql`):
+read coverage under the agent (thread / approved strategy /
+resolver-born profile / policy — every judgment input, nothing more);
+the lane born and maintained by the agent with a counts-only,
+text-probe-clean, correctly-attributed trail; history at
+twenty-eight by COUNT; THE ESCALATED PIN all faces (the raise lands
+with its reason; the escalated row then DEAD to the agent — resolve
+attempt and draft touch both land nowhere; a reasonless raise refused
+at policy AND table CHECK; the reason-without-escalation refused even
+owner-side; the recruiter's resolve lands with the reason cleared;
+viewer lands nowhere; no human INSERT door, no DELETE door; trail
+doors refuse unknown types and humans); negative matrix incl. the
+erasure queue; kill switches at TWENTY-THREE. **Control run verified**:
+`engagement_states_agent_update` rebuilt with the escalated conjunct
+dropped from USING ("the seam refuses escalated lanes anyway") — the
+agent RESOLVED ITS OWN ESCALATION and the harness aborted at
+INVARIANT-FAIL (4b); drift and harness in ONE transaction, the abort
+rolling the rebuild back; live policy verified intact after.
+
+**The principal.** Live account `vbreygin+engagement@gmail.com`, id
+`8c1eb484-…`, Mandate HQ, §30 recipe, the flip as its OWN statement;
+sign-in smoke-tested (self-read active agent, lanes readable) and the
+session revoked; `AGENT_ENGAGEMENT_*` in Vercel production.
+`.env.local` stays founder-hand (the pair is in this job's report,
+joining the two prior Engage pairs). **New durable baseline: 24 users
+/ 23 agents / 71 events** (the +3 creation trail keyed by member
+name) **/ 1 profile / 1 policy** — 2 projects, 2 clients, 1
+candidate, 5 skills, 1 job_spec unchanged; all send/lane classes
+zero.
+
+**The seam + surfaces** (`run-engagement.ts`, `engagement.ts`,
+`engagement-merge.ts` + 12 vitest → 868, `engagement-actions.ts`,
+`engagement-panel.tsx`, the outreach panel's thread view,
+`session.ts` kind `engagement`): the agent re-reads the thread
+(097's contact grant), the approved strategy, the relationship
+record, and the comms policy under ITS session; **project-scoped
+skills — a lane IS a mandate (D6)**; the spec-§10 HARD GATES run
+deterministically FIRST (privacy / request-for-human / legal
+lexicons — the conversation stops before any model turn);
+`buildEngagementUpdate` is the pure clamp — only the four
+maintainable fields, no reasonless escalation, an escalated lane
+proposes nothing, and the draft is clamped through the SAME
+strategy-policy validator as 097's drafts and 099's sends (three
+layers, one rule). A suppressed person and an escalated lane are
+both refused BEFORE any model spend. The thread view labels every
+row honestly: provider rows "sent via Mandate" with the delivery
+fact, bare outbound rows "logged by hand", `sent_by_principal`
+rendered as the agent label the day Scout earns it. The registry's
+ENGAGE chapter carries three principals; the footer counts
+twenty-two siblings.
+
+### Driven live on production (deploy `mandate-6e9iz5q7l` = `b1f4983`)
+
+Scratch world 0ee INSIDE Mandate HQ: operator Selma Voss (is_founder
+admin, never the real founder), mandate "0EE VP Engineering"
+(fictional Corvane Analytics Group), one sourced candidate (a
+founder-controlled test address), a hand-logged outbound touch and an
+inbound "travelling until Thursday" reply, one approved strategy.
+The acts, each verified in the database as it landed:
+
+1. **The resolver proved itself again at seed time** — the scratch
+   candidate's INSERT birthed the person before any code ran.
+2. **Open engagement lane** → the agent judged the thread correctly:
+   lane born `timing_follow_up`, next touch 2026-08-28 (the Friday
+   after "travelling until Thursday"), a proposed follow-up saying it
+   will reach back out on Friday; ONE `engagement_updated` event,
+   counts only (thread 2, inbound 1, has_draft true); zero agent
+   sessions after.
+3. **Send via Mandate on the PROPOSAL — the D8b loop closed**: the
+   human's click sent the agent's draft through the comms service
+   under the OPERATOR's name — provider `resend` + ref, delivery
+   `sent`, `sent_by_principal` FALSE (honest), `thread_key` minted,
+   notice carried, the candidate_notifications row AND the Art. 14
+   stamp landed atomically via `complete_candidate_send`; the lane's
+   draft cleared and the lane awaits the reply — Mandate's SECOND
+   candidate email, and its first agent-drafted, human-sent one.
+4. **The thread view is honest**: the provider row reads "sent via
+   Mandate · sent", the hand-logged touch reads "logged by hand".
+5. **The hard gate, deterministic**: an inbound "stop contacting me
+   and delete my data" → Update engagement escalated the lane with
+   `hard_gate: true` — the privacy reason verbatim, NO model call,
+   no draft; the agent's own button dead while escalated (proven
+   disabled), the banner naming the reason; the human resolved it.
+6. **AN UNPLANNED FINDING, the layers working in depth**: after a
+   follow-up inbound RETRACTED the deletion request ("meant for
+   another sender"), the hard gate — which reads the LATEST inbound
+   only — correctly let the model take its turn, and the MODEL
+   escalated anyway: "the data-deletion and unsubscribe request on
+   record requires a human to review… whether the retraction is
+   sufficient." Policy uncertainty escalated honestly rather than
+   guessed at — the spec-§10 agent-recommended lane observed live,
+   unprompted.
+7. **Steering probe** — a Skills-Studio-authored, PROJECT-scoped
+   skill naming its target schema field: the next proposal's draft
+   subject began **"STEERED-0EE:"** on production.
+8. **Suspended from /ops → D5 VERBATIM** ("The Candidate Engagement
+   Agent could not run — an operator has suspended it or its
+   credentials are absent. The conversation record is untouched. Try
+   again when it is restored."), captured by MutationObserver;
+   restored.
+9. **/app/agents** — 23 principals, ENGAGE carries three, the footer
+   counts twenty-two siblings.
+
+Screenshots (`.playwright-mcp/`): engagement-0ee-panel-empty,
+engagement-0ee-proposal-card, engagement-0ee-thread-honest,
+engagement-0ee-escalated-hardgate, engagement-0ee-model-escalation,
+engagement-0ee-steered-draft, engagement-0ee-suspended-d5,
+agents-0ee-engage-three.
+
+Teardown on scratch ids and KNOWN-ZERO baselines (every send/lane
+class swept whole), the suspend/restore residue keyed by VALUE with
+the creation trail's pending→active untouched, the operator's session
+revoked by the operator's own deletion — no global signout. Durable
+baseline landed EXACTLY; the one remaining session is the founder's.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The 099–100 pair is functionally complete**: the service sends,
+  the agent manages, the human decides. Level ≤1 outbound engagement
+  is live end to end — draft (#21) → approve → send (099) → judge the
+  thread (#22) → propose → human send (099) — with the escalated pin,
+  the DNC family, the caps, and the Art. 14 machinery all enforced in
+  the database.
+- **The hard gates are deterministic-first as specced (§10)**, and
+  the drive showed the model layer catching what the lexicon layer
+  deliberately passes (the retracted-deletion case) — two layers,
+  both observed working, neither trusted alone.
+- **Inbound stays designed-NOT-built** (spec §6, D8f): the drive's
+  inbound rows were hand-logged/seeded; no MX, no webhook-mailbox, no
+  classification judgment shipped. The thread_key routing is minted
+  and waiting.
+- **Next per the confirmed §89 order: 101 #23 Pre-Screen** — noting
+  the spec's counsel gate (§12) stands BEFORE any level ≥3 conduct;
+  #23's evidence/interest capture at the current ceiling needs its
+  own NEXT file and D-gate.
+- **`.env.local` appends stay founder-hand** (all three Engage
+  pairs); production is live without them.

@@ -12,10 +12,21 @@ live — MANDATE'S FIRST CANDIDATE EMAIL sent with the whole record
 the webhook 307 defect found by curl and fixed (deploys
 `mandate-70j9nkm3c`, then `9abc6e8`); teardown exact. **STAGE ONE
 CONFIRMED §95 (2026-08-25). STAGE TWO (100, #22 — the twenty-third
-principal) is UNLOCKED and runs next per the confirmed D4; this file
-is deleted only after the founder confirms stage two's §96 verdicts.**
-Founder-hand: wire the Resend dashboard webhook +
-RESEND_WEBHOOK_SECRET (+ redeploy); both Engage `.env.local` pairs.**
+principal) BUILT AND DRIVEN 2026-08-25 the same night: migration 100
+with the escalated pin both faces + bidirectional
+escalation-coherence CHECK, harness + control run (the dropped
+conjunct let the agent resolve its own escalation — abort at 4b),
+the principal provisioned per §30 and smoke-revoked, the seam with
+project-scoped skills and the spec-§10 hard gates
+deterministic-first, the D8b loop closed live on production (the
+agent's proposal sent by the HUMAN through the service — provider
+ref + notice + stamp atomic), drive 0ee with steering, D5 verbatim,
+and an unplanned model-layer escalation on a retracted deletion
+request; teardown exact (baseline 24 / 23 / 71 / 1). **§96 verdicts
+DRAFTED — this file is deleted only on the founder's written
+confirmation of §96.** Founder-hand: wire the Resend dashboard
+webhook + RESEND_WEBHOOK_SECRET (+ redeploy); all THREE Engage
+`.env.local` pairs.**
 
 ## The surface, as found — the infrastructure slice is smaller than
 ## it looked
