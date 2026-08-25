@@ -10079,3 +10079,36 @@ Numbers: next migration 114, next § 137, next drive 100; vitest
 939; activity CHECK 80; intent door 14; agent allowlist 29; durable
 baseline 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 +
 key_results 0.
+
+## 137. ONBOARDING — the docs and the front door; Phase 0 run, gate DRAFTED — 2026-08-25
+
+The founder opened the slice 2026-08-25: the onboarding
+documentation, "also we should add access request." Phase 0 read
+the second ask against the code and found the hole it names: the
+access-request journey has a working FRONT (/request-access →
+waitlist → founder review, limiter proven) and a working BACK
+(§135's staff invitations + /join) — and a hand-work hole in the
+middle that approveWaitlistRequestAction admits in its own comment
+("the actual user creation flow is left to … manually"). Deeper: NO
+code path can create an organisation at all — the live org was
+hand-made in SQL, and organizations has no INSERT policy for any
+session role. The docs shelf is empty of anything user-facing.
+
+The gate is drafted at
+docs/superpowers/specs/2026-08-25-onboarding-gate.md: D1 approval
+becomes a PROVISIONING act with an explicit choice (new org — name
+it, organizations gains its first legal founder INSERT policy,
+requester invited as that org's ADMIN — or existing org + role),
+the waitlist row recording its issued invitation; D2 a public
+/handbook route on the marketing surface, markdown-authored in
+docs/handbook/, covering the whole journey in the user's language
+(no screenshots in v1); D3 docs law — as-built only, the no-verdict
+sentence wherever an agent is described. Drive 100: street-to-desk
+— a real /request-access submission approved into a NEW scratch org
+whose admin then runs §135's invite loop. R1 the founder remains
+the only door-opener for new organisations; R2 approval issues an
+invitation, never an account.
+
+Numbers: migration 114 + drive 100 claimed by the gate on
+confirmation; next § 138; vitest 939. The gate awaits the founder's
+written word.
