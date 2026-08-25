@@ -13,6 +13,8 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { runOutreachStrategyAndPersist } from "@/lib/ai/run-outreach-strategy";
+import { sendCandidateMessage } from "@/lib/comms/send-candidate-message";
+import type { OutreachStrategyContent } from "@/lib/ai/outreach-strategy";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 
@@ -134,6 +136,65 @@ export async function declineOutreachStrategyAction(
   return runAction(SUBJECT, () =>
     decideStrategy(projectId, candidateId, strategyId, "declined")
   );
+}
+
+/**
+ * Send an APPROVED strategy through the Candidate Communication
+ * Service (099) — the level ≤1 human send, replacing nothing: mailto
+ * stays beside it. The service composes the Art. 14 notice, walks the
+ * policy ladder, and the idempotency key is strategy-scoped so a
+ * double-click cannot send twice.
+ */
+export async function sendApprovedStrategyAction(
+  projectId: string,
+  candidateId: string,
+  strategyId: string
+): Promise<ActionResult<{ noticeCarried: boolean }>> {
+  return runAction(SUBJECT, async () => {
+    await requireAuth();
+    const supabase = await createServerSupabaseClient();
+
+    const { data: strategy } = await supabase
+      .from("outreach_strategies")
+      .select("id, status, content")
+      .eq("id", strategyId)
+      .maybeSingle<{
+        id: string;
+        status: string;
+        content: Partial<OutreachStrategyContent>;
+      }>();
+    if (!strategy || strategy.status !== "approved") {
+      throw new Error(
+        "Only an APPROVED strategy can be sent — approve it first, or reload the page."
+      );
+    }
+    const body = (strategy.content.draft_body ?? "").trim();
+    if (!body) {
+      throw new Error("The approved strategy has no draft message to send.");
+    }
+
+    const result = await sendCandidateMessage({
+      candidateId,
+      projectId,
+      channel: "email",
+      subject: (strategy.content.draft_subject ?? "").trim(),
+      recruiterBody: body,
+      actor: { kind: "human" },
+      idempotencyKey: `strategy:${strategyId}`,
+    });
+
+    if (result.sent && result.alreadySent) {
+      throw new Error(
+        "This strategy was already sent — the contact log has the record."
+      );
+    }
+    if (!result.sent) {
+      throw new Error(result.message);
+    }
+
+    revalidate(projectId, candidateId);
+    return { noticeCarried: result.noticeCarried };
+  });
 }
 
 export async function redraftOutreachStrategyAction(

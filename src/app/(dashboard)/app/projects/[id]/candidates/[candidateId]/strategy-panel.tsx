@@ -9,6 +9,7 @@ import {
   IconMail,
   IconRefresh,
   IconIntelligence,
+  IconSend,
 } from "@/components/icons";
 import type { OutreachStrategyContent } from "@/lib/ai/outreach-strategy";
 import {
@@ -16,6 +17,7 @@ import {
   declineOutreachStrategyAction,
   draftOutreachStrategyAction,
   redraftOutreachStrategyAction,
+  sendApprovedStrategyAction,
 } from "./strategy-actions";
 import { unwrap } from "@/lib/actions/result";
 
@@ -276,10 +278,38 @@ export function OutreachStrategyPanel({
 
             {isApproved && (
               <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    run(
+                      "send",
+                      async () => {
+                        const out = unwrap(
+                          await sendApprovedStrategyAction(
+                            projectId,
+                            candidateId,
+                            strategy.id
+                          )
+                        );
+                        return out;
+                      },
+                      "Sent — the contact record is stamped"
+                    )
+                  }
+                  disabled={pending}
+                  className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+                >
+                  {pending && act === "send" ? (
+                    <IconRefresh size={14} className="animate-spin" />
+                  ) : (
+                    <IconSend size={14} />
+                  )}
+                  Send via Mandate
+                </button>
                 {mailtoHref && (
                   <a
                     href={mailtoHref}
-                    className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5"
+                    className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container-high transition-colors flex items-center gap-1.5"
                   >
                     <IconMail size={14} />
                     Open in mail client
