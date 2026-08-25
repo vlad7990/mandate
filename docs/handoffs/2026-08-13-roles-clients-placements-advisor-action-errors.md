@@ -9777,3 +9777,43 @@ Numbers: next migration 113, next § 130, next drive 0fc; vitest
 remaining items stand: the founder's real-CV/HM/mail-client
 sessions, the D2 disposition ruling, and punch items F-2..F-6
 (F-2 mailto ceiling next by severity).
+
+## 130. F-2 FIXED — the mailto ceiling; drafts never clip silently — 2026-08-25
+
+The founder ordered the F-2 fix 2026-08-25. Shipped the same day.
+
+**The fix: one shared helper, five sites converted.**
+`src/lib/mail-draft.ts` — `openMailDraft({to?, subject, body})` with a
+conservative 1,900-char ceiling on the full mailto URL (drive 0fa
+measured a modest evaluation at 2,290 against the ~2,000 ceiling
+common mail clients enforce by truncation). Under the ceiling:
+opens as before. Over it: the FULL body is copied to the clipboard
+FIRST, then the mail client opens with the subject and a one-line
+pointer body ("The full draft was too long for a mail link, so it
+is on your clipboard — paste it here"); the caller toasts what
+happened. If the clipboard is unavailable too, the helper REFUSES
+to open at all and the caller points at the Copy affordance — a
+clipped client-facing draft is never sent behind the user's back.
+
+Converted sites: the evaluation draft dialog, the comparison export
+dialog, the weekly-report dialog, the positioning panel's Open in
+Mail, and the outreach strategy panel — the last was a raw
+`<a href=mailto:>` carrying the candidate's address and the FULL
+approved draft body, the largest exposure of the five, now a button
+through the same helper with the recipient preserved.
+
+**Coverage:** four new unit tests (encoding, under-ceiling
+pass-through, over-ceiling clipboard+pointer flow with the pointer
+URL asserted under the ceiling, clipboard-unavailable refusal) —
+vitest 929 → 933. Green gate: tsc / vitest 933 / eslint / build ·
+commit dc314a6 · deployed (mandate-by7ws7cem). No DB surface — no
+migration, no drive owed; the founder's pending mail-client session
+(§128's remaining half) now exercises the pointer-body flow as its
+F-2 check.
+
+Punch list state: F-1 CLOSED (§129) · F-2 CLOSED (this) · F-3 (EI
+report PDF) not covered · F-4 (HM review drops token label) · F-5
+(hydration mismatch /hiring-manager) · F-6 ("Top 1 Candidates")
+open. Numbers: next migration 113, next § 131, next drive 0fc;
+vitest 933; activity CHECK 80; intent door 14; agent allowlist 29;
+durable baseline unchanged.
