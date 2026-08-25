@@ -10230,3 +10230,57 @@ gate text.
 Numbers: migration 115 + drive 101 claimed by the gate on
 confirmation; next § 140; vitest 964. The gate awaits the founder's
 written word.
+
+## 140. §139 confirmed — STATUS BUILT; drive 101 green — 2026-08-25
+
+The founder's word ("confirmed") landed against the status gate and
+the ladder ran the same hour. Migration 115 (file + MCP, applied):
+ops_heartbeats, deny-all RLS on the limiter-pair shape — zero
+policies, zero grants, service-role only (R4 held: the anon roster
+stays TWELVE). The cron route stamps the heartbeat at the end of
+every successful run — the stamp says "the cron executed", the
+sweep's own outcome travels in detail — best-effort, logged on
+failure, never failing the run it reports on.
+
+/api/health (public, ALWAYS_PUBLIC_PREFIXES in the birth commit —
+§138's law): {ok, at, checks:{db, auth, cron}}, R2-bounded, 30 s
+in-module cache, 200/503 on overall. The db probe is a zero-row
+anon-door round trip (verify_staff_invitation with a random uuid);
+auth is GoTrue's own health; cron is heartbeat staleness against a
+26 h window (pure rule + 6 tests, src/lib/status/heartbeat.ts).
+/status (public marketing route, force-dynamic) renders the same
+checks through the shared src/lib/status/checks.ts so the machine
+answer and the human page can never disagree — dot plus a word, the
+blind-spot sentence verbatim, no invented uptime. Footer gained the
+Status link; D5 executed as recommended — the sign-in footer's
+unread "Node Status: Active" became a System Status LINK with a
+neutral brand dot (a green pulse would itself have been an unread
+claim).
+
+DEFECT FOUND IN DRIVE, fixed b7312cd: the hosted Supabase gateway
+401s /auth/v1/health without an apikey header — the first deploy
+read auth as degraded. The probe now carries the anon key (the
+publishable one, not a secret).
+
+Drive 101 (prod, logged out): BEFORE = 503 {db ok, auth ok, cron
+degraded} — the honest no-reading state; the cron invoked via its
+Bearer secret stamped cron_maintenance (row verified, detail
+carrying {earned: 0, sweep: not sweep day}); AFTER = 200 all ok,
+/status reads "All systems operational." with three dot-plus-word
+rows and the honesty paragraph; the sign-in footer shows System
+Status, "Node Status: Active" gone from prod. Screenshot
+status-101-all-operational.png. Teardown: NONE owed by the gate —
+the heartbeat row is durable state; the baseline gains
+ops_heartbeats 1.
+
+Green gate: tsc, eslint, build, vitest 964 → 970. Commits 4af874d
+(slice) + b7312cd (auth probe); prod = mandate-803yvuqo7. D4
+remains FOUNDER-OWNED and open: an UptimeRobot (or similar) account
+pinging / and /api/health from outside — surfaced once, the page's
+own blind-spot sentence covers the gap honestly until it exists.
+
+Numbers: next migration 116; next § 141; next drive 102; vitest
+970; anon grant roster TWELVE; durable baseline gains
+ops_heartbeats 1 (now 25/24/74/5/5/1/1/2/2/1/1/0/0 + heartbeats 1).
+Remaining per checklist: Lighthouse + mobile-animation audits ·
+simulator verification · the founder's testing half of §128.
