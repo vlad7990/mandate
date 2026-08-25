@@ -8897,3 +8897,28 @@ migration 107, next § 113, next drive 0f6. On confirmation THE
 PRODUCT PASS IS COMPLETE — next per the standing order: THE
 PRE-LAUNCH CHECKLIST (advisor sweep, Turnstile, key rotation, RLS
 review, FK indexes).
+
+---
+
+## 113. §112 confirmed — THE PRODUCT PASS COMPLETE; the OKR/KPI programme tabled — 2026-08-25
+
+The founder confirmed §112 in writing 2026-08-25. All five slices of
+the §103 product pass stand confirmed (naming §105, pipeline Kanban
+§107, role templates + rider §109, Optimizer §111, task domain
+§113's own predecessor §112) — NEXT-task-domain.md and
+NEXT-product-pass.md deleted per doctrine. THE PASS IS CLOSED.
+
+The founder then tabled the next programme, taking the slot ahead of
+the pre-launch checklist: OKRs AND KPIs — a component letting
+Recruiters and Managers set objectives and metrics (financial,
+quantitative, qualitative) to measure performance and delivery, tied
+to the pipeline (Kanban) data with metric tracking; financial
+metrics landing on the Placements page, the rest enhancing
+Analytics; the whole enabling strategy creation; then rolled out
+per persona EXCEPT Admins (technical support only). Brief captured
+in NEXT-okr-programme.md. Phase 0 first; the D-gate is drafted and
+presented BEFORE any confirmation attaches (§112's process note is
+precedent); BUILD on the founder's written word against the drafted
+gate. Numbers: next migration 107, next § 114, next drive 0f6;
+vitest 904; durable baseline unchanged (25/24/74/5/5/1/1/2/2/1/1,
+tasks 0); allowlist 29, activity CHECK 78, intent door 12.
