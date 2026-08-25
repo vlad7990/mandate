@@ -9610,3 +9610,97 @@ claimed by D1 on confirmation; vitest 929; activity CHECK 80;
 intent door 14; agent allowlist 29; durable baseline
 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 + key_results 0.
 The gate awaits the founder's written word.
+
+## 128. Drive 0fa — first-client testing, the MECHANICAL half — 2026-08-25 — DRAFT
+
+The founder confirmed the first-client-testing gate in writing
+2026-08-25; drive 0fa ran the same day per D1. Scratch org "0fa
+Probe Org" (fixed 0fa UUIDs), operator Orin Faulkes (manager),
+client Halcyon Logistics, mandate "Head of Platform Engineering",
+synthetic CV "Avery Penhallow" (marked SYNTHETIC in its own text).
+The founder's saved browser credentials autofilled the sign-in form
+and were overwritten unused — the scratch operator doctrine held.
+
+**What ran GREEN, in prod, under Orin's session or a token:**
+CV upload to the org-scoped bucket; evaluation PDF (3 pages, valid
+PDF 1.3) and its email-draft dialog; comparison PDF; weekly report
+page rendering whole from content plus its PDF; recruiter feedback
+(divergent from the AI on purpose) landing WITH its interpretation
+(the interpretation write runs under the HUMAN session — see F-1's
+boundary); HM flow end to end — token issued with a label, the anon
+portal rendering slate + evidence grid, a divergent review landing
+as per-candidate ratings + top concern (and fanning out two
+feedback rows), revoke, then the revoked link refusing with the
+honest sentence; candidate portal end to end — token issued from
+the Outreach block, anon load greeting the candidate by name,
+contact round-trip persisting (phone + location), and an ERASURE
+REQUEST landing — the D2 covenant path proven mechanically before
+any real CV ever enters. Triangulation's gated empty state renders
+honestly (it is an AGENT-INTELLIGENCE fusion — company + candidate
++ HM psychology — with per-source Missing markers; real data is the
+founder's session by construction).
+
+**THE PUNCH LIST (D3 — recorded, not fixed):**
+
+- **F-1 · BLOCKS-FIRST-CLIENT (conditional) — cross-org agent
+  pipelines stall SILENTLY.** All 24 agent principals live in
+  Mandate HQ. In any other organization an agent-session write is
+  filtered by RLS to zero rows, Supabase reports no error, and the
+  pipeline returns success: observed live as a candidate stuck "AI
+  parse in flight" forever — no cv_parse_error, therefore no retry
+  affordance, the §42 silent-vanish class at the seam. The trail
+  stayed clean (record_agent_event refused the cross-org event;
+  founder-org events unpolluted at 74). Boundary: writes under the
+  HUMAN session (feedback interpretation) persist fine. Blocks any
+  first client provisioned as their OWN organization; invisible
+  inside Mandate HQ. Root class: a zero-row UPDATE treated as
+  success — the write-blind doctrine biting a seam that needed to
+  read its own effect. The drive's remaining agent-shaped data was
+  SQL-scaffolded because of F-1, and every such scaffold is named
+  here.
+- **F-2 · FIX-SOON — the evaluation mailto draft is over the
+  ceiling.** Measured live: subject 71 + body 1,524 chars →
+  mailto URL 2,290 chars on a MODEST evaluation; the common client
+  ceiling is ~2,000. Comparison (1,631) and weekly (1,173) sit
+  under it today but scale with slate size. Mitigation already in
+  the dialog: Copy / Copy Both. The founder's mail-client session
+  decides how it presents; the fix direction is body truncation
+  with a "full text copied" fallback, gated separately.
+- **F-3 · NOT COVERED — the EI report PDF.** The fourth PDF site
+  needs a full executive search (profile → plan → assessment) to
+  render; scaffolding that stack was out of the drive's proportion.
+  Founder session with real EI data, or a dedicated scaffold later.
+- **F-4 · NIT — the HM review does not carry the token's label.**
+  The token was issued as "0fa Probe HM @ Halcyon"; the review row
+  landed with hm_label ''. The desk cannot tell WHICH hiring
+  manager answered when two links are live.
+- **F-5 · NIT — hydration mismatch (React #418) on
+  /hiring-manager** after generate/revoke interactions.
+- **F-6 · COSMETIC — "Top 1 Candidates"** heading on the weekly
+  report inlines the count into the phrase.
+
+**Teardown by VALUE, exact first pass:** 8 org activity events
+(3 provisioning member-audit + 5 drive), 1 erasure request, 3
+feedback, 1 HM review, 1+1 tokens, 2 scores, 1 report, 2
+candidates, 3 network profiles, 1 project, 1 client, the storage
+object (Storage API — direct SQL delete is trigger-blocked, a
+teardown lesson for the recipe), 5 rate-limit buckets, then Orin
+public-before-auth (users/identities/sessions/refresh_tokens), then
+the org. Baseline EXACT: 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 +
+objectives 0 + key_results 0 + auth 25 + orgs 1 + rate_limit 0.
+Screenshots (.playwright-mcp): fct-0fa-email-draft-dialog,
+fct-0fa-triangulation-empty-honest; PDFs pulled:
+evaluation-avery-penhallow (3pp), comparison, weekly-report.
+
+**What remains is the founder's half (D1):** the 8–10 real CVs
+(quality judgment), the real hiring manager, Triangulation over
+real intelligence, the mail-client check (F-2 decides there), the
+real erasure exercise, and the D2 disposition ruling. F-1 needs a
+severity ruling first: if the first client is a second
+organization, it blocks; if they operate inside Mandate HQ, it
+waits.
+
+No code changed; vitest stands 929; no deploy. Numbers: next
+migration 111 (unclaimed), next § 129, drive 0fa CONSUMED; activity
+CHECK 80; intent door 14; agent allowlist 29. This section is
+DRAFTED; the founder's sessions and rulings close the slice.
