@@ -9577,3 +9577,36 @@ activity CHECK 80; intent door 14; agent allowlist 29; durable
 baseline 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 +
 key_results 0. This section is DRAFTED; the checklist item closes
 only on the founder's written word.
+
+## 127. §126 confirmed — THE RLS REVIEW CLOSES on its null result; first-client testing OPENS — 2026-08-25
+
+The founder confirmed §126 in writing 2026-08-25. The RLS review
+pass closes as drafted: nothing moved, the three rulings stand as
+law — null results are results; the founder console's four families
+are the only legal cross-org predicates and any future unanchored
+non-founder policy is a defect by definition; the deny-all limiter
+pair never gains a session-role policy. Checklist slice three done.
+
+Slice four — FIRST-CLIENT TESTING — opened its Phase 0 the same
+day. The gate is drafted at
+docs/superpowers/specs/2026-08-25-first-client-testing-gate.md.
+The shape, in one breath: five loops mapped to their surfaces
+(search loop / HM portal / Triangulation / four PDF export sites /
+mailto drafts); ONE named trap found in Phase 0 — mail clients
+truncate long mailto URLs (~2000 chars), so the drive measures
+every draft against the ceiling before the founder clicks one; the
+gate's heart is D1's line between drive 0fa (mechanical proofs,
+scratch principals, torn down by value) and the founder's sessions
+(real CVs, a real hiring manager, real judgment — R1: no agent
+grades the product's taste). D2 inverts the data doctrine for the
+first time — real PII enters prod under the erasure covenant (R2:
+the erasure path is proven in the same slice), with a RULING
+REQUESTED on end-state disposition (keep the real dataset vs erase
+to baseline). D3: findings land as an immutable punch list; fixes
+gate separately.
+
+Numbers: next migration 111 (unclaimed), next § 128, drive 0fa
+claimed by D1 on confirmation; vitest 929; activity CHECK 80;
+intent door 14; agent allowlist 29; durable baseline
+25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 + key_results 0.
+The gate awaits the founder's written word.
