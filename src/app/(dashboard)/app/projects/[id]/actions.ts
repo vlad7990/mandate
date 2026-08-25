@@ -39,6 +39,9 @@ import type { CandidateProfile } from "@/lib/ai/cv-parsing";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
+import { bridgeCalibrationSuggestion } from "@/lib/recalibration/apply-suggestion";
+import { computeAndStoreScores } from "@/lib/ranking/scoring-engine";
+import { recordCalibrationSnapshot } from "@/lib/calibration/history";
 
 /** Sentence subject for a failure this file did not author. See `runAction`. */
 const SUBJECT = "The mandate workspace";
@@ -718,6 +721,126 @@ export async function applySourcingSuggestionAction(
     revalidatePath(`/app/projects/${projectId}/metrics`);
     revalidatePath(`/app/projects/${projectId}/sourcing`);
     return { slot, version: nextVersion };
+  });
+}
+
+/**
+ * Apply a CALIBRATION-category suggestion — the Optimizer's one new
+ * act (§109 gate, D2). The click is the HUMAN's decision: the weights
+ * update, the re-score and the history snapshot all land under the
+ * recruiter's cookie session; the suggestion is advisory input, named
+ * in the change_reason with its id and delta. Gated on mandates:write
+ * — the same predicate calibration_history's RLS INSERT enforces.
+ *
+ * This is the apply family's one destructive in-place write (weights
+ * change, every candidate re-scores), which is why the panel shows a
+ * before → after preview and a confirm before this is ever called.
+ */
+export async function applyCalibrationSuggestionAction(
+  projectId: string,
+  suggestionId: string
+): Promise<ActionResult<{ dimension: string; from: number; to: number }>> {
+  return runAction(SUBJECT, async () => {
+    if (!projectId || !suggestionId) {
+      throw new Error("Missing projectId or suggestionId.");
+    }
+    const auth = await requireActionContext("mandates:write");
+    const supabase = await createServerSupabaseClient();
+
+    const { data: project } = await supabase
+      .from("projects")
+      .select("health_suggestions, calibration_model, organization_id")
+      .eq("id", projectId)
+      .single<{
+        health_suggestions: HealthSuggestionsBlob | null;
+        calibration_model: Partial<CalibrationModel> | null;
+        organization_id: string | null;
+      }>();
+    if (!project) throw new Error("Project not found.");
+    if (project.organization_id !== auth.organizationId) {
+      throw new Error("Project belongs to a different organisation.");
+    }
+    if (!project.health_suggestions) {
+      throw new Error("No suggestions available — generate first.");
+    }
+
+    const suggestion = project.health_suggestions.suggestions.find(
+      (s: HealthSuggestion) => s.id === suggestionId
+    );
+    if (!suggestion) throw new Error("Suggestion not found.");
+    if (suggestion.dismissed) {
+      throw new Error("This suggestion was already applied or dismissed.");
+    }
+
+    const bridge = bridgeCalibrationSuggestion(
+      suggestion,
+      project.calibration_model?.dimension_weights ?? null
+    );
+
+    const updatedCalibration: Partial<CalibrationModel> = {
+      ...(project.calibration_model ?? {}),
+      dimension_weights: bridge.after,
+    };
+
+    // Weights + suggestion dismissal in ONE update, so a repeat click
+    // cannot apply the same delta twice.
+    const dismissed = {
+      ...project.health_suggestions,
+      suggestions: project.health_suggestions.suggestions.map(
+        (s: HealthSuggestion) =>
+          s.id === suggestionId ? { ...s, dismissed: true } : s
+      ),
+    };
+    const { error: updateErr } = await supabase
+      .from("projects")
+      .update({
+        calibration_model: updatedCalibration,
+        health_suggestions: dismissed,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", projectId);
+    if (updateErr) {
+      throw new Error(`Failed to apply weight change: ${updateErr.message}`);
+    }
+
+    const reason = `Health suggestion applied: ${bridge.dimension} ${
+      bridge.delta > 0 ? "+" : ""
+    }${bridge.delta} (${suggestionId}). ${suggestion.action}`;
+
+    // Re-score so the leaderboard reflects the shift; failure keeps the
+    // weights (the next ranking visit auto-scores) — same contract as
+    // applyRecalibration.
+    try {
+      await computeAndStoreScores(projectId, undefined, {
+        trigger: { trigger: "recalibration", summary: reason },
+      });
+    } catch (err) {
+      console.error(
+        "[optimizer] scoring re-run failed (weight change kept)",
+        err
+      );
+    }
+
+    // The history snapshot wears the RECRUITER's face (changed_by =
+    // auth.uid() inside the helper) — the founder's provenance ruling.
+    try {
+      await recordCalibrationSnapshot(projectId, updatedCalibration, {
+        change_type: "recalibration",
+        change_reason: reason,
+      });
+    } catch (err) {
+      console.error("[optimizer] history snapshot failed", err);
+    }
+
+    revalidatePath(`/app/projects/${projectId}`);
+    revalidatePath(`/app/projects/${projectId}/metrics`);
+    revalidatePath(`/app/projects/${projectId}/optimize`);
+    revalidatePath(`/app/projects/${projectId}/ranking`);
+    return {
+      dimension: bridge.dimension,
+      from: bridge.before[bridge.dimension] ?? 0,
+      to: bridge.after[bridge.dimension] ?? 0,
+    };
   });
 }
 

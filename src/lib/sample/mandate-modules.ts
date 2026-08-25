@@ -80,7 +80,10 @@ export const SAMPLE_MODULES = [
 export const SAMPLE_MODULES_PENDING: readonly {
   readonly slug: string;
   readonly label: string;
-}[] = [{ slug: "pipeline", label: "Pipeline" }];
+}[] = [
+  { slug: "pipeline", label: "Pipeline" },
+  { slug: "optimize", label: "Optimize" },
+];
 
 export type SampleModuleSlug = (typeof SAMPLE_MODULES)[number]["slug"];
 

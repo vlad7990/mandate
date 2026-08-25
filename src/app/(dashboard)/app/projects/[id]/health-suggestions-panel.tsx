@@ -17,6 +17,11 @@ import type {
   HealthSuggestionsBlob,
 } from "@/lib/ai/search-health-agent";
 import {
+  DIMENSION_KEYS,
+  type DimensionWeights,
+} from "@/lib/ai/onboarding-analysis";
+import {
+  applyCalibrationSuggestionAction,
   applySourcingSuggestionAction,
   dismissHealthSuggestionAction,
   generateHealthSuggestionsAction,
@@ -33,10 +38,17 @@ export function HealthSuggestionsPanel({
   projectId,
   initial,
   healthStatus,
+  weights = null,
 }: {
   projectId: string;
   initial: HealthSuggestionsBlob | null;
   healthStatus: "healthy" | "stalled" | "at_risk";
+  /**
+   * Current calibration weights, for the calibration-apply preview.
+   * Without them the calibration Apply is not offered — a preview
+   * that cannot say before → after would be a blind write.
+   */
+  weights?: DimensionWeights | null;
 }) {
   const router = useRouter();
   const [blob, setBlob] = useState<HealthSuggestionsBlob | null>(initial);
@@ -81,6 +93,48 @@ export function HealthSuggestionsPanel({
         toast.success("Suggestion dismissed");
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Dismiss failed.");
+      } finally {
+        setBusy(null);
+      }
+    });
+  };
+
+  const handleApplyCalibration = (
+    suggestion: HealthSuggestion,
+    preview: { dimension: string; from: number; to: number }
+  ) => {
+    if (busy) return;
+    // The apply family's one destructive in-place write — said plainly
+    // before it happens (the confirmed D2 ruling).
+    if (
+      !window.confirm(
+        `Apply ${preview.dimension} ${preview.from} → ${preview.to}? This re-scores every candidate in this search.`
+      )
+    ) {
+      return;
+    }
+    setBusy(suggestion.id);
+    start(async () => {
+      try {
+        const result = unwrap(
+          await applyCalibrationSuggestionAction(projectId, suggestion.id)
+        );
+        toast.success(
+          `${result.dimension} ${result.from} → ${result.to} · re-scoring`
+        );
+        setBlob((b) =>
+          b
+            ? {
+                ...b,
+                suggestions: b.suggestions.map((s) =>
+                  s.id === suggestion.id ? { ...s, dismissed: true } : s
+                ),
+              }
+            : b
+        );
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Apply failed.");
       } finally {
         setBusy(null);
       }
@@ -185,9 +239,13 @@ export function HealthSuggestionsPanel({
                 <SuggestionRow
                   key={s.id}
                   suggestion={s}
+                  weights={weights}
                   busy={busy === s.id}
                   onDismiss={() => handleDismiss(s.id)}
                   onApply={() => handleApply(s)}
+                  onApplyCalibration={(preview) =>
+                    handleApplyCalibration(s, preview)
+                  }
                 />
               ))}
             </ol>
@@ -198,21 +256,54 @@ export function HealthSuggestionsPanel({
   );
 }
 
+/**
+ * The calibration preview, computed the way the server will: rounded
+ * delta, [0,10] clamp, refused (null) when the category, dimension,
+ * delta, or baseline is unusable, or the clamp makes it a no-op.
+ * Mirrors bridgeCalibrationSuggestion — the server remains the
+ * authority; this only decides whether to OFFER the act.
+ */
+function calibrationPreview(
+  suggestion: HealthSuggestion,
+  weights: DimensionWeights | null
+): { dimension: string; from: number; to: number } | null {
+  if (suggestion.category !== "calibration" || !weights) return null;
+  const dimension = suggestion.applicable_dimension;
+  if (!dimension || !DIMENSION_KEYS.includes(dimension)) return null;
+  const raw = suggestion.applicable_payload?.delta;
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
+  const delta = Math.round(raw);
+  if (delta === 0 || Math.abs(delta) > 3) return null;
+  const from = weights[dimension] ?? 0;
+  const to = Math.max(0, Math.min(10, Math.round(from + delta)));
+  if (to === from) return null;
+  return { dimension, from, to };
+}
+
 function SuggestionRow({
   suggestion,
+  weights,
   busy,
   onDismiss,
   onApply,
+  onApplyCalibration,
 }: {
   suggestion: HealthSuggestion;
+  weights: DimensionWeights | null;
   busy: boolean;
   onDismiss: () => void;
   onApply: () => void;
+  onApplyCalibration: (preview: {
+    dimension: string;
+    from: number;
+    to: number;
+  }) => void;
 }) {
   const isApplyable =
     suggestion.category === "sourcing" &&
     typeof suggestion.applicable_payload?.replacement === "string" &&
     (suggestion.applicable_payload.replacement as string).trim().length > 0;
+  const preview = calibrationPreview(suggestion, weights);
   return (
     <li className="flex flex-col gap-2 border border-outline-variant bg-surface-container px-3.5 py-3">
       <div className="flex items-baseline gap-2 flex-wrap">
@@ -258,6 +349,23 @@ function SuggestionRow({
           </pre>
         </details>
       )}
+      {preview && (
+        <details className="group">
+          <summary className="flex cursor-pointer items-center gap-1 font-mono-label text-[11px] font-semibold uppercase tracking-[0.08em] text-primary hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+            <IconChevronRight
+              size={12}
+              className="transition-transform group-open:rotate-90"
+            />
+            Preview weight change
+          </summary>
+          <p className="mt-2 border border-outline-variant bg-surface-container-lowest px-3 py-2 font-mono-data text-mono-data leading-relaxed text-on-surface">
+            {preview.dimension} {preview.from} → {preview.to}
+            <span className="block text-on-surface-variant">
+              Applying re-scores every candidate in this search.
+            </span>
+          </p>
+        </details>
+      )}
       <div className="flex items-center justify-end gap-2">
         <button
           type="button"
@@ -267,6 +375,22 @@ function SuggestionRow({
         >
           Dismiss
         </button>
+        {preview && (
+          <button
+            type="button"
+            onClick={() => onApplyCalibration(preview)}
+            disabled={busy}
+            aria-busy={busy ? true : undefined}
+            className={PANEL_BUTTON}
+          >
+            {busy ? (
+              <IconRefresh size={14} className="animate-spin" />
+            ) : (
+              <IconSpark size={14} />
+            )}
+            Apply
+          </button>
+        )}
         {isApplyable && (
           <button
             type="button"

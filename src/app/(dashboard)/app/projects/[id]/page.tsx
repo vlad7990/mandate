@@ -112,6 +112,7 @@ const PROJECT_MODULES: Array<{ href: (id: string) => string; label: string }> = 
   { href: (id) => `/app/projects/${id}/pipeline`, label: "Pipeline" },
   { href: (id) => `/app/projects/${id}/ranking`, label: "Rankings" },
   { href: (id) => `/app/projects/${id}/metrics`, label: "Metrics" },
+  { href: (id) => `/app/projects/${id}/optimize`, label: "Optimize" },
   { href: (id) => `/app/projects/${id}/shortlist`, label: "Shortlist" },
   { href: (id) => `/app/projects/${id}/feedback`, label: "Feedback" },
   { href: (id) => `/app/projects/${id}/reports`, label: "Weekly Report" },
@@ -417,6 +418,7 @@ export default async function ProjectPage({
             projectId={project.id}
             initial={project.health_suggestions}
             healthStatus={health.status}
+            weights={project.calibration_model?.dimension_weights ?? null}
           />
         )}
         {ready && (

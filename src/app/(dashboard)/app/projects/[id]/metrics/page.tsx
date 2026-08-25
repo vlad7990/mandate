@@ -34,6 +34,9 @@ type ProjectRow = {
   title: string;
   company_name: string;
   health_suggestions: HealthSuggestionsBlob | null;
+  calibration_model: {
+    dimension_weights?: import("@/lib/ai/onboarding-analysis").DimensionWeights;
+  } | null;
 };
 
 const HEALTH_TONES: Record<HealthStatus, string> = {
@@ -64,7 +67,7 @@ export default async function ProjectMetricsPage({
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, title, company_name, health_suggestions")
+    .select("id, title, company_name, health_suggestions, calibration_model")
     .eq("id", id)
     .single<ProjectRow>();
 
@@ -211,6 +214,7 @@ export default async function ProjectMetricsPage({
           projectId={project.id}
           initial={project.health_suggestions}
           healthStatus={health.status}
+          weights={project.calibration_model?.dimension_weights ?? null}
         />
 
         {/* Funnel */}
