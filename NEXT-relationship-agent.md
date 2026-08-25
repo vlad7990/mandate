@@ -2,9 +2,20 @@
 
 Opened on the founder's word 2026-08-25 (§91 confirmed slice one;
 the §89 order stands: 097 #21 → **098 #24** → 099–100 #22 → 101 #23).
-Spec §7 is this principal. **Phase 0 complete 2026-08-25. D1–D8
-DRAFTED below — the build is GATED on the founder's written
-confirmation. Nothing past Phase 0 has been touched.**
+Spec §7 is this principal. **D1–D8 CONFIRMED in writing 2026-08-25;
+the ladder ran the same night: 098 applied + harness + column-pin
+control run, principal provisioned (`a99848b0-…`), resolver trigger /
+RPC-only DNC / seam / clamp / card / #21 refusal built, green gate
+(tsc / vitest 843 / eslint / build), 0ec live drive on production
+(deploy `mandate-nn7lcjttx` = `7ddef02`), teardown to the new durable
+baseline (23 users / 22 agents / 68 events / 1 profile). One Phase-0
+live-read correction, stronger than drafted: the SQL identity rule
+already existed as `candidate_identity_key()` (073) — reused, and
+count_network_people refactored onto it. §92 verdicts are DRAFTED in
+the handoff — this file is NOT deleted and no completion is declared
+until the founder's written confirmation of §92. Founder-hand:
+append AGENT_RELATIONSHIP_* (and 097's AGENT_OUTREACH_STRATEGY_*)
+to `.env.local`.**
 
 Why this slice is second (spec §15): #22's policy ladder needs
 durable DNC and relationship state BEFORE any autonomous send

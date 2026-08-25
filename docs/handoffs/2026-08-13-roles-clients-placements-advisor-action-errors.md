@@ -7601,3 +7601,152 @@ queue; the clamp stays conservative. Founder-hand items open:
 browser (the §90 global-signout wound). Numbers: next migration 098,
 next handoff § 92, next drive prefix 0ec; durable baseline 22 users /
 21 agents / 65 events / 1 org_comms_policy row.
+
+---
+
+## 92. Engage slice two — the Candidate Relationship Agent (#24), the twenty-second principal — 2026-08-25 — DRAFT, awaiting the founder's written confirmation
+
+D1–D8 confirmed in writing 2026-08-25 (NEXT-relationship-agent.md,
+committed `3f2f877`); built and driven the same night. **This § is a
+DRAFT: no completion is declared and NEXT-relationship-agent.md is
+not deleted until the founder confirms these verdicts.**
+
+**Migration 098** (MCP + `supabase/migrations/098_agent_relationship.sql`,
+commit `7ddef02`): the person becomes REAL. `network_profiles` —
+UNIQUE (org, identity_key); dnc-with-reason table CHECK (a
+suppression without a reason cannot exist, and relationship_state
+cannot claim do_not_contact while dnc says otherwise); NO INSERT or
+DELETE doors for anyone (profiles are born by the resolver,
+relationship data survives). **One Phase-0 live-read correction to
+the confirmed draft, stronger than drafted:** the SQL identity rule
+already existed as `candidate_identity_key()` (073 — the portal
+withdraw RPC uses it), so 098 REUSES it for resolver + backfill and
+refactors `count_network_people()` onto it — the rule now has ONE SQL
+home and zero new transcriptions. **The resolver is data-layer**: a
+BEFORE trigger on candidates' identity columns find-or-creates and
+(re)links `network_profile_id` on EVERY birth path — manual, import,
+promotion RPC, portal self-update — and an identity edit RE-links
+(proven in harness: the sibling row keeps its person). **DNC writes
+are RPC-only** (guard trigger + transaction-local GUC, the 043
+guard_subject_notified family — upgraded from the drafted agent-only
+pin to bind HUMANS outside the RPCs too): `set_network_dnc` (human,
+reason mandatory, actor recorded, refuses agents by name),
+`clear_network_dnc` (FOUNDER ONLY, reason mandatory), and the
+portal's withdraw/erasure RPCs suppress SYSTEMICALLY (dnc_set_by
+NULL, evented). Vocabulary: `relationship_updated` (agent, allowlist
+TWENTY-SEVEN) + `network_dnc_set` / `network_dnc_cleared` (HUMAN
+types — refused at the agent's trail door, proven); CHECK 65 → 68.
+
+**The harness** (`supabase/tests/agent_relationship_invariants.sql`):
+resolver determinism/uniqueness/re-link; the agent's merge-write
+lands with dnc untouched; counts-only trail, text-probe clean;
+history at twenty-seven; THE COLUMN PIN all faces (agent direct-dnc
+refused, agent do_not_contact transition refused both ways, RECRUITER
+direct-dnc refused — the RPC-only hole closed, reasonless suppression
+refused at RPC and at table CHECK even through an armed GUC, the
+recruiter's suppression actor-stamped, the founder's clear alone,
+lawful maintenance of a suppressed profile survives with dnc intact);
+the erasure RPC's systemic suppression; viewer/insert/delete refusals;
+negative matrix incl. the erasure queue unreadable to the agent; kill
+switches at TWENTY-TWO. **Control run verified**: guard rebuilt with
+v_allowed forced true ("the RPCs are the only callers anyway") — the
+agent SET do-not-contact by direct UPDATE and the harness aborted at
+INVARIANT-FAIL (4a) — the first control to regress a COLUMN pin. One
+harness defect found mid-run and fixed honestly: after an owner-side
+check the script had not re-entered the authenticated role, so the
+"viewer" probe briefly tested the superuser — the missing re-entry is
+now commented in the file. GUC discipline recorded: a successful DNC
+RPC leaves the GUC armed for the transaction, so the harness disarms
+after every success or later refusal checks test nothing.
+
+**The principal.** Live account `vbreygin+relationship@gmail.com`, id
+`a99848b0-…`, Mandate HQ, §30 recipe; sign-in smoke-tested and
+revoked; `AGENT_RELATIONSHIP_*` in Vercel production. `.env.local`
+stays founder-hand (both Engage pairs are in the job reports). **New
+durable baseline: 23 users / 22 agents / 68 events / 1 profile** (2
+projects, 2 clients, 5 skills, 1 job_spec, 1 candidate unchanged).
+
+**The seam + surfaces** (`run-relationship.ts`, `relationship-merge.ts`
++ 5 vitest → 843, `profile-resolver.ts` read-side,
+`relationship-card.tsx` on the network table, `relationship-actions.ts`):
+the agent re-reads profile + appearances + contact history +
+strategies under ITS session; org-wide skills only (a person is
+cross-project, the digest precedent); `last_meaningful_contact_at` is
+DETERMINISTIC (the newest contact's stamp, never the model's);
+`buildRelationshipUpdate` is the pure clamp — only the four
+maintainable fields can exist in the update, no state write on a
+suppressed profile, out-of-vocabulary states write nothing. **#21
+learned about people (D6)**: `runOutreachStrategyAndPersist` refuses
+a suppressed person BEFORE any model spend, with the suppression
+named in the toast. The registry's ENGAGE chapter carries two
+principals; the footer counts twenty-one siblings.
+
+### Driven live on production (deploy `mandate-nn7lcjttx` = `7ddef02`)
+
+Scratch world 0ec INSIDE Mandate HQ: operator Odile Fenwick
+(is_founder admin, never the real founder), mandate "0EC Chief Risk
+Officer" (fictional Halbrook Reinsurance Group), one sourced
+candidate with evidence, one outbound touch and one INBOUND reply.
+The acts, each verified in the database as it landed:
+
+1. **The trigger proved itself at seed time**: the scratch candidate's
+   INSERT created the person on production before any code ran.
+2. **Update relationship** → the agent judged the thread correctly:
+   cold → ENGAGED off the inbound reply, follow-up set from the
+   "travelling until the 9th" evidence, last-meaningful-contact
+   stamped deterministically; ONE `relationship_updated` event under
+   the agent's name, counts only (contacts 2, disposition_fields 3);
+   **text-probe ZERO**; zero agent sessions after.
+3. **Do-not-contact by hand** (reason typed, mandatory) → dnc true,
+   actor-stamped to the operator, state do_not_contact,
+   `network_dnc_set` evented.
+4. **#21 refused the suppressed person VERBATIM** ("This person is
+   marked do-not-contact on their relationship record — no strategy
+   was drafted and no model call was spent. Only a founder-level act
+   with a recorded reason can clear the suppression.") — 0 strategy
+   rows, 0 events, 0 spend.
+5. **Founder-level clear** (reason typed, mandatory) → dnc false,
+   state back to cold, `network_dnc_cleared` evented.
+6. **Suspended from /ops → D5 VERBATIM** ("The Candidate Relationship
+   Agent could not run — an operator has suspended it or its
+   credentials are absent. The relationship record is untouched. Try
+   again when it is restored."), captured by MutationObserver;
+   restored.
+7. **Steering probe** — a Skills-Studio-authored skill NAMING its
+   target field: the next update's disposition summary began
+   **"STEERED-0EC:"** on production, and the agent honestly re-judged
+   the cleared profile back to engaged from the reply evidence.
+8. **/app/agents** — ENGAGE carries both principals.
+
+Screenshots (`.playwright-mcp/`): relationship-0ec-cold-card,
+relationship-0ec-engaged, relationship-0ec-dnc-card,
+relationship-0ec-strategy-dnc-refusal, relationship-0ec-suspended-d5,
+relationship-0ec-steered-summary, agents-0ec-engage-two.
+
+Teardown on scratch ids and KNOWN-ZERO baselines (the new event
+types had zero durable rows — the whole classes swept clean), the
+suspend/restore residue keyed by VALUE, the operator's session
+revoked by the operator's own deletion — NO global signout this time
+(§90's lesson applied). Durable baseline landed EXACTLY; the one
+remaining session is the FOUNDER's own fresh sign-in (01:36 UTC),
+which also heals §90's wound.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The Engage arc's policy substrate is COMPLETE for 099**: durable
+  person, enforceable DNC (RPC-only, founder-only clear, systemic on
+  withdrawal/erasure), relationship state — everything §5's comms
+  service ladder reads now exists ahead of it.
+- **Next slice per the confirmed order: 099–100 comms service + #22
+  Engagement** — the infrastructure slice (outreach extensions,
+  suppression list, inbound_messages, webhook routes,
+  engagement_states, caps); largest and riskiest; its own NEXT file
+  and D1–D8 gate; outbound-only Level 2 before any inbound.
+- **The network aggregator still folds at read time** (D8d as
+  confirmed) — moving the page onto the stored key is its own later
+  cleanup; the overlay joins on identity_key today.
+- **Withdrawal sets person-level DNC** (as drafted and confirmed) —
+  deliberately conservative; the founder-only clear is the release
+  valve, and the first real withdrawal will test the ergonomics.
+- **`.env.local` appends stay founder-hand** (both Engage pairs);
+  production is live without them.
