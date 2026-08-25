@@ -237,5 +237,6 @@ export async function updatePipelineStage(
 
     revalidatePath(`/app/projects/${projectId}/candidates`);
     revalidatePath(`/app/projects/${projectId}/candidates/${candidateId}`);
+    revalidatePath(`/app/projects/${projectId}/pipeline`);
   });
 }

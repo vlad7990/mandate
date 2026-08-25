@@ -109,6 +109,7 @@ const HEALTH_CHIP: Record<HealthStatus, ChipTone> = {
  */
 const PROJECT_MODULES: Array<{ href: (id: string) => string; label: string }> = [
   { href: (id) => `/app/projects/${id}/candidates`, label: "Candidates" },
+  { href: (id) => `/app/projects/${id}/pipeline`, label: "Pipeline" },
   { href: (id) => `/app/projects/${id}/ranking`, label: "Rankings" },
   { href: (id) => `/app/projects/${id}/metrics`, label: "Metrics" },
   { href: (id) => `/app/projects/${id}/shortlist`, label: "Shortlist" },

@@ -71,17 +71,16 @@ export const SAMPLE_MODULES = [
  * with no message — eleven routes, silently — and a rail that simply left
  * them out would still leave a typed URL doing it.
  *
- * **Empty since W7.** `/shortlist` was the last entry and is now in
- * `SAMPLE_MODULES` above; it had been outside every workstream in the
- * inventory, which is how it stayed pending through six of them. The list
- * and the machinery around it stay: `SampleModuleNotBuilt` is still what
- * the other six sample mandates render for every module, and the next
- * module the product grows should land here before it lands in the sample.
+ * Emptied by W7 when `/shortlist` moved into `SAMPLE_MODULES` above, and
+ * repopulated the way the machinery was kept for: the next module the
+ * product grows lands here before it lands in the sample. `/pipeline` is
+ * that module — the board renders `SampleNotBuilt` for sample ids until a
+ * sample board is worth building.
  */
 export const SAMPLE_MODULES_PENDING: readonly {
   readonly slug: string;
   readonly label: string;
-}[] = [];
+}[] = [{ slug: "pipeline", label: "Pipeline" }];
 
 export type SampleModuleSlug = (typeof SAMPLE_MODULES)[number]["slug"];
 
