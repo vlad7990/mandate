@@ -8811,3 +8811,19 @@ Green gate: tsc / vitest 901 / eslint / build. Numbers: next
 migration 106, next § 111, next drive 0f5. Next per the pass after
 confirmation: Kanban (b) — the task domain, its own gate — then the
 pre-launch checklist.
+
+---
+
+## 111. §110 confirmed — the Optimizer COMPLETE; task-domain Phase 0 opens — 2026-08-25
+
+The founder confirmed §110 in writing 2026-08-25. The Optimizer
+stands (calibration apply with human provenance, composition
+surface, zero migration); NEXT-optimizer.md deleted per doctrine.
+The product pass reaches its final slice: KANBAN (b) — THE TASK
+DOMAIN. Per the §103 analysis this is a NEW DOMAIN, not a UI slice:
+tasks table, assignees, status, RLS (org SELECT / assignee+desk
+UPDATE), desk-page integration, member-facing views — its own
+migration (106), harness and D-gate; nothing smuggled from (a).
+Phase 0 first; BUILD GATED on written confirmation. Numbers: next
+migration 106, next § 112, next drive 0f5; durable baseline
+unchanged.
