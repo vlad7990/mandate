@@ -7,6 +7,7 @@ import {
   loadNetworkOverview,
   type NetworkPerson,
 } from "@/lib/network/network-aggregator";
+import { loadRelationshipProfiles } from "@/lib/network/profile-resolver";
 import { type Archetype } from "@/lib/ai/cv-parsing";
 import { NetworkTable } from "./network-table";
 import { PageShell, TerminalTitle } from "@/components/ui/page-shell";
@@ -22,6 +23,19 @@ export default async function NetworkPage() {
   if (!user) redirect("/auth/signin");
 
   const overview = await loadNetworkOverview();
+
+  // The durable relationship overlay (#24, 098) and whether the viewer
+  // may clear a suppression (founder territory).
+  const [profileMap, { data: viewerRow }] = await Promise.all([
+    loadRelationshipProfiles(),
+    supabase
+      .from("users")
+      .select("is_founder")
+      .eq("id", user.id)
+      .maybeSingle<{ is_founder: boolean }>(),
+  ]);
+  const profiles = Object.fromEntries(profileMap);
+  const isFounder = viewerRow?.is_founder === true;
 
   // A network of nobody is the least legible empty state in the product:
   // the page's whole idea is that a row is a *person folded from several
@@ -90,6 +104,8 @@ export default async function NetworkPage() {
         <NetworkTable
           people={overview.people}
           activeProjects={overview.active_projects}
+          profiles={profiles}
+          isFounder={isFounder}
         />
       </section>
     </PageShell>

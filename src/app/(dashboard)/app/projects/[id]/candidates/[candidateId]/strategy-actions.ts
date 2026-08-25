@@ -54,6 +54,13 @@ function messageFor(status: string): string {
       return "The candidate or mandate could not be read — nothing was drafted.";
     case "draft_exists":
       return "A draft strategy already exists — approve, decline, or redraft it instead.";
+    case "dnc":
+      return (
+        "This person is marked do-not-contact on their relationship " +
+        "record — no strategy was drafted and no model call was spent. " +
+        "Only a founder-level act with a recorded reason can clear the " +
+        "suppression."
+      );
     case "agent_unavailable":
       return AGENT_UNAVAILABLE_MESSAGE;
     default:

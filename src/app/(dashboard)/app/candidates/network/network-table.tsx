@@ -16,6 +16,8 @@ import type {
   NetworkProject,
 } from "@/lib/network/network-aggregator";
 import { AddToSearchButton } from "./add-to-search-button";
+import { RelationshipCard } from "./relationship-card";
+import type { RelationshipProfile } from "@/lib/network/profile-resolver";
 import {
   IconArrowDown,
   IconArrowUp,
@@ -50,9 +52,14 @@ const PER_PAGE = 25;
 export function NetworkTable({
   people,
   activeProjects,
+  profiles,
+  isFounder,
 }: {
   people: NetworkPerson[];
   activeProjects: NetworkProject[];
+  /** Durable relationship overlay (098), keyed by identity_key. */
+  profiles: Record<string, RelationshipProfile>;
+  isFounder: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [archetypeFilter, setArchetypeFilter] = useState<string>("");
@@ -238,6 +245,8 @@ export function NetworkTable({
                 key={p.identity_key}
                 person={p}
                 activeProjects={activeProjects}
+                profile={profiles[p.identity_key] ?? null}
+                isFounder={isFounder}
               />
             ))}
           </ul>
@@ -346,10 +355,15 @@ function FilterSelect({
 function NetworkCard({
   person,
   activeProjects,
+  profile,
+  isFounder,
 }: {
   person: NetworkPerson;
   activeProjects: NetworkProject[];
+  profile: RelationshipProfile | null;
+  isFounder: boolean;
 }) {
+  const [showRelationship, setShowRelationship] = useState(false);
   const fitPct =
     person.best_score != null
       ? Math.round(person.best_score * 10)
@@ -505,12 +519,31 @@ function NetworkCard({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowRelationship((v) => !v)}
+            className={cn(
+              "px-2 py-1.5 border font-mono-label text-mono-label uppercase tracking-widest transition-colors",
+              profile?.dnc
+                ? "border-error/50 text-error hover:bg-error/10"
+                : "border-outline-variant text-on-surface-variant hover:bg-surface-container-high"
+            )}
+            aria-expanded={showRelationship}
+          >
+            {profile?.dnc
+              ? "DNC"
+              : (profile?.relationship_state ?? "relationship").replace(/_/g, " ")}
+            {showRelationship ? " ▴" : " ▾"}
+          </button>
           <AddToSearchButton
             person={person}
             activeProjects={activeProjects}
           />
         </div>
       </div>
+      {showRelationship && (
+        <RelationshipCard profile={profile} isFounder={isFounder} />
+      )}
     </li>
   );
 }

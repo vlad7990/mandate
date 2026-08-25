@@ -362,6 +362,21 @@ export async function signInCandidateSearchAgent(): Promise<AgentSession> {
 }
 
 /**
+ * Sign in the Candidate Relationship Agent — the twenty-second
+ * principal, the Engage arc's second (098). One judgment: maintain
+ * the relationship record from evidence. It can never set or clear
+ * do-not-contact — the guard trigger refuses it the columns, and the
+ * DNC RPCs refuse it by name.
+ */
+export async function signInRelationshipAgent(): Promise<AgentSession> {
+  return signInAgent({
+    kind: "relationship",
+    email: process.env.AGENT_RELATIONSHIP_EMAIL,
+    password: process.env.AGENT_RELATIONSHIP_PASSWORD,
+  });
+}
+
+/**
  * Sign in the Outreach Strategy Agent — the twenty-first principal,
  * the Engage arc's first (097). One judgment: decide how this person
  * should be approached, and draft it. The draft is born status

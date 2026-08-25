@@ -97,6 +97,10 @@ export type OutreachStrategyRunResult =
    * or decide it first (the partial unique index would refuse anyway;
    * this refusal is the same boundary, honest and free). */
   | { status: "draft_exists" }
+  /** The person is marked do-not-contact (098): no strategy is
+   * drafted, no model call is spent. Only a founder-level act with a
+   * recorded reason clears the suppression. */
+  | { status: "dnc" }
   /** The agent refused to sign in — suspended from /ops or credentials
    * absent. Nothing was drafted and NOTHING WAS DESTROYED (D5). */
   | { status: "agent_unavailable"; reason: string }
@@ -141,7 +145,9 @@ export async function runOutreachStrategyAndPersist(
         }>(),
       supabase
         .from("candidates")
-        .select("id, full_name, current_title, current_company, cv_structured")
+        .select(
+          "id, full_name, current_title, current_company, cv_structured, network_profile_id"
+        )
         .eq("id", candidateId)
         .maybeSingle<{
           id: string;
@@ -149,6 +155,7 @@ export async function runOutreachStrategyAndPersist(
           current_title: string | null;
           current_company: string | null;
           cv_structured: Record<string, unknown> | null;
+          network_profile_id: string | null;
         }>(),
       supabase
         .from("candidate_outreach")
@@ -171,6 +178,18 @@ export async function runOutreachStrategyAndPersist(
     ]);
 
     if (!project || !candidate) return { status: "unavailable" };
+
+    // The relationship record speaks first (098): a suppressed person
+    // gets no strategy and costs no model call. The comms service will
+    // re-check at send time in 099 — this is the drafting-side layer.
+    if (candidate.network_profile_id) {
+      const { data: person } = await supabase
+        .from("network_profiles")
+        .select("dnc")
+        .eq("id", candidate.network_profile_id)
+        .maybeSingle<{ dnc: boolean }>();
+      if (person?.dnc) return { status: "dnc" };
+    }
 
     // ONE live draft per candidate-lane, refused before the spend.
     if ((priorStrategies ?? []).some((s) => s.status === "draft")) {

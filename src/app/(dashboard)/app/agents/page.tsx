@@ -130,6 +130,11 @@ const REGISTRY: AgentGroup[] = [
         does: "Decides how a specific person should be approached about a specific mandate — angle, career hook, disclosure lines, talking points, and a ready-to-edit draft message — from the evidence and the contact history, clamped to the org's communication policy.",
         staysHuman: "Approving, editing, declining and sending are the recruiter's acts forever — the draft cannot leave 'draft' by the agent's hand, and the approved message goes out from the recruiter's own mail client.",
       },
+      {
+        name: "Candidate Relationship Agent",
+        does: "Maintains the durable relationship record for each person in the network — state, structured disposition, and follow-ups — from the appearances, contact history, and evidence that already exist.",
+        staysHuman: "It can never set or clear do-not-contact, and never moves a relationship into or out of that state — suppression is the human's and the erasure system's alone, and only a founder-level act with a recorded reason clears it.",
+      },
     ],
   },
   {
@@ -322,7 +327,7 @@ export default async function AgentsPage() {
         {profile?.is_founder && (
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
             Suspend or restore any principal from Platform ops — each kill
-            switch is independent of the other twenty.
+            switch is independent of the other twenty-one.
           </p>
         )}
       </footer>
