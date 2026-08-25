@@ -26,7 +26,7 @@ function isUuid(value: string): boolean {
   );
 }
 
-export const metadata = { title: "Join your team · Mandate" };
+export const metadata = { title: "Join your team" };
 
 export default async function JoinPage({
   params,
