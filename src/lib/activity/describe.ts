@@ -13,6 +13,7 @@
 import { formatMoney } from "@/lib/fees/compute";
 import { PLACEMENT_STATUS_LABELS, parsePlacementStatus } from "@/lib/fees/types";
 import { ROLE_LABELS, parseRole } from "@/lib/auth/roles";
+import { PIPELINE_LABELS } from "@/lib/ai/cv-parsing";
 import type { ActivityEventRow, ActivityEventType } from "./types";
 
 /** Read a string out of `detail`, or null. */
@@ -37,6 +38,15 @@ function stage(value: unknown): string {
   const parsed = parsePlacementStatus(value);
   if (parsed) return PLACEMENT_STATUS_LABELS[parsed].toLowerCase();
   return typeof value === "string" && value ? value.replace(/_/g, " ") : "unknown";
+}
+
+/** A candidate pipeline stage, labelled if recognised, raw otherwise. */
+function pipelineStage(value: unknown): string {
+  if (typeof value === "string" && value) {
+    const label = (PIPELINE_LABELS as Record<string, string>)[value];
+    return (label ?? value.replace(/_/g, " ")).toLowerCase();
+  }
+  return "unknown";
 }
 
 function role(value: unknown): string {
@@ -72,6 +82,12 @@ export function describeActivity(event: ActivityEventRow): string {
       const to = stage(d.to);
       const reason = str(d, "reason");
       return `Moved the placement from ${from} to ${to}${reason ? ` — ${reason}` : ""}`;
+    }
+
+    case "candidate_stage_changed": {
+      const from = pipelineStage(d.from);
+      const to = pipelineStage(d.to);
+      return `Moved the candidate from ${from} to ${to}`;
     }
 
     case "placement_signoff_changed": {

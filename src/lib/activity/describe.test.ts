@@ -40,6 +40,18 @@ describe("describeActivity", () => {
     );
   });
 
+  it("describes a candidate pipeline move with its stage labels", () => {
+    expect(
+      describeActivity(
+        event("candidate_stage_changed", { from: "passed_rounds", to: "finalist" })
+      )
+    ).toBe("Moved the candidate from passed rounds to finalist");
+    // A bare row must still read as a sentence (the empty-detail pin).
+    expect(describeActivity(event("candidate_stage_changed", {}))).toBe(
+      "Moved the candidate from unknown to unknown"
+    );
+  });
+
   it("describes a status transition with its labels, not its raw values", () => {
     const line = describeActivity(
       event("placement_status_changed", { from: "offered", to: "started" })
@@ -345,10 +357,16 @@ describe("the vocabulary", () => {
       "skill_paused",
       "skill_activated",
       "skill_deleted",
+      // 104: the pipeline move — writer-gated inside the RPC on
+      // can_write_candidates(), and it files under mandates like the
+      // rest of the candidate events.
+      "candidate_stage_changed",
     ]);
     for (const type of APP_RECORDABLE_EVENTS) {
       const expected =
-        type === "mandate_reassigned" || type.startsWith("skill_")
+        type === "mandate_reassigned" ||
+        type === "candidate_stage_changed" ||
+        type.startsWith("skill_")
           ? "mandates"
           : "client";
       expect(ACTIVITY_GROUP_OF[type]).toBe(expected);

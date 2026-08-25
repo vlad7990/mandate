@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { PageShell } from "@/components/ui/page-shell";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { CapabilityGate } from "@/components/auth/capability-gate";
 import type { ExecutiveRoleTemplateRow } from "@/lib/executive/types";
 import {
   IconArrowLeft,
   IconArrowRight,
+  IconPlus,
 } from "@/components/icons";
+import { DeleteTemplateButton } from "./delete-template-button";
 
 type TemplateListRow = Pick<
   ExecutiveRoleTemplateRow,
@@ -41,13 +44,26 @@ export default async function ExecutiveTemplatesPage() {
           <span className="text-on-surface-variant">Templates</span>
         </div>
 
-        <header className="space-y-1">
-          <h1 className="font-h2 text-h2 text-on-surface">Role Templates</h1>
-          <p className="text-body-main text-on-surface-variant max-w-2xl">
-            Curated starting points for common executive mandates. A template
-            prefills the intake and seeds competency weights — everything remains
-            editable before and after creation.
-          </p>
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="font-h2 text-h2 text-on-surface">Role Templates</h1>
+            <p className="text-body-main text-on-surface-variant max-w-2xl">
+              Curated starting points for common executive mandates. A template
+              prefills the intake and seeds competency weights — everything remains
+              editable before and after creation. Your organisation&rsquo;s own
+              templates sit beside the global library; give one a global key and
+              yours wins here.
+            </p>
+          </div>
+          <CapabilityGate capability="skills:write">
+            <Link
+              href="/app/executive-intelligence/templates/new"
+              className="btn-notch flex shrink-0 items-center gap-2 bg-primary-container px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest text-on-primary-container transition-all hover:brightness-110 active:scale-[0.98]"
+            >
+              <IconPlus size={15} />
+              New Template
+            </Link>
+          </CapabilityGate>
         </header>
 
         {error && (
@@ -57,13 +73,12 @@ export default async function ExecutiveTemplatesPage() {
           </div>
         )}
 
-        {/* Same reasoning as the competency library — see that page. */}
         {!error && templates.length === 0 && (
           <div className="bg-surface-container-low border border-outline-variant p-12 text-center">
             <p className="text-body-main text-on-surface-variant">
-              No role templates are available. They ship with Mandate rather
-              than being configured per organisation, so there is nothing to
-              set up here — if this stays empty, that is ours to fix.
+              No role templates are available. The global library ships with
+              Mandate, and an admin can author your organisation&rsquo;s own —
+              if even the global set is missing here, that is ours to fix.
             </p>
           </div>
         )}
@@ -89,13 +104,26 @@ export default async function ExecutiveTemplatesPage() {
                   <span className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
                     {weightCount} weighted competencies
                   </span>
-                  <Link
-                    href={`/app/executive-intelligence/searches/new?template=${encodeURIComponent(t.key)}`}
-                    className="btn-notch bg-primary-container text-on-primary-container px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5"
-                  >
-                    Use Template
-                    <IconArrowRight size={15} />
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    {t.organization_id != null && (
+                      <CapabilityGate capability="skills:write">
+                        <Link
+                          href={`/app/executive-intelligence/templates/${t.id}/edit`}
+                          className="font-mono-label text-mono-label uppercase tracking-widest text-outline transition-colors hover:text-primary"
+                        >
+                          Edit
+                        </Link>
+                        <DeleteTemplateButton templateId={t.id} title={t.title} />
+                      </CapabilityGate>
+                    )}
+                    <Link
+                      href={`/app/executive-intelligence/searches/new?template=${encodeURIComponent(t.key)}`}
+                      className="btn-notch bg-primary-container text-on-primary-container px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5"
+                    >
+                      Use Template
+                      <IconArrowRight size={15} />
+                    </Link>
+                  </div>
                 </div>
               </div>
             );

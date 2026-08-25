@@ -156,11 +156,14 @@ export default async function ExecutiveIntelligencePage() {
 
   /*
     Sample mode is decided on the account's own searches, never on the
-    catalogue counts. Templates and competencies are a *seeded global* set
-    that 056's policy admits to every active organisation (D4), so they are
-    non-zero on a brand-new account and would make `hasRealData` true for
-    an org that has never opened a search. The two tiles that describe this
-    organisation are the two that decide.
+    catalogue counts. Templates and competencies include a *seeded global*
+    set that 056's policy admits to every active organisation (D4), so the
+    counts are non-zero on a brand-new account and would make `hasRealData`
+    true for an org that has never opened a search. Since 104 an org can
+    author its own templates, which makes the template count partly the
+    org's — but a template with no search behind it is still preparation,
+    not activity, so the rule stands: the two tiles that describe this
+    organisation's searches are the two that decide.
   */
   const dismissed = (await cookies()).get(SAMPLE_DISMISSED_COOKIE)?.value === "1";
   const showSample = shouldShowSample({

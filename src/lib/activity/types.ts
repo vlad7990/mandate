@@ -71,6 +71,11 @@ export const ACTIVITY_EVENT_TYPES = [
   "skill_activated",
   "skill_deleted",
 
+  // 104: a recruiter moving a candidate through the pipeline — the
+  // detail carries stages only ({from, to}), never free text. Gated
+  // inside `record_activity_event` on can_write_candidates().
+  "candidate_stage_changed",
+
   // Written by agent principals through `record_agent_event` (074/075) —
   // the door narrower than `record_activity_event`: an enumerated event
   // list, callable only by an active `agent` role, actor stamped from
@@ -135,6 +140,9 @@ export const APP_RECORDABLE_EVENTS = [
   "skill_paused",
   "skill_activated",
   "skill_deleted",
+  // 104 — the pipeline move (dropdown or board drag). Writer-gated
+  // inside the RPC on can_write_candidates().
+  "candidate_stage_changed",
 ] as const;
 
 export type AppRecordableEvent = (typeof APP_RECORDABLE_EVENTS)[number];
@@ -214,6 +222,8 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   skill_paused: "mandates",
   skill_activated: "mandates",
   skill_deleted: "mandates",
+
+  candidate_stage_changed: "mandates",
 
   feedback_interpreted: "mandates",
   candidates_ranked: "mandates",

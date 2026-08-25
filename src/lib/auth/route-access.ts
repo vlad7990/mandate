@@ -107,6 +107,11 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   // Opening an executive search is opening a mandate; everything under an
   // existing search is readable, and its writes are guarded in the actions.
   { pattern: "/app/executive-intelligence/searches/new", capability: "mandates:write" },
+  // 104: authoring an org role template changes how every executive search
+  // scores — the skills-studio shape: the list stays readable, the
+  // authoring routes sit with the admin.
+  { pattern: "/app/executive-intelligence/templates/new", capability: "skills:write" },
+  { pattern: "/app/executive-intelligence/templates/:templateId/edit", capability: "skills:write" },
 ];
 
 /**

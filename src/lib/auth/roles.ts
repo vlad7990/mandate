@@ -270,7 +270,7 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
   "clients:share": "Shortlists, exports and outreach",
   "fees:read": "Placement fees and revenue",
   "desk:manage": "Desk oversight and reassignment",
-  "skills:write": "Skills studio",
+  "skills:write": "Skills & templates",
   "org:manage": "Org settings and members",
   "portal:read": "Client portal",
   "client:manage-people": "Client company's people",

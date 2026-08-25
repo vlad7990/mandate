@@ -15,6 +15,7 @@ import {
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
+import { recordActivity } from "@/lib/activity/record";
 
 /** Sentence subject for a failure this file did not author. See `runAction`. */
 const SUBJECT = "The candidate update";
@@ -209,6 +210,10 @@ async function markCandidateFailed(
 /**
  * Move a candidate through the recruiter's pipeline. Validates against
  * the schema's CHECK constraint values to avoid round-trip rejections.
+ *
+ * 104: the move writes its own trail row — stages only ({from, to}),
+ * never free text. The prior stage is read first so the event can say
+ * where the candidate came from; a no-op move records nothing.
  */
 export async function updatePipelineStage(
   candidateId: string,
@@ -222,6 +227,14 @@ export async function updatePipelineStage(
     }
 
     const supabase = await createServerSupabaseClient();
+    const { data: prior } = await supabase
+      .from("candidates")
+      .select("pipeline_stage")
+      .eq("id", candidateId)
+      .eq("project_id", projectId)
+      .maybeSingle<{ pipeline_stage: string | null }>();
+    const from = prior?.pipeline_stage ?? "found";
+
     const { error } = await supabase
       .from("candidates")
       .update({
@@ -233,6 +246,15 @@ export async function updatePipelineStage(
 
     if (error) {
       throw new Error(`Failed to update pipeline stage: ${error.message}`);
+    }
+
+    if (from !== stage) {
+      await recordActivity(supabase, {
+        eventType: "candidate_stage_changed",
+        projectId,
+        candidateId,
+        detail: { from, to: stage },
+      });
     }
 
     revalidatePath(`/app/projects/${projectId}/candidates`);

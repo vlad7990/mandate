@@ -139,7 +139,13 @@ export type ExecutiveAuditEventType =
   | "assessment_created"
   | "assessment_edited"
   | "assessment_new_version"
-  | "assessment_approved";
+  | "assessment_approved"
+  // 104: org-authored role templates — the module's own ledger carries
+  // the authoring acts (search_id NULL; detail = key/title/shadowing,
+  // never the defaults' text).
+  | "template_created"
+  | "template_updated"
+  | "template_deleted";
 
 /** Due-diligence funnel position — never a hiring decision. */
 export type ExecutiveCandidateStage =
