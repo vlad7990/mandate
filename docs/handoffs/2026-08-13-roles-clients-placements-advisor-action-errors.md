@@ -10196,3 +10196,37 @@ AGENT_TILES.length with no roster denominator at all — the 14 was
 the AGENTS.md-era number, and any hardcoded denominator would go
 stale again the day the Interviewer principal lands. Next migration
 115 / § 139 / drive 101 stand.
+
+## 139. THE STATUS PAGE — Phase 0 run, gate DRAFTED — 2026-08-25
+
+The founder called the slice ("run the status page slice next").
+Phase 0 read the checklist line against the code: NO health endpoint
+exists (the only API routes are copilot, demo, the Bearer-gated cron,
+the svix-gated dormant webhook); the daily cron leaves NO persisted
+heartbeat — a silent failure is invisible until Monday's digest fails
+to arrive; the sign-in footer hardcodes "Node Status: Active", a
+status claim read from nowhere; the marketing surface has no status
+link. The structural truth is stated plainly: a status page served by
+the deployment it reports on is blind to the platform's own outage —
+the honest design is an in-product page for degraded states plus an
+external monitor for the outage class the page cannot see.
+
+The gate is drafted at
+docs/superpowers/specs/2026-08-25-status-page-gate.md: D1 public
+/api/health (db via an existing anon door zero-row round trip, auth
+via GoTrue's own health, cron via heartbeat staleness; ~30 s cache;
+states not internals) · D2 public /status on the marketing surface
+(dot plus a word, its own blind spot stated in words, no invented
+uptime percentages) · D3 migration 115 = ops_heartbeats, deny-all
+RLS, service-role stamped by the cron (no thirteenth anon grant —
+R4) · D4 external monitor FOUNDER-OWNED (UptimeRobot free
+recommended; surfaced once, not nagged) · D5 ruling wanted on the
+sign-in footer's decorative "Active" (recommend: soften the copy) ·
+D6 the ladder, claiming drive 101 — whose heartbeat row is DURABLE
+state: baseline gains ops_heartbeats 1, no teardown. Both §136's
+anon-roster rule and §138's proxy-allowlist trap are bound into the
+gate text.
+
+Numbers: migration 115 + drive 101 claimed by the gate on
+confirmation; next § 140; vitest 964. The gate awaits the founder's
+written word.
