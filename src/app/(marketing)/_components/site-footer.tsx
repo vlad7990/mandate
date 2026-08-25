@@ -45,6 +45,9 @@ export function SiteFooter() {
 
           <nav className="m-footer__col" aria-label="Access">
             <h3 className="m-footer__heading">Access</h3>
+            <Link href="/handbook" className="m-footer__link">
+              Handbook
+            </Link>
             <Link href="/request-access" className="m-footer__link">
               Request access
             </Link>

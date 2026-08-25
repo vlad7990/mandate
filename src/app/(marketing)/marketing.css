@@ -4743,3 +4743,118 @@ details[open] > .m-faq__btn .m-faq__icon {
   align-items: center;
   justify-content: center;
 }
+
+/* ────────────────────────────────────────────────────────────────────
+   The handbook (§137 D2). One long read, prose only — authored as
+   markdown in docs/handbook/, parsed by src/lib/handbook/markdown.ts
+   and served at /handbook. Semantic tags are styled in scope so the
+   route stays a plain mapping from parsed blocks to elements.
+   ──────────────────────────────────────────────────────────────────── */
+
+.m-handbook {
+  max-width: 46rem;
+}
+
+.m-handbook__index {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 4rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--line);
+}
+
+.m-handbook__index-link {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+.m-handbook__index-link:hover,
+.m-handbook__index-link:focus-visible { color: var(--accent); }
+.m-handbook__index-num { color: var(--fg-muted); margin-right: 0.75rem; }
+
+.m-handbook__section {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 6rem;
+}
+.m-handbook__section:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.m-handbook__title {
+  font-family: var(--font-display);
+  font-weight: 360;
+  font-variation-settings: "opsz" 96, "SOFT" 0;
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  text-wrap: balance;
+  margin-bottom: 1.5rem;
+}
+
+.m-handbook__section h3 {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg);
+  margin: 2.25rem 0 0.875rem;
+}
+
+.m-handbook__section h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--fg);
+  margin: 1.75rem 0 0.75rem;
+}
+
+.m-handbook__section p {
+  color: var(--fg-soft);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.m-handbook__section ul,
+.m-handbook__section ol {
+  margin: 0 0 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.m-handbook__section ul { list-style: disc; }
+.m-handbook__section ol { list-style: decimal; }
+.m-handbook__section li {
+  color: var(--fg-soft);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  padding-left: 0.25rem;
+}
+.m-handbook__section li::marker { color: var(--fg-muted); }
+
+.m-handbook__section code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--fg);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid var(--line);
+  padding: 0.1em 0.35em;
+}
+
+.m-handbook__section a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.m-handbook__section strong { color: var(--fg); font-weight: 600; }

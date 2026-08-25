@@ -17,18 +17,24 @@ export const metadata = {
 export default async function OpsWaitlistPage() {
   const supabase = await createServerSupabaseClient();
 
-  const { data: rows, error } = await supabase
-    .from("waitlist")
-    .select(
-      "id, full_name, email, company, role, referral_source, use_case, status, notes, reviewed_by, reviewed_at, created_at"
-    )
-    .order("created_at", { ascending: false });
+  // The invitation embed and the org list both read on migration 114's
+  // founder policies; approval provisions from this screen (§137 D1).
+  const [{ data: rows, error }, { data: orgs }] = await Promise.all([
+    supabase
+      .from("waitlist")
+      .select(
+        "id, full_name, email, company, role, referral_source, use_case, status, notes, reviewed_by, reviewed_at, created_at, staff_invitation:staff_invitations!waitlist_staff_invitation_id_fkey(token, role, expires_at, accepted_at, revoked_at, organization:organizations(name))"
+      )
+      .order("created_at", { ascending: false }),
+    supabase.from("organizations").select("id, name").order("name"),
+  ]);
 
   if (error) {
     throw new Error(`Failed to load waitlist: ${error.message}`);
   }
 
-  const list = (rows ?? []) as WaitlistRow[];
+  const list = (rows ?? []) as unknown as WaitlistRow[];
+  const organizations = (orgs ?? []) as Array<{ id: string; name: string }>;
   const counts = {
     pending: list.filter((r) => r.status === "pending").length,
     approved: list.filter((r) => r.status === "approved").length,
@@ -68,7 +74,7 @@ export default async function OpsWaitlistPage() {
         </p>
       </header>
 
-      <WaitlistTable rows={list} />
+      <WaitlistTable rows={list} organizations={organizations} />
     </div>
   );
 }

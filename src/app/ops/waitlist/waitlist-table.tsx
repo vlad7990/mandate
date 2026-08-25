@@ -5,12 +5,25 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { IconCheck } from "@/components/icons";
+import { useHydrated } from "@/lib/use-hydrated";
+import { STAFF_ROLES, ROLE_LABELS, type StaffRole } from "@/lib/auth/roles";
+import { deriveOrgSlug } from "@/lib/orgs/provision-rules";
 import {
   approveWaitlistRequestAction,
   rejectWaitlistRequestAction,
   saveWaitlistNoteAction,
+  type ApprovalProvision,
 } from "./actions";
 import { unwrap } from "@/lib/actions/result";
+
+export type WaitlistInvitation = {
+  token: string;
+  role: string;
+  expires_at: string;
+  accepted_at: string | null;
+  revoked_at: string | null;
+  organization: { name: string } | null;
+};
 
 export type WaitlistRow = {
   id: string;
@@ -25,7 +38,10 @@ export type WaitlistRow = {
   reviewed_by: string | null;
   reviewed_at: string | null;
   created_at: string;
+  staff_invitation: WaitlistInvitation | null;
 };
+
+type Organization = { id: string; name: string };
 
 const STATUS_TONE: Record<WaitlistRow["status"], string> = {
   pending: "border-primary/60 bg-primary-container/15 text-primary",
@@ -34,7 +50,13 @@ const STATUS_TONE: Record<WaitlistRow["status"], string> = {
   rejected: "border-error/60 bg-error/10 text-error",
 };
 
-export function WaitlistTable({ rows }: { rows: WaitlistRow[] }) {
+export function WaitlistTable({
+  rows,
+  organizations,
+}: {
+  rows: WaitlistRow[];
+  organizations: Organization[];
+}) {
   const [filter, setFilter] = useState<"all" | WaitlistRow["status"]>("pending");
   const filtered =
     filter === "all" ? rows : rows.filter((r) => r.status === filter);
@@ -67,7 +89,7 @@ export function WaitlistTable({ rows }: { rows: WaitlistRow[] }) {
       ) : (
         <ul className="space-y-2">
           {filtered.map((r) => (
-            <RequestCard key={r.id} row={r} />
+            <RequestCard key={r.id} row={r} organizations={organizations} />
           ))}
         </ul>
       )}
@@ -75,11 +97,19 @@ export function WaitlistTable({ rows }: { rows: WaitlistRow[] }) {
   );
 }
 
-function RequestCard({ row }: { row: WaitlistRow }) {
+function RequestCard({
+  row,
+  organizations,
+}: {
+  row: WaitlistRow;
+  organizations: Organization[];
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [notesDraft, setNotesDraft] = useState(row.notes ?? "");
   const [notesEditing, setNotesEditing] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [issuedUrl, setIssuedUrl] = useState<string | null>(null);
 
   const saveNotes = () => {
     if (pending) return;
@@ -91,20 +121,6 @@ function RequestCard({ row }: { row: WaitlistRow }) {
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Save failed.");
-      }
-    });
-  };
-
-  const approve = () => {
-    if (pending) return;
-    if (!window.confirm(`Approve ${row.full_name} (${row.email})?`)) return;
-    start(async () => {
-      try {
-        unwrap(await approveWaitlistRequestAction(row.id));
-        toast.success("Approved");
-        router.refresh();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Approve failed.");
       }
     });
   };
@@ -157,6 +173,10 @@ function RequestCard({ row }: { row: WaitlistRow }) {
         <KV label="Heard about" value={row.referral_source} />
       )}
       {row.use_case && <KV label="Use case" value={row.use_case} />}
+
+      {row.staff_invitation && (
+        <InvitationState invitation={row.staff_invitation} />
+      )}
 
       <div className="space-y-1.5">
         <div className="flex items-baseline justify-between gap-2">
@@ -215,7 +235,9 @@ function RequestCard({ row }: { row: WaitlistRow }) {
         )}
       </div>
 
-      {isPending && (
+      {issuedUrl && <IssuedLink url={issuedUrl} />}
+
+      {isPending && !approving && !issuedUrl && (
         <footer className="pt-3 border-t border-outline-variant/40 flex items-center justify-end gap-2">
           <button
             type="button"
@@ -227,7 +249,7 @@ function RequestCard({ row }: { row: WaitlistRow }) {
           </button>
           <button
             type="button"
-            onClick={approve}
+            onClick={() => setApproving(true)}
             disabled={pending}
             className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
           >
@@ -236,8 +258,287 @@ function RequestCard({ row }: { row: WaitlistRow }) {
           </button>
         </footer>
       )}
+
+      {isPending && approving && !issuedUrl && (
+        <ApprovalPanel
+          row={row}
+          organizations={organizations}
+          onCancel={() => setApproving(false)}
+          onIssued={(url) => {
+            setIssuedUrl(url);
+            setApproving(false);
+            router.refresh();
+          }}
+        />
+      )}
     </article>
   );
+}
+
+/**
+ * The provisioning choice (§137 D1) — explicit, never defaulted: a new
+ * organisation with the requester as its admin, or a seat in an existing
+ * one at a chosen role. Approval issues an invitation, never an account;
+ * nothing is emailed — the founder hands the link over.
+ */
+function ApprovalPanel({
+  row,
+  organizations,
+  onCancel,
+  onIssued,
+}: {
+  row: WaitlistRow;
+  organizations: Organization[];
+  onCancel: () => void;
+  onIssued: (url: string) => void;
+}) {
+  const [pending, start] = useTransition();
+  const [mode, setMode] = useState<"new-org" | "existing-org">("new-org");
+  const [orgName, setOrgName] = useState(row.company ?? "");
+  const [slug, setSlug] = useState(deriveOrgSlug(row.company ?? ""));
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [orgChoice, setOrgChoice] = useState("");
+  const [role, setRole] = useState<StaffRole>("recruiter");
+
+  const submit = () => {
+    if (pending) return;
+    const provision: ApprovalProvision =
+      mode === "new-org"
+        ? { kind: "new-org", orgName, orgSlug: slug }
+        : { kind: "existing-org", organizationId: orgChoice, role };
+    if (mode === "existing-org" && !orgChoice) {
+      toast.error("Choose an organisation to approve this request into.");
+      return;
+    }
+    start(async () => {
+      try {
+        const { url } = unwrap(
+          await approveWaitlistRequestAction(row.id, provision)
+        );
+        toast.success("Approved — hand the link over");
+        onIssued(url);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Approve failed.");
+      }
+    });
+  };
+
+  const fieldClass =
+    "border border-outline-variant bg-surface-container-lowest px-3 py-1.5 text-body-main text-on-surface placeholder:text-outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+
+  return (
+    <div className="pt-3 border-t border-outline-variant/40 space-y-3">
+      <p className="text-body-main text-on-surface-variant">
+        Approving <span className="text-on-surface">{row.full_name}</span>{" "}
+        issues a staff invitation for{" "}
+        <span className="font-mono-data text-on-surface">{row.email}</span>.
+        Nothing is emailed — you hand the link over; their account exists
+        only once they set a password at the link.
+      </p>
+
+      <div className="flex border border-outline-variant divide-x divide-outline-variant w-fit">
+        {(
+          [
+            ["new-org", "New organisation"],
+            ["existing-org", "Existing organisation"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setMode(value)}
+            aria-pressed={mode === value}
+            className={cn(
+              "px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary",
+              mode === value
+                ? "bg-primary-container text-on-primary-container"
+                : "bg-surface-container-low text-on-surface-variant hover:text-on-surface"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === "new-org" ? (
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
+              Organisation name
+            </span>
+            <input
+              type="text"
+              value={orgName}
+              onChange={(e) => {
+                setOrgName(e.target.value);
+                if (!slugTouched) setSlug(deriveOrgSlug(e.target.value));
+              }}
+              placeholder="Acme Search Partners"
+              className={fieldClass}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
+              Slug
+            </span>
+            <input
+              type="text"
+              value={slug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setSlug(e.target.value);
+              }}
+              placeholder="acme-search"
+              className={cn(fieldClass, "font-mono-data")}
+            />
+          </label>
+          <p className="basis-full font-mono-label text-mono-label uppercase tracking-widest text-outline">
+            {row.full_name} joins as the organisation&apos;s admin
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
+              Organisation
+            </span>
+            <select
+              value={orgChoice}
+              onChange={(e) => setOrgChoice(e.target.value)}
+              className={fieldClass}
+            >
+              <option value="">Choose organisation…</option>
+              {organizations.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
+              Role
+            </span>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as StaffRole)}
+              className={fieldClass}
+            >
+              {STAFF_ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_LABELS[r]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={pending}
+          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={
+            pending ||
+            (mode === "new-org" ? !orgName.trim() || !slug.trim() : !orgChoice)
+          }
+          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+        >
+          <IconCheck size={14} />
+          {pending ? "Provisioning…" : "Approve & Issue Invitation"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** The queue shows which approvals have been handed their door (§137 D1). */
+function InvitationState({ invitation }: { invitation: WaitlistInvitation }) {
+  const hydrated = useHydrated();
+  const origin = hydrated ? window.location.origin : "";
+  const url = `${origin}/join/${invitation.token}`;
+
+  const state = invitationState(invitation);
+
+  return (
+    <div className="space-y-1">
+      <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+        Invitation{" // "}
+        {invitation.organization?.name ?? "organisation"} · {invitation.role} ·{" "}
+        <span
+          className={cn(
+            state === "accepted" && "text-secondary-fixed-dim",
+            state === "live" && "text-primary",
+            (state === "revoked" || state === "expired") && "text-error"
+          )}
+        >
+          {state}
+        </span>
+      </div>
+      {state === "live" && (
+        <p className="break-all font-mono-data text-body-main text-on-surface">
+          {url}
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(url);
+                toast.success("Link copied");
+              } catch {
+                toast.error("Clipboard unavailable.");
+              }
+            }}
+            className="ml-3 border border-outline-variant px-2 py-0.5 font-mono-label text-mono-label uppercase tracking-widest text-outline hover:border-primary hover:text-primary transition-colors"
+          >
+            Copy
+          </button>
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Shown immediately after issuance, before the refresh lands. */
+function IssuedLink({ url }: { url: string }) {
+  const hydrated = useHydrated();
+  const origin = hydrated ? window.location.origin : "";
+  return (
+    <p className="break-all font-mono-data text-body-main text-on-surface">
+      {origin}
+      {url}
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(`${origin}${url}`);
+            toast.success("Link copied");
+          } catch {
+            toast.error("Clipboard unavailable.");
+          }
+        }}
+        className="ml-3 border border-outline-variant px-2 py-0.5 font-mono-label text-mono-label uppercase tracking-widest text-outline hover:border-primary hover:text-primary transition-colors"
+      >
+        Copy
+      </button>
+    </p>
+  );
+}
+
+function invitationState(
+  invitation: WaitlistInvitation
+): "accepted" | "revoked" | "expired" | "live" {
+  if (invitation.accepted_at) return "accepted";
+  if (invitation.revoked_at) return "revoked";
+  if (new Date(invitation.expires_at).getTime() < Date.now()) return "expired";
+  return "live";
 }
 
 function KV({ label, value }: { label: string; value: string }) {
