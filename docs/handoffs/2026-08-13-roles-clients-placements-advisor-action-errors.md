@@ -8827,3 +8827,73 @@ migration (106), harness and D-gate; nothing smuggled from (a).
 Phase 0 first; BUILD GATED on written confirmation. Numbers: next
 migration 106, next § 112, next drive 0f5; durable baseline
 unchanged.
+
+---
+
+## 112. The task domain — product-pass slice five, THE PASS'S LAST — 2026-08-25 — DRAFT
+
+Slice five on the founder's confirmed D1–D8 and all four rulings as
+recommended (R1 assignees = active admin/manager/recruiter/
+researcher; R2 nullable project_id with ActionItem widened; R3 no
+DELETE — cancelled is the walk-away; R4 desk-only creation). Commit
+`668f26a`, deploy `mandate-ozckj5yoe`, migration 106, drive 0f5.
+**This § is a DRAFT: no completion is declared; NEXT-task-domain.md
+and NEXT-product-pass.md stand until the founder confirms.** NOTE
+FOR THE RECORD: an earlier pre-draft "D1–D8 confirmed" arrived
+before the gate existed and was DECLINED as unattachable — the gate
+was drafted, presented with the four named rulings, and confirmed
+against the real document. The doctrine held.
+
+**Built.** 106 = `tasks` (org conventions; coherence CHECKs done ⇔
+stamped ⇔ signed; unassigned is a real state) + 097-shape RLS
+(org-wide SELECT; desk-only INSERT with created_by pinned; UPDATE
+for desk-or-assignee with the completed_by pin — nobody signs
+another's completion; NO DELETE for anyone) +
+guard_task_assignee_changes() on the 064 model (assignee must be
+ACTIVE and in the R1 set; only the desk assigns or reassigns; the
+author never changes; predicates COALESCED per the 064 lesson) +
+task_assigned/task_completed (CHECK 76→78 rebuilt from
+pg_constraint; intent door 10→12, task_assigned desk-gated inside
+the RPC; grants re-declared; labels snapshotted at write time).
+Surfaces: the desk gains a Tasks section (create/assign/reassign/
+complete/cancel) and an open-tasks (overdue) column; the roster
+widened to researchers with the mandate-reassign picker filtered
+back to lead-capable roles (the 064 trigger would refuse a
+researcher lead); the digest input gains per-member open/overdue
+counts through the ONE shared rollup; /app/home gains MY_TASKS
+(complete button; honest absence when empty) and the action queue
+gains task_overdue (attention, above the chores) and task_due
+(routine, last) under its consequence rules — ActionItem's project
+now nullable, "your desk" the label when it is. vitest 904 (queue
+task rows + describe cases).
+
+**Harness** (task_invariants.sql, live, rolled back): manager
+creates+assigns with the pinned author / recruiter INSERT refused /
+assignee completes own (stamped+signed) / NON-assignee lands ZERO
+rows / forged completed_by refused / viewer AND agent refused as
+assignees BY NAME + non-desk reassignment refused / intent door
+three faces (recruiter's task_assigned insufficient_privilege;
+assignee's task_completed lands with the right face; agent door
+refuses) / §42 exact counts + org containment. CONTROL RUN: the
+assignee-or-desk disjunction dropped to plain can_read_org → a
+THIRD recruiter completed someone else's task → INVARIANT-FAIL
+(4), self-rolled-back; live policy verified intact after.
+
+**Drive 0f5** (scratch manager Elowen Thack + scratch recruiter
+Jory Penhale, both torn down): desk Tasks section live with the
+real roster; overdue project-scoped task created for Jory
+(task_assigned under the MANAGER with Jory's snapshotted label) +
+an unassigned desk task; cancel leaves the row saying cancelled;
+Jory's /app/home showed the NEEDS_YOU aggregate ("1 of your task is
+past due" · "your desk") AND MY_TASKS with the overdue mark;
+Complete landed done+stamped+signed-by-Jory with task_completed
+under HIS face, and both panels honestly emptied. Teardown EXACT
+first pass to 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 (no candidates
+seeded — no network-profile residue this drive). Screenshots:
+tasks-0f5-desk-board, tasks-0f5-my-tasks-needs-you.
+
+Green gate: tsc / vitest 904 / eslint / build. Numbers: next
+migration 107, next § 113, next drive 0f6. On confirmation THE
+PRODUCT PASS IS COMPLETE — next per the standing order: THE
+PRE-LAUNCH CHECKLIST (advisor sweep, Turnstile, key rotation, RLS
+review, FK indexes).
