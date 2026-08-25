@@ -24,7 +24,10 @@ import {
 // fails closed with 503/401) — the provider has no session, and the
 // 099 drive found the 307 bounce the same way /api/cron's was found:
 // by curling the route.
-const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/invite/", "/invite", "/candidate/", "/candidate", "/api/demo", "/api/cron/", "/api/webhooks/"];
+// "/join" is the staff-invitation door (§135): its visitor has no account
+// by definition, so like the other token doors it must bypass the session
+// entirely — the token in the URL is the whole credential.
+const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/invite/", "/invite", "/candidate/", "/candidate", "/join/", "/join", "/api/demo", "/api/cron/", "/api/webhooks/"];
 
 // Public-facing pages that unauthenticated users SHOULD see. We still
 // run the session refresh on these so authenticated visitors can be
@@ -40,6 +43,7 @@ const PUBLIC_PAGES = new Set([
   "/executive-intelligence",
   "/solutions",
   "/pricing",
+  "/handbook",
   "/request-access",
   "/auth/signin",
   "/auth/signup",
