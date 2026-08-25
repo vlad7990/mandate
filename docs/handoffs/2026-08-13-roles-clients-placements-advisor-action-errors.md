@@ -8388,3 +8388,18 @@ session is the founder's).
   the current prose rule plus field-naming steering practice is
   proportionate at five skills.
 - **Next per the standing order: the pre-launch checklist.**
+
+---
+
+## 101. §100 confirmed — Skills Studio repairs COMPLETE; the Skill Creator architecture document under review — 2026-08-25
+
+The founder confirmed §100 in writing 2026-08-25. The studio's
+integrity repairs stand: scope lands as picked, scope visible,
+changes evented and admin-gated, mutations truthful, caps in place.
+The founder then tabled an external "Skill Creator Architecture"
+document for analysis — whether adopting it in whole or part would
+strengthen the process. The analysis follows this entry's session;
+any adopted slices get their own D-gates. Numbers: next migration
+103, next § 102, next drive 0f1; durable baseline 25 users / 24
+agents / 74 events / 5 skills / 1 network_profile / 1
+org_comms_policy.
