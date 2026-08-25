@@ -9497,3 +9497,38 @@ access token; Resend webhook secret + redeploy; four Engage
 Investment Bank" rename; stale-poll refresh §82). Stripe parked
 LAST. This section is DRAFTED; nothing here is confirmed until the
 founder's written word.
+
+## 125. §124 confirmed — THE GRANTS PASS IS COMPLETE; the Interviewer gate confirmed, sequenced BEHIND the checklist — 2026-08-25
+
+The founder confirmed in writing 2026-08-25, three rulings in one
+word:
+
+**§124 stands — the grants pass is COMPLETE.** Migration 110 is
+settled law: seven trigger functions hold zero session grants, the
+two machine doors answer anon only, the eleven load-bearing anon
+grants stay named in the migration's comments. Sweep two of the
+pre-launch checklist closes. The matrices, harness runs, and drive
+0f9 recorded in §124 are the permanent record.
+
+**The Interviewer programme gate is CONFIRMED** (commit 0e4b7a1,
+docs/superpowers/specs/2026-08-25-interviewer-programme-gate.md):
+the 25th principal, mainstream interview_plans on the 037 pattern
+(EI's agent 17 untouched), slice one authorised in full, slices
+two–four (candidate prep pack, client interview, simulator) gated
+separately later. R1–R4 are programme law.
+
+**R5 is RULED: the checklist completes first.** The Interviewer
+programme opens only after the pre-launch checklist closes. No slice
+builds until then; the confirmed gate waits, not the founder.
+
+ACTIVE NOW, per §122's order: the full RLS review pass on
+pre-existing tables — its own Phase 0 (live pg_policies, never
+files) and its own gate before anything moves. Then first-client
+testing, onboarding docs, status page, Lighthouse/mobile audits,
+simulator verification. Founder-owned stack unchanged. Stripe last,
+then the Interviewer programme.
+
+Numbers: next migration 111, next § 126, next drive 0fa; vitest 929;
+activity CHECK 80; intent door 14; agent allowlist 29; durable
+baseline 25/24/74/5/5/1/1/2/2/1/1 + tasks 0 + objectives 0 +
+key_results 0.
