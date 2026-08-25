@@ -9355,3 +9355,43 @@ webhook (founder) · Stripe LAST (founder's call, unchanged).
 
 Numbers: next migration 110, next § 123, next drive 0f9; vitest 929;
 activity CHECK 80; intent door 14; durable baseline unchanged.
+
+---
+
+## 123. §122 confirmed — sweep one COMPLETE; the grants-pass Phase 0 — 2026-08-25
+
+The founder confirmed §122 in writing 2026-08-25 (migration 109
+stands). Phase 0 for the grants pass ran against CODE, not
+assumption — every flagged SECURITY DEFINER function now has a
+verified caller story:
+
+**The trap was REAL, three times over.** check_rate_limit is called
+through the COOKIE client (src/lib/rate-limit/server.ts:49) — anon
+on /request-access; the Resend webhook route builds its client with
+the ANON key (api/webhooks/resend/route.ts:14, svix signature at the
+app layer) so record_email_delivery_event arrives as anon; and the
+Vercel cron (api/cron/maintenance/route.ts:57) uses the cookie
+client too — no session, CRON_SECRET at the app layer — so
+run_guarantee_maintenance arrives as anon. All three anon grants are
+LOAD-BEARING. Revoking any of them would have silently broken the
+front door's limiter, the delivery trail, or the guarantee sweep —
+fails-closed design means the breakage would read as "everything
+rate-limited/unavailable", the worst kind of quiet.
+
+**The safe set is the trigger functions.** record_skill_version
+(103) and candidates_link_network_profile (098) turn out to be
+TRIGGER functions — never invoked by any session; likewise the guard
+family (guard_task_assignee_changes from 106,
+guard_objective_owner_changes and guard_financial_key_results from
+107/108 — revoked public+anon at birth but Supabase's default
+privileges grant authenticated separately, which is why the advisor
+still lists them — guard_lead_recruiter_changes from 064,
+handle_new_auth_user). Trigger firing does not check the invoker's
+EXECUTE; the house already proved the full revoke on
+guard_author_in_org (057) and every audit_* function (068) years of
+migrations ago.
+
+The gate is drafted at
+docs/superpowers/specs/2026-08-25-grants-pass-gate.md; BUILD
+(migration 110) gated on written confirmation. Numbers: next
+migration 110, next § 124, next drive 0f9.
