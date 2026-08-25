@@ -9299,3 +9299,59 @@ key rotation, RLS review on pre-existing tables, unindexed-FK fixes,
 first-client testing, onboarding docs, status page, Lighthouse
 audit, simulator verification. Numbers: next migration 109, next
 § 122, next drive 0f9; vitest 929; durable baseline unchanged.
+
+---
+
+## 122. The pre-launch checklist opens — the advisor sweep, and migration 109 — 2026-08-25 — DRAFT
+
+Checklist item one (CLAUDE.md standing order) run live 2026-08-25:
+**62 security findings, 132 performance findings, ZERO errors.**
+Migration 109 applied (27 indexes + 2 ALTER FUNCTION, verified live).
+**This § is a DRAFT: no completion is declared.**
+
+**FIXED (109, purely additive):** all 27 unindexed foreign keys
+(INFO) — including the new domains' (tasks ×4, objectives ×4,
+objective_key_results ×1) and the older created_by/attribution
+columns the checklist bullet named — plus the two
+function_search_path_mutable WARNs (candidate_identity_key,
+complete_candidate_send pinned to search_path=public; neither is
+SECURITY DEFINER — hygiene, not a boundary).
+
+**FOUNDER-OWNED (already on the standing list):**
+auth_leaked_password_protection (Pro-gated toggle).
+
+**BY DESIGN, documented here rather than "fixed":**
+rate_limit/rate_limit_policy show RLS-enabled-no-policy (INFO) —
+088's caps-as-data: default-deny, service-role only, exactly as
+built; the token-path RPCs executable by anon (verify_hm_token,
+verify_invitation, candidate_portal_*) — the token path IS anon, that
+is the product; the predicate and door functions executable by
+authenticated — they are the mechanism RLS calls; 43
+multiple_permissive_policies (WARN) — the deliberate human-lane +
+agent-lane policy pairs; merging them into OR-policies would blur
+the named-lane doctrine for a per-row cost that is negligible at
+current volume — revisit at real load; 62 unused_index (INFO) — no
+traffic yet, expected pre-launch.
+
+**OPEN — the sweep's one real follow-up, ITS OWN SLICE:** EXECUTE
+grants on internal SECURITY DEFINER functions that anon (and in some
+cases authenticated) should not hold: guard_task_assignee_changes
+(106 predates the revoke habit 107/108 adopted),
+handle_new_auth_user, record_email_delivery_event,
+record_skill_version, run_guarantee_maintenance,
+candidates_link_network_profile, check_rate_limit — the last needs
+CARE: whether the marketing /request-access path calls it under anon
+must be verified live before any grant moves (the 088 machinery must
+not break). Grants are behaviour; this pass wants its own
+harness-verified slice, drafted before touched.
+
+Remaining checklist after this §: the grants slice above · Turnstile
+on /request-access (founder keys pending) · service-role key
+rotation (founder act) · the full RLS review pass on pre-existing
+tables · first-client testing (search loop, HM portal, Triangulation
+Report, PDF exports, email drafts) · onboarding docs · status page ·
+Lighthouse/mobile-animation audits · simulator verification · Resend
+webhook (founder) · Stripe LAST (founder's call, unchanged).
+
+Numbers: next migration 110, next § 123, next drive 0f9; vitest 929;
+activity CHECK 80; intent door 14; durable baseline unchanged.
