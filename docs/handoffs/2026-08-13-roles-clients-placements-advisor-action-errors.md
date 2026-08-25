@@ -9704,3 +9704,76 @@ No code changed; vitest stands 929; no deploy. Numbers: next
 migration 111 (unclaimed), next § 129, drive 0fa CONSUMED; activity
 CHECK 80; intent door 14; agent allowlist 29. This section is
 DRAFTED; the founder's sessions and rulings close the slice.
+
+## 129. F-1 ruled BLOCKING and FIXED — PLATFORM AGENTS (migrations 111 + 112); drive 0fb green — 2026-08-25
+
+The founder ruled 2026-08-25: the first client gets their own
+organization, so §128's F-1 blocks — fix it. The fix shipped the
+same day, in three parts, and drive 0fb proved it end to end.
+
+**The ruling that shapes the fix: agents are the PLATFORM's
+workforce, not one org's members.** The alternative — minting 24
+agent principals per organization — was weighed and set aside: it
+breaks the one-env-credential-pair-per-agent model and multiplies
+the provisioning surface for no doctrine gain. Instead the agents'
+org anchor yields to their IDENTITY anchor everywhere it appears:
+`is_agent()`, which already carries the /ops kill switch
+(current_user_role() resolves NULL for a suspended row within one
+run).
+
+**Migration 111 — the policies and the door.** All FORTY-TWO agent
+policies across 26 tables re-emitted with the
+`organization_id = current_user_org_id()` conjunct dropped and
+every domain-narrowing conjunct preserved verbatim (draft-only
+gates, author pins, the engagement escalation rule, prescreen
+status vocabulary). `record_agent_event` now derives the event's
+organization from the SUBJECT — the project's org, else the
+candidate's, else the agent's own — so an agent acting for org X
+writes org X's trail under its own face, never HQ's. §126 R2 gains
+its named SECOND legal cross-org family: agent-anchored policies,
+by this ruling.
+
+**The seam honesty (code).** The 0fa stall was a zero-row UPDATE
+reported as success. agent-parser.ts now passes `count: 'exact'` on
+both persistence writes and REFUSES on zero rows; the upload action
+persists the honest failure under the RECRUITER's session (which
+always reaches its own org's row) before throwing — the retry
+affordance can no longer silently vanish, whatever RLS does to the
+agent. This is the class fix's exemplar; the same count-check
+belongs in the other agent seams as they are touched (noted, not
+swept — D3 discipline).
+
+**Migration 112 — the trail guard.** Drive 0fb's first pass proved
+the parse PERSISTED cross-org but the trail write still died
+silently inside write_activity_event's WARNING catch:
+guard_author_in_org (057) refuses authors who are not members of
+the event's org. It gains ONE exception — an ACTIVE agent authors
+any org's trail; a SUSPENDED agent falls through to the membership
+test and is refused, proven both ways in a rolled-back probe
+(active landed, suspended refused). The 057/068/110 zero-session-
+grant pattern re-asserted on the function.
+
+**Drive 0fb (scratch org, fixed 0fb UUIDs, prod after deploy):**
+the EXACT 0fa stall scenario re-run — synthetic CV uploaded by a
+scratch manager in a NON-HQ org. Parse persisted: "Avery
+Penhallow", title, company, archetype, fit dimensions,
+cv_processing false, no error. The candidate_parsed event landed IN
+THE SUBJECT ORG wearing "CV Parsing Agent". Both invariant
+harnesses re-ran live under 111+112 — okr FOURTEEN and task EIGHT,
+green, rolled back. Teardown by value, exact first pass; baseline
+25/24/74/5/5/1/1/2/2/1/1 + 0/0/0 + auth 25 + orgs 1 + rate_limit 0,
+no stray storage.
+
+Green gate: tsc / vitest 929 / eslint / build · commit 3031aad
+(111 + code) · deployed to production (mandate-1euyfk3mx) ·
+migration 112 in this commit. F-1 CLOSES. The residue class stays
+named: any agent seam that writes without a count check can still
+lie on a FUTURE policy regression — the harness invariant that
+would pin it (an agent write asserted cross-org in
+supabase/tests/) is the natural first test of the next SQL slice.
+
+Numbers: next migration 113, next § 130, next drive 0fc; vitest
+929; activity CHECK 80; intent door 14; agent allowlist 29. §128's
+remaining items stand: the founder's real-CV/HM/mail-client
+sessions, the D2 disposition ruling, and punch items F-2..F-6
+(F-2 mailto ceiling next by severity).
