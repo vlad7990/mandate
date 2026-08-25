@@ -7432,3 +7432,153 @@ slice; inbound email is the arc's largest genuine gap) → 101 #23
 Pre-Screen (two evidence tracks, no verdict key — harness-pinned).
 The founder chose to begin the arc NEXT; the pre-launch checklist
 queues behind it.
+
+---
+
+## 90. Engage slice one — the Outreach Strategy Agent (#21), the twenty-first principal — 2026-08-24 — DRAFT, awaiting the founder's written confirmation
+
+D1–D8 confirmed in writing 2026-08-24 (NEXT-outreach-strategy.md,
+committed `70cfcd5`); built and driven the same evening. **This § is a
+DRAFT: no completion is declared and NEXT-outreach-strategy.md is not
+deleted until the founder confirms these verdicts.**
+
+**Migration 097** (MCP + `supabase/migrations/097_agent_outreach_strategy.sql`,
+commit `3e18cac`): the first slice since 085 that mints tables rather
+than converting a surface. `outreach_strategies` — agent I+S, agent U
+double-pinned status='draft' BOTH faces (the 092 family); INSERT pins
+status at birth AND created_by to the signing session; the human door
+(approve/decline/supersede) gated `can_share_clients` — the SAME
+predicate as the contact log, because the act that authorizes contact
+is pinned like the contact record; approved_by actor-pinned in WITH
+CHECK (the 087 decided_by family); a decision without a decider is
+refused by table CHECK; ONE live draft per candidate-lane (partial
+unique index). `org_comms_policy` — policy as data (088), admin-only
+writes, agent read; **`linkedin` cannot enter allowed_channels BY
+CONSTRAINT** — the source-policy doctrine enforced at the data layer.
+ONE new read grant: `candidate_outreach_agent_select` (the history
+read; Phase 0 found candidate_outreach had NO agent face). NO agent
+write on the contact record — sends stay human until 099. Vocabulary:
+`outreach_strategy_drafted`, CHECK rebuilt from the live list 64→65,
+allowlist TWENTY-FIVE→TWENTY-SIX. `mission_id` landed nullable and
+unread (D8 as confirmed: Scout's tables deferred).
+
+**The harness** (`supabase/tests/agent_outreach_strategy_invariants.sql`):
+read coverage on harness ids including the new history grant; the
+draft born under the agent's name with a counts-only event (text-probe
+clean); history intact at twenty-six by COUNT; the pins all faces —
+agent cannot birth a decided row, sign another's name, leave 'draft',
+or touch a decided row; the human decision actor-pinned (an approval
+wearing another's name refused); a viewer refused; two live drafts
+refused; the agent refused at candidate_outreach INSERT and at
+org_comms_policy UPDATE (a recruiter too; the admin lands; linkedin
+refused by CHECK); negative matrix unchanged; kill switches
+independent at TWENTY-ONE. **Control run verified**: the agent UPDATE
+rebuilt with the WITH CHECK status conjunct dropped ("USING already
+refuses decided rows") — the agent moved its own draft to 'superseded'
+and the harness aborted at INVARIANT-FAIL (4), drift and harness in
+one transaction, residue-free by construction. The two conjuncts guard
+different faces: USING is what the agent may touch, WITH CHECK is what
+it may leave behind.
+
+**The principal.** Live account `vbreygin+strategy@gmail.com`, id
+`1a6bbc30-…`, Mandate HQ, §30 recipe (the flip its own statement, +3
+member events keyed by the agent's name); sign-in smoke-tested via
+GoTrue and the session revoked. `AGENT_OUTREACH_STRATEGY_*` in Vercel
+production (sensitive). **`.env.local` is founder-hand this slice** —
+the file is permission-protected from the session that built this; the
+pair to append is in the job report. **New durable baseline: 22 users
+/ 21 agents / 65 events / 1 org_comms_policy row** (2 projects, 2
+clients, 5 skills, 1 job_spec, 1 candidate unchanged).
+
+**The seam** (`src/lib/ai/run-outreach-strategy.ts`): signs the
+twenty-first principal in per drafting act; re-reads mandate,
+evidence, contact history, and comms policy under ITS session; judges
+with skills riding the session (D6); **clamps deterministically**
+(`src/lib/outreach/strategy-policy.ts`, 10 vitest contracts — client
+name scrubbed under never/after_nda, compensation content cut under
+human_only, channel clamped to the allowed set) — layer one of 099's
+two-layer check; INSERTs the draft; records counts; signs out in a
+finally. The panel (`strategy-panel.tsx`) renders the draft source in
+the outreach tab: approve/decline/redraft on a draft, mailto + copy on
+approved — level ≤1 sending is the recruiter's own mail client, and
+the panel says the Art. 14 notice is appended by Mandate at send time,
+not part of the draft. **Redraft is human-first** (the pin conflict
+found in Phase 0): the recruiter's session supersedes, the agent
+drafts the next version, and a refusal rolls the supersede back.
+compose.ts unchanged — the agent writes recruiter-block text only, so
+the notice guarantee needed nothing. /app/agents grew the ENGAGE
+chapter with the "stays human" line; the footer counts twenty
+independent siblings.
+
+### Driven live on production (deploy `mandate-7qjgbiqbj` = `3e18cac`)
+
+Scratch world 0eb INSIDE Mandate HQ: operator Wren Halloway
+(is_founder admin, never the real founder), mandate "0EB Head of
+Treasury Operations" (fictional Thornbridge Capital Partners), one
+sourced candidate with evidence and a nine-day-old outreach log. The
+acts, each verified in the database as it landed:
+
+1. **Draft** → v1 landed status='draft' under the AGENT's id, 5
+   talking points grounded in the seeded T+1/FCA evidence; ONE
+   `outreach_strategy_drafted` event, actor-label the agent's name,
+   detail counts only (evidence_keys 3, prior_contacts 1,
+   policy_clamped false); **text-probe ZERO** across the whole trail
+   (no candidate name, no company, no draft text); zero agent
+   sessions after.
+2. **Approve** → status='approved', approved_by = the OPERATOR,
+   stamped; the mailto + copy affordances rendered.
+3. **New draft (v2) → Redraft** → the ledger reads v1 approved / v2
+   superseded (the human's act) / v3 draft — the human-first
+   supersede proven live.
+4. **Suspended from /ops → the refusal, VERBATIM** ("The Outreach
+   Strategy Agent could not run — an operator has suspended it or its
+   credentials are absent. Nothing was drafted; the contact log and
+   history are untouched. Try again when it is restored."), captured
+   by MutationObserver; strategies still 3, events still 3, nothing
+   destroyed. **Restored** from /ops (the buttons now read
+   Suspend/Restore — §30's cosmetic note is resolved).
+5. **Steering probe** — a search skill authored through the real
+   Skills Studio, NAMING its target field (§82 guidance): the next
+   draft's angle began **"STEERED-0EB:"** on production — a
+   recruiter-authored skill provably steering the twenty-first
+   principal.
+6. **/app/agents** — the ENGAGE chapter live, the principal ACTIVE.
+
+Screenshots (`.playwright-mcp/`): strategy-0eb-empty-panel,
+strategy-0eb-draft-v1, strategy-0eb-approved-mailto,
+strategy-0eb-suspended-d5, strategy-0eb-steered-angle,
+agents-0eb-engage-chapter.
+
+Teardown on scratch ids to the new durable baseline EXACTLY — the
+suspend/restore residue keyed by VALUE (from 'active'/'suspended' vs
+creation's 'pending', the documented trap) was caught at 67 and
+removed to 65; the principal's 3 creation events stand durable.
+
+**One honest wound from the drive:** the Playwright browser held the
+FOUNDER's live session; signing it out to admit the scratch operator
+was a GLOBAL GoTrue signout and revoked the founder's own device
+session too (auth.sessions read 0 at teardown). Nothing else was
+touched; the founder signs in again once. Future drives should prefer
+deleting only the browser's own session row by id, or a separate
+browser profile.
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The slice is live at level ≤1 end to end**: draft → human decision
+  → the recruiter's own mail client. No autonomous send exists
+  anywhere; the comms service (and its second policy layer) is 099's.
+- **Next slice per the confirmed order: 098 #24 Candidate
+  Relationship** — network_profiles + resolver + durable DNC before
+  any autonomous send; its own NEXT file and D1–D8 gate before
+  anything is built.
+- **org_comms_policy has no settings surface yet** — defaults serve
+  slice one; the admin editing surface belongs with the approvals
+  queue when the arc's surfaces consolidate (or earlier by founder
+  call).
+- **The clamp is intentionally conservative** (drop/scrub, never
+  rewrite); a false positive costs a lightly thinner draft, never a
+  leak. Its vocabulary (comp regex, stand-in phrase) is code the
+  founder may tune.
+- **`.env.local` append is founder-hand** (the pair is in the job
+  report); production is already live without it — local dev refuses
+  honestly until it lands.

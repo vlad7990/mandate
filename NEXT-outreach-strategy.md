@@ -2,9 +2,17 @@
 
 Picked by the founder 2026-08-24 (§89): the approved Scout spec's
 implementation order 21 → 24 → 22 → 23, slice one first — migration
-097, the TWENTY-FIRST principal. **Phase 0 complete 2026-08-24.
-D1–D8 DRAFTED below — the build is GATED on the founder's written
-confirmation. Nothing past Phase 0 has been touched.**
+097, the TWENTY-FIRST principal. **D1–D8 CONFIRMED in writing
+2026-08-24; the ladder ran the same evening: 097 applied + harness +
+control run, principal provisioned, seam/clamp/panel/registry built,
+green gate (tsc / vitest 838 / eslint / build), 0eb live drive on
+production (deploy `mandate-7qjgbiqbj` = `3e18cac`), teardown to the
+new durable baseline (22 users / 21 agents / 65 events / 1
+org_comms_policy row). §90 verdicts are DRAFTED in the handoff — this
+file is NOT deleted and no completion is declared until the founder's
+written confirmation of §90. One founder-hand item: append the
+AGENT_OUTREACH_STRATEGY_* pair to `.env.local` (the pair is in the
+job report; the file is permission-protected from this session).**
 
 Spec: `docs/superpowers/specs/2026-08-24-mandate-scout-engagement-design.md`
 (§8 is this principal; defaults confirmed: org autonomy cap default
