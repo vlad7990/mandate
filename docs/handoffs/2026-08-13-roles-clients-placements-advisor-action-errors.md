@@ -9129,3 +9129,26 @@ intent door 14 (both untouched); agent allowlist 29. On
 confirmation the programme proceeds per D9: viewer → externals (own
 gates) → admins never; after the programme, THE PRE-LAUNCH CHECKLIST
 (standing order).
+
+---
+
+## 117. §116 confirmed — the researcher slice COMPLETE; the viewer slice Phase 0 opens — 2026-08-25
+
+The founder confirmed §116 in writing 2026-08-25. Slice two stands
+(migration 108, the D3 double refusal, placements_sourced, drive
+0f7). NEXT-okr-programme.md marks slice two DONE; the file stands
+until the programme closes. Per D9 the programme reaches the VIEWER —
+the degenerate case: a definitionally non-writing role with no
+delivery to measure. Phase 0 verified the surface as built: every
+authoring affordance on /app/objectives is behind okrs:write (create
+form, KR composer, attest, close, abandon), the subhead names the
+viewer's state ("read-only"), Analytics shows them the non-financial
+progress, Placements shows them the "Fees restricted" panel and no
+strip, and the harness already pins every viewer negative BY NAME
+(refused as owner, refused creation, refused at the intent door,
+zero financial rows) plus the positive (they READ the board and the
+quantitative rows — visibility is the point of the role). The gate
+is drafted at docs/superpowers/specs/2026-08-25-okr-viewer-gate.md —
+a VERIFICATION-ONLY slice proposal; BUILD (such as it is) GATED on
+written confirmation against it. Numbers: next migration 109 (none
+proposed by this gate), next § 118, next drive 0f8.

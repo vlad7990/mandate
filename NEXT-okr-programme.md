@@ -8,8 +8,11 @@
 # SLICE ONE (Recruiter/Manager) DONE — §114 confirmed 2026-08-25
 # (migration 107, /app/objectives, Analytics + Placements, drive
 # 0f6; gate: docs/superpowers/specs/2026-08-25-okr-kpi-design.md).
-# NEXT: the RESEARCHER slice, its own Phase 0 + gate. This file
-# stands until the whole programme closes.
+# SLICE TWO (Researcher) DONE — §116 confirmed 2026-08-25
+# (migration 108, the D3 double refusal, placements_sourced, drive
+# 0f7; gate: docs/superpowers/specs/2026-08-25-okr-researcher-gate.md).
+# NEXT: the VIEWER slice, its own Phase 0 + gate. This file stands
+# until the whole programme closes.
 
 ## The founder's words (2026-08-25)
 
