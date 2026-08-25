@@ -9395,3 +9395,105 @@ The gate is drafted at
 docs/superpowers/specs/2026-08-25-grants-pass-gate.md; BUILD
 (migration 110) gated on written confirmation. Numbers: next
 migration 110, next § 124, next drive 0f9.
+
+## 124. §123 confirmed — THE GRANTS PASS ran; migration 110 applied, the matrix diff exact — 2026-08-25 — DRAFT
+
+The founder confirmed §123 in writing 2026-08-25 against the gate doc
+(docs/superpowers/specs/2026-08-25-grants-pass-gate.md, commit
+26f5e6e). The D-gate ladder ran in order, live, against pg_proc —
+never files.
+
+**The privilege matrix, BEFORE (has_function_privilege, live).**
+Signatures from pg_proc: the seven triggers all take no arguments;
+the machine doors are record_email_delivery_event(text, text, text,
+text) and run_guarantee_maintenance(); the control is
+check_rate_limit(text, text).
+
+| function | anon | authenticated |
+|---|---|---|
+| guard_task_assignee_changes | t | t |
+| guard_objective_owner_changes | f | t |
+| guard_financial_key_results | f | t |
+| guard_lead_recruiter_changes | f | t |
+| handle_new_auth_user | t | t |
+| record_skill_version | t | t |
+| candidates_link_network_profile | t | t |
+| record_email_delivery_event | t | t |
+| run_guarantee_maintenance | t | t |
+| check_rate_limit (control) | t | t |
+
+Note 106's guard still carried ANON — only 107/108 were revoked
+public+anon at birth; the gate doc's roll-call was right to name all
+seven.
+
+**Migration 110 applied** — both faces: the numbered file
+supabase/migrations/110_grants_pass_execute_revokes.sql and MCP
+apply_migration, identical SQL. D1: REVOKE ALL from public, anon,
+authenticated on the seven trigger functions. D2: REVOKE EXECUTE
+from authenticated ONLY on the two machine doors. service_role
+untouched. Per R1 the migration's comments name all three
+load-bearing machine paths (limiter / webhook / cron) so no future
+sweep "fixes" them.
+
+**The matrix AFTER — the diff is EXACTLY the planned rows (R2).**
+
+| function | anon | authenticated |
+|---|---|---|
+| guard_task_assignee_changes | f | f |
+| guard_objective_owner_changes | f | f |
+| guard_financial_key_results | f | f |
+| guard_lead_recruiter_changes | f | f |
+| handle_new_auth_user | f | f |
+| record_skill_version | f | f |
+| candidates_link_network_profile | f | f |
+| record_email_delivery_event | t | f |
+| run_guarantee_maintenance | t | f |
+| check_rate_limit (control) | t | t |
+
+Nine functions changed, fourteen cells flipped, the control
+unchanged, service_role true on all ten before and after. Nothing
+else moved.
+
+**The harnesses re-ran live, under the revoke.** okr_invariants.sql
+(FOURTEEN) and task_invariants.sql (EIGHT), each self-contained
+begin/rollback via execute_sql — both green, no exception raised.
+This is the behavioural proof of D1's premise: every harness insert
+into auth.users fired handle_new_auth_user, and every objective/task
+write fired the guard family, all under `set local role
+authenticated` with ZERO session grants remaining — triggers fire on
+the table owner's authority, not the invoker's EXECUTE. Baseline
+verified after both rollbacks: 25 users / 24 agents / 74 events / 5
+skills / 5 skill_versions / 1 network_profile / 1 org_comms_policy /
+2 projects / 2 clients / 1 candidate / 1 job_spec / 0 tasks / 0
+objectives / 0 key_results — exact.
+
+**Drive 0f9 (light), R3 proven from the outside.** An anon REST
+probe of check_rate_limit (anon key via get_publishable_keys)
+returned a VERDICT, not a privilege error:
+`{"allowed": true, "reason": "ok", "retry_after_seconds": 0}` on
+scope access_request_ip — the fails-closed limiter still answers
+anon, so the front door is open and honest. (A first probe with an
+unknown scope returned the P0001 domain error "unknown scope" —
+itself proof the function EXECUTED as anon.) The probe's single
+bucket row was swept by value
+(access_request_ip:0f9-grants-pass-probe:496577, count 1, deleted).
+/request-access renders whole in prod (Playwright: headline, all six
+fields, submit, the no-credit-card line). No skill edit needed — the
+okr harness already fires record_skill_version's sibling pattern and
+the trigger family is proven above; no scratch principals were
+minted outside the harness rollbacks, so there is nothing to sweep.
+
+Green gate: vitest 929/929 (60 files) — this slice is SQL+docs, no
+app code touched, no deploy owed. Numbers now: next migration 111,
+next § 125, next drive 0fa; vitest 929; activity CHECK 80; intent
+door 14; agent allowlist 29.
+
+Next per §122: the full RLS review pass on pre-existing tables, then
+first-client testing, onboarding docs, status page,
+Lighthouse/mobile audits, simulator verification. Founder-owned
+stack unchanged (Turnstile keys; service-role key rotation + exposed
+access token; Resend webhook secret + redeploy; four Engage
+.env.local pairs; leaked-password protection; the "Capital Markets
+Investment Bank" rename; stale-poll refresh §82). Stripe parked
+LAST. This section is DRAFTED; nothing here is confirmed until the
+founder's written word.
