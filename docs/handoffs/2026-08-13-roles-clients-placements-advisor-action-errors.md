@@ -10112,3 +10112,80 @@ invitation, never an account.
 Numbers: migration 114 + drive 100 claimed by the gate on
 confirmation; next § 138; vitest 939. The gate awaits the founder's
 written word.
+
+## 138. §137 confirmed — ONBOARDING BUILT; drive 100 street-to-desk green — 2026-08-25
+
+The founder's written word landed against the gate doc and the slice
+was built the same day. Migration 114 (file + MCP, applied) carries
+the gate's two claims — waitlist.staff_invitation_id (indexed,
+ON DELETE SET NULL) and organizations_founder_insert, that table's
+first legal INSERT policy — plus a pair the gate had not named and
+the act cannot run without: staff_invitations_founder_select and
+_founder_insert. 113's admin policies are org-matched, so the
+founder's session (org = Mandate HQ) could neither issue nor read
+back an invitation for any OTHER organisation; provisioning invites
+the requester into the org being provisioned, so the founder needs
+the cross-org pair. Anchored policies per §126 R2 — no definer door
+was added.
+
+approveWaitlistRequestAction is now the provisioning act: reads the
+pending row, refuses re-review, resolves the door (new org — pure
+rule orgProvisionRefusal + deriveOrgSlug in src/lib/orgs/, slug
+unique-violation in words, requester at role ADMIN — or existing
+org + staff role, with the already-a-member check), issues the
+invitation with the founder as invited_by, stamps the waitlist row
+with status + reviewer + staff_invitation_id in one read-back
+update, and returns the /join URL. The waitlist card grew the
+explicit choice panel (§135 D4 — no silent defaults; slug derives
+from the company name until touched) and approved cards show
+"Invitation // org · role · live|accepted|revoked|expired" with the
+copyable link — the queue shows which approvals have been handed
+their door.
+
+The handbook: eight chapters in docs/handbook/ (requesting access ·
+approval + the join contract · first sign-in · the mandate loop ·
+HM sharing · candidate portal + erasure · member management · what
+the agents do and never do), rendered at a public /handbook on the
+marketing surface by a hand-rolled, unit-tested markdown subset
+parser (src/lib/handbook/markdown.ts) — no rendering dependency
+taken. Content was written against a fresh as-built sweep of every
+journey's actual copy; D3 held — nothing promised, the no-verdict
+sentence wherever an agent is described, the stale "4 / 14 agents"
+string on /app/projects/new NOT repeated (it contradicts the
+24-principal registry and is still unfixed). Footer gained the
+Handbook link.
+
+DEFECT FOUND IN PROD, fixed d35be36: /join was never in the proxy's
+ALWAYS_PUBLIC_PREFIXES — a fresh anonymous visitor (the only kind
+an invitation has, by definition) was bounced to /auth/signin; and
+the new /handbook was missing from PUBLIC_PAGES, exactly the
+silent-hide the allowlist's own comment warns about. Both public
+now; /join sits with the other token doors.
+
+Green gate: tsc, eslint, build, vitest 939 → 964 (orgs
+provision-rules 13, handbook markdown 12). Commits 9124ae9 (slice)
++ d35be36 (proxy); deployed twice, prod = mandate-386lpo7cu.
+
+Drive 100 (prod, street to desk): Nora Quist submitted the real
+/request-access form (100-probe@mandate.test, Quist Search Group) →
+row pending → scratch founder (§6a recipe, Mandate HQ) approved via
+the NEW-ORG panel — org quist-search-group born under the founder's
+session, admin invitation issued, queue showed the live link →
+cookies cleared, the real /join link redeemed with a fresh password
+→ Nora landed on /app/home as the org's sole active admin ("1
+ACCOUNT // 1 ADMIN") → she issued a recruiter invitation for Rex
+Marlow from /app/settings/members — §135's loop reached from the
+street. Screenshots onboarding-100-*.png. Teardown by value in
+order (quist trail events; the four HQ member-audit events
+targeting the scratch founder; staff invitations; waitlist row by
+email; rate_limit to zero; public.users before auth rows; the org
+LAST); baseline verified in a fresh statement — 25/24/74/5/5/1/1/
+2/2/1/1/0/0, auth 25, orgs 1, staff_invitations 0, rate_limit 0.
+
+Numbers: next migration 115; next § 139; next drive 101; vitest
+964; anon grant roster still TWELVE (114 added policies, not
+grants). Remaining per checklist: status page · Lighthouse +
+mobile-animation audits · simulator verification · the founder's
+testing half of §128 (real CVs, real HM, mail-client check, real
+erasure, D2 disposition ruling). The "4 / 14 agents" stale string
+is now a named loose end.
