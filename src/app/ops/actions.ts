@@ -31,14 +31,19 @@ async function requireFounder(): Promise<AuthContext> {
 }
 
 /**
- * Approve a pending user. Sets status='active' and (optionally) assigns
- * them to the founder's organization if they're not yet attached. RLS on
- * the users table allows founders to update other rows via the
- * `founders_can_update_users` policy from migration 002.
+ * Approve a pending user. Sets status='active'. An org-less signup now
+ * requires an EXPLICIT organisation choice (§134 D4) — the old behaviour
+ * silently filed strangers into the founder's org, the same single-tenant
+ * assumption class as §128 F-1. RLS on the users table allows founders to
+ * update other rows via the `founders_can_update_users` policy from
+ * migration 002.
  */
-export async function approveUserAction(targetUserId: string): Promise<ActionResult> {
+export async function approveUserAction(
+  targetUserId: string,
+  organizationId?: string
+): Promise<ActionResult> {
   return runAction(SUBJECT, async () => {
-    const auth = await requireFounder();
+    await requireFounder();
     const supabase = await createServerSupabaseClient();
 
     const { data: target, error: targetError } = await supabase
@@ -56,14 +61,25 @@ export async function approveUserAction(targetUserId: string): Promise<ActionRes
       throw new Error(`User not found: ${targetError?.message ?? targetUserId}`);
     }
 
-    // If the pending user has no org yet, assign them to the founder's org.
-    // Otherwise just flip their status.
     const updates: Record<string, unknown> = {
       status: "active",
       updated_at: new Date().toISOString(),
     };
-    if (!target.organization_id && auth.organizationId) {
-      updates.organization_id = auth.organizationId;
+    if (!target.organization_id) {
+      if (!organizationId) {
+        throw new Error(
+          "This account has no organisation yet — choose one to approve them into."
+        );
+      }
+      const { data: org, error: orgError } = await supabase
+        .from("organizations")
+        .select("id")
+        .eq("id", organizationId)
+        .maybeSingle<{ id: string }>();
+      if (orgError || !org) {
+        throw new Error("That organisation could not be found.");
+      }
+      updates.organization_id = organizationId;
     }
 
     const { error: updateError } = await supabase

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { requireActionContext } from "@/lib/auth/access";
 import { isExternalRole, parseRole } from "@/lib/auth/roles";
+import { memberStatusRefusal } from "@/lib/members/status-rules";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 
@@ -114,5 +115,204 @@ export async function setMemberRoleAction(
 
     revalidatePath("/app/settings/members");
     revalidatePath("/app/settings");
+  });
+}
+
+/**
+ * Suspending or restoring a colleague (§134 D3).
+ *
+ * Same discipline as the role writer: capability gate first, refusals in
+ * words (the pure rule in src/lib/members/status-rules.ts carries the
+ * lockout invariants — never the founder, never yourself, never an agent,
+ * never the last active admin), and a `.select()` read-back so a silent
+ * RLS denial cannot report success.
+ */
+export async function setMemberStatusAction(
+  targetUserId: string,
+  nextStatus: string
+): Promise<ActionResult> {
+  return runAction("The status change", async () => {
+    const actor = await requireActionContext("org:manage");
+
+    if (nextStatus !== "active" && nextStatus !== "suspended") {
+      throw new Error(`Not a member status: ${nextStatus}`);
+    }
+
+    const supabase = await createServerSupabaseClient();
+
+    const { data: target, error: readError } = await supabase
+      .from("users")
+      .select("id, organization_id, is_founder, role, status")
+      .eq("id", targetUserId)
+      .single<{
+        id: string;
+        organization_id: string | null;
+        is_founder: boolean;
+        role: string | null;
+        status: string;
+      }>();
+
+    if (readError || !target) {
+      throw new Error("That member is not visible from your organisation.");
+    }
+    if (target.organization_id !== actor.organizationId) {
+      throw new Error("That member belongs to a different organisation.");
+    }
+
+    const { count: adminCount } = await supabase
+      .from("users")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", actor.organizationId)
+      .eq("role", "admin")
+      .eq("status", "active");
+
+    const refusal = memberStatusRefusal({
+      actorId: actor.userId,
+      target,
+      nextStatus,
+      activeAdminCount: adminCount ?? 0,
+    });
+    if (refusal) {
+      throw new Error(refusal);
+    }
+
+    if (target.status === nextStatus) {
+      return;
+    }
+
+    const { data: updated, error: updateError } = await supabase
+      .from("users")
+      .update({ status: nextStatus, updated_at: new Date().toISOString() })
+      .eq("id", targetUserId)
+      .select("id");
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+    if (!updated || updated.length === 0) {
+      throw new Error(
+        "The change was refused. You may no longer have admin access to this organisation."
+      );
+    }
+
+    revalidatePath("/app/settings/members");
+  });
+}
+
+/**
+ * Issuing a staff invitation (§134 D1). The write is RLS-anchored — the
+ * admin's own session inserts, `staff_invitations_admin_insert` decides —
+ * and nothing is emailed: the admin hands the /join link over, exactly the
+ * HM-token contract.
+ */
+export async function issueStaffInvitationAction(input: {
+  email: string;
+  fullName: string;
+  role: string;
+}): Promise<ActionResult<{ url: string; expiresAt: string }>> {
+  return runAction("The invitation", async () => {
+    const actor = await requireActionContext("org:manage");
+
+    const role = parseRole(input.role);
+    if (!role) {
+      throw new Error(`Not a role: ${input.role}`);
+    }
+    if (role === "agent" || isExternalRole(role)) {
+      throw new Error("Only staff roles can be invited from the members screen.");
+    }
+
+    const email = input.email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error("That does not look like an email address.");
+    }
+    const fullName = input.fullName.trim();
+    if (!fullName) {
+      throw new Error("The invitation needs the person's name.");
+    }
+
+    const supabase = await createServerSupabaseClient();
+
+    // An address that already holds an ACTIVE seat in this org needs no
+    // invitation; said in words before the unique index says it in codes.
+    const { data: existing } = await supabase
+      .from("users")
+      .select("id, status")
+      .eq("organization_id", actor.organizationId)
+      .ilike("email", email)
+      .maybeSingle<{ id: string; status: string }>();
+    if (existing) {
+      throw new Error(
+        "That address already belongs to a member of this organisation."
+      );
+    }
+
+    const { data: self } = await supabase
+      .from("users")
+      .select("full_name, email")
+      .eq("id", actor.userId)
+      .maybeSingle<{ full_name: string | null; email: string }>();
+
+    const { data: invitation, error: insertError } = await supabase
+      .from("staff_invitations")
+      .insert({
+        organization_id: actor.organizationId,
+        email,
+        full_name: fullName,
+        role,
+        invited_by: actor.userId,
+        invited_by_label: self?.full_name?.trim() || self?.email || null,
+      })
+      .select("token, expires_at")
+      .single<{ token: string; expires_at: string }>();
+
+    if (insertError) {
+      if (insertError.message.includes("staff_invitations_live_email_idx")) {
+        throw new Error(
+          "A live invitation for that address already exists. Revoke it first to change the role."
+        );
+      }
+      throw new Error(insertError.message);
+    }
+    if (!invitation) {
+      throw new Error(
+        "The invitation was refused. You may no longer have admin access to this organisation."
+      );
+    }
+
+    revalidatePath("/app/settings/members");
+    return {
+      url: `/join/${invitation.token}`,
+      expiresAt: invitation.expires_at,
+    };
+  });
+}
+
+/** Revoking a live staff invitation. It cannot be reactivated. */
+export async function revokeStaffInvitationAction(
+  invitationId: string
+): Promise<ActionResult> {
+  return runAction("The revocation", async () => {
+    await requireActionContext("org:manage");
+    const supabase = await createServerSupabaseClient();
+
+    const { data: updated, error: updateError } = await supabase
+      .from("staff_invitations")
+      .update({
+        revoked_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", invitationId)
+      .is("revoked_at", null)
+      .is("accepted_at", null)
+      .select("id");
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+    if (!updated || updated.length === 0) {
+      throw new Error("That invitation is no longer live.");
+    }
+
+    revalidatePath("/app/settings/members");
   });
 }

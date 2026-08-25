@@ -5,6 +5,8 @@ import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { PageShell } from "@/components/ui/page-shell";
 import { MastHead } from "@/components/ui/mast-head";
 import { RolePicker } from "./role-picker";
+import { MemberStatusButtons } from "./member-status-buttons";
+import { StaffInvitePanel, type OpenInvitationRow } from "./invite-panel";
 import {
   CAPABILITIES,
   CAPABILITY_LABELS,
@@ -75,6 +77,18 @@ export default async function MembersPage() {
   const activeAdmins = members.filter(
     (m) => m.status === "active" && parseRole(m.role) === "admin"
   ).length;
+
+  // Open staff invitations (§134). Org-scoped and admin-gated by RLS; the
+  // filters restate what "open" means rather than trusting a view.
+  const { data: invitationData } = await supabase
+    .from("staff_invitations")
+    .select("id, email, full_name, role, invited_by_label, expires_at")
+    .eq("organization_id", access.organizationId ?? "")
+    .is("revoked_at", null)
+    .is("accepted_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false });
+  const openInvitations = (invitationData ?? []) as OpenInvitationRow[];
 
   return (
     <PageShell className="space-y-6">
@@ -183,19 +197,28 @@ export default async function MembersPage() {
                       {formatDate(member.created_at)}
                     </td>
                     <td className="px-4 py-3">
-                      <RolePicker
-                        userId={member.id}
-                        displayName={member.full_name?.trim() || member.email}
-                        currentRole={role}
-                        disabled={locked}
-                        disabledReason={
-                          isAgent
-                            ? "Agent principals are managed from Platform ops"
-                            : locked
-                              ? "Founder accounts are managed by Mandate"
-                              : undefined
-                        }
-                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <RolePicker
+                          userId={member.id}
+                          displayName={member.full_name?.trim() || member.email}
+                          currentRole={role}
+                          disabled={locked}
+                          disabledReason={
+                            isAgent
+                              ? "Agent principals are managed from Platform ops"
+                              : locked
+                                ? "Founder accounts are managed by Mandate"
+                                : undefined
+                          }
+                        />
+                        <MemberStatusButtons
+                          userId={member.id}
+                          displayName={member.full_name?.trim() || member.email}
+                          status={member.status}
+                          locked={locked}
+                          isSelf={isSelf}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );
@@ -213,6 +236,19 @@ export default async function MembersPage() {
         <p className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
           NEW ACCOUNTS JOIN AS VIEWER{" // "}PROMOTE THEM HERE
         </p>
+      </section>
+
+      <section className="space-y-3">
+        <MastHead
+          tone="neutral"
+          label="INVITATIONS"
+          meta={
+            openInvitations.length > 0
+              ? `${openInvitations.length} OPEN`
+              : undefined
+          }
+        />
+        <StaffInvitePanel invitations={openInvitations} />
       </section>
 
       <section className="space-y-3">

@@ -134,6 +134,8 @@ export default async function OpsOverviewPage() {
                     userId={u.id}
                     fullName={u.full_name?.trim() || u.email}
                     status={u.status}
+                    needsOrg={!u.organization_id}
+                    organizations={orgs.map((o) => ({ id: o.id, name: o.name }))}
                   />
                 </div>
               </li>
