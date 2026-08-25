@@ -291,45 +291,6 @@ export default async function PlacementsPage() {
               </table>
             </div>
           </ListPanel>
-
-          {financialLines.length > 0 && (
-            <ListPanel>
-              <div className="flex items-center justify-between border-b border-outline-variant px-[18px] py-[15px]">
-                <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
-                  Financial objectives
-                </h2>
-                <Link
-                  href="/app/objectives"
-                  prefetch={false}
-                  className="font-mono-label text-mono-label uppercase tracking-widest text-outline transition-colors hover:text-primary"
-                >
-                  All objectives
-                </Link>
-              </div>
-              <div className="divide-y divide-outline-variant/40">
-                {financialLines.map((line) => (
-                  <div
-                    key={line.id}
-                    className="flex flex-wrap items-center gap-x-4 gap-y-2 px-[18px] py-3"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="text-body-s text-on-surface">{line.label}</span>
-                      <span className="ml-2 font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
-                        {line.objectiveTitle} · {line.ownerLabel} · to {line.periodEnd}
-                      </span>
-                    </div>
-                    <span className="font-mono-label text-mono-label tabular-nums text-on-surface">
-                      {formatMoney(line.current, line.currency)}
-                      <span className="text-outline"> / {formatMoney(line.target, line.currency)}</span>
-                    </span>
-                    <StatusChip tone={OKR_CHIP[line.status]} dot pulse={line.status === "at_risk"}>
-                      {KEY_RESULT_STATUS_LABELS[line.status]}
-                    </StatusChip>
-                  </div>
-                ))}
-              </div>
-            </ListPanel>
-          )}
         </>
       ) : (
         <div className="border border-outline-variant bg-surface-container-low px-[18px] py-4">
@@ -343,6 +304,51 @@ export default async function PlacementsPage() {
             are the full list — nothing is hidden from it.
           </p>
         </div>
+      )}
+
+      {/* The financial-objective strip (107, D4) sits OUTSIDE the
+          sample short-circuit above: a real fees_earned target set
+          before the first placement lands is real data, and the sample
+          gate is keyed on placements alone. `financialLines` is empty
+          for any role RLS refused, so the seesFees guard here is the
+          belt to RLS's braces. */}
+      {seesFees && financialLines.length > 0 && (
+        <ListPanel>
+          <div className="flex items-center justify-between border-b border-outline-variant px-[18px] py-[15px]">
+            <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
+              Financial objectives
+            </h2>
+            <Link
+              href="/app/objectives"
+              prefetch={false}
+              className="font-mono-label text-mono-label uppercase tracking-widest text-outline transition-colors hover:text-primary"
+            >
+              All objectives
+            </Link>
+          </div>
+          <div className="divide-y divide-outline-variant/40">
+            {financialLines.map((line) => (
+              <div
+                key={line.id}
+                className="flex flex-wrap items-center gap-x-4 gap-y-2 px-[18px] py-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="text-body-s text-on-surface">{line.label}</span>
+                  <span className="ml-2 font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
+                    {line.objectiveTitle} · {line.ownerLabel} · to {line.periodEnd}
+                  </span>
+                </div>
+                <span className="font-mono-label text-mono-label tabular-nums text-on-surface">
+                  {formatMoney(line.current, line.currency)}
+                  <span className="text-outline"> / {formatMoney(line.target, line.currency)}</span>
+                </span>
+                <StatusChip tone={OKR_CHIP[line.status]} dot pulse={line.status === "at_risk"}>
+                  {KEY_RESULT_STATUS_LABELS[line.status]}
+                </StatusChip>
+              </div>
+            ))}
+          </div>
+        </ListPanel>
       )}
 
       <ListPanel>
