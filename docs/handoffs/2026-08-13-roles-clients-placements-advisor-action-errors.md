@@ -9277,3 +9277,25 @@ PROGRAMME CLOSES, and THE PRE-LAUNCH CHECKLIST takes the slot
 (CLAUDE.md standing order: advisor sweep, Turnstile, key rotation,
 RLS review, FK indexes, first-client testing, onboarding docs,
 status page, Lighthouse audit, simulator verification).
+
+---
+
+## 121. §120 confirmed — THE OKR/KPI PROGRAMME IS CLOSED; the pre-launch checklist opens — 2026-08-25
+
+The founder confirmed §120 in writing 2026-08-25. The completion
+claim stands: four slices, four confirmed gates, one doctrine
+(recruiter/manager §114, researcher §116, viewer §118, externals
+§120; admins never; agents hold no goals; clients hold no org
+goals). NEXT-okr-programme.md DELETED per doctrine. THE PROGRAMME IS
+CLOSED. The programme's residue, all durable: migrations 107–108,
+the fourteen-invariant okr harness, /app/objectives, the Analytics
+OBJECTIVES section, the Placements financial-objective strip, the
+okrs:write capability, the 80-type activity CHECK with the
+reconciled TS mirror, and the 14-type intent door.
+
+Per the standing order (CLAUDE.md) the slot passes to THE PRE-LAUNCH
+CHECKLIST: advisor sweep, Turnstile on /request-access, service-role
+key rotation, RLS review on pre-existing tables, unindexed-FK fixes,
+first-client testing, onboarding docs, status page, Lighthouse
+audit, simulator verification. Numbers: next migration 109, next
+§ 122, next drive 0f9; vitest 929; durable baseline unchanged.
