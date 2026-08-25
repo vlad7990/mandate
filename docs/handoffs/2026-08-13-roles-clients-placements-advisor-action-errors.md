@@ -8284,3 +8284,107 @@ handoff § 100, next drive prefix 0f0; durable baseline 25 users /
 24 agents / 74 events / 1 network_profile / 1 org_comms_policy.
 Next on the founder's word: a review of Skills Studio and the
 skill-creation process.
+
+---
+
+## 100. Skills Studio review + repairs — 2026-08-25 — DRAFT
+
+On the founder's word (§99): a full review of Skills Studio and the
+skill-creation process, then the repairs, built and driven the same
+session (commit `7b4577e`, deploy `mandate-nq0bh4ao1`, drive 0f0).
+**This § is a DRAFT: no completion is declared until the founder
+confirms these verdicts.**
+
+### The review, as found
+
+The pipeline: admin-only at both layers (skills:write = admin; RLS
+is_org_admin — no capability/RLS mismatch); three scopes (org-wide
+search, client-scoped client, project-scoped role); injection under
+the AGENT's own session via 074's skills_agent_select, XML-escaped,
+appended trailing (authoritative), degrade-to-base-prompt on any
+failure. All 33 model-calling seams inject — the header claim
+"injected into every AI agent run" is true. The trust story is
+sound: skills steer JUDGMENT (proven STEERED-0E5→0EF), and
+everything consequential sits behind deterministic clamps a skill
+cannot talk past (disclosure/comp clamps, DNC guard, no-verdict
+strip, the editorial pins). Precedence and trigger conditions are
+ADVISORY by design — prose in the injected block, model-judged; the
+UI says so honestly.
+
+### Findings → repairs (all shipped)
+
+1. **REAL DEFECT, fixed: create dropped the client scope.** The
+   form collected `applies_to_client_id`, the parser validated it,
+   and the INSERT omitted the column — every client-targeted skill
+   created through the form landed with a NULL client, which the
+   injector reads as "fires for EVERY client": silent scope
+   WIDENING. Repaired; no live damage (all five durable skills are
+   org-wide search skills, untouched).
+2. **The list now shows client scope** — a "Client · name" /
+   "Every client" chip on every client skill (the widened scope was
+   previously invisible where you'd look for it), and the stale
+   "same scope as a search skill" copy is gone from both the type
+   card and the section blurb.
+3. **"Where does it run?" de-enumerated** (the §82/stop-counting
+   class): "Every agent run…" instead of a stale eight-surface list.
+4. **Migration 102 — the studio gets a trail.** Five HUMAN event
+   types (skill_created/updated/paused/activated/deleted; CHECK
+   rebuilt from the LIVE list, 70 → 75). The intent door
+   (`record_activity_event`) grows the family ADMIN-GATED inside
+   the RPC — only the role that can change a skill can claim to
+   have changed one; a recruiter and an agent are refused by name
+   (insufficient_privilege), and the agent's own door refuses the
+   family too. The agent allowlist is UNTOUCHED at twenty-nine.
+   Trail detail carries the skill's NAME, type and scope — never
+   the instructions' text. The feed describes all five acts, filed
+   under mandates (skills change how every search scores);
+   `APP_RECORDABLE_EVENTS`' pinned test updated deliberately — the
+   tripwire fired as designed. **Harness + control run verified**
+   (`skills_studio_invariants.sql`): the admin's five acts land
+   attributed and counted; recruiter/agent/unknown-type refused at
+   every door; agent history intact at twenty-nine. CONTROL (§42
+   family): the CHECK rebuilt WITHOUT the skill family — 0 of 5
+   events VANISHED SILENTLY and the count aborted the harness;
+   drift rolled back.
+5. **Zero-row honesty**: update / toggle / delete now `.select()`
+   and refuse loudly when nothing landed (previously a stale or
+   foreign id reported success).
+6. **Guardrails**: length caps (name 120 / description 300 /
+   trigger 1k / instructions 4k) with honest refusal sentences —
+   every active skill rides every model call for its scope, and a
+   dump should be split, not injected.
+
+### Driven live on production (deploy `mandate-nq0bh4ao1` = `7b4577e`)
+
+Scratch operator Petra Nyland (is_founder admin, never the real
+founder). Through the repaired UI path: a client skill "0F0 Client
+Preference Probe" scoped to a durable client — **applies_to_client_id
+LANDED at create (the exact column that was dropped), the "Client ·
+RBC Capital Markets" chip rendered in the list, `skill_created`
+appeared in the trail under the operator's name with the client
+linked and the scope booleans set, and the instructions' text was
+provably absent from the trail (probe zero)**. Pause → Delete (the
+/ops confirm-override trap applied) → `skill_paused` +
+`skill_deleted` evented; the activity feed rendered all three acts
+("Created the skill … (client-scoped)"). Screenshots
+(`.playwright-mcp/`): skills-0f0-client-chip, skills-0f0-trail.
+Teardown on the probe's name and the operator's — durable baseline
+landed EXACTLY (25 users / 24 agents / 74 events / 5 skills; the one
+session is the founder's).
+
+### Phase 4 verdicts — drafted, for the founder to confirm
+
+- **The studio's honesty gaps are closed**: scope lands as picked,
+  scope is visible where it is managed, changes to the one surface
+  that steers every agent now write their own record, and a
+  no-op save can no longer report success.
+- **Not built, deliberately**: skill versioning (what did it say
+  BEFORE the edit — the trail records that a change happened, not
+  the previous text) and a per-run active-skill count cap. Both are
+  real; neither blocks the pre-launch checklist. Queue them on the
+  founder's word.
+- **Advisory precedence stands as designed** — deterministic
+  precedence enforcement would require a resolver in the injector;
+  the current prose rule plus field-naming steering practice is
+  proportionate at five skills.
+- **Next per the standing order: the pre-launch checklist.**
