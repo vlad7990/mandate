@@ -10954,3 +10954,129 @@ schema_failed signal. Numbers at close: next migration 120; next
 § 153; next drive 107; vitest 1025; CHECK 87; door 20; allowlist
 29; anon roster 12; durable baseline unchanged (inference_runs 0
 durable, gains nothing).
+
+## 153. LLM ROUTER SLICE 4 BUILT — PART R MODEL REGISTRY — drive 107 GREEN — 2026-08-25 — DRAFTED, AWAITS CONFIRMATION
+
+The founder's word ("please execute") landed against the slice 4
+gate as drafted (1885da9, 2026-08-25-llm-router-slice4-gate.md); the
+ladder ran end to end. Nothing here is law until the founder
+confirms THIS entry.
+
+**Migration 120 (model_registry).** Three tables on the 088
+caps-as-data shape, natural keys: model_providers (adapter_kind
+CHECK admits ONLY 'anthropic' — Q4's deferral made structural;
+key_env_var shape-checked ^[A-Z][A-Z0-9_]*$, an env-var NAME that
+cannot admit a key), provider_models (status
+benchmarking|active|retired; CHECK active ⇒ benchmark_ref NOT
+NULL; informational price/caps columns — Part L's read-time map
+stays the cost authority), capability_assignments (capability text
+PK, no CHECK over the 35 — a typo'd row is inert and the console
+shows it; updated_by plain uuid, 118 shape). RLS `is_org_admin()`
+FOR ALL on all three — agents (role 'agent') refused by the same
+test; anon closed by policy absence; the ruled roster STAYS TWELVE.
+Structural activation gate as triggers created AFTER the seed
+(migration order is the door): INSERT refuses active-at-birth;
+active only FROM benchmarking; an assignment only to an active
+model on an active provider; a model cannot leave active while
+assigned. Seed: anthropic provider (ANTHROPIC_API_KEY by NAME) +
+the three production models active with evidence named
+(sonnet-4-6 incumbent §147; sonnet-5 + haiku-4-5 → §150's
+results file). capability_assignments seeds ZERO (J.2): a row is an
+explicit founder override; absence = the ruled map governs and the
+tripwire stays authoritative. Trail: CHECK rebuilt 87 → 89
+(model_provider_added, model_assignment_changed), intent door
+20 → 22, both admin-gated exactly like the skill family;
+record_agent_event untouched at 29.
+
+**Migration 121 (guard revokes).** The post-DDL advisor sweep
+found 120's two trigger guards executable by anon/authenticated as
+SECURITY DEFINER RPCs (Postgres default EXECUTE to PUBLIC). Full
+revoke per the 110 doctrine — a trigger function has no caller.
+Guards proven still firing post-revoke.
+
+**Read path.** src/lib/ai/registry.ts: whole-table read (≤35 rows)
+through the service-role client, 60s in-process TTL, warn-once +
+code-map fallback; stale beats blind (a failed refresh keeps the
+last good read); a failed read stamps the window (one attempt per
+TTL, never one per call). resolveOverrides() is now async on both
+seam paths: assignment row → map. The thinking rule (J.6):
+CAPABILITY_THINKING rides only when the resolved model IS the
+map's model. Registry NEVER consulted under MANDATE_EVAL=1 —
+benchmarks stay reproducible from harness + map alone.
+
+**Admin surface.** NEW capability `models:write`, admin-only
+(roles.ts + matrix test + no-access label "Model management");
+route-access: the whole /app/settings/models prefix takes it
+(unlike the skills list — the registry's RLS is admin-only SELECT,
+so a non-admin render would be an empty lie). Page on the Skills
+shell: providers / models (status, evidence, activate–retire–
+re-benchmark lifecycle; activation prompts for benchmark_ref) /
+35-capability assignment table showing map default beside any
+override, set/clear. actions.ts on the Skills pattern
+(requireActionContext, runAction, recordActivity; the triggers'
+own sentences surface in toasts). Settings hub gains an admin-only
+Models link. TS mirrors widened: ACTIVITY_EVENT_TYPES 87 → 89,
+APP_RECORDABLE_EVENTS 20 → 22, describe cases (names and statuses
+only — never key env-var names), group = mandates (skills
+precedent).
+
+**Tests.** vitest 1025 → 1044: registry.test.ts (TTL, warn-once,
+stale-beats-blind, failure-window) + inference.test.ts slice-4
+describe (override wins + thinking dropped on model change;
+map-model assignment keeps thinking; absence → map; telemetry
+records the override model; failed read never blocks; eval fence
+skips registry). Tripwire UNTOUCHED. tsc, eslint, build green.
+Commits 84e2a29 (build) + f9d83e7 (121); deployed
+mandate-l66e4dsd5.
+
+**Drive 107 — GREEN, live in prod.** (1) Founder-admin at
+/app/settings/models: seeded registry + 35 map defaults rendered
+(models-107-registry-live.png). (2) Added claude-opus-5 → landed
+benchmarking (models-107-opus-benchmarking.png); the UI's
+assignment selects don't even offer it. (3) DB door probed live:
+assignment of the benchmarking model REFUSED by the trigger with
+its own sentence. (4) Activated with evidence prompt; assigned
+copilot → claude-opus-5 (models-107-copilot-override-set.png);
+trail carried 1× model_provider_added + status + assignment
+changes, actor-stamped. (5) After the 60s TTL, Mandy answered ON
+OPUS — inference_runs row copilot/claude-opus-5/ok through the
+STREAMING seam (models-107-copilot-on-opus.png). (6) Cleared the
+override; after TTL the next answer recorded
+copilot/claude-sonnet-4-6 — the ruled map back in charge. The
+round trip is the whole design proven: override wins, clear
+restores, no deploy either way. (7) Refusals: scratch recruiter
+(minted via the standing recipe — NEW TRAP: GoTrue chokes on
+NULL token columns in hand-minted auth.users rows, "Database error
+querying schema"; set the eight token/change columns to '' and
+sign-in works) — browser no-access screen naming models:write
+(models-107-recruiter-no-access.png), RLS 0/0/0 rows under forged
+claims, registry INSERT refused by RLS, model_provider_added
+refused "is an admin act" (42501); the Copilot Agent principal
+refused identically on model_assignment_changed. (8) Teardown by
+value, EXACT first pass: 9 drive trail rows (1 provider-added, 3
+assignment-changed, 2 copilot_answered, 3 member_* from the
+promote) deleted by id; scratch opus row; inference_runs swept;
+rate_limit swept whole; scratch principal public-before-auth;
+localStorage + cookies cleared both sessions. Fresh-statement
+baseline: 26 users / 25 agents / 26 auth / 77 events / 5 skills /
+5 versions / 2 projects / 2 clients / 1 candidate / 1 job_spec /
+1 ops_heartbeat / 0 inference_runs / 0 rate_limit / 1 org / 0
+invitations / 0 interview_plans / 0 client_interviews — PLUS the
+ruled gains: model_providers 1 / provider_models 3 /
+capability_assignments 0.
+
+**Advisor residue (pre-existing, not this slice's):** the sweep's
+other warnings (36 authenticated-executable definer fns, 6 mutable
+search_path, 4 deny-all INFO = by design, leaked-password =
+founder-owned standing item) predate 120 and stay with their
+standing dispositions.
+
+**Router programme state.** All four slices BUILT; 1–3 confirmed
+law, slice 4 awaits the founder's word against THIS entry.
+Escalation pairs (Part G, O.5) are now unblocked once §153
+confirms. Q4 cross-provider spike stays deferred; adding a second
+provider is a migration that widens adapter_kind WITH an adapter
+behind it, never before. Numbers: next migration 122; next § 154;
+next drive 108; vitest 1044; CHECK 89; door 22; allowlist 29;
+anon roster 12; durable baseline gains model_providers 1 /
+provider_models 3 / capability_assignments 0.
