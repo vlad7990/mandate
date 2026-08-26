@@ -12048,3 +12048,107 @@ surface.**
 Numbers at close: next migration 129; next § 167; next drive 115;
 vitest 1105; CHECK 93; door 26; allowlist 29; anon roster 12; durable
 baseline unchanged.
+
+## 167. MARKETING PERFORMANCE — THE CLS CLIFF BELOW 412px — DRAFTED 2026-08-26
+
+Gate `docs/superpowers/specs/2026-08-26-marketing-perf-gate.md` (commit
+344e3f3), then a second founder ruling after the first approach was
+built, measured, and failed. Both are recorded because the failure is
+the more useful half.
+
+**The premise the slice was opened on was stale.** §141 left a residual
+"mobile LCP 3.5s — fonts + bundle, a later perf slice candidate". It
+does not reproduce on either measurement method. Measuring before
+drafting found something else.
+
+**What was actually wrong.** Under APPLIED mobile throttling, cold, the
+homepage measured CLS **0.116 at 390px** and **0.120 at 360px**, against
+**0.011 at 412px**. The marketing faces arrived at ~2.8s, after first
+paint; Fraunces replaced the fallback, the hero headline re-wrapped
+from N lines to N−1, and everything below moved up ~59px. One reflow,
+worth 0.100 of the 0.116.
+
+**Why it hid for six weeks — two reasons, the second the important
+one.** WIDTH: Lighthouse's default mobile emulation is a 412px Moto G,
+on the good side of the cliff. SIMULATION: Lighthouse re-run **pinned
+to 390px against the still-broken build STILL reported 0.007**, because
+Lantern models a slow network over a fast trace — the font never
+actually arrives late, so the swap never actually reflows. **Lighthouse
+would have missed this at any width.** §141's 0.009 was true and blind
+at the same time, and every iPhone from the 12 to the 16 is 390 or 393.
+
+**What did not work, measured rather than assumed.** The first ruling
+was D2(a)+(c): replace the hero's font-relative `46ch` measure with a
+fixed one and reserve its box. Built, and it came out at **0.118
+against a 0.116 baseline — nothing at all.** `.m-hero-trust` was a
+passenger in the shift, not its driver; `ch` explained its own height
+change and none of the 59px everything else travelled. Reverted, and
+the finding put back to the founder rather than widening scope alone.
+
+**As built, on the second ruling.** `display: "optional"` on Fraunces /
+Hanken Grotesk / JetBrains: a ~100ms block period, then the fallback is
+KEPT for the rest of that page load rather than swapping mid-view. No
+swap, no re-wrap, no shift. And `preload: false` on the root layout's
+Inter / Space Grotesk / JetBrains — measured on `/`, Hanken covers 256
+elements, JetBrains 148 and Fraunces 64, while **Inter and Space
+Grotesk cover ZERO**, yet all three were preloaded and downloaded,
+competing for the critical path against the faces actually in use. That
+was 101 KB of the homepage's 236 KB.
+
+**Drive 115 — GREEN, live in prod.** Deployed mandate-9di90olo1 with
+`--force`, and the rules VERIFIED in the served stylesheet before
+measuring (§160's standing lesson): chunk `3o0cirz-q5goi.css` carries
+the canary and 13 `font-display:optional` declarations; font preload
+links in the HTML went 6 → 3.
+
+| width | CLS before | CLS after | LCP after |
+|---|---|---|---|
+| 360 | 0.1203 | **0.0231** | 1832ms |
+| 390 | 0.1157 | **0.0086** | 1828ms |
+| 412 | 0.0111 | 0.0081 | 1720ms |
+| 1440 | 0.0160 | 0.0117 | 1656ms |
+
+Fonts 236 KB / 6 files → **166 KB / 4**. Lighthouse mobile (the D1(a)
+LCP authority) 79 → **82**, LCP 5.1s → 4.5s, TBT 100ms → 30ms, CLS
+0.011 → 0.006. Both authorities improved; D6's target (CLS < 0.05 at
+360 AND 390, no LCP regression) is met on both.
+
+**The accepted trade, honestly bounded.** `optional` means a slow first
+load keeps the fallback face for that load. Checked in three scenarios
+at 390px — slow-4G cold, unthrottled cold, and warm cache — and in all
+three Fraunces and Hanken loaded and rendered. **The trade did not bite
+at Slow-4G**; it would need a worse connection than that, which was not
+tested and is not claimed either way.
+
+**No teardown.** This slice touched no data — frontend only. Baseline
+re-confirmed unchanged after the drive: users 26, events 77, rate_limit
+0, invoices 0, inference_runs 0.
+
+**D5 delivered: `scripts/perf-probe.mjs`.** Pins the WIDTHS
+(360/390/412/1440) *and* uses applied throttling — both halves
+load-bearing, since width alone would not have caught this. Carries a
+`cssOk` canary that fails loudly rather than measuring an unstyled
+page, exits non-zero if mobile CLS reaches 0.05, and is deliberately
+NOT in CI because it needs the network. Adds `playwright-core` driving
+the system Chrome, no bundled browser download.
+
+**A trap that cost real time and is now standing law.** Mid-slice,
+`npm run build` reported SUCCESS while emitting a **21-byte CSS chunk
+with the entire marketing stylesheet missing** — served page had
+`max-width: none` and rendered in Inter. It was stale `.next`
+incremental state, not the edit: the identical code built correctly
+after `rm -rf .next`. Measurements taken against it read 0.22 and sent
+me chasing a nav-layout ghost. **A green build is not evidence the CSS
+shipped — `rm -rf .next` first, then grep the served chunk.** This is
+the local sibling of the Vercel cached-CSS lesson from §160: same
+symptom, two different mechanisms.
+
+Also re-learned: the shell cwd reset to the iCloud clone mid-session
+and one build ran there. Absolute-path edits were unaffected. Check
+`pwd`.
+
+Numbers: next migration 129; next § 168; next drive 116; vitest 1105;
+CHECK 93; door 26; allowlist 29; anon roster 12; durable baseline
+unchanged.
+
+DRAFTED — awaiting the founder's word. No completion declared.
