@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { getAnthropic } from "@/lib/anthropic";
 import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import {
+  CACHED_CONVERSATION_CAPABILITIES,
   INFERENCE_PROVIDER,
   modelForCapability,
   type Capability,
@@ -66,6 +67,7 @@ type InferenceRunRow = {
   provider: string;
   input_tokens: number | null;
   cached_input_tokens: number | null;
+  cache_creation_input_tokens: number | null;
   output_tokens: number | null;
   latency_ms: number;
   outcome: InferenceOutcome;
@@ -84,6 +86,7 @@ export function buildRunRow(args: {
     input_tokens?: number | null;
     output_tokens?: number | null;
     cache_read_input_tokens?: number | null;
+    cache_creation_input_tokens?: number | null;
   } | null;
   latencyMs: number;
   outcome: InferenceOutcome;
@@ -96,6 +99,8 @@ export function buildRunRow(args: {
     provider: INFERENCE_PROVIDER,
     input_tokens: args.usage?.input_tokens ?? null,
     cached_input_tokens: args.usage?.cache_read_input_tokens ?? null,
+    cache_creation_input_tokens:
+      args.usage?.cache_creation_input_tokens ?? null,
     output_tokens: args.usage?.output_tokens ?? null,
     latency_ms: args.latencyMs,
     outcome: args.outcome,
@@ -166,6 +171,57 @@ export function markInferenceSchemaFailed(response: object): void {
 }
 
 /**
+ * Stamp the LAST user message with an ephemeral cache_control so the
+ * whole conversation prefix (tools → system → every prior turn)
+ * caches, and the next turn reads it at ~0.1× (slice 2, gate
+ * 0788898). Pure and exported for its tests. String content becomes
+ * its equivalent single text block — wire-identical otherwise. A
+ * list that doesn't end on a user turn is returned untouched: there
+ * is nothing safe to stamp.
+ */
+export function stampConversationCache(
+  messages: ReadonlyArray<Anthropic.Messages.MessageParam>
+): Anthropic.Messages.MessageParam[] {
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== "user") return [...messages];
+
+  const ephemeral = { type: "ephemeral" as const };
+  let content: Anthropic.Messages.MessageParam["content"];
+  if (typeof last.content === "string") {
+    content = [{ type: "text", text: last.content, cache_control: ephemeral }];
+  } else {
+    const blocks = [...last.content];
+    const tail = blocks[blocks.length - 1];
+    // Only block kinds the API accepts a cache_control on; anything
+    // else (e.g. a thinking block) means nothing safe to stamp.
+    if (
+      !tail ||
+      typeof tail !== "object" ||
+      !["text", "image", "document", "tool_use", "tool_result"].includes(
+        tail.type
+      )
+    ) {
+      return [...messages];
+    }
+    blocks[blocks.length - 1] = {
+      ...tail,
+      cache_control: ephemeral,
+    } as Anthropic.Messages.ContentBlockParam;
+    content = blocks;
+  }
+  return [...messages.slice(0, -1), { ...last, content }];
+}
+
+/** The seam's caching decision — per-capability flag, never the
+ * prompt builder's business (Part J's own rule). */
+function withConversationCache<
+  R extends { messages: Anthropic.Messages.MessageParam[] },
+>(capability: Capability, request: R): R {
+  if (!CACHED_CONVERSATION_CAPABILITIES.has(capability)) return request;
+  return { ...request, messages: stampConversationCache(request.messages) };
+}
+
+/**
  * One non-streaming model call. `request` is the caller's request
  * exactly as it built it today — same system, messages, tools,
  * output_config, per-seam max_tokens; the seam supplies ONLY the
@@ -186,7 +242,7 @@ export async function runInference(
   let response: Anthropic.Message;
   try {
     response = await anthropic.messages.create({
-      ...request,
+      ...withConversationCache(capability, request),
       model,
     });
   } catch (err) {
@@ -239,7 +295,7 @@ export async function runInferenceStream(
   let upstream: AsyncIterable<Anthropic.Messages.RawMessageStreamEvent>;
   try {
     upstream = await anthropic.messages.create({
-      ...request,
+      ...withConversationCache(capability, request),
       model,
       stream: true,
     });
@@ -263,10 +319,12 @@ export async function runInferenceStream(
     const usage: {
       input_tokens: number | null;
       cache_read_input_tokens: number | null;
+      cache_creation_input_tokens: number | null;
       output_tokens: number | null;
     } = {
       input_tokens: null,
       cache_read_input_tokens: null,
+      cache_creation_input_tokens: null,
       output_tokens: null,
     };
     let stopReason: string | null = null;
@@ -277,6 +335,8 @@ export async function runInferenceStream(
           usage.input_tokens = event.message.usage?.input_tokens ?? null;
           usage.cache_read_input_tokens =
             event.message.usage?.cache_read_input_tokens ?? null;
+          usage.cache_creation_input_tokens =
+            event.message.usage?.cache_creation_input_tokens ?? null;
         } else if (event.type === "message_delta") {
           usage.output_tokens = event.usage?.output_tokens ?? null;
           stopReason = event.delta?.stop_reason ?? stopReason;

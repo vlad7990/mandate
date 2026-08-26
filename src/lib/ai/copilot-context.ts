@@ -70,7 +70,10 @@ export async function loadCopilotProjectContext(
         .select(
           "id, full_name, current_title, current_company, archetype, pipeline_stage, cv_structured, recruiter_assessment"
         )
-        .eq("project_id", projectId),
+        .eq("project_id", projectId)
+        // Deterministic order: the snapshot is a prompt-cache prefix
+        // (slice 2), and an unordered array is a silent invalidator.
+        .order("id", { ascending: true }),
       supabase
         .from("candidate_scores")
         .select(

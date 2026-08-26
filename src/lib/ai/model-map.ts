@@ -58,6 +58,17 @@ export type Capability = keyof typeof CAPABILITY_MODEL;
 /** One provider this slice; the registry-as-data successor is Part R. */
 export const INFERENCE_PROVIDER = "anthropic";
 
+/**
+ * Capabilities whose CONVERSATION prefix the seam caches (slice 2,
+ * gate 0788898): the last user message gets a cache_control stamp so
+ * turn N reads what turn N−1 wrote. Copilot only — Phase 0 measured
+ * every base prompt under Sonnet's 1024-token cacheable minimum and
+ * the other Part J candidates single-shot against the 5-minute TTL;
+ * they re-enter here only with slice 3's eval data behind them.
+ */
+export const CACHED_CONVERSATION_CAPABILITIES: ReadonlySet<Capability> =
+  new Set(["copilot"]);
+
 export function modelForCapability(capability: Capability): string {
   return CAPABILITY_MODEL[capability];
 }

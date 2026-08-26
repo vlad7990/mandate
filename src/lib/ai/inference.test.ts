@@ -28,8 +28,12 @@ import {
   outcomeForStopReason,
   runInference,
   runInferenceStream,
+  stampConversationCache,
 } from "./inference";
-import { CAPABILITY_MODEL } from "./model-map";
+import {
+  CACHED_CONVERSATION_CAPABILITIES,
+  CAPABILITY_MODEL,
+} from "./model-map";
 
 function workingServiceClient() {
   return {
@@ -110,8 +114,90 @@ describe("buildRunRow", () => {
     });
     expect(row.input_tokens).toBeNull();
     expect(row.cached_input_tokens).toBeNull();
+    expect(row.cache_creation_input_tokens).toBeNull();
     expect(row.output_tokens).toBeNull();
     expect(row.project_id).toBeNull();
+  });
+
+  it("captures cache writes alongside cache reads (slice 2)", () => {
+    const row = buildRunRow({
+      id: "r3",
+      capability: "copilot",
+      model: "claude-sonnet-4-6",
+      usage: {
+        input_tokens: 20,
+        output_tokens: 5,
+        cache_read_input_tokens: 0,
+        cache_creation_input_tokens: 7800,
+      },
+      latencyMs: 900,
+      outcome: "ok",
+    });
+    expect(row.cache_creation_input_tokens).toBe(7800);
+    expect(row.cached_input_tokens).toBe(0);
+  });
+});
+
+describe("stampConversationCache (slice 2)", () => {
+  it("only copilot carries the conversation-cache flag this slice", () => {
+    expect([...CACHED_CONVERSATION_CAPABILITIES]).toEqual(["copilot"]);
+  });
+
+  it("converts a trailing user message's string content into one stamped text block", () => {
+    const stamped = stampConversationCache([
+      { role: "user", content: "snapshot + question" },
+      { role: "assistant", content: "answer" },
+      { role: "user", content: "follow-up" },
+    ]);
+    expect(stamped[0]).toEqual({ role: "user", content: "snapshot + question" });
+    expect(stamped[1]).toEqual({ role: "assistant", content: "answer" });
+    expect(stamped[2]).toEqual({
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: "follow-up",
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+    });
+  });
+
+  it("stamps the LAST block of block-form content and leaves the rest alone", () => {
+    const stamped = stampConversationCache([
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "part one" },
+          { type: "text", text: "part two" },
+        ],
+      },
+    ]);
+    expect(stamped[0].content).toEqual([
+      { type: "text", text: "part one" },
+      {
+        type: "text",
+        text: "part two",
+        cache_control: { type: "ephemeral" },
+      },
+    ]);
+  });
+
+  it("returns an assistant-tailed or empty list untouched — nothing safe to stamp", () => {
+    const tailed: Parameters<typeof stampConversationCache>[0] = [
+      { role: "user", content: "q" },
+      { role: "assistant", content: "a" },
+    ];
+    expect(stampConversationCache(tailed)).toEqual(tailed);
+    expect(stampConversationCache([])).toEqual([]);
+  });
+
+  it("does not mutate the caller's array", () => {
+    const original: Parameters<typeof stampConversationCache>[0] = [
+      { role: "user", content: "q" },
+    ];
+    stampConversationCache(original);
+    expect(original[0].content).toBe("q");
   });
 });
 
@@ -134,6 +220,13 @@ describe("runInference", () => {
       ...request,
       model: "claude-sonnet-4-6",
     });
+  });
+
+  it("sends unflagged capabilities' messages byte-identically — no cache stamp", async () => {
+    mocks.create.mockResolvedValue({ content: [], stop_reason: "end_turn", usage: {} });
+    const messages = [{ role: "user" as const, content: "hi" }];
+    await runInference("parse_cv", { max_tokens: 10, messages });
+    expect(mocks.create.mock.calls[0][0].messages).toBe(messages);
   });
 
   it("returns the raw response and records an ok row with tokens and project", async () => {
@@ -256,6 +349,26 @@ describe("runInferenceStream", () => {
       output_tokens: 9,
       project_id: "p3",
     });
+  });
+
+  it("stamps the flagged copilot conversation before sending (slice 2)", async () => {
+    mocks.create.mockResolvedValue((async function* () {})());
+    await runInferenceStream("copilot", {
+      max_tokens: 1500,
+      messages: [{ role: "user", content: "snapshot + question" }],
+    });
+    expect(mocks.create.mock.calls[0][0].messages).toEqual([
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "snapshot + question",
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+      },
+    ]);
   });
 
   it("records a mid-stream provider error and rethrows it", async () => {
