@@ -12472,3 +12472,53 @@ Numbers: next migration 130; next § 174; **drive 117 still owed**;
 vitest 1110; CHECK 97; door 26; allowlist 29; anon roster 12.
 
 DRAFTED — awaiting the founder's word. No completion declared.
+
+### 173a. DRIVE 117 — RUN, AND IT EARNED ITS KEEP — 2026-08-26
+
+The drive §173 said was still owed. It found **two defects in the UI
+layer, both invisible to tsc, vitest, eslint and the build**, and both
+of the exact class the database work had already been careful about.
+
+1. **The role picker lied.** Promoting Rae through the UI produced the
+   toast *"Rae Recruiter is now Admin."* — over a request that was
+   merely PENDING. The tier had not moved and a colleague still had to
+   agree, but the proposer was told the job was done. The action
+   already returned the outcome; the picker discarded it. It now reads
+   "Proposed — becomes Admin once a second admin approves."
+
+2. **The pending panel rendered nothing** while a request sat in the
+   table. The query embedded `users` TWICE with named foreign keys, the
+   embed errored, and the error was destructured away — a SILENT EMPTY
+   of precisely the 111/112 kind, in code written the same day as a
+   comment warning about it. Fixed by deleting the embed rather than
+   repairing it: the table has three FKs to `users`, the page already
+   loads every member, so labels resolve in JS and the error is now
+   logged instead of dropped.
+
+The database was correct throughout both: Rae stayed a recruiter, one
+pending request, one trail event. **Only the surface lied** — which is
+why a green DB drive is not a drive.
+
+**Drive 117 — GREEN after the fixes**, live in prod
+(mandate-5yuarb9j8). As the PROPOSER, Ada sees the pending row with
+"Yours — another admin must approve", a Withdraw button and **no
+Approve button**. As the SECOND admin, Ben sees Decline and Approve and
+**no Withdraw**. Ben approves; the toast says Rae is now an admin, the
+panel clears, `users.role` is `admin`, the request is `approved`, and
+the trail reads *admin_grant_proposed by Ada Admin → admin_grant_approved
+by Ben Admin* — both parties named, which is the entire point.
+
+**Teardown exact:** users 26 / agents 25 / auth 26, events 77, grant
+requests 0, invitations 0, rate_limit 0, anon roster 12, zero probe
+functions, one admin.
+
+**A method note worth keeping:** the first read of the panel reported
+`panelVisible: false` while a Withdraw button existed. That was a
+MEASUREMENT artifact — `innerText` reflects CSS `text-transform`, so
+the heading arrives uppercased and a case-sensitive match misses it.
+Checked case-insensitively before concluding anything.
+
+Numbers unchanged: next migration 130; next § 174; next drive 118;
+vitest 1110; CHECK 97; door 26; allowlist 29; anon roster 12.
+
+§173 now stands complete as drafted — still awaiting the founder's word.
