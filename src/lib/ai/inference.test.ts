@@ -29,6 +29,7 @@ import {
   __evalRecordedRuns,
   __setEvalOverrides,
   buildRunRow,
+  escalateInference,
   markInferenceSchemaFailed,
   outcomeForStopReason,
   runInference,
@@ -38,6 +39,7 @@ import {
 import {
   CACHED_CONVERSATION_CAPABILITIES,
   CAPABILITY_MODEL,
+  ESCALATION_PAIRS,
 } from "./model-map";
 import { __resetRegistryCache } from "./registry";
 
@@ -84,6 +86,13 @@ describe("the capability map", () => {
         flipped[capability] ?? "claude-sonnet-4-6"
       );
     }
+  });
+
+  it("pins the RULED escalation pairs (gate ef832fc, the founder's word) — an edit here without a gate is the defect this tripwire catches", () => {
+    expect(ESCALATION_PAIRS).toEqual({
+      parse_cv: { from: "claude-haiku-4-5", to: "claude-sonnet-4-6" },
+      generate_evaluation: { from: "claude-sonnet-5", to: "claude-opus-5" },
+    });
   });
 
   it("sends the benchmarked thinking-off variant for generate_evaluation — bare Sonnet 5 runs adaptive, which truncated", async () => {
@@ -468,6 +477,109 @@ describe("the assignment override (slice 4)", () => {
       expect(mocks.create.mock.calls[0][0].model).toBe(
         CAPABILITY_MODEL.parse_cv
       );
+    } finally {
+      delete process.env.MANDATE_EVAL;
+    }
+  });
+});
+
+describe("the escalation hop (Part G / O.5)", () => {
+  const ok = () =>
+    mocks.create.mockResolvedValue({
+      content: [{ type: "text", text: "not json" }],
+      stop_reason: "end_turn",
+      usage: {},
+    });
+  const request = { max_tokens: 10, messages: [] };
+
+  it("fires for generate_evaluation: marks the failed run, retries the SAME request on opus-5, records escalated_from", async () => {
+    ok();
+    const first = await runInference("generate_evaluation", request);
+    mocks.create.mockClear();
+    mocks.insert.mockClear();
+
+    const second = await escalateInference(
+      "generate_evaluation",
+      request,
+      undefined,
+      first
+    );
+    expect(second).not.toBeNull();
+    // The failed run was re-marked schema_failed by its own id.
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "schema_failed" }),
+      expect.any(String)
+    );
+    // The hop carried the identical request, the pair's to-model, and
+    // NO thinking param (the config was benchmarked for the map's model).
+    const sent = mocks.create.mock.calls[0][0];
+    expect(sent.model).toBe("claude-opus-5");
+    expect(sent.max_tokens).toBe(10);
+    expect(sent).not.toHaveProperty("thinking");
+    // The new row is honest about the hop.
+    expect(mocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        capability: "generate_evaluation",
+        model: "claude-opus-5",
+        escalated_from: "claude-sonnet-5",
+      })
+    );
+  });
+
+  it("the from-guard is the arming pin: parse_cv (still on sonnet-4-6) gets NO hop", async () => {
+    ok();
+    const first = await runInference("parse_cv", request);
+    mocks.create.mockClear();
+    const second = await escalateInference("parse_cv", request, undefined, first);
+    expect(second).toBeNull();
+    expect(mocks.create).not.toHaveBeenCalled();
+    // The failed run is still marked — honesty precedes the guard.
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: "schema_failed" }),
+      expect.any(String)
+    );
+  });
+
+  it("a founder registry override disarms the pair rather than escalating off the founder's model", async () => {
+    ok();
+    mocks.assignmentRows = [
+      { capability: "generate_evaluation", model_id: "claude-sonnet-4-6" },
+    ];
+    const first = await runInference("generate_evaluation", request);
+    mocks.create.mockClear();
+    const second = await escalateInference(
+      "generate_evaluation",
+      request,
+      undefined,
+      first
+    );
+    expect(second).toBeNull();
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  it("a capability with no ruled pair never hops", async () => {
+    ok();
+    const first = await runInference("copilot", request);
+    mocks.create.mockClear();
+    const second = await escalateInference("copilot", request, undefined, first);
+    expect(second).toBeNull();
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  it("never hops under MANDATE_EVAL — benchmarks measure ONE model", async () => {
+    process.env.MANDATE_EVAL = "1";
+    try {
+      ok();
+      const first = await runInference("generate_evaluation", request);
+      mocks.create.mockClear();
+      const second = await escalateInference(
+        "generate_evaluation",
+        request,
+        undefined,
+        first
+      );
+      expect(second).toBeNull();
+      expect(mocks.create).not.toHaveBeenCalled();
     } finally {
       delete process.env.MANDATE_EVAL;
     }

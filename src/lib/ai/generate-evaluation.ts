@@ -1,6 +1,10 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { markInferenceSchemaFailed, runInference } from "./inference";
+import {
+  escalateInference,
+  markInferenceSchemaFailed,
+  runInference,
+} from "./inference";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { signInEvaluator } from "@/lib/agents/session";
 import {
@@ -98,29 +102,33 @@ export async function generateCandidateEvaluation(
     client,
   });
 
-  const response = await runInference("generate_evaluation", {
+  const request = {
     max_tokens: 4500,
     system,
-    messages: [{ role: "user", content: userPrompt }],
+    messages: [{ role: "user" as const, content: userPrompt }],
     output_config: {
       format: {
-        type: "json_schema",
+        type: "json_schema" as const,
         schema: CANDIDATE_EVALUATION_SCHEMA,
       },
     },
-  }, { projectId: input.skill_context?.project_id ?? null });
+  };
+  const callOpts = { projectId: input.skill_context?.project_id ?? null };
 
-  try {
+  // The deterministic extraction BOTH attempts pass through — the
+  // escalated answer earns acceptance the same way the first one
+  // would have (gate ef832fc).
+  const extract = (
+    response: Awaited<ReturnType<typeof runInference>>
+  ): CandidateEvaluation => {
     const textBlock = response.content.find((b) => b.type === "text");
     if (!textBlock || textBlock.type !== "text") {
       throw new Error("Evaluation response contained no text block");
     }
-
     const partial = JSON.parse(textBlock.text) as Omit<
       CandidateEvaluation,
       "schema_version" | "generated_at" | "role_title" | "company_name"
     >;
-
     return {
       ...partial,
       schema_version: 1,
@@ -128,9 +136,32 @@ export async function generateCandidateEvaluation(
       role_title: input.role.role_title,
       company_name: input.role.company_name,
     };
+  };
+
+  const response = await runInference("generate_evaluation", request, callOpts);
+
+  try {
+    return extract(response);
   } catch (err) {
-    markInferenceSchemaFailed(response);
-    throw err;
+    // The schema signal fired. escalateInference marks this run
+    // schema_failed and — when the ruled pair is armed — retries once
+    // on the stronger model; null means no hop, and the original
+    // failure stands byte-identical to pre-slice behavior.
+    const second = await escalateInference(
+      "generate_evaluation",
+      request,
+      callOpts,
+      response
+    );
+    if (!second) throw err;
+    try {
+      return extract(second);
+    } catch {
+      // One hop, then honesty (090): the escalated answer failed the
+      // same gate — mark it and surface the original failure.
+      markInferenceSchemaFailed(second);
+      throw err;
+    }
   }
 }
 

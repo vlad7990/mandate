@@ -79,6 +79,27 @@ export function modelForCapability(capability: Capability): string {
 }
 
 /**
+ * The two ruled escalation pairs (Part G / O.5, gate ef832fc, the
+ * founder's word 2026-08-26): when a capability's model answers but
+ * the shape is unusable — the deterministic schema signal, never
+ * model-reported confidence — the seam retries ONCE on the pair's
+ * to-model and records the hop in inference_runs.escalated_from.
+ *
+ * The from-guard is the arming pin: no hop unless the model that
+ * ACTUALLY ran equals `from`. parse_cv's pair is therefore DORMANT
+ * today (it runs sonnet-4-6 until its Haiku flip lands on the
+ * founder's CV benchmark) and arms itself when that flip happens. A
+ * founder registry override likewise disarms a pair rather than
+ * escalating off a model the founder moved away from.
+ */
+export const ESCALATION_PAIRS: Partial<
+  Record<Capability, { from: string; to: string }>
+> = {
+  parse_cv: { from: "claude-haiku-4-5", to: "claude-sonnet-4-6" },
+  generate_evaluation: { from: "claude-sonnet-5", to: "claude-opus-5" },
+};
+
+/**
  * Per-capability thinking config the seam sends in PRODUCTION.
  * generate_evaluation runs Sonnet 5 with thinking disabled — the
  * benchmarked variant; omitting the param would run adaptive, which

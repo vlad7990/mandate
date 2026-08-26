@@ -6,6 +6,7 @@ import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import {
   CACHED_CONVERSATION_CAPABILITIES,
   CAPABILITY_THINKING,
+  ESCALATION_PAIRS,
   INFERENCE_PROVIDER,
   modelForCapability,
   type Capability,
@@ -74,7 +75,7 @@ type InferenceRunRow = {
   latency_ms: number;
   outcome: InferenceOutcome;
   retries: number;
-  escalated_from: null;
+  escalated_from: string | null;
   project_id: string | null;
 };
 
@@ -93,6 +94,8 @@ export function buildRunRow(args: {
   latencyMs: number;
   outcome: InferenceOutcome;
   projectId?: string | null;
+  /** The pair's from-model when this run IS the escalation hop. */
+  escalatedFrom?: string | null;
 }): InferenceRunRow {
   return {
     id: args.id,
@@ -109,7 +112,7 @@ export function buildRunRow(args: {
     // 0 is honest: the SDK's internal max_retries are not observable
     // per call, and app-level retries do not exist this slice.
     retries: 0,
-    escalated_from: null,
+    escalated_from: args.escalatedFrom ?? null,
     project_id: args.projectId ?? null,
   };
 }
@@ -224,6 +227,12 @@ export const __evalRecordedRuns: InferenceRunRow[] = [];
  * can re-mark the row without the row id ever entering its shape. */
 const runIdByResponse = new WeakMap<object, string>();
 
+/** response object → the model that ACTUALLY produced it — the
+ * escalation from-guard reads what ran, not what should have
+ * (gate ef832fc: a founder override disarms a pair rather than
+ * escalating off a model the founder moved away from). */
+const runModelByResponse = new WeakMap<object, string>();
+
 /**
  * Mark a run's outcome as schema_failed — the one-liner a seam adds
  * inside its EXISTING parse/normalize failure branch. Fire-and-forget
@@ -314,6 +323,27 @@ export async function runInference(
   opts?: { projectId?: string | null } & InferenceOverrides
 ): Promise<Anthropic.Message> {
   const { model, extra } = await resolveOverrides(capability, opts);
+  return callModel(capability, request, opts?.projectId ?? null, {
+    model,
+    extra,
+    escalatedFrom: null,
+  });
+}
+
+/** The one non-streaming call body — runInference's path and the
+ * escalation hop share it byte-for-byte, so the hop's telemetry,
+ * error handling, and response bookkeeping cannot drift. */
+async function callModel(
+  capability: Capability,
+  request: InferenceRequest,
+  projectId: string | null,
+  resolved: {
+    model: string;
+    extra: Record<string, unknown>;
+    escalatedFrom: string | null;
+  }
+): Promise<Anthropic.Message> {
+  const { model, extra, escalatedFrom } = resolved;
   const anthropic = getAnthropic();
   const id = randomUUID();
   const started = Date.now();
@@ -333,7 +363,8 @@ export async function runInference(
         model,
         latencyMs: Date.now() - started,
         outcome: "provider_error",
-        projectId: opts?.projectId,
+        projectId,
+        escalatedFrom,
       })
     );
     throw err;
@@ -347,11 +378,52 @@ export async function runInference(
       usage: response.usage,
       latencyMs: Date.now() - started,
       outcome: outcomeForStopReason(response.stop_reason),
-      projectId: opts?.projectId,
+      projectId,
+      escalatedFrom,
     })
   );
   runIdByResponse.set(response, id);
+  runModelByResponse.set(response, model);
   return response;
+}
+
+/**
+ * The escalation hop (Part G / O.5, gate ef832fc). Called from a
+ * seam's deterministic schema-failure branch, and ONLY there: marks
+ * the failed response's run `schema_failed`, and — when the ruled
+ * pair for this capability is armed — retries the SAME request once
+ * on the pair's to-model, recording `escalated_from` on the new row.
+ *
+ * Returns null (and the caller rethrows its original error,
+ * byte-identical to pre-slice behavior) when: no pair exists for the
+ * capability; the model that actually produced the failure is not
+ * the pair's from-model (the arming pin — parse_cv sits here until
+ * its Haiku flip, and a founder registry override disarms a pair);
+ * or MANDATE_EVAL=1 (benchmarks measure ONE model; the fence stays
+ * law). One hop, never a chain: the caller marks a failed second
+ * response itself and throws — 090's honest failure, unchanged.
+ *
+ * The to-model comes from the ruled pair map alone — this is not the
+ * eval override, and product code still cannot name an arbitrary
+ * model (Part N holds). No thinking param rides the hop (the ruled
+ * thinking rule: the config was benchmarked for the map's model).
+ */
+export async function escalateInference(
+  capability: Capability,
+  request: InferenceRequest,
+  opts: { projectId?: string | null } | undefined,
+  failedResponse: object
+): Promise<Anthropic.Message | null> {
+  markInferenceSchemaFailed(failedResponse);
+  if (EVAL_MODE()) return null;
+  const pair = ESCALATION_PAIRS[capability];
+  if (!pair) return null;
+  if (runModelByResponse.get(failedResponse) !== pair.from) return null;
+  return callModel(capability, request, opts?.projectId ?? null, {
+    model: pair.to,
+    extra: {},
+    escalatedFrom: pair.from,
+  });
 }
 
 /**

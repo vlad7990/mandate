@@ -1,7 +1,11 @@
 import "server-only";
 import mammoth from "mammoth";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { markInferenceSchemaFailed, runInference } from "./inference";
+import {
+  escalateInference,
+  markInferenceSchemaFailed,
+  runInference,
+} from "./inference";
 import {
   CANDIDATE_PROFILE_SCHEMA,
   CV_PARSING_SYSTEM_PROMPT,
@@ -58,29 +62,48 @@ export async function parseCv(
     client: options?.skillClient,
   });
 
-  const response = await runInference("parse_cv", {
+  const request = {
     max_tokens: 4096,
     system,
-    messages: [{ role: "user", content: userMessage }],
+    messages: [{ role: "user" as const, content: userMessage }],
     output_config: {
       format: {
-        type: "json_schema",
+        type: "json_schema" as const,
         schema: CANDIDATE_PROFILE_SCHEMA,
       },
     },
-  }, { projectId: ctx.projectId ?? null });
+  };
+  const callOpts = { projectId: ctx.projectId ?? null };
 
-  try {
+  // Both attempts pass the same deterministic extraction (ef832fc).
+  const extract = (
+    response: Awaited<ReturnType<typeof runInference>>
+  ): CandidateProfile => {
     const textBlock = response.content.find((b) => b.type === "text");
     if (!textBlock || textBlock.type !== "text") {
       throw new Error("CV parse response contained no text block");
     }
     return JSON.parse(textBlock.text) as CandidateProfile;
+  };
+
+  const response = await runInference("parse_cv", request, callOpts);
+
+  try {
+    return extract(response);
   } catch (err) {
     // The model answered but the shape is unusable — telemetry's
     // schema_failed, distinct from provider_error (slice 3, 03bafc3).
-    markInferenceSchemaFailed(response);
-    throw err;
+    // escalateInference marks the run and, when the pair is armed
+    // (DORMANT until parse_cv's Haiku flip — the from-guard is the
+    // arming pin), retries once on the stronger model.
+    const second = await escalateInference("parse_cv", request, callOpts, response);
+    if (!second) throw err;
+    try {
+      return extract(second);
+    } catch {
+      markInferenceSchemaFailed(second);
+      throw err;
+    }
   }
 }
 
