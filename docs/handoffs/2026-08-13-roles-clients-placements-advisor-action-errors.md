@@ -11406,3 +11406,33 @@ Numbers: next migration 125; next § 159; next drive 111; vitest
 1075; CHECK 92; door 25; allowlist 29; anon roster 12; durable
 baseline gains the four invoice zeros, all else unchanged
 (candidate_notes/client_notes stay pinned per-drive at 3/0).
+
+## 159. §158 CONFIRMED — INVOICING SLICE 1 CLOSES; slice 3 and the embed sweep proceed on the same word — 2026-08-26
+
+The founder's written word ("I confirm all on my side") lands against
+§158 as drafted. SLICE 1 OF THE INVOICING + PRINT PROGRAMME IS
+CLOSED and law: migrations 123 + 124, the invoice domain with its
+one-way door, the template studio at org:manage, the builder at
+fees:read, the §133 one-renderer print path, the mailto pointer, the
+trail at CHECK 92 / door 25 with the invoice intents at 'fees'
+visibility, and drive 110's live round trip — INV-2026-0001 issued,
+immutability refused in SQL and UI, print probe exact, the agent
+fence proven at zero rows, and the document proven to outlive its
+template. The two defects found in that drive are law as fixed: the
+ambiguous-embed class (F-1, pre-existing production) and the
+referential SET NULL vs the frozen door (F-2, migration 124).
+
+The same word carries the programme's ruled sequence forward: SLICE
+3 (the print pass) proceeds on the inventory confirmed at D.5, and
+the EMBED SWEEP proceeds as the generalisation of F-1 — that defect
+was found by accident under one table, and a class found by accident
+is not a class that has been looked for. Slice 2 (real send) still
+gates separately: it needs three founder rulings that are not
+derivable from the code (the from/reply-to identity for client-facing
+mail, whether client email joins 099's candidate-scoped cap and log
+doctrine, and bounce handling), so its GATE is drafted here and its
+BUILD waits on those rulings.
+
+Numbers at close: next migration 125; next § 160; next drive 111;
+vitest 1075; CHECK 92; door 25; allowlist 29; anon roster 12;
+durable baseline holds its four invoice zeros.
