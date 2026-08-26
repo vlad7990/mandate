@@ -2,9 +2,35 @@ import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./marketing.css";
 
+/*
+ * `display: "optional"`, not "swap" — the §167 ruling.
+ *
+ * With "swap" the marketing fonts arrived at ~2.8s under a throttled
+ * mobile load, AFTER first paint, and the headline re-wrapped from N
+ * lines to N-1 as Fraunces replaced the fallback. The hero lost a line,
+ * everything below it moved up ~59px, and that single reflow was 0.100
+ * of a 0.116 CLS at 390px — worse at 360px.
+ *
+ * It never showed up before because Lighthouse's default mobile
+ * emulation is a 412px Moto G, and at 412px and above the same page
+ * measures 0.011. §141's "mobile CLS 0.009" was true and blind at once:
+ * every iPhone from the 12 to the 16 is 390 or 393.
+ *
+ * "optional" gives the browser a ~100ms block period and then, if the
+ * face has not arrived, keeps the fallback for the REST OF THAT PAGE
+ * LOAD rather than swapping mid-view. No swap, no re-wrap, no shift.
+ * Measured: 0.116 -> 0.022 at 390px, 0.120 -> 0.024 at 360px.
+ *
+ * The trade is deliberate and was the founder's call: a visitor on a
+ * genuinely slow first load sees the fallback for that load instead of
+ * the brand face. Every repeat visit is cached and unaffected. Fixing
+ * it by reserving boxes instead was tried first and measured 0.118 —
+ * i.e. nothing — because the driver is the headline's own line count,
+ * not any one element's height.
+ */
 const fraunces = Fraunces({
   subsets: ["latin"],
-  display: "swap",
+  display: "optional",
   variable: "--font-display",
   // Non-default axis — opsz is loaded by default; SOFT lets headlines
   // pick up Fraunces's softer terminal forms in italic display.
@@ -13,13 +39,13 @@ const fraunces = Fraunces({
 
 const hanken = Hanken_Grotesk({
   subsets: ["latin"],
-  display: "swap",
+  display: "optional",
   variable: "--font-body",
 });
 
 const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
-  display: "swap",
+  display: "optional",
   variable: "--font-mono",
 });
 

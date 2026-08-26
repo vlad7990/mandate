@@ -3,21 +3,48 @@ import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { AGENT_COUNT } from "./(marketing)/_constants";
 import "./globals.css";
 
+/*
+ * `preload: false` on all three — the §167 ruling.
+ *
+ * These are the APP's faces. The marketing routes declare their own
+ * (Fraunces / Hanken Grotesk / JetBrains variable) in
+ * `(marketing)/layout.tsx`, and render in those exclusively: measured
+ * on `/`, Hanken covers 256 elements, JetBrains 148 and Fraunces 64,
+ * while Inter and Space Grotesk cover ZERO.
+ *
+ * But this layout wraps every route, so next/font preloaded all three
+ * on the marketing pages too — 101 KB of the homepage's 236 KB of font
+ * bytes was downloaded, never rendered, and worse, PRELOADED, so the
+ * dead faces competed for the critical path against the live ones.
+ *
+ * Dropping the preload does not remove the @font-face rules: a browser
+ * still fetches these the moment a route actually renders text in
+ * them, which is every app, portal and auth route. It only stops the
+ * speculative fetch on routes that never use them. Measured on `/`:
+ * 236 KB -> 166 KB, six font files -> four, six preloads -> three.
+ *
+ * If a future marketing surface starts rendering Inter, this becomes a
+ * late fetch rather than a preloaded one — `scripts/perf-probe.mjs`
+ * is what would catch it.
+ */
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  preload: false,
 });
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
+  preload: false,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   weight: ["500", "700"],
+  preload: false,
 });
 
 const SITE_TITLE = "Mandate — AI Executive Search Operating System";
