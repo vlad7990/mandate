@@ -10739,3 +10739,19 @@ inference_runs 0. Slices 2 (caching) / 3 (evals + tier flips) / 4
 spike stays deferred. Numbers: next migration 119; next § 147; next
 drive 105; vitest 1010; activity CHECK 87; intent door 20; agent
 allowlist 29 (ruled); anon roster 12 (ruled).
+
+## 147. §146 CONFIRMED — slice 1 CLOSES; the router continues — 2026-08-25
+
+The founder's word ("if everything in this slice is working we can
+continue") lands conditionally against §146; the condition was
+re-verified live before closing: /api/health 200 (db/auth/cron ok),
+durable baseline exact (26/25/77), inference_runs quiet at its
+durable 0. SLICE 1 IS CLOSED: migration 118, the seam, the map, the
+35-file sweep, the four-seam web-drift fix, drive 104's honest row
+and the unchanged baseline are law as recorded. The schema_failed
+disposition (shipped unwired, wiring = slice 3) stands as recorded
+direction.
+
+"Continue" proceeds under R4: slice 2 (prompt caching, Part J) gates
+next — Phase-0-verified gate DRAFT first, build only on the
+founder's written word against it. Slices 3 and 4 wait their turns.
