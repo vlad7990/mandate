@@ -3,7 +3,7 @@ import { SiteNav } from "../_components/site-nav";
 import { SiteFooter } from "../_components/site-footer";
 import { PageHero, PageCta } from "../_components/page-hero";
 import { Reveal } from "../_components/reveal";
-import { AGENT_COUNT } from "../_constants";
+import { ADDON_AGENT_COUNT, AGENT_COUNT } from "../_constants";
 import { AGENT_PHASES, agentsInPhase } from "../_data/agents";
 
 export const dynamic = "force-static";
@@ -133,8 +133,9 @@ function PhaseMap() {
         ))}
 
         <p className="m-sechead__body" style={{ marginTop: "1.5rem" }}>
-          Three of the {AGENT_COUNT} are marked <strong>Add-on</strong>: they
-          run only for accounts with Executive Intelligence.
+          {ADDON_AGENT_COUNT} of the {AGENT_COUNT} are marked{" "}
+          <strong>Add-on</strong>: they run only for accounts with Executive
+          Intelligence.
         </p>
       </div>
     </section>

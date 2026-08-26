@@ -78,6 +78,9 @@ export default function MarketingLandingPage() {
         <Principles />
         <HowItWorks />
         <Stack />
+        {/* Composition order must match SECTIONS' numeral order — the
+            watermark and the eyebrow both read from it. */}
+        <AfterTheSlate />
         <Triangulation />
         <ExecutiveIntelligence />
         <Pricing />
@@ -152,7 +155,9 @@ function Hero() {
         >
           Type the mandate. Mandate decomposes it, researches the company,
           drafts the role specification and builds the scoring model — then
-          you approve the bar before a single candidate is scored against it.
+          you approve the bar before a single candidate is scored against
+          it. It runs the client&apos;s portal and the invoice at the other
+          end, too.
         </p>
 
         <div
@@ -425,10 +430,83 @@ const HOW_STEPS = [
 
 /** The pipeline, stated once. Calibration is highlighted because it is
  *  the step the whole product argument turns on. */
+/*
+ * The arc, drawn. It used to end at "Recalibrate" — inside the search
+ * loop — because that is where the product ended when this row was
+ * written. It has not ended there since: the client reviews the slate
+ * in their own portal, the hire becomes a placement with fee terms, and
+ * the invoice is issued and sent from those terms (§158–§166). §169
+ * extends the row rather than adding a second one, because the claim is
+ * that this is ONE continuous system and not a search tool with
+ * bolt-ons.
+ */
 const PIPELINE = [
   "Mandate", "Spec", "Calibration", "Sourcing",
   "Evaluation", "Ranking", "Shortlist", "Feedback", "Recalibrate",
+  "Client portal", "Placement", "Invoice",
 ];
+
+/*
+ * §169's one new section (gate D3). The homepage's story stopped at the
+ * shortlist while the product kept going, so a prospect could not tell
+ * that Mandate runs the client relationship and the money as well as
+ * the search. Three stages, in the order a mandate actually reaches
+ * them — no screenshots, because the real ones carry real names.
+ */
+const AFTER_SLATE = [
+  {
+    n: "01",
+    title: "Your client reviews it themselves",
+    body:
+      "Hiring managers sign in to their own portal and see exactly the slate you sent — the scores, the evidence behind each one, and nothing about the candidates you did not submit. They rate, they raise a concern, and the search recalibrates on what they said.",
+  },
+  {
+    n: "02",
+    title: "The search interviews the client back",
+    body:
+      "Where the brief left a gap, Mandate composes the questions that close it — from the calibration's own missing information, not from a template — and asks the client directly. Their answers ride the same feedback loop that ranks the candidates.",
+  },
+  {
+    n: "03",
+    title: "The placement bills itself",
+    body:
+      "A hire becomes a placement with its fee terms attached. Invoices are built from those terms, issued once and frozen, sent from your own billing identity, and readable by the client in the same portal they reviewed the slate in.",
+  },
+];
+
+function AfterTheSlate() {
+  return (
+    <section className="m-section">
+      <span className="m-section__numeral" aria-hidden>
+        {SECTIONS.afterTheSlate.numeral}
+      </span>
+      <div className="m-container">
+        <Reveal className="m-reveal">
+          <span className="m-eyebrow">{eyebrow(SECTIONS.afterTheSlate)}</span>
+          <h2 className="m-h2" style={{ marginTop: "1rem", maxWidth: "22ch" }}>
+            The mandate does not end <em>at the shortlist.</em>
+          </h2>
+          <p className="m-lede" style={{ marginTop: "1rem", maxWidth: "62ch" }}>
+            Most tools hand you a list and stop. The work that decides
+            whether the search lands — the client&apos;s own reading of the
+            slate, the questions nobody asked at briefing, and getting
+            paid — happens after it.
+          </p>
+        </Reveal>
+
+        <Reveal className="m-reveal-stagger m-steps" as="ol" threshold={0.1}>
+          {AFTER_SLATE.map((s) => (
+            <li key={s.n} className="m-card m-step">
+              <span className="m-step__n" aria-hidden>{s.n}</span>
+              <h3 className="m-step__title">{s.title}</h3>
+              <p className="m-step__body">{s.body}</p>
+            </li>
+          ))}
+        </Reveal>
+      </div>
+    </section>
+  );
+}
 
 function HowItWorks() {
   return (

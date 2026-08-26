@@ -23,6 +23,16 @@ import { AGENTS } from "./_data/agents";
  */
 export const AGENT_COUNT = AGENTS.length;
 
+/**
+ * Agents gated behind the Executive Intelligence add-on.
+ *
+ * Derived, because the sentence on `/platform` used to say "Three of
+ * the 17" as a typed word above a list whose add-on flags said
+ * something else — the same class of error as the roster itself, and
+ * the reason `_constants.ts` exists. Say it once, from the data.
+ */
+export const ADDON_AGENT_COUNT = AGENTS.filter((a) => a.addOn).length;
+
 /** Specialised modules across the three intelligence layers. */
 export const MODULE_COUNT = 12;
 
@@ -50,14 +60,20 @@ export const SECTIONS = {
   principles: { numeral: "03", label: "Guardrails" },
   howItWorks: { numeral: "04", label: "How it works" },
   stack: { numeral: "05", label: "Stack" },
-  triangulation: { numeral: "06", label: "The fusion layer" },
+  // §169: the arc used to stop at the slate, which is where the PRODUCT
+  // stopped in early 2026 and has not stopped since. The client's own
+  // portal, the placement and the invoice all shipped without ever
+  // reaching the homepage. Inserting here renumbers everything below —
+  // which is exactly why these numerals are derived and never typed.
+  afterTheSlate: { numeral: "06", label: "After the slate" },
+  triangulation: { numeral: "07", label: "The fusion layer" },
   executiveIntelligence: {
-    numeral: "07",
+    numeral: "08",
     label: "Executive Intelligence · Add-on",
   },
-  pricing: { numeral: "08", label: "Pricing" },
-  faq: { numeral: "09", label: "Questions" },
-  cta: { numeral: "10", label: "Get started" },
+  pricing: { numeral: "09", label: "Pricing" },
+  faq: { numeral: "10", label: "Questions" },
+  cta: { numeral: "11", label: "Get started" },
 } as const satisfies Record<string, Section>;
 
 /** Renders the canonical `NN / Label` eyebrow string. */
