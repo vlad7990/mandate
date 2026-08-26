@@ -10931,3 +10931,26 @@ spec). parse_cv benchmark still waits on founder CVs. Slice 4
 schema_failed signal live to build on. Numbers: next migration 120;
 next § 152; next drive 107; vitest 1025; CHECK 87 / door 20 /
 allowlist 29 / roster 12; durable baseline unchanged.
+
+## 152. §151 CONFIRMED — slice 3 CLOSES — 2026-08-25
+
+The founder's written word ("Confirmed") lands against §151 as
+drafted. SLICE 3 IS CLOSED: the eval harness, the fenced overrides,
+schema_failed wiring on six seams, the benchmark matrix and its
+results (evals/results/2026-08-25.md), the four flips
+(sourcing/relationship/target-companies → haiku-4-5; evaluation →
+sonnet-5 + CAPABILITY_THINKING disabled + max_tokens 4500),
+search-health's hold, the repinned tripwire, and drive 106's live
+proof are law as recorded. Residue stands as recorded: three Haiku
+flips benchmark-proven (prod rows arrive in normal use; sourcing
+needs a finalised spec), parse_cv benchmark waits on founder CVs,
+judge debts (max_tokens 600 + fixture digest). The router programme
+has ONE gate left: slice 4 — Part R (registry-as-data, keys in env
+NEVER the DB, eval-gated activation, admin surface on the Skills
+pattern) + cross-provider adapters only if data justifies (Q4 spike
+stays deferred until in-family savings are exhausted). Escalation
+pairs (Part G) gate after slice 4 per O.5, now with live
+schema_failed signal. Numbers at close: next migration 120; next
+§ 153; next drive 107; vitest 1025; CHECK 87; door 20; allowlist
+29; anon roster 12; durable baseline unchanged (inference_runs 0
+durable, gains nothing).
