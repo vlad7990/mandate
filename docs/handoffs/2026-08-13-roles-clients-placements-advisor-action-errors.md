@@ -10648,3 +10648,94 @@ Numbers at close: next migration 118; next § 146; next drive 104;
 vitest 996; activity CHECK 87; intent door 20; agent allowlist 29
 (ruled); anon roster 12 (ruled); durable baseline 26 users / 25
 agents / 77 events, client_interviews 0 in the counted set.
+
+## 146. LLM ROUTER SLICE 1 BUILT — the seam — 2026-08-25 — DRAFTED
+
+The founder's word ("go") landed against the slice-1 gate (fda4764,
+docs/superpowers/specs/2026-08-25-llm-router-slice1-gate.md) and the
+D-ladder ran end to end. DRAFTED — no completion declared; §147
+confirms or corrects.
+
+**Migration 118 — inference_runs.** One row per model call:
+capability / model / provider / input / cached / output tokens /
+latency_ms / outcome (ok | schema_failed | provider_error | refused)
+/ retries / escalated_from / project_id (nullable, NO FK) /
+created_at. Deny-all on the 115 precedent — RLS enabled, zero
+policies, zero named grants; the anon roster stays TWELVE. (Phase-0
+note now recorded: Supabase's default table privileges appear on
+every new table including ops_heartbeats — "deny-all" is
+RLS-with-zero-policies, the ruled roster counts NAMED grants.) No
+prices anywhere. Trail untouched: CHECK stays 87, door stays 20,
+allowlist stays 29.
+
+**The seam.** src/lib/ai/inference.ts — runInference(capability,
+request, {projectId?}) and runInferenceStream (copilot's SSE). The
+seam supplies ONLY the model, from src/lib/ai/model-map.ts (35
+slugs, every entry claude-sonnet-4-6 — a tier flip is slice 3's
+gate, and a unit test is the tripwire). Part N law in the module
+header: the seam never holds a product Supabase client; its one DB
+access is the fire-and-forget service-role telemetry insert, which
+logs once and can never block, fail, or reshape a model call.
+Provider errors are recorded and RETHROWN unchanged — every seam's
+agent-errors/090 handling fires exactly as before. retries records
+0, honestly (SDK-internal retries are unobservable; app retries
+don't exist).
+
+**The sweep.** 35 files / 37 call sites (demo untouched per Q6),
+mechanical: same request objects, same response handling, same
+normalize*(), same max_tokens; exported model consts became
+re-exports of map entries so every importer and test stayed green.
+project_id attribution rides the same expression each file already
+passes to applySkillsToPrompt (null stays null — EI seams and the
+desk digest are correctly unattributed). The ruled drift fix:
+run-candidate-research, run-company-intelligence,
+run-hiring-manager-research, run-executive-company-context moved
+web_search_20250305 → web_search_20260209; sourcing-search was
+already there; the demo door STAYS on 20250305 (§142 verified,
+out of scope).
+
+**DISPOSITION — schema_failed wiring.** markInferenceSchemaFailed()
+shipped in the seam (WeakMap response → run id) but NO call site
+uses it yet: every existing failure branch wraps the provider call
+AND the parse in one catch, so marking there would stamp
+schema_failed on provider errors — a lie. The clean wiring belongs
+to slice 3's escalation work, which needs exactly that signal
+separation. The gate's escape hatch anticipated this; the column
+ships, the outcome enum is complete, rows simply never carry
+schema_failed this slice.
+
+**Green gate.** tsc clean · eslint clean · vitest 1010 (996 + 14
+seam tests: map completeness + the all-sonnet tripwire, outcome
+mapping, buildRunRow honesty incl. absent-usage nulls, provider
+error rethrow-unchanged, telemetry-failure isolation,
+markInferenceSchemaFailed by id + stranger no-op, stream
+pass-through + usage-off-the-stream, mid-stream error) · build
+clean. Commit d3ec865, deployed mandate-mnqwopfzf.
+
+**Drive 104 GREEN (live, prod).** Scratch principal minted in SQL
+(auth.users + identities pair; the auth trigger cut the public row
+viewer/pending — promoted recruiter/active). The autofill trap
+fired EXACTLY as §-recorded — the founder's real credentials
+pre-filled; overwritten. Signed in, opened Head of IT Operations,
+asked Mandy one question — the answer STREAMED normally
+(byte-identical product behavior), and the row landed: copilot /
+claude-sonnet-4-6 / anthropic / 7,869 in / 0 cached / 151 out /
+5,090 ms / ok / retries 0 / project_id = the mandate's uuid. The 0
+cached is itself slice 2's baseline measurement. Screenshot
+router-104-copilot-live-answer.png. NEW TRAP LEARNED: promoting a
+user by direct SQL UPDATE fires the member-audit trigger — three
+member_* events landed and were swept by id alongside
+copilot_answered. Teardown by value (events → inference_runs →
+rate_limit whole → public.users → auth.identities → auth.users →
+clearCookies); fresh-statement baseline EXACT first pass: 26 users /
+25 agents / 77 events / auth 26 / orgs 1 / projects 2 / clients 2 /
+candidates 1 / skills 5/5 / job_specs 1 / network 1 /
+ops_heartbeats 1 / interview_plans 0 / client_interviews 0 /
+staff_invitations 0 / rate_limit 0 / inference_runs 0.
+
+THE DURABLE BASELINE IS UNCHANGED — baseline GAINS the table:
+inference_runs 0. Slices 2 (caching) / 3 (evals + tier flips) / 4
+(Part R + providers) each gate separately (R4); Q4's cross-provider
+spike stays deferred. Numbers: next migration 119; next § 147; next
+drive 105; vitest 1010; activity CHECK 87; intent door 20; agent
+allowlist 29 (ruled); anon roster 12 (ruled).
