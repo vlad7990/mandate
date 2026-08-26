@@ -1,5 +1,5 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   CALIBRATION_SYSTEM_PROMPT,
   CALIBRATION_WEIGHTS_SCHEMA,
@@ -11,7 +11,6 @@ import { signInCalibrationAgent } from "@/lib/agents/session";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const CALIBRATION_MODEL = "claude-sonnet-4-6";
 
 type ProjectSnapshot = {
   organization_id: string | null;
@@ -90,9 +89,7 @@ export async function runCalibrationDerivationAndPersist(
 
     let derived: CalibrationDerivation;
     try {
-      const anthropic = getAnthropic();
-      const response = await anthropic.messages.create({
-        model: CALIBRATION_MODEL,
+      const response = await runInference("derive_calibration", {
         max_tokens: 1024,
         system,
         messages: [{ role: "user", content: userPrompt }],
@@ -102,7 +99,7 @@ export async function runCalibrationDerivationAndPersist(
             schema: CALIBRATION_WEIGHTS_SCHEMA,
           },
         },
-      });
+      }, { projectId });
       const textBlock = response.content.find((b) => b.type === "text");
       if (!textBlock || textBlock.type !== "text") {
         throw new Error("Calibration response contained no text block");

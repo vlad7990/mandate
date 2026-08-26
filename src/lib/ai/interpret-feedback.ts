@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   FEEDBACK_INTERPRETATION_SCHEMA,
   FEEDBACK_INTERPRETATION_SYSTEM_PROMPT,
@@ -12,7 +12,6 @@ import type { OnboardingResponses } from "./onboarding-analysis";
 import type { CandidateProfile } from "./cv-parsing";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
-const FEEDBACK_MODEL = "claude-sonnet-4-6";
 
 export type InterpretFeedbackInput = {
   /** The new feedback row's content + type. */
@@ -71,7 +70,6 @@ export async function interpretFeedback(
   input: InterpretFeedbackInput,
   options?: InterpretFeedbackOptions
 ): Promise<FeedbackInterpretation> {
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
   const system = await applySkillsToPrompt(FEEDBACK_INTERPRETATION_SYSTEM_PROMPT, {
     projectId: input.skill_context?.project_id ?? null,
@@ -79,8 +77,7 @@ export async function interpretFeedback(
     client: options?.skillClient,
   });
 
-  const response = await anthropic.messages.create({
-    model: FEEDBACK_MODEL,
+  const response = await runInference("interpret_feedback", {
     max_tokens: 1500,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -90,7 +87,7 @@ export async function interpretFeedback(
         schema: FEEDBACK_INTERPRETATION_SCHEMA,
       },
     },
-  });
+  }, { projectId: input.skill_context?.project_id ?? null });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

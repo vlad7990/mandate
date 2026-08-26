@@ -10,7 +10,9 @@
 // is client-side (per-project localStorage) so we don't accumulate
 // chat data in the database.
 
-export const COPILOT_MODEL = "claude-sonnet-4-6" as const;
+import { CAPABILITY_MODEL } from "./model-map";
+
+export const COPILOT_MODEL = CAPABILITY_MODEL.copilot;
 
 export type CopilotPageContext = {
   /** Current pathname captured by the panel via usePathname(). */

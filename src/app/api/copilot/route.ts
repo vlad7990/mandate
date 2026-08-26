@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInferenceStream } from "@/lib/ai/inference";
 import {
-  COPILOT_MODEL,
   COPILOT_SYSTEM_PROMPT,
   suggestionContextForPath,
   type CopilotMessage,
@@ -134,8 +133,6 @@ export async function POST(req: Request): Promise<Response> {
     ...messages.slice(1),
   ];
 
-  const anthropic = getAnthropic();
-
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -145,13 +142,15 @@ export async function POST(req: Request): Promise<Response> {
         );
       };
       try {
-        const upstream = await anthropic.messages.create({
-          model: COPILOT_MODEL,
-          max_tokens: 1500,
-          system,
-          messages: upstreamMessages,
-          stream: true,
-        });
+        const upstream = await runInferenceStream(
+          "copilot",
+          {
+            max_tokens: 1500,
+            system,
+            messages: upstreamMessages,
+          },
+          { projectId }
+        );
 
         for await (const event of upstream) {
           if (

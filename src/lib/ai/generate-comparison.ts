@@ -1,5 +1,5 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   COMPARISON_ANALYSIS_SCHEMA,
   COMPARISON_SYSTEM_PROMPT,
@@ -9,7 +9,6 @@ import type { CalibrationModel } from "./role-analysis";
 import type { CandidateProfile } from "./cv-parsing";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
-const COMPARISON_MODEL = "claude-sonnet-4-6";
 
 export type ComparisonInputCandidate = {
   candidate_id: string;
@@ -47,15 +46,13 @@ export async function generateComparisonAnalysis(
     throw new Error("Comparison capped at 3 candidates.");
   }
 
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
   const system = await applySkillsToPrompt(COMPARISON_SYSTEM_PROMPT, {
     projectId: input.skill_context?.project_id ?? null,
     organizationId: input.skill_context?.organization_id ?? null,
   });
 
-  const response = await anthropic.messages.create({
-    model: COMPARISON_MODEL,
+  const response = await runInference("generate_comparison", {
     max_tokens: 1500,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -65,7 +62,7 @@ export async function generateComparisonAnalysis(
         schema: COMPARISON_ANALYSIS_SCHEMA,
       },
     },
-  });
+  }, { projectId: input.skill_context?.project_id ?? null });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

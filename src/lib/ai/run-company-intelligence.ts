@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   COMPANY_INTELLIGENCE_SCHEMA,
   COMPANY_INTELLIGENCE_SYSTEM_PROMPT,
@@ -10,7 +10,6 @@ import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { signInCompanyIntelAgent } from "@/lib/agents/session";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const COMPANY_INTELLIGENCE_MODEL = "claude-sonnet-4-6";
 // Cap server-side searches per run. 7 dimensions but we tell Claude to
 // combine adjacent ones — 7 is a generous ceiling, not a target.
 const WEB_SEARCH_MAX_USES = 7;
@@ -78,7 +77,6 @@ export async function runCompanyIntelligence(
   input: RunCompanyIntelligenceInput,
   ctx: RunCompanyIntelligenceContext
 ): Promise<CompanyIntelligenceReport> {
-  const anthropic = getAnthropic();
 
   const userPrompt = JSON.stringify(
     {
@@ -103,8 +101,7 @@ export async function runCompanyIntelligence(
     }
   );
 
-  const response = await anthropic.messages.create({
-    model: COMPANY_INTELLIGENCE_MODEL,
+  const response = await runInference("run_company_intelligence", {
     // Tool calls + tool results stack in the context window; bump the
     // ceiling so the final structured JSON has room after 5–7 searches.
     max_tokens: 8000,
@@ -112,7 +109,7 @@ export async function runCompanyIntelligence(
     messages: [{ role: "user", content: userPrompt }],
     tools: [
       {
-        type: "web_search_20250305",
+        type: "web_search_20260209",
         name: "web_search",
         max_uses: WEB_SEARCH_MAX_USES,
       },
@@ -123,7 +120,7 @@ export async function runCompanyIntelligence(
         schema: COMPANY_INTELLIGENCE_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId });
 
   // Final assistant text block is the JSON payload. Earlier blocks are
   // the server_tool_use / web_search_tool_result pairs that Anthropic

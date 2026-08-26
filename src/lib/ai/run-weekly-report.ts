@@ -1,7 +1,8 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
+import { CAPABILITY_MODEL } from "./model-map";
 import {
   WEEKLY_REPORT_SCHEMA,
   WEEKLY_REPORT_SYSTEM_PROMPT,
@@ -13,7 +14,7 @@ import { signInSearchHealthAgent } from "@/lib/agents/session";
 import type { AgentRunTrigger } from "./run-search-health";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const WEEKLY_REPORT_MODEL = "claude-sonnet-4-6";
+const WEEKLY_REPORT_MODEL = CAPABILITY_MODEL.run_weekly_report;
 
 export type WeeklyReportInput = {
   week_starting: string;
@@ -74,7 +75,6 @@ export async function runWeeklyReport(
   input: WeeklyReportInput,
   ctx: RunWeeklyReportContext
 ): Promise<{ report: WeeklyReport; model: string }> {
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
   const system = await applySkillsToPrompt(WEEKLY_REPORT_SYSTEM_PROMPT, {
     projectId: ctx.projectId,
@@ -82,8 +82,7 @@ export async function runWeeklyReport(
     client: ctx.skillClient,
   });
 
-  const response = await anthropic.messages.create({
-    model: WEEKLY_REPORT_MODEL,
+  const response = await runInference("run_weekly_report", {
     max_tokens: 3000,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -93,7 +92,7 @@ export async function runWeeklyReport(
         schema: WEEKLY_REPORT_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

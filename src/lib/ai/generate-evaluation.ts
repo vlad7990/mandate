@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { signInEvaluator } from "@/lib/agents/session";
 import {
@@ -23,7 +23,6 @@ import {
 import { TIER_BANDS, type Tier } from "@/lib/ranking/scoring-engine";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
-const EVAL_MODEL = "claude-sonnet-4-6";
 
 // We expose the evaluation through the candidate's existing
 // cv_structured JSONB column under the `evaluation` key. That keeps the
@@ -92,7 +91,6 @@ export async function generateCandidateEvaluation(
   // so the Skills Studio read runs under skills_agent_select.
   client?: SupabaseClient
 ): Promise<CandidateEvaluation> {
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
   const system = await applySkillsToPrompt(CANDIDATE_EVALUATION_SYSTEM_PROMPT, {
     projectId: input.skill_context?.project_id ?? null,
@@ -100,8 +98,7 @@ export async function generateCandidateEvaluation(
     client,
   });
 
-  const response = await anthropic.messages.create({
-    model: EVAL_MODEL,
+  const response = await runInference("generate_evaluation", {
     max_tokens: 3500,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -111,7 +108,7 @@ export async function generateCandidateEvaluation(
         schema: CANDIDATE_EVALUATION_SCHEMA,
       },
     },
-  });
+  }, { projectId: input.skill_context?.project_id ?? null });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

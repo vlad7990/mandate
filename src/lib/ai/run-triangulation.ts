@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   TRIANGULATION_SCHEMA,
   TRIANGULATION_SYSTEM_PROMPT,
@@ -13,7 +13,6 @@ import type { HiringManagerIntelligenceReport } from "./hiring-manager-research-
 import { signInTriangulationAgent } from "@/lib/agents/session";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const TRIANGULATION_MODEL = "claude-sonnet-4-6";
 
 export type RunTriangulationInput = {
   candidate: {
@@ -45,7 +44,6 @@ export async function runTriangulation(
   input: RunTriangulationInput,
   ctx: RunTriangulationContext
 ): Promise<TriangulationReport> {
-  const anthropic = getAnthropic();
 
   const userPrompt = JSON.stringify(
     {
@@ -67,8 +65,7 @@ export async function runTriangulation(
     client: ctx.skillClient,
   });
 
-  const response = await anthropic.messages.create({
-    model: TRIANGULATION_MODEL,
+  const response = await runInference("run_triangulation", {
     max_tokens: 4500,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -78,7 +75,7 @@ export async function runTriangulation(
         schema: TRIANGULATION_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

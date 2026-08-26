@@ -1,5 +1,5 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   ENGAGEMENT_SCHEMA,
   ENGAGEMENT_SYSTEM_PROMPT,
@@ -17,7 +17,6 @@ import {
 } from "@/lib/outreach/strategy-policy";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const ENGAGEMENT_MODEL = "claude-sonnet-4-6";
 
 export type EngagementInput = {
   role_context: {
@@ -50,11 +49,9 @@ export type EngagementInput = {
 
 export async function generateEngagementJudgment(
   input: EngagementInput,
-  options?: { system?: string }
+  options?: { system?: string; projectId?: string | null }
 ): Promise<EngagementJudgment> {
-  const anthropic = getAnthropic();
-  const response = await anthropic.messages.create({
-    model: ENGAGEMENT_MODEL,
+  const response = await runInference("run_engagement", {
     max_tokens: 1500,
     system: options?.system ?? ENGAGEMENT_SYSTEM_PROMPT,
     messages: [{ role: "user", content: JSON.stringify(input, null, 2) }],
@@ -64,7 +61,7 @@ export async function generateEngagementJudgment(
         schema: ENGAGEMENT_SCHEMA,
       },
     },
-  });
+  }, { projectId: options?.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {
@@ -277,7 +274,7 @@ export async function runEngagementAndPersist(
               : null,
             today: new Date().toISOString().slice(0, 10),
           },
-          { system }
+          { system, projectId }
         );
       } catch (err) {
         captureSeamError("[engagement] agent judgment failed", err);

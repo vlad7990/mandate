@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   PSYCHOLOGY_SCHEMA,
   PSYCHOLOGY_SYSTEM_PROMPT,
@@ -11,7 +11,6 @@ import { wrapWithRecruiterContext } from "./recruiter-context";
 import { signInPsychologyAgent } from "@/lib/agents/session";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const PSYCHOLOGY_MODEL = "claude-sonnet-4-6";
 
 export type PsychologyInput = {
   candidate: {
@@ -51,7 +50,6 @@ export async function runPsychology(
   input: PsychologyInput,
   ctx: RunPsychologyContext
 ): Promise<CandidatePsychology> {
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
   const baseSystem = await applySkillsToPrompt(PSYCHOLOGY_SYSTEM_PROMPT, {
     projectId: ctx.projectId,
@@ -60,8 +58,7 @@ export async function runPsychology(
   });
   const system = wrapWithRecruiterContext(baseSystem, ctx.recruiterContext);
 
-  const response = await anthropic.messages.create({
-    model: PSYCHOLOGY_MODEL,
+  const response = await runInference("run_psychology", {
     max_tokens: 2500,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -71,7 +68,7 @@ export async function runPsychology(
         schema: PSYCHOLOGY_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

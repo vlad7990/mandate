@@ -1,7 +1,8 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
+import { CAPABILITY_MODEL } from "./model-map";
 import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
 import {
   INTERVIEWER_PROMPT_VERSION,
@@ -30,7 +31,7 @@ const SUBJECT = "Interview-plan generation";
 const INTERVIEWER_UNAVAILABLE_SENTENCE =
   "The Interviewer Agent could not run — an operator has suspended it or its credentials are absent. Retry when it is restored.";
 
-export const INTERVIEWER_MODEL = "claude-sonnet-4-6";
+export const INTERVIEWER_MODEL = CAPABILITY_MODEL.generate_interview_plan;
 
 export type InterviewPlanTrigger = "initial" | "regenerate";
 
@@ -195,16 +196,14 @@ async function generateUnderAgentSession(
       client: supabase,
     });
 
-    const anthropic = getAnthropic();
-    const response = await anthropic.messages.create({
-      model: INTERVIEWER_MODEL,
+    const response = await runInference("generate_interview_plan", {
       max_tokens: 8000,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
       output_config: {
         format: { type: "json_schema", schema: MAINSTREAM_PLAN_SCHEMA },
       },
-    });
+    }, { projectId });
 
     const textBlock = response.content.find(
       (b): b is Extract<(typeof response.content)[number], { type: "text" }> =>

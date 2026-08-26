@@ -1,5 +1,6 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
+import { CAPABILITY_MODEL } from "./model-map";
 import {
   SOURCING_SEARCH_SCHEMA,
   SOURCING_SEARCH_SYSTEM_PROMPT,
@@ -16,7 +17,7 @@ import { signInCandidateSearchAgent } from "@/lib/agents/session";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-export const SOURCING_SEARCH_MODEL = "claude-sonnet-4-6";
+export const SOURCING_SEARCH_MODEL = CAPABILITY_MODEL.sourcing_search;
 export { SOURCING_SEARCH_PROMPT_VERSION };
 
 /** Search rounds per run. Each round is a billed search; this is the cost ceiling. */
@@ -75,12 +76,11 @@ type ContentBlock = { type: string; [k: string]: unknown };
 async function runSourcingSearch(
   brief: SourcingSearchBrief,
   connectors: readonly SourceConnector[],
-  system: string
+  system: string,
+  projectId: string | null
 ): Promise<SourcingSearchResult | null> {
   const allowedDomains = resolveAllowedDomains(connectors);
   if (!allowedDomains) return null;
-
-  const anthropic = getAnthropic();
 
   const userPrompt = JSON.stringify(
     {
@@ -114,14 +114,14 @@ async function runSourcingSearch(
   let finalText: string | null = null;
 
   try {
-    const combined = await runToolLoop(anthropic, userPrompt, allowedDomains, true, system);
+    const combined = await runToolLoop(userPrompt, allowedDomains, true, system, projectId);
     searchRounds = combined.searchRounds;
     finalText = combined.text;
   } catch (err) {
     if (!isFormatToolConflict(err)) throw err;
-    const searched = await runToolLoop(anthropic, userPrompt, allowedDomains, false, system);
+    const searched = await runToolLoop(userPrompt, allowedDomains, false, system, projectId);
     searchRounds = searched.searchRounds;
-    finalText = searched.text === null ? null : await structureFindings(anthropic, searched.text, system);
+    finalText = searched.text === null ? null : await structureFindings(searched.text, system, projectId);
   }
 
   // No terminal turn, or nothing to structure — better to report nothing
@@ -152,11 +152,11 @@ async function runSourcingSearch(
  * that into the schema in a second, tool-free call.
  */
 async function runToolLoop(
-  anthropic: ReturnType<typeof getAnthropic>,
   userPrompt: string,
   allowedDomains: string[],
   structured: boolean,
-  system: string
+  system: string,
+  projectId: string | null
 ): Promise<{ text: string | null; searchRounds: number }> {
   const messages: Array<{ role: "user" | "assistant"; content: unknown }> = [
     { role: "user", content: userPrompt },
@@ -164,8 +164,7 @@ async function runToolLoop(
   let searchRounds = 0;
 
   for (let attempt = 0; attempt <= MAX_CONTINUATIONS; attempt++) {
-    const response = await anthropic.messages.create({
-      model: SOURCING_SEARCH_MODEL,
+    const response = await runInference("sourcing_search", {
       max_tokens: 8000,
       system,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -187,7 +186,7 @@ async function runToolLoop(
             },
           }
         : {}),
-    });
+    }, { projectId });
 
     const blocks = response.content as unknown as ContentBlock[];
     searchRounds += countSearchRounds(blocks);
@@ -212,12 +211,11 @@ async function runToolLoop(
  * it cannot introduce a person or a URL that no search returned.
  */
 async function structureFindings(
-  anthropic: ReturnType<typeof getAnthropic>,
   findings: string,
-  system: string
+  system: string,
+  projectId: string | null
 ): Promise<string | null> {
-  const response = await anthropic.messages.create({
-    model: SOURCING_SEARCH_MODEL,
+  const response = await runInference("sourcing_search", {
     max_tokens: 8000,
     system:
       system +
@@ -226,7 +224,7 @@ async function structureFindings(
     output_config: {
       format: { type: "json_schema", schema: SOURCING_SEARCH_SCHEMA },
     },
-  });
+  }, { projectId });
   return extractText(response.content as unknown as ContentBlock[]);
 }
 
@@ -327,7 +325,7 @@ export async function runSourcingSearchAsAgent(
 
     let result: SourcingSearchResult | null;
     try {
-      result = await runSourcingSearch(brief, connectors, system);
+      result = await runSourcingSearch(brief, connectors, system, opts.projectId);
     } catch (err) {
       captureSeamError("[sourcing-search] agent judgment failed", err);
       return { status: "failed", error: err };

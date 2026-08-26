@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   SLOTS,
   SOURCING_FULL_SCHEMA,
@@ -16,7 +16,6 @@ import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { signInBooleanSearchAgent } from "@/lib/agents/session";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const SOURCING_MODEL = "claude-sonnet-4-6";
 
 export type GenerationContext = {
   job_spec: JobSpecSections;
@@ -42,7 +41,6 @@ export type GenerationContext = {
 export async function generateAllSourcingQueries(
   ctx: GenerationContext
 ): Promise<SourcingQueries> {
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(
     {
       job_spec: ctx.job_spec,
@@ -59,8 +57,7 @@ export async function generateAllSourcingQueries(
     organizationId: ctx.skill_context?.organization_id ?? null,
     client: ctx.skill_context?.client,
   });
-  const response = await anthropic.messages.create({
-    model: SOURCING_MODEL,
+  const response = await runInference("generate_sourcing", {
     max_tokens: 2048,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -70,7 +67,7 @@ export async function generateAllSourcingQueries(
         schema: SOURCING_FULL_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.skill_context?.project_id ?? null });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {
@@ -91,7 +88,6 @@ export async function regenerateSingleQuery(
   feedback: string,
   ctx: GenerationContext
 ): Promise<string> {
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(
     {
       slot,
@@ -110,8 +106,7 @@ export async function regenerateSingleQuery(
     organizationId: ctx.skill_context?.organization_id ?? null,
     client: ctx.skill_context?.client,
   });
-  const response = await anthropic.messages.create({
-    model: SOURCING_MODEL,
+  const response = await runInference("generate_sourcing", {
     max_tokens: 1024,
     system: singleSystem,
     messages: [{ role: "user", content: userPrompt }],
@@ -121,7 +116,7 @@ export async function regenerateSingleQuery(
         schema: SOURCING_SINGLE_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.skill_context?.project_id ?? null });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

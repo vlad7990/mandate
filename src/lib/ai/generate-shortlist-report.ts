@@ -1,5 +1,5 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   SHORTLIST_REPORT_SCHEMA,
   SHORTLIST_REPORT_SYSTEM_PROMPT,
@@ -11,7 +11,6 @@ import { signInShortlistAgent } from "@/lib/agents/session";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const SHORTLIST_MODEL = "claude-sonnet-4-6";
 
 export type ShortlistGenerationInput = {
   role_context: {
@@ -40,7 +39,7 @@ export type ShortlistGenerationInput = {
  */
 export async function generateShortlistReport(
   input: ShortlistGenerationInput,
-  options?: { system?: string }
+  options?: { system?: string; projectId?: string | null }
 ): Promise<ShortlistReport> {
   if (input.slate.length < 1) {
     throw new Error("Shortlist requires at least 1 candidate.");
@@ -49,11 +48,9 @@ export async function generateShortlistReport(
     throw new Error("Shortlist capped at 10 candidates.");
   }
 
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
 
-  const response = await anthropic.messages.create({
-    model: SHORTLIST_MODEL,
+  const response = await runInference("generate_shortlist_report", {
     max_tokens: 3000,
     system: options?.system ?? SHORTLIST_REPORT_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userPrompt }],
@@ -63,7 +60,7 @@ export async function generateShortlistReport(
         schema: SHORTLIST_REPORT_SCHEMA,
       },
     },
-  });
+  }, { projectId: options?.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {
@@ -237,7 +234,7 @@ export async function runShortlistReportAndPersist(
           recruiter_narrative: sl.narrative.trim() || null,
           slate,
         },
-        { system }
+        { system, projectId }
       );
     } catch (err) {
       captureSeamError("[shortlist-report] agent generation failed", err);

@@ -1,5 +1,5 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   CLIENT_PSYCHOLOGY_SCHEMA,
   CLIENT_PSYCHOLOGY_SYSTEM_PROMPT,
@@ -7,7 +7,6 @@ import {
 } from "./client-psychology-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
-const CLIENT_PSYCHOLOGY_MODEL = "claude-sonnet-4-6";
 
 export type ClientPsychologyInput = {
   project: {
@@ -43,15 +42,13 @@ export async function runClientPsychology(
   input: ClientPsychologyInput,
   ctx: RunClientPsychologyContext
 ): Promise<ClientPsychology> {
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
   const system = await applySkillsToPrompt(CLIENT_PSYCHOLOGY_SYSTEM_PROMPT, {
     projectId: ctx.projectId,
     organizationId: ctx.organizationId,
   });
 
-  const response = await anthropic.messages.create({
-    model: CLIENT_PSYCHOLOGY_MODEL,
+  const response = await runInference("run_client_psychology", {
     max_tokens: 2500,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -61,7 +58,7 @@ export async function runClientPsychology(
         schema: CLIENT_PSYCHOLOGY_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

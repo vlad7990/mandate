@@ -1,5 +1,5 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   CANDIDATE_SEARCH_SCHEMA,
   CANDIDATE_SEARCH_SYSTEM_PROMPT,
@@ -11,12 +11,11 @@ import { signInCandidateSearchAgent } from "@/lib/agents/session";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const SEARCH_MODEL = "claude-sonnet-4-6";
 
 export async function runCandidateSearch(
   query: string,
   candidates: CandidateSearchInputCandidate[],
-  options?: { system?: string }
+  options?: { system?: string; projectId?: string | null }
 ): Promise<CandidateSearchResult> {
   if (!query.trim()) {
     return {
@@ -25,15 +24,13 @@ export async function runCandidateSearch(
     };
   }
 
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(
     { query: query.trim(), candidates },
     null,
     2
   );
 
-  const response = await anthropic.messages.create({
-    model: SEARCH_MODEL,
+  const response = await runInference("run_candidate_search", {
     max_tokens: 2500,
     system: options?.system ?? CANDIDATE_SEARCH_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userPrompt }],
@@ -43,7 +40,7 @@ export async function runCandidateSearch(
         schema: CANDIDATE_SEARCH_SCHEMA,
       },
     },
-  });
+  }, { projectId: options?.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {
@@ -207,7 +204,7 @@ export async function runCandidateSearchAsAgent(
 
     let result: CandidateSearchResult;
     try {
-      result = await runCandidateSearch(query, inputCandidates, { system });
+      result = await runCandidateSearch(query, inputCandidates, { system, projectId: filters.projectId });
     } catch (err) {
       captureSeamError("[candidate-search] agent judgment failed", err);
       return { status: "failed", error: err };

@@ -1,7 +1,8 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
+import { CAPABILITY_MODEL } from "./model-map";
 import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
 import {
   INTERVIEW_ARCHITECT_SYSTEM_PROMPT,
@@ -29,7 +30,7 @@ const SUBJECT = "Interview-plan generation";
 const EXECINTEL_UNAVAILABLE_SENTENCE =
   "The Executive Intelligence Agent could not run — an operator has suspended it or its credentials are absent. Retry when it is restored.";
 
-export const INTERVIEW_ARCHITECT_MODEL = "claude-sonnet-4-6";
+export const INTERVIEW_ARCHITECT_MODEL = CAPABILITY_MODEL.generate_executive_interview_plan;
 
 /** Read-only SSR client for after() callbacks — see generate-job-spec.ts. */
 async function createReadOnlySupabaseClient() {
@@ -262,16 +263,14 @@ async function generatePlanUnderAgentSession(
 
   let content: InterviewPlanContent;
   try {
-    const anthropic = getAnthropic();
-    const response = await anthropic.messages.create({
-      model: INTERVIEW_ARCHITECT_MODEL,
+    const response = await runInference("generate_executive_interview_plan", {
       max_tokens: 8000,
       system,
       messages: [{ role: "user", content: userPrompt }],
       output_config: {
         format: { type: "json_schema", schema: INTERVIEW_PLAN_SCHEMA },
       },
-    });
+    }, { projectId: null });
 
     const textBlock = response.content.find((b) => b.type === "text");
     if (!textBlock || textBlock.type !== "text") {

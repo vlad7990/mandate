@@ -1,7 +1,8 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
+import { CAPABILITY_MODEL } from "./model-map";
 import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
 import {
   ROLE_ARCHITECT_SYSTEM_PROMPT,
@@ -24,7 +25,7 @@ import type {
  */
 const SUBJECT = "Success-profile generation";
 
-export const ROLE_ARCHITECT_MODEL = "claude-sonnet-4-6";
+export const ROLE_ARCHITECT_MODEL = CAPABILITY_MODEL.generate_executive_success_profile;
 
 /** Read-only SSR client for after() callbacks — see generate-job-spec.ts. */
 async function createReadOnlySupabaseClient() {
@@ -199,9 +200,7 @@ async function generateUnderAgentSession(
 
   let content: SuccessProfileContent;
   try {
-    const anthropic = getAnthropic();
-    const response = await anthropic.messages.create({
-      model: ROLE_ARCHITECT_MODEL,
+    const response = await runInference("generate_executive_success_profile", {
       max_tokens: 8000,
       system,
       messages: [{ role: "user", content: userPrompt }],
@@ -211,7 +210,7 @@ async function generateUnderAgentSession(
           schema: SUCCESS_PROFILE_SCHEMA,
         },
       },
-    });
+    }, { projectId: null });
 
     const textBlock = response.content.find((b) => b.type === "text");
     if (!textBlock || textBlock.type !== "text") {

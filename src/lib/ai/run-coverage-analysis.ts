@@ -1,5 +1,6 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
+import { CAPABILITY_MODEL } from "./model-map";
 import {
   COVERAGE_ANALYSIS_PROMPT_VERSION,
   COVERAGE_ANALYSIS_SCHEMA,
@@ -10,7 +11,7 @@ import {
 } from "./coverage-analysis-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
-export const COVERAGE_ANALYSIS_MODEL = "claude-sonnet-4-6";
+export const COVERAGE_ANALYSIS_MODEL = CAPABILITY_MODEL.run_coverage_analysis;
 export { COVERAGE_ANALYSIS_PROMPT_VERSION };
 
 export type RunCoverageAnalysisContext = {
@@ -34,15 +35,13 @@ export async function runCoverageAnalysis(
   input: CoverageAnalysisInput,
   ctx: RunCoverageAnalysisContext
 ): Promise<CoverageAnalysis> {
-  const anthropic = getAnthropic();
 
   const system = await applySkillsToPrompt(COVERAGE_ANALYSIS_SYSTEM_PROMPT, {
     projectId: ctx.projectId,
     organizationId: ctx.organizationId,
   });
 
-  const response = await anthropic.messages.create({
-    model: COVERAGE_ANALYSIS_MODEL,
+  const response = await runInference("run_coverage_analysis", {
     max_tokens: 2000,
     system,
     messages: [{ role: "user", content: JSON.stringify(input, null, 2) }],
@@ -52,7 +51,7 @@ export async function runCoverageAnalysis(
         schema: COVERAGE_ANALYSIS_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

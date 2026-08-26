@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   CANDIDATE_INTELLIGENCE_SCHEMA,
   CANDIDATE_INTELLIGENCE_SYSTEM_PROMPT,
@@ -10,7 +10,6 @@ import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { signInCandidateResearchAgent } from "@/lib/agents/session";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const CANDIDATE_RESEARCH_MODEL = "claude-sonnet-4-6";
 const WEB_SEARCH_MAX_USES = 7;
 
 export type RunCandidateResearchInput = {
@@ -76,7 +75,6 @@ export async function runCandidateResearch(
   input: RunCandidateResearchInput,
   ctx: RunCandidateResearchContext
 ): Promise<CandidateIntelligenceReport> {
-  const anthropic = getAnthropic();
 
   const userPrompt = JSON.stringify(
     {
@@ -104,14 +102,13 @@ export async function runCandidateResearch(
     }
   );
 
-  const response = await anthropic.messages.create({
-    model: CANDIDATE_RESEARCH_MODEL,
+  const response = await runInference("run_candidate_research", {
     max_tokens: 8000,
     system,
     messages: [{ role: "user", content: userPrompt }],
     tools: [
       {
-        type: "web_search_20250305",
+        type: "web_search_20260209",
         name: "web_search",
         max_uses: WEB_SEARCH_MAX_USES,
       },
@@ -122,7 +119,7 @@ export async function runCandidateResearch(
         schema: CANDIDATE_INTELLIGENCE_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId });
 
   const textBlocks = response.content.filter(
     (b): b is Extract<typeof b, { type: "text" }> => b.type === "text"

@@ -1,5 +1,5 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   OUTREACH_STRATEGY_SCHEMA,
   OUTREACH_STRATEGY_SYSTEM_PROMPT,
@@ -15,7 +15,6 @@ import {
 } from "@/lib/outreach/strategy-policy";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const STRATEGY_MODEL = "claude-sonnet-4-6";
 
 export type OutreachStrategyInput = {
   role_context: {
@@ -44,13 +43,11 @@ export type OutreachStrategyInput = {
 
 export async function generateOutreachStrategy(
   input: OutreachStrategyInput,
-  options?: { system?: string }
+  options?: { system?: string; projectId?: string | null }
 ): Promise<OutreachStrategyContent> {
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
 
-  const response = await anthropic.messages.create({
-    model: STRATEGY_MODEL,
+  const response = await runInference("run_outreach_strategy", {
     max_tokens: 2500,
     system: options?.system ?? OUTREACH_STRATEGY_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userPrompt }],
@@ -60,7 +57,7 @@ export async function generateOutreachStrategy(
         schema: OUTREACH_STRATEGY_SCHEMA,
       },
     },
-  });
+  }, { projectId: options?.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {
@@ -236,7 +233,7 @@ export async function runOutreachStrategyAndPersist(
           })),
           policy,
         },
-        { system }
+        { system, projectId }
       );
     } catch (err) {
       captureSeamError("[outreach-strategy] agent generation failed", err);

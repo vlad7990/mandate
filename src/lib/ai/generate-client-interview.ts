@@ -1,7 +1,8 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
+import { CAPABILITY_MODEL } from "./model-map";
 import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
 import {
   CLIENT_INTERVIEW_PROMPT_VERSION,
@@ -36,7 +37,7 @@ const INTERVIEWER_UNAVAILABLE_SENTENCE =
 const NO_GAPS_SENTENCE =
   "This mandate has no provable gaps — intake left no missing information and the calibration is established. There is nothing to ask the client.";
 
-export const CLIENT_INTERVIEW_MODEL = "claude-sonnet-4-6";
+export const CLIENT_INTERVIEW_MODEL = CAPABILITY_MODEL.generate_client_interview;
 
 export type ClientInterviewTrigger = "initial" | "regenerate";
 
@@ -169,16 +170,14 @@ async function generateUnderAgentSession(
       }
     );
 
-    const anthropic = getAnthropic();
-    const response = await anthropic.messages.create({
-      model: CLIENT_INTERVIEW_MODEL,
+    const response = await runInference("generate_client_interview", {
       max_tokens: 4000,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
       output_config: {
         format: { type: "json_schema", schema: CLIENT_INTERVIEW_SCHEMA },
       },
-    });
+    }, { projectId });
 
     const textBlock = response.content.find(
       (b): b is Extract<(typeof response.content)[number], { type: "text" }> =>

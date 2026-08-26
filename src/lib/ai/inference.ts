@@ -1,0 +1,313 @@
+import "server-only";
+import type Anthropic from "@anthropic-ai/sdk";
+import { randomUUID } from "crypto";
+import { getAnthropic } from "@/lib/anthropic";
+import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
+import {
+  INFERENCE_PROVIDER,
+  modelForCapability,
+  type Capability,
+} from "./model-map";
+
+/**
+ * The inference seam — every model call in the product flows through
+ * here (LLM router slice 1, gate fda4764). The seam does exactly two
+ * things the call sites used to do for themselves, and nothing more:
+ * it resolves the model from the capability map, and it records one
+ * inference_runs row per call.
+ *
+ * LAW (Part N of the review, ruled): this module never holds a
+ * product Supabase client. It receives prompt strings and returns raw
+ * responses — every read-under-RLS and write-under-RLS stays in the
+ * callers, so provider choice can never change what an agent reads or
+ * writes. Its ONLY database access is the service-role telemetry
+ * insert below, which is fire-and-forget: a failed telemetry write
+ * logs and never blocks, fails, or reshapes the model call it
+ * describes. Skills keep influencing judgment only — they arrive here
+ * already applied to the system prompt, and nothing in this module
+ * gives them (or the model) a say in model choice.
+ *
+ * NOT here, deliberately (each is a later slice behind its own gate):
+ * caching, cost math, prices, retries beyond the SDK's own,
+ * fallbacks, escalation, providers, policy tables.
+ */
+
+export type InferenceRequest = Omit<
+  Anthropic.Messages.MessageCreateParamsNonStreaming,
+  "model" | "stream"
+>;
+
+export type InferenceStreamRequest = Omit<
+  Anthropic.Messages.MessageCreateParamsStreaming,
+  "model" | "stream"
+>;
+
+export type InferenceOutcome =
+  | "ok"
+  | "schema_failed"
+  | "provider_error"
+  | "refused";
+
+/**
+ * A refusal is the only stop_reason that changes the bookkeeping —
+ * everything else (end_turn, tool_use, pause_turn, max_tokens) is a
+ * response the caller's existing handling already deals with.
+ */
+export function outcomeForStopReason(
+  stopReason: string | null | undefined
+): "ok" | "refused" {
+  return stopReason === "refusal" ? "refused" : "ok";
+}
+
+type InferenceRunRow = {
+  id: string;
+  capability: Capability;
+  model: string;
+  provider: string;
+  input_tokens: number | null;
+  cached_input_tokens: number | null;
+  output_tokens: number | null;
+  latency_ms: number;
+  outcome: InferenceOutcome;
+  retries: number;
+  escalated_from: null;
+  project_id: string | null;
+};
+
+/** Build the telemetry row from a usage block that may be absent
+ * (mocked responses in tests carry none). Exported for its tests. */
+export function buildRunRow(args: {
+  id: string;
+  capability: Capability;
+  model: string;
+  usage?: {
+    input_tokens?: number | null;
+    output_tokens?: number | null;
+    cache_read_input_tokens?: number | null;
+  } | null;
+  latencyMs: number;
+  outcome: InferenceOutcome;
+  projectId?: string | null;
+}): InferenceRunRow {
+  return {
+    id: args.id,
+    capability: args.capability,
+    model: args.model,
+    provider: INFERENCE_PROVIDER,
+    input_tokens: args.usage?.input_tokens ?? null,
+    cached_input_tokens: args.usage?.cache_read_input_tokens ?? null,
+    output_tokens: args.usage?.output_tokens ?? null,
+    latency_ms: args.latencyMs,
+    outcome: args.outcome,
+    // 0 is honest: the SDK's internal max_retries are not observable
+    // per call, and app-level retries do not exist this slice.
+    retries: 0,
+    escalated_from: null,
+    project_id: args.projectId ?? null,
+  };
+}
+
+/** Log the first telemetry failure per process, then stay quiet — a
+ * missing env in a test run must not drown the suite's output. */
+let telemetryWarned = false;
+function warnTelemetry(err: unknown): void {
+  if (telemetryWarned) return;
+  telemetryWarned = true;
+  console.error(
+    "[inference] telemetry write failed (model calls are unaffected):",
+    err
+  );
+}
+
+function insertRun(row: InferenceRunRow): void {
+  try {
+    const supabase = getServiceRoleSupabaseClient();
+    void supabase
+      .from("inference_runs")
+      .insert(row)
+      .then(
+        ({ error }) => {
+          if (error) warnTelemetry(error);
+        },
+        (err: unknown) => warnTelemetry(err)
+      );
+  } catch (err) {
+    warnTelemetry(err);
+  }
+}
+
+/** response object → run id, so a caller's normalize-failure branch
+ * can re-mark the row without the row id ever entering its shape. */
+const runIdByResponse = new WeakMap<object, string>();
+
+/**
+ * Mark a run's outcome as schema_failed — the one-liner a seam adds
+ * inside its EXISTING parse/normalize failure branch. Fire-and-forget
+ * like the insert; a response the seam did not produce is a no-op.
+ */
+export function markInferenceSchemaFailed(response: object): void {
+  const id = runIdByResponse.get(response);
+  if (!id) return;
+  try {
+    const supabase = getServiceRoleSupabaseClient();
+    void supabase
+      .from("inference_runs")
+      .update({ outcome: "schema_failed" })
+      .eq("id", id)
+      .then(
+        ({ error }) => {
+          if (error) warnTelemetry(error);
+        },
+        (err: unknown) => warnTelemetry(err)
+      );
+  } catch (err) {
+    warnTelemetry(err);
+  }
+}
+
+/**
+ * One non-streaming model call. `request` is the caller's request
+ * exactly as it built it today — same system, messages, tools,
+ * output_config, per-seam max_tokens; the seam supplies ONLY the
+ * model. Returns the raw Anthropic message; provider errors are
+ * recorded and RETHROWN unchanged so every seam's existing
+ * agent-errors/090 handling fires exactly as before.
+ */
+export async function runInference(
+  capability: Capability,
+  request: InferenceRequest,
+  opts?: { projectId?: string | null }
+): Promise<Anthropic.Message> {
+  const model = modelForCapability(capability);
+  const anthropic = getAnthropic();
+  const id = randomUUID();
+  const started = Date.now();
+
+  let response: Anthropic.Message;
+  try {
+    response = await anthropic.messages.create({
+      ...request,
+      model,
+    });
+  } catch (err) {
+    insertRun(
+      buildRunRow({
+        id,
+        capability,
+        model,
+        latencyMs: Date.now() - started,
+        outcome: "provider_error",
+        projectId: opts?.projectId,
+      })
+    );
+    throw err;
+  }
+
+  insertRun(
+    buildRunRow({
+      id,
+      capability,
+      model,
+      usage: response.usage,
+      latencyMs: Date.now() - started,
+      outcome: outcomeForStopReason(response.stop_reason),
+      projectId: opts?.projectId,
+    })
+  );
+  runIdByResponse.set(response, id);
+  return response;
+}
+
+/**
+ * The one streaming call shape (copilot's SSE). Events pass through
+ * byte-identical; usage is read off message_start / message_delta and
+ * the row is written when the stream completes or throws. A stream
+ * the consumer abandons mid-flight (client disconnect) may leave no
+ * row — acceptable for ops telemetry, never worth buffering an SSE
+ * response over.
+ */
+export async function runInferenceStream(
+  capability: Capability,
+  request: InferenceStreamRequest,
+  opts?: { projectId?: string | null }
+): Promise<AsyncIterable<Anthropic.Messages.RawMessageStreamEvent>> {
+  const model = modelForCapability(capability);
+  const anthropic = getAnthropic();
+  const id = randomUUID();
+  const started = Date.now();
+
+  let upstream: AsyncIterable<Anthropic.Messages.RawMessageStreamEvent>;
+  try {
+    upstream = await anthropic.messages.create({
+      ...request,
+      model,
+      stream: true,
+    });
+  } catch (err) {
+    insertRun(
+      buildRunRow({
+        id,
+        capability,
+        model,
+        latencyMs: Date.now() - started,
+        outcome: "provider_error",
+        projectId: opts?.projectId,
+      })
+    );
+    throw err;
+  }
+
+  const projectId = opts?.projectId;
+
+  return (async function* () {
+    const usage: {
+      input_tokens: number | null;
+      cache_read_input_tokens: number | null;
+      output_tokens: number | null;
+    } = {
+      input_tokens: null,
+      cache_read_input_tokens: null,
+      output_tokens: null,
+    };
+    let stopReason: string | null = null;
+
+    try {
+      for await (const event of upstream) {
+        if (event.type === "message_start") {
+          usage.input_tokens = event.message.usage?.input_tokens ?? null;
+          usage.cache_read_input_tokens =
+            event.message.usage?.cache_read_input_tokens ?? null;
+        } else if (event.type === "message_delta") {
+          usage.output_tokens = event.usage?.output_tokens ?? null;
+          stopReason = event.delta?.stop_reason ?? stopReason;
+        }
+        yield event;
+      }
+    } catch (err) {
+      insertRun(
+        buildRunRow({
+          id,
+          capability,
+          model,
+          usage,
+          latencyMs: Date.now() - started,
+          outcome: "provider_error",
+          projectId,
+        })
+      );
+      throw err;
+    }
+
+    insertRun(
+      buildRunRow({
+        id,
+        capability,
+        model,
+        usage,
+        latencyMs: Date.now() - started,
+        outcome: outcomeForStopReason(stopReason),
+        projectId,
+      })
+    );
+  })();
+}

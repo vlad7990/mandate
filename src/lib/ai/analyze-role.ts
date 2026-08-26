@@ -1,7 +1,7 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   promoteCompanyContextToClient,
   resolveClientId,
@@ -23,7 +23,6 @@ import {
   type IntakeTrigger,
 } from "./intake-failure";
 
-const ANALYSIS_MODEL = "claude-sonnet-4-6";
 
 async function createReadOnlySupabaseClient() {
   const cookieStore = await cookies();
@@ -113,9 +112,7 @@ export async function runIntakeAnalysisAndPersist(
 
     let parsed: RoleAnalysis;
     try {
-      const anthropic = getAnthropic();
-      const response = await anthropic.messages.create({
-        model: ANALYSIS_MODEL,
+      const response = await runInference("analyze_role", {
         max_tokens: 1024,
         system,
         messages: [{ role: "user", content: oneLineInput }],
@@ -125,7 +122,7 @@ export async function runIntakeAnalysisAndPersist(
             schema: ROLE_ANALYSIS_SCHEMA,
           },
         },
-      });
+      }, { projectId });
       const textBlock = response.content.find((b) => b.type === "text");
       if (!textBlock || textBlock.type !== "text") {
         throw new Error("Anthropic response contained no text block");

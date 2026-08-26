@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   POSITIONING_SCHEMA,
   POSITIONING_SYSTEM_PROMPT,
@@ -10,7 +10,6 @@ import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { signInPositioningAgent } from "@/lib/agents/session";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const POSITIONING_MODEL = "claude-sonnet-4-6";
 
 export type PositioningInput = {
   role: {
@@ -53,7 +52,6 @@ export async function runPositioning(
   input: PositioningInput,
   ctx: RunPositioningContext
 ): Promise<PositioningResult> {
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
   const system = await applySkillsToPrompt(POSITIONING_SYSTEM_PROMPT, {
     projectId: ctx.projectId,
@@ -61,8 +59,7 @@ export async function runPositioning(
     client: ctx.skillClient,
   });
 
-  const response = await anthropic.messages.create({
-    model: POSITIONING_MODEL,
+  const response = await runInference("run_positioning", {
     max_tokens: 3000,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -72,7 +69,7 @@ export async function runPositioning(
         schema: POSITIONING_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

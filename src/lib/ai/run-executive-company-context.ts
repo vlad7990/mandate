@@ -1,7 +1,8 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
+import { CAPABILITY_MODEL } from "./model-map";
 import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
 import {
   EXECUTIVE_COMPANY_CONTEXT_SCHEMA,
@@ -20,7 +21,7 @@ import type { ExecutiveSearchRow } from "@/lib/executive/types";
  */
 const SUBJECT = "Company-context research";
 
-export const EXECUTIVE_COMPANY_CONTEXT_MODEL = "claude-sonnet-4-6";
+export const EXECUTIVE_COMPANY_CONTEXT_MODEL = CAPABILITY_MODEL.run_executive_company_context;
 const WEB_SEARCH_MAX_USES = 6;
 
 /**
@@ -191,15 +192,13 @@ async function runContextUnderAgentSession(
 
   let context: ExecutiveCompanyContext;
   try {
-    const anthropic = getAnthropic();
-    const response = await anthropic.messages.create({
-      model: EXECUTIVE_COMPANY_CONTEXT_MODEL,
+    const response = await runInference("run_executive_company_context", {
       max_tokens: 8000,
       system,
       messages: [{ role: "user", content: userPrompt }],
       tools: [
         {
-          type: "web_search_20250305",
+          type: "web_search_20260209",
           name: "web_search",
           max_uses: WEB_SEARCH_MAX_USES,
         },
@@ -210,7 +209,7 @@ async function runContextUnderAgentSession(
           schema: EXECUTIVE_COMPANY_CONTEXT_SCHEMA,
         },
       },
-    });
+    }, { projectId: null });
 
     const textBlocks = response.content.filter(
       (b): b is Extract<typeof b, { type: "text" }> => b.type === "text"

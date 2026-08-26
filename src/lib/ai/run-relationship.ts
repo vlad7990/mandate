@@ -1,5 +1,5 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   RELATIONSHIP_SCHEMA,
   RELATIONSHIP_SYSTEM_PROMPT,
@@ -10,7 +10,6 @@ import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { buildRelationshipUpdate } from "@/lib/network/relationship-merge";
 import { captureSeamError } from "@/lib/observability/sentry";
 
-const RELATIONSHIP_MODEL = "claude-sonnet-4-6";
 
 export type RelationshipInput = {
   profile: {
@@ -45,9 +44,7 @@ export async function generateRelationshipJudgment(
   input: RelationshipInput,
   options?: { system?: string }
 ): Promise<RelationshipJudgment> {
-  const anthropic = getAnthropic();
-  const response = await anthropic.messages.create({
-    model: RELATIONSHIP_MODEL,
+  const response = await runInference("run_relationship", {
     max_tokens: 1500,
     system: options?.system ?? RELATIONSHIP_SYSTEM_PROMPT,
     messages: [{ role: "user", content: JSON.stringify(input, null, 2) }],

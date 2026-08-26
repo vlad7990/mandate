@@ -2,7 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import { signInRoleSpecAgent } from "@/lib/agents/session";
 import { captureSeamError } from "@/lib/observability/sentry";
 import { agentErrorMessage, safeFailureMessage } from "./agent-errors";
@@ -16,7 +16,6 @@ import type { CalibrationModel, CompanyContext } from "./role-analysis";
 import type { OnboardingResponses } from "./onboarding-analysis";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
-const JOB_SPEC_MODEL = "claude-sonnet-4-6";
 
 /**
  * How this generator names itself in a failure a recruiter reads. The
@@ -143,7 +142,6 @@ async function generateUnderAgentSession(
 
   let sections: JobSpecSections;
   try {
-    const anthropic = getAnthropic();
     // Skills ride the AGENT's session (092: D6 — §50 doctrine), no
     // longer borrowing the recruiter's cookies inside after().
     const system = await applySkillsToPrompt(JOB_SPEC_SYSTEM_PROMPT, {
@@ -151,8 +149,7 @@ async function generateUnderAgentSession(
       organizationId: project.organization_id,
       client: supabase,
     });
-    const response = await anthropic.messages.create({
-      model: JOB_SPEC_MODEL,
+    const response = await runInference("generate_job_spec", {
       max_tokens: 4096,
       system,
       messages: [{ role: "user", content: userPrompt }],
@@ -162,7 +159,7 @@ async function generateUnderAgentSession(
           schema: JOB_SPEC_SCHEMA,
         },
       },
-    });
+    }, { projectId });
 
     const textBlock = response.content.find((b) => b.type === "text");
     if (!textBlock || textBlock.type !== "text") {

@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
+import { CAPABILITY_MODEL } from "./model-map";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
 /**
@@ -16,7 +17,7 @@ import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
  * stated, not implied away (§14's cron reasoning).
  */
 
-export const DESK_DIGEST_MODEL = "claude-sonnet-4-6";
+export const DESK_DIGEST_MODEL = CAPABILITY_MODEL.desk_digest;
 
 export type DeskDigestInput = {
   organization_name: string;
@@ -104,7 +105,6 @@ export async function generateDeskDigest(
   input: DeskDigestInput,
   skillCtx?: { organizationId: string | null; client?: SupabaseClient }
 ): Promise<DeskDigest> {
-  const anthropic = getAnthropic();
   // The skills gap's LAST sighting, closed (§47 standing): the digest
   // was the one model call recruiter-authored skills never reached.
   // projectId is null by nature — a desk digest belongs to no mandate —
@@ -119,15 +119,14 @@ export async function generateDeskDigest(
         client: skillCtx.client,
       })
     : DESK_DIGEST_SYSTEM_PROMPT;
-  const response = await anthropic.messages.create({
-    model: DESK_DIGEST_MODEL,
+  const response = await runInference("desk_digest", {
     max_tokens: 2048,
     system,
     messages: [{ role: "user", content: JSON.stringify(input, null, 2) }],
     output_config: {
       format: { type: "json_schema", schema: DESK_DIGEST_SCHEMA },
     },
-  });
+  }, { projectId: null });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

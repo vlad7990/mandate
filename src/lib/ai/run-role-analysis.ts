@@ -1,5 +1,5 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   ROLE_ANALYSIS_MAX,
   ROLE_ANALYSIS_MIN,
@@ -10,7 +10,6 @@ import {
 } from "./role-analysis-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
-const ROLE_ANALYSIS_MODEL = "claude-sonnet-4-6";
 
 export type RunRoleAnalysisContext = {
   projectId: string | null;
@@ -32,15 +31,13 @@ export async function runRoleAnalysis(
     );
   }
 
-  const anthropic = getAnthropic();
   const userPrompt = JSON.stringify(input, null, 2);
   const system = await applySkillsToPrompt(ROLE_ANALYSIS_SYSTEM_PROMPT, {
     projectId: ctx.projectId,
     organizationId: ctx.organizationId,
   });
 
-  const response = await anthropic.messages.create({
-    model: ROLE_ANALYSIS_MODEL,
+  const response = await runInference("run_role_analysis", {
     max_tokens: 2000,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -50,7 +47,7 @@ export async function runRoleAnalysis(
         schema: ROLE_ANALYSIS_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

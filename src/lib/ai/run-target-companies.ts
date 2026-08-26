@@ -1,5 +1,5 @@
 import "server-only";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   TARGET_COMPANIES_SCHEMA,
   TARGET_COMPANIES_SYSTEM_PROMPT,
@@ -7,7 +7,6 @@ import {
 } from "./target-companies-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
-const TARGET_COMPANIES_MODEL = "claude-sonnet-4-6";
 
 export type RunTargetCompaniesInput = {
   role: {
@@ -35,7 +34,6 @@ export async function runTargetCompanies(
   input: RunTargetCompaniesInput,
   ctx: RunTargetCompaniesContext
 ): Promise<TargetCompaniesReport> {
-  const anthropic = getAnthropic();
 
   const userPrompt = JSON.stringify(input, null, 2);
   const system = await applySkillsToPrompt(TARGET_COMPANIES_SYSTEM_PROMPT, {
@@ -43,8 +41,7 @@ export async function runTargetCompanies(
     organizationId: ctx.organizationId,
   });
 
-  const response = await anthropic.messages.create({
-    model: TARGET_COMPANIES_MODEL,
+  const response = await runInference("run_target_companies", {
     max_tokens: 2500,
     system,
     messages: [{ role: "user", content: userPrompt }],
@@ -54,7 +51,7 @@ export async function runTargetCompanies(
         schema: TARGET_COMPANIES_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

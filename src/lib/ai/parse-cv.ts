@@ -1,7 +1,7 @@
 import "server-only";
 import mammoth from "mammoth";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/anthropic";
+import { runInference } from "./inference";
 import {
   CANDIDATE_PROFILE_SCHEMA,
   CV_PARSING_SYSTEM_PROMPT,
@@ -10,7 +10,6 @@ import {
 import type { CalibrationModel, CompanyContext } from "./role-analysis";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
-const PARSE_MODEL = "claude-sonnet-4-6";
 
 export const PDF_MIME = "application/pdf";
 export const DOCX_MIME =
@@ -52,7 +51,6 @@ export async function parseCv(
     throw new Error(`Unsupported MIME type for CV parse: ${mimeType}`);
   }
 
-  const anthropic = getAnthropic();
   const userMessage = await buildUserMessage(fileBytes, mimeType, ctx);
   const system = await applySkillsToPrompt(CV_PARSING_SYSTEM_PROMPT, {
     projectId: ctx.projectId ?? null,
@@ -60,8 +58,7 @@ export async function parseCv(
     client: options?.skillClient,
   });
 
-  const response = await anthropic.messages.create({
-    model: PARSE_MODEL,
+  const response = await runInference("parse_cv", {
     max_tokens: 4096,
     system,
     messages: [{ role: "user", content: userMessage }],
@@ -71,7 +68,7 @@ export async function parseCv(
         schema: CANDIDATE_PROFILE_SCHEMA,
       },
     },
-  });
+  }, { projectId: ctx.projectId ?? null });
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {
