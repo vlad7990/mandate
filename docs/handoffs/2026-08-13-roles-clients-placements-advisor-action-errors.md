@@ -11856,3 +11856,113 @@ drive 114; vitest 1105; CHECK 93; door 26; allowlist 29; anon roster
 
 Slice 2 (invoice visibility) begins here on the gate's already-ruled
 D4(b) / D5 / D6(a).
+
+## 165. THE CLIENT PORTAL — SLICE 2 — INVOICE VISIBILITY — DRAFTED 2026-08-26
+
+Gate `docs/superpowers/specs/2026-08-26-client-portal-gate.md` (commit
+20a01e5), on the founder's confirmation of D4(b), D5 and D6(a). This
+closes the gap §162 named when the invoicing + print programme
+deliberately left it: a client admin can now see what their company
+has been billed, and print it.
+
+**Migration 128 — two RPCs and nothing else.** The 069 doctrine
+governs: externals hold no base-table policy on `invoices` or
+`invoice_lines`, both functions are reachable from a browser console,
+and each returns what its page renders rather than the row it was
+computed from. `portal_list_invoices` carries no snapshot at all, so
+the index cannot leak the billing identity of an invoice the caller
+never opens. `portal_get_invoice` strips `from_email`, `reply_to`,
+`numbering_prefix` and the default terms out of `from_snapshot`, and
+drops `placement_id` / `fee_line_id` from the lines — provenance is
+the desk's, and a client has no use for the id of a fee line they
+cannot look up.
+
+**D5 as three rules in the WHERE clauses.** Issued and void only: a
+draft is the desk thinking aloud and must never cross, and void must
+cross because a client who saw an invoice is owed the fact that it
+was cancelled. Lines cross: a total with no explanation invites
+exactly the email the portal exists to prevent. The document renders
+from the frozen snapshot, which every issued invoice already
+guaranteed (123) — the portal inherits that rather than restating it.
+
+**D6(a): `client_admin` only**, gated on `is_client_admin()` the way
+069's grant ledger already gates itself. The route ALSO refuses by
+role before it reads, so a hiring manager who types the URL gets the
+same 404 as a page that was never built rather than an empty list
+that confirms the surface exists.
+
+**§133 crosses the desk/client boundary.** The portal mounts the SAME
+`InvoiceDocument` the agency looks at. A second layout for the client
+would be a second thing to disagree with — the exact failure the
+print pass existed to end. `InvoiceDocument` gains an opt-in
+`printId` (§160's Panel pattern) because the portal shell, unlike the
+dashboard's, is NOT `print:hidden`: the document marks itself and the
+scoped-print CSS drops the rest of the page.
+
+**A guard hole found and closed in passing.** The scope id is written
+as a LITERAL in both places on purpose. `print-report-button.test.ts`
+pairs `scopeId="x"` against a declared `printId="x"` by SOURCE TEXT,
+so the shared `const PRINT_ID` this page was first written with made
+the new document invisible to the very guard that exists to catch a
+dangling scope — it passed by not being seen. Mutation-tested after
+the change: a typo'd `printId` now fails the suite. **Standing
+lesson: a source-text guard only guards source text. A constant that
+reads better can walk straight out from under one.**
+
+**No write path of any kind** — not even a "seen" flag, which would
+be a write to the invoice domain from outside the desk. Counts
+unmoved and verified after apply: anon roster TWELVE, allowlist 29,
+doors 26, CHECK 93 — nothing here writes, so nothing here trails.
+vitest 1105 unchanged; tsc / eslint / build green. Commit 4ca39ff;
+deployed mandate-703sejrc2.
+
+**Drive 114 — GREEN, live in prod.** Fixtures: a scratch client, a
+template, and three invoices in the three states that matter —
+D114-2026-0001 issued at £42,000 over two lines, D114-2026-0002
+issued then VOIDED at £18,500, and a £99,999 draft whose line was
+labelled "must never reach the client". (1) The list shows exactly
+TWO: the issued and the void. The draft is absent. (2) The issued
+document renders in full from its frozen snapshot — letterhead,
+bill-to, both lines, total, notes, payment instructions, footer. (3)
+The void one renders too, under its own sentence: cancelled on this
+date, not payable, kept because you may have received it. (4) **The
+print outcome was verified under PRINT MEDIA, not assumed** — §160's
+lesson that print bugs only show on paper. With the scope marks
+applied, `getComputedStyle` under `emulateMedia({media:'print'})`
+reports the portal header, footer, back link and print button all
+`display: none` and the document `block` with its content intact: the
+paper gets exactly the invoice. (5) The draft by direct URL 404s, and
+the response body contains neither its amount nor its line label. (6)
+The fence, probed at the definer level: client_admin sees 2 and the
+issued document but NOT the draft; a **client_hr of the SAME client**
+sees zero and gets NULL — D6(a) proven where it actually bites; a
+platform AGENT, the FOUNDER as staff, and a SUSPENDED client_admin
+all get zero and NULL on every call. (7) The minimal-crossing rule
+checked field by field: exactly SEVEN structure keys reach the client
+— billing_name, address_lines, company_number, vat_number,
+payment_instructions, header_text, footer_text. `from_email`,
+`reply_to`, `numbering_prefix` and the default terms do not.
+
+**Teardown exact.** Trail rows first, then the invoices through the
+RULED FLAG PATH — issued and void invoices are records and refuse
+deletion, so `mandate.allow_invoice_transition` is the only way a
+drive unwinds one (§158's rule, unchanged). Then template, users
+(public before auth), client, probe functions, rate_limit swept
+whole. All pins fresh-statement: users 26 / agents 25 / auth 26,
+events 77, projects 2, clients 2, candidates 1, feedback 3,
+client_interviews 0, mandate_shares 1, mandate_grants 0,
+inference_runs 0, rate_limit 0, ops_heartbeats 1, anon-executable 12,
+zero probe functions left, and ALL FIVE invoice surfaces plus
+client_contacts and email_suppressions back at durable ZERO.
+
+Numbers: next migration 129; next § 166; next drive 115; vitest 1105;
+CHECK 93; door 26; allowlist 29; anon roster 12; durable baseline
+gains nothing.
+
+**With this, both slices of the client portal gate are built.** What
+the programme deliberately did NOT do, still standing: slice 3 (the
+client-visible trail), payments and Stripe, credit notes and partial
+invoicing, FX on the invoice, agent involvement of any kind, and any
+write path from the portal to the invoice domain.
+
+DRAFTED — awaiting the founder's word. No completion declared.
