@@ -12405,3 +12405,70 @@ needs a first client. Recorded as judgment, not as a task.
 Numbers at close: next migration 129; next § 173; next drive 117;
 vitest 1110; CHECK 93; door 26; allowlist 29; anon roster 12; durable
 baseline unchanged.
+
+## 173. TWO-PERSON APPROVAL FOR ADMIN GRANTS — DRAFTED 2026-08-26
+
+Gate `docs/superpowers/specs/2026-08-26-two-person-admin-grants-gate.md`
+(4e31a78), founder-confirmed D1(a)–D8. Opened by the founder's own
+question — whether an admin can add other admins. They could, through
+two doors, unilaterally and with immediate effect.
+
+**D1(a), the threshold.** The rule engages only once an org has TWO OR
+MORE active admins. Two-person control is arithmetically impossible
+with one person, and every org — this one included, which has exactly
+one staff user — starts there. The 1 → 2 transition is unprotected by
+arithmetic, not by omission.
+
+**D5, and the proof that matters.** Enforcement is in the database, not
+the server action, because an admin holds a session and a browser
+console. Proven live with three scratch admins: a direct PostgREST
+`update users set role='admin'` is REFUSED by
+`guard_user_privilege_changes`, and a direct `staff_invitations` insert
+with `role='admin'` is refused by the new `guard_admin_invitations`.
+The flow itself: propose → pending with the target unchanged; **the
+proposer's own approval refused**; a second admin approves and the role
+lands; the trail names both parties.
+
+**TWO DEFECTS I INTRODUCED AND CAUGHT BY CHECKING** — both now recorded
+in the migration's own header, because both are reusable:
+
+1. **A new trigger function inherits EXECUTE for PUBLIC**, so
+   `guard_admin_invitations` silently took the ruled anon roster from
+   TWELVE to THIRTEEN. Caught only because the roster is counted
+   immediately after every apply. A trigger function needs no direct
+   EXECUTE by anyone.
+2. **The four trail events were written at `'members'` visibility,
+   which the database does not allow.** The column takes `org | fees |
+   admin`; `members` is an APP-LEVEL UI scope in
+   `src/lib/activity/types.ts` and I conflated the two. The visibility
+   CHECK rejected every write and `write_activity_event`'s exception
+   handler SWALLOWED it — the events simply never appeared, with no
+   error anywhere. Caught by reading the trail back rather than
+   trusting a fire-and-forget write. **A swallowed write is
+   indistinguishable from a write that never happened; the only
+   defence is to read it back.**
+
+**Also:** `AMBIGUOUS_PAIRS` regenerated — `admin_grant_requests` holds
+THREE foreign keys to `users` (target, proposer, decider), so the
+members page names the FK explicitly rather than letting PostgREST
+refuse the whole query. CHECK 93 → 97 with `describe.test.ts` bumped in
+the same commit. Allowlist 29, doors 26, anon roster 12, all verified
+after teardown.
+
+**What was verified, and what was NOT.** The database layer and the
+whole approval flow were proven live at the definer level, with exact
+teardown (users 26 / agents 25 / auth 26, events 77, grant requests 0,
+invitations 0, rate_limit 0, anon roster 12, zero probe functions).
+**The members-screen UI — the pending-grants panel, the role picker's
+"pending" outcome and the invitation refusal — was built, type-checked
+and built green, but NOT exercised in a browser.** There is no drive
+117 screenshot pass. That is the honest gap in this entry, and it is
+the first thing to do before this is called law: with one admin in the
+org the panel cannot even render a row without fixtures.
+
+Deployed mandate-j6vwsfavk. vitest 1110; tsc / eslint / build green.
+
+Numbers: next migration 130; next § 174; **drive 117 still owed**;
+vitest 1110; CHECK 97; door 26; allowlist 29; anon roster 12.
+
+DRAFTED — awaiting the founder's word. No completion declared.
