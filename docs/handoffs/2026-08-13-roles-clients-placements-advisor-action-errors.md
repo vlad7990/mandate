@@ -10816,3 +10816,17 @@ caching candidates) and 4 (Part R + providers) gate separately
 (R4). Numbers: next migration 120; next § 149; next drive 106;
 vitest 1018; activity CHECK 87; intent door 20; allowlist 29
 (ruled); anon roster 12 named grants (ruled).
+
+## 149. §148 CONFIRMED — slice 2 CLOSES; slice 3 gates — 2026-08-25
+
+The founder's word ("lets go") lands against §148 as drafted. SLICE
+2 IS CLOSED: migration 119, the copilot conversation cache, the
+stamped seam, the ORDER BY pin, drive 105's write-then-read proof
+(8,032 tokens written turn 1, read at ~0.1× turn 2) and the
+unchanged durable baseline are law as recorded. The localStorage
+teardown lesson joins the standing trap list.
+
+Slice 3 gates next under R4 — evals + the Q3-authorized benchmarks
+(Sonnet 5, Haiku 4.5) + tier flips only where evals pass +
+schema_failed wiring + re-judging the eight deferred caching
+candidates. Phase-0-verified gate DRAFT first; build on the word.
