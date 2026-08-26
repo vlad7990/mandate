@@ -73,6 +73,8 @@ function parseTemplateForm(formData: FormData): TemplateFormInput {
       company_number: text("company_number", LINE_MAX, "company number"),
       vat_number: text("vat_number", LINE_MAX, "VAT number"),
       payment_instructions: text("payment_instructions", TEXT_MAX, "payment instructions"),
+      from_email: text("from_email", LINE_MAX, "billing email address"),
+      reply_to: text("reply_to", LINE_MAX, "reply-to address"),
       header_text: text("header_text", TEXT_MAX, "header text"),
       footer_text: text("footer_text", TEXT_MAX, "footer text"),
       numbering_prefix: prefix || "INV-",

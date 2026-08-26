@@ -405,6 +405,8 @@ describe("the vocabulary", () => {
       "invoice_created",
       "invoice_issued",
       "invoice_voided",
+      // 126: the send. Same fee-writer gate, same 'fees' tier.
+      "invoice_sent",
     ]);
     for (const type of APP_RECORDABLE_EVENTS) {
       const expected =
@@ -431,11 +433,12 @@ describe("the vocabulary", () => {
    * 107's rebuild; 116 added the three interview-plan human acts = 83;
    * 117 adds the three client-interview human acts + the sessionless
    * answered event = 87; 120 adds the model registry's two admin
-   * acts = 89; 123 adds the invoice lifecycle's three human acts = 92.
+   * acts = 89; 123 adds the invoice lifecycle's three human acts = 92;
+   * 126 adds the send = 93.
    */
-  it("mirrors the live CHECK's ninety-two event types", () => {
-    expect(ACTIVITY_EVENT_TYPES).toHaveLength(92);
-    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(92);
+  it("mirrors the live CHECK's ninety-three event types", () => {
+    expect(ACTIVITY_EVENT_TYPES).toHaveLength(93);
+    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(93);
   });
 
   it("describes the OKR acts with titles and outcomes, never amounts", () => {
@@ -491,6 +494,16 @@ describe("the vocabulary", () => {
     expect(
       describeActivity(event("invoice_voided", { invoice_number: "INV-2026-0001" }))
     ).toBe("Voided INV-2026-0001 — its fee lines are billable again");
+    expect(
+      describeActivity(
+        event("invoice_sent", {
+          invoice_number: "INV-2026-0001",
+          to: "accounts@larkspur.test",
+          total: 64000,
+          currency: "USD",
+        })
+      )
+    ).toBe("Sent INV-2026-0001 (US$64,000) to accounts@larkspur.test");
   });
 
   it("narrows untrusted values and rejects anything else", () => {

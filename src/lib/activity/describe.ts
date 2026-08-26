@@ -224,6 +224,13 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Voided ${number} — its fee lines are billable again`;
     }
 
+    case "invoice_sent": {
+      const number = str(d, "invoice_number") ?? "an invoice";
+      const to = str(d, "to");
+      const total = money(d, "total");
+      return `Sent ${number}${total ? ` (${total})` : ""}${to ? ` to ${to}` : ""}`;
+    }
+
     case "member_role_changed": {
       const who = str(d, "member") ?? "a member";
       return `Changed ${who} from ${role(d.from)} to ${role(d.to)}`;

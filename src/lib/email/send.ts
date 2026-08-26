@@ -1,5 +1,6 @@
 import "server-only";
 import { captureSeamError } from "@/lib/observability/sentry";
+import { escapeHtml } from "./escape";
 
 /**
  * The one door to Resend.
@@ -30,6 +31,19 @@ export type EmailMessage = {
   /** Plain-text alternative. Always provide one for external recipients. */
   text?: string;
   replyTo?: string;
+  /**
+   * Override the sending identity for this one message (126).
+   *
+   * `RESEND_FROM` is the PRODUCT's address and is right for everything
+   * that is Mandate writing to its own users — digests, invitations,
+   * waitlist mail. An invoice is not that: it is the agency billing its
+   * client, and it must come from the agency, whose identity lives on
+   * the invoice template. Callers that pass this are responsible for
+   * the domain being verified with the provider; an unverified one
+   * comes back as a `refused` result with the provider's own sentence,
+   * which is the honest outcome to show the sender.
+   */
+  from?: string;
 };
 
 const DEFAULT_FROM = "Mandate <noreply@getmandate.io>";
@@ -52,7 +66,7 @@ export async function sendEmail(message: EmailMessage): Promise<EmailResult> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM ?? DEFAULT_FROM,
+        from: message.from ?? process.env.RESEND_FROM ?? DEFAULT_FROM,
         to: message.to,
         subject: message.subject,
         html: message.html,
@@ -105,10 +119,7 @@ export function siteUrl(): string {
   );
 }
 
-export function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+// Re-exported so the callers that have always imported it from here
+// are unchanged; the implementation moved to `./escape` in 126 so the
+// client-safe invoice renderer can share it.
+export { escapeHtml };

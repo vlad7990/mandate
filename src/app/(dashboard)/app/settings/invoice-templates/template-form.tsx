@@ -23,6 +23,8 @@ export type TemplateFormInitial = {
   payment_instructions: string;
   header_text: string;
   footer_text: string;
+  from_email: string;
+  reply_to: string;
   numbering_prefix: string;
   default_payment_terms_days: number;
   numbering_next: number;
@@ -43,6 +45,8 @@ export function TemplateForm({ initial }: { initial: TemplateFormInitial }) {
   );
   const [headerText, setHeaderText] = useState(initial.header_text);
   const [footerText, setFooterText] = useState(initial.footer_text);
+  const [fromEmail, setFromEmail] = useState(initial.from_email);
+  const [replyTo, setReplyTo] = useState(initial.reply_to);
   const [prefix, setPrefix] = useState(initial.numbering_prefix);
   const [terms, setTerms] = useState(String(initial.default_payment_terms_days));
   const [logo, setLogo] = useState<File | null>(null);
@@ -75,6 +79,8 @@ export function TemplateForm({ initial }: { initial: TemplateFormInitial }) {
     formData.set("company_number", companyNumber.trim());
     formData.set("vat_number", vatNumber.trim());
     formData.set("payment_instructions", paymentInstructions.trim());
+    formData.set("from_email", fromEmail.trim());
+    formData.set("reply_to", replyTo.trim());
     formData.set("header_text", headerText.trim());
     formData.set("footer_text", footerText.trim());
     formData.set("numbering_prefix", prefix.trim());
@@ -159,6 +165,31 @@ export function TemplateForm({ initial }: { initial: TemplateFormInitial }) {
               />
             </Field>
           </div>
+
+          <Field
+            label="Billing email address"
+            hint="Invoices send FROM this address. Must be on a domain verified with the email provider — leave blank and this template cannot send, only print."
+          >
+            <input
+              type="email"
+              value={fromEmail}
+              onChange={(e) => setFromEmail(e.target.value)}
+              className={INPUT}
+              placeholder="billing@youragency.com"
+            />
+          </Field>
+
+          <Field
+            label="Reply-to address"
+            hint="Where client replies land. Defaults to the billing address."
+          >
+            <input
+              type="email"
+              value={replyTo}
+              onChange={(e) => setReplyTo(e.target.value)}
+              className={INPUT}
+            />
+          </Field>
 
           <Field
             label="Payment instructions"

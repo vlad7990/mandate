@@ -36,6 +36,8 @@ export default function NewInvoiceTemplatePage() {
           payment_instructions: "",
           header_text: "",
           footer_text: "",
+          from_email: "",
+          reply_to: "",
           numbering_prefix: "INV-",
           default_payment_terms_days: DEFAULT_PAYMENT_TERMS_DAYS,
           numbering_next: 1,

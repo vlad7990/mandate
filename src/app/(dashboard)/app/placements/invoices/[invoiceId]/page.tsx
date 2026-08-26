@@ -8,10 +8,12 @@ import { FEE_LINE_COLUMNS, type FeeLineRow } from "@/lib/fees/types";
 import { billableFeeLines } from "@/lib/invoices/compute";
 import {
   INVOICE_COLUMNS,
+  INVOICE_DELIVERY_COLUMNS,
   INVOICE_LINE_COLUMNS,
   INVOICE_STATUS_LABELS,
   parseBillTo,
   parseTemplateStructure,
+  type InvoiceDeliveryRow,
   type InvoiceLineRow,
   type InvoiceRow,
 } from "@/lib/invoices/types";
@@ -21,6 +23,7 @@ import {
   type AvailableFeeLine,
   type PanelInvoice,
 } from "./builder-panel";
+import { SendPanel, type ContactOption, type DeliveryLine } from "./send-panel";
 
 export const metadata = { title: "Invoice" };
 
@@ -179,6 +182,44 @@ export default async function InvoicePage({ params }: { params: Params }) {
     }
   }
 
+  // Slice 2: the send surface only exists once the document does.
+  let deliveries: DeliveryLine[] = [];
+  let contacts: ContactOption[] = [];
+  if (invoice.status !== "draft") {
+    const [{ data: deliveryRows }, { data: contactRows }] = await Promise.all([
+      supabase
+        .from("invoice_deliveries")
+        .select(INVOICE_DELIVERY_COLUMNS)
+        .eq("invoice_id", invoiceId)
+        .order("created_at", { ascending: false })
+        .returns<InvoiceDeliveryRow[]>(),
+      invoice.client_id
+        ? supabase
+            .from("client_contacts")
+            .select("id, full_name, email, title")
+            .eq("client_id", invoice.client_id)
+            .eq("is_archived", false)
+            .not("email", "is", null)
+            .order("is_primary", { ascending: false })
+            .returns<{ id: string; full_name: string; email: string; title: string | null }[]>()
+        : Promise.resolve({ data: [] as { id: string; full_name: string; email: string; title: string | null }[] }),
+    ]);
+    deliveries = (deliveryRows ?? []).map((d) => ({
+      id: d.id,
+      to_address: d.to_address,
+      to_label: d.to_label,
+      delivery_status: d.delivery_status,
+      failure_detail: d.failure_detail,
+      created_at: d.created_at,
+    }));
+    contacts = (contactRows ?? []).map((c) => ({
+      id: c.id,
+      name: c.full_name,
+      email: c.email,
+      title: c.title,
+    }));
+  }
+
   const billTo = parseBillTo(invoice.bill_to);
   const orgName = orgRow?.name ?? "";
   const clientName = invoice.clients?.name ?? "";
@@ -228,6 +269,7 @@ export default async function InvoicePage({ params }: { params: Params }) {
         />
 
         <aside className="print:hidden xl:sticky xl:top-6 xl:self-start">
+          <div className="space-y-5">
           <BuilderPanel
             invoice={panelInvoice}
             lines={lines.map((l) => ({
@@ -241,6 +283,17 @@ export default async function InvoicePage({ params }: { params: Params }) {
             paymentInstructions={structure.payment_instructions}
             clientName={clientName}
           />
+          {invoice.status === "issued" && (
+            <SendPanel
+              invoiceId={invoice.id}
+              canSend={Boolean(structure.from_email)}
+              fromAddress={structure.from_email || null}
+              contacts={contacts}
+              deliveries={deliveries}
+              billToName={billTo.name}
+            />
+          )}
+          </div>
         </aside>
       </div>
     </PageShell>

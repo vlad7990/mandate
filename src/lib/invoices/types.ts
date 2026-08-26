@@ -44,6 +44,22 @@ export type TemplateStructure = {
   vat_number: string;
   /** Bank details, remittance instructions — free text, printed verbatim. */
   payment_instructions: string;
+  /**
+   * The address invoices are SENT FROM (126, gate D.1).
+   *
+   * Not `RESEND_FROM`: that is the product writing to its own users,
+   * and an invoice is the agency billing its client. It lives here
+   * because the template already carries the billing identity, and it
+   * is per-template so an agency billing under two entities can send
+   * as each. Blank means this template cannot send — the affordance is
+   * absent and the refusal says why, rather than sending as Mandate.
+   *
+   * The domain must be verified with the email provider; an unverified
+   * one comes back as the provider's own refusal sentence.
+   */
+  from_email: string;
+  /** Where client replies should land. Falls back to `from_email`. */
+  reply_to: string;
   header_text: string;
   footer_text: string;
   /** Prefix for minted numbers, e.g. "INV-2026-". */
@@ -88,6 +104,8 @@ export function parseTemplateStructure(value: unknown): TemplateStructure {
     company_number: text("company_number"),
     vat_number: text("vat_number"),
     payment_instructions: text("payment_instructions"),
+    from_email: text("from_email"),
+    reply_to: text("reply_to"),
     header_text: text("header_text"),
     footer_text: text("footer_text"),
     numbering_prefix: text("numbering_prefix") || DEFAULT_NUMBERING_PREFIX,
@@ -218,3 +236,46 @@ export function validateLogoFile(file: {
   }
   return { ok: true, extension };
 }
+
+/**
+ * One send of one invoice (126). A record, not a stamp that moves
+ * (gate D.4): "what did this client actually receive, and when" is an
+ * audit question, and an invoice re-sent after a bounce has two
+ * answers. Addresses and subject are SNAPSHOTS for the same reason
+ * everything else in this family is.
+ */
+export const DELIVERY_STATUSES = [
+  "sent",
+  "delivered",
+  "bounced",
+  "complained",
+  "failed",
+] as const;
+export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
+
+export const DELIVERY_STATUS_LABELS: Record<DeliveryStatus, string> = {
+  sent: "Sent",
+  delivered: "Delivered",
+  bounced: "Bounced",
+  complained: "Complained",
+  failed: "Failed",
+};
+
+export type InvoiceDeliveryRow = {
+  id: string;
+  organization_id: string;
+  invoice_id: string;
+  to_address: string;
+  to_label: string | null;
+  from_address: string;
+  subject: string;
+  provider: string;
+  provider_message_id: string | null;
+  delivery_status: DeliveryStatus;
+  failure_detail: string | null;
+  sent_by: string | null;
+  created_at: string;
+};
+
+export const INVOICE_DELIVERY_COLUMNS =
+  "id, organization_id, invoice_id, to_address, to_label, from_address, subject, provider, provider_message_id, delivery_status, failure_detail, sent_by, created_at";

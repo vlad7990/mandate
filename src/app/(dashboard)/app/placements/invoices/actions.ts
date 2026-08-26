@@ -10,9 +10,19 @@ import type { ActionResult } from "@/lib/actions/result";
 import { FEE_LINE_COLUMNS, type FeeLineRow } from "@/lib/fees/types";
 import {
   INVOICE_COLUMNS,
+  INVOICE_LINE_COLUMNS,
+  parseBillTo,
   parseTemplateStructure,
+  type InvoiceLineRow,
   type InvoiceRow,
 } from "@/lib/invoices/types";
+import { evaluateInvoiceSendPolicy } from "@/lib/invoices/send-policy";
+import {
+  invoiceEmailHtml,
+  invoiceEmailSubject,
+  invoiceEmailText,
+} from "@/lib/invoices/email";
+import { sendEmail } from "@/lib/email/send";
 
 /** Sentence subject for a failure this file did not author. See `runAction`. */
 const SUBJECT = "The invoice change";
@@ -461,5 +471,131 @@ export async function deleteDraftAction(invoiceId: string): Promise<ActionResult
 
     revalidatePath("/app/placements/invoices");
     redirect("/app/placements/invoices");
+  });
+}
+
+/**
+ * Send an issued invoice to the client (126, slice 2).
+ *
+ * The order is deliberate and is the 099 shape: decide, then send,
+ * then record what happened — including when it failed. A send that
+ * the provider refused still writes a `failed` delivery row, because
+ * "we tried and it bounced" is a different fact from "nobody has ever
+ * sent this", and only one of them is visible if failures are silent.
+ *
+ * The trail event is written ONLY on success: `invoice_sent` means the
+ * invoice left the building, and a refused send did not.
+ */
+export async function sendInvoiceAction(
+  invoiceId: string,
+  formData: FormData
+): Promise<ActionResult<{ status: string; detail?: string }>> {
+  return runAction(SUBJECT, async () => {
+    const auth = await requireWriter();
+    const supabase = await createServerSupabaseClient();
+
+    const toAddress = String(formData.get("to_address") ?? "").trim();
+    const toLabel = String(formData.get("to_label") ?? "").trim() || null;
+
+    const { data: invoice } = await supabase
+      .from("invoices")
+      .select(`${INVOICE_COLUMNS}, clients!invoices_client_id_fkey(name)`)
+      .eq("id", invoiceId)
+      .maybeSingle<InvoiceRow & { clients: { name: string } | null }>();
+    if (!invoice) throw new Error("The invoice no longer exists. Reload the page.");
+
+    // The identity comes from the FROZEN snapshot, not the live
+    // template: an invoice sends as whoever issued it, even if the
+    // template has been edited or deleted since.
+    const structure = parseTemplateStructure(invoice.from_snapshot);
+    const billTo = parseBillTo(invoice.bill_to);
+
+    const { data: suppression } = await supabase
+      .from("email_suppressions")
+      .select("reason")
+      .eq("address", toAddress.toLowerCase())
+      .maybeSingle<{ reason: string }>();
+
+    const verdict = evaluateInvoiceSendPolicy({
+      status: invoice.status,
+      fromEmail: structure.from_email || null,
+      toAddress: toAddress || null,
+      suppressed: suppression ?? null,
+    });
+    if (!verdict.ok) throw new Error(verdict.message);
+
+    const { data: lineRows } = await supabase
+      .from("invoice_lines")
+      .select(INVOICE_LINE_COLUMNS)
+      .eq("invoice_id", invoiceId)
+      .order("sequence", { ascending: true })
+      .returns<InvoiceLineRow[]>();
+
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("name")
+      .eq("id", auth.organizationId)
+      .maybeSingle<{ name: string }>();
+
+    const input = {
+      invoice,
+      lines: lineRows ?? [],
+      from: structure,
+      billTo,
+      orgName: org?.name ?? "",
+    };
+    const subject = invoiceEmailSubject(input);
+
+    const result = await sendEmail({
+      to: [toAddress],
+      subject,
+      html: invoiceEmailHtml(input),
+      text: invoiceEmailText(input),
+      from: structure.billing_name
+        ? `${structure.billing_name} <${structure.from_email}>`
+        : structure.from_email,
+      replyTo: structure.reply_to || structure.from_email,
+    });
+
+    // Recorded either way — see the header.
+    await supabase.from("invoice_deliveries").insert({
+      organization_id: auth.organizationId,
+      invoice_id: invoiceId,
+      to_address: toAddress,
+      to_label: toLabel,
+      from_address: structure.from_email,
+      subject,
+      provider: "resend",
+      provider_message_id: result.sent ? result.id : null,
+      delivery_status: result.sent ? "sent" : "failed",
+      failure_detail: result.sent ? null : `${result.reason}: ${result.detail}`.slice(0, 500),
+      sent_by: auth.userId,
+    });
+
+    revalidatePath(invoicePath(invoiceId));
+
+    if (!result.sent) {
+      // The honest sentence, by reason. `not-configured` is a local /
+      // unprovisioned environment and is not the sender's fault.
+      throw new Error(
+        result.reason === "not-configured"
+          ? "Email is not configured in this environment, so nothing was sent. The attempt is on the record."
+          : `The invoice could not be sent: ${result.detail.slice(0, 300)}`
+      );
+    }
+
+    await recordActivity(supabase, {
+      eventType: "invoice_sent",
+      clientId: invoice.client_id,
+      detail: {
+        invoice_number: invoice.invoice_number,
+        client: invoice.clients?.name,
+        to: toAddress,
+        total: invoice.total_amount,
+        currency: invoice.currency,
+      },
+    });
+
+    return { status: "sent" };
   });
 }

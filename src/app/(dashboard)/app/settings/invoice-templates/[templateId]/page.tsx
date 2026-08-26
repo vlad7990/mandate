@@ -84,6 +84,8 @@ export default async function EditInvoiceTemplatePage({
           payment_instructions: structure.payment_instructions,
           header_text: structure.header_text,
           footer_text: structure.footer_text,
+          from_email: structure.from_email,
+          reply_to: structure.reply_to,
           numbering_prefix: structure.numbering_prefix,
           default_payment_terms_days: structure.default_payment_terms_days,
           numbering_next: template.numbering_next,

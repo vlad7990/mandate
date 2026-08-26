@@ -186,6 +186,8 @@ export const ACTIVITY_EVENT_TYPES = [
   "invoice_created",
   "invoice_issued",
   "invoice_voided",
+  // 126: the invoice left the building. Same gate, same 'fees' tier.
+  "invoice_sent",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -259,6 +261,8 @@ export const APP_RECORDABLE_EVENTS = [
   "invoice_created",
   "invoice_issued",
   "invoice_voided",
+  // 126: the invoice left the building. Same gate, same 'fees' tier.
+  "invoice_sent",
 ] as const;
 
 export type AppRecordableEvent = (typeof APP_RECORDABLE_EVENTS)[number];
@@ -416,6 +420,7 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   invoice_created: "money",
   invoice_issued: "money",
   invoice_voided: "money",
+  invoice_sent: "money",
 };
 
 /**
