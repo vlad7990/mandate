@@ -11966,3 +11966,85 @@ invoicing, FX on the invoice, agent involvement of any kind, and any
 write path from the portal to the invoice domain.
 
 DRAFTED — awaiting the founder's word. No completion declared.
+
+## 166. §165 CONFIRMED — SLICE 2 CLOSES — THE CLIENT PORTAL PROGRAMME IS COMPLETE — 2026-08-26
+
+The founder's written word ("I confirm §165") lands against §165 as
+drafted. **SLICE 2 IS CLOSED and THE CLIENT PORTAL PROGRAMME IS
+COMPLETE**: both slices of gate 20a01e5 are law.
+
+- **§163/§164 — slice 1**: migration 127. The client interview
+  reaches the signed-in door. `portal_get_mandate` carries the
+  approved set and the caller's own standing answer;
+  `record_portal_client_interview_answered` is the session
+  counterpart of 117's token entry point; `feedback.answers_json`
+  and a partial unique index make D3(c)'s one-answer-per-person an
+  edit rather than a silent overwrite; one `interviewAnswerDoor` prop
+  now serves all three doors.
+- **§165/§166 — slice 2**: migration 128. `portal_list_invoices` and
+  `portal_get_invoice` give a client admin the money, read-only:
+  issued and void only, lines crossing, the frozen snapshot
+  rendering through the SAME `InvoiceDocument` the desk uses, and no
+  write path of any kind.
+
+The seven decisions of the gate are ruled as built: the signed-in
+door answers rather than merely reading; attribution is a real FK and
+not a label (and needed no migration — 057/068 had already built it);
+one answer per person which re-answering edits; invoices visible;
+issued and void with their lines through the existing print path;
+`client_admin` only; and the two slices shipped in that order.
+
+**Both drives are law with them.** Drive 113's fence — an active
+external in, a suspended external / a platform agent / the founder
+refused at every call. Drive 114's — a client admin sees issued and
+void but never the draft, and a `client_hr` of the SAME client sees
+nothing at all, which is where D6(a) actually bites. Exactly seven
+snapshot keys cross to the client; `from_email`, `reply_to` and the
+numbering machinery do not.
+
+**Two standing lessons this programme leaves behind.** First: **a
+source-text guard only guards source text.** The shared constant the
+portal invoice page was first written with made its print scope
+invisible to `print-report-button.test.ts` — it passed by not being
+seen. Write the literal, say in a comment that the duplication IS the
+check, and mutation-test the guard before trusting it. Second, its
+corollary, applied here: `portal-doors.test.ts` was mutation-tested
+three ways before it was committed, because a guard nobody has
+watched fail is not yet a guard.
+
+**Pre-launch advisor sweep — CLOSED, null result.** Run after both
+migrations, as the checklist's first line requires. Security: 56
+lints, of which the 51 SECURITY DEFINER warnings ARE the 069 doctrine
+rather than findings against it. The advisor's anon-executable set is
+**exactly the ruled TWELVE, by name** — an independent confirmation
+of a roster the house has counted by hand since 110. All four
+functions this session touched are `authenticated`-only; none is anon
+reachable. The four `rls_enabled_no_policy` INFOs are the deliberate
+deny-all tables. Performance: 124 lints, all pre-existing classes —
+the `multiple_permissive_policies` pairs are the 111/112 platform-agent
+doctrine, and the `unused_index` INFOs are meaningless at three
+feedback rows. The one actionable item, leaked-password protection,
+was already founder-owned and is not restated here as new.
+
+**One slip, found and corrected.** Migrations 127 and 128 were first
+recorded in `supabase_migrations.schema_migrations` as
+`portal_client_interview` and `portal_invoices` — without the numeric
+prefix every predecessor carries, so neither row could be lined up
+with its repo file. The `name` metadata was corrected in place;
+versions untouched. **Standing rule: `apply_migration` takes the
+NUMBERED name, or the database's own migration list stops agreeing
+with `supabase/migrations/`.**
+
+**What the programme deliberately did NOT do, still standing:** slice
+3 (the client-visible trail — real but speculative, and it earns its
+own gate once a client has actually used the portal); payments and
+Stripe, parked LAST; credit notes and partial invoicing; FX on the
+invoice; agent involvement of any kind — externals remain outside
+`is_agent()` entirely; any write path from the portal to the invoice
+domain, not even a "seen" flag; and any base-table RLS policy for
+externals, because the 069 doctrine holds: **RPCs are the read
+surface.**
+
+Numbers at close: next migration 129; next § 167; next drive 115;
+vitest 1105; CHECK 93; door 26; allowlist 29; anon roster 12; durable
+baseline unchanged.
