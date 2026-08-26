@@ -11196,3 +11196,52 @@ Numbers: next migration 123; next § 156; next drive 109; vitest
 1054; CHECK 89 / door 22 / allowlist 29 / roster 12; durable
 baseline unchanged (call-audio objects 0 durable; note tables stay
 pinned per-drive, not baseline).
+
+## 156. ESCALATION PAIRS BUILT — drive 109 GREEN (null result) — 2026-08-26 — DRAFTED, AWAITS CONFIRMATION
+
+The founder's word ("For section G confirmed the three points")
+landed against gate ef832fc. The two ruled hops are live. Nothing
+here is law until the founder confirms THIS entry.
+
+**No migration** — `inference_runs.escalated_from` had waited since
+118; `buildRunRow` widened from hardcoded null. **model-map.ts**:
+ESCALATION_PAIRS tripwire-pinned — parse_cv haiku-4-5→sonnet-4-6
+DORMANT behind the from-guard (arms itself when the Haiku flip
+lands on the founder's CV benchmark), generate_evaluation
+sonnet-5→opus-5 live (G.2 ruled: opus-5 unbenchmarked is
+acceptable as a FAILURE-PATH fallback — it fires only after
+sonnet-5 already failed the deterministic gate, and its answer
+passes the same validation before acceptance). **inference.ts**:
+runInference and the hop share ONE call body (callModel) so
+telemetry cannot drift; a WeakMap twin (runModelByResponse) records
+what actually ran; escalateInference marks the failed run
+schema_failed then refuses under MANDATE_EVAL / no pair /
+from-mismatch (a founder registry override DISARMS a pair), else
+ONE hop of the identical request — no thinking param, escalated_from
+recorded. **Both seams**: catch → hop → same extraction → a second
+failure marks and rethrows the ORIGINAL error (G.3: one hop, then
+090's honesty, byte-identical to pre-slice behavior on every
+refusal path). vitest 1054 → 1060 (tripwire + five hop proofs:
+fired with identical request and escalated_from; from-guard dormant
+parse_cv; override-disarm; no-pair; eval-fence). Commit b66ff57;
+deployed mandate-c9iw66802.
+
+**Drive 109 — GREEN, the null result is the pass (142 precedent).**
+The fire path cannot be forced in production; it is mock-pinned.
+Live: the standing candidate's evaluation REGENERATED through the
+wired seam — claude-sonnet-5, escalated_from NULL, ok, 32,177 in /
+3,461 out / 31.9s — the happy path unchanged by the wiring.
+Teardown exact: evaluation restored BYTE-IDENTICAL via the
+sibling-key snapshot (md5-verified before and after), snapshot key
+dropped, inference_runs swept to 0, the regenerate's trail event
+swept by value (events 77), session signed out with localStorage
+cleared. The first REAL fired hop will announce itself in
+inference_runs (escalated_from NOT NULL) in normal use — residue,
+not re-driven.
+
+**The router thread is now fully built**: programme (§154) +
+escalation pairs. Remaining router residue unchanged: parse_cv
+benchmark on founder CVs (which also arms its pair), judge debts,
+Q4 deferred. Numbers: next migration 123; next § 157; next drive
+110; vitest 1060; CHECK 89 / door 22 / allowlist 29 / roster 12;
+durable baseline unchanged.
