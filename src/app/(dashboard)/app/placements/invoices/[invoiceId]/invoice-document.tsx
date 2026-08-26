@@ -24,6 +24,7 @@ export function InvoiceDocument({
   billTo,
   logoUrl,
   orgName,
+  printId,
 }: {
   invoice: InvoiceRow;
   lines: InvoiceLineRow[];
@@ -32,12 +33,23 @@ export function InvoiceDocument({
   billTo: BillTo;
   logoUrl: string | null;
   orgName: string;
+  /**
+   * Opt-in print scope (§160's Panel pattern). The desk's own route is
+   * a page that IS the document under a `print:hidden` shell, so it
+   * passes nothing. The client portal has its own header and footer
+   * which are NOT print-hidden, so it marks the document and the
+   * scoped-print CSS drops everything else.
+   */
+  printId?: string;
 }) {
   const billingName = structure.billing_name || orgName;
   const isDraft = invoice.status === "draft";
 
   return (
-    <article className="m-report-doc mx-auto w-full max-w-[780px] border border-outline-variant bg-surface-container-low px-8 py-10 sm:px-14 sm:py-12 print:rounded-none print:border-0 print:px-0 print:py-0">
+    <article
+      id={printId}
+      className="m-report-doc mx-auto w-full max-w-[780px] border border-outline-variant bg-surface-container-low px-8 py-10 sm:px-14 sm:py-12 print:rounded-none print:border-0 print:px-0 print:py-0"
+    >
       {/* Letterhead */}
       <header className="flex flex-wrap items-start justify-between gap-6">
         <div className="min-w-0 space-y-3">

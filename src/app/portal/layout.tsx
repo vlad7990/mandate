@@ -39,12 +39,23 @@ export default async function PortalLayout({
               Searches
             </Link>
             {access.role === "client_admin" && (
-              <Link
-                href="/portal/people"
-                className="font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant transition-colors hover:text-primary"
-              >
-                People
-              </Link>
+              <>
+                <Link
+                  href="/portal/people"
+                  className="font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant transition-colors hover:text-primary"
+                >
+                  People
+                </Link>
+                {/* Money is an account-holder concern (128, D6(a)). The
+                    route refuses everyone else in-database too — this
+                    only decides whether the surface is NAMED. */}
+                <Link
+                  href="/portal/invoices"
+                  className="font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant transition-colors hover:text-primary"
+                >
+                  Invoices
+                </Link>
+              </>
             )}
             <Link
               href="/portal/settings"
