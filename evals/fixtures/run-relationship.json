@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Vladimir Breygin",
+    "input": {
+      "profile": {
+        "display_name": "Vladimir Breygin",
+        "relationship_state": "cold",
+        "disposition": {},
+        "follow_up_at": null,
+        "follow_up_note": null,
+        "last_meaningful_contact_at": null
+      },
+      "appearances": [],
+      "contact_history": [],
+      "strategies": [],
+      "evidence": {},
+      "today": "2026-08-25"
+    }
+  }
+]

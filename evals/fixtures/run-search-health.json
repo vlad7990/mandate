@@ -1,0 +1,332 @@
+[
+  {
+    "name": "Head of IT Operations @ RBC Capital Markets",
+    "input": {
+      "project": {
+        "title": "Head of IT Operations",
+        "company_name": "RBC Capital Markets",
+        "calibration": {
+          "role_title": "Head of IT Operations",
+          "inferred_scope": "This is a senior leadership role overseeing IT operations for RBC Capital Markets, the investment banking and capital markets division of Royal Bank of Canada. The role likely carries global or regional (North America/EMEA) scope and reports into a CTO or CIO function within the division.",
+          "role_structure": {
+            "function": "Technology",
+            "seniority": "Head of"
+          },
+          "dimension_weights": {
+            "domain": 10,
+            "technical": 8,
+            "leadership": 9,
+            "regulatory": 7,
+            "transformation": 8
+          },
+          "weights_rationale": "The recruiter's priority signals all scored 9–10, with Capital Markets domain expertise explicitly flagged by the CIO stakeholder as non-negotiable and domain/technical/leadership each weighted at maximum, driving those three dimensions to the top of the model; the must-haves around regulatory and supervisory technology ownership, a $100MM budget, 400-person team, and a live modernisation/simplification mandate further elevate regulatory and transformation dimensions above baseline for a global investment bank context.",
+          "missing_information": [
+            "Geography / primary location",
+            "Team size and organisational remit",
+            "Reporting line (e.g. CTO, CIO)",
+            "Compensation range",
+            "Mandate timeline"
+          ]
+        },
+        "company_context": {
+          "industry": "Investment Banking",
+          "company_name": "RBC Capital Markets",
+          "business_model": "Global Investment Bank",
+          "culture_profile": {
+            "summary": "RBC Capital Markets presents as a regulated, matrix-structured global investment bank where capital-markets domain depth and operational scale are non-negotiable. Feedback signals are placeholder/test entries only, so cultural calibration rests entirely on the role brief and industry context.",
+            "red_flags": [
+              {
+                "label": "IT Operations vs App Dev confusion — anti-pattern risk",
+                "detail": "The hiring manager explicitly flags that candidates confusing Ops IT (infrastructure run) with application development will fail screening. Recruiters must verify the candidate owns software delivery and post-trade application roadmaps, not just production estate management.",
+                "severity": "high"
+              },
+              {
+                "label": "Domain depth gap — capital markets specificity required",
+                "detail": "CIO Vlad Breygin's sole stated filter is deep capital-markets knowledge. Candidates from adjacent fintech, wealth management, or generic banking technology without named asset-class or post-trade system ownership (e.g. Murex, Broadridge, FIS GMI) will likely be screened out regardless of leadership scale.",
+                "severity": "high"
+              },
+              {
+                "label": "Scale mismatch — sub-threshold leadership scope",
+                "detail": "Role requires managers-of-managers experience across ~400 headcount and $100MM budget. Candidates who cannot cite direct headcount, total org span, and owned budget explicitly cannot credibly compete; any CV silent on these numbers must have the gap flagged before submission.",
+                "severity": "medium"
+              },
+              {
+                "label": "Feedback signal vacuum — cultural calibration limited",
+                "detail": "All three HM feedback entries are test/placeholder content with no substantive preference signal. Culture profile confidence is constrained to industry and role-brief inference; recalibration is warranted once real interview feedback is captured.",
+                "severity": "low"
+              }
+            ],
+            "generated_at": "2026-05-01T14:03:38.084Z",
+            "risk_appetite": {
+              "value": "measured",
+              "evidence": "Global investment bank operating under FCA/PRA, OSC/OSFI, and SEC/FINRA regulatory regimes; the mandate to modernise post-trade and regulatory reporting technology signals appetite for controlled change within a compliance-bounded envelope — not speculative innovation.",
+              "confidence": 72
+            },
+            "decision_speed": {
+              "value": "committee",
+              "evidence": "The role reports to a Line of Business CIO and sits on the CM Tech Operating Committee, with direct CM COO interface; multi-stakeholder governance and a $100MM budget imply board/committee approval cycles rather than founder-speed execution.",
+              "confidence": 78
+            },
+            "change_readiness": {
+              "value": "incremental",
+              "evidence": "The estate modernisation is described as simplifying and modernising for scale and resilience — a structured, risk-managed programme rather than a blank-sheet transformation. A regulated capital-markets environment with large incumbent post-trade infrastructure (likely Murex/Calypso-class systems) points to incremental rather than wholesale change readiness.",
+              "confidence": 68
+            },
+            "leadership_preference": {
+              "value": "operator",
+              "evidence": "Must-haves explicitly call out BAU ownership of a 400-person team, $100MM budget management, and a transformation mandate grounded in simplification and resilience — delivery execution over strategic narrative. CIO stakeholder focus on capital-markets domain depth reinforces operator over visionary profile.",
+              "confidence": 85
+            },
+            "candidate_facing_pitch": "RBC Capital Markets is a globally regulated investment bank where this role sits at the intersection of post-trade technology and regulatory reporting at serious scale — 400 people, $100MM budget, direct COO and CIO visibility. The trade-off is honest: this is a disciplined, committee-governed environment that rewards deep capital-markets domain expertise and operational delivery over frontier experimentation."
+          },
+          "intelligence_report": {
+            "sources": [
+              "https://www.rbccm.com/en/about-us/leadership",
+              "https://www.rbc.com/our-company/our-leadership.html",
+              "https://www.rbcx.com/our-leadership/",
+              "https://fintechfrontiers.live/rbc-launches-ai-and-digital-innovation-team-to-drive-capital-markets-growth/",
+              "https://theorg.com/org/rbc-capital-markets/teams/leadership-team-1",
+              "https://www.rbccm.com/en/insights.page",
+              "https://www.rbccm.com/en/careers/full-time.page",
+              "https://www.ibm.com/investor/events/rbc-capital-markets-2025-technology-internet-media-and-telecommunications-conference",
+              "https://craft.co/royal-bank-of-canada/executives",
+              "https://investors.micron.com/events/event-details/rbc-capital-markets-2025-global-technology-internet-media-telecommunications",
+              "https://www.rbccm.com/en/insights/outlook-2026",
+              "https://www.rbccm.com/en/conference/timt-conference",
+              "https://www.rbccm.com/en/insights/2026/01/2025-takeaways-and-2026-outlooks-us-equity-markets-perspectives",
+              "https://www.rbccm.com/en/story/story.page?dcr=templatedata%2Farticle%2Fstory%2Fdata%2F2024%2F11%2Ffrom-ipos-to-ma-shifting-strategies",
+              "https://www.rbccm.com/en/expertise/rbcclear",
+              "https://www.rbccm.com/en/insights/gmo2025.page",
+              "https://www.rbccm.com/en/insights/imagine",
+              "https://nextsprints.com/guide/rbc-product-strategy-guide",
+              "https://en.wikipedia.org/wiki/RBC_Capital_Markets",
+              "https://theorg.com/org/rbc-capital-markets",
+              "https://leadiq.com/c/rbc-capital-markets/5a1d93ca5400005400780e87",
+              "https://www.rbccm.com/en/gib/technology.page",
+              "https://www.mergersight.com/rbc-capital-markets",
+              "https://www.bloomberg.com/profile/company/16920Z:US",
+              "https://vault.com/company-profiles/commercial-banking-and-investment-banking/rbc-capital-markets",
+              "https://www.rbccm.com/en/",
+              "https://www.rbccm.com/en/about-us.page",
+              "https://www.linkedin.com/company/rbc-capital-markets",
+              "https://www.rbccm.com/assets/rbccm/data/futures/certified-annual-report.pdf",
+              "https://www.rbccm.com/en/insights/transcripts/2024-takeaways-and-2025-outlooks-us-equity-markets-perspectives-preview.page",
+              "https://www.rbc.com/investor-relations/",
+              "https://www.rbcis.com/2025-regulatory-calendar/complete_list.html",
+              "https://www.rbccm.com/en/story/story.page?dcr=templatedata%2Farticle%2Fstory%2Fdata%2F2024%2F12%2F2024-takeaways-and-2025-outlooks-us-equity-markets-perspectives",
+              "https://www.rbc.com/investor-relations/financial-information.html",
+              "https://www.rbc.com/investor-relations/_assets-custom/pdf/investorday2025_presentation.pdf",
+              "https://www.rbcclearingandcustody.com/en-us/technology/rbc-nexus/markets-and-research/",
+              "https://rbcborealis.com/",
+              "https://www.rbccm.com/en/expertise/electronic-trading/ai-trading",
+              "https://www.americanbanker.com/news/rbc-says-its-focus-on-ai-is-paying-dividends",
+              "https://www.rbccm.com/en/insights/ai",
+              "https://www.rbccm.com/en/expertise/electronic-trading/aiden/from-the-whiteboard",
+              "https://www.pymnts.com/artificial-intelligence-2/2026/rbc-embeds-ai-at-the-core-of-banking-aiming-for-1-billion-in-returns/",
+              "https://rbcborealis.com/applications/aiden/",
+              "https://www.rbccm.com/en/insights/2025/06/how-rbc-is-using-ai-to-transform-capital-markets-research",
+              "https://finance.yahoo.com/news/transforming-trading-ai-rbc-aiden-183002708.html",
+              "https://www.ainvest.com/news/rbc-ai-powered-playbook-building-1-billion-moat-financial-services-2505/"
+            ],
+            "ai_agenda": "RBC Capital Markets has one of the most concrete and publicly documented AI agendas among global investment banks. The Aiden platform ecosystem — built with RBC Borealis on Nvidia AI Enterprise — is the flagship, encompassing electronic trading (VWAP and Arrival Price deep reinforcement learning algorithms), research acceleration (AidenResearch, QuickTakes built on Databricks), and banker productivity (AidenBanker). As of a March 2026 PYMNTS report, more than 8,000 capital markets employees are already using the Aiden platform. RBC Borealis has filed more than 635 AI-related patents since 2019 and the ATOM foundation model was used across 15 products and processes in 2025. RBC partnered with Cohere in 2025 to develop secure generative AI solutions for financial services, and with Nvidia for customised generative AI deployment. RBC's 2025 Investor Day set a target of $700M–$1B in pre-tax earnings from AI-driven initiatives by 2027, and the firm ranks first in Canada and third globally in the 2025 Evident AI Index.\n\nFor the specific mandate of this role, the AI agenda is most directly relevant through its implications for supervisory and regulatory reporting automation and the potential to embed AI-driven controls and exception management into back-office workflows. While public documentation on AI deployment within the post-trade and regulatory estate is limited (the public narrative is front-office and research focused), the firm's broader AI Group — reporting directly to CEO Dave McKay — has a mandate to scale AI across all business segments, including operations. A candidate who can credibly connect the firm's AI infrastructure (Aiden platform, Databricks, Lumina) to back-office modernisation use cases will resonate strongly with Vlad Breygin and the CM Tech Operating Committee.",
+            "red_flags": [
+              "Candidates whose back-office or operations technology experience is as a consumer of systems (e.g. business analyst, product owner sitting above a vendor platform) rather than as an application development owner with roadmap and vendor-contract accountability will not clear Vlad Breygin's domain depth bar.",
+              "Pure infrastructure or IT Operations (run-the-bank, SRE, ITSM) backgrounds are an explicit anti-pattern called out in the recruiter brief — the role is application development leadership for post-trade processing, not production estate management.",
+              "Candidates without managers-of-managers experience at a comparable headcount (~300–500 resources) and budget (~$75M–$125M) cannot be presented for a Head-of role of this scope; the leadership dimension gap must be stated explicitly if headcount or budget numbers are absent from the CV.",
+              "Executives who have spent the majority of their careers in pure consulting or advisory without operational P&L and team ownership tend to lack the daily BAU accountability culture that a COO-interfacing technology leadership role demands at a firm of RBC's regulatory weight.",
+              "Candidates who can speak to AI and digital innovation at the front-office level but have no post-trade or regulatory reporting depth will be filtered quickly by the CIO given the explicit Capital Markets domain non-negotiable — surface-level capital markets familiarity is insufficient.",
+              "Strong general banking technology leaders from retail, wealth, or commercial banking divisions who have not operated within a broker-dealer or investment bank post-trade environment will face a steep credibility gap on the specific regulatory reporting and clearing/settlement infrastructure required by this role."
+            ],
+            "generated_at": "2026-05-01T16:16:34.724Z",
+            "recent_context": [
+              {
+                "date": "2026-03-24",
+                "headline": "PYMNTS: RBC deploys AI at operational core; 8,000+ CM employees on Aiden platform; AI Group reports directly to CEO McKay",
+                "significance": "Signals that AI is now a firm-wide operational mandate, not just a front-office initiative — the incoming head of back-office technology will be expected to integrate with and leverage the Aiden/Lumina/Databricks platform stack rather than build independently."
+              },
+              {
+                "date": "2026-03-19",
+                "headline": "American Banker: RBC ranks first in Canada and third globally in 2025 Evident AI Index; CEO McKay confirms AI strategy on track",
+                "significance": "Elevates the reputational stakes of the technology estate — the back-office modernisation programme will be scrutinised in the context of a bank publicly committed to AI-led operational excellence, raising the bar for the incoming leader's technology credibility."
+              },
+              {
+                "date": "2025-05-30",
+                "headline": "RBC Capital Markets creates dedicated AI and Digital Innovation team; Lindsay Patrick appointed Chief Strategy and Innovation Officer; Bobby Grubert named Head of AI and Digital Innovation",
+                "significance": "Establishes the peer stakeholder map for this role — the new head of CM Operations Technology will need to align closely with Patrick and Grubert on how enterprise AI tooling applies to post-trade and supervisory reporting workflows."
+              },
+              {
+                "date": "2025-06-09",
+                "headline": "RBCCM publishes AidenResearch/QuickTakes launch; built on Databricks, reduces research turnaround 20–60%",
+                "significance": "Demonstrates the firm's in-house build velocity and preference for proprietary AI tooling on commercial platforms — a candidate who can extend similar thinking to back-office automation and regulatory reporting will have a strong alignment story."
+              },
+              {
+                "date": "2025-01-13",
+                "headline": "RBCCM 2025 Outlook: ECM volumes up ~16% in 2025; private credit structural shift; AI remains a key investment theme for 2026",
+                "significance": "Growing deal volumes and structural product expansion in private credit and ECM increase the transaction throughput pressure on the post-trade estate, reinforcing the urgency of the modernisation mandate."
+              },
+              {
+                "date": "2024-01-01",
+                "headline": "Project Samara: RBC completes Canada's first blockchain-based bond issuance ($100M tokenized bond) with Bank of Canada and RBC Investor Services",
+                "significance": "Signals active interest in DLT-based post-trade settlement infrastructure — the incoming head should be conversant with distributed ledger approaches to settlement and their regulatory implications."
+              },
+              {
+                "date": "2024-01-01",
+                "headline": "RBC Clear wins 2025 Model Bank Award for Reinventing Cash Management; built as digital-first platform replacing legacy cash management workflows",
+                "significance": "Demonstrates the firm's willingness to decommission legacy systems and build purpose-built replacements — the back-office modernisation programme will likely follow a similar philosophy, requiring a leader comfortable with greenfield build decisions."
+              },
+              {
+                "date": "2025-10-31",
+                "headline": "RBC Capital Markets LLC certified annual report (Oct 2025): SEC Rule 15c3-3 compliance confirmed; ~$19.8M segregated in special reserve accounts",
+                "significance": "Confirms active SEC Rule 15c3-3 regulatory obligations in the US broker-dealer entity — a named regulatory framework the incoming head's team must maintain compliance with, making US regulatory reporting experience a concrete requirement."
+              }
+            ],
+            "culture_signals": {
+              "pace": 68,
+              "hierarchy": 58,
+              "risk_tolerance": 65,
+              "innovation_appetite": 80
+            },
+            "leadership_team": [
+              {
+                "name": "Vlad Breygin",
+                "title": "Capital Markets Line of Business CIO",
+                "relevance_to_role": "Direct hiring manager and sitting chair of the CM Tech Operating Committee; the recruiter brief explicitly flags his non-negotiable requirement for deep Capital Markets domain knowledge from the incoming head."
+              },
+              {
+                "name": "Derek Neldner",
+                "title": "CEO and Group Head, RBC Capital Markets",
+                "relevance_to_role": "Divisional CEO whose strategic priorities for market share growth and AI-led transformation set the investment envelope and urgency for the back-office modernisation mandate."
+              },
+              {
+                "name": "Lindsay Patrick",
+                "title": "Chief Strategy and Innovation Officer, RBC Capital Markets",
+                "relevance_to_role": "Appointed May 2025 to lead the CM AI and Digital Innovation team; a key peer stakeholder whose front-office AI agenda intersects with the regulatory and supervisory technology remit of this role."
+              },
+              {
+                "name": "Bobby Grubert",
+                "title": "Head of AI and Digital Innovation, RBC Capital Markets",
+                "relevance_to_role": "Leads the Aiden/AidenResearch/AidenBanker product ecosystem and the firm's enterprise AI deployment across 8,000+ CM employees; a peer whose platform choices will shape what tooling the back-office modernisation programme can consume."
+              },
+              {
+                "name": "Patti Shugart",
+                "title": "Senior Executive, RBC Capital Markets (Global Diversity Leadership Council Chair)",
+                "relevance_to_role": "Referenced in the CM leadership page as a senior executive with broad organisational influence; likely a senior stakeholder in the CM Operating Committee environment."
+              },
+              {
+                "name": "Jonathan (Surname Not Surfaced)",
+                "title": "Senior Executive with Digital Transformation Focus, RBC Capital Markets",
+                "relevance_to_role": "Named on the RBCCM leadership page with an explicit digital transformation mandate and advisory board membership at Queen's University MFIT programme; a likely peer on the CM Tech Operating Committee."
+              }
+            ],
+            "executive_summary": "RBC Capital Markets is operating from a position of deliberate technology investment and transformation, with the Capital Markets division explicitly identified as a growth engine within Royal Bank of Canada's broader enterprise strategy. The firm operates 55 offices across 16 countries and, as of February 2026, employs approximately 11,000 people with estimated annual revenues of $15 billion. The CM Tech function is structured around a Line of Business CIO model — the hiring stakeholder is Vlad Breygin, Capital Markets CIO — with a standing CM Tech Operating Committee that the incoming Global Head of CM Operations, Regulatory, and Supervisory Technology will join. The mandate is unambiguous: the role owns all application development for post-execution trade processing (back office) and regulatory/supervisory reporting technology, carries a ~$100MM annual budget and ~400 headcount, and is chartered to drive a major simplification and modernisation initiative across the estate for scale and resilience.\n\nThe firm's public posture is biased toward in-house build: the Aiden algorithmic trading platform (built with RBC Borealis using deep reinforcement learning), the Lumina enterprise data and AI platform, the ATOM proprietary foundation model, and the AidenResearch/AidenBanker product suite are all internally developed. In May 2025, RBC Capital Markets formalised a dedicated AI and Digital Innovation team under Lindsay Patrick (Chief Strategy and Innovation Officer) and Bobby Grubert (Head of AI and Digital Innovation). RBC's 2025 Investor Day cited $700M–$1B in pre-tax earnings targeted by 2027 from AI-driven initiatives, and the firm ranked first in Canada and third globally in the 2025 Evident AI Index. The technology posture for back-office and regulatory technology, while less publicly profiled than the front-office AI story, sits squarely in the mandate of this hire — the incumbent will need to translate the firm's front-office innovation ambition into the resilience and simplification of the post-trade and regulatory reporting estate, interfacing daily with the CM COO and her management team.",
+            "technology_strategy": "RBC Capital Markets operates a strongly in-house build posture for strategic technology. Confirmed proprietary platforms include Aiden (deep reinforcement learning electronic trading, launched globally 2020), Lumina (enterprise data and AI platform), ATOM (foundation model for financial services built by RBC Borealis with 100+ researchers, deployed across 15 products and processes in 2025), AidenResearch (AI agents for earnings content, call summarisation, and filing access), AidenBanker (pitchbook and meeting-prep automation), and QuickTakes (research turnaround platform built on Databricks). The disclosed tech stack includes Microsoft, Java, C#, Power BI, and SQL Server. For the post-trade and regulatory estate, the firm's stated goal — sourced from the recruiter brief — is simplification and modernisation for scale and resilience, signalling that the current estate carries legacy complexity typical of a mid-tier global investment bank that has grown through product and geographic expansion. Project Samara (Canada's first blockchain-based bond issuance, settled via distributed ledger in partnership with the Bank of Canada and RBC Investor Services) signals an appetite for post-trade infrastructure experimentation. RBC Clear, a purpose-built digital-first cash management platform launched in 2024–25, won the 2025 Model Bank award for Reinventing Cash Management, reflecting the firm's willingness to decommission legacy workflows and build from scratch when the business case is clear.\n\nThe CM technology organisation is governed through a Line of Business CIO model with a standing CM Tech Operating Committee, which the incoming head will join as a standing member. This governance structure implies a reasonably mature technology operating model with cross-functional accountability — budget holders sit alongside the business COO and CIO, not below them. The $100MM annual technology budget for the Operations, Regulatory, and Supervisory Technology tower is material and indicates the firm is prepared to fund the modernisation programme at scale, not incrementally.",
+            "ideal_candidate_profile": "The target archetype is a senior technology executive who has owned — not just contributed to — the post-execution application development estate at a global investment bank or large broker-dealer, with credible capital markets domain depth across equities, fixed income, or multi-asset post-trade. The role carries a $100MM annual budget and ~400 headcount, so the candidate must have demonstrated managers-of-managers leadership at comparable scale; direct headcount and budget ownership must be named and verifiable, not inferred. The standing membership on the CM Tech Operating Committee and the daily interface with the CM COO require executive maturity: the ability to translate complex technology states into business risk language for non-technical COO-level stakeholders, and to hold ground on architectural decisions under commercial pressure. Given the firm's confirmed in-house build posture and proprietary platform investments, candidates from pure third-party system integrator or outsourced operations backgrounds will likely struggle to earn credibility with the engineering-heavy RBC Borealis-influenced technology culture.\n\nOn transformation, the mandate explicitly requires driving a simplification and modernisation initiative — the Post-Trade Systems Check skill applies in full here. Candidates must be able to name at least one analogous programme with budget, duration, platforms decommissioned or migrated, and measurable outcome (e.g. settlement fail-rate improvement, regulatory submission latency reduction, system consolidation from N to M). Regulatory exposure is non-negotiable: the role owns supervisory and regulatory reporting technology, so familiarity with SEC Rule 15c3-3, CAT, Reg SCI, and/or EMIR/MiFID II reporting infrastructure (depending on geography) must be demonstrable by named programme, not generic compliance language. Candidates who have navigated a T+1 readiness programme, a regulatory remediation driven by SEC/FINRA/FCA findings, or a CCP/clearing-house integration bring concrete differentiation that maps directly to the stated scope.",
+            "transformation_priorities": [
+              "Back-office estate simplification",
+              "Post-trade resilience & scale",
+              "Regulatory/supervisory reporting modernisation",
+              "AI platform embedding in operations",
+              "Post-trade T+1 & DLT readiness",
+              "ISO 20022 migration",
+              "Front-to-back workflow integration",
+              "US growth operating model build"
+            ]
+          }
+        }
+      },
+      "health": {
+        "status": "at_risk",
+        "alerts": [
+          {
+            "kind": "low_pipeline",
+            "message": "Low pipeline"
+          },
+          {
+            "kind": "no_feedback",
+            "message": "No feedback"
+          }
+        ],
+        "candidatesThisWeek": 0,
+        "feedbackThisWeek": 0,
+        "rankingChangesThisWeek": 0,
+        "totalCandidates": 1,
+        "avgOverallScore": 6.24,
+        "lastActivityAt": null
+      },
+      "pipeline_summary": {
+        "active_pool_size": 1,
+        "rejected_count": 0,
+        "weekly_velocity": 0,
+        "funnel": [
+          {
+            "stage": "found",
+            "count": 1
+          }
+        ]
+      },
+      "boolean_queries": [],
+      "recent_feedback": []
+    }
+  },
+  {
+    "name": "Head of Prime Brokerage IT @ Capital Markets Investment Bank",
+    "input": {
+      "project": {
+        "title": "Head of Prime Brokerage IT",
+        "company_name": "Capital Markets Investment Bank",
+        "calibration": {
+          "role_title": "Head of Prime Brokerage IT",
+          "inferred_scope": "Senior technology leadership role responsible for the IT function supporting the Prime Brokerage business within a capital markets-focused investment bank. Likely oversees infrastructure, platforms, and engineering teams serving prime brokerage clients and internal trading desks.",
+          "role_structure": {
+            "function": "Technology",
+            "seniority": "Head of"
+          },
+          "missing_information": [
+            "Company name (input appears to be a description rather than a firm name)",
+            "Geography / location",
+            "Team size and budget responsibility",
+            "Reporting line (e.g. CTO, CIO, or business COO)",
+            "Compensation range"
+          ]
+        },
+        "company_context": {
+          "industry": "Investment Banking",
+          "company_name": "Capital Markets Investment Bank",
+          "business_model": "Investment Bank"
+        }
+      },
+      "health": {
+        "status": "at_risk",
+        "alerts": [
+          {
+            "kind": "low_pipeline",
+            "message": "Low pipeline"
+          },
+          {
+            "kind": "no_feedback",
+            "message": "No feedback"
+          }
+        ],
+        "candidatesThisWeek": 0,
+        "feedbackThisWeek": 0,
+        "rankingChangesThisWeek": 0,
+        "totalCandidates": 0,
+        "avgOverallScore": null,
+        "lastActivityAt": null
+      },
+      "pipeline_summary": {
+        "active_pool_size": 0,
+        "rejected_count": 0,
+        "weekly_velocity": 0,
+        "funnel": [
+          {
+            "stage": "found",
+            "count": 0
+          }
+        ]
+      },
+      "boolean_queries": [],
+      "recent_feedback": []
+    }
+  }
+]

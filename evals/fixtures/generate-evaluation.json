@@ -1,0 +1,966 @@
+[
+  {
+    "name": "Vladimir Breygin vs Head of IT Operations",
+    "input": {
+      "subject": {
+        "candidate_id": "78c0bff0-7fb2-443e-8862-1c6f2ace2ade",
+        "full_name": "Vladimir Breygin",
+        "current_title": "Global Practice Director – Chief Product Officer & Global Head of Transformation",
+        "current_company": "Enterprise Solution Providers (ESP)",
+        "archetype": "Transformer",
+        "profile": {
+          "email": "vlad@flexcpo.com",
+          "risks": [
+            "Consulting-to-operator transition risk; has been external adviser since 2017",
+            "Team scale and budget authority significantly below RBC role requirements",
+            "CV metrics appear high-level and difficult to verify; credibility risk in due diligence",
+            "Positioning as CPO/transformation lead may misalign with IT Operations mandate"
+          ],
+          "roles": [
+            {
+              "title": "Global Practice Director – Chief Product Officer & Global Head of Transformation",
+              "company": "Enterprise Solution Providers (ESP)",
+              "summary": "Leads digital transformation and product strategy across global enterprise clients, directing the full lifecycle of 15+ solutions and delivering a reported 29% improvement in delivery efficiency and 30% increase in market penetration.",
+              "end_date": "present",
+              "start_date": "2017"
+            },
+            {
+              "title": "COO / Difecto CIO – Senior Program Director",
+              "company": "Sberbank CIB",
+              "summary": "Built and launched a FinTech trading application from inception to full-scale production, managing a $50M P&L and achieving a reported 40% revenue increase and 50% rise in client acquisition through Agile transformation.",
+              "end_date": "2017",
+              "start_date": "2014"
+            },
+            {
+              "title": "Global Head of Risk & Regulatory",
+              "company": "Bank of America Merrill Lynch",
+              "summary": "Led front-to-back delivery of global regulatory and risk programs at a tier-1 investment bank, driving big data and data science initiatives that contributed to a reported 25% increase in annual revenue.",
+              "end_date": "2014",
+              "start_date": "2012"
+            },
+            {
+              "title": "CIO of IB and Risk IT Practices / US COO",
+              "company": "GBSG Inc. Capital Markets",
+              "summary": "Held dual CIO and COO responsibilities across investment banking and risk IT practices within a capital markets firm.",
+              "end_date": "2012",
+              "start_date": "2010"
+            },
+            {
+              "title": "COO",
+              "company": "Vander Mollen Capital Markets",
+              "summary": "Served as Chief Operating Officer for a capital markets firm, overseeing operational functions concurrently with other advisory roles.",
+              "end_date": "2012",
+              "start_date": "2010"
+            },
+            {
+              "title": "CIO of Finance & Compliance Technology",
+              "company": "UCSG Inc.",
+              "summary": "Led finance and compliance technology as CIO, overseeing IT infrastructure and regulatory technology delivery.",
+              "end_date": "2012",
+              "start_date": "2010"
+            }
+          ],
+          "scale": "$50M P&L managed at Sberbank CIB; team sizes not explicitly stated; board-level engagement across CIB and exchange clearing bodies.",
+          "domain": "Capital Markets · Investment Banking · FinTech · Financial Services",
+          "summary": "Vladimir Breygin is a senior transformation and product executive with roughly 15 years spanning capital markets, investment banking, and FinTech, including a Global Head of Risk & Regulatory role at Bank of America Merrill Lynch and a CIO/COO mandate at Sberbank CIB where he managed a $50M P&L. His current advisory and consulting practice (ESP) focuses on enterprise digital transformation rather than running a large internal IT operations function, and his CV skews heavily toward product strategy and transformation leadership rather than steady-state IT operations management at scale.",
+          "location": null,
+          "archetype": "Transformer",
+          "full_name": "Vladimir Breygin",
+          "strengths": [
+            "Capital markets domain breadth",
+            "Regulatory and risk programme delivery",
+            "Digital transformation track record",
+            "Agile and product lifecycle leadership",
+            "Board-level stakeholder engagement"
+          ],
+          "evaluation": {
+            "gaps": [
+              {
+                "detail": "No role on the CV states a direct or total headcount. The largest budget figure is $50M at Sberbank CIB. The RBC Capital Markets role requires demonstrated ownership of a 400-person team and $100M opex. Per the scale-leadership threshold rule, the CV cannot substantiate managers-of-managers experience at this scope, and the leadership dimension score is capped at 6/10 as a result.",
+                "headline": "No evidenced large-team headcount or budget authority",
+                "role_mismatch": "The role's 9/10 leadership weight demands evidenced management of a senior technology organisation at bulge-bracket or near-equivalent scale — this candidate cannot demonstrate that bar from available CV data."
+              },
+              {
+                "detail": "Since 2017 Breygin has operated exclusively as an external consultant and practice director at ESP. The transition from advising clients on digital transformation to owning the P&L, headcount, and 24/7 operational risk of a large CIB IT function is a material step-change. There is no recent evidence of managing incident response, infrastructure SLAs, or run-the-bank obligations.",
+                "headline": "Seven years out of in-seat operational leadership",
+                "role_mismatch": "The Head of IT Operations role requires an operator mindset with live accountability for system uptime and operational resilience — the CV evidences an advisory and product-design posture for the most recent seven years."
+              },
+              {
+                "detail": "The CV references cloud, big data, and AI generically but names no specific post-trade or capital markets infrastructure platforms (Murex, Calypso, Broadridge, FIS GMI). For a Head of IT Operations at a global CIB, platform ownership — not consultative exposure — is a baseline expectation. The technical dimension score of 5/10 reflects this gap directly.",
+                "headline": "No named post-trade platform or infrastructure ownership",
+                "role_mismatch": "With a technical weight of 8/10, the absence of named infrastructure and post-trade platform ownership against which operational accountability can be assessed is a critical evidential gap."
+              }
+            ],
+            "strengths": [
+              {
+                "detail": "Breygin held a Global Head of Risk & Regulatory title at Bank of America Merrill Lynch and a dual CIO/COO seat at Sberbank CIB, giving him front-to-back CIB exposure across risk, regulatory, and trading technology. This is not generic financial services; the roles sit inside investment banking divisions with direct trading-desk adjacency.",
+                "signal": "He will navigate RBC Capital Markets stakeholders — trading desks, risk officers, and compliance — with credibility that a candidate from a non-CIB background would lack.",
+                "headline": "Tier-1 capital markets domain pedigree"
+              },
+              {
+                "detail": "The Sberbank CIB FinTech trading platform was built from inception to full production under his leadership, with reported 40% revenue increase and 50% client acquisition growth attributed to the programme. At BofA Merrill Lynch he led a global regulatory and risk programme overhaul. These are multi-phase, cross-functional deliveries, not advisory engagements.",
+                "signal": "He can lead a live modernisation mandate at RBC Capital Markets with the pattern-recognition of someone who has shipped complex CIB technology programmes before, not just designed them.",
+                "headline": "End-to-end transformation programme delivery"
+              },
+              {
+                "detail": "His BofA Merrill Lynch tenure (2012–2014) centred on global regulatory and risk programme delivery at a point when post-crisis regulatory pressure was at its peak — Dodd-Frank, Basel III, and EMIR were all in simultaneous flight. The CV does not name specific frameworks but the institutional context and title are credible signals of deep regime exposure.",
+                "signal": "He is unlikely to be surprised by the regulatory overhead of a Head of IT Operations role at RBC Capital Markets and should be able to engage substantively with compliance and audit functions.",
+                "headline": "Regulatory and risk technology programme ownership"
+              },
+              {
+                "detail": "Breygin drove Agile transformation at Sberbank CIB across a fintech build, and at ESP has directed the full lifecycle of 15+ enterprise solutions concurrently. His self-identification as a CPO-archetype means he applies product-management discipline — roadmaps, OKRs, delivery cadences — to large, complex IT environments.",
+                "signal": "This predicts strong execution rigour and the ability to impose delivery structure on the IT operations function during a modernisation phase.",
+                "headline": "Agile and product lifecycle leadership at scale"
+              }
+            ],
+            "comparison": {
+              "competitors": [],
+              "positioning": "No other candidates have been provided in this slate, so relative positioning cannot be assessed. Breygin is evaluated on an absolute basis only."
+            },
+            "role_title": "Head of IT Operations",
+            "positioning": {
+              "opener": "Vladimir Breygin brings a rare combination of front-to-back CIB domain credibility — Global Head of Risk & Regulatory at Bank of America Merrill Lynch, CIO/COO at Sberbank CIB with a $50M P&L — and a substantive track record of delivering complex transformation programmes inside tier-1 investment banking environments.",
+              "talking_points": [
+                "His BofA Merrill Lynch and Sberbank CIB tenures give him the capital markets fluency to engage immediately with trading-desk stakeholders and risk officers — this is not a candidate who needs a domain induction.",
+                "He has shipped a FinTech trading platform from inception to production and led a global regulatory programme overhaul, which maps directly to the modernisation mandate inside this role.",
+                "If the client is willing to explore a structured transition plan — for example, pairing him with a strong COO or Head of Infrastructure in the first 12 months — the domain and transformation credentials could justify the operator-to-advisor reintegration risk."
+              ],
+              "objection_handling": "The most likely client objection is that he has not run a 400-person IT operations function and has been consulting for seven years — the honest response is to acknowledge both gaps directly and position this as a transformation-first hire that requires a complementary operational deputy, rather than a steady-state operations incumbent."
+            },
+            "company_name": "RBC Capital Markets",
+            "generated_at": "2026-04-30T21:25:13.543Z",
+            "final_verdict": {
+              "tier": "tier_3",
+              "narrative": "Against the two highest-weighted dimensions — domain (10) and leadership (9) — Breygin scores 7 and 6 respectively, and the alignment test returns red on the single most important operational must-have: evidenced ownership of a large IT function at tier-1 scale. The weighted profile (approximate weighted score of 6.33 across all five dimensions, dragged down by the leadership and technical gaps) places him at the lower end of tier_3 — a stretch fit that is hard to position credibly given the seven-year consulting gap and the absence of any headcount or infrastructure-scale data. This is not an off-profile candidate on domain, but it is an off-mandate candidate on operational scope."
+            },
+            "scoring_table": [
+              {
+                "score": 5,
+                "weight": 8,
+                "dimension": "technical",
+                "commentary": "Breygin's tech exposure spans cloud, big data, AI, and SaaS at a conceptual level through his ESP advisory practice, but the CV provides no evidence of hands-on IT infrastructure ownership, SRE, or named post-trade platforms (Murex, Calypso, Broadridge). For a Head of IT Operations role carrying an 8/10 technical weight, the absence of infrastructure depth and specific system ownership is a material deficit."
+              },
+              {
+                "score": 7,
+                "weight": 10,
+                "dimension": "domain",
+                "commentary": "Genuine capital markets and CIB domain credentials: Global Head of Risk & Regulatory at Bank of America Merrill Lynch (2012–2014) and CIO/COO at Sberbank CIB managing a $50M P&L (2014–2017). Asset class and desk-level specificity are not quoted in the CV, and post-2017 domain exposure has been consultative rather than operational inside a tier-1 bank."
+              },
+              {
+                "score": 6,
+                "weight": 9,
+                "dimension": "leadership",
+                "commentary": "The CV references board-level engagement and directorial titles but provides no direct headcount, managers-of-managers structure, or budget authority approaching the 400-person team and $100M opex mandate required. Per scale-leadership threshold rules, without evidenced managers-of-managers experience this dimension cannot exceed 6/10 for a Head-of role at this scope."
+              },
+              {
+                "score": 6,
+                "weight": 7,
+                "dimension": "regulatory",
+                "commentary": "Bank of America Merrill Lynch Global Head of Risk & Regulatory role (2012–2014) implies FCA/PRA and likely Dodd-Frank exposure, and Sberbank CIB suggests awareness of CIB regulatory frameworks. However, no specific regulatory regime (SMCR, Basel III/IV, MiFID II, Reg SCI) is named in the CV, capping this score at 6/10 per the regulatory validator rule."
+              },
+              {
+                "score": 7,
+                "weight": 8,
+                "dimension": "transformation",
+                "commentary": "Three substantive programmes are evidenced: a FinTech trading platform built from inception to production at Sberbank CIB, a global regulatory and risk overhaul at BofA Merrill Lynch, and enterprise-wide digital transformation at ESP. The Sberbank programme is the closest to a named, scoped transformation artefact ($50M P&L, Agile adoption), but budget, duration, and decommission outcomes are not quoted for the others, limiting confidence."
+              }
+            ],
+            "alignment_test": {
+              "light": "red",
+              "answer": "The CV does not provide team size for any role. The largest budget figure cited is a $50M P&L at Sberbank CIB, which is materially below the $100M opex threshold, and Sberbank CIB, while a substantial CIB, is not a tier-1 global bulge-bracket institution. Post-2017 he has operated as an external consultant, not an in-seat operator of a large IT function. Evidence for this specific must-have is absent.",
+              "question": "Can this candidate evidence direct ownership — headcount, budget, and P&L — of a 300-plus person IT operations function inside a tier-1 investment bank or equivalent regulated institution?",
+              "justification": "The CV provides no headcount data for any role and the largest budget evidenced ($50M at Sberbank CIB) falls short of the $100M threshold, with the consulting-to-operator gap compounding the absence — this is a red against the role's single most critical operational must-have."
+            },
+            "recommendation": "do_not_include",
+            "schema_version": 1,
+            "profile_summary": {
+              "executive_summary": "Vladimir Breygin is a capital markets transformation executive with 15 years spanning Bank of America Merrill Lynch, Sberbank CIB, and a seven-year advisory practice at ESP, where he has directed product strategy and enterprise digital programmes. His domain credentials are genuine but his operational mode since 2017 has been external consulting, not running a large-scale internal IT operations function — the implicit ask is whether a consulting-to-operator transition at this scope (400 people, $100M opex) is credible. Against the two highest-weighted dimensions — domain (10) and leadership (9) — he meets the domain bar only partially and falls short on evidenced leadership scale.",
+              "background_bullets": [
+                "Global Head of Risk & Regulatory at Bank of America Merrill Lynch, 2012–2014.",
+                "CIO/COO at Sberbank CIB managing a $50M P&L, 2014–2017; delivered FinTech trading platform from inception to production.",
+                "Global Practice Director at ESP since 2017, directing 15+ enterprise solutions across global clients.",
+                "Reported 40% revenue increase and 50% client acquisition rise at Sberbank CIB via Agile transformation.",
+                "Dual CIO/COO responsibilities at GBSG Capital Markets covering investment banking and risk IT, 2010–2012.",
+                "Board-level engagement cited across CIB and exchange clearing bodies."
+              ]
+            },
+            "recommendation_rationale": "Tier_3 classification driven by a red alignment-test result on the leadership scale must-have and a seven-year consulting gap means the candidate cannot be credibly presented as a primary or secondary shortlist candidate for a Head of IT Operations role with a 400-person team and $100M opex mandate."
+          },
+          "psychology": {
+            "watch_outs": [
+              "Seven-year consulting gap: no evidenced run-the-bank accountability since 2017.",
+              "Zero headcount data on CV; leadership scale at $100M opex cannot be substantiated."
+            ],
+            "generated_at": "2026-05-01T14:05:44.652Z",
+            "role_pattern": {
+              "value": "climber",
+              "evidence": "The career arc moves from CIO/COO at boutique capital markets firms (GBSG, Vander Mollen, UCSG, 2010–2012) to Global Head of Risk & Regulatory at BofA Merrill Lynch, then CIO/COO at Sberbank CIB with P&L ownership, then Global Practice Director at ESP — each move targets a larger title or broader mandate, consistent with a climber pattern.",
+              "confidence": 72
+            },
+            "risk_tolerance": {
+              "value": "aggressive",
+              "evidence": "He moved from a bulge-bracket advisory role at BofA Merrill Lynch to building a FinTech trading platform from scratch at Sberbank CIB (a non-tier-1 institution), then exited in-seat banking entirely in 2017 to launch an independent consulting practice — each transition carries asymmetric personal and commercial risk rather than incremental safety.",
+              "confidence": 65
+            },
+            "pace_preference": {
+              "value": "scale_up",
+              "evidence": "His highest-energy operational period was at Sberbank CIB (2014–2017) building a FinTech platform from inception to production inside a mid-sized CIB — a scale-up context rather than a startup greenfield or a mature enterprise steady-state; his ESP practice also serves growth-phase enterprise clients rather than turnaround incumbents.",
+              "confidence": 60
+            },
+            "leadership_style": {
+              "value": "directive",
+              "evidence": "Breygin's career shows a consistent pattern of holding singular accountability titles — CIO, COO, Global Head, Practice Director — rather than collaborative peer roles; at Sberbank CIB he owned a $50M P&L and drove Agile transformation top-down, and at ESP he directs 15+ concurrent enterprise programmes as sole practice lead.",
+              "confidence": 68
+            },
+            "narrative_summary": "Breygin is a transformation-first executive who gravitates toward building or overhauling systems rather than running them at steady state, and whose seven-year consulting arc at ESP suggests he now operates best with autonomous scope and diverse mandates rather than inside a single corporate hierarchy — on the job at RBC Capital Markets, a recruiter should expect strong programme design rigour and capital markets stakeholder credibility, but should anticipate friction with the run-the-bank accountability and 24/7 operational governance that a Head of IT Operations role demands. The absence of evidenced headcount scale (no team sizes disclosed for any role) and the consulting-to-operator gap are the two facts a hiring manager will press hardest, and the honest positioning is transformation-first with a complementary operational deputy rather than a full-spectrum IT operations incumbent.",
+            "adversity_response": "The most visible inflection point is Breygin's 2017 exit from in-seat banking into independent consulting at ESP; rather than seeking another operator role after Sberbank CIB, he pivoted to an advisory model — a pattern that suggests he responds to institutional constraints by seeking greater autonomy rather than absorbing them, which could signal difficulty re-integrating into a structured corporate hierarchy after seven years of self-directed practice.",
+            "change_orientation": {
+              "value": "transformational",
+              "evidence": "The AI evaluation identifies three substantive transformation programmes: a FinTech trading platform built from inception to production at Sberbank CIB, a global regulatory and risk overhaul at BofA Merrill Lynch, and enterprise-wide digital transformation across 15+ client solutions at ESP — a career-long pattern of building or overhauling rather than optimising existing systems.",
+              "confidence": 78
+            },
+            "motivation_drivers": [
+              {
+                "driver": "impact",
+                "weight": 75,
+                "evidence": "Career choices consistently prioritise transformational mandates over incremental management roles — building a FinTech platform from scratch at Sberbank CIB, overseeing a global regulatory overhaul at BofA Merrill Lynch, and directing enterprise digital transformation at ESP all prioritise programme legacy over positional security."
+              },
+              {
+                "driver": "mastery",
+                "weight": 65,
+                "evidence": "The self-identification as a CPO archetype and the breadth of domain expertise accumulated — capital markets, regulatory technology, Agile, AI, blockchain, digital payments — points to a pattern of building cross-domain capability rather than deepening within a single function."
+              },
+              {
+                "driver": "status",
+                "weight": 50,
+                "evidence": "The consistent pursuit of CIO, COO, and Global Head titles across organisations of varying size, and the current branding as both CPO and Global Head of Transformation at ESP, signals that positional recognition is a meaningful but secondary motivator relative to the impact and mastery signals."
+              },
+              {
+                "driver": "money",
+                "weight": 35,
+                "evidence": "No explicit compensation signals in the CV; the decision to leave a bulge-bracket seat (BofA Merrill Lynch) for Sberbank CIB and then exit banking entirely for independent consulting suggests financial optimisation was not the primary driver at either junction."
+              }
+            ],
+            "collaboration_style": {
+              "value": "team_builder",
+              "evidence": "At ESP he simultaneously manages 15+ enterprise client engagements, which requires orchestrating distributed delivery teams rather than solo execution; the Sberbank CIB Agile transformation also implies deliberate team-structure design as a delivery mechanism, and board-level engagement is cited across CIB and exchange clearing bodies.",
+              "confidence": 58
+            },
+            "hierarchy_preference": {
+              "value": "flat",
+              "evidence": "Breygin has self-selected into an independent consulting practice since 2017 and his current title — Global Practice Director, CPO and Global Head of Transformation — sits outside any conventional corporate reporting line; the voluntary departure from structured tier-1 bank environments after 2017 signals a preference for autonomous, flatter operating models.",
+              "confidence": 62
+            }
+          },
+          "fit_summary": "Against the highest-weighted dimensions of domain (10) and leadership (9), Breygin offers genuine capital markets and CIB domain exposure but has spent seven years in a consulting/product role rather than running a large-scale internal IT operations function — the 400-person team and $100M opex mandate are materially beyond what his CV evidences; on transformation (8) he shows credible programme delivery but the operational depth and in-seat scale required for Head of IT Operations at RBC Capital Markets are not sufficiently demonstrated.",
+          "linkedin_url": "https://linkedin.com/in/vladimirbreygin",
+          "current_title": "Global Practice Director – Chief Product Officer & Global Head of Transformation",
+          "tech_exposure": [
+            "Cloud computing",
+            "Agile / Scrum",
+            "Big Data",
+            "Data Analytics",
+            "AI-driven solutions",
+            "SaaS",
+            "Blockchain",
+            "Digital payments",
+            "Cybersecurity"
+          ],
+          "fit_dimensions": {
+            "domain": 7,
+            "technical": 5,
+            "leadership": 6,
+            "regulatory": 6,
+            "transformation": 7
+          },
+          "current_company": "Enterprise Solution Providers (ESP)",
+          "positioning_kit": {
+            "emails": [
+              {
+                "key": "introduction",
+                "body": "I wanted to introduce Vladimir Breygin as a candidate for the Head of IT Operations role at RBC Capital Markets. I am presenting him with transparency about where he is strong and where the fit requires a structural conversation, because I think the domain question — the dimension your CIO has flagged as non-negotiable — is genuinely answered by his background.\n\nBreygin held a Global Head of Risk & Regulatory seat at Bank of America Merrill Lynch from 2012 to 2014, leading front-to-back delivery of global regulatory and risk programmes at a point of peak post-crisis regulatory pressure. He followed that with a CIO/COO mandate at Sberbank CIB from 2014 to 2017, where he managed a $50M P&L and built a FinTech trading platform from inception to full production. These are not adjacent-fintech or wealth-management backgrounds — they are in-seat capital markets and investment banking roles with direct trading-desk and regulatory accountability.\n\nThe two gaps I want to name upfront: his CV does not state headcount for any role, and the $50M Sberbank P&L falls short of the $100M opex threshold the role requires. He has also been operating as an external consultant and Global Practice Director at Enterprise Solution Providers since 2017, directing over 15 enterprise transformation programmes rather than running a large internal IT function. The consulting-to-operator transition is real and should be tested explicitly.\n\nMy recommendation is a first-round conversation scoped around the modernisation mandate and domain depth, with headcount and infrastructure scale as the explicit qualification questions. I am happy to brief you in more detail before that call if useful.",
+                "subject": "Vladimir Breygin — CIB Domain Depth for RBC Head of IT Ops"
+              },
+              {
+                "key": "follow_up",
+                "body": "Following your review of Vladimir Breygin's dossier, I want to get ahead of the two questions I expect are front of mind: leadership scale and post-trade platform ownership.\n\nOn scale, the honest position is that his CV does not state team sizes for any role, and the largest budget evidenced is a $50M P&L at Sberbank CIB. Our evaluation model caps his leadership dimension at 6/10 as a result — I have not papered over that. What the CV does evidence is managers-of-managers behaviour through title and programme scope: at Sberbank CIB he owned a P&L and drove Agile transformation across a cross-functional fintech build; at BofA Merrill Lynch he held global programme accountability across a tier-1 investment bank. The right question for a first interview is not whether his current CV number matches the 400-person threshold, but whether his operational pattern scales — and I believe a direct conversation will surface headcount data that the CV omits.\n\nOn post-trade platform ownership, the CV is silent on named systems such as Murex, Calypso, or Broadridge. This is a genuine gap against the technical dimension and I have flagged it as such. His BofA Merrill Lynch role sits squarely inside the post-crisis regulatory infrastructure build, which in a tier-1 CIB in that period almost certainly involved at least one major post-trade or risk platform programme — but I cannot assert ownership without named evidence, and that is a direct interview question.\n\nThe new angle I would add at this stage is the transformation programme at Sberbank CIB specifically: a FinTech trading platform built from inception to production inside a CIB, with a $50M P&L and reported 40% revenue uplift, is a closer analogue to the modernisation mandate inside the RBC Capital Markets role than most operator-profile candidates in this market can offer. That is the ceiling argument for moving him forward despite the scale gap.",
+                "subject": "Vladimir Breygin — Addressing Your Scale and Platform Questions"
+              },
+              {
+                "key": "advance",
+                "body": "Given the positive HM feedback signals and the productive first-round conversation, I would like to propose a structured second-round panel to qualify the two remaining open questions: operational scale and post-trade platform depth.\n\nMy recommendation is a two-part interview. The first part should be a 45-minute session with the Line of Business CIO and the CM COO, focused on the modernisation mandate — specifically how Breygin would structure the simplification programme, what governance model he would apply, and how he would manage the regulatory reporting technology agenda. This is where his BofA Merrill Lynch and Sberbank CIB credentials will be most visible and where the domain depth argument is strongest.\n\nThe second part should be a 30-minute technical deep-dive with your Head of Infrastructure or a senior architect, with explicit questions on post-trade platform ownership — ask him directly whether he has held roadmap or vendor-relationship accountability for any of the major clearing or settlement platforms, and probe the Sberbank CIB build for the infrastructure stack he owned. If he cannot name platforms at that session, the technical gap is confirmed and the structural mitigation — appointing a strong Head of Infrastructure as operational deputy — should be tabled as the path forward.\n\nI would suggest scheduling within the next ten days given the timeline concern flagged in feedback. I can coordinate directly with Breygin and provide a structured briefing note for each panel member in advance of the session.",
+                "subject": "Vladimir Breygin — Proposed Next Step and Panel Structure"
+              }
+            ],
+            "pitches": [
+              {
+                "tone": "conservative",
+                "opener": "Vladimir Breygin carries genuine tier-1 capital markets credentials — Global Head of Risk & Regulatory at Bank of America Merrill Lynch and CIO/COO at Sberbank CIB — but I want to be transparent about two material gaps before you review his dossier.",
+                "talking_points": [
+                  "His BofA Merrill Lynch and Sberbank CIB tenures give him front-to-back CIB domain fluency — risk, regulatory, and trading-technology adjacency — that directly satisfies the CIO's stated non-negotiable filter for deep capital markets knowledge, but post-trade platform ownership (Murex, Broadridge, FIS GMI) is not named in his CV and must be probed at interview.",
+                  "His CV provides no headcount data for any role and the largest budget evidenced is a $50M P&L at Sberbank CIB — materially below the $100M opex and 400-person team threshold; per our evaluation model his leadership dimension is capped at 6/10 and this gap must be addressed before submission.",
+                  "He has operated as an external consultant at ESP since 2017, meaning there is a seven-year gap in in-seat operational accountability for run-the-bank obligations — if you proceed, the risk-mitigation recommendation is to pair him with a strong Head of Infrastructure for the first 12 months rather than position him as a full-spectrum steady-state operator."
+                ],
+                "objection_handling": "If the client pushes back on the consulting gap and sub-scale leadership history, the honest response is to agree the fit is tier-3 and recommend a structured first-round conversation scoped specifically around domain depth and transformation mandate alignment, with scale verification as the explicit qualification gate."
+              },
+              {
+                "tone": "balanced",
+                "opener": "Vladimir Breygin's capital markets domain depth — the dimension weighted highest at 10/10 for this role — is substantiated by a Global Head of Risk & Regulatory seat at Bank of America Merrill Lynch and a CIO/COO mandate at Sberbank CIB where he managed a $50M P&L and delivered a FinTech trading platform from inception to production.",
+                "talking_points": [
+                  "His BofA Merrill Lynch tenure (2012–2014) placed him at the centre of post-crisis regulatory delivery — Dodd-Frank, Basel III, and EMIR were all in simultaneous flight — giving him the regulatory and risk technology pattern-recognition to engage immediately with RBC Capital Markets compliance and audit functions, even though specific framework names are not quoted in the CV.",
+                  "At Sberbank CIB he shipped a FinTech trading platform end-to-end using Agile transformation, reporting a 40% revenue increase and 50% client acquisition rise — this is a named, scoped delivery programme with measurable outcomes, not a consulting engagement, and it maps directly to the modernisation mandate inside this role.",
+                  "The acknowledged gap is operational scale: no headcount is stated on his CV and the $50M Sberbank P&L falls short of the $100M opex threshold, so the positioning is transformation-first hire paired with a complementary operational deputy rather than a full-spectrum IT operations incumbent."
+                ],
+                "objection_handling": "When the client raises the consulting gap and leadership scale deficit, acknowledge both directly and pivot to the transformation mandate — this role has a live modernisation programme where his CIB domain fluency and delivery track record are the harder-to-source credentials, and steady-state operational depth can be supplemented through the team structure."
+              },
+              {
+                "tone": "aggressive",
+                "opener": "If the CIO's non-negotiable is deep capital markets knowledge, Vladimir Breygin is the strongest domain candidate in this market — a Global Head of Risk & Regulatory at Bank of America Merrill Lynch who then built and shipped a CIB FinTech trading platform from zero to production at Sberbank CIB with a $50M P&L, and you should move him to a first-round conversation this week before he fields competing approaches.",
+                "talking_points": [
+                  "His BofA Merrill Lynch and Sberbank CIB tenures give him front-to-back CIB fluency across trading-desk, risk, and regulatory technology that a candidate from wealth management, generic fintech, or infrastructure-only backgrounds simply cannot replicate — this is the domain ceiling the CIO asked for, evidenced across two named tier-1 and near-tier-1 institutions.",
+                  "The transformation dimension is where he outperforms the market: three substantive delivery programmes — a global regulatory overhaul at BofA Merrill Lynch, a full-stack FinTech trading platform at Sberbank CIB, and 15+ concurrent enterprise transformation programmes at ESP — make him a credible owner of the modernisation and simplification mandate from day one.",
+                  "The consulting-to-operator transition and the headcount gap are real, but they are solvable through org design — appoint a strong Head of Infrastructure as his operational deputy and the 400-person run-the-bank function has continuity while Breygin drives the transformation agenda that the role was actually created to deliver."
+                ],
+                "objection_handling": "Push back on any instinct to park him: the HM feedback signals are positive, the domain bar is met, the transformation mandate is where he is strongest, and waiting for a candidate who checks every box including operational scale will cost you three months in a thin market."
+              }
+            ],
+            "generated_at": "2026-05-01T14:07:13.231Z",
+            "positioning_summary": "Lead with Breygin's capital markets domain depth — Global Head of Risk & Regulatory at BofA Merrill Lynch and CIO/COO at Sberbank CIB — as the non-negotiable differentiator the CIO stakeholder requires, while naming the operational scale gap and the consulting-to-operator transition as known risks that must be mitigated structurally."
+          },
+          "years_experience": 15,
+          "development_areas": [
+            "No evidence of managing 400+ person IT ops team",
+            "Budget scale below $100M threshold evidenced",
+            "Current role is consulting, not in-seat operator",
+            "IT infrastructure / SRE depth not demonstrated"
+          ],
+          "transformation_experience": [
+            "Enterprise-wide digital transformation programs at ESP (2017–present)",
+            "FinTech trading platform build from inception to production at Sberbank CIB",
+            "Global regulatory and risk program overhaul at Bank of America Merrill Lynch",
+            "IT infrastructure overhaul including cloud migration (CIO contributions)",
+            "Organisational change management and Agile adoption programs"
+          ]
+        },
+        "rank": 1,
+        "overall_score": 6.24,
+        "tier": "tier_2"
+      },
+      "role": {
+        "role_title": "Head of IT Operations",
+        "company_name": "RBC Capital Markets",
+        "calibration": {
+          "role_title": "Head of IT Operations",
+          "inferred_scope": "This is a senior leadership role overseeing IT operations for RBC Capital Markets, the investment banking and capital markets division of Royal Bank of Canada. The role likely carries global or regional (North America/EMEA) scope and reports into a CTO or CIO function within the division.",
+          "role_structure": {
+            "function": "Technology",
+            "seniority": "Head of"
+          },
+          "dimension_weights": {
+            "domain": 10,
+            "technical": 8,
+            "leadership": 9,
+            "regulatory": 7,
+            "transformation": 8
+          },
+          "weights_rationale": "The recruiter's priority signals all scored 9–10, with Capital Markets domain expertise explicitly flagged by the CIO stakeholder as non-negotiable and domain/technical/leadership each weighted at maximum, driving those three dimensions to the top of the model; the must-haves around regulatory and supervisory technology ownership, a $100MM budget, 400-person team, and a live modernisation/simplification mandate further elevate regulatory and transformation dimensions above baseline for a global investment bank context.",
+          "missing_information": [
+            "Geography / primary location",
+            "Team size and organisational remit",
+            "Reporting line (e.g. CTO, CIO)",
+            "Compensation range",
+            "Mandate timeline"
+          ]
+        },
+        "company": {
+          "industry": "Investment Banking",
+          "company_name": "RBC Capital Markets",
+          "business_model": "Global Investment Bank",
+          "culture_profile": {
+            "summary": "RBC Capital Markets presents as a regulated, matrix-structured global investment bank where capital-markets domain depth and operational scale are non-negotiable. Feedback signals are placeholder/test entries only, so cultural calibration rests entirely on the role brief and industry context.",
+            "red_flags": [
+              {
+                "label": "IT Operations vs App Dev confusion — anti-pattern risk",
+                "detail": "The hiring manager explicitly flags that candidates confusing Ops IT (infrastructure run) with application development will fail screening. Recruiters must verify the candidate owns software delivery and post-trade application roadmaps, not just production estate management.",
+                "severity": "high"
+              },
+              {
+                "label": "Domain depth gap — capital markets specificity required",
+                "detail": "CIO Vlad Breygin's sole stated filter is deep capital-markets knowledge. Candidates from adjacent fintech, wealth management, or generic banking technology without named asset-class or post-trade system ownership (e.g. Murex, Broadridge, FIS GMI) will likely be screened out regardless of leadership scale.",
+                "severity": "high"
+              },
+              {
+                "label": "Scale mismatch — sub-threshold leadership scope",
+                "detail": "Role requires managers-of-managers experience across ~400 headcount and $100MM budget. Candidates who cannot cite direct headcount, total org span, and owned budget explicitly cannot credibly compete; any CV silent on these numbers must have the gap flagged before submission.",
+                "severity": "medium"
+              },
+              {
+                "label": "Feedback signal vacuum — cultural calibration limited",
+                "detail": "All three HM feedback entries are test/placeholder content with no substantive preference signal. Culture profile confidence is constrained to industry and role-brief inference; recalibration is warranted once real interview feedback is captured.",
+                "severity": "low"
+              }
+            ],
+            "generated_at": "2026-05-01T14:03:38.084Z",
+            "risk_appetite": {
+              "value": "measured",
+              "evidence": "Global investment bank operating under FCA/PRA, OSC/OSFI, and SEC/FINRA regulatory regimes; the mandate to modernise post-trade and regulatory reporting technology signals appetite for controlled change within a compliance-bounded envelope — not speculative innovation.",
+              "confidence": 72
+            },
+            "decision_speed": {
+              "value": "committee",
+              "evidence": "The role reports to a Line of Business CIO and sits on the CM Tech Operating Committee, with direct CM COO interface; multi-stakeholder governance and a $100MM budget imply board/committee approval cycles rather than founder-speed execution.",
+              "confidence": 78
+            },
+            "change_readiness": {
+              "value": "incremental",
+              "evidence": "The estate modernisation is described as simplifying and modernising for scale and resilience — a structured, risk-managed programme rather than a blank-sheet transformation. A regulated capital-markets environment with large incumbent post-trade infrastructure (likely Murex/Calypso-class systems) points to incremental rather than wholesale change readiness.",
+              "confidence": 68
+            },
+            "leadership_preference": {
+              "value": "operator",
+              "evidence": "Must-haves explicitly call out BAU ownership of a 400-person team, $100MM budget management, and a transformation mandate grounded in simplification and resilience — delivery execution over strategic narrative. CIO stakeholder focus on capital-markets domain depth reinforces operator over visionary profile.",
+              "confidence": 85
+            },
+            "candidate_facing_pitch": "RBC Capital Markets is a globally regulated investment bank where this role sits at the intersection of post-trade technology and regulatory reporting at serious scale — 400 people, $100MM budget, direct COO and CIO visibility. The trade-off is honest: this is a disciplined, committee-governed environment that rewards deep capital-markets domain expertise and operational delivery over frontier experimentation."
+          },
+          "intelligence_report": {
+            "sources": [
+              "https://www.rbccm.com/en/about-us/leadership",
+              "https://www.rbc.com/our-company/our-leadership.html",
+              "https://www.rbcx.com/our-leadership/",
+              "https://fintechfrontiers.live/rbc-launches-ai-and-digital-innovation-team-to-drive-capital-markets-growth/",
+              "https://theorg.com/org/rbc-capital-markets/teams/leadership-team-1",
+              "https://www.rbccm.com/en/insights.page",
+              "https://www.rbccm.com/en/careers/full-time.page",
+              "https://www.ibm.com/investor/events/rbc-capital-markets-2025-technology-internet-media-and-telecommunications-conference",
+              "https://craft.co/royal-bank-of-canada/executives",
+              "https://investors.micron.com/events/event-details/rbc-capital-markets-2025-global-technology-internet-media-telecommunications",
+              "https://www.rbccm.com/en/insights/outlook-2026",
+              "https://www.rbccm.com/en/conference/timt-conference",
+              "https://www.rbccm.com/en/insights/2026/01/2025-takeaways-and-2026-outlooks-us-equity-markets-perspectives",
+              "https://www.rbccm.com/en/story/story.page?dcr=templatedata%2Farticle%2Fstory%2Fdata%2F2024%2F11%2Ffrom-ipos-to-ma-shifting-strategies",
+              "https://www.rbccm.com/en/expertise/rbcclear",
+              "https://www.rbccm.com/en/insights/gmo2025.page",
+              "https://www.rbccm.com/en/insights/imagine",
+              "https://nextsprints.com/guide/rbc-product-strategy-guide",
+              "https://en.wikipedia.org/wiki/RBC_Capital_Markets",
+              "https://theorg.com/org/rbc-capital-markets",
+              "https://leadiq.com/c/rbc-capital-markets/5a1d93ca5400005400780e87",
+              "https://www.rbccm.com/en/gib/technology.page",
+              "https://www.mergersight.com/rbc-capital-markets",
+              "https://www.bloomberg.com/profile/company/16920Z:US",
+              "https://vault.com/company-profiles/commercial-banking-and-investment-banking/rbc-capital-markets",
+              "https://www.rbccm.com/en/",
+              "https://www.rbccm.com/en/about-us.page",
+              "https://www.linkedin.com/company/rbc-capital-markets",
+              "https://www.rbccm.com/assets/rbccm/data/futures/certified-annual-report.pdf",
+              "https://www.rbccm.com/en/insights/transcripts/2024-takeaways-and-2025-outlooks-us-equity-markets-perspectives-preview.page",
+              "https://www.rbc.com/investor-relations/",
+              "https://www.rbcis.com/2025-regulatory-calendar/complete_list.html",
+              "https://www.rbccm.com/en/story/story.page?dcr=templatedata%2Farticle%2Fstory%2Fdata%2F2024%2F12%2F2024-takeaways-and-2025-outlooks-us-equity-markets-perspectives",
+              "https://www.rbc.com/investor-relations/financial-information.html",
+              "https://www.rbc.com/investor-relations/_assets-custom/pdf/investorday2025_presentation.pdf",
+              "https://www.rbcclearingandcustody.com/en-us/technology/rbc-nexus/markets-and-research/",
+              "https://rbcborealis.com/",
+              "https://www.rbccm.com/en/expertise/electronic-trading/ai-trading",
+              "https://www.americanbanker.com/news/rbc-says-its-focus-on-ai-is-paying-dividends",
+              "https://www.rbccm.com/en/insights/ai",
+              "https://www.rbccm.com/en/expertise/electronic-trading/aiden/from-the-whiteboard",
+              "https://www.pymnts.com/artificial-intelligence-2/2026/rbc-embeds-ai-at-the-core-of-banking-aiming-for-1-billion-in-returns/",
+              "https://rbcborealis.com/applications/aiden/",
+              "https://www.rbccm.com/en/insights/2025/06/how-rbc-is-using-ai-to-transform-capital-markets-research",
+              "https://finance.yahoo.com/news/transforming-trading-ai-rbc-aiden-183002708.html",
+              "https://www.ainvest.com/news/rbc-ai-powered-playbook-building-1-billion-moat-financial-services-2505/"
+            ],
+            "ai_agenda": "RBC Capital Markets has one of the most concrete and publicly documented AI agendas among global investment banks. The Aiden platform ecosystem — built with RBC Borealis on Nvidia AI Enterprise — is the flagship, encompassing electronic trading (VWAP and Arrival Price deep reinforcement learning algorithms), research acceleration (AidenResearch, QuickTakes built on Databricks), and banker productivity (AidenBanker). As of a March 2026 PYMNTS report, more than 8,000 capital markets employees are already using the Aiden platform. RBC Borealis has filed more than 635 AI-related patents since 2019 and the ATOM foundation model was used across 15 products and processes in 2025. RBC partnered with Cohere in 2025 to develop secure generative AI solutions for financial services, and with Nvidia for customised generative AI deployment. RBC's 2025 Investor Day set a target of $700M–$1B in pre-tax earnings from AI-driven initiatives by 2027, and the firm ranks first in Canada and third globally in the 2025 Evident AI Index.\n\nFor the specific mandate of this role, the AI agenda is most directly relevant through its implications for supervisory and regulatory reporting automation and the potential to embed AI-driven controls and exception management into back-office workflows. While public documentation on AI deployment within the post-trade and regulatory estate is limited (the public narrative is front-office and research focused), the firm's broader AI Group — reporting directly to CEO Dave McKay — has a mandate to scale AI across all business segments, including operations. A candidate who can credibly connect the firm's AI infrastructure (Aiden platform, Databricks, Lumina) to back-office modernisation use cases will resonate strongly with Vlad Breygin and the CM Tech Operating Committee.",
+            "red_flags": [
+              "Candidates whose back-office or operations technology experience is as a consumer of systems (e.g. business analyst, product owner sitting above a vendor platform) rather than as an application development owner with roadmap and vendor-contract accountability will not clear Vlad Breygin's domain depth bar.",
+              "Pure infrastructure or IT Operations (run-the-bank, SRE, ITSM) backgrounds are an explicit anti-pattern called out in the recruiter brief — the role is application development leadership for post-trade processing, not production estate management.",
+              "Candidates without managers-of-managers experience at a comparable headcount (~300–500 resources) and budget (~$75M–$125M) cannot be presented for a Head-of role of this scope; the leadership dimension gap must be stated explicitly if headcount or budget numbers are absent from the CV.",
+              "Executives who have spent the majority of their careers in pure consulting or advisory without operational P&L and team ownership tend to lack the daily BAU accountability culture that a COO-interfacing technology leadership role demands at a firm of RBC's regulatory weight.",
+              "Candidates who can speak to AI and digital innovation at the front-office level but have no post-trade or regulatory reporting depth will be filtered quickly by the CIO given the explicit Capital Markets domain non-negotiable — surface-level capital markets familiarity is insufficient.",
+              "Strong general banking technology leaders from retail, wealth, or commercial banking divisions who have not operated within a broker-dealer or investment bank post-trade environment will face a steep credibility gap on the specific regulatory reporting and clearing/settlement infrastructure required by this role."
+            ],
+            "generated_at": "2026-05-01T16:16:34.724Z",
+            "recent_context": [
+              {
+                "date": "2026-03-24",
+                "headline": "PYMNTS: RBC deploys AI at operational core; 8,000+ CM employees on Aiden platform; AI Group reports directly to CEO McKay",
+                "significance": "Signals that AI is now a firm-wide operational mandate, not just a front-office initiative — the incoming head of back-office technology will be expected to integrate with and leverage the Aiden/Lumina/Databricks platform stack rather than build independently."
+              },
+              {
+                "date": "2026-03-19",
+                "headline": "American Banker: RBC ranks first in Canada and third globally in 2025 Evident AI Index; CEO McKay confirms AI strategy on track",
+                "significance": "Elevates the reputational stakes of the technology estate — the back-office modernisation programme will be scrutinised in the context of a bank publicly committed to AI-led operational excellence, raising the bar for the incoming leader's technology credibility."
+              },
+              {
+                "date": "2025-05-30",
+                "headline": "RBC Capital Markets creates dedicated AI and Digital Innovation team; Lindsay Patrick appointed Chief Strategy and Innovation Officer; Bobby Grubert named Head of AI and Digital Innovation",
+                "significance": "Establishes the peer stakeholder map for this role — the new head of CM Operations Technology will need to align closely with Patrick and Grubert on how enterprise AI tooling applies to post-trade and supervisory reporting workflows."
+              },
+              {
+                "date": "2025-06-09",
+                "headline": "RBCCM publishes AidenResearch/QuickTakes launch; built on Databricks, reduces research turnaround 20–60%",
+                "significance": "Demonstrates the firm's in-house build velocity and preference for proprietary AI tooling on commercial platforms — a candidate who can extend similar thinking to back-office automation and regulatory reporting will have a strong alignment story."
+              },
+              {
+                "date": "2025-01-13",
+                "headline": "RBCCM 2025 Outlook: ECM volumes up ~16% in 2025; private credit structural shift; AI remains a key investment theme for 2026",
+                "significance": "Growing deal volumes and structural product expansion in private credit and ECM increase the transaction throughput pressure on the post-trade estate, reinforcing the urgency of the modernisation mandate."
+              },
+              {
+                "date": "2024-01-01",
+                "headline": "Project Samara: RBC completes Canada's first blockchain-based bond issuance ($100M tokenized bond) with Bank of Canada and RBC Investor Services",
+                "significance": "Signals active interest in DLT-based post-trade settlement infrastructure — the incoming head should be conversant with distributed ledger approaches to settlement and their regulatory implications."
+              },
+              {
+                "date": "2024-01-01",
+                "headline": "RBC Clear wins 2025 Model Bank Award for Reinventing Cash Management; built as digital-first platform replacing legacy cash management workflows",
+                "significance": "Demonstrates the firm's willingness to decommission legacy systems and build purpose-built replacements — the back-office modernisation programme will likely follow a similar philosophy, requiring a leader comfortable with greenfield build decisions."
+              },
+              {
+                "date": "2025-10-31",
+                "headline": "RBC Capital Markets LLC certified annual report (Oct 2025): SEC Rule 15c3-3 compliance confirmed; ~$19.8M segregated in special reserve accounts",
+                "significance": "Confirms active SEC Rule 15c3-3 regulatory obligations in the US broker-dealer entity — a named regulatory framework the incoming head's team must maintain compliance with, making US regulatory reporting experience a concrete requirement."
+              }
+            ],
+            "culture_signals": {
+              "pace": 68,
+              "hierarchy": 58,
+              "risk_tolerance": 65,
+              "innovation_appetite": 80
+            },
+            "leadership_team": [
+              {
+                "name": "Vlad Breygin",
+                "title": "Capital Markets Line of Business CIO",
+                "relevance_to_role": "Direct hiring manager and sitting chair of the CM Tech Operating Committee; the recruiter brief explicitly flags his non-negotiable requirement for deep Capital Markets domain knowledge from the incoming head."
+              },
+              {
+                "name": "Derek Neldner",
+                "title": "CEO and Group Head, RBC Capital Markets",
+                "relevance_to_role": "Divisional CEO whose strategic priorities for market share growth and AI-led transformation set the investment envelope and urgency for the back-office modernisation mandate."
+              },
+              {
+                "name": "Lindsay Patrick",
+                "title": "Chief Strategy and Innovation Officer, RBC Capital Markets",
+                "relevance_to_role": "Appointed May 2025 to lead the CM AI and Digital Innovation team; a key peer stakeholder whose front-office AI agenda intersects with the regulatory and supervisory technology remit of this role."
+              },
+              {
+                "name": "Bobby Grubert",
+                "title": "Head of AI and Digital Innovation, RBC Capital Markets",
+                "relevance_to_role": "Leads the Aiden/AidenResearch/AidenBanker product ecosystem and the firm's enterprise AI deployment across 8,000+ CM employees; a peer whose platform choices will shape what tooling the back-office modernisation programme can consume."
+              },
+              {
+                "name": "Patti Shugart",
+                "title": "Senior Executive, RBC Capital Markets (Global Diversity Leadership Council Chair)",
+                "relevance_to_role": "Referenced in the CM leadership page as a senior executive with broad organisational influence; likely a senior stakeholder in the CM Operating Committee environment."
+              },
+              {
+                "name": "Jonathan (Surname Not Surfaced)",
+                "title": "Senior Executive with Digital Transformation Focus, RBC Capital Markets",
+                "relevance_to_role": "Named on the RBCCM leadership page with an explicit digital transformation mandate and advisory board membership at Queen's University MFIT programme; a likely peer on the CM Tech Operating Committee."
+              }
+            ],
+            "executive_summary": "RBC Capital Markets is operating from a position of deliberate technology investment and transformation, with the Capital Markets division explicitly identified as a growth engine within Royal Bank of Canada's broader enterprise strategy. The firm operates 55 offices across 16 countries and, as of February 2026, employs approximately 11,000 people with estimated annual revenues of $15 billion. The CM Tech function is structured around a Line of Business CIO model — the hiring stakeholder is Vlad Breygin, Capital Markets CIO — with a standing CM Tech Operating Committee that the incoming Global Head of CM Operations, Regulatory, and Supervisory Technology will join. The mandate is unambiguous: the role owns all application development for post-execution trade processing (back office) and regulatory/supervisory reporting technology, carries a ~$100MM annual budget and ~400 headcount, and is chartered to drive a major simplification and modernisation initiative across the estate for scale and resilience.\n\nThe firm's public posture is biased toward in-house build: the Aiden algorithmic trading platform (built with RBC Borealis using deep reinforcement learning), the Lumina enterprise data and AI platform, the ATOM proprietary foundation model, and the AidenResearch/AidenBanker product suite are all internally developed. In May 2025, RBC Capital Markets formalised a dedicated AI and Digital Innovation team under Lindsay Patrick (Chief Strategy and Innovation Officer) and Bobby Grubert (Head of AI and Digital Innovation). RBC's 2025 Investor Day cited $700M–$1B in pre-tax earnings targeted by 2027 from AI-driven initiatives, and the firm ranked first in Canada and third globally in the 2025 Evident AI Index. The technology posture for back-office and regulatory technology, while less publicly profiled than the front-office AI story, sits squarely in the mandate of this hire — the incumbent will need to translate the firm's front-office innovation ambition into the resilience and simplification of the post-trade and regulatory reporting estate, interfacing daily with the CM COO and her management team.",
+            "technology_strategy": "RBC Capital Markets operates a strongly in-house build posture for strategic technology. Confirmed proprietary platforms include Aiden (deep reinforcement learning electronic trading, launched globally 2020), Lumina (enterprise data and AI platform), ATOM (foundation model for financial services built by RBC Borealis with 100+ researchers, deployed across 15 products and processes in 2025), AidenResearch (AI agents for earnings content, call summarisation, and filing access), AidenBanker (pitchbook and meeting-prep automation), and QuickTakes (research turnaround platform built on Databricks). The disclosed tech stack includes Microsoft, Java, C#, Power BI, and SQL Server. For the post-trade and regulatory estate, the firm's stated goal — sourced from the recruiter brief — is simplification and modernisation for scale and resilience, signalling that the current estate carries legacy complexity typical of a mid-tier global investment bank that has grown through product and geographic expansion. Project Samara (Canada's first blockchain-based bond issuance, settled via distributed ledger in partnership with the Bank of Canada and RBC Investor Services) signals an appetite for post-trade infrastructure experimentation. RBC Clear, a purpose-built digital-first cash management platform launched in 2024–25, won the 2025 Model Bank award for Reinventing Cash Management, reflecting the firm's willingness to decommission legacy workflows and build from scratch when the business case is clear.\n\nThe CM technology organisation is governed through a Line of Business CIO model with a standing CM Tech Operating Committee, which the incoming head will join as a standing member. This governance structure implies a reasonably mature technology operating model with cross-functional accountability — budget holders sit alongside the business COO and CIO, not below them. The $100MM annual technology budget for the Operations, Regulatory, and Supervisory Technology tower is material and indicates the firm is prepared to fund the modernisation programme at scale, not incrementally.",
+            "ideal_candidate_profile": "The target archetype is a senior technology executive who has owned — not just contributed to — the post-execution application development estate at a global investment bank or large broker-dealer, with credible capital markets domain depth across equities, fixed income, or multi-asset post-trade. The role carries a $100MM annual budget and ~400 headcount, so the candidate must have demonstrated managers-of-managers leadership at comparable scale; direct headcount and budget ownership must be named and verifiable, not inferred. The standing membership on the CM Tech Operating Committee and the daily interface with the CM COO require executive maturity: the ability to translate complex technology states into business risk language for non-technical COO-level stakeholders, and to hold ground on architectural decisions under commercial pressure. Given the firm's confirmed in-house build posture and proprietary platform investments, candidates from pure third-party system integrator or outsourced operations backgrounds will likely struggle to earn credibility with the engineering-heavy RBC Borealis-influenced technology culture.\n\nOn transformation, the mandate explicitly requires driving a simplification and modernisation initiative — the Post-Trade Systems Check skill applies in full here. Candidates must be able to name at least one analogous programme with budget, duration, platforms decommissioned or migrated, and measurable outcome (e.g. settlement fail-rate improvement, regulatory submission latency reduction, system consolidation from N to M). Regulatory exposure is non-negotiable: the role owns supervisory and regulatory reporting technology, so familiarity with SEC Rule 15c3-3, CAT, Reg SCI, and/or EMIR/MiFID II reporting infrastructure (depending on geography) must be demonstrable by named programme, not generic compliance language. Candidates who have navigated a T+1 readiness programme, a regulatory remediation driven by SEC/FINRA/FCA findings, or a CCP/clearing-house integration bring concrete differentiation that maps directly to the stated scope.",
+            "transformation_priorities": [
+              "Back-office estate simplification",
+              "Post-trade resilience & scale",
+              "Regulatory/supervisory reporting modernisation",
+              "AI platform embedding in operations",
+              "Post-trade T+1 & DLT readiness",
+              "ISO 20022 migration",
+              "Front-to-back workflow integration",
+              "US growth operating model build"
+            ]
+          }
+        },
+        "weights": {
+          "domain": 10,
+          "technical": 8,
+          "leadership": 9,
+          "regulatory": 7,
+          "transformation": 8
+        }
+      },
+      "competitors": []
+    }
+  },
+  {
+    "name": "Vladimir Breygin vs Head of Prime Brokerage IT",
+    "input": {
+      "subject": {
+        "candidate_id": "78c0bff0-7fb2-443e-8862-1c6f2ace2ade",
+        "full_name": "Vladimir Breygin",
+        "current_title": "Global Practice Director – Chief Product Officer & Global Head of Transformation",
+        "current_company": "Enterprise Solution Providers (ESP)",
+        "archetype": "Transformer",
+        "profile": {
+          "email": "vlad@flexcpo.com",
+          "risks": [
+            "Consulting-to-operator transition risk; has been external adviser since 2017",
+            "Team scale and budget authority significantly below RBC role requirements",
+            "CV metrics appear high-level and difficult to verify; credibility risk in due diligence",
+            "Positioning as CPO/transformation lead may misalign with IT Operations mandate"
+          ],
+          "roles": [
+            {
+              "title": "Global Practice Director – Chief Product Officer & Global Head of Transformation",
+              "company": "Enterprise Solution Providers (ESP)",
+              "summary": "Leads digital transformation and product strategy across global enterprise clients, directing the full lifecycle of 15+ solutions and delivering a reported 29% improvement in delivery efficiency and 30% increase in market penetration.",
+              "end_date": "present",
+              "start_date": "2017"
+            },
+            {
+              "title": "COO / Difecto CIO – Senior Program Director",
+              "company": "Sberbank CIB",
+              "summary": "Built and launched a FinTech trading application from inception to full-scale production, managing a $50M P&L and achieving a reported 40% revenue increase and 50% rise in client acquisition through Agile transformation.",
+              "end_date": "2017",
+              "start_date": "2014"
+            },
+            {
+              "title": "Global Head of Risk & Regulatory",
+              "company": "Bank of America Merrill Lynch",
+              "summary": "Led front-to-back delivery of global regulatory and risk programs at a tier-1 investment bank, driving big data and data science initiatives that contributed to a reported 25% increase in annual revenue.",
+              "end_date": "2014",
+              "start_date": "2012"
+            },
+            {
+              "title": "CIO of IB and Risk IT Practices / US COO",
+              "company": "GBSG Inc. Capital Markets",
+              "summary": "Held dual CIO and COO responsibilities across investment banking and risk IT practices within a capital markets firm.",
+              "end_date": "2012",
+              "start_date": "2010"
+            },
+            {
+              "title": "COO",
+              "company": "Vander Mollen Capital Markets",
+              "summary": "Served as Chief Operating Officer for a capital markets firm, overseeing operational functions concurrently with other advisory roles.",
+              "end_date": "2012",
+              "start_date": "2010"
+            },
+            {
+              "title": "CIO of Finance & Compliance Technology",
+              "company": "UCSG Inc.",
+              "summary": "Led finance and compliance technology as CIO, overseeing IT infrastructure and regulatory technology delivery.",
+              "end_date": "2012",
+              "start_date": "2010"
+            }
+          ],
+          "scale": "$50M P&L managed at Sberbank CIB; team sizes not explicitly stated; board-level engagement across CIB and exchange clearing bodies.",
+          "domain": "Capital Markets · Investment Banking · FinTech · Financial Services",
+          "summary": "Vladimir Breygin is a senior transformation and product executive with roughly 15 years spanning capital markets, investment banking, and FinTech, including a Global Head of Risk & Regulatory role at Bank of America Merrill Lynch and a CIO/COO mandate at Sberbank CIB where he managed a $50M P&L. His current advisory and consulting practice (ESP) focuses on enterprise digital transformation rather than running a large internal IT operations function, and his CV skews heavily toward product strategy and transformation leadership rather than steady-state IT operations management at scale.",
+          "location": null,
+          "archetype": "Transformer",
+          "full_name": "Vladimir Breygin",
+          "strengths": [
+            "Capital markets domain breadth",
+            "Regulatory and risk programme delivery",
+            "Digital transformation track record",
+            "Agile and product lifecycle leadership",
+            "Board-level stakeholder engagement"
+          ],
+          "evaluation": {
+            "gaps": [
+              {
+                "detail": "No role on the CV states a direct or total headcount. The largest budget figure is $50M at Sberbank CIB. The RBC Capital Markets role requires demonstrated ownership of a 400-person team and $100M opex. Per the scale-leadership threshold rule, the CV cannot substantiate managers-of-managers experience at this scope, and the leadership dimension score is capped at 6/10 as a result.",
+                "headline": "No evidenced large-team headcount or budget authority",
+                "role_mismatch": "The role's 9/10 leadership weight demands evidenced management of a senior technology organisation at bulge-bracket or near-equivalent scale — this candidate cannot demonstrate that bar from available CV data."
+              },
+              {
+                "detail": "Since 2017 Breygin has operated exclusively as an external consultant and practice director at ESP. The transition from advising clients on digital transformation to owning the P&L, headcount, and 24/7 operational risk of a large CIB IT function is a material step-change. There is no recent evidence of managing incident response, infrastructure SLAs, or run-the-bank obligations.",
+                "headline": "Seven years out of in-seat operational leadership",
+                "role_mismatch": "The Head of IT Operations role requires an operator mindset with live accountability for system uptime and operational resilience — the CV evidences an advisory and product-design posture for the most recent seven years."
+              },
+              {
+                "detail": "The CV references cloud, big data, and AI generically but names no specific post-trade or capital markets infrastructure platforms (Murex, Calypso, Broadridge, FIS GMI). For a Head of IT Operations at a global CIB, platform ownership — not consultative exposure — is a baseline expectation. The technical dimension score of 5/10 reflects this gap directly.",
+                "headline": "No named post-trade platform or infrastructure ownership",
+                "role_mismatch": "With a technical weight of 8/10, the absence of named infrastructure and post-trade platform ownership against which operational accountability can be assessed is a critical evidential gap."
+              }
+            ],
+            "strengths": [
+              {
+                "detail": "Breygin held a Global Head of Risk & Regulatory title at Bank of America Merrill Lynch and a dual CIO/COO seat at Sberbank CIB, giving him front-to-back CIB exposure across risk, regulatory, and trading technology. This is not generic financial services; the roles sit inside investment banking divisions with direct trading-desk adjacency.",
+                "signal": "He will navigate RBC Capital Markets stakeholders — trading desks, risk officers, and compliance — with credibility that a candidate from a non-CIB background would lack.",
+                "headline": "Tier-1 capital markets domain pedigree"
+              },
+              {
+                "detail": "The Sberbank CIB FinTech trading platform was built from inception to full production under his leadership, with reported 40% revenue increase and 50% client acquisition growth attributed to the programme. At BofA Merrill Lynch he led a global regulatory and risk programme overhaul. These are multi-phase, cross-functional deliveries, not advisory engagements.",
+                "signal": "He can lead a live modernisation mandate at RBC Capital Markets with the pattern-recognition of someone who has shipped complex CIB technology programmes before, not just designed them.",
+                "headline": "End-to-end transformation programme delivery"
+              },
+              {
+                "detail": "His BofA Merrill Lynch tenure (2012–2014) centred on global regulatory and risk programme delivery at a point when post-crisis regulatory pressure was at its peak — Dodd-Frank, Basel III, and EMIR were all in simultaneous flight. The CV does not name specific frameworks but the institutional context and title are credible signals of deep regime exposure.",
+                "signal": "He is unlikely to be surprised by the regulatory overhead of a Head of IT Operations role at RBC Capital Markets and should be able to engage substantively with compliance and audit functions.",
+                "headline": "Regulatory and risk technology programme ownership"
+              },
+              {
+                "detail": "Breygin drove Agile transformation at Sberbank CIB across a fintech build, and at ESP has directed the full lifecycle of 15+ enterprise solutions concurrently. His self-identification as a CPO-archetype means he applies product-management discipline — roadmaps, OKRs, delivery cadences — to large, complex IT environments.",
+                "signal": "This predicts strong execution rigour and the ability to impose delivery structure on the IT operations function during a modernisation phase.",
+                "headline": "Agile and product lifecycle leadership at scale"
+              }
+            ],
+            "comparison": {
+              "competitors": [],
+              "positioning": "No other candidates have been provided in this slate, so relative positioning cannot be assessed. Breygin is evaluated on an absolute basis only."
+            },
+            "role_title": "Head of IT Operations",
+            "positioning": {
+              "opener": "Vladimir Breygin brings a rare combination of front-to-back CIB domain credibility — Global Head of Risk & Regulatory at Bank of America Merrill Lynch, CIO/COO at Sberbank CIB with a $50M P&L — and a substantive track record of delivering complex transformation programmes inside tier-1 investment banking environments.",
+              "talking_points": [
+                "His BofA Merrill Lynch and Sberbank CIB tenures give him the capital markets fluency to engage immediately with trading-desk stakeholders and risk officers — this is not a candidate who needs a domain induction.",
+                "He has shipped a FinTech trading platform from inception to production and led a global regulatory programme overhaul, which maps directly to the modernisation mandate inside this role.",
+                "If the client is willing to explore a structured transition plan — for example, pairing him with a strong COO or Head of Infrastructure in the first 12 months — the domain and transformation credentials could justify the operator-to-advisor reintegration risk."
+              ],
+              "objection_handling": "The most likely client objection is that he has not run a 400-person IT operations function and has been consulting for seven years — the honest response is to acknowledge both gaps directly and position this as a transformation-first hire that requires a complementary operational deputy, rather than a steady-state operations incumbent."
+            },
+            "company_name": "RBC Capital Markets",
+            "generated_at": "2026-04-30T21:25:13.543Z",
+            "final_verdict": {
+              "tier": "tier_3",
+              "narrative": "Against the two highest-weighted dimensions — domain (10) and leadership (9) — Breygin scores 7 and 6 respectively, and the alignment test returns red on the single most important operational must-have: evidenced ownership of a large IT function at tier-1 scale. The weighted profile (approximate weighted score of 6.33 across all five dimensions, dragged down by the leadership and technical gaps) places him at the lower end of tier_3 — a stretch fit that is hard to position credibly given the seven-year consulting gap and the absence of any headcount or infrastructure-scale data. This is not an off-profile candidate on domain, but it is an off-mandate candidate on operational scope."
+            },
+            "scoring_table": [
+              {
+                "score": 5,
+                "weight": 8,
+                "dimension": "technical",
+                "commentary": "Breygin's tech exposure spans cloud, big data, AI, and SaaS at a conceptual level through his ESP advisory practice, but the CV provides no evidence of hands-on IT infrastructure ownership, SRE, or named post-trade platforms (Murex, Calypso, Broadridge). For a Head of IT Operations role carrying an 8/10 technical weight, the absence of infrastructure depth and specific system ownership is a material deficit."
+              },
+              {
+                "score": 7,
+                "weight": 10,
+                "dimension": "domain",
+                "commentary": "Genuine capital markets and CIB domain credentials: Global Head of Risk & Regulatory at Bank of America Merrill Lynch (2012–2014) and CIO/COO at Sberbank CIB managing a $50M P&L (2014–2017). Asset class and desk-level specificity are not quoted in the CV, and post-2017 domain exposure has been consultative rather than operational inside a tier-1 bank."
+              },
+              {
+                "score": 6,
+                "weight": 9,
+                "dimension": "leadership",
+                "commentary": "The CV references board-level engagement and directorial titles but provides no direct headcount, managers-of-managers structure, or budget authority approaching the 400-person team and $100M opex mandate required. Per scale-leadership threshold rules, without evidenced managers-of-managers experience this dimension cannot exceed 6/10 for a Head-of role at this scope."
+              },
+              {
+                "score": 6,
+                "weight": 7,
+                "dimension": "regulatory",
+                "commentary": "Bank of America Merrill Lynch Global Head of Risk & Regulatory role (2012–2014) implies FCA/PRA and likely Dodd-Frank exposure, and Sberbank CIB suggests awareness of CIB regulatory frameworks. However, no specific regulatory regime (SMCR, Basel III/IV, MiFID II, Reg SCI) is named in the CV, capping this score at 6/10 per the regulatory validator rule."
+              },
+              {
+                "score": 7,
+                "weight": 8,
+                "dimension": "transformation",
+                "commentary": "Three substantive programmes are evidenced: a FinTech trading platform built from inception to production at Sberbank CIB, a global regulatory and risk overhaul at BofA Merrill Lynch, and enterprise-wide digital transformation at ESP. The Sberbank programme is the closest to a named, scoped transformation artefact ($50M P&L, Agile adoption), but budget, duration, and decommission outcomes are not quoted for the others, limiting confidence."
+              }
+            ],
+            "alignment_test": {
+              "light": "red",
+              "answer": "The CV does not provide team size for any role. The largest budget figure cited is a $50M P&L at Sberbank CIB, which is materially below the $100M opex threshold, and Sberbank CIB, while a substantial CIB, is not a tier-1 global bulge-bracket institution. Post-2017 he has operated as an external consultant, not an in-seat operator of a large IT function. Evidence for this specific must-have is absent.",
+              "question": "Can this candidate evidence direct ownership — headcount, budget, and P&L — of a 300-plus person IT operations function inside a tier-1 investment bank or equivalent regulated institution?",
+              "justification": "The CV provides no headcount data for any role and the largest budget evidenced ($50M at Sberbank CIB) falls short of the $100M threshold, with the consulting-to-operator gap compounding the absence — this is a red against the role's single most critical operational must-have."
+            },
+            "recommendation": "do_not_include",
+            "schema_version": 1,
+            "profile_summary": {
+              "executive_summary": "Vladimir Breygin is a capital markets transformation executive with 15 years spanning Bank of America Merrill Lynch, Sberbank CIB, and a seven-year advisory practice at ESP, where he has directed product strategy and enterprise digital programmes. His domain credentials are genuine but his operational mode since 2017 has been external consulting, not running a large-scale internal IT operations function — the implicit ask is whether a consulting-to-operator transition at this scope (400 people, $100M opex) is credible. Against the two highest-weighted dimensions — domain (10) and leadership (9) — he meets the domain bar only partially and falls short on evidenced leadership scale.",
+              "background_bullets": [
+                "Global Head of Risk & Regulatory at Bank of America Merrill Lynch, 2012–2014.",
+                "CIO/COO at Sberbank CIB managing a $50M P&L, 2014–2017; delivered FinTech trading platform from inception to production.",
+                "Global Practice Director at ESP since 2017, directing 15+ enterprise solutions across global clients.",
+                "Reported 40% revenue increase and 50% client acquisition rise at Sberbank CIB via Agile transformation.",
+                "Dual CIO/COO responsibilities at GBSG Capital Markets covering investment banking and risk IT, 2010–2012.",
+                "Board-level engagement cited across CIB and exchange clearing bodies."
+              ]
+            },
+            "recommendation_rationale": "Tier_3 classification driven by a red alignment-test result on the leadership scale must-have and a seven-year consulting gap means the candidate cannot be credibly presented as a primary or secondary shortlist candidate for a Head of IT Operations role with a 400-person team and $100M opex mandate."
+          },
+          "psychology": {
+            "watch_outs": [
+              "Seven-year consulting gap: no evidenced run-the-bank accountability since 2017.",
+              "Zero headcount data on CV; leadership scale at $100M opex cannot be substantiated."
+            ],
+            "generated_at": "2026-05-01T14:05:44.652Z",
+            "role_pattern": {
+              "value": "climber",
+              "evidence": "The career arc moves from CIO/COO at boutique capital markets firms (GBSG, Vander Mollen, UCSG, 2010–2012) to Global Head of Risk & Regulatory at BofA Merrill Lynch, then CIO/COO at Sberbank CIB with P&L ownership, then Global Practice Director at ESP — each move targets a larger title or broader mandate, consistent with a climber pattern.",
+              "confidence": 72
+            },
+            "risk_tolerance": {
+              "value": "aggressive",
+              "evidence": "He moved from a bulge-bracket advisory role at BofA Merrill Lynch to building a FinTech trading platform from scratch at Sberbank CIB (a non-tier-1 institution), then exited in-seat banking entirely in 2017 to launch an independent consulting practice — each transition carries asymmetric personal and commercial risk rather than incremental safety.",
+              "confidence": 65
+            },
+            "pace_preference": {
+              "value": "scale_up",
+              "evidence": "His highest-energy operational period was at Sberbank CIB (2014–2017) building a FinTech platform from inception to production inside a mid-sized CIB — a scale-up context rather than a startup greenfield or a mature enterprise steady-state; his ESP practice also serves growth-phase enterprise clients rather than turnaround incumbents.",
+              "confidence": 60
+            },
+            "leadership_style": {
+              "value": "directive",
+              "evidence": "Breygin's career shows a consistent pattern of holding singular accountability titles — CIO, COO, Global Head, Practice Director — rather than collaborative peer roles; at Sberbank CIB he owned a $50M P&L and drove Agile transformation top-down, and at ESP he directs 15+ concurrent enterprise programmes as sole practice lead.",
+              "confidence": 68
+            },
+            "narrative_summary": "Breygin is a transformation-first executive who gravitates toward building or overhauling systems rather than running them at steady state, and whose seven-year consulting arc at ESP suggests he now operates best with autonomous scope and diverse mandates rather than inside a single corporate hierarchy — on the job at RBC Capital Markets, a recruiter should expect strong programme design rigour and capital markets stakeholder credibility, but should anticipate friction with the run-the-bank accountability and 24/7 operational governance that a Head of IT Operations role demands. The absence of evidenced headcount scale (no team sizes disclosed for any role) and the consulting-to-operator gap are the two facts a hiring manager will press hardest, and the honest positioning is transformation-first with a complementary operational deputy rather than a full-spectrum IT operations incumbent.",
+            "adversity_response": "The most visible inflection point is Breygin's 2017 exit from in-seat banking into independent consulting at ESP; rather than seeking another operator role after Sberbank CIB, he pivoted to an advisory model — a pattern that suggests he responds to institutional constraints by seeking greater autonomy rather than absorbing them, which could signal difficulty re-integrating into a structured corporate hierarchy after seven years of self-directed practice.",
+            "change_orientation": {
+              "value": "transformational",
+              "evidence": "The AI evaluation identifies three substantive transformation programmes: a FinTech trading platform built from inception to production at Sberbank CIB, a global regulatory and risk overhaul at BofA Merrill Lynch, and enterprise-wide digital transformation across 15+ client solutions at ESP — a career-long pattern of building or overhauling rather than optimising existing systems.",
+              "confidence": 78
+            },
+            "motivation_drivers": [
+              {
+                "driver": "impact",
+                "weight": 75,
+                "evidence": "Career choices consistently prioritise transformational mandates over incremental management roles — building a FinTech platform from scratch at Sberbank CIB, overseeing a global regulatory overhaul at BofA Merrill Lynch, and directing enterprise digital transformation at ESP all prioritise programme legacy over positional security."
+              },
+              {
+                "driver": "mastery",
+                "weight": 65,
+                "evidence": "The self-identification as a CPO archetype and the breadth of domain expertise accumulated — capital markets, regulatory technology, Agile, AI, blockchain, digital payments — points to a pattern of building cross-domain capability rather than deepening within a single function."
+              },
+              {
+                "driver": "status",
+                "weight": 50,
+                "evidence": "The consistent pursuit of CIO, COO, and Global Head titles across organisations of varying size, and the current branding as both CPO and Global Head of Transformation at ESP, signals that positional recognition is a meaningful but secondary motivator relative to the impact and mastery signals."
+              },
+              {
+                "driver": "money",
+                "weight": 35,
+                "evidence": "No explicit compensation signals in the CV; the decision to leave a bulge-bracket seat (BofA Merrill Lynch) for Sberbank CIB and then exit banking entirely for independent consulting suggests financial optimisation was not the primary driver at either junction."
+              }
+            ],
+            "collaboration_style": {
+              "value": "team_builder",
+              "evidence": "At ESP he simultaneously manages 15+ enterprise client engagements, which requires orchestrating distributed delivery teams rather than solo execution; the Sberbank CIB Agile transformation also implies deliberate team-structure design as a delivery mechanism, and board-level engagement is cited across CIB and exchange clearing bodies.",
+              "confidence": 58
+            },
+            "hierarchy_preference": {
+              "value": "flat",
+              "evidence": "Breygin has self-selected into an independent consulting practice since 2017 and his current title — Global Practice Director, CPO and Global Head of Transformation — sits outside any conventional corporate reporting line; the voluntary departure from structured tier-1 bank environments after 2017 signals a preference for autonomous, flatter operating models.",
+              "confidence": 62
+            }
+          },
+          "fit_summary": "Against the highest-weighted dimensions of domain (10) and leadership (9), Breygin offers genuine capital markets and CIB domain exposure but has spent seven years in a consulting/product role rather than running a large-scale internal IT operations function — the 400-person team and $100M opex mandate are materially beyond what his CV evidences; on transformation (8) he shows credible programme delivery but the operational depth and in-seat scale required for Head of IT Operations at RBC Capital Markets are not sufficiently demonstrated.",
+          "linkedin_url": "https://linkedin.com/in/vladimirbreygin",
+          "current_title": "Global Practice Director – Chief Product Officer & Global Head of Transformation",
+          "tech_exposure": [
+            "Cloud computing",
+            "Agile / Scrum",
+            "Big Data",
+            "Data Analytics",
+            "AI-driven solutions",
+            "SaaS",
+            "Blockchain",
+            "Digital payments",
+            "Cybersecurity"
+          ],
+          "fit_dimensions": {
+            "domain": 7,
+            "technical": 5,
+            "leadership": 6,
+            "regulatory": 6,
+            "transformation": 7
+          },
+          "current_company": "Enterprise Solution Providers (ESP)",
+          "positioning_kit": {
+            "emails": [
+              {
+                "key": "introduction",
+                "body": "I wanted to introduce Vladimir Breygin as a candidate for the Head of IT Operations role at RBC Capital Markets. I am presenting him with transparency about where he is strong and where the fit requires a structural conversation, because I think the domain question — the dimension your CIO has flagged as non-negotiable — is genuinely answered by his background.\n\nBreygin held a Global Head of Risk & Regulatory seat at Bank of America Merrill Lynch from 2012 to 2014, leading front-to-back delivery of global regulatory and risk programmes at a point of peak post-crisis regulatory pressure. He followed that with a CIO/COO mandate at Sberbank CIB from 2014 to 2017, where he managed a $50M P&L and built a FinTech trading platform from inception to full production. These are not adjacent-fintech or wealth-management backgrounds — they are in-seat capital markets and investment banking roles with direct trading-desk and regulatory accountability.\n\nThe two gaps I want to name upfront: his CV does not state headcount for any role, and the $50M Sberbank P&L falls short of the $100M opex threshold the role requires. He has also been operating as an external consultant and Global Practice Director at Enterprise Solution Providers since 2017, directing over 15 enterprise transformation programmes rather than running a large internal IT function. The consulting-to-operator transition is real and should be tested explicitly.\n\nMy recommendation is a first-round conversation scoped around the modernisation mandate and domain depth, with headcount and infrastructure scale as the explicit qualification questions. I am happy to brief you in more detail before that call if useful.",
+                "subject": "Vladimir Breygin — CIB Domain Depth for RBC Head of IT Ops"
+              },
+              {
+                "key": "follow_up",
+                "body": "Following your review of Vladimir Breygin's dossier, I want to get ahead of the two questions I expect are front of mind: leadership scale and post-trade platform ownership.\n\nOn scale, the honest position is that his CV does not state team sizes for any role, and the largest budget evidenced is a $50M P&L at Sberbank CIB. Our evaluation model caps his leadership dimension at 6/10 as a result — I have not papered over that. What the CV does evidence is managers-of-managers behaviour through title and programme scope: at Sberbank CIB he owned a P&L and drove Agile transformation across a cross-functional fintech build; at BofA Merrill Lynch he held global programme accountability across a tier-1 investment bank. The right question for a first interview is not whether his current CV number matches the 400-person threshold, but whether his operational pattern scales — and I believe a direct conversation will surface headcount data that the CV omits.\n\nOn post-trade platform ownership, the CV is silent on named systems such as Murex, Calypso, or Broadridge. This is a genuine gap against the technical dimension and I have flagged it as such. His BofA Merrill Lynch role sits squarely inside the post-crisis regulatory infrastructure build, which in a tier-1 CIB in that period almost certainly involved at least one major post-trade or risk platform programme — but I cannot assert ownership without named evidence, and that is a direct interview question.\n\nThe new angle I would add at this stage is the transformation programme at Sberbank CIB specifically: a FinTech trading platform built from inception to production inside a CIB, with a $50M P&L and reported 40% revenue uplift, is a closer analogue to the modernisation mandate inside the RBC Capital Markets role than most operator-profile candidates in this market can offer. That is the ceiling argument for moving him forward despite the scale gap.",
+                "subject": "Vladimir Breygin — Addressing Your Scale and Platform Questions"
+              },
+              {
+                "key": "advance",
+                "body": "Given the positive HM feedback signals and the productive first-round conversation, I would like to propose a structured second-round panel to qualify the two remaining open questions: operational scale and post-trade platform depth.\n\nMy recommendation is a two-part interview. The first part should be a 45-minute session with the Line of Business CIO and the CM COO, focused on the modernisation mandate — specifically how Breygin would structure the simplification programme, what governance model he would apply, and how he would manage the regulatory reporting technology agenda. This is where his BofA Merrill Lynch and Sberbank CIB credentials will be most visible and where the domain depth argument is strongest.\n\nThe second part should be a 30-minute technical deep-dive with your Head of Infrastructure or a senior architect, with explicit questions on post-trade platform ownership — ask him directly whether he has held roadmap or vendor-relationship accountability for any of the major clearing or settlement platforms, and probe the Sberbank CIB build for the infrastructure stack he owned. If he cannot name platforms at that session, the technical gap is confirmed and the structural mitigation — appointing a strong Head of Infrastructure as operational deputy — should be tabled as the path forward.\n\nI would suggest scheduling within the next ten days given the timeline concern flagged in feedback. I can coordinate directly with Breygin and provide a structured briefing note for each panel member in advance of the session.",
+                "subject": "Vladimir Breygin — Proposed Next Step and Panel Structure"
+              }
+            ],
+            "pitches": [
+              {
+                "tone": "conservative",
+                "opener": "Vladimir Breygin carries genuine tier-1 capital markets credentials — Global Head of Risk & Regulatory at Bank of America Merrill Lynch and CIO/COO at Sberbank CIB — but I want to be transparent about two material gaps before you review his dossier.",
+                "talking_points": [
+                  "His BofA Merrill Lynch and Sberbank CIB tenures give him front-to-back CIB domain fluency — risk, regulatory, and trading-technology adjacency — that directly satisfies the CIO's stated non-negotiable filter for deep capital markets knowledge, but post-trade platform ownership (Murex, Broadridge, FIS GMI) is not named in his CV and must be probed at interview.",
+                  "His CV provides no headcount data for any role and the largest budget evidenced is a $50M P&L at Sberbank CIB — materially below the $100M opex and 400-person team threshold; per our evaluation model his leadership dimension is capped at 6/10 and this gap must be addressed before submission.",
+                  "He has operated as an external consultant at ESP since 2017, meaning there is a seven-year gap in in-seat operational accountability for run-the-bank obligations — if you proceed, the risk-mitigation recommendation is to pair him with a strong Head of Infrastructure for the first 12 months rather than position him as a full-spectrum steady-state operator."
+                ],
+                "objection_handling": "If the client pushes back on the consulting gap and sub-scale leadership history, the honest response is to agree the fit is tier-3 and recommend a structured first-round conversation scoped specifically around domain depth and transformation mandate alignment, with scale verification as the explicit qualification gate."
+              },
+              {
+                "tone": "balanced",
+                "opener": "Vladimir Breygin's capital markets domain depth — the dimension weighted highest at 10/10 for this role — is substantiated by a Global Head of Risk & Regulatory seat at Bank of America Merrill Lynch and a CIO/COO mandate at Sberbank CIB where he managed a $50M P&L and delivered a FinTech trading platform from inception to production.",
+                "talking_points": [
+                  "His BofA Merrill Lynch tenure (2012–2014) placed him at the centre of post-crisis regulatory delivery — Dodd-Frank, Basel III, and EMIR were all in simultaneous flight — giving him the regulatory and risk technology pattern-recognition to engage immediately with RBC Capital Markets compliance and audit functions, even though specific framework names are not quoted in the CV.",
+                  "At Sberbank CIB he shipped a FinTech trading platform end-to-end using Agile transformation, reporting a 40% revenue increase and 50% client acquisition rise — this is a named, scoped delivery programme with measurable outcomes, not a consulting engagement, and it maps directly to the modernisation mandate inside this role.",
+                  "The acknowledged gap is operational scale: no headcount is stated on his CV and the $50M Sberbank P&L falls short of the $100M opex threshold, so the positioning is transformation-first hire paired with a complementary operational deputy rather than a full-spectrum IT operations incumbent."
+                ],
+                "objection_handling": "When the client raises the consulting gap and leadership scale deficit, acknowledge both directly and pivot to the transformation mandate — this role has a live modernisation programme where his CIB domain fluency and delivery track record are the harder-to-source credentials, and steady-state operational depth can be supplemented through the team structure."
+              },
+              {
+                "tone": "aggressive",
+                "opener": "If the CIO's non-negotiable is deep capital markets knowledge, Vladimir Breygin is the strongest domain candidate in this market — a Global Head of Risk & Regulatory at Bank of America Merrill Lynch who then built and shipped a CIB FinTech trading platform from zero to production at Sberbank CIB with a $50M P&L, and you should move him to a first-round conversation this week before he fields competing approaches.",
+                "talking_points": [
+                  "His BofA Merrill Lynch and Sberbank CIB tenures give him front-to-back CIB fluency across trading-desk, risk, and regulatory technology that a candidate from wealth management, generic fintech, or infrastructure-only backgrounds simply cannot replicate — this is the domain ceiling the CIO asked for, evidenced across two named tier-1 and near-tier-1 institutions.",
+                  "The transformation dimension is where he outperforms the market: three substantive delivery programmes — a global regulatory overhaul at BofA Merrill Lynch, a full-stack FinTech trading platform at Sberbank CIB, and 15+ concurrent enterprise transformation programmes at ESP — make him a credible owner of the modernisation and simplification mandate from day one.",
+                  "The consulting-to-operator transition and the headcount gap are real, but they are solvable through org design — appoint a strong Head of Infrastructure as his operational deputy and the 400-person run-the-bank function has continuity while Breygin drives the transformation agenda that the role was actually created to deliver."
+                ],
+                "objection_handling": "Push back on any instinct to park him: the HM feedback signals are positive, the domain bar is met, the transformation mandate is where he is strongest, and waiting for a candidate who checks every box including operational scale will cost you three months in a thin market."
+              }
+            ],
+            "generated_at": "2026-05-01T14:07:13.231Z",
+            "positioning_summary": "Lead with Breygin's capital markets domain depth — Global Head of Risk & Regulatory at BofA Merrill Lynch and CIO/COO at Sberbank CIB — as the non-negotiable differentiator the CIO stakeholder requires, while naming the operational scale gap and the consulting-to-operator transition as known risks that must be mitigated structurally."
+          },
+          "years_experience": 15,
+          "development_areas": [
+            "No evidence of managing 400+ person IT ops team",
+            "Budget scale below $100M threshold evidenced",
+            "Current role is consulting, not in-seat operator",
+            "IT infrastructure / SRE depth not demonstrated"
+          ],
+          "transformation_experience": [
+            "Enterprise-wide digital transformation programs at ESP (2017–present)",
+            "FinTech trading platform build from inception to production at Sberbank CIB",
+            "Global regulatory and risk program overhaul at Bank of America Merrill Lynch",
+            "IT infrastructure overhaul including cloud migration (CIO contributions)",
+            "Organisational change management and Agile adoption programs"
+          ]
+        },
+        "rank": null,
+        "overall_score": null,
+        "tier": null
+      },
+      "role": {
+        "role_title": "Head of Prime Brokerage IT",
+        "company_name": "Capital Markets Investment Bank",
+        "calibration": {
+          "role_title": "Head of Prime Brokerage IT",
+          "inferred_scope": "Senior technology leadership role responsible for the IT function supporting the Prime Brokerage business within a capital markets-focused investment bank. Likely oversees infrastructure, platforms, and engineering teams serving prime brokerage clients and internal trading desks.",
+          "role_structure": {
+            "function": "Technology",
+            "seniority": "Head of"
+          },
+          "missing_information": [
+            "Company name (input appears to be a description rather than a firm name)",
+            "Geography / location",
+            "Team size and budget responsibility",
+            "Reporting line (e.g. CTO, CIO, or business COO)",
+            "Compensation range"
+          ]
+        },
+        "company": {
+          "industry": "Investment Banking",
+          "company_name": "Capital Markets Investment Bank",
+          "business_model": "Investment Bank"
+        },
+        "weights": null
+      },
+      "competitors": []
+    }
+  }
+]

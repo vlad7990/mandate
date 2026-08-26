@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { runInference } from "./inference";
+import { markInferenceSchemaFailed, runInference } from "./inference";
 import {
   SLOTS,
   SOURCING_FULL_SCHEMA,
@@ -69,12 +69,16 @@ export async function generateAllSourcingQueries(
     },
   }, { projectId: ctx.skill_context?.project_id ?? null });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Sourcing response contained no text block");
+  try {
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("Sourcing response contained no text block");
+    }
+    return JSON.parse(textBlock.text) as SourcingQueries;
+  } catch (err) {
+    markInferenceSchemaFailed(response);
+    throw err;
   }
-
-  return JSON.parse(textBlock.text) as SourcingQueries;
 }
 
 /**
@@ -118,13 +122,17 @@ export async function regenerateSingleQuery(
     },
   }, { projectId: ctx.skill_context?.project_id ?? null });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Sourcing single-regen response contained no text block");
+  try {
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("Sourcing single-regen response contained no text block");
+    }
+    const parsed = JSON.parse(textBlock.text) as { query: string };
+    return parsed.query;
+  } catch (err) {
+    markInferenceSchemaFailed(response);
+    throw err;
   }
-
-  const parsed = JSON.parse(textBlock.text) as { query: string };
-  return parsed.query;
 }
 
 // ────────────────────────────────────────────────────────────────────────

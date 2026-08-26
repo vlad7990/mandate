@@ -1,5 +1,5 @@
 import "server-only";
-import { runInference } from "./inference";
+import { markInferenceSchemaFailed, runInference } from "./inference";
 import {
   TARGET_COMPANIES_SCHEMA,
   TARGET_COMPANIES_SYSTEM_PROMPT,
@@ -53,17 +53,21 @@ export async function runTargetCompanies(
     },
   }, { projectId: ctx.projectId });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Target-companies response contained no text block");
+  try {
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("Target-companies response contained no text block");
+    }
+    const partial = JSON.parse(textBlock.text) as Omit<
+      TargetCompaniesReport,
+      "generated_at"
+    >;
+    return {
+      ...partial,
+      generated_at: new Date().toISOString(),
+    };
+  } catch (err) {
+    markInferenceSchemaFailed(response);
+    throw err;
   }
-
-  const partial = JSON.parse(textBlock.text) as Omit<
-    TargetCompaniesReport,
-    "generated_at"
-  >;
-  return {
-    ...partial,
-    generated_at: new Date().toISOString(),
-  };
 }

@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Head of IT Operations @ RBC Capital Markets",
+    "input": {
+      "role": {
+        "title": "Head of IT Operations",
+        "seniority": null,
+        "function": null
+      },
+      "company": {
+        "name": "RBC Capital Markets",
+        "industry": "Investment Banking",
+        "business_model": "Global Investment Bank"
+      },
+      "calibration": {
+        "role_title": "Head of IT Operations",
+        "inferred_scope": "This is a senior leadership role overseeing IT operations for RBC Capital Markets, the investment banking and capital markets division of Royal Bank of Canada. The role likely carries global or regional (North America/EMEA) scope and reports into a CTO or CIO function within the division.",
+        "role_structure": {
+          "function": "Technology",
+          "seniority": "Head of"
+        },
+        "dimension_weights": {
+          "domain": 10,
+          "technical": 8,
+          "leadership": 9,
+          "regulatory": 7,
+          "transformation": 8
+        },
+        "weights_rationale": "The recruiter's priority signals all scored 9–10, with Capital Markets domain expertise explicitly flagged by the CIO stakeholder as non-negotiable and domain/technical/leadership each weighted at maximum, driving those three dimensions to the top of the model; the must-haves around regulatory and supervisory technology ownership, a $100MM budget, 400-person team, and a live modernisation/simplification mandate further elevate regulatory and transformation dimensions above baseline for a global investment bank context.",
+        "missing_information": [
+          "Geography / primary location",
+          "Team size and organisational remit",
+          "Reporting line (e.g. CTO, CIO)",
+          "Compensation range",
+          "Mandate timeline"
+        ]
+      },
+      "archetype_hint": null
+    }
+  },
+  {
+    "name": "Head of Prime Brokerage IT @ Capital Markets Investment Bank",
+    "input": {
+      "role": {
+        "title": "Head of Prime Brokerage IT",
+        "seniority": null,
+        "function": null
+      },
+      "company": {
+        "name": "Capital Markets Investment Bank",
+        "industry": "Investment Banking",
+        "business_model": "Investment Bank"
+      },
+      "calibration": {
+        "role_title": "Head of Prime Brokerage IT",
+        "inferred_scope": "Senior technology leadership role responsible for the IT function supporting the Prime Brokerage business within a capital markets-focused investment bank. Likely oversees infrastructure, platforms, and engineering teams serving prime brokerage clients and internal trading desks.",
+        "role_structure": {
+          "function": "Technology",
+          "seniority": "Head of"
+        },
+        "missing_information": [
+          "Company name (input appears to be a description rather than a firm name)",
+          "Geography / location",
+          "Team size and budget responsibility",
+          "Reporting line (e.g. CTO, CIO, or business COO)",
+          "Compensation range"
+        ]
+      },
+      "archetype_hint": null
+    }
+  }
+]

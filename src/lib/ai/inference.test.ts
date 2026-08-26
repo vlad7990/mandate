@@ -23,6 +23,8 @@ vi.mock("@/lib/supabase-service-role", () => ({
 }));
 
 import {
+  __evalRecordedRuns,
+  __setEvalOverrides,
   buildRunRow,
   markInferenceSchemaFailed,
   outcomeForStopReason,
@@ -287,6 +289,59 @@ describe("runInference", () => {
 
     const response = await runInference("analyze_role", { max_tokens: 10, messages: [] });
     expect(response).toBe(upstream);
+  });
+});
+
+describe("the eval fence (slice 3)", () => {
+  it("REFUSES a model override outside eval mode — production model choice is the map's alone", async () => {
+    await expect(
+      runInference(
+        "parse_cv",
+        { max_tokens: 10, messages: [] },
+        { modelOverride: "claude-haiku-4-5" }
+      )
+    ).rejects.toThrow(/eval-only/);
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  it("REFUSES __setEvalOverrides outside eval mode", () => {
+    expect(() => __setEvalOverrides({ modelOverride: "x" })).toThrow(
+      /eval-only/
+    );
+  });
+
+  it("under MANDATE_EVAL=1: honors the override, records in memory, never touches the DB", async () => {
+    process.env.MANDATE_EVAL = "1";
+    try {
+      mocks.create.mockResolvedValue({
+        content: [],
+        stop_reason: "end_turn",
+        usage: { input_tokens: 5, output_tokens: 2 },
+      });
+      const before = __evalRecordedRuns.length;
+      __setEvalOverrides({
+        modelOverride: "claude-haiku-4-5",
+        thinkingOverride: { type: "disabled" },
+      });
+      await runInference("parse_cv", { max_tokens: 10, messages: [] });
+      __setEvalOverrides(null);
+
+      expect(mocks.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: "claude-haiku-4-5",
+          thinking: { type: "disabled" },
+        })
+      );
+      expect(__evalRecordedRuns.length).toBe(before + 1);
+      expect(__evalRecordedRuns[before]).toMatchObject({
+        capability: "parse_cv",
+        model: "claude-haiku-4-5",
+        outcome: "ok",
+      });
+      expect(mocks.insert).not.toHaveBeenCalled();
+    } finally {
+      delete process.env.MANDATE_EVAL;
+    }
   });
 });
 

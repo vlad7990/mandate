@@ -1,5 +1,5 @@
 import "server-only";
-import { runInference } from "./inference";
+import { markInferenceSchemaFailed, runInference } from "./inference";
 import {
   RELATIONSHIP_SCHEMA,
   RELATIONSHIP_SYSTEM_PROMPT,
@@ -56,11 +56,16 @@ export async function generateRelationshipJudgment(
     },
   });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Relationship response contained no text block");
+  try {
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("Relationship response contained no text block");
+    }
+    return JSON.parse(textBlock.text) as RelationshipJudgment;
+  } catch (err) {
+    markInferenceSchemaFailed(response);
+    throw err;
   }
-  return JSON.parse(textBlock.text) as RelationshipJudgment;
 }
 
 // ────────────────────────────────────────────────────────────────────────

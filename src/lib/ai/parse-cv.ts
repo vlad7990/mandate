@@ -1,7 +1,7 @@
 import "server-only";
 import mammoth from "mammoth";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { runInference } from "./inference";
+import { markInferenceSchemaFailed, runInference } from "./inference";
 import {
   CANDIDATE_PROFILE_SCHEMA,
   CV_PARSING_SYSTEM_PROMPT,
@@ -70,12 +70,18 @@ export async function parseCv(
     },
   }, { projectId: ctx.projectId ?? null });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("CV parse response contained no text block");
+  try {
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("CV parse response contained no text block");
+    }
+    return JSON.parse(textBlock.text) as CandidateProfile;
+  } catch (err) {
+    // The model answered but the shape is unusable — telemetry's
+    // schema_failed, distinct from provider_error (slice 3, 03bafc3).
+    markInferenceSchemaFailed(response);
+    throw err;
   }
-
-  return JSON.parse(textBlock.text) as CandidateProfile;
 }
 
 type AnthropicContentBlock =

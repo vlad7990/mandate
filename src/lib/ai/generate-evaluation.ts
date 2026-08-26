@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { runInference } from "./inference";
+import { markInferenceSchemaFailed, runInference } from "./inference";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { signInEvaluator } from "@/lib/agents/session";
 import {
@@ -46,7 +46,7 @@ type EvaluationInputCompetitor = {
   fit_dimensions: FitDimensions | null;
 };
 
-type EvaluationInput = {
+export type EvaluationInput = {
   subject: {
     candidate_id: string;
     full_name: string;
@@ -110,23 +110,28 @@ export async function generateCandidateEvaluation(
     },
   }, { projectId: input.skill_context?.project_id ?? null });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Evaluation response contained no text block");
+  try {
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("Evaluation response contained no text block");
+    }
+
+    const partial = JSON.parse(textBlock.text) as Omit<
+      CandidateEvaluation,
+      "schema_version" | "generated_at" | "role_title" | "company_name"
+    >;
+
+    return {
+      ...partial,
+      schema_version: 1,
+      generated_at: new Date().toISOString(),
+      role_title: input.role.role_title,
+      company_name: input.role.company_name,
+    };
+  } catch (err) {
+    markInferenceSchemaFailed(response);
+    throw err;
   }
-
-  const partial = JSON.parse(textBlock.text) as Omit<
-    CandidateEvaluation,
-    "schema_version" | "generated_at" | "role_title" | "company_name"
-  >;
-
-  return {
-    ...partial,
-    schema_version: 1,
-    generated_at: new Date().toISOString(),
-    role_title: input.role.role_title,
-    company_name: input.role.company_name,
-  };
 }
 
 // ────────────────────────────────────────────────────────────────────────

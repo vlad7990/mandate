@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { runInference } from "./inference";
+import { markInferenceSchemaFailed, runInference } from "./inference";
 import {
   HEALTH_AGENT_SCHEMA,
   HEALTH_AGENT_SYSTEM_PROMPT,
@@ -75,31 +75,36 @@ export async function runSearchHealth(
     },
   }, { projectId: ctx.projectId });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Search-health response contained no text block");
+  try {
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("Search-health response contained no text block");
+    }
+
+    const partial = JSON.parse(textBlock.text) as Omit<
+      HealthSuggestionsBlob,
+      "generated_at" | "health_status" | "suggestions"
+    > & {
+      suggestions: Array<Omit<HealthSuggestion, "id" | "dismissed">>;
+    };
+
+    // Mint stable ids server-side so dismissals can target individual
+    // suggestions across cache invalidations.
+    const suggestions: HealthSuggestion[] = partial.suggestions.map((s) => ({
+      ...s,
+      id: randomUUID(),
+    }));
+
+    return {
+      generated_at: new Date().toISOString(),
+      health_status: input.health.status as "stalled" | "at_risk",
+      summary: partial.summary,
+      suggestions,
+    };
+  } catch (err) {
+    markInferenceSchemaFailed(response);
+    throw err;
   }
-
-  const partial = JSON.parse(textBlock.text) as Omit<
-    HealthSuggestionsBlob,
-    "generated_at" | "health_status" | "suggestions"
-  > & {
-    suggestions: Array<Omit<HealthSuggestion, "id" | "dismissed">>;
-  };
-
-  // Mint stable ids server-side so dismissals can target individual
-  // suggestions across cache invalidations.
-  const suggestions: HealthSuggestion[] = partial.suggestions.map((s) => ({
-    ...s,
-    id: randomUUID(),
-  }));
-
-  return {
-    generated_at: new Date().toISOString(),
-    health_status: input.health.status as "stalled" | "at_risk",
-    summary: partial.summary,
-    suggestions,
-  };
 }
 
 // ────────────────────────────────────────────────────────────────────────

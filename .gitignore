@@ -39,3 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+evals/fixtures/cvs/*
+!evals/fixtures/cvs/.gitkeep

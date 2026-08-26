@@ -125,6 +125,12 @@ function warnTelemetry(err: unknown): void {
 }
 
 function insertRun(row: InferenceRunRow): void {
+  if (EVAL_MODE()) {
+    // The harness reads runs from memory; eval telemetry never lands
+    // in the production table (gate 03bafc3, Part B.7).
+    __evalRecordedRuns.push(row);
+    return;
+  }
   try {
     const supabase = getServiceRoleSupabaseClient();
     void supabase
@@ -140,6 +146,61 @@ function insertRun(row: InferenceRunRow): void {
     warnTelemetry(err);
   }
 }
+
+/**
+ * THE EVAL FENCE (slice 3, gate 03bafc3). `MANDATE_EVAL=1` is the
+ * offline eval harness's flag and never set in any deployment. Behind
+ * it, and ONLY behind it: a per-call model/thinking override for
+ * benchmarking, and an in-memory record of every run so the harness
+ * reads honest tokens/latency without a database. Product code and
+ * agents can never choose a model (Part N): an override without the
+ * fence THROWS rather than being silently ignored.
+ */
+const EVAL_MODE = () => process.env.MANDATE_EVAL === "1";
+
+export type InferenceOverrides = {
+  /** Eval-only: run this exact model instead of the map's. */
+  modelOverride?: string;
+  /** Eval-only: an explicit thinking config (e.g. {type:"disabled"}). */
+  thinkingOverride?: { type: "adaptive" | "disabled" };
+};
+
+/** Harness-set overrides for calls the seams make internally (the
+ * product functions don't — and must not — take a model parameter).
+ * Fence-guarded on both set and use; always null in production. */
+let evalOverrides: InferenceOverrides | null = null;
+export function __setEvalOverrides(o: InferenceOverrides | null): void {
+  if (!EVAL_MODE()) {
+    throw new Error(
+      "[inference] __setEvalOverrides is eval-only (MANDATE_EVAL=1)."
+    );
+  }
+  evalOverrides = o;
+}
+
+function resolveOverrides(
+  capability: Capability,
+  opts?: InferenceOverrides
+): { model: string; extra: Record<string, unknown> } {
+  const wantsOverride = opts?.modelOverride ?? opts?.thinkingOverride;
+  if (wantsOverride && !EVAL_MODE()) {
+    throw new Error(
+      "[inference] model/thinking overrides are eval-only (MANDATE_EVAL=1); " +
+        "production model choice lives in the capability map alone."
+    );
+  }
+  if (!EVAL_MODE()) return { model: modelForCapability(capability), extra: {} };
+  const model =
+    opts?.modelOverride ??
+    evalOverrides?.modelOverride ??
+    modelForCapability(capability);
+  const thinking = opts?.thinkingOverride ?? evalOverrides?.thinkingOverride;
+  return { model, extra: thinking ? { thinking } : {} };
+}
+
+/** Eval-only run capture — populated behind the fence, drained by the
+ * harness. Always empty in production. */
+export const __evalRecordedRuns: InferenceRunRow[] = [];
 
 /** response object → run id, so a caller's normalize-failure branch
  * can re-mark the row without the row id ever entering its shape. */
@@ -232,9 +293,9 @@ function withConversationCache<
 export async function runInference(
   capability: Capability,
   request: InferenceRequest,
-  opts?: { projectId?: string | null }
+  opts?: { projectId?: string | null } & InferenceOverrides
 ): Promise<Anthropic.Message> {
-  const model = modelForCapability(capability);
+  const { model, extra } = resolveOverrides(capability, opts);
   const anthropic = getAnthropic();
   const id = randomUUID();
   const started = Date.now();
@@ -243,6 +304,7 @@ export async function runInference(
   try {
     response = await anthropic.messages.create({
       ...withConversationCache(capability, request),
+      ...extra,
       model,
     });
   } catch (err) {
@@ -285,9 +347,9 @@ export async function runInference(
 export async function runInferenceStream(
   capability: Capability,
   request: InferenceStreamRequest,
-  opts?: { projectId?: string | null }
+  opts?: { projectId?: string | null } & InferenceOverrides
 ): Promise<AsyncIterable<Anthropic.Messages.RawMessageStreamEvent>> {
-  const model = modelForCapability(capability);
+  const { model, extra } = resolveOverrides(capability, opts);
   const anthropic = getAnthropic();
   const id = randomUUID();
   const started = Date.now();
@@ -296,6 +358,7 @@ export async function runInferenceStream(
   try {
     upstream = await anthropic.messages.create({
       ...withConversationCache(capability, request),
+      ...extra,
       model,
       stream: true,
     });
