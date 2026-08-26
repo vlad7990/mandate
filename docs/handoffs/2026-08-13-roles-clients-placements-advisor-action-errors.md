@@ -10889,3 +10889,45 @@ Numbers: next migration 120 (none used); next § 151; next drive
 106; vitest 1024; CHECK 87; door 20; allowlist 29; anon roster 12;
 durable baseline unchanged (inference_runs 0 — eval rows never
 touched prod).
+
+## 151. SLICE 3 FLIPS APPLIED — drive 106 green — 2026-08-25 — DRAFTED
+
+The founder's flip word ("flip all four including evaluation")
+landed against §150's table. Applied (commit 2a3d825, deployed
+mandate-ly0wnrlet): generate_sourcing / run_relationship /
+run_target_companies → claude-haiku-4-5; generate_evaluation →
+claude-sonnet-5 with thinking DISABLED via new CAPABILITY_THINKING
+map (production seam behavior — bare Sonnet 5 defaults to adaptive,
+the variant the benchmark rejected for truncation) + max_tokens
+3500 → 4500 headroom. run_search_health held on sonnet-4-6 as
+ruled. Tripwire test REPINNED to the ruled mapping + a test that
+generate_evaluation sends thinking-off and Haiku capabilities send
+none. vitest 1025.
+
+**Drive 106 GREEN (live, prod).** First door attempted was
+sourcing-generation (Optimize → "Generate all") — it HONESTLY
+REFUSED with no spend because the job spec is not final
+(is_final=false); correct product law, wrong drive door, and a
+useful negative proof. The proof ran on the marquee flip instead:
+snapshotted cv_structured.evaluation into a sibling key DB-side,
+removed the live key, visited the candidate page as the scratch
+recruiter — the REAL pending→after() generation path fired and the
+row landed: **generate_evaluation / claude-sonnet-5 / 27,792 in /
+3,472 out / 33.4s / ok / project attributed** — latency HALVED vs
+the 70s 4.6 baseline, and 3,472 out validates the headroom raise
+(it would have grazed the old 3,500 cap). Screenshot
+router-106-sonnet5-evaluation.png. Teardown by value: evaluation
+restored byte-identical from the sibling key (original generated_at
+2026-04-30 verified back), 4 events swept (3 member_* + 1
+candidate_evaluated), inference_runs/rate_limit swept, scratch user
+public-before-auth, localStorage + cookies cleared. Fresh-statement
+baseline EXACT: 26/26/77/0/0, boolean_queries 0.
+
+RESIDUE, honest: the three Haiku flips are proven at benchmark
+level; their first PROD runs will write their own inference_runs
+rows in normal use (sourcing additionally waits on a finalised
+spec). parse_cv benchmark still waits on founder CVs. Slice 4
+(Part R + providers) is the last gate; escalation pairs now have
+schema_failed signal live to build on. Numbers: next migration 120;
+next § 152; next drive 107; vitest 1025; CHECK 87 / door 20 /
+allowlist 29 / roster 12; durable baseline unchanged.
