@@ -666,6 +666,32 @@ export function describeActivity(event: ActivityEventRow): string {
       return outcome ? `${base} — ${outcome}` : base;
     }
 
+    // 120: the model registry's two admin acts. Names, tiers and
+    // statuses only — never key env-var names.
+    case "model_provider_added": {
+      const kind = str(d, "kind");
+      if (kind === "model") {
+        const model = str(d, "model_id") ?? "a model";
+        return `Added the model ${model} to the registry (benchmarking)`;
+      }
+      return `Added the provider ${str(d, "provider") ?? "unnamed"} to the model registry`;
+    }
+    case "model_assignment_changed": {
+      const kind = str(d, "kind");
+      const model = str(d, "model_id") ?? "a model";
+      if (kind === "status") {
+        const to = str(d, "to");
+        if (to === "active") return `Activated the model ${model}`;
+        if (to === "retired") return `Retired the model ${model}`;
+        return `Moved the model ${model} to ${to ?? "a new status"}`;
+      }
+      const capability = str(d, "capability") ?? "a capability";
+      const to = str(d, "to");
+      return to
+        ? `Assigned ${capability} to ${to}`
+        : `Cleared ${capability}'s model override — the ruled map governs`;
+    }
+
     default: {
       // A row written by a migration this build predates. Render it rather
       // than crash the feed — an audit trail that goes blank on an

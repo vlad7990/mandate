@@ -170,6 +170,13 @@ export const ACTIVITY_EVENT_TYPES = [
   "client_interview_generation_failed",
   "client_interview_approved",
   "client_interview_answered",
+
+  // 120: the model registry's two admin acts. Admin-gated inside
+  // `record_activity_event` like the skill family. The detail carries
+  // provider/model names, tiers and statuses — never key env-var
+  // names, never prompt text.
+  "model_provider_added",
+  "model_assignment_changed",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -234,6 +241,10 @@ export const APP_RECORDABLE_EVENTS = [
   "client_interview_generation_requested",
   "client_interview_generation_failed",
   "client_interview_approved",
+  // 120 — the model registry: both admin-gated inside the RPC, the
+  // skill family's gate extended.
+  "model_provider_added",
+  "model_assignment_changed",
 ] as const;
 
 export type AppRecordableEvent = (typeof APP_RECORDABLE_EVENTS)[number];
@@ -382,6 +393,11 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   client_interview_generation_failed: "mandates",
   client_interview_approved: "mandates",
   client_interview_answered: "mandates",
+
+  // The registry changes what model runs every search's capabilities —
+  // it files with the searches, the skills precedent.
+  model_provider_added: "mandates",
+  model_assignment_changed: "mandates",
 };
 
 /**

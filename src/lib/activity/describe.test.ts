@@ -394,6 +394,11 @@ describe("the vocabulary", () => {
       "client_interview_generation_requested",
       "client_interview_generation_failed",
       "client_interview_approved",
+      // 120: the model registry's two admin acts — the skill family's
+      // admin gate extended; they file under mandates for the skills
+      // precedent (the registry changes what runs every search).
+      "model_provider_added",
+      "model_assignment_changed",
     ]);
     for (const type of APP_RECORDABLE_EVENTS) {
       const expected =
@@ -403,7 +408,8 @@ describe("the vocabulary", () => {
         type.startsWith("task_") ||
         type.startsWith("objective_") ||
         type.startsWith("interview_plan_") ||
-        type.startsWith("client_interview_")
+        type.startsWith("client_interview_") ||
+        type.startsWith("model_")
           ? "mandates"
           : "client";
       expect(ACTIVITY_GROUP_OF[type]).toBe(expected);
@@ -416,11 +422,12 @@ describe("the vocabulary", () => {
    * rendered as raw slugs. The count pins the reconciliation: 80 was
    * 107's rebuild; 116 added the three interview-plan human acts = 83;
    * 117 adds the three client-interview human acts + the sessionless
-   * answered event = 87.
+   * answered event = 87; 120 adds the model registry's two admin
+   * acts = 89.
    */
-  it("mirrors the live CHECK's eighty-seven event types", () => {
-    expect(ACTIVITY_EVENT_TYPES).toHaveLength(87);
-    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(87);
+  it("mirrors the live CHECK's eighty-nine event types", () => {
+    expect(ACTIVITY_EVENT_TYPES).toHaveLength(89);
+    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(89);
   });
 
   it("describes the OKR acts with titles and outcomes, never amounts", () => {

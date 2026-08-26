@@ -40,6 +40,9 @@ const MATRIX: Record<Capability, readonly Role[]> = {
   // objective).
   "okrs:write": ["admin", "manager", "recruiter", "researcher"],
   "skills:write": ["admin"],
+  // 120: the model registry — which model runs which capability. Its
+  // own named power, admin-only like the studio it sits beside.
+  "models:write": ["admin"],
   "org:manage": ["admin"],
   "portal:read": ["hiring_manager", "client_hr", "client_admin"],
   "client:manage-people": ["client_admin"],

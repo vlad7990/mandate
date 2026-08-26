@@ -141,6 +141,15 @@ export const CAPABILITIES = [
   "okrs:write",
   /** Author skills, competencies and role templates — they change how every search scores. */
   "skills:write",
+  /**
+   * The model registry (120): which model runs which capability. Its
+   * own named power rather than a rider on `skills:write` — a skill
+   * steers judgment inside a prompt; a model assignment changes what
+   * produces every prompt's answer. Admin-only, and the whole
+   * `/app/settings/models` surface takes it: the registry's RLS is
+   * admin-only SELECT, so a non-admin render would be an empty lie.
+   */
+  "models:write",
   /** Org settings and member administration. */
   "org:manage",
   /**
@@ -176,6 +185,7 @@ const GRANTS: Record<Role, readonly Capability[]> = {
     "desk:manage",
     "okrs:write",
     "skills:write",
+    "models:write",
     "org:manage",
   ],
   // A recruiter's writes plus the desk, minus member administration and the
@@ -293,6 +303,7 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
   "desk:manage": "Desk oversight and reassignment",
   "okrs:write": "Objectives and key results",
   "skills:write": "Skills & templates",
+  "models:write": "Model management",
   "org:manage": "Org settings and members",
   "portal:read": "Client portal",
   "client:manage-people": "Client company's people",

@@ -12,6 +12,9 @@ const mocks = vi.hoisted(() => ({
   insert: vi.fn(),
   update: vi.fn(),
   getServiceClient: vi.fn(),
+  // Rows the registry read (slice 4) returns; empty = no overrides,
+  // the map governs — which is every pre-slice-4 test's assumption.
+  assignmentRows: [] as { capability: string; model_id: string }[],
 }));
 
 vi.mock("server-only", () => ({}));
@@ -36,6 +39,7 @@ import {
   CACHED_CONVERSATION_CAPABILITIES,
   CAPABILITY_MODEL,
 } from "./model-map";
+import { __resetRegistryCache } from "./registry";
 
 function workingServiceClient() {
   return {
@@ -50,12 +54,16 @@ function workingServiceClient() {
           return Promise.resolve({ error: null });
         },
       }),
+      select: () =>
+        Promise.resolve({ data: mocks.assignmentRows, error: null }),
     }),
   };
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.assignmentRows = [];
+  __resetRegistryCache();
   mocks.getServiceClient.mockImplementation(workingServiceClient);
 });
 
@@ -367,6 +375,99 @@ describe("the eval fence (slice 3)", () => {
         outcome: "ok",
       });
       expect(mocks.insert).not.toHaveBeenCalled();
+    } finally {
+      delete process.env.MANDATE_EVAL;
+    }
+  });
+});
+
+describe("the assignment override (slice 4)", () => {
+  const ok = () =>
+    mocks.create.mockResolvedValue({
+      content: [],
+      stop_reason: "end_turn",
+      usage: {},
+    });
+
+  it("a registry row wins over the map — and drops the map's thinking config when the model differs (gate J.6)", async () => {
+    ok();
+    mocks.assignmentRows = [
+      { capability: "generate_evaluation", model_id: "claude-sonnet-4-6" },
+    ];
+    await runInference("generate_evaluation", { max_tokens: 10, messages: [] });
+    const sent = mocks.create.mock.calls[0][0];
+    expect(sent.model).toBe("claude-sonnet-4-6");
+    // CAPABILITY_THINKING was benchmarked FOR the map's model; a
+    // different resolved model sends no thinking param.
+    expect(sent).not.toHaveProperty("thinking");
+  });
+
+  it("an assignment naming the map's own model keeps the benchmarked thinking config", async () => {
+    ok();
+    mocks.assignmentRows = [
+      { capability: "generate_evaluation", model_id: "claude-sonnet-5" },
+    ];
+    await runInference("generate_evaluation", { max_tokens: 10, messages: [] });
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "claude-sonnet-5",
+        thinking: { type: "disabled" },
+      })
+    );
+  });
+
+  it("no row = the ruled map governs; the telemetry row records the override model when one rides", async () => {
+    ok();
+    await runInference("run_target_companies", { max_tokens: 10, messages: [] });
+    expect(mocks.create.mock.calls[0][0].model).toBe("claude-haiku-4-5");
+
+    mocks.create.mockClear();
+    __resetRegistryCache();
+    mocks.assignmentRows = [
+      { capability: "run_target_companies", model_id: "claude-sonnet-5" },
+    ];
+    await runInference("run_target_companies", { max_tokens: 10, messages: [] });
+    expect(mocks.create.mock.calls[0][0].model).toBe("claude-sonnet-5");
+    expect(mocks.insert).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        capability: "run_target_companies",
+        model: "claude-sonnet-5",
+      })
+    );
+  });
+
+  it("a failed registry read falls back to the map and never blocks the call", async () => {
+    ok();
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      mocks.getServiceClient.mockImplementation(() => ({
+        from: () => ({
+          insert: () => Promise.resolve({ error: null }),
+          select: () => Promise.reject(new Error("registry down")),
+        }),
+      }));
+      const response = await runInference("run_target_companies", {
+        max_tokens: 10,
+        messages: [],
+      });
+      expect(response.stop_reason).toBe("end_turn");
+      expect(mocks.create.mock.calls[0][0].model).toBe("claude-haiku-4-5");
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("under MANDATE_EVAL=1 the registry is never consulted — benchmarks are reproducible from the harness alone", async () => {
+    process.env.MANDATE_EVAL = "1";
+    try {
+      ok();
+      mocks.assignmentRows = [
+        { capability: "parse_cv", model_id: "claude-sonnet-5" },
+      ];
+      await runInference("parse_cv", { max_tokens: 10, messages: [] });
+      expect(mocks.create.mock.calls[0][0].model).toBe(
+        CAPABILITY_MODEL.parse_cv
+      );
     } finally {
       delete process.env.MANDATE_EVAL;
     }

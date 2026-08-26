@@ -11,6 +11,7 @@ import {
   IconGroup,
   IconIntelligence,
   IconShield,
+  IconSpark,
 } from "@/components/icons";
 
 type OrgRow = {
@@ -162,6 +163,19 @@ export default async function SettingsPage() {
             <IconIntelligence size={14} />
             Skills Studio
           </Link>
+          {/* The model registry (120) — admin-only like Members, and for
+              the same reason: the route refuses everyone else, and a
+              link that bounces reads as a broken product. */}
+          {can(parseRole(profile.role), "models:write") && (
+            <Link
+              href="/app/settings/models"
+              prefetch={false}
+              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <IconSpark size={14} />
+              Models
+            </Link>
+          )}
         </nav>
       </header>
 

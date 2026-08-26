@@ -10,6 +10,7 @@ import {
   modelForCapability,
   type Capability,
 } from "./model-map";
+import { assignedModelForCapability } from "./registry";
 
 /**
  * The inference seam — every model call in the product flows through
@@ -179,10 +180,10 @@ export function __setEvalOverrides(o: InferenceOverrides | null): void {
   evalOverrides = o;
 }
 
-function resolveOverrides(
+async function resolveOverrides(
   capability: Capability,
   opts?: InferenceOverrides
-): { model: string; extra: Record<string, unknown> } {
+): Promise<{ model: string; extra: Record<string, unknown> }> {
   const wantsOverride = opts?.modelOverride ?? opts?.thinkingOverride;
   if (wantsOverride && !EVAL_MODE()) {
     throw new Error(
@@ -194,10 +195,17 @@ function resolveOverrides(
   // flip word: generate_evaluation = Sonnet 5 thinking-off).
   const mapThinking = CAPABILITY_THINKING[capability];
   if (!EVAL_MODE()) {
-    return {
-      model: modelForCapability(capability),
-      extra: mapThinking ? { thinking: mapThinking } : {},
-    };
+    // Slice 4 (gate 1885da9): a founder assignment in the registry
+    // wins over the map; absence or a failed read falls back. The
+    // thinking rule (gate J.6): the map's thinking config was
+    // benchmarked FOR the map's model — it rides only when the
+    // resolved model IS that model; an override to a different model
+    // sends no thinking param until an eval rules otherwise.
+    const mapModel = modelForCapability(capability);
+    const assigned = await assignedModelForCapability(capability);
+    const model = assigned ?? mapModel;
+    const thinking = model === mapModel ? mapThinking : undefined;
+    return { model, extra: thinking ? { thinking } : {} };
   }
   const model =
     opts?.modelOverride ??
@@ -305,7 +313,7 @@ export async function runInference(
   request: InferenceRequest,
   opts?: { projectId?: string | null } & InferenceOverrides
 ): Promise<Anthropic.Message> {
-  const { model, extra } = resolveOverrides(capability, opts);
+  const { model, extra } = await resolveOverrides(capability, opts);
   const anthropic = getAnthropic();
   const id = randomUUID();
   const started = Date.now();
@@ -359,7 +367,7 @@ export async function runInferenceStream(
   request: InferenceStreamRequest,
   opts?: { projectId?: string | null } & InferenceOverrides
 ): Promise<AsyncIterable<Anthropic.Messages.RawMessageStreamEvent>> {
-  const { model, extra } = resolveOverrides(capability, opts);
+  const { model, extra } = await resolveOverrides(capability, opts);
   const anthropic = getAnthropic();
   const id = randomUUID();
   const started = Date.now();

@@ -79,6 +79,12 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { pattern: "/app/settings/skills/:skillId", capability: "skills:write" },
   { pattern: "/app/settings/skills", capability: "org:read" },
 
+  // --- Model registry (120) -----------------------------------------------
+  // The whole surface is admin territory, list included — unlike the
+  // skills list, the registry's RLS is admin-only SELECT, so a
+  // non-admin render would be an empty page pretending to be data.
+  { pattern: "/app/settings/models", capability: "models:write", prefix: true },
+
   // --- Mandate creation and editing ---------------------------------------
   { pattern: "/app/projects/new", capability: "mandates:write" },
   { pattern: "/app/projects/:id/onboarding", capability: "mandates:write", prefix: true },
