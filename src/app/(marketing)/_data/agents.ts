@@ -64,12 +64,14 @@ export const AGENTS: readonly Agent[] = [
     name: "Company Intelligence",
     phase: "define",
     output: "Web-grounded picture of the estate, org shape and regulatory environment",
+    addOn: true,
   },
   {
     kind: "culture",
     name: "Culture",
     phase: "define",
     output: "How this company actually decides, and who survives it",
+    addOn: true,
   },
   {
     kind: "rolespec",
@@ -97,6 +99,7 @@ export const AGENTS: readonly Agent[] = [
     name: "Client Psychology",
     phase: "calibrate",
     output: "What this client says they want, and what they have actually hired",
+    addOn: true,
   },
   {
     kind: "boolean_search",
