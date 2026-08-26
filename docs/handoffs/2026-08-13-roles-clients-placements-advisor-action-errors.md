@@ -11646,3 +11646,50 @@ stays dark until it lands.
 Numbers: next migration 127; next § 162; next drive 113; vitest 1096;
 CHECK 93; door 26; allowlist 29; anon roster 12; durable baseline
 gains invoice_deliveries 0.
+
+## 162. §161 CONFIRMED — SLICE 2 CLOSES — THE INVOICING + PRINT PROGRAMME IS COMPLETE — 2026-08-26
+
+The founder's written word ("I confirm §161") lands against §161 as
+drafted. SLICE 2 IS CLOSED and **THE INVOICING + PRINT PROGRAMME IS
+COMPLETE**: all three slices of gate 5f2820d are law.
+
+- **§159 — slice 1**: migrations 123 + 124, the invoice domain with its
+  one-way door, the template studio at `org:manage`, the builder at
+  `fees:read`, the §133 one-renderer print path, the mailto pointer,
+  and the trail at `fees` visibility.
+- **§160 — slice 3**: the print pass across the six ruled documents,
+  one shared print control, and §133 extended with a print scope so a
+  panel on a busy workspace prints as itself. Carried with it the embed
+  sweep (which found the OKR financial-progress defect) and migration
+  125's completion of the grants pass.
+- **§162 — slice 2**: migration 126, `invoice_deliveries`, the separate
+  client send ladder, the frozen-row email, and the bounce resolver
+  wired dark. Drive 112 sent a real invoice through Resend.
+
+The five send decisions of the slice-2 gate are ruled as built: the
+from-identity on the template rather than in env; a separate ladder
+where the candidate volume caps deliberately do not cross over but
+suppression does; the email as a second medium for the frozen row
+rather than a second layout engine; every send kept; and the bounce
+path wired and honestly dark until its secret lands.
+
+**What this programme deliberately did NOT do, still standing:**
+payments and Stripe (parked LAST by standing order, untouched), credit
+notes and partial invoicing, FX conversion on the invoice, client-portal
+invoice visibility, agent involvement of any kind, and editing an
+issued invoice — void and reissue remains the only path.
+
+**Founder-owned residue from the programme, surfaced and not nagged:**
+a sending domain of the agency's own needs verifying with Resend if
+invoices should not come from `getmandate.io`, and
+`RESEND_WEBHOOK_SECRET` is still unprovisioned, so delivery feedback
+stays dark by design rather than by accident.
+
+With this closed, every agent-runnable line of the pre-launch checklist
+is closed. What remains on it is founder-owned (real-CV testing, the
+Turnstile keys, the service-role rotation, leaked-password protection,
+the D4 monitor) plus Stripe, which is parked last.
+
+Numbers at close: next migration 127; next § 163; next drive 113;
+vitest 1096; CHECK 93; door 26; allowlist 29; anon roster 12; durable
+baseline holds its five invoice zeros.
