@@ -11831,3 +11831,28 @@ ruled and waiting: issued and void only, lines cross, the existing
 kind. It needs migration 128 and its own drive.
 
 DRAFTED — awaiting the founder's word. No completion declared.
+
+## 164. §163 CONFIRMED — CLIENT PORTAL SLICE 1 IS LAW — 2026-08-26
+
+The founder's written word ("I confirm §163") lands against §163 as
+drafted. **Slice 1 of the client portal programme is CLOSED.** The
+client interview reaches the signed-in door; the §144/§145
+`portal_get_mandate` residue, open since 25 August, is closed and
+struck from the founder-owned list.
+
+What is law: migration 127; `feedback.answers_json` and the partial
+one-answer-per-person index; `portal_get_mandate` carrying the
+approved set and the caller's own answer;
+`record_portal_client_interview_answered` as the session counterpart
+of 117's token entry point; the single `interviewAnswerDoor` prop
+across all three doors; and `portal-doors.test.ts` as a standing
+structural guard. Drive 113's fence table is law with it: an active
+external in, a suspended external / a platform agent / the founder
+all refused at every call.
+
+Numbers unchanged at close: next migration 128; next § 165; next
+drive 114; vitest 1105; CHECK 93; door 26; allowlist 29; anon roster
+12.
+
+Slice 2 (invoice visibility) begins here on the gate's already-ruled
+D4(b) / D5 / D6(a).
