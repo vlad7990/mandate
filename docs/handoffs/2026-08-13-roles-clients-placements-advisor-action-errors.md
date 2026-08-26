@@ -11245,3 +11245,38 @@ benchmark on founder CVs (which also arms its pair), judge debts,
 Q4 deferred. Numbers: next migration 123; next § 157; next drive
 110; vitest 1060; CHECK 89 / door 22 / allowlist 29 / roster 12;
 durable baseline unchanged.
+
+
+## 157. §155 AND §156 CONFIRMED — CALL LOGGING AND ESCALATION PAIRS CLOSE — 2026-08-26
+
+The founder's written word ("I CONFIRM BOTH") lands against §155
+and §156 as drafted — one word, one entry.
+
+**§155 is law.** The call-logging cheap slice closes: migration 122
+(call-audio bucket on the cvs precedent, consent-CHECKed audio
+columns on both note tables, no trail change), signed-URL playback,
+create-then-attach with deletion hygiene through the storage API,
+the Deep Infra transcribe seam honestly absent without its key,
+bodySizeLimit 50mb (which also released the latent CV ceiling).
+Drive 108 green; vitest 1054 at its close. Founder residue stands
+as surfaced: provision Deep Infra to light transcripts (then one
+live endpoint-shape verification); Twilio parked WITH its
+needs-checklist in memory.
+
+**§156 is law.** Escalation pairs close and THE ROUTER THREAD IS
+FULLY BUILT — programme (§154) + the two ruled hops:
+generate_evaluation sonnet-5→opus-5 live on the deterministic
+schema signal, parse_cv haiku-4-5→sonnet-4-6 DORMANT behind the
+from-guard until the founder's CV benchmark lands the Haiku flip.
+One shared call body, escalated_from recorded, refusal paths
+byte-identical to pre-slice. Drive 109 green (null result = the
+pass). Router residue unchanged: parse_cv benchmark on founder CVs
+arms the dormant pair; the first real fired hop announces itself
+in inference_runs; judge debts; Q4 cross-provider spike deferred.
+
+What gates next on its own word: the INVOICING + PRINT programme
+(gate 5f2820d), slice by slice.
+
+Numbers at close: next migration 123; next § 158; next drive 110;
+vitest 1060; CHECK 89; door 22; allowlist 29; anon roster 12;
+durable baseline unchanged.
