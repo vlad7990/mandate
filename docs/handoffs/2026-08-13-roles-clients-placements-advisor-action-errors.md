@@ -12166,3 +12166,47 @@ CHECK 93; door 26; allowlist 29; anon roster 12; durable baseline
 unchanged.
 
 DRAFTED — awaiting the founder's word. No completion declared.
+
+## 168. §167 CONFIRMED — THE MARKETING CLS DEFECT IS CLOSED — 2026-08-26
+
+The founder's written word ("I confirm §167") lands against §167 as
+drafted, including the post-deploy sweep appended to it. **The CLS
+cliff below 412px is closed and the perf slice is law.**
+
+What is law: `display: "optional"` on the marketing faces;
+`preload: false` on the root layout's three, which the marketing
+routes never render; CLS 0.116 → 0.0086 at 390px and 0.120 → 0.0231 at
+360px, with fonts 236 KB / 6 files → 166 KB / 4 and Lighthouse mobile
+79 → 82; the six scoped-out marketing routes measured at CLS 0.0000;
+and `scripts/perf-probe.mjs` as a standing harness, with
+`playwright-core` as its devDependency.
+
+Three findings carry forward as standing law:
+
+1. **Lighthouse cannot see this class of defect.** Pinned to 390px
+   against the broken build it still reported 0.007, because Lantern
+   simulates the slow network over a fast trace and the font never
+   actually arrives late. Width *and* applied throttling are both
+   load-bearing in the probe. A Lighthouse score is not evidence of
+   layout stability.
+2. **A green build is not evidence the CSS shipped.** `npm run build`
+   reported success while emitting a 21-byte CSS chunk with the whole
+   marketing stylesheet missing, from stale `.next` state. `rm -rf
+   .next` first; then grep the served chunk. The local sibling of
+   §160's Vercel cached-CSS lesson.
+3. **Measure before drafting, and measure the fix.** The residue this
+   slice was opened on (§141's "mobile LCP 3.5s") did not reproduce at
+   all, and the first ruled approach was built and measured at 0.118
+   against a 0.116 baseline — nothing. Both were caught by measuring
+   rather than reasoning, and both changed what got built.
+
+**Every agent-runnable line of the pre-launch checklist is closed
+again**, now including the Lighthouse/mobile audit line that §141 left
+with a residual. What remains is founder-owned (real-CV testing, the
+Turnstile keys, the service-role rotation, leaked-password protection,
+the D4 monitor, the Deep Infra and Resend items) plus Stripe, parked
+last.
+
+Numbers at close: next migration 129; next § 169; next drive 116;
+vitest 1105; CHECK 93; door 26; allowlist 29; anon roster 12; durable
+baseline unchanged.
