@@ -10755,3 +10755,64 @@ direction.
 "Continue" proceeds under R4: slice 2 (prompt caching, Part J) gates
 next — Phase-0-verified gate DRAFT first, build only on the
 founder's written word against it. Slices 3 and 4 wait their turns.
+
+## 148. LLM ROUTER SLICE 2 BUILT — copilot conversation caching — 2026-08-25 — DRAFTED
+
+The founder's word ("go") landed against the slice-2 gate (0788898)
+and the D-ladder ran. DRAFTED — no completion declared; §149
+confirms or corrects.
+
+**The gate's Phase-0 correction held.** Slice 2 caches ONE
+capability — the copilot conversation — because measurement rewrote
+Part J: every candidate base prompt sits under Sonnet 4.6's
+1024-token cacheable minimum (largest ≈991 est.), and the eight
+non-copilot candidates are single-shot against the 5-minute TTL.
+They stay deferred WITH their numbers until slice 3's eval harness
+creates repeated identical runs.
+
+**Built (commit 69762dc, deployed mandate-3fzuektvf).** Migration
+119 adds cache_creation_input_tokens to inference_runs (writes are
+the proof an entry exists, and bill 1.25×) — no policy/grant/roster
+change. model-map gains CACHED_CONVERSATION_CAPABILITIES = {copilot}.
+The seam owns the mechanism (Part J's own rule): exported pure
+stampConversationCache() converts the LAST user message's tail to a
+cache_control:{ephemeral} block (string content → its equivalent
+text block, wire-identical; assistant-tailed/empty lists untouched;
+only block kinds that legally carry cache_control are stamped —
+thinking blocks refuse). Unflagged capabilities send byte-identical
+messages (unit-tested via reference equality). The candidates
+snapshot query gained ORDER BY id (copilot-context.ts) — an
+unordered array was a silent prefix invalidator; scores/feedback/
+shortlist were already ordered. vitest 1010 → 1018 (8 new: flag
+roster, string→block stamp, last-block-only, assistant-tail no-op,
+no caller mutation, cache-write capture, absent-usage null, flagged
+stream sends stamped messages).
+
+**Drive 105 GREEN (live, prod) — the cache proven by its own
+telemetry.** Scratch principal (drive105), autofill trap
+overwritten again, two-turn Mandy conversation on Head of IT
+Operations, both answers streamed normally. The rows told the whole
+story: turn 1 = input 3 / cached 0 / **cache_creation 8,032** /
+out 134 / ok; turn 2 = input 3 / **cached 8,032** /
+cache_creation 146 / out 248 / ok — turn 2 read the ENTIRE turn-1
+prefix at ~0.1×, ~98% of its input served from cache, writing only
+the 146 new tokens. Screenshot router-105-cached-conversation.png.
+NEW TEARDOWN LESSON: clearCookies does NOT clear localStorage — the
+copilot panel's client-side history carried drive 104's conversation
+into drive 105's (harmless here, but sweep localStorage.clear() +
+clearCookies from now on). Teardown by value (5 events: 3 member_*
+from the §146-known promotion trap + 2 copilot_answered →
+inference_runs → rate_limit whole → public.users → auth.identities
+→ auth.users → localStorage + cookies); fresh-statement baseline
+EXACT first pass: 26/26/25 agents/77 events/orgs 1/projects 2/
+clients 2/candidates 1/skills 5/5/job_specs 1/network 1/
+ops_heartbeats 1/interview_plans 0/client_interviews 0/
+staff_invitations 0/rate_limit 0/inference_runs 0.
+
+THE DURABLE BASELINE IS UNCHANGED — inference_runs stays a durable
+0 and gains the cache_creation_input_tokens column. Slices 3
+(evals + tier flips + schema_failed wiring + the eight deferred
+caching candidates) and 4 (Part R + providers) gate separately
+(R4). Numbers: next migration 120; next § 149; next drive 106;
+vitest 1018; activity CHECK 87; intent door 20; allowlist 29
+(ruled); anon roster 12 named grants (ruled).
