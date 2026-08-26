@@ -177,6 +177,15 @@ export const ACTIVITY_EVENT_TYPES = [
   // names, never prompt text.
   "model_provider_added",
   "model_assignment_changed",
+
+  // 123: the invoice lifecycle's three human acts. Fee-writer-gated
+  // inside the RPC (can_read_fees AND can_write_mandates — 050's
+  // split, both halves) and written at 'fees' visibility, which is
+  // the only reason amounts may ride the detail: the rows are
+  // invisible outside the money trio.
+  "invoice_created",
+  "invoice_issued",
+  "invoice_voided",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -245,6 +254,11 @@ export const APP_RECORDABLE_EVENTS = [
   // skill family's gate extended.
   "model_provider_added",
   "model_assignment_changed",
+  // 123 — the invoice lifecycle: fee-writer-gated inside the RPC and
+  // written at 'fees' visibility (the one intent family not at 'org').
+  "invoice_created",
+  "invoice_issued",
+  "invoice_voided",
 ] as const;
 
 export type AppRecordableEvent = (typeof APP_RECORDABLE_EVENTS)[number];
@@ -398,6 +412,10 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   // it files with the searches, the skills precedent.
   model_provider_added: "mandates",
   model_assignment_changed: "mandates",
+
+  invoice_created: "money",
+  invoice_issued: "money",
+  invoice_voided: "money",
 };
 
 /**

@@ -70,6 +70,14 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { pattern: "/app/settings/waitlist", capability: "org:manage", prefix: true },
   { pattern: "/app/settings/members", capability: "org:manage", prefix: true },
 
+  // --- Invoicing (123) ----------------------------------------------------
+  // Template authoring is admin territory like Members (gate D.1 — the
+  // template carries the org's billing identity). The builder is the
+  // money trio's surface: `fees:read` — a route rule behind auth, NOT a
+  // proxy-allowlist entry.
+  { pattern: "/app/settings/invoice-templates", capability: "org:manage", prefix: true },
+  { pattern: "/app/placements/invoices", capability: "fees:read", prefix: true },
+
   // --- Skills studio ------------------------------------------------------
   // A skill rewrites how every candidate in the org is scored, so authoring
   // one is an admin act. Reading the list is not — a recruiter needs to know

@@ -657,6 +657,44 @@ export const SAMPLE_REVENUE = {
   byQuarter: [48_000, 132_000, 24_000, 64_000],
 } as const;
 
+export type SampleInvoice = {
+  id: string;
+  number: string | null;
+  client: string;
+  status: "DRAFT" | "ISSUED" | "VOID";
+  total: number;
+  issueDate: string | null;
+  dueDate: string | null;
+};
+
+/**
+ * Two invoices against the placements above: the Demirci placement's
+ * billed instalments issued as a document, and a draft still being
+ * assembled. Same consistency rule as the placement rows — the figures
+ * agree with `SAMPLE_PLACEMENTS`, an issued invoice equals what that
+ * placement shows as billed.
+ */
+export const SAMPLE_INVOICES: readonly SampleInvoice[] = [
+  {
+    id: "sample-invoice-issued",
+    number: "INV-2026-0007",
+    client: "Larkspur Health",
+    status: "ISSUED",
+    total: 64_000,
+    issueDate: "2026-07-08",
+    dueDate: "2026-08-07",
+  },
+  {
+    id: "sample-invoice-draft",
+    number: null,
+    client: "Northvale Capital",
+    status: "DRAFT",
+    total: 30_000,
+    issueDate: null,
+    dueDate: null,
+  },
+];
+
 /* ────────────────────────────────────────────────────────────────────
    Skills studio
    ──────────────────────────────────────────────────────────────────── */

@@ -399,6 +399,12 @@ describe("the vocabulary", () => {
       // precedent (the registry changes what runs every search).
       "model_provider_added",
       "model_assignment_changed",
+      // 123: the invoice lifecycle — fee-writer-gated inside the RPC
+      // (can_read_fees AND can_write_mandates) and written at 'fees'
+      // visibility, the one intent family not at 'org'. Money group.
+      "invoice_created",
+      "invoice_issued",
+      "invoice_voided",
     ]);
     for (const type of APP_RECORDABLE_EVENTS) {
       const expected =
@@ -411,7 +417,9 @@ describe("the vocabulary", () => {
         type.startsWith("client_interview_") ||
         type.startsWith("model_")
           ? "mandates"
-          : "client";
+          : type.startsWith("invoice_")
+            ? "money"
+            : "client";
       expect(ACTIVITY_GROUP_OF[type]).toBe(expected);
     }
   });
@@ -423,11 +431,11 @@ describe("the vocabulary", () => {
    * 107's rebuild; 116 added the three interview-plan human acts = 83;
    * 117 adds the three client-interview human acts + the sessionless
    * answered event = 87; 120 adds the model registry's two admin
-   * acts = 89.
+   * acts = 89; 123 adds the invoice lifecycle's three human acts = 92.
    */
-  it("mirrors the live CHECK's eighty-nine event types", () => {
-    expect(ACTIVITY_EVENT_TYPES).toHaveLength(89);
-    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(89);
+  it("mirrors the live CHECK's ninety-two event types", () => {
+    expect(ACTIVITY_EVENT_TYPES).toHaveLength(92);
+    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(92);
   });
 
   it("describes the OKR acts with titles and outcomes, never amounts", () => {
@@ -463,6 +471,26 @@ describe("the vocabulary", () => {
     expect(describeActivity(event("member_org_changed", { member: "Rae", from: "Org A", to: "Org B" }))).toBe(
       "Moved Rae from Org A to Org B"
     );
+  });
+
+  it("describes the invoice lifecycle, amounts riding the fees-tier rows", () => {
+    expect(describeActivity(event("invoice_created", { client: "Larkspur Health" }))).toBe(
+      "Started an invoice draft for Larkspur Health"
+    );
+    expect(describeActivity(event("invoice_created", {}))).toBe("Started an invoice draft");
+    expect(
+      describeActivity(
+        event("invoice_issued", {
+          invoice_number: "INV-2026-0001",
+          client: "Larkspur Health",
+          total: 64000,
+          currency: "USD",
+        })
+      )
+    ).toBe("Issued INV-2026-0001 to Larkspur Health for US$64,000");
+    expect(
+      describeActivity(event("invoice_voided", { invoice_number: "INV-2026-0001" }))
+    ).toBe("Voided INV-2026-0001 — its fee lines are billable again");
   });
 
   it("narrows untrusted values and rejects anything else", () => {

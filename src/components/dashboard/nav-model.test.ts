@@ -57,6 +57,14 @@ describe("isNavItemActive", () => {
     ]);
   });
 
+  // 123: Placements stays an exact match so the Invoices child owns its
+  // own tree — the Candidates / Pool search arrangement again.
+  it("distinguishes Placements from its Invoices child", () => {
+    expect(activeLabels("/app/placements")).toEqual(["Placements"]);
+    expect(activeLabels("/app/placements/invoices")).toEqual(["Invoices"]);
+    expect(activeLabels("/app/placements/invoices/abc")).toEqual(["Invoices"]);
+  });
+
   // Skills studio lives under /app/settings/skills, so a naive prefix
   // rule on Settings would light both entries at once.
   it("does not light Settings and Skills studio together", () => {

@@ -312,12 +312,13 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   PRINT — the Executive Intelligence report.
+   PRINT — the documents that leave the building: the Executive
+   Intelligence report, and since 123 the invoice.
 
-   The report is the one screen in this product that leaves the
-   building, and the comp's rule is that it prints as itself: the
-   document column IS the print layout, so exporting changes the paper
-   and nothing else.
+   The rule is that a document prints as itself: the document column
+   IS the print layout, so exporting changes the paper and nothing
+   else. Any page that adopts `.m-report-doc` joins the same
+   contract — one renderer, ink on paper.
 
    Two things have to be true for that. The app shell is chrome, not
    document — it is hidden by `print:hidden` in the dashboard layout.

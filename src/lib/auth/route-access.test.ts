@@ -80,6 +80,20 @@ describe("capabilityForPath", () => {
     expect(capabilityForPath("/app/settings/skills/abc")).toBe("skills:write");
   });
 
+  // 123: the template studio is admin territory (it carries the org's
+  // billing identity); the builder is the money trio's surface. Both
+  // are route rules behind auth, NOT proxy-allowlist entries — and the
+  // parent /app/placements stays readable by every active role.
+  it("puts the invoice surfaces behind their capabilities", () => {
+    expect(capabilityForPath("/app/settings/invoice-templates")).toBe("org:manage");
+    expect(capabilityForPath("/app/settings/invoice-templates/new")).toBe("org:manage");
+    expect(capabilityForPath("/app/settings/invoice-templates/abc")).toBe("org:manage");
+    expect(capabilityForPath("/app/placements/invoices")).toBe("fees:read");
+    expect(capabilityForPath("/app/placements/invoices/new")).toBe("fees:read");
+    expect(capabilityForPath("/app/placements/invoices/abc")).toBe("fees:read");
+    expect(capabilityForPath("/app/placements")).toBe(DEFAULT_CAPABILITY);
+  });
+
   it("puts org administration behind org:manage", () => {
     expect(capabilityForPath("/app/settings/waitlist")).toBe("org:manage");
     expect(capabilityForPath("/app/settings/members")).toBe("org:manage");

@@ -122,6 +122,24 @@ export const NAV: readonly NavItem[] = [
     label: "Placements",
     icon: "placements",
     group: "workspace",
+    // Exact match, not a prefix: the Invoices child below owns
+    // /app/placements/invoices/*, and a prefix here would light both —
+    // the same arrangement Candidates / Pool search already rely on.
+  },
+  /**
+   * Gated on `fees:read`, unlike its parent: the placements page shows
+   * a researcher their placements and says the money is restricted,
+   * but the invoice builder is ONLY money — offering it to a role the
+   * route guard will bounce would read as broken, not restricted.
+   */
+  {
+    href: "/app/placements/invoices",
+    label: "Invoices",
+    icon: "placements",
+    group: "workspace",
+    child: true,
+    capability: "fees:read",
+    matchPrefix: true,
   },
 
   /**

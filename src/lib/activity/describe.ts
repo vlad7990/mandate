@@ -205,6 +205,25 @@ export function describeActivity(event: ActivityEventRow): string {
     case "fee_terms_deleted":
       return `Removed ${str(d, "scope") === "client" ? "client" : "mandate"} fee terms`;
 
+    // The invoice rows are fees-tier (123), which is the only reason an
+    // amount may appear in these sentences.
+    case "invoice_created": {
+      const client = str(d, "client");
+      return `Started an invoice draft${client ? ` for ${client}` : ""}`;
+    }
+
+    case "invoice_issued": {
+      const number = str(d, "invoice_number") ?? "an invoice";
+      const client = str(d, "client");
+      const total = money(d, "total");
+      return `Issued ${number}${client ? ` to ${client}` : ""}${total ? ` for ${total}` : ""}`;
+    }
+
+    case "invoice_voided": {
+      const number = str(d, "invoice_number") ?? "an invoice";
+      return `Voided ${number} — its fee lines are billable again`;
+    }
+
     case "member_role_changed": {
       const who = str(d, "member") ?? "a member";
       return `Changed ${who} from ${role(d.from)} to ${role(d.to)}`;
@@ -744,5 +763,5 @@ export function describeActor(event: ActivityEventRow): string {
  * which is useful precisely because not everyone is seeing them.
  */
 export function isMoneyEvent(type: ActivityEventType): boolean {
-  return type.startsWith("fee_");
+  return type.startsWith("fee_") || type.startsWith("invoice_");
 }
