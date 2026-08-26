@@ -12210,3 +12210,80 @@ last.
 Numbers at close: next migration 129; next § 169; next drive 116;
 vitest 1105; CHECK 93; door 26; allowlist 29; anon roster 12; durable
 baseline unchanged.
+
+## 169. THE HOMEPAGE SAYS WHAT THE PRODUCT DOES — DRAFTED 2026-08-26
+
+Gate `docs/superpowers/specs/2026-08-26-homepage-truth-gate.md` (commit
+bfb2e93), founder-confirmed on all five decisions. Opened by the
+founder's own question — whether the site reflects what has been built —
+which it did not, in two measurable ways.
+
+**The roster was wrong by NAME, not merely stale.**
+`_data/agents.ts` listed SEVENTEEN while `src/lib/agents/session.ts`
+signs in TWENTY-FIVE. Five marketed agents were not platform
+principals at all (Company Research, Onboarding, Executive Role
+Architect, Interview Architect, Candidate Review); twelve live ones had
+never been mentioned (Candidate Engagement, Candidate Relationship,
+Candidate Research, Candidate Search, Company Intelligence, Culture,
+Desk Digest, Evaluation, Executive Intelligence, Interviewer, Outreach
+Strategy, Pre-Screen). Because `AGENT_COUNT` derives from that array,
+the hero rail, the meta description, the OG card and `/platform`'s
+phase map were mutually consistent and all wrong.
+
+**The lesson, which is the reusable half.** `_constants.ts` was written
+to end exactly this failure and DID — inside marketing. Deriving every
+count from one array closed the drift between marketing surfaces and
+left the boundary between marketing and the platform unwatched, so the
+same class of error came back one level up. **A single source of truth
+only ends drift below it.** Ask what watches the seam above.
+
+**As built.** The roster is the real twenty-five, each entry carrying
+the `kind` of the platform agent it describes. Names and one-line
+outputs stay marketing's own — a client reads "Pre-Screen", not
+`prescreen` — but the SET is no longer marketing's to drift (D1(b)).
+`agent-roster.test.ts` joins the two and fails when the platform gains
+or loses an agent the marketing file does not account for, with a
+`NOT_MARKETED` escape so "we chose not to" is recorded as distinct from
+"we forgot". Mutation-tested three ways — drop an agent, advertise a
+phantom, describe one twice — and it also asserts the regex still
+matches a non-trivial roster, so a shape change in `session.ts` cannot
+make the guard silently vacuous. `ADDON_AGENT_COUNT` is derived too:
+`/platform` had been saying "Three of the 17" as a typed word above a
+list whose own flags disagreed.
+
+**The arc (D3/D4).** One new section — `06 / After the slate` — saying
+the three things the homepage had never said: the client reviews the
+slate in their own portal, the search interviews the client back to
+close the calibration gaps the brief left, and the placement bills
+itself. Inserting it renumbered 06–10 to 07–11, from `_constants.ts`
+and never retyped, which is what that file is for. The PIPELINE row is
+EXTENDED rather than duplicated (…Recalibrate → Client portal →
+Placement → Invoice), because the claim is one continuous system and
+not a search tool with bolt-ons. The hero lede now says so above the
+fold. The `<title>` had claimed "Operating System" for months; the body
+has caught up.
+
+**Drive 116 — GREEN, live in prod.** Deployed mandate-qbx5sx5nd with
+`--force`. Homepage, `/platform`, the meta description and the OG card
+all read 25 and agree; the add-on sentence renders "2 of the 25" from
+the data; `06 / After the slate` and the extended pipeline row are
+live. Perf probe green at all four widths — CLS 0.0086 at 390, 0.0216
+at 360, fonts unchanged at 166 KB / 4 files, `cssOk` yes everywhere —
+so §168 is not regressed by the new section. No horizontal overflow at
+390 or 1440; eyebrows read 01 → 11 in order.
+
+**No teardown** — frontend only, no data touched.
+
+**One open question for the founder, surfaced not guessed.** The
+previous roster marked three agents as Executive Intelligence add-ons;
+all three were phantom names. I have marked the two I can justify —
+Executive Intelligence and Triangulation — and left Company
+Intelligence, Culture and Psychology as core, because I do not know
+whether they are add-on-gated in the product. If they are, they need
+`addOn: true` and the derived count corrects itself.
+
+vitest 1105 → 1110. Numbers: next migration 129; next § 170; next drive
+117; CHECK 93; door 26; allowlist 29; anon roster 12; durable baseline
+unchanged.
+
+DRAFTED — awaiting the founder's word. No completion declared.
