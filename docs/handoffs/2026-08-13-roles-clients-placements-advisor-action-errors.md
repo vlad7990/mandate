@@ -12287,3 +12287,63 @@ vitest 1105 → 1110. Numbers: next migration 129; next § 170; next drive
 unchanged.
 
 DRAFTED — awaiting the founder's word. No completion declared.
+
+## 170. §169 CONFIRMED — THE SITE AND THE PRODUCT AGREE AGAIN — 2026-08-26
+
+The founder's written word ("I confirm §169") lands against §169 as
+drafted. **The homepage now says what the product does, and a guard
+keeps it that way.**
+
+What is law: the marketed roster is the real twenty-five, each entry
+joined to its platform `kind`; `agent-roster.test.ts` fails the build
+when the platform gains or loses an agent the marketing file does not
+account for, with `NOT_MARKETED` recording a deliberate omission as
+distinct from a forgotten one; `ADDON_AGENT_COUNT` is derived rather
+than typed; section `06 / After the slate` and the extended PIPELINE
+row carry the story past the shortlist to the client portal, the
+placement and the invoice; and the hero lede says so above the fold.
+Drive 116 is law with it — every count on the homepage, `/platform`,
+the meta description and the OG card reads 25 and agrees, and the perf
+probe stayed green so §168 is intact.
+
+**The standing lesson, and the reason this entry matters more than its
+diff.** `_constants.ts` was written to end exactly this class of error
+and DID — inside marketing. Deriving every count from one array closed
+the drift between marketing surfaces, and left the seam BETWEEN
+marketing and the platform unwatched. The same failure returned one
+level up, and survived eight agent additions.
+
+> **A single source of truth only ends drift below it. Whenever one is
+> introduced, ask what watches the seam above it.**
+
+That question is now answered for this seam by a test. It is not
+answered for every seam in the product, and this is the second time in
+two days that a guard-shaped hole has been the actual defect (the other
+being §165's print scope, invisible to a source-text guard because it
+used a constant).
+
+**Founder-owned residue from this slice, surfaced and not to be
+nagged:** whether Company Intelligence, Culture and Psychology are
+gated behind the Executive Intelligence add-on. Only Executive
+Intelligence and Triangulation are marked, so `/platform` currently
+tells buyers "2 of the 25". If those three are add-on-only the sentence
+understates what the add-on buys, and it is a pricing claim. Marking
+them `addOn: true` corrects the derived count with no other change.
+
+**A judgment recorded, not a task.** Asked whether the expansion was
+needed, the honest answer is that the CORRECTION was non-negotiable and
+the EXPANSION was defensible but not compelling: agent count is an
+implementation detail that works only because it is paired with "one
+accountable human". The surfaces deliberately left off the homepage
+(call logging, OKRs, the model registry, skills) should stay off. The
+real gap is not capability but PROOF and FIT — the homepage carries no
+case study, customer, outcome number, named buyer, switching story or
+guarantee, and `/solutions` names the buyer where the homepage does
+not. That cannot be closed with invented evidence while there are no
+clients; what can be leaned on is what is genuinely real — the live
+simulator and the guardrails section — plus naming the buyer. **A
+positioning slice, needing its own gate. Not started.**
+
+Numbers at close: next migration 129; next § 171; next drive 117;
+vitest 1110; CHECK 93; door 26; allowlist 29; anon roster 12; durable
+baseline unchanged.
