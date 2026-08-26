@@ -10625,3 +10625,26 @@ Interviewer direction: candidate prep pack (D3, skipped by the
 founder's word) and the simulator (D5, LAST) — each still gates
 separately (R4). Named residue above: /portal rendering of the
 question set.
+
+## 145. §144 CONFIRMED — the client-interview slice CLOSES — 2026-08-25
+
+The founder's written word ("confirmed — §144 closes") lands against
+§144 as drafted. The client-interview slice is CLOSED: migration 117,
+the gap-fed pipeline, the two doors, the harness, drive 103 and the
+unchanged durable baseline are law as recorded. Nothing was built on
+this confirmation — it closes the record.
+
+What remains of the Interviewer programme, all still gated
+separately (R4): the candidate prep pack (D3 — skipped by the
+founder's word, direction recorded), the Interview Simulator (D5 —
+LAST, closed until its own gate after the programme's other slices),
+and the named residue: rendering the approved question set on the
+signed-in /portal door needs a one-line ruling to widen
+portal_get_mandate's payload (068's confirmed machinery — not
+touched without a word). Founder-only items stand unchanged (§128
+testing half, the surfaced-once list, D4 monitor; Stripe last).
+
+Numbers at close: next migration 118; next § 146; next drive 104;
+vitest 996; activity CHECK 87; intent door 20; agent allowlist 29
+(ruled); anon roster 12 (ruled); durable baseline 26 users / 25
+agents / 77 events, client_interviews 0 in the counted set.
