@@ -30,6 +30,7 @@ import {
 } from "./portal-people-panel";
 import { isSampleId } from "@/lib/sample";
 import { SampleClientDetail } from "@/components/sample/sample-client-detail";
+import { transcriptionAvailable } from "@/lib/calls/transcribe";
 
 /**
  * The client record: who they are, what we know about them, and everything
@@ -125,6 +126,20 @@ export default async function ClientDetailPage({
   const searchRows = (searches ?? []) as SearchRow[];
   const contactRows = (contacts ?? []) as ClientContactRow[];
   const noteRows = (notes ?? []) as ClientNoteRow[];
+
+  // Signed playback URLs for call recordings (122) — minted per view
+  // under the session's own storage read, one hour, private bucket.
+  const noteAudioUrls: Record<string, string> = {};
+  await Promise.all(
+    noteRows
+      .filter((n) => n.audio_path)
+      .map(async (n) => {
+        const { data } = await supabase.storage
+          .from("call-audio")
+          .createSignedUrl(n.audio_path as string, 3600);
+        if (data?.signedUrl) noteAudioUrls[n.id] = data.signedUrl;
+      })
+  );
 
   // The commercial agreement. RLS refuses the row without `fees:read`, so
   // a researcher gets null and the section is simply absent — there is no
@@ -335,6 +350,8 @@ export default async function ClientDetailPage({
         contacts={contactRows}
         canWrite={canWriteClient}
         canWriteCommercial={seesFees}
+        audioUrls={noteAudioUrls}
+        transcriptionEnabled={transcriptionAvailable()}
       />
 
       <section className="space-y-3">

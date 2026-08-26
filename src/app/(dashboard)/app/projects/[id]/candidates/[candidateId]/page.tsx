@@ -93,6 +93,7 @@ import {
   type InterviewPlanRow,
 } from "./interview-plan-panel";
 import { computeEvidenceCoverage } from "@/lib/candidates/evidence-coverage";
+import { transcriptionAvailable } from "@/lib/calls/transcribe";
 
 type ProjectRow = {
   id: string;
@@ -353,7 +354,7 @@ export default async function CandidateProfilePage({
   const { data: rawNotes } = await supabase
     .from("candidate_notes")
     .select(
-      "id, candidate_id, note_type, content, is_pinned, call_duration_minutes, created_by, created_at, updated_at"
+      "id, candidate_id, note_type, content, is_pinned, call_duration_minutes, audio_path, transcript, transcript_error, created_by, created_at, updated_at"
     )
     .eq("candidate_id", candidate.id)
     .order("is_pinned", { ascending: false })
@@ -366,11 +367,28 @@ export default async function CandidateProfilePage({
     content: string;
     is_pinned: boolean;
     call_duration_minutes: number | null;
+    audio_path: string | null;
+    transcript: string | null;
+    transcript_error: string | null;
     created_by: string | null;
     created_at: string;
     updated_at: string;
   };
   const noteRows = (rawNotes ?? []) as RawNote[];
+
+  // Signed playback URLs for call recordings (122) — minted per view
+  // under the session's own storage read, one hour, private bucket.
+  const audioUrlByNote = new Map<string, string>();
+  await Promise.all(
+    noteRows
+      .filter((n) => n.audio_path)
+      .map(async (n) => {
+        const { data } = await supabase.storage
+          .from("call-audio")
+          .createSignedUrl(n.audio_path as string, 3600);
+        if (data?.signedUrl) audioUrlByNote.set(n.id, data.signedUrl);
+      })
+  );
 
   // Stitch a display name onto each note. We resolve in one query keyed
   // by created_by so a recruiter's name shows up next to their note.
@@ -397,6 +415,7 @@ export default async function CandidateProfilePage({
     ...n,
     note_type: n.note_type as CandidateNote["note_type"],
     created_by_name: n.created_by ? authorMap.get(n.created_by) ?? null : null,
+    audio_url: audioUrlByNote.get(n.id) ?? null,
   }));
 
   // The placement record, and the money behind it. Three reads rather than
@@ -796,6 +815,7 @@ export default async function CandidateProfilePage({
                 projectId={projectId}
                 candidateName={candidate.full_name}
                 notes={notes as CandidateNote[]}
+                transcriptionEnabled={transcriptionAvailable()}
               />
             ),
           },

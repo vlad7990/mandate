@@ -131,12 +131,16 @@ export type ClientNoteRow = {
   content: string;
   visibility: ClientNoteVisibility;
   is_pinned: boolean;
+  /** 122: call-recording attachment + its ASR bookkeeping. */
+  audio_path: string | null;
+  transcript: string | null;
+  transcript_error: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export const CLIENT_NOTE_COLUMNS =
-  "id, organization_id, client_id, contact_id, created_by, author_label, note_type, content, visibility, is_pinned, created_at, updated_at";
+  "id, organization_id, client_id, contact_id, created_by, author_label, note_type, content, visibility, is_pinned, audio_path, transcript, transcript_error, created_at, updated_at";
 
 /**
  * Narrow an untrusted value to a contact type.

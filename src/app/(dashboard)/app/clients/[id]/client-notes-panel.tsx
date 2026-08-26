@@ -43,8 +43,10 @@ import {
   createClientNoteAction,
   deleteClientNoteAction,
   toggleClientNotePinAction,
+  transcribeClientNoteAction,
   updateClientNoteAction,
 } from "./client-notes-actions";
+import { AUDIO_ACCEPT } from "@/lib/calls/audio";
 import { unwrap, type ActionResult } from "@/lib/actions/result";
 
 const FIELD =
@@ -67,6 +69,8 @@ export function ClientNotesPanel({
   contacts,
   canWrite,
   canWriteCommercial,
+  audioUrls,
+  transcriptionEnabled,
 }: {
   clientId: string;
   notes: ClientNoteRow[];
@@ -82,6 +86,10 @@ export function ClientNotesPanel({
   canWrite: boolean;
   /** Whether the author holds `fees:read`, and so may pick the commercial tier. */
   canWriteCommercial: boolean;
+  /** 122: signed playback URLs by note id, minted server-side per view. */
+  audioUrls: Record<string, string>;
+  /** Whether the ASR key exists server-side — no key, no affordance. */
+  transcriptionEnabled: boolean;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -96,6 +104,9 @@ export function ClientNotesPanel({
         toast.success(ok);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Could not save the note");
+        // A partial landing (122: note saved, recording refused) must be
+        // visible immediately rather than after a manual reload.
+        router.refresh();
       }
     });
   }
@@ -194,6 +205,56 @@ export function ClientNotesPanel({
                     {note.content}
                   </p>
 
+                  {audioUrls[note.id] && (
+                    <div className="mt-2.5 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* No <track> caption: the transcript block
+                            below IS the accessible text alternative
+                            once the ASR has produced one. */}
+                        <audio
+                          controls
+                          preload="none"
+                          src={audioUrls[note.id]}
+                          className="h-8 max-w-full"
+                        />
+                        {canWrite && transcriptionEnabled && !note.transcript && (
+                          <button
+                            type="button"
+                            disabled={pending}
+                            className={PANEL_BUTTON_QUIET}
+                            onClick={() => {
+                              const fd = new FormData();
+                              fd.set("noteId", note.id);
+                              fd.set("clientId", clientId);
+                              run(
+                                transcribeClientNoteAction,
+                                fd,
+                                "Recording transcribed"
+                              );
+                            }}
+                          >
+                            Transcribe
+                          </button>
+                        )}
+                      </div>
+                      {note.transcript && (
+                        <div className="border border-outline-variant/60 bg-surface px-3 py-2">
+                          <p className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline mb-1">
+                            Transcript — machine-generated
+                          </p>
+                          <p className="max-w-[80ch] whitespace-pre-wrap text-body-s leading-relaxed text-on-surface">
+                            {note.transcript}
+                          </p>
+                        </div>
+                      )}
+                      {note.transcript_error && !note.transcript && (
+                        <p className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-error">
+                          {note.transcript_error}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {note.contact_id && (
                     <p className="mt-1.5 font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
                       With{" "}
@@ -290,6 +351,9 @@ function NoteForm({
   const [visibility, setVisibility] = useState<ClientNoteVisibility>(
     note?.visibility ?? "org"
   );
+  // Controlled so the attachment block (122) can follow the selection.
+  const [noteType, setNoteType] = useState<string>(note?.note_type ?? "general");
+  const [consent, setConsent] = useState(false);
 
   const tiers = canWriteCommercial
     ? CLIENT_NOTE_VISIBILITIES
@@ -323,7 +387,8 @@ function NoteForm({
           <span className={LABEL}>Type</span>
           <select
             name="noteType"
-            defaultValue={note?.note_type ?? "general"}
+            value={noteType}
+            onChange={(e) => setNoteType(e.target.value)}
             className={FIELD}
           >
             {CLIENT_NOTE_TYPES.map((t) => (
@@ -387,6 +452,37 @@ function NoteForm({
       <p className="font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline">
         {CLIENT_NOTE_VISIBILITY_HINTS[visibility]}
       </p>
+
+      {/* 122: a call recording rides the same form on NEW call notes.
+          The file input stays disabled until consent is attested — the
+          CHECK refuses regardless; the form never offers the illegal
+          move. */}
+      {!note && noteType === "call" && (
+        <div className="space-y-2 border border-outline-variant/60 bg-surface px-3 py-2">
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              name="consent"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="size-4 accent-primary mt-0.5"
+            />
+            <span className="text-body-s text-on-surface-variant">
+              Every party consented to this call being recorded
+            </span>
+          </label>
+          <label className="space-y-1.5">
+            <span className={LABEL}>Recording (optional)</span>
+            <input
+              type="file"
+              name="file"
+              accept={AUDIO_ACCEPT}
+              disabled={!consent}
+              className="block w-full text-body-s text-on-surface-variant file:mr-2 file:border file:border-outline-variant file:bg-surface-container-high file:px-2 file:py-1 file:font-mono-label file:text-[11px] file:uppercase file:tracking-[0.08em] file:text-on-surface-variant disabled:opacity-40"
+            />
+          </label>
+        </div>
+      )}
 
       {!note && (
         <label className="flex items-center gap-2">

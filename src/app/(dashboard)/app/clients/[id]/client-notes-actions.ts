@@ -37,6 +37,8 @@ import {
   parseClientNoteType,
   parseClientNoteVisibility,
 } from "@/lib/clients/contacts";
+import { AUDIO_EXTENSIONS, validateAudioFile } from "@/lib/calls/audio";
+import { transcribeAudio, transcriptionAvailable } from "@/lib/calls/transcribe";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 
@@ -118,18 +120,160 @@ export async function createClientNoteAction(formData: FormData): Promise<Action
     // is why the snapshot has to exist at all: without it, every note a
     // departed colleague wrote goes anonymous the day their account is
     // removed. Same fix 053 made with `actor_label`.
-    const { error } = await supabase.from("client_notes").insert({
-      organization_id: organizationId,
-      client_id: clientId,
-      contact_id: contactId,
-      created_by: userId,
-      note_type: parseClientNoteType(formData.get("noteType")) ?? "general",
-      content,
-      visibility,
-      is_pinned: formData.get("isPinned") === "on",
-    });
+    const noteType = parseClientNoteType(formData.get("noteType")) ?? "general";
 
-    if (error) throw new Error(`Could not save the note: ${error.message}`);
+    // 122: an optional call recording rides the same form. Validated
+    // before the insert so a refused file refuses the whole submit —
+    // the author fixes it and resubmits with nothing half-landed.
+    const file = formData.get("file");
+    const attaching =
+      file instanceof File && file.size > 0 && noteType === "call";
+    let audioVerdict: { extension: string } | null = null;
+    if (attaching) {
+      if (formData.get("consent") !== "on") {
+        throw new Error(
+          "Confirm that every party consented to the recording before attaching it."
+        );
+      }
+      const verdict = validateAudioFile(file);
+      if (!verdict.ok) throw new Error(verdict.reason);
+      audioVerdict = verdict;
+    }
+
+    const { data: born, error } = await supabase
+      .from("client_notes")
+      .insert({
+        organization_id: organizationId,
+        client_id: clientId,
+        contact_id: contactId,
+        created_by: userId,
+        note_type: noteType,
+        content,
+        visibility,
+        is_pinned: formData.get("isPinned") === "on",
+      })
+      .select("id")
+      .maybeSingle<{ id: string }>();
+
+    if (error || !born) {
+      throw new Error(`Could not save the note: ${error?.message ?? "no row"}`);
+    }
+
+    if (attaching && audioVerdict) {
+      // Org id first — storage RLS anchors on the first path segment.
+      // Failure after the insert keeps the typed note standing (gate
+      // adbb05f §D) and says so.
+      const storagePath = `${organizationId}/client-notes/${born.id}.${audioVerdict.extension}`;
+      const bytes = new Uint8Array(await (file as File).arrayBuffer());
+      const { error: uploadErr } = await supabase.storage
+        .from("call-audio")
+        .upload(storagePath, bytes, {
+          contentType: (file as File).type,
+          upsert: true,
+        });
+      if (uploadErr) {
+        revalidate(clientId);
+        throw new Error(
+          `The note is saved, but the recording did not upload (${uploadErr.message}).`
+        );
+      }
+      const { error: stampErr } = await supabase
+        .from("client_notes")
+        .update({
+          audio_path: storagePath,
+          consent_confirmed: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", born.id);
+      if (stampErr) {
+        revalidate(clientId);
+        throw new Error(
+          `The note is saved, but the recording did not attach (${stampErr.message}).`
+        );
+      }
+    }
+
+    revalidate(clientId);
+  });
+}
+
+/**
+ * Transcribe a client call note's recording through the key-gated ASR
+ * seam (122). Failure lands on the row (`transcript_error`) AND in the
+ * toast — never retried silently. The transcript is DATA on the note;
+ * per 054's Art. 14 note it feeds no agent.
+ */
+export async function transcribeClientNoteAction(
+  formData: FormData
+): Promise<ActionResult> {
+  return runAction(SUBJECT, async () => {
+    await requireActionContext("mandates:write");
+    if (!transcriptionAvailable()) {
+      throw new Error(
+        "Transcription is not configured — the recording stays attached, and transcripts switch on when the provider key is added."
+      );
+    }
+
+    const noteId = str(formData, "noteId");
+    const clientId = str(formData, "clientId");
+    if (!noteId || !clientId) throw new Error("Missing note.");
+
+    const supabase = await createServerSupabaseClient();
+    const { data: note, error: readErr } = await supabase
+      .from("client_notes")
+      .select("audio_path")
+      .eq("id", noteId)
+      .eq("client_id", clientId)
+      .single<{ audio_path: string | null }>();
+
+    if (readErr || !note) throw new Error("Note not found.");
+    if (!note.audio_path) {
+      throw new Error("This note has no recording to transcribe.");
+    }
+
+    const { data: blob, error: dlErr } = await supabase.storage
+      .from("call-audio")
+      .download(note.audio_path);
+    if (dlErr || !blob) {
+      throw new Error("The recording could not be read from storage.");
+    }
+
+    const ext = note.audio_path.split(".").pop() ?? "";
+    const fallbackMime =
+      Object.entries(AUDIO_EXTENSIONS).find(([, e]) => e === ext)?.[0] ??
+      "audio/mpeg";
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+
+    try {
+      const text = await transcribeAudio(
+        bytes,
+        blob.type || fallbackMime,
+        `call.${ext || "mp3"}`
+      );
+      const { error } = await supabase
+        .from("client_notes")
+        .update({
+          transcript: text,
+          transcript_error: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", noteId);
+      if (error) throw new Error(`The transcript did not save: ${error.message}`);
+    } catch (err) {
+      const sentence =
+        err instanceof Error ? err.message : "Transcription failed.";
+      const { error: markErr } = await supabase
+        .from("client_notes")
+        .update({
+          transcript_error: sentence,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", noteId);
+      if (markErr) {
+        console.error("[calls] transcript_error write failed:", markErr.message);
+      }
+      throw err instanceof Error ? err : new Error(sentence);
+    }
 
     revalidate(clientId);
   });

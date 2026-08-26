@@ -36,6 +36,15 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  // Server actions default to a 1MB body — a ceiling that silently sat
+  // under the 10MB CV upload and now under call-audio attachments
+  // (122, gate adbb05f J.6). 50MB matches the call-audio bucket's own
+  // limit; the bucket mime/size rules stay the real enforcement.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "50mb",
+    },
+  },
   async redirects() {
     return LEGACY_PRODUCT_REDIRECTS.map((r) => ({ ...r, permanent: true }));
   },

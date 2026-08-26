@@ -24,12 +24,15 @@ import {
   PanelMeta,
 } from "@/components/projects/panel";
 import {
+  attachCallAudioAction,
   createNoteAction,
   deleteNoteAction,
   togglePinAction,
+  transcribeNoteAction,
   updateNoteAction,
 } from "./notes-actions";
 import { NOTE_TYPES, type NoteType } from "./notes-constants";
+import { AUDIO_ACCEPT, validateAudioFile } from "@/lib/calls/audio";
 import { unwrap } from "@/lib/actions/result";
 
 export type CandidateNote = {
@@ -39,11 +42,53 @@ export type CandidateNote = {
   content: string;
   is_pinned: boolean;
   call_duration_minutes: number | null;
+  audio_path: string | null;
+  /** Signed playback URL, minted server-side per view (private bucket). */
+  audio_url: string | null;
+  transcript: string | null;
+  transcript_error: string | null;
   created_by: string | null;
   created_by_name: string | null;
   created_at: string;
   updated_at: string;
 };
+
+/**
+ * Create-then-attach: the typed note lands first, the recording second —
+ * an upload failure keeps the note and says so (gate adbb05f §D). Used
+ * by both the composer and the live-call modal.
+ */
+async function saveCallNoteWithAudio(args: {
+  candidateId: string;
+  projectId: string;
+  content: string;
+  isPinned: boolean;
+  callDurationMinutes: number | null;
+  file: File | null;
+  consent: boolean;
+}): Promise<void> {
+  const { id } = unwrap(
+    await createNoteAction(args.candidateId, args.projectId, {
+      noteType: "call",
+      content: args.content,
+      isPinned: args.isPinned,
+      callDurationMinutes: args.callDurationMinutes,
+    })
+  );
+  if (!args.file) return;
+  const fd = new FormData();
+  fd.set("consent", args.consent ? "true" : "false");
+  fd.set("file", args.file);
+  try {
+    unwrap(await attachCallAudioAction(id, args.projectId, fd));
+  } catch (err) {
+    throw new Error(
+      `The note is saved, but the recording did not attach: ${
+        err instanceof Error ? err.message : "upload failed"
+      }`
+    );
+  }
+}
 
 const NOTE_TYPE_META: Record<
   NoteType,
@@ -84,11 +129,14 @@ export function CandidateNotesPanel({
   projectId,
   candidateName,
   notes,
+  transcriptionEnabled,
 }: {
   candidateId: string;
   projectId: string;
   candidateName: string;
   notes: CandidateNote[];
+  /** Whether the ASR key exists server-side — no key, no affordance. */
+  transcriptionEnabled: boolean;
 }) {
   const [composing, setComposing] = useState(false);
   const [callOpen, setCallOpen] = useState(false);
@@ -159,6 +207,7 @@ export function CandidateNotesPanel({
               key={note.id}
               projectId={projectId}
               note={note}
+              transcriptionEnabled={transcriptionEnabled}
             />
           ))}
         </ul>
@@ -196,6 +245,8 @@ function NoteComposer({
   const [content, setContent] = useState("");
   const [isPinned, setIsPinned] = useState(false);
   const [callDuration, setCallDuration] = useState<string>("");
+  const [consent, setConsent] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
   const [pending, start] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -219,20 +270,43 @@ function NoteComposer({
       }
       duration = Math.round(n);
     }
+    const attaching = noteType === "call" && file != null;
+    if (attaching) {
+      const verdict = validateAudioFile(file);
+      if (!verdict.ok) {
+        toast.error(verdict.reason);
+        return;
+      }
+    }
     start(async () => {
       try {
-        unwrap(await createNoteAction(candidateId, projectId, {
-          noteType,
-          content: trimmed,
-          isPinned,
-          callDurationMinutes: duration,
-        }));
-        toast.success("Note saved");
+        if (attaching) {
+          await saveCallNoteWithAudio({
+            candidateId,
+            projectId,
+            content: trimmed,
+            isPinned,
+            callDurationMinutes: duration,
+            file,
+            consent,
+          });
+        } else {
+          unwrap(await createNoteAction(candidateId, projectId, {
+            noteType,
+            content: trimmed,
+            isPinned,
+            callDurationMinutes: duration,
+          }));
+        }
+        toast.success(attaching ? "Note saved · recording attached" : "Note saved");
         router.refresh();
         onDone();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Save failed.";
         toast.error(msg);
+        // A partially-landed save (note without its recording) is
+        // visible immediately rather than after a manual reload.
+        router.refresh();
       }
     });
   };
@@ -262,18 +336,26 @@ function NoteComposer({
       </div>
 
       {noteType === "call" && (
-        <label className="flex items-center gap-2 font-mono-label text-mono-label text-outline uppercase tracking-widest">
-          Call duration
-          <input
-            type="number"
-            min={0}
-            value={callDuration}
-            onChange={(e) => setCallDuration(e.target.value)}
-            placeholder="min"
-            className="w-20 bg-surface-container-lowest border border-outline-variant px-2 py-1 text-on-surface font-mono-data text-body-main tabular-nums focus:border-primary focus:outline-none transition-colors"
+        <>
+          <label className="flex items-center gap-2 font-mono-label text-mono-label text-outline uppercase tracking-widest">
+            Call duration
+            <input
+              type="number"
+              min={0}
+              value={callDuration}
+              onChange={(e) => setCallDuration(e.target.value)}
+              placeholder="min"
+              className="w-20 bg-surface-container-lowest border border-outline-variant px-2 py-1 text-on-surface font-mono-data text-body-main tabular-nums focus:border-primary focus:outline-none transition-colors"
+            />
+            <span>minutes</span>
+          </label>
+          <CallAudioAttachment
+            consent={consent}
+            onConsentChange={setConsent}
+            file={file}
+            onFileChange={setFile}
           />
-          <span>minutes</span>
-        </label>
+        </>
       )}
 
       <textarea
@@ -320,6 +402,60 @@ function NoteComposer({
   );
 }
 
+/**
+ * The consent-gated attachment picker (122). The file input stays
+ * disabled until consent is attested — the CHECK refuses regardless;
+ * the UI just never offers the illegal move (the registry-console
+ * pattern). Clearing consent also clears a picked file so the two can
+ * never travel out of step.
+ */
+function CallAudioAttachment({
+  consent,
+  onConsentChange,
+  file,
+  onFileChange,
+}: {
+  consent: boolean;
+  onConsentChange: (v: boolean) => void;
+  file: File | null;
+  onFileChange: (f: File | null) => void;
+}) {
+  return (
+    <div className="border border-outline-variant/60 bg-surface-container-lowest px-3 py-2 space-y-2">
+      <label className="flex items-start gap-2 font-mono-label text-mono-label text-outline uppercase tracking-widest cursor-pointer leading-snug">
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={(e) => {
+            onConsentChange(e.target.checked);
+            if (!e.target.checked) onFileChange(null);
+          }}
+          className="accent-primary mt-0.5"
+        />
+        <span>
+          Every party consented to this call being recorded
+        </span>
+      </label>
+      <label
+        className={cn(
+          "flex items-center gap-2 font-mono-label text-mono-label uppercase tracking-widest",
+          consent ? "text-outline" : "text-outline-variant"
+        )}
+      >
+        Recording
+        <input
+          type="file"
+          accept={AUDIO_ACCEPT}
+          disabled={!consent}
+          onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
+          className="text-on-surface-variant file:mr-2 file:px-2 file:py-1 file:border file:border-outline-variant file:bg-surface-container-high file:text-on-surface-variant file:font-mono-label file:text-mono-label file:uppercase file:tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
+        />
+        {file && <span className="normal-case tracking-normal">{file.name}</span>}
+      </label>
+    </div>
+  );
+}
+
 // ────────────────────────────────────────────────────────────────────────
 // Note item
 // ────────────────────────────────────────────────────────────────────────
@@ -329,9 +465,11 @@ const COLLAPSE_THRESHOLD = 400;
 function NoteItem({
   projectId,
   note,
+  transcriptionEnabled,
 }: {
   projectId: string;
   note: CandidateNote;
+  transcriptionEnabled: boolean;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -395,6 +533,21 @@ function NoteItem({
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Pin failed.";
         toast.error(msg);
+      }
+    });
+  };
+
+  const handleTranscribe = () => {
+    start(async () => {
+      try {
+        unwrap(await transcribeNoteAction(note.id, projectId));
+        toast.success("Recording transcribed");
+        router.refresh();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Transcription failed.";
+        toast.error(msg);
+        // The honest failure sentence also landed on the row.
+        router.refresh();
       }
     });
   };
@@ -501,6 +654,46 @@ function NoteItem({
                 {expanded ? "Show less" : "Show more"}
               </button>
             )}
+            {note.audio_url && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* No <track> caption: the transcript block below IS
+                      the accessible text alternative once the ASR has
+                      produced one. */}
+                  <audio
+                    controls
+                    preload="none"
+                    src={note.audio_url}
+                    className="h-8 max-w-full"
+                  />
+                  {transcriptionEnabled && !note.transcript && (
+                    <button
+                      type="button"
+                      onClick={handleTranscribe}
+                      disabled={pending}
+                      className="px-2 py-1 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+                    >
+                      {pending ? "Transcribing…" : "Transcribe"}
+                    </button>
+                  )}
+                </div>
+                {note.transcript && (
+                  <div className="border border-outline-variant/60 bg-surface-container-lowest px-3 py-2">
+                    <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest mb-1">
+                      Transcript — machine-generated
+                    </p>
+                    <p className="whitespace-pre-wrap break-words text-body-s leading-relaxed">
+                      {note.transcript}
+                    </p>
+                  </div>
+                )}
+                {note.transcript_error && !note.transcript && (
+                  <p className="font-mono-label text-mono-label text-error uppercase tracking-widest">
+                    {note.transcript_error}
+                  </p>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -558,10 +751,11 @@ function LiveCallNotesModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  // TODO: Connect to AI transcription service (Whisper/Assembly AI)
   const [content, setContent] = useState("");
   const [seconds, setSeconds] = useState(0);
   const [running, setRunning] = useState(true);
+  const [consent, setConsent] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
   const [pending, start] = useTransition();
   // lastResume = wall-clock at the start of the current run interval.
   // Lazily filled on first run-tick — initialising with `Date.now()` at
@@ -621,23 +815,36 @@ function LiveCallNotesModal({
       toast.error("Add some notes before saving.");
       return;
     }
+    if (file) {
+      const verdict = validateAudioFile(file);
+      if (!verdict.ok) {
+        toast.error(verdict.reason);
+        return;
+      }
+    }
     const minutes = computeDurationMinutes();
     start(async () => {
       try {
-        unwrap(await createNoteAction(candidateId, projectId, {
-          noteType: "call",
+        await saveCallNoteWithAudio({
+          candidateId,
+          projectId,
           content: trimmed,
           isPinned: false,
           callDurationMinutes: minutes,
-        }));
+          file,
+          consent,
+        });
         toast.success(
-          `Call notes saved · ${minutes} min${minutes === 1 ? "" : "s"}`
+          `Call notes saved · ${minutes} min${minutes === 1 ? "" : "s"}${
+            file ? " · recording attached" : ""
+          }`
         );
         router.refresh();
         onClose();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Save failed.";
         toast.error(msg);
+        router.refresh();
       }
     });
   };
@@ -718,9 +925,16 @@ function LiveCallNotesModal({
             placeholder="Notes start typing here…"
             className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 font-mono-data text-body-main text-on-surface focus:border-primary focus:outline-none transition-colors resize-y leading-relaxed min-h-[280px]"
           />
+          <CallAudioAttachment
+            consent={consent}
+            onConsentChange={setConsent}
+            file={file}
+            onFileChange={setFile}
+          />
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest leading-snug">
-            Live transcription is on the roadmap — for now this is plain
-            text. Hit <span className="text-primary">End Call &amp; Save</span>{" "}
+            Called on your own phone? Attach the recording above — it saves
+            with the note and can be transcribed from the notes feed. Hit{" "}
+            <span className="text-primary">End Call &amp; Save</span>{" "}
             when you&rsquo;re done; the duration is captured automatically.
           </p>
         </div>
