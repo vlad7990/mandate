@@ -11114,3 +11114,85 @@ Numbers at close: next migration 122; next § 155; next drive 108;
 vitest 1044; CHECK 89; door 22; allowlist 29; anon roster 12;
 durable baseline holds its registry gains (model_providers 1 /
 provider_models 3 / capability_assignments 0).
+
+## 155. CALL LOGGING CHEAP SLICE BUILT — drive 108 GREEN — 2026-08-26 — DRAFTED, AWAITS CONFIRMATION
+
+The founder's word ("lets do it", choosing this slice as next
+priority) landed against the gate as drafted (adbb05f,
+2026-08-25-call-logging-gate.md), the six J-decisions taken as
+recommended. Frame: live telephony (Twilio) stays DEFERRED by the
+founder's earlier word; its needs-checklist is recorded in memory.
+Nothing here is law until the founder confirms THIS entry.
+
+**Migration 122 (call_audio).** The `call-audio` bucket on the cvs
+precedent: private, 50MB, seven audio mimes, seeded ON CONFLICT DO
+UPDATE; the org-first-segment storage.objects policy trio verbatim
+(read/insert/delete), so uploads run under the SESSION client and
+RLS is the enforcement. Four columns on BOTH note tables
+(audio_path / consent_confirmed / transcript / transcript_error)
+guarded by CHECKs, no triggers: no audio without consent
+(consent-as-attestation, J.4 — the legal obligation stays the
+founder's; the schema makes the claim recorded, not skippable);
+audio only on note_type='call'; no transcript bookkeeping without
+audio. All three doors SMOKED LIVE on apply, across both tables.
+The trail deliberately unchanged (J.5): CHECK 89 / door 22 /
+allowlist 29 / anon roster 12 all hold; the migration adds no
+function, no grant, no principal — the 121 lesson had nothing to
+bite.
+
+**App.** `serverActions.bodySizeLimit: "50mb"` (J.6) — also
+releases the LATENT 1MB ceiling Phase 0 found under the 10MB CV
+upload (the defect §128's real-CV testing would have tripped).
+Candidate side: consent-gated attachment on the composer AND the
+LiveCallNotesModal (whose Whisper TODO this slice retires),
+create-then-attach — an upload failure keeps the typed note and
+says so; signed-URL playback minted per view. Client side: the
+recording rides the existing FormData form on new call notes, same
+consent gate; player + transcript block in the row. Deletion
+hygiene (caught in build, fixed before the drive): a deleted note
+takes its recording with it through the storage API under the
+session's own org delete policy — SQL deletes on storage.objects
+stay trigger-blocked. The transcribe seam
+(src/lib/calls/transcribe.ts): Deep Infra Whisper (J.1,
+marketplace discover-top) by env-var NAME (DEEPINFRA_API_KEY),
+honestly absent without the key — no affordance rendered, refusal
+sentence if reached; failures land in transcript_error (the
+generation_error precedent) AND the toast; the transcript is DATA
+on the note, feeds no AI loop and no trail (054's Art. 14 note
+restated at the seam; J.2: the ASR stays OUT of model_providers).
+vitest 1044 → 1054 (audio validation + seam proofs). Commits
+71d5124 + 18b7b62; deployed mandate-dxrgzding.
+
+**Drive 108 — GREEN, live in prod.** Pins at start:
+candidate_notes 3 / client_notes 0 / call-audio objects 0.
+(1) Candidate call note with a 1s probe WAV: consent gate VISIBLE
+(file input disabled until attested — calls-108-consent-gate-
+disabled.png), note landed with org-first audio_path +
+consent_confirmed + duration, signed-URL player rendered
+(calls-108-candidate-note-player.png). (2) Transcription's HONEST
+ABSENCE proven — no key in Vercel, no Transcribe button, transcript
+columns null (the 142 null-result precedent; the key-absent refusal
+sentence is unit-pinned). (3) Client call note same path, player
+rendered (calls-108-client-note-player.png). (4) The three CHECK
+refusals stand as the apply-time smokes (live prod DB, both
+tables); bucket mime/size limits are platform-enforced config, the
+cvs precedent. (5) Teardown BY THE PRODUCT: both notes deleted
+through the UI and the bucket went to ZERO on its own — the
+deletion-hygiene path proved itself; counts back at the pins
+fresh-statement (3 / 0 / 0), probe WAV removed, sessions signed
+out with localStorage cleared. NOTE: candidate_notes' durable 3 are
+pre-existing rows, pinned per-drive — still not baseline members.
+
+**Founder-owned residue (surfaced once):** provision Deep Infra
+when transcripts should go live (`vercel integration add
+deepinfra`, billed; the key lands as DEEPINFRA_API_KEY and the
+buttons appear on the next render — no deploy). First LIVE
+transcription then wants a one-shot verification that the
+provider's endpoint shape holds (the seam is fetch-based and
+mock-pinned; drive it once with the key present). Twilio slice
+parked with its checklist in memory.
+
+Numbers: next migration 123; next § 156; next drive 109; vitest
+1054; CHECK 89 / door 22 / allowlist 29 / roster 12; durable
+baseline unchanged (call-audio objects 0 durable; note tables stay
+pinned per-drive, not baseline).
