@@ -10,9 +10,12 @@ import { normalizeClientInterview } from "@/lib/ai/client-interview-agent";
 import { HmFeedbackForm, type HmFeedbackCandidate } from "./feedback-form";
 import {
   ClientInterviewSection,
+  type ClientInterviewAnswerDoor,
   type PortalClientInterview,
 } from "./client-interview-section";
 import { IconChevronRight } from "@/components/icons";
+
+export type { ClientInterviewAnswerDoor };
 
 // Shared client-facing portal content. Used by:
 //   - /projects/[id]/hiring-manager (founder preview, with share-link
@@ -76,11 +79,11 @@ export type PortalProps = {
    */
   clientInterview?: PortalClientInterview | null;
   /**
-   * The share token, present ONLY on the /hm/[token] door — the one
-   * path answers can enter through. Absent ⇒ the section is read-only
-   * (founder preview, signed-in /portal).
+   * The door answers may enter through — the token path or the
+   * signed-in portal (127). Absent ⇒ the section is read-only, which
+   * is what the founder preview passes.
    */
-  interviewAnswerToken?: string | null;
+  interviewAnswerDoor?: ClientInterviewAnswerDoor | null;
 };
 
 export function PortalContent({
@@ -93,7 +96,7 @@ export function PortalContent({
   submitPath,
   evidenceGrid,
   clientInterview,
-  interviewAnswerToken,
+  interviewAnswerDoor,
 }: PortalProps) {
   const formCandidates: HmFeedbackCandidate[] = candidates.map((c) => ({
     id: c.id,
@@ -124,7 +127,7 @@ export function PortalContent({
       {clientInterview && clientInterview.questions.length > 0 && (
         <ClientInterviewSection
           interview={clientInterview}
-          answerToken={interviewAnswerToken}
+          door={interviewAnswerDoor}
         />
       )}
       <HmFeedbackForm

@@ -188,7 +188,14 @@ export default async function HiringManagerPublicPage({
       submitHandle={token}
       evidenceGrid={evidenceGrid}
       clientInterview={buildPortalClientInterview(interviewQ.data ?? null)}
-      interviewAnswerToken={token}
+      // The token door: anonymous, so it asks for a name, and it holds
+      // no "your previous answers" — a share link has no author to
+      // remember (069 D5, unchanged by 127).
+      interviewAnswerDoor={{
+        path: `/hm/${token}/api/interview-answers`,
+        identityKnown: false,
+        previous: null,
+      }}
     />
   );
 }

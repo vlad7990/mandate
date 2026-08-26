@@ -13,6 +13,7 @@ import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import {
   PortalContent,
   buildPortalCandidate,
+  buildPortalClientInterview,
   type PortalCandidate,
 } from "@/app/(dashboard)/app/projects/[id]/hiring-manager/portal-content";
 import { HM_RATING_LABELS, type HmRating } from "@/app/(dashboard)/app/projects/[id]/hiring-manager/feedback-constants";
@@ -55,6 +56,22 @@ type PortalPayload = {
     transformation_score: number | null;
   }>;
   progress: { candidates_total: number; candidates_reviewed: number };
+  /** The mandate's APPROVED client-interview set (127); null when the
+   * desk has not approved one, in which case the section is absent
+   * rather than empty. */
+  client_interview: {
+    id: string;
+    version: number;
+    content_json: unknown;
+  } | null;
+  /** This caller's own standing answer, for edit-in-place (D3(c)).
+   * Never a colleague's — the RPC filters on auth.uid(). */
+  my_interview_answer: {
+    id: string;
+    answers_json: Record<string, string> | null;
+    content: string;
+    created_at: string;
+  } | null;
 };
 
 type ReviewRow = {
@@ -173,6 +190,21 @@ export default async function PortalMandatePage({
         submitHandle={payload.project.id}
         submitPath={`/portal/api/mandates/${payload.project.id}/submit`}
         evidenceGrid={evidenceGrid}
+        clientInterview={buildPortalClientInterview(payload.client_interview)}
+        // The signed-in door (127 D1(b)): the caller is named, active,
+        // share-verified and grant-checked — a stronger principal than
+        // the token holder who could already answer. `previous` is
+        // their own standing answer and nobody else's.
+        interviewAnswerDoor={{
+          path: `/portal/api/mandates/${payload.project.id}/interview-answers`,
+          identityKnown: true,
+          previous: payload.my_interview_answer?.answers_json
+            ? {
+                answers: payload.my_interview_answer.answers_json,
+                answeredAt: payload.my_interview_answer.created_at,
+              }
+            : null,
+        }}
       />
 
       {myReviews.length > 0 && (
