@@ -99,8 +99,13 @@ export default async function PlacementsPage() {
   const [{ data: placementRows }, { data: lineRows }, { data: orgRow }] = await Promise.all([
     supabase
       .from("placements")
+      // FKs named explicitly. The composite `_in_org` FKs (111/112) gave
+      // placements a SECOND path to candidates, projects and clients, and
+      // PostgREST refuses an ambiguous embed outright — this page's whole
+      // query silently nulled, so a real placement rendered as "no
+      // placements" and the sample stayed up. Found in drive 110.
       .select(
-        `${PLACEMENT_COLUMNS}, candidates(full_name), projects(title), clients(name)`
+        `${PLACEMENT_COLUMNS}, candidates!placements_candidate_id_fkey(full_name), projects!placements_project_id_fkey(title), clients!placements_client_id_fkey(name)`
       )
       .order("offer_date", { ascending: false })
       .returns<PlacementListRow[]>(),

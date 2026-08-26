@@ -200,7 +200,9 @@ export async function addFeeLineAction(
     // the label stays editable on the draft.
     const { data: placement } = await supabase
       .from("placements")
-      .select("id, candidates(full_name)")
+      // FK named explicitly — the composite `_in_org` twin makes a bare
+      // embed ambiguous (see the invoice page's placements query).
+      .select("id, candidates!placements_candidate_id_fkey(full_name)")
       .eq("id", feeLine.placement_id)
       .maybeSingle<{ id: string; candidates: { full_name: string } | null }>();
     const candidate = placement?.candidates?.full_name;

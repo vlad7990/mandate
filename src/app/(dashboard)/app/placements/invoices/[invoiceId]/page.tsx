@@ -123,7 +123,12 @@ export default async function InvoicePage({ params }: { params: Params }) {
   if (isDraft && invoice.client_id) {
     const { data: placementRows } = await supabase
       .from("placements")
-      .select("id, candidates(full_name), projects(title)")
+      // FK named explicitly: the composite `_in_org` twins (111/112)
+      // make a bare embed ambiguous, and PostgREST refuses the whole
+      // query rather than guessing.
+      .select(
+        "id, candidates!placements_candidate_id_fkey(full_name), projects!placements_project_id_fkey(title)"
+      )
       .eq("client_id", invoice.client_id)
       .returns<PlacementLite[]>();
     const placements = placementRows ?? [];
