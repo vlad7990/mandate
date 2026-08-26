@@ -15,6 +15,7 @@ import {
   Panel,
   PanelMeta,
 } from "@/components/projects/panel";
+import { PrintPanelButton } from "@/components/ui/print-report-button";
 import type { TriangulationReport } from "@/lib/ai/triangulation-agent";
 import { generateTriangulationAction } from "./actions";
 import { unwrap } from "@/lib/actions/result";
@@ -73,6 +74,7 @@ export function TriangulationPanel({
 
   return (
     <Panel
+      printId="triangulation-report"
       title="Triangulation"
       meta={
         <PanelMeta>
@@ -80,24 +82,27 @@ export function TriangulationPanel({
         </PanelMeta>
       }
       action={
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={pending || !allReady}
-          title={!allReady ? `Missing: ${missing.join(", ")}` : undefined}
-          className={PANEL_BUTTON}
-        >
-          {pending || report ? (
-            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
-          ) : (
-            <IconSpark size={14} />
-          )}
-          {pending
-            ? "Synthesising"
-            : report
-              ? "Regenerate"
-              : "Generate report"}
-        </button>
+        <>
+          {report && <PrintPanelButton scopeId="triangulation-report" />}
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={pending || !allReady}
+            title={!allReady ? `Missing: ${missing.join(", ")}` : undefined}
+            className={PANEL_BUTTON}
+          >
+            {pending || report ? (
+              <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+            ) : (
+              <IconSpark size={14} />
+            )}
+            {pending
+              ? "Synthesising"
+              : report
+                ? "Regenerate"
+                : "Generate report"}
+          </button>
+        </>
       }
     >
       {!allReady ? (

@@ -27,6 +27,7 @@ export function Panel({
   action,
   children,
   tone = "default",
+  printId,
 }: {
   title: string;
   /** Status text or a chip. Sits next to the heading. */
@@ -36,12 +37,25 @@ export function Panel({
   children: React.ReactNode;
   /** `notice` marks a panel that is asking for attention, not just present. */
   tone?: "default" | "notice";
+  /**
+   * Opt this panel into the print pass (slice 3): it becomes a
+   * printable document, and `PrintPanelButton` with the same id prints
+   * it alone.
+   *
+   * Opt-IN rather than automatic, even though fifteen files render a
+   * `Panel`. Most panels are working surfaces — a queue, a composer, a
+   * gate — and a print button on one of those offers paper for
+   * something nobody would put on paper. The gate named six documents
+   * and this is how a page says it is one of them.
+   */
+  printId?: string;
 }) {
   return (
     <section
+      id={printId}
       className={`overflow-hidden border bg-surface-container-low ${
         tone === "notice" ? "border-tertiary/40" : "border-outline-variant"
-      }`}
+      } ${printId ? "m-report-doc" : ""}`}
     >
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-outline-variant px-[18px] py-[15px]">
         <h2 className="font-mono-label text-mono-label uppercase tracking-widest text-primary">

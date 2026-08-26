@@ -12,6 +12,7 @@ import {
   Panel,
   PanelMeta,
 } from "@/components/projects/panel";
+import { PrintPanelButton } from "@/components/ui/print-report-button";
 import {
   CHANGE_READINESS_LABELS,
   CULTURE_RISK_APPETITE_LABELS,
@@ -101,6 +102,7 @@ export function CultureIntelligencePanel({
 
   return (
     <Panel
+      printId="culture-intelligence-report"
       title="Culture intelligence"
       meta={
         <>
@@ -118,22 +120,25 @@ export function CultureIntelligencePanel({
         </>
       }
       action={
-        <button
-          type="button"
-          onClick={() => {
-            setContextDraft(savedContext ?? "");
-            setRegenOpen((o) => !o);
-          }}
-          disabled={pending}
-          className={PANEL_BUTTON}
-        >
-          {pending || profile ? (
-            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
-          ) : (
-            <IconSpark size={14} />
-          )}
-          {pending ? "Analysing" : profile ? "Regenerate" : "Analyse culture fit"}
-        </button>
+        <>
+          {profile && <PrintPanelButton scopeId="culture-intelligence-report" />}
+          <button
+            type="button"
+            onClick={() => {
+              setContextDraft(savedContext ?? "");
+              setRegenOpen((o) => !o);
+            }}
+            disabled={pending}
+            className={PANEL_BUTTON}
+          >
+            {pending || profile ? (
+              <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+            ) : (
+              <IconSpark size={14} />
+            )}
+            {pending ? "Analysing" : profile ? "Regenerate" : "Analyse culture fit"}
+          </button>
+        </>
       }
     >
 

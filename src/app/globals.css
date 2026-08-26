@@ -365,4 +365,50 @@
   .m-report-keep {
     break-inside: avoid;
   }
+
+  /* ── SCOPED PRINT — a panel inside a busy page (slice 3) ──────────
+     Four of the print-pass documents are panels on workspaces that
+     carry a dozen other panels and a tab bar, so `window.print()`
+     alone would spool the whole workspace. `PrintReportButton` marks
+     the one document and puts the body in this mode.
+
+     `visibility` rather than `display`, deliberately: hiding by
+     `display` collapses the document's own ancestors and takes the
+     document with them, so every wrapper would need a rule of its
+     own. Hidden-but-laid-out ancestors keep the document reachable
+     and let one pair of rules do the whole job.
+
+     The scope is then lifted to the page origin, because it is still
+     sitting wherever the (invisible) workspace put it — without this
+     a panel low on a long page prints as several blank sheets
+     followed by the document. */
+  body.m-printing-scoped * {
+    visibility: hidden;
+  }
+
+  body.m-printing-scoped .m-print-scope,
+  body.m-printing-scoped .m-print-scope * {
+    visibility: visible;
+  }
+
+  body.m-printing-scoped .m-print-scope {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    margin: 0;
+    border: 0;
+    /* A panel is height-locked on screen in at least one case (the
+       shortlist pool column); on paper it is as long as it is. */
+    max-height: none;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Scrollers inside the printed document must also give up their
+     height, or the paper shows one screenful and a scrollbar's worth
+     of clipped content. */
+  body.m-printing-scoped .m-print-scope * {
+    max-height: none !important;
+    overflow: visible !important;
+  }
 }

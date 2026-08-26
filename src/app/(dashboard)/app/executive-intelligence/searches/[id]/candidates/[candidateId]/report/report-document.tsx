@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { IconInfo } from "@/components/icons";
 import type { CompiledReport } from "@/lib/executive/report";
-import { PrintReportButton } from "./print-button";
+import { PrintReportButton } from "@/components/ui/print-report-button";
 
 /**
  * The Executive Intelligence report — comp 12, compiled from approved

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { PANEL_BODY, Panel, PanelMeta } from "@/components/projects/panel";
+import { PrintPanelButton } from "@/components/ui/print-report-button";
 import { MastHead } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import {
@@ -104,6 +105,7 @@ export function EvaluationReport({
 }) {
   return (
     <Panel
+      printId="evaluation-report"
       title="Evaluation report"
       meta={
         <PanelMeta>
@@ -112,14 +114,22 @@ export function EvaluationReport({
         </PanelMeta>
       }
       action={
-        <EvaluationActions
-          evaluation={evaluation}
-          candidateId={candidateId}
-          candidateName={candidateName}
-          candidateTitle={candidateTitle}
-          candidateCompany={candidateCompany}
-          projectId={projectId}
-        />
+        <>
+          {/* Print sits BESIDE the @react-pdf export rather than
+              replacing it (gate B, slice 3). The PDF export is a second
+              renderer and stays; print is the zero-dependency path that
+              cannot disagree with the screen. Two exports, two
+              different guarantees. */}
+          <PrintPanelButton scopeId="evaluation-report" />
+          <EvaluationActions
+            evaluation={evaluation}
+            candidateId={candidateId}
+            candidateName={candidateName}
+            candidateTitle={candidateTitle}
+            candidateCompany={candidateCompany}
+            projectId={projectId}
+          />
+        </>
       }
     >
       <div className={cn(PANEL_BODY, "flex flex-col gap-6")}>

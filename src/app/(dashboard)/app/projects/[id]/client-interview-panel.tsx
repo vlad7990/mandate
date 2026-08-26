@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { unwrap } from "@/lib/actions/result";
 import { normalizeClientInterview } from "@/lib/ai/client-interview-agent";
+import { PrintPanelButton } from "@/components/ui/print-report-button";
 import {
   approveClientInterviewAction,
   requestClientInterviewAction,
@@ -178,10 +179,20 @@ export function ClientInterviewPanel({
   const content = normalizeClientInterview(initial.content_json);
 
   return (
-    <section className="bg-surface-container-low border border-outline-variant p-4 space-y-5">
+    // This one does not use `Panel` (it never has), so it opts into the
+    // print pass by hand: the same id + `m-report-doc` that the Panel
+    // `printId` prop applies. The APPROVED set is the document — it is
+    // the version the client sees, so it is the version worth printing.
+    <section
+      id="client-interview-set"
+      className="m-report-doc bg-surface-container-low border border-outline-variant p-4 space-y-5"
+    >
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <PanelHead status={initial.status} version={initial.version} />
         <div className="flex items-center gap-2">
+          {initial.status === "approved" && (
+            <PrintPanelButton scopeId="client-interview-set" />
+          )}
           {initial.status === "draft" && (
             <button
               type="button"

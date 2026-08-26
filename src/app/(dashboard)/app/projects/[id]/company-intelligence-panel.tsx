@@ -16,6 +16,7 @@ import {
   Panel,
   PanelMeta,
 } from "@/components/projects/panel";
+import { PrintPanelButton } from "@/components/ui/print-report-button";
 import type {
   CompanyIntelligenceReport,
   CultureSignals,
@@ -98,6 +99,7 @@ export function CompanyIntelligencePanel({
 
   return (
     <Panel
+      printId="company-intelligence-report"
       title="Company intelligence"
       meta={
         <PanelMeta>
@@ -105,19 +107,22 @@ export function CompanyIntelligencePanel({
         </PanelMeta>
       }
       action={
-        <button
-          type="button"
-          onClick={handleResearch}
-          disabled={pending}
-          className={PANEL_BUTTON}
-        >
-          {pending || report ? (
-            <IconRefresh size={14} className={cn(pending && "animate-spin")} />
-          ) : (
-            <IconSpark size={14} />
-          )}
-          {pending ? "Researching" : report ? "Re-research" : "Research company"}
-        </button>
+        <>
+          {report && <PrintPanelButton scopeId="company-intelligence-report" />}
+          <button
+            type="button"
+            onClick={handleResearch}
+            disabled={pending}
+            className={PANEL_BUTTON}
+          >
+            {pending || report ? (
+              <IconRefresh size={14} className={cn(pending && "animate-spin")} />
+            ) : (
+              <IconSpark size={14} />
+            )}
+            {pending ? "Researching" : report ? "Re-research" : "Research company"}
+          </button>
+        </>
       }
     >
       {pending && <ProgressTracker key={runId} />}

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { MastHead } from "@/components/ui/mast-head";
+import { PrintPanelButton } from "@/components/ui/print-report-button";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { TierComparison } from "@/components/ui/tier-comparison";
 import type { Tier } from "@/lib/ranking/tiers";
@@ -301,6 +302,10 @@ export function ShortlistBuilder({
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {/* The SLATE is the document, not the whole builder: the
+                pool column is a working surface and is height-locked to
+                the viewport, which is meaningless on paper. */}
+            {slate.length > 0 && <PrintPanelButton scopeId="shortlist-slate" />}
             <button
               type="button"
               onClick={handleGenerateReport}
@@ -440,7 +445,7 @@ export function ShortlistBuilder({
             )}
           </section>
 
-          <section className="col-span-12 lg:col-span-8">
+          <section id="shortlist-slate" className="m-report-doc col-span-12 lg:col-span-8">
             <div className="bg-surface-container-low border border-outline-variant p-4 flex flex-col gap-3 min-h-[400px]">
               <MastHead
                 tone="secondary"

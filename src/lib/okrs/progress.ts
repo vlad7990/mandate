@@ -150,7 +150,17 @@ export async function computeObjectiveProgress(
     ? projectId
       ? supabase
           .from("placement_fee_lines")
-          .select("base_amount, status, earned_on, due_on, placements!inner(project_id)")
+          // The FK is named as well as the join type. `!inner` is a
+          // JOIN-TYPE modifier and does NOT disambiguate: 111/112 gave
+          // this table a second path to placements (the composite
+          // `_in_org` twin), so the bare form was an ambiguous embed —
+          // PostgREST refused the query, the error was swallowed into
+          // `[]` below, and a mandate-scoped financial key result
+          // reported ZERO progress however much had been billed.
+          // Found by the embed sweep after drive 110's F-1.
+          .select(
+            "base_amount, status, earned_on, due_on, placements!placement_fee_lines_placement_id_fkey!inner(project_id)"
+          )
           .eq("placements.project_id", projectId)
           .returns<FeeLineLite[]>()
       : supabase

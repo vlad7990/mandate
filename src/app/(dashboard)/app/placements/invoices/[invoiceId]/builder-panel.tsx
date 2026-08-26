@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { IconPlus, IconPrint } from "@/components/icons";
+import { IconPlus } from "@/components/icons";
+import { PrintReportButton } from "@/components/ui/print-report-button";
 import { unwrap } from "@/lib/actions/result";
 import { openMailDraft } from "@/lib/mail-draft";
 import { formatMoney } from "@/lib/fees/compute";
@@ -458,14 +459,9 @@ function IssuedPanel({
 
   return (
     <div className="space-y-3">
-      <button
-        type="button"
-        onClick={() => window.print()}
-        className="flex w-full items-center justify-center gap-2 border border-outline-variant bg-surface-container-low px-4 py-2.5 font-mono-label text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      >
-        <IconPrint size={15} />
-        Print or save as PDF
-      </button>
+      {/* No scopeId: the invoice page IS the document and the dashboard
+          shell is already `print:hidden` — proven exact in drive 110. */}
+      <PrintReportButton />
 
       {invoice.status === "issued" && (
         <>
