@@ -11280,3 +11280,129 @@ What gates next on its own word: the INVOICING + PRINT programme
 Numbers at close: next migration 123; next § 158; next drive 110;
 vitest 1060; CHECK 89; door 22; allowlist 29; anon roster 12;
 durable baseline unchanged.
+
+## 158. INVOICING SLICE 1 BUILT — drive 110 GREEN — 2026-08-26 — DRAFTED, AWAITS CONFIRMATION
+
+The founder's word ("Build slice 1 on THIS word", all six D-decisions
+of gate 5f2820d taken as recommended) landed against the committed
+gate. The invoice domain, the template studio, the builder and the
+print path are live. Nothing here is law until the founder confirms
+THIS entry. Slices 3 (print pass) and 2 (send) each wait on their own
+word — sequence 1 → 3 → 2 as ruled.
+
+**Migration 123 (applied; six doors smoked live on apply).** The
+`invoice-assets` bucket (private, 2MB, PNG/JPEG/WebP — no SVG, a logo
+that can carry a script is not a logo; the org-first policy trio
+verbatim). Three tables on the house shapes: `invoice_templates`
+(admin-write, the org's billing identity in structure jsonb — B.3:
+there is nothing to join — plus a `numbering_next` counter taken FOR
+UPDATE at issue), `invoices` (draft|issued|void ONE-WAY door, the 037
+trigger family + transaction-local flag; bill_to and from_snapshot
+frozen at issue; number unique per org, minted at issue, drafts
+unnumbered per D.2; totals trigger-maintained on drafts and frozen at
+issue; issued/void rows undeletable — a numbered document is a
+record), `invoice_lines` (label/amount/currency SNAPSHOTTED from the
+fee line — no new money math anywhere; placement_id + fee_line_id ON
+DELETE SET NULL provenance; one currency per document, gate §C).
+`issue_invoice` SECURITY DEFINER (the counter lives on the
+admin-write template; the body re-states org + both capability
+halves), `void_invoice` SECURITY INVOKER (RLS does the work, the
+function only carries the flag). RLS: 050's split verbatim — SELECT
+can_read_fees(), writes can_write_mandates(); template writes
+is_org_admin() (D.1: NO new capability). Trail: CHECK 89 → 92, intent
+door 22 → 25 — the three invoice intents are fee-writer-gated
+(can_read_fees AND can_write_mandates) and land at 'fees' visibility,
+the ONE intent family not at 'org', which is the only reason amounts
+ride the detail (D.3). Allowlist stays 29; anon roster stays TWELVE
+(guards revoked at birth per the 121 lesson; advisor sweep clean
+after pinning search_path on the three trigger guards; the
+issue_invoice definer WARN is the intended door).
+
+**App.** Template studio at /app/settings/invoice-templates
+(org:manage route rule + nav child, Skills-pattern surface;
+create-then-attach logo through the session client; delete takes the
+logo through the storage API first — the call-audio hygiene). Builder
+at /app/placements/invoices (fees:read route rule — behind auth, NOT
+the proxy allowlist; nav child under Placements, which stays an exact
+match so the two never light together): pick client + template →
+draft opens on the client's EARNED, un-invoiced fee lines
+(candidate + mandate named per line) → lines land with snapshotted
+label/amount, labels editable, free lines, reorder → issue. A line on
+a live invoice shows "Billed" in the builder query — void releases it
+(B.1, a query rule, not a constraint). The invoice page IS the A4
+document (§133 one-renderer, .m-report-doc rebinding shared with the
+EI report); drafts watermark themselves unnumbered; openMailDraft
+pointer on issued invoices (subject + dates + total + payment
+instructions, ceiling-tested). Sample invoices labelled per the
+standing law; both dynamic routes handle sample ids (the routes.test
+rule). vitest 1060 → 1075; tsc/eslint/build green. Commits c08aba5 +
+1cb7b72 + 9a7e2db; deployed mandate-8ie0gucah.
+
+**Two defects found live in drive 110, both fixed in the drive:**
+
+*F-1 (latent, production, pre-existing).* The composite `_in_org` FKs
+(111/112) gave placements a SECOND path to candidates, projects and
+clients — and PostgREST refuses an ambiguous embed outright. Every
+bare embed on placements silently nulled: /app/placements showed the
+SAMPLE over a REAL placement, and the builder offered nothing. All
+three embed sites now name their FK
+(candidates!placements_candidate_id_fkey, …). LESSON, standing: any
+table that gains a composite `_in_org` twin breaks every bare embed
+pointing at it — name the FK in every new embed.
+
+*F-2 (mine, caught by the teardown).* ON DELETE SET NULL is an
+UPDATE, and it fires the frozen row's own immutability guard —
+deleting the drive's template was REFUSED by the issued invoice
+pointing at it, contradicting the ruled "an issued invoice outlives
+its template". Migration 124 (applied): both guards admit exactly ONE
+edit shape — a provenance FK going NULL with every other column
+byte-identical (invoices: template/client/created_by; lines:
+placement/fee_line). Proven live both ways: issued edits and
+provenance+payload smuggling still refused; the template then deleted
+through the product and the issued document rendered IDENTICALLY from
+its own snapshot.
+
+**Drive 110 — GREEN, live in prod.** Pins at start: invoices 0 /
+lines 0 / templates 0 / invoice-assets 0 / events 77. No placement
+existed, so a scratch placement + retained fee + two EARNED lines
+(15k + 30k USD) were minted by the standing recipe (candidate stage
+snapshotted first — the placement trigger moves it). (1) Template
+"Standard letterhead" with logo, full billing identity, prefix
+INV-2026-, studio previews "next INV-2026-0001"
+(invoices-110-template-created.png). (2) Draft for RBC Capital
+Markets: both earned lines pulled on, source lines flipped to
+"Billed" live, bill-to typed, totals US$45,000
+(invoices-110-draft-built.png). (3) ISSUED: INV-2026-0001 minted,
+issue 2026-08-26 / due 2026-09-25 (30d), snapshot frozen
+(invoices-110-issued-document.png); builder collapsed to
+print/mail/void — the UI immutability. (4) SQL immutability on the
+REAL row: edit and delete both refused (and re-proven after 124).
+(5) Print probe under emulated print media: ONLY the document
+renders, ink on paper — chrome, rail and builder all gone
+(invoices-110-print-probe.png). (6) Non-money-role: forged agent
+claims saw ZERO rows across invoices/lines/templates AND the
+fees-tier trail; the intent door refused the agent
+(insufficient_privilege) and issue_invoice refused the org-less
+principal. Trail proven: invoice_created + invoice_issued at 'fees'
+visibility, actor-stamped, amounts in detail. (7) The
+outlives-its-template proof (invoices-110-outlives-template.png).
+Teardown: template deleted BY THE PRODUCT (logo object went with it,
+bucket 0 on its own), invoice swept by the ruled flag path, scratch
+placement family by value, candidate stage restored to 'found', the
+teardown's own placement_deleted event swept by value, rate_limit
+swept whole per zero baseline; sessions signed out with BOTH stores
+cleared. Every pin fresh-statement: events 77, users 26 / agents 25 /
+auth 26, all four invoice surfaces durable ZERO — the baseline GAINS
+invoices 0 / invoice_lines 0 / invoice_templates 0 / invoice-assets
+objects 0 as members.
+
+**Deliberately not in this slice** (§C of the gate, unchanged):
+Stripe/payments parked LAST · credit notes · FX on the document ·
+portal visibility · agent involvement · editing issued invoices.
+Slice 2's day-one half (mailto pointer) shipped here; REAL send still
+gates behind the from-address and client-comms rulings.
+
+Numbers: next migration 125; next § 159; next drive 111; vitest
+1075; CHECK 92; door 25; allowlist 29; anon roster 12; durable
+baseline gains the four invoice zeros, all else unchanged
+(candidate_notes/client_notes stay pinned per-drive at 3/0).
