@@ -11693,3 +11693,141 @@ the D4 monitor) plus Stripe, which is parked last.
 Numbers at close: next migration 127; next § 163; next drive 113;
 vitest 1096; CHECK 93; door 26; allowlist 29; anon roster 12; durable
 baseline holds its five invoice zeros.
+
+## 163. THE CLIENT PORTAL — SLICE 1 — THE CLIENT INTERVIEW REACHES THE SIGNED-IN DOOR — DRAFTED 2026-08-26
+
+Gate `docs/superpowers/specs/2026-08-26-client-portal-gate.md` (commit
+20a01e5), confirmed by the founder's written word the same day: "I
+confirm the recommendations" — D1(b), D2(b), D3(c), D4(b), D5, D6(a),
+D7(b). This entry covers **slice 1 only**; slice 2 (invoice
+visibility) is unbuilt and gates on nothing further.
+
+**The finding the slice corrects.** §144 closed the client-interview
+slice with one answer door, the token path. What nobody noticed
+through §144 and §145 is that the signed-in door was not merely
+unable to answer — it could not SEE the question set at all.
+`client-interview-section.tsx` documented three doors rendering the
+approved set, read-only on two of them; doors one and two honoured
+that, and `/portal/mandates/[id]` passed neither prop while
+`portal_get_mandate` never selected from `client_interviews`. It
+survived because nothing failed: an absent optional prop renders an
+absent section, which looks exactly like a mandate with no approved
+set. The product consequence was the inverted one — the ANONYMOUS
+token holder could answer questions the named, active,
+share-verified, grant-checked client could not.
+
+**D2(b) needed no migration.** The gate asked for a real attribution
+FK on the answer row and the build found one already there:
+`feedback.submitted_by REFERENCES users(id)`, carrying
+`guard_author_in_org('submitted_by')` since 057, which 068 taught to
+admit an external principal of one of the org's clients. No new
+column and no new foreign key, so `embed-ambiguity.test.ts` and its
+AMBIGUOUS_PAIRS list are untouched by this migration — the one
+standing obligation that did NOT come due.
+
+**Migration 127, as built.** `feedback.answers_json` (nullable jsonb,
+no FK) keeps the question-id → answer map the client actually typed;
+D3(c) rules that re-answering REPLACES, and replacement without the
+original in front of the author is a footgun — a client returning to
+correct one answer would silently lose the other four, because
+`composeClientInterviewContent` is lossy by design and re-parsing it
+would be guesswork. A PARTIAL unique index on `(project_id,
+submitted_by) WHERE feedback_type='client_interview' AND submitted_by
+IS NOT NULL` bounds an attributed author to one answer per mandate;
+the token door is exempt BY CONSTRUCTION, since it writes
+submitted_by NULL and no unique index constrains a null — its answers
+still accumulate and 069 D5's anonymity is unchanged.
+`portal_get_mandate` gains two keys and nothing else: the APPROVED
+set (drafts excluded in the WHERE) and the caller's OWN standing
+answer, filtered on `auth.uid()` the way `portal_list_my_reviews`
+filters — client_hr sees the mandate's question set, not a
+colleague's answers to it. `record_portal_client_interview_answered`
+is the session counterpart of 117's token twin: it takes no token,
+runs under the CALLER's session so `can_view_portal_mandate()` and
+`auth.uid()` mean what they say, and is granted to `authenticated`
+rather than revoked from everyone. Two rate-limit buckets, caps as
+data, Tier 1 fail-closed because the door triggers a paid interpreter
+run.
+
+**Counts held deliberately, and verified after apply:** anon roster
+TWELVE (queried, exactly 12); agent allowlist 29; intent doors 26 —
+externals go through SECURITY DEFINER RPCs, never the staff ladder;
+activity CHECK 93, because a signed-in answer is the same FACT as a
+token answer and differs only in attribution, which the trail already
+carries in `actor_id`. `describe.test.ts` therefore never came due
+either.
+
+**One shared component, three doors.** `interviewAnswerToken` is
+replaced by `interviewAnswerDoor` — one prop carrying path, whether
+identity is already known, and the author's own previous answers. The
+token door passes identityKnown false and keeps its name field and
+its one-shot lock; the signed-in door passes true, is never asked for
+a name, and never locks itself because the author can come back; the
+founder preview passes nothing and stays read-only, which is the one
+thing that surface must never stop being.
+
+**New structural guard.** `portal-doors.test.ts` pins what each of
+the three doors passes and that only the anonymous one asks for a
+name. Mutation-tested three ways (drop clientInterview, drop the
+answer door, flip identityKnown) — all three fail it. A type could
+not have caught the original defect, because the prop is legitimately
+optional for the preview's sake. `vitest.config.ts` gains the
+`server-only` stub alias the eval harness has used since the router
+slice, so server helpers are unit-testable at all. vitest 1096 →
+1105; tsc / eslint / build green. Commit fcef82c; deployed
+mandate-64ecod6j1.
+
+**Drive 113 — GREEN, live in prod.** Fixtures: a scratch client, a
+mandate shared to it, an APPROVED three-question set, and TWO
+externals — Dana Hollis (client_hr) and Marcus Vane (hiring_manager,
+deliberately ungranted). (1) The signed-in door RENDERS the set — the
+residue closed, with no name field and SUBMIT disabled at zero
+answers. (2) Dana answered two questions; the row landed attributed
+to her, `answers_json` structured, content composed "From: Dana
+Hollis" from her PROFILE, the trail event actor-stamped with
+`door: 'portal'`, and the Feedback Interpreter ran. (3) A full page
+RELOAD re-prefilled from `portal_get_mandate`, proving the prefill is
+the database's and not React's. (4) Dana added the third answer and
+UPDATED: still ONE row, the SAME id, now holding all three — the
+footgun D3(c) would otherwise have had. (5) The ungranted Marcus got
+404 on the direct URL and 403 from a forged console POST, refused
+before any write. (6) Granted, his answer landed as a SECOND row —
+per-person, not per-mandate — and his body's claim of
+`hm_label: 'Dana Hollis'` was ignored: both the row and the composed
+text say Marcus Vane. Two named clients now disagree about remote
+working, which is exactly the signal D3(c) argued the interpreter
+should see. (7) A stale interview id 409s; a body answering nothing
+in the set 400s. (8) The fence table, probed at the definer level:
+active external in; SUSPENDED external, a platform AGENT, and the
+FOUNDER all refused at all three of can_view / get_mandate / answer —
+069's "every branch fails closed", now including the two principals
+this slice newly exposes a surface to.
+
+**Teardown exact.** Trail rows swept by project, actor, target and
+client before the domain rows; then feedback → grants → shares →
+interviews → project → users (public before auth) → client, an
+ordering the FKs dictated and which cost three refusals to find
+(`feedback_submitted_by_fkey` has no SET NULL, so feedback outranks
+its author). Probe function dropped. inference_runs and rate_limit
+swept whole per their zero baselines. All pins fresh-statement: users
+26 / agents 25 / auth 26, events 77, projects 2, clients 2,
+candidates 1, feedback 3, client_interviews 0, mandate_shares 1,
+mandate_grants 0, inference_runs 0, rate_limit 0, hm_reviews 4,
+job_specs 1, skills 5, anon-executable 12.
+
+**A note on the drive's record:** the browser evidence is the
+accessibility snapshots, not screenshots — the MCP's relative save
+path did not persist PNGs to either repo. The snapshots are the more
+precise artefact and are what this entry cites.
+
+Numbers: next migration 128; next § 164; next drive 114; vitest 1105;
+CHECK 93; door 26; allowlist 29; anon roster 12; durable baseline
+gains nothing — slice 1 adds a column and an index to an existing
+table and no new countable surface.
+
+**Slice 2 (invoice visibility) is NOT built.** D4(b)/D5/D6(a) are
+ruled and waiting: issued and void only, lines cross, the existing
+`PrintReportButton` path, `client_admin` only, no write path of any
+kind. It needs migration 128 and its own drive.
+
+DRAFTED — awaiting the founder's word. No completion declared.
