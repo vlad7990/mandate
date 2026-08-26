@@ -718,6 +718,36 @@ export function describeActivity(event: ActivityEventRow): string {
         : `Cleared ${capability}'s model override — the ruled map governs`;
     }
 
+    // 129 — two-person approval for admin grants. The trail has to name
+    // BOTH people: "who proposed" and "who agreed" are the whole point,
+    // and a line that says only one of them would be evidence of nothing.
+    // The actor is stamped on the row; the other party is in the detail.
+    case "admin_grant_proposed": {
+      const target = str(d, "target");
+      const kind = str(d, "kind") === "invitation" ? "invite" : "promote";
+      return target
+        ? `Proposed to ${kind} ${target} to admin — needs a second admin`
+        : "Proposed an admin grant — needs a second admin";
+    }
+    case "admin_grant_approved": {
+      const target = str(d, "target");
+      return target
+        ? `Approved admin for ${target}`
+        : "Approved an admin grant";
+    }
+    case "admin_grant_rejected": {
+      // One event type, two facts: another admin vetoed it, or the
+      // proposer thought better of it. The trail should not blur them.
+      const target = str(d, "target");
+      const withdrawn = str(d, "decision") === "withdrawn";
+      const verb = withdrawn ? "Withdrew their own" : "Declined the";
+      return target
+        ? `${verb} admin proposal for ${target}`
+        : `${verb} admin proposal`;
+    }
+    case "admin_grant_expired":
+      return "An admin proposal expired without a second approval";
+
     default: {
       // A row written by a migration this build predates. Render it rather
       // than crash the feed — an audit trail that goes blank on an

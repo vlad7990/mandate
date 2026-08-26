@@ -434,11 +434,11 @@ describe("the vocabulary", () => {
    * 117 adds the three client-interview human acts + the sessionless
    * answered event = 87; 120 adds the model registry's two admin
    * acts = 89; 123 adds the invoice lifecycle's three human acts = 92;
-   * 126 adds the send = 93.
+   * 126 adds the send = 93; 129 adds the four admin-grant events = 97.
    */
   it("mirrors the live CHECK's ninety-three event types", () => {
-    expect(ACTIVITY_EVENT_TYPES).toHaveLength(93);
-    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(93);
+    expect(ACTIVITY_EVENT_TYPES).toHaveLength(97);
+    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(97);
   });
 
   it("describes the OKR acts with titles and outcomes, never amounts", () => {

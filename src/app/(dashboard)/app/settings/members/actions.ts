@@ -6,10 +6,13 @@ import { requireActionContext } from "@/lib/auth/access";
 import { isExternalRole, parseRole } from "@/lib/auth/roles";
 import { memberStatusRefusal } from "@/lib/members/status-rules";
 import { runAction } from "@/lib/actions/run";
-import type { ActionResult } from "@/lib/actions/result";
+import { ActionFailure, type ActionResult } from "@/lib/actions/result";
 
 /** Sentence subject for a failure this file did not author. See `runAction`. */
 const SUBJECT = "The role change";
+
+/** What a role write actually did — "pending" means it awaits a second admin. */
+export type RoleWriteOutcome = "applied" | "pending";
 
 /**
  * Changing a colleague's role.
@@ -28,12 +31,14 @@ const SUBJECT = "The role change";
  *      *which columns* an update may touch — without it an admin inside the
  *      policy could set `is_founder = true` on themselves.
  *
- * Both migration 046.
+ * Both migration 046. 129 adds a fourth: granting `admin` goes through
+ * `propose_admin_grant`, which applies it outright while an org has
+ * fewer than two admins and otherwise parks it for a second one.
  */
 export async function setMemberRoleAction(
   targetUserId: string,
   nextRole: string
-): Promise<ActionResult> {
+): Promise<ActionResult<RoleWriteOutcome>> {
   return runAction(SUBJECT, async () => {
     const actor = await requireActionContext("org:manage");
 
@@ -87,7 +92,28 @@ export async function setMemberRoleAction(
     }
 
     if (parseRole(target.role) === role) {
-      return; // Nothing to do; don't spend a write or a revalidation on it.
+      return "applied"; // Nothing to do; don't spend a write or a revalidation.
+    }
+
+    // 129 — granting admin takes two people. The RPC decides whether that
+    // applies: below two active admins there is nobody to ask, so it
+    // grants outright and says so. We route through it rather than
+    // testing the threshold here, because the same threshold is enforced
+    // by the trigger and a second copy of the rule would be a second
+    // thing to drift.
+    if (role === "admin") {
+      const { data, error } = await supabase.rpc("propose_admin_grant", {
+        p_target_user_id: targetUserId,
+      });
+      if (error) throw new Error(error.message);
+      revalidatePath("/app/settings/members");
+      revalidatePath("/app/settings");
+      // "Awaiting a second admin" is an OUTCOME, not a failure — it rides
+      // the success channel so the screen can say what happened instead
+      // of showing a red toast for a thing that worked.
+      return (data as { outcome?: string } | null)?.outcome === "pending"
+        ? "pending"
+        : "applied";
     }
 
     // `.select()` on the update is what turns a policy denial into something
@@ -115,6 +141,7 @@ export async function setMemberRoleAction(
 
     revalidatePath("/app/settings/members");
     revalidatePath("/app/settings");
+    return "applied";
   });
 }
 
@@ -232,6 +259,27 @@ export async function issueStaffInvitationAction(input: {
 
     const supabase = await createServerSupabaseClient();
 
+    // 129 — an admin-role invitation is an admin grant with a longer
+    // fuse, so it takes the same two people. `propose_admin_grant`
+    // parks it; the invitation itself is issued by `approve_admin_grant`
+    // once a second admin agrees, which is why nothing is inserted here.
+    // Below two admins the RPC says 'granted' and the normal path runs.
+    if (role === "admin") {
+      const { data: proposal, error: proposeError } = await supabase.rpc(
+        "propose_admin_grant",
+        { p_target_email: email, p_full_name: fullName }
+      );
+      if (proposeError) throw new Error(proposeError.message);
+      if ((proposal as { outcome?: string } | null)?.outcome === "pending") {
+        // A pending invitation has no link to hand over yet — the link is
+        // minted at approval. Saying so is better than returning a URL
+        // that does not exist.
+        throw new ActionFailure(
+          "Proposed. A second admin has to approve before the invitation is sent."
+        );
+      }
+    }
+
     // An address that already holds an ACTIVE seat in this org needs no
     // invitation; said in words before the unique index says it in codes.
     const { data: existing } = await supabase
@@ -314,5 +362,38 @@ export async function revokeStaffInvitationAction(
     }
 
     revalidatePath("/app/settings/members");
+  });
+}
+
+/**
+ * Deciding a parked admin grant (129).
+ *
+ * Approve, decline, or withdraw your own proposal. Every rule that
+ * matters lives in the RPC and, beneath it, in the trigger: the
+ * approver may not be the proposer, only the proposer may withdraw, an
+ * expired request cannot be approved, and a grant that reaches
+ * `users.role` any other way is refused outright. This action is the
+ * doorway, not the doorman.
+ */
+export async function decideAdminGrantAction(
+  requestId: string,
+  decision: "approve" | "reject" | "withdraw"
+): Promise<ActionResult> {
+  return runAction("The approval", async () => {
+    await requireActionContext("org:manage");
+    const supabase = await createServerSupabaseClient();
+
+    const { error } =
+      decision === "approve"
+        ? await supabase.rpc("approve_admin_grant", { p_request_id: requestId })
+        : await supabase.rpc("decide_admin_grant", {
+            p_request_id: requestId,
+            p_decision: decision === "reject" ? "rejected" : "withdrawn",
+          });
+
+    if (error) throw new Error(error.message);
+
+    revalidatePath("/app/settings/members");
+    revalidatePath("/app/settings");
   });
 }

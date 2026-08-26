@@ -7,6 +7,7 @@ import { MastHead } from "@/components/ui/mast-head";
 import { RolePicker } from "./role-picker";
 import { MemberStatusButtons } from "./member-status-buttons";
 import { StaffInvitePanel, type OpenInvitationRow } from "./invite-panel";
+import { PendingGrantsPanel, type PendingGrantRow } from "./pending-grants-panel";
 import {
   CAPABILITIES,
   CAPABILITY_LABELS,
@@ -89,6 +90,50 @@ export default async function MembersPage() {
     .gt("expires_at", new Date().toISOString())
     .order("created_at", { ascending: false });
   const openInvitations = (invitationData ?? []) as OpenInvitationRow[];
+
+  // 129 — admin grants parked for a second admin. The FK is NAMED: this
+  // table holds THREE foreign keys to `users` (target, proposer,
+  // decider), so a bare embed is ambiguous and PostgREST refuses the
+  // whole query rather than guessing — the standing lesson from 111/112,
+  // and the reason embed-ambiguity.test.ts lists this pair.
+  const { data: grantData } = await supabase
+    .from("admin_grant_requests")
+    .select(
+      "id, kind, target_email, target_full_name, expires_at, proposed_by, " +
+        "target:users!admin_grant_requests_target_user_id_fkey(full_name, email), " +
+        "proposer:users!admin_grant_requests_proposed_by_fkey(full_name, email)"
+    )
+    .eq("organization_id", access.organizationId ?? "")
+    .eq("status", "pending")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false });
+
+  type GrantJoin = { full_name: string | null; email: string } | null;
+  const pendingGrants: PendingGrantRow[] = (
+    (grantData ?? []) as unknown as Array<{
+      id: string;
+      kind: "promotion" | "invitation";
+      target_email: string | null;
+      target_full_name: string | null;
+      expires_at: string;
+      proposed_by: string;
+      target: GrantJoin;
+      proposer: GrantJoin;
+    }>
+  ).map((g) => ({
+    id: g.id,
+    kind: g.kind,
+    target:
+      g.target?.full_name?.trim() ||
+      g.target?.email ||
+      g.target_full_name?.trim() ||
+      g.target_email ||
+      "Unknown",
+    proposedByLabel:
+      g.proposer?.full_name?.trim() || g.proposer?.email || "another admin",
+    mine: g.proposed_by === access.userId,
+    expiresAt: g.expires_at,
+  }));
 
   return (
     <PageShell className="space-y-6">
@@ -250,6 +295,11 @@ export default async function MembersPage() {
         />
         <StaffInvitePanel invitations={openInvitations} />
       </section>
+
+      {/* Placed directly under the invite panel: both are "people who are
+          not yet what they will be", and the approver needs to meet this
+          list without hunting for it. */}
+      <PendingGrantsPanel rows={pendingGrants} />
 
       <section className="space-y-3">
         <MastHead tone="neutral" label="WHAT EACH ROLE CARRIES" />

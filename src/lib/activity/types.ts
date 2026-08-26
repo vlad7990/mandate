@@ -188,6 +188,14 @@ export const ACTIVITY_EVENT_TYPES = [
   "invoice_voided",
   // 126: the invoice left the building. Same gate, same 'fees' tier.
   "invoice_sent",
+  // 129 — two-person approval for admin grants. Written by SECURITY
+  // DEFINER entry points under the acting admin's session, never by the
+  // intent door, so these are deliberately NOT app-recordable below.
+  // They ride 'admin' visibility with the other member events.
+  "admin_grant_proposed",
+  "admin_grant_approved",
+  "admin_grant_rejected",
+  "admin_grant_expired",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -330,6 +338,11 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   member_status_changed: "members",
   member_founder_changed: "members",
   member_org_changed: "members",
+
+  admin_grant_proposed: "members",
+  admin_grant_approved: "members",
+  admin_grant_rejected: "members",
+  admin_grant_expired: "members",
 
   external_invited: "client",
   external_invitation_revoked: "client",
