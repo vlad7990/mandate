@@ -11080,3 +11080,37 @@ behind it, never before. Numbers: next migration 122; next § 154;
 next drive 108; vitest 1044; CHECK 89; door 22; allowlist 29;
 anon roster 12; durable baseline gains model_providers 1 /
 provider_models 3 / capability_assignments 0.
+
+## 154. §153 CONFIRMED — SLICE 4 CLOSES — THE ROUTER PROGRAMME IS COMPLETE — 2026-08-25
+
+The founder's written word ("confirmed") lands against §153 as
+drafted. SLICE 4 IS CLOSED and the LLM ROUTER PROGRAMME IS
+COMPLETE: all four slices of the ruled review (8649cdd) are law —
+§147 the seam + map + inference_runs, §149 copilot conversation
+caching, §152 evals + the ruled flips, and now §153 the Part R
+model registry: migrations 120 + 121, the structural activation
+gate (benchmarking → active-with-evidence → assignable; the eval
+harness's pass is the door), the override-wins/map-governs read
+path with its 60s TTL and code-map fallback, `models:write` and
+the /app/settings/models console, CHECK 89 / door 22, and drive
+107's live round-trip proof. The six J-decisions of gate 1885da9
+are ruled as built: two-intent trail semantics with detail.kind;
+zero-seed assignments; models:write admin-only over the whole
+prefix; adapter_kind admits only 'anthropic' until an adapter
+ships; pricing columns informational; the thinking rule.
+
+What gates next, each on its own word: ESCALATION PAIRS (Part G,
+per O.5 — parse_cv Economy→Standard, generate_evaluation
+Standard→Premium, deterministic signals only, schema_failed live
+to build on). Standing router residue unchanged: parse_cv
+benchmark waits on founder CVs in evals/fixtures/cvs/; three Haiku
+flips' first prod rows arrive in normal use; judge debts
+(max_tokens 600 + fixture digest); Q4 cross-provider spike
+deferred until in-family savings are exhausted — a second
+provider is a migration that widens adapter_kind WITH an adapter
+behind it.
+
+Numbers at close: next migration 122; next § 155; next drive 108;
+vitest 1044; CHECK 89; door 22; allowlist 29; anon roster 12;
+durable baseline holds its registry gains (model_providers 1 /
+provider_models 3 / capability_assignments 0).
