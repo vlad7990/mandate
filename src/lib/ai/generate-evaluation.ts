@@ -99,7 +99,7 @@ export async function generateCandidateEvaluation(
   });
 
   const response = await runInference("generate_evaluation", {
-    max_tokens: 3500,
+    max_tokens: 4500,
     system,
     messages: [{ role: "user", content: userPrompt }],
     output_config: {

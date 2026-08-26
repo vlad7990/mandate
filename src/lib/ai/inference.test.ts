@@ -64,10 +64,38 @@ describe("the capability map", () => {
     expect(Object.keys(CAPABILITY_MODEL)).toHaveLength(35);
   });
 
-  it("pins every capability to claude-sonnet-4-6 this slice — a tier flip is slice 3's gate, and this test is the tripwire", () => {
+  it("pins the RULED mapping (§150 flip word) — any edit here without a gate behind it is the defect this tripwire exists to catch", () => {
+    const flipped: Record<string, string> = {
+      generate_sourcing: "claude-haiku-4-5",
+      run_relationship: "claude-haiku-4-5",
+      run_target_companies: "claude-haiku-4-5",
+      generate_evaluation: "claude-sonnet-5",
+    };
     for (const [capability, model] of Object.entries(CAPABILITY_MODEL)) {
-      expect(model, capability).toBe("claude-sonnet-4-6");
+      expect(model, capability).toBe(
+        flipped[capability] ?? "claude-sonnet-4-6"
+      );
     }
+  });
+
+  it("sends the benchmarked thinking-off variant for generate_evaluation — bare Sonnet 5 runs adaptive, which truncated", async () => {
+    mocks.create.mockResolvedValue({
+      content: [{ type: "text", text: "{}" }],
+      stop_reason: "end_turn",
+      usage: {},
+    });
+    await runInference("generate_evaluation", { max_tokens: 10, messages: [] });
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "claude-sonnet-5",
+        thinking: { type: "disabled" },
+      })
+    );
+    mocks.create.mockClear();
+    await runInference("run_target_companies", { max_tokens: 10, messages: [] });
+    const sent = mocks.create.mock.calls[0][0];
+    expect(sent.model).toBe("claude-haiku-4-5");
+    expect(sent).not.toHaveProperty("thinking");
   });
 });
 

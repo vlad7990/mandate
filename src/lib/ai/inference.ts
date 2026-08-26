@@ -5,6 +5,7 @@ import { getAnthropic } from "@/lib/anthropic";
 import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import {
   CACHED_CONVERSATION_CAPABILITIES,
+  CAPABILITY_THINKING,
   INFERENCE_PROVIDER,
   modelForCapability,
   type Capability,
@@ -189,12 +190,21 @@ function resolveOverrides(
         "production model choice lives in the capability map alone."
     );
   }
-  if (!EVAL_MODE()) return { model: modelForCapability(capability), extra: {} };
+  // The map's own thinking config is PRODUCTION behavior (§150's
+  // flip word: generate_evaluation = Sonnet 5 thinking-off).
+  const mapThinking = CAPABILITY_THINKING[capability];
+  if (!EVAL_MODE()) {
+    return {
+      model: modelForCapability(capability),
+      extra: mapThinking ? { thinking: mapThinking } : {},
+    };
+  }
   const model =
     opts?.modelOverride ??
     evalOverrides?.modelOverride ??
     modelForCapability(capability);
-  const thinking = opts?.thinkingOverride ?? evalOverrides?.thinkingOverride;
+  const thinking =
+    opts?.thinkingOverride ?? evalOverrides?.thinkingOverride ?? mapThinking;
   return { model, extra: thinking ? { thinking } : {} };
 }
 

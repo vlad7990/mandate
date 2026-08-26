@@ -1,12 +1,17 @@
 /**
  * The capability→model map — the ONE place a model is chosen.
  *
- * Slice 1 of the LLM router (gate fda4764): every entry is
- * claude-sonnet-4-6, deliberately — this slice moves WHERE the model
- * is named, never WHICH model runs. Tier flips (Haiku economy, Sonnet
- * 5 benchmarks) are slice 3's business, behind their own gate and an
- * eval harness; a map edit without an eval is how a cheaper model
- * silently degrades a capability.
+ * Slice 3 flips (§150's table, the founder's word 2026-08-25,
+ * benchmark evals/results/2026-08-25.md): generate_sourcing,
+ * run_target_companies, run_relationship → claude-haiku-4-5 (rubric
+ * 4–5 at ⅓ price); generate_evaluation → claude-sonnet-5 with
+ * thinking DISABLED (the benchmark's winning variant — bare Sonnet 5
+ * runs adaptive by default, which truncated 5/8 cells inside the
+ * seams' max_tokens; see CAPABILITY_THINKING). run_search_health
+ * HELD on sonnet-4-6 (Haiku failed 1/2 deterministically). Every
+ * other entry stays claude-sonnet-4-6. A map edit without an eval
+ * behind it is how a cheaper model silently degrades a capability —
+ * the tripwire test pins THIS ruled mapping.
  *
  * One slug per seam. The two dual-call seams (generate_sourcing,
  * sourcing_search) record both their calls under one slug — the slug
@@ -22,13 +27,13 @@ export const CAPABILITY_MODEL = {
   desk_digest: "claude-sonnet-4-6",
   generate_client_interview: "claude-sonnet-4-6",
   generate_comparison: "claude-sonnet-4-6",
-  generate_evaluation: "claude-sonnet-4-6",
+  generate_evaluation: "claude-sonnet-5",
   generate_executive_interview_plan: "claude-sonnet-4-6",
   generate_executive_success_profile: "claude-sonnet-4-6",
   generate_interview_plan: "claude-sonnet-4-6",
   generate_job_spec: "claude-sonnet-4-6",
   generate_shortlist_report: "claude-sonnet-4-6",
-  generate_sourcing: "claude-sonnet-4-6",
+  generate_sourcing: "claude-haiku-4-5",
   interpret_feedback: "claude-sonnet-4-6",
   parse_cv: "claude-sonnet-4-6",
   run_candidate_research: "claude-sonnet-4-6",
@@ -44,10 +49,10 @@ export const CAPABILITY_MODEL = {
   run_positioning: "claude-sonnet-4-6",
   run_prescreen: "claude-sonnet-4-6",
   run_psychology: "claude-sonnet-4-6",
-  run_relationship: "claude-sonnet-4-6",
+  run_relationship: "claude-haiku-4-5",
   run_role_analysis: "claude-sonnet-4-6",
   run_search_health: "claude-sonnet-4-6",
-  run_target_companies: "claude-sonnet-4-6",
+  run_target_companies: "claude-haiku-4-5",
   run_triangulation: "claude-sonnet-4-6",
   run_weekly_report: "claude-sonnet-4-6",
   sourcing_search: "claude-sonnet-4-6",
@@ -72,3 +77,16 @@ export const CACHED_CONVERSATION_CAPABILITIES: ReadonlySet<Capability> =
 export function modelForCapability(capability: Capability): string {
   return CAPABILITY_MODEL[capability];
 }
+
+/**
+ * Per-capability thinking config the seam sends in PRODUCTION.
+ * generate_evaluation runs Sonnet 5 with thinking disabled — the
+ * benchmarked variant; omitting the param would run adaptive, which
+ * truncated inside the seam's max_tokens. Anything not named here
+ * sends no thinking param (today's behavior on every model).
+ */
+export const CAPABILITY_THINKING: Partial<
+  Record<Capability, { type: "adaptive" | "disabled" }>
+> = {
+  generate_evaluation: { type: "disabled" },
+};
