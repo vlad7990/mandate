@@ -12347,3 +12347,32 @@ positioning slice, needing its own gate. Not started.**
 Numbers at close: next migration 129; next § 171; next drive 117;
 vitest 1110; CHECK 93; door 26; allowlist 29; anon roster 12; durable
 baseline unchanged.
+
+## 171. THE EXECUTIVE INTELLIGENCE ADD-ON SET, RULED AND CORRECTED — 2026-08-26
+
+The founder's word closes the one question §169 left open and §170
+carried as residue: **Company Intelligence, Culture and Client
+Psychology ARE gated behind the Executive Intelligence add-on.**
+
+Marked `addOn: true`. Because §169 made `ADDON_AGENT_COUNT` derived
+rather than typed, `/platform` corrected itself from "2 of the 25" to
+**"5 of the 25"** with no sentence rewritten — which is the entire
+argument for deriving it, demonstrated one section later. Eight add-on
+markers now render across the phase grid.
+
+This was a **pricing claim, not cosmetics**: the page had been
+understating what the Executive Intelligence add-on buys by three
+agents, on the one surface a prospect reads before asking what it
+costs. It was found only because §169's rewrite forced the question of
+which agents were gated, and the previous answer ("three") turned out
+to name three agents that did not exist.
+
+Verified in prod (mandate-kl7v80767, `--force`): `/platform` reads 5 of
+25, the homepage reads 25, the badges render. vitest 1110; tsc /
+eslint / build green. No data touched, so no teardown.
+
+Numbers: next migration 129; next § 172; next drive 117; vitest 1110;
+CHECK 93; door 26; allowlist 29; anon roster 12; durable baseline
+unchanged.
+
+DRAFTED — awaiting the founder's word. No completion declared.
