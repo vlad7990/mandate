@@ -12376,3 +12376,32 @@ CHECK 93; door 26; allowlist 29; anon roster 12; durable baseline
 unchanged.
 
 DRAFTED — awaiting the founder's word. No completion declared.
+
+## 172. §171 CONFIRMED — THE HOMEPAGE THREAD IS CLOSED — 2026-08-26
+
+The founder's written word ("I confirm §171") lands against §171 as
+drafted. **Company Intelligence, Culture and Client Psychology are
+Executive Intelligence add-ons, and `/platform` says so: 5 of the 25.**
+
+With this the homepage thread opened by the founder's question — does
+the site reflect what has been built — is closed end to end: §169 built
+it, §170 made it law, §171 corrected the one claim §169 could not
+answer without a ruling, and §172 closes that. The last founder-owned
+residue from the thread is struck.
+
+**What the thread leaves behind, beyond its diff:** a guard at the
+marketing/platform seam (`agent-roster.test.ts`), two derived counts
+that cannot be retyped (`AGENT_COUNT`, `ADDON_AGENT_COUNT`), and the
+standing lesson that **a single source of truth only ends drift below
+it** — ask what watches the seam above.
+
+**Still open, and deliberately not started:** the positioning slice.
+The site is now accurate on capability and empty on proof and fit — no
+case study, customer, outcome number, named buyer, switching story or
+guarantee — and that cannot honestly be closed while there are no
+clients to point at. It needs its own gate and, more than that, it
+needs a first client. Recorded as judgment, not as a task.
+
+Numbers at close: next migration 129; next § 173; next drive 117;
+vitest 1110; CHECK 93; door 26; allowlist 29; anon roster 12; durable
+baseline unchanged.
