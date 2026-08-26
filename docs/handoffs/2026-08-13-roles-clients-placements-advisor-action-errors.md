@@ -11555,3 +11555,94 @@ path honestly dark.
 Numbers: next migration 126; next § 161; next drive 112; vitest 1082;
 CHECK 92; door 25; allowlist 29; anon roster 12 (now exactly the ruled
 twelve); durable baseline unchanged.
+
+## 161. INVOICING SLICE 2 BUILT — SEND — drive 112 GREEN — 2026-08-26 — DRAFTED, AWAITS CONFIRMATION
+
+The founder's word ("I confirm §160 — now build slice 2 send") lands
+against the gate drafted inside §160, whose Part D carried a
+recommendation for each of the five decisions; those recommendations
+are taken as the ruling and are recorded as such below. Nothing here
+is law until the founder confirms THIS entry. **THE INVOICING + PRINT
+PROGRAMME IS NOW BUILT END TO END** — slice 1 (domain, builder,
+print), slice 3 (the print pass), slice 2 (send).
+
+**Migration 126 (applied).** `invoice_deliveries`: one row per send,
+to/from/subject SNAPSHOTTED like everything else in this family. RLS
+is the fee split with NO user UPDATE and NO user DELETE — a delivery
+is a record; the only writer after insert is the webhook's definer,
+and the only deletion is the invoice cascade. The delivery resolver
+now reaches invoices: `candidate_outreach` is tried first and still
+wins, an invoice delivery is looked up only when no outreach row owns
+the message id, and suppression behaves identically on both sides
+(a bounced client address damages the sending domain exactly as much
+as a bounced candidate one). Trail CHECK 92 → 93, intent door 25 → 26;
+`invoice_sent` joins the fee-writer gate at 'fees' visibility. The
+anon roster stays EXACTLY TWELVE — 126 re-declares an existing member
+(`record_email_delivery_event`), it does not add one.
+
+**The five rulings, as built.** D.1 — the from identity lives on the
+TEMPLATE, not in env: `RESEND_FROM` is the product writing to its own
+users, an invoice is the agency billing its client. `lib/email/send.ts`
+gained a per-message `from` override, and `escapeHtml` split into
+`lib/email/escape.ts` so the renderer stays client-safe. D.2 — a
+SEPARATE ladder (`lib/invoices/send-policy.ts`), not a flag on 099's:
+the candidate caps exist because volume is the harm to someone who
+never asked to be contacted, and a client owed three invoices should
+receive three; suppression DOES cross over. A test walks the entire
+ladder and pins that NO branch can refuse for volume. D.3 — the email
+carries the invoice, not a second layout: no server-side PDF, because
+§133 put the renderer in the browser so an export cannot disagree with
+the screen. The email renders the SAME frozen row in a different
+medium with no arithmetic at all — pinned by a test that feeds it a
+total disagreeing with its own lines and asserts the STORED figure
+wins. D.4 — every send is kept. D.5 — the bounce path is wired and
+dark: `RESEND_WEBHOOK_SECRET` is still unprovisioned and the route
+already refuses without it, so nothing arrives today and nothing needs
+a migration when it does.
+
+A refused send still writes a `failed` delivery row: "we tried and it
+bounced" is a different fact from "nobody ever sent this". The trail
+event is written ONLY on success. vitest 1082 → 1096; tsc / eslint /
+build green. Commit 0f64724; deployed mandate-6cmz93wxf (`--force`,
+per §160's CSS-cache lesson).
+
+**Drive 112 — GREEN, live in prod, with a REAL email sent.**
+(1) HONEST ABSENCE proven first: a template with no billing address
+issued D112-0001, and the Send panel rendered with the explanation, NO
+send button, and the mailto fallback still offered. (2) The
+no-double-billing rule stopped the drive itself — the second invoice
+had no line to add because the first had claimed it; voiding
+D112-0001 released it, re-proving that path from the product. (3) A
+template WITH `billing@getmandate.io` issued D112S-0001 and SENT it
+live through Resend to the founder's own inbox: delivery row `sent`
+with a provider message id, from/to/subject snapshotted, recipient
+resolved from the client's own contact list. (4) `invoice_sent`
+landed on the trail at 'fees' visibility, actor-stamped, carrying
+number + recipient + total. (5) The AGENT fence held on the new
+intent (`insufficient_privilege`) and agents saw ZERO delivery rows.
+(6) D.5's resolver exercised directly: it matched the INVOICE
+delivery by message id, flipped it to `bounced`, and wrote the
+suppression. (7) The suppression refusal then fired in the UI on a
+re-send attempt, with its exact sentence — and BEFORE any provider
+call, so no second delivery row was written (deliveries stayed 1,
+sent events 1).
+
+**Teardown exact.** Invoices swept by the ruled flag path (lines and
+deliveries by cascade), templates, the scratch placement family and
+contact, the probe suppression, the drive's trail rows, candidate
+stage restored to 'found', rate_limit swept whole. All pins
+fresh-statement: events 77, users 26 / agents 25 / auth 26, clients 2,
+candidates 1 at 'found', skills 5, ops_heartbeats 1, inference_runs 0,
+suppressions 0, client_contacts 0, and all FIVE invoice surfaces at
+durable ZERO. anon-executable 12.
+
+**Founder-owned residue for send, surfaced once:** the drive sent from
+`billing@getmandate.io` because that domain is already verified — if
+invoices should come from the agency's own domain, that domain needs
+verifying with Resend and the address setting on each template.
+`RESEND_WEBHOOK_SECRET` still unprovisioned, so delivery feedback
+stays dark until it lands.
+
+Numbers: next migration 127; next § 162; next drive 113; vitest 1096;
+CHECK 93; door 26; allowlist 29; anon roster 12; durable baseline
+gains invoice_deliveries 0.
