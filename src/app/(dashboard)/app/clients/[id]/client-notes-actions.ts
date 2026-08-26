@@ -322,13 +322,26 @@ export async function deleteClientNoteAction(formData: FormData): Promise<Action
     if (!noteId || !clientId) throw new Error("Missing note.");
 
     const supabase = await createServerSupabaseClient();
-    const { error } = await supabase
+    const { data: gone, error } = await supabase
       .from("client_notes")
       .delete()
       .eq("id", noteId)
-      .eq("client_id", clientId);
+      .eq("client_id", clientId)
+      .select("audio_path");
 
     if (error) throw new Error(`Could not remove the note: ${error.message}`);
+
+    // The recording goes with its note (122) — API-only, see
+    // deleteNoteAction's twin for the reasoning.
+    const audioPath = gone?.[0]?.audio_path;
+    if (audioPath) {
+      const { error: rmErr } = await supabase.storage
+        .from("call-audio")
+        .remove([audioPath]);
+      if (rmErr) {
+        console.error("[calls] orphaned recording not removed:", rmErr.message);
+      }
+    }
 
     revalidate(clientId);
   });

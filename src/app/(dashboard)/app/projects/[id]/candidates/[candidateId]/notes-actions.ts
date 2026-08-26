@@ -324,9 +324,9 @@ export async function deleteNoteAction(
 
     const { data: note, error: readErr } = await supabase
       .from("candidate_notes")
-      .select("project_id, candidate_id")
+      .select("project_id, candidate_id, audio_path")
       .eq("id", noteId)
-      .single<{ project_id: string; candidate_id: string }>();
+      .single<{ project_id: string; candidate_id: string; audio_path: string | null }>();
 
     if (readErr || !note) throw new Error("Note not found.");
     if (note.project_id !== projectId) {
@@ -340,6 +340,20 @@ export async function deleteNoteAction(
 
     if (error) {
       throw new Error(`Failed to delete note: ${error.message}`);
+    }
+
+    // The recording goes with its note (122) — through the storage API
+    // under the session's own org delete policy; SQL deletes on
+    // storage.objects are trigger-blocked by design. A failed removal
+    // is logged, not surfaced: the note the reader asked to delete IS
+    // deleted.
+    if (note.audio_path) {
+      const { error: rmErr } = await supabase.storage
+        .from("call-audio")
+        .remove([note.audio_path]);
+      if (rmErr) {
+        console.error("[calls] orphaned recording not removed:", rmErr.message);
+      }
     }
 
     revalidatePath(`/app/projects/${projectId}/candidates/${note.candidate_id}`);
