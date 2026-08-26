@@ -9,9 +9,13 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+      // The seams import "server-only" (a Next.js guard package);
+      // the harness runs them in plain node, so stub it.
+      "server-only": path.resolve(__dirname, "evals/server-only-stub.ts"),
     },
   },
   test: {
+    setupFiles: ["evals/setup.ts"],
     include: ["evals/**/*.eval.ts"],
     environment: "node",
     fileParallelism: false,
