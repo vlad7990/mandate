@@ -11436,3 +11436,122 @@ BUILD waits on those rulings.
 Numbers at close: next migration 125; next § 160; next drive 111;
 vitest 1075; CHECK 92; door 25; allowlist 29; anon roster 12;
 durable baseline holds its four invoice zeros.
+
+## 160. EMBED SWEEP + GRANTS PASS COMPLETED + SLICE 3 (THE PRINT PASS) — drive 111 GREEN — 2026-08-26 — DRAFTED, AWAITS CONFIRMATION
+
+The founder's word ("resolve everything we need from above list")
+carried §159's authorisation into three pieces of work. Nothing here
+is law until the founder confirms THIS entry.
+
+**1. The embed sweep — the F-1 class, looked for rather than
+stumbled on.** Drive 110 found ONE ambiguous embed by accident. This
+enumerated the whole class: 88 table pairs carry more than one FK
+path, because 111/112 gave most domain tables a composite `_in_org`
+twin beside the plain FK. Sweeping the source against that list found
+a second LIVE defect — `src/lib/okrs/progress.ts` read
+`placement_fee_lines → placements!inner(project_id)`, and **`!inner`
+is a JOIN-TYPE modifier, not an FK hint**. The query was ambiguous,
+PostgREST refused it, the error was swallowed into `[]`, and a
+mandate-scoped FINANCIAL key result reported ZERO progress however
+much had actually been billed. Proven at the protocol level in drive
+111: the bare form returns HTTP 300 / PGRST201 naming both paths, the
+FK-named form returns 200. New structural guard
+(`embed-ambiguity.test.ts`) pins the pair list with its regeneration
+SQL, walks the tree, refuses to count `!inner`/`!left` as
+disambiguation, and carries a control assertion; mutation-tested
+against the real defect (fails on it, passes on the fix).
+
+**2. Migration 125 — the grants pass completed.** The pre-launch
+advisor sweep found the anon roster at TWENTY-THREE executable
+functions where the ruled law says TWELVE. The ruled twelve are
+intact and untouched (six candidate-portal doors, the limiter, the
+webhook, the cron, three token verifiers — all definer, all
+load-bearing for sessionless routes). The eleven that no ruling asked
+for are closed: TEN trigger functions that were anon-executable over
+PostgREST (110's doctrine, 121's lesson — a trigger function has no
+caller; the machinery invokes it as table owner) and `can_write_okrs`,
+a capability predicate 107 created without the revoke every other
+predicate has carried since 046. Six functions also gained a pinned
+`search_path`. Fresh-statement after: anon-executable = 12 EXACTLY.
+
+**3. Slice 3 — the print pass**, on the D.5 inventory confirmed at
+§159. One shared `PrintReportButton` now replaces the route-local
+original AND the byte-identical copy the invoice builder had inlined
+— the drift had already started. §133 is extended with a print SCOPE,
+because four of the six documents are panels on workspaces carrying a
+dozen other panels: the button marks the document and CSS removes
+everything that is not the document, not inside it, and not one of its
+ancestors (`:has()` is what makes the ancestor test expressible).
+`Panel` gains an opt-IN `printId` — opt-in, not automatic, because
+most panels are working surfaces and a print button on a queue offers
+paper for something nobody would print. All six opt in: triangulation,
+company intelligence, culture, the evaluation report (BESIDE its
+@react-pdf export, not replacing it — two exports, two guarantees),
+the client-interview approved set, and the shortlist slate (the slate
+only: the pool column is a working surface, height-locked to the
+viewport, and meaningless on paper). New print-contract test:
+`window.print()` may be called from exactly ONE file, every `scopeId`
+must resolve to a real id, and every print target must carry
+`m-report-doc`.
+
+vitest 1075 → 1082; tsc / eslint / build green. Commits after §159:
+the sweep + 125 + slice 3, then the in-flow scope fix. Deployed
+mandate-kmjzp8oie.
+
+**Drive 111 — GREEN, live in prod, and it found two things.**
+(1) The scoped print proved exact on the company-intelligence report:
+the document and its contents visible, the culture sibling, the page
+heading and the rail all `display: none`, ink on paper (white ground,
+#14161c text), page height collapsed to the document (3213px body
+against a 3147px document). (2) The OKR embed defect and its fix
+proven at the PostgREST protocol level, as above. (3) The conditional
+affordances proved honest: a project with no reports renders no print
+button, and an empty shortlist slate renders none either — the target
+and its ink class are present, the button is not.
+
+**Two defects found IN the drive, both fixed in it:**
+
+*F-1 — a stale Vercel build cache served CSS without the new rules.*
+The JS from the deploy was live (the print buttons rendered) while the
+stylesheet was the previous build's, so the scope silently did nothing
+and every sibling stayed visible. `vercel deploy --prod --force` (no
+build cache) shipped it. LESSON, standing: **a Vercel deploy can ship
+new JS against cached CSS — after any `globals.css` change, verify the
+rule reached the served stylesheet, or deploy with `--force`.**
+
+*F-2 — the first scope implementation printed blank pages.* Hiding by
+`visibility` kept the hidden boxes in layout, so the document was
+followed by several blank sheets; lifting the scope out of flow to fix
+that left the page as tall as the workspace behind it. Rewritten to
+remove the other boxes from layout entirely, which collapses the page
+to the document. The body also gained a white ground — the shell is a
+dark terminal and printed as a black sheet wherever the document did
+not reach. Both were only visible ON PAPER, which is the argument for
+driving a print pass rather than unit-testing it.
+
+**Teardown exact.** The drive only read; its residue was sign-in
+buckets, swept whole per the zero baseline. All pins fresh-statement:
+events 77, users 26 / agents 25 / auth 26, skills 5, objectives 0,
+clients 2, candidates 1 at stage 'found', ops_heartbeats 1,
+inference_runs 0, all four invoice surfaces 0, anon-executable 12.
+
+**Slice 2 (send) — GATE DRAFTED, build still waits.**
+`2026-08-26-invoice-send-gate.md`. Phase 0 verified: the Resend
+transport is live and already used by three senders; `send-policy.ts`
+(099) is CANDIDATE-scoped by design; the delivery webhook verifies its
+svix signature before the database hears anything and refuses without
+`RESEND_WEBHOOK_SECRET`, which is NOT provisioned; and the invoice has
+no server-side PDF, because §133 put the renderer in the browser on
+purpose. FIVE decisions are the founder's and none is derivable from
+the code — the from/reply-to identity and whether it is per-template,
+whether client email joins 099's cap doctrine (recommended: log and
+honour suppression, but no per-day caps — a client owed three invoices
+should receive three), attachment vs link vs recruiter-attaches
+(recommended: the third for now, since a server-side renderer
+reintroduces exactly the divergence the one-renderer rule prevents),
+resend history vs a moving stamp, and whether to ship with the bounce
+path honestly dark.
+
+Numbers: next migration 126; next § 161; next drive 112; vitest 1082;
+CHECK 92; door 25; allowlist 29; anon roster 12 (now exactly the ruled
+twelve); durable baseline unchanged.
