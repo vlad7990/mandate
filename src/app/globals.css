@@ -382,19 +382,31 @@
      sitting wherever the (invisible) workspace put it — without this
      a panel low on a long page prints as several blank sheets
      followed by the document. */
-  body.m-printing-scoped * {
-    visibility: hidden;
+  /* Hide everything that is not the document, not inside it, and not
+     one of its ancestors. `:has()` is what makes the ancestor test
+     expressible, and it is what keeps the document IN FLOW.
+
+     The obvious alternative — `visibility: hidden` on everything, then
+     visible again on the scope — was tried first and printed wrong in
+     two ways that only showed on paper: hidden-but-laid-out siblings
+     kept their height, so the document was followed by several blank
+     sheets, and lifting the scope out of flow to fix that left the
+     page as tall as the workspace it came from. Removing the other
+     boxes from layout entirely collapses the page to the document. */
+  body.m-printing-scoped
+    *:not(:has(.m-print-scope)):not(.m-print-scope):not(.m-print-scope *) {
+    display: none !important;
   }
 
-  body.m-printing-scoped .m-print-scope,
-  body.m-printing-scoped .m-print-scope * {
-    visibility: visible;
+  /* The shell is a dark terminal. Ink-on-paper is rebound inside
+     `.m-report-doc`, but the page behind it is still the app's
+     background — which prints as a black sheet wherever the document
+     does not reach. */
+  body.m-printing-scoped {
+    background: #ffffff !important;
   }
 
   body.m-printing-scoped .m-print-scope {
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
     margin: 0;
     border: 0;
     /* A panel is height-locked on screen in at least one case (the
