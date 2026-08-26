@@ -91,46 +91,56 @@ export default async function MembersPage() {
     .order("created_at", { ascending: false });
   const openInvitations = (invitationData ?? []) as OpenInvitationRow[];
 
-  // 129 — admin grants parked for a second admin. The FK is NAMED: this
-  // table holds THREE foreign keys to `users` (target, proposer,
-  // decider), so a bare embed is ambiguous and PostgREST refuses the
-  // whole query rather than guessing — the standing lesson from 111/112,
-  // and the reason embed-ambiguity.test.ts lists this pair.
-  const { data: grantData } = await supabase
+  // 129 — admin grants parked for a second admin.
+  //
+  // Scalar columns ONLY, and the labels resolved from `members` above.
+  // The first cut embedded `users` twice (target and proposer) with
+  // named FKs; the query failed, the error was destructured away, and
+  // the panel rendered as "nothing pending" while a request sat in the
+  // table — a silent-empty exactly like the one 111/112 warned about.
+  // This table has THREE foreign keys to `users`, so the safest embed
+  // here is no embed: the page already holds every member.
+  const { data: grantData, error: grantError } = await supabase
     .from("admin_grant_requests")
     .select(
-      "id, kind, target_email, target_full_name, expires_at, proposed_by, " +
-        "target:users!admin_grant_requests_target_user_id_fkey(full_name, email), " +
-        "proposer:users!admin_grant_requests_proposed_by_fkey(full_name, email)"
+      "id, kind, target_user_id, target_email, target_full_name, expires_at, proposed_by"
     )
     .eq("organization_id", access.organizationId ?? "")
     .eq("status", "pending")
     .gt("expires_at", new Date().toISOString())
     .order("created_at", { ascending: false });
 
-  type GrantJoin = { full_name: string | null; email: string } | null;
+  if (grantError) {
+    // Never silently. A pending admin grant that does not render is a
+    // two-person control nobody can complete.
+    console.error("[members] pending admin grants unreadable", grantError);
+  }
+
+  const labelOf = (id: string | null): string | null => {
+    if (!id) return null;
+    const m = members.find((x) => x.id === id);
+    return m ? m.full_name?.trim() || m.email : null;
+  };
+
   const pendingGrants: PendingGrantRow[] = (
-    (grantData ?? []) as unknown as Array<{
+    (grantData ?? []) as Array<{
       id: string;
       kind: "promotion" | "invitation";
+      target_user_id: string | null;
       target_email: string | null;
       target_full_name: string | null;
       expires_at: string;
       proposed_by: string;
-      target: GrantJoin;
-      proposer: GrantJoin;
     }>
   ).map((g) => ({
     id: g.id,
     kind: g.kind,
     target:
-      g.target?.full_name?.trim() ||
-      g.target?.email ||
-      g.target_full_name?.trim() ||
-      g.target_email ||
+      labelOf(g.target_user_id) ??
+      g.target_full_name?.trim() ??
+      g.target_email ??
       "Unknown",
-    proposedByLabel:
-      g.proposer?.full_name?.trim() || g.proposer?.email || "another admin",
+    proposedByLabel: labelOf(g.proposed_by) ?? "another admin",
     mine: g.proposed_by === access.userId,
     expiresAt: g.expires_at,
   }));

@@ -52,8 +52,19 @@ export function RolePicker({
   const apply = () => {
     startTransition(async () => {
       try {
-        unwrap(await setMemberRoleAction(userId, selected));
-        toast.success(`${displayName} is now ${ROLE_LABELS[selected]}.`);
+        // 129 — the action reports what it DID, and admin may only have
+        // been proposed. Announcing "is now Admin" over a pending
+        // request tells the proposer the job is done when the tier has
+        // not moved and a colleague still has to agree. Drive 117
+        // caught exactly that.
+        const outcome = unwrap(await setMemberRoleAction(userId, selected));
+        if (outcome === "pending") {
+          toast.success(
+            `Proposed — ${displayName} becomes Admin once a second admin approves.`
+          );
+        } else {
+          toast.success(`${displayName} is now ${ROLE_LABELS[selected]}.`);
+        }
         router.refresh();
       } catch (err) {
         const message =
