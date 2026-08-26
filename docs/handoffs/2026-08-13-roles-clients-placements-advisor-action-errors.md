@@ -10830,3 +10830,62 @@ Slice 3 gates next under R4 — evals + the Q3-authorized benchmarks
 (Sonnet 5, Haiku 4.5) + tier flips only where evals pass +
 schema_failed wiring + re-judging the eight deferred caching
 candidates. Phase-0-verified gate DRAFT first; build on the word.
+
+## 150. LLM ROUTER SLICE 3 — harness built, matrix RUN — 2026-08-25 — DRAFTED, FLIP WORD PENDING
+
+The founder's first word ("please continue") landed against the
+slice-3 gate (03bafc3); the build phase and the benchmark matrix
+both completed. DRAFTED — the SECOND word (the flip ruling against
+the table below) is what changes production models; nothing flipped
+yet.
+
+**Built (commits 8010176 + 60c9d5b, deployed mandate-3cr96caet).**
+evals/ harness: env-gated vitest (`npm run eval`, MANDATE_EVAL=1;
+`npm test` spends nothing); fenced overrides in the seam
+(modelOverride/thinkingOverride THROW outside eval mode — Part N
+holds; __setEvalOverrides for the seams' internal calls); eval runs
+recorded in memory, never the prod table; real fixtures exported
+once from the two live mandates (8 fixtures, 5 capabilities; thin-N
+stated); two graders (deterministic seam assertions + Sonnet 4.6
+rubric judge); results append to evals/results/. schema_failed
+WIRED on six seams (parse-only try, outer behavior byte-identical;
+representative unit proof run-relationship.schema.test.ts). vitest
+1024. KEY LESSON: Vercel sensitive-flagged env vars are UNPULLABLE
+(`vercel env pull` writes "[SENSITIVE]") — correct posture; the
+first matrix attempt 401'd on the placeholder and doubled as the
+harness's mechanical verification ($0). evals/setup.ts now resolves
+ANTHROPIC_API_KEY founder-side (.env.local read at eval runtime),
+which is how the real run executed.
+
+**The matrix (30 live cells, ~$1.50, evals/results/2026-08-25.md):**
+- **Sonnet 5 adaptive: REJECTED as drop-in.** 5/8 cells truncated
+  at the seams' own max_tokens ("Unterminated string…", one
+  "no text block") — the Phase-0 canary (thinking inside
+  max_tokens + ~35% tokenizer) fired exactly as predicted.
+- **Sonnet 5 thinking-off: strong (rubric 4–5) and ~2× faster on
+  big generations** (evaluation 70s → 31s) but +30–40% input
+  tokens — at the identical post-intro list price, a net cost
+  increase.
+- **Haiku 4.5: flip-grade on three of four economy capabilities**
+  (target-companies 5+4, relationship 4 at 1.1s/⅓ price, sourcing
+  4) — but FAILED search-health 1/2 deterministically (1 suggestion
+  vs the required 3–5).
+- Baseline 4.6 passed everything. Judge debts noted (max_tokens
+  300 → 600; give it the fixture digest).
+- The eight deferred caching candidates STAY deferred — every
+  prefix confirmed under the 1024-token minimum; the bulk lives in
+  never-repeating user payloads.
+
+**RECOMMENDED FLIPS awaiting the word:** run_target_companies +
+run_relationship + generate_sourcing → claude-haiku-4-5;
+run_search_health HOLDS; generate_evaluation = founder's judgment
+call (sonnet-5 thinking-off halves a page-blocking latency at
++30% tokens); parse_cv waits on CV files (surfaced once);
+everything else holds. On the word: map edits + tripwire repin +
+green gate + deploy + drive 106 (one flipped capability live,
+row shows the new model) + §151.
+
+Numbers: next migration 120 (none used); next § 151; next drive
+106; vitest 1024; CHECK 87; door 20; allowlist 29; anon roster 12;
+durable baseline unchanged (inference_runs 0 — eval rows never
+touched prod).
