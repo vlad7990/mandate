@@ -10477,3 +10477,151 @@ next drive 103; vitest 976; activity CHECK 83; intent door 17;
 agent allowlist 29 (unchanged, ruled). Slices two–four (candidate
 prep pack / client interview / simulator) remain direction, not
 authorisation — each gates separately (R4).
+
+## 144. THE CLIENT INTERVIEW BUILT — the Interviewer's second face; drive 103 green — 2026-08-25 — DRAFTED, NOT CONFIRMED
+
+The client-interview slice ran its full D-ladder on the founder's
+written confirmation of
+docs/superpowers/specs/2026-08-25-interviewer-client-interview-gate.md
+(commit 3368dc3 — Phase 0 verified live the same day: feedback's
+candidate_id NULLABLE, the CHECK at four values with the TS union at
+three, the Interviewer's calibration_model reads already lawful under
+111). The candidate prep pack stays recorded-and-skipped; the
+SIMULATOR stays closed and LAST (programme D5) — nothing here touches
+it. This section is DRAFTED; the founder's word closes it.
+
+Migration 117 (file + MCP, applied): `client_interviews` — the
+037/116 pattern copied a FOURTH time, never shared, keyed by the
+MANDATE alone (project_id, version; no candidate axis). The
+allocation lock is the PROJECT row FOR UPDATE with the org equality
+in the lock's WHERE; the transition flag is DEDICATED
+(mandate.allow_client_interview_transition — EI's, 116's and this one
+can never interfere); archive-then-promote approval RPC
+(approve_client_interview); org RLS + the agent pair double-pinned
+status='draft' on both faces. The feedback vocabulary widened 4 → 5
+('client_interview' — a new VALUE, not a new pipeline). The trail:
+CHECK 83 → 87 (client_interview_generation_requested /
+_generation_failed / _approved — mandate-writer-gated, door 17 → 20 —
+plus client_interview_answered, which is deliberately NOT
+app-recordable: it is sessionless and enters ONLY via the new
+SECURITY DEFINER record_client_interview_answered, 063's shape —
+token re-validated, APPROVED set required, label in detail, EXECUTE
+revoked from everyone so the ruled anon roster stays TWELVE). The
+agent allowlist UNTOUCHED at twenty-nine: the Interviewer's composing
+act reuses interview_plan_generated with
+detail.plan_scope='client_interview'. Two new 088 buckets as data
+(client_interview_token 5/hr/300-day-global, client_interview_ip
+30/hr) — the answer door is anonymous and billed, so it FAILS CLOSED.
+
+The pipeline (src/lib/ai/client-interview-agent.ts +
+generate-client-interview.ts): the gap list is computed SERVER-side
+before the model call (computeMandateGaps — every
+missing_information item verbatim, onboarding absent, weights absent
+or flat at spread < 2) and passed INTO the prompt; on return every
+question's cited gap_id is checked against that list and off-list
+questions are STRIPPED (finalizeClientInterview), coverage computed
+by the app — the agent phrases, it cannot invent (gate D2). Zero
+gaps is an HONEST REFUSAL said in the action before a row exists
+("nothing to ask the client") and re-checked in the pipeline.
+{count:"exact"} + zero-row refusal on the agent write (§129);
+failure bookkeeping human (090) via markFailed +
+client_interview_generation_failed through the door. The
+interpretation of answers is the EXISTING pipeline:
+runHmFeedbackPipeline now reads the row's OWN feedback_type (was
+hardcoded hm_portal) and accepts candidate_id NULL — one seam
+widened, no new machinery.
+
+The answer door: POST /hm/[token]/api/interview-answers — uuid
+shape, fail-closed limits BEFORE verification, verify_hm_token, the
+body must name the mandate's CURRENT approved set (a mismatch 409s
+with a refresh sentence — old answer ids are never silently mapped
+onto new questions), ONE mandate-level feedback row per submission
+(composeClientInterviewContent, §128 F-4's issuance-label fallback
+kept), the definer answered-event fire-and-forget, interpretation in
+after() under the Feedback Interpreter's own session.
+
+UI: a "Client interview" panel on /app/projects/[id] directly below
+the "Information required" rail it feeds from — explainer + a
+LABELLED illustrative example question in the empty state (both
+standing memory rules), honest refusal lines (no calibration / no
+gaps), generating/failed/draft/approved states, gap-coverage chips
+("computed against the mandate's record, not the agent's claims" —
+uncovered reads error-toned), per-question why-it-matters + Addresses
+lines, Approve for Portal behind a confirm, Regenerate minting a NEW
+version, the no-verdict sentence. Portal side: a "Questions from the
+search team" section in PortalContent (buildPortalClientInterview
+deliberately DROPS gap ids/labels — the desk's machinery never
+reaches the client's page), rendered read-only in the founder
+preview ("Preview — answers are submitted from the client's share
+link") and LIVE only on the token door; the sticky submitted state
+mirrors the feedback form's. NAMED RESIDUE: the signed-in /portal
+door does not render the section — its reads flow through the
+SECURITY DEFINER portal_get_mandate (068's confirmed machinery), and
+widening that payload was not in this gate; it needs its own
+one-line ruling if the founder wants externals to see the questions
+in-account.
+
+Harness: supabase/tests/agent_client_interview_invariants.sql —
+eleven invariants GREEN against the live schema in a rolled-back
+transaction: 116's negatives re-proven mandate-keyed (immutability,
+RPC-only promotion, pre-approved insert refused, exactly-one
+approved, flag containment, foreign-org allocation refused), the
+agent pins (draft edit lands / approved silent-zero / no
+self-promotion / suspended reads ZERO), the plan_scope'd trail
+event, the viewer refused at the door, the answered entry point
+REFUSED to authenticated and — with the owner's privilege — true on
+a live token against the approved set (label + count in detail),
+false on a revoked token and on a draft set with no row written, and
+the widened CHECK accepting a candidate-less client_interview row
+while refusing an unknown type.
+
+Green gate: tsc, eslint, build, vitest 976 → 996 (twenty new: gap
+computation, strip/coverage/ids, draft + stored normalizers, body
+parsing incl. the hostile-key filter, content composition, the
+describe-mirror moved to 87/20). Commit 46a5f03; deployed
+mandate-ds3ga76bd.
+
+Drive 103 (prod): scratch org Ledgerline Drive 103 + scratch
+recruiter (§6a; the browser AUTOFILLED THE FOUNDER'S REAL
+CREDENTIALS on the signin form — the standing trap, overwritten) +
+seeded mandate (two missing-info items, differentiated weights
+8/7/6/5/3, onboarding {}) → THREE gaps computed → Draft Client
+Questions → the Interviewer signed in LIVE and persisted a
+6-question v1 draft in ~16s — every question citing a real gap, all
+three gaps covered 1q/2q/3q, the missing-info items steering
+visibly (comp question from the comp gap, org-shape questions from
+the team gap, success-criteria/anti-pattern questions from the
+absent onboarding) → Approve for Portal behind the confirm (dialog
+via the handler, effect verified in DB: approved, stamped by Drive
+Recruiter 103) → share link minted through the real action
+(30-day, labelled) → founder preview showed the section READ-ONLY →
+clearCookies → /hm/[token] rendered the live form → two answers,
+name left BLANK deliberately → submit → sticky acknowledgment → the
+feedback row landed mandate-level (candidate_id NULL, type
+client_interview) carrying the ISSUANCE label via the F-4 fallback →
+the answered event landed with label + count 2 → the Feedback
+Interpreter ran in after() and RECALIBRATED off the client's
+answers — the full loop the gate promised, closing in one drive.
+The org trail told it in order: requested (recruiter) → generated
+(Interviewer, plan_scope client_interview) → approved (recruiter) →
+hm_portal_opened (label) → answered (label, 2) → interpreted
+(Interpreter, recalibrated true). Screenshots
+clientinterview-103-panel-empty / -draft-set / -portal-form /
+-answers-submitted.png. Teardown by value (events → calibration
+snapshot → feedback → sets → tokens → project → users
+public-before-auth incl. sessions/refresh/identities → org LAST →
+rate_limit swept whole, per its zero baseline); fresh-statement
+baseline EXACT first pass: 26 users / 25 agents / 77 events / auth
+26 / orgs 1 / projects 2 / clients 2 / feedback 3 /
+client_interviews 0 / interview_plans 0 / hm tokens 3 / reviews 4 /
+calibration_history 0 / ops_heartbeats 1 / rate_limit 0.
+
+THE DURABLE BASELINE IS UNCHANGED — the slice added no durable
+rows, only machinery. Baseline GAINS the table: client_interviews 0.
+Numbers: next migration 118; next § 145; next drive 104; vitest
+996; activity CHECK 87; intent door 20; agent allowlist 29
+(unchanged, ruled); anon roster 12 (unchanged, ruled). Remaining
+Interviewer direction: candidate prep pack (D3, skipped by the
+founder's word) and the simulator (D5, LAST) — each still gates
+separately (R4). Named residue above: /portal rendering of the
+question set.
