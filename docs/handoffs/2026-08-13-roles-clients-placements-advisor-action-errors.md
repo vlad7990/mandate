@@ -12147,6 +12147,20 @@ Also re-learned: the shell cwd reset to the iCloud clone mid-session
 and one build ran there. Absolute-path edits were unaffected. Check
 `pwd`.
 
+
+**The scoped-out routes, checked after the fact.** D4(a) deliberately
+limited the change to the homepage hero, leaving nine other `ch`
+measures — including `.m-page-hero__lede` (68ch) and
+`.m-display--page` (20ch) on the sub-page heroes — untouched, on the
+reasoning that only above-the-fold ones can cost CLS. Swept at 390px,
+cold, applied throttling, after the deploy: `/pricing`, `/solutions`,
+`/platform`, `/executive-intelligence`, `/handbook` and
+`/request-access` all measure **CLS 0.0000**, LCP 1.6–2.2s, fonts 166
+KB / 4 files (135 KB / 3 on `/request-access`). The remaining `ch`
+measures no longer have a post-paint swap to react to, so they cost
+nothing. Left as they are — deliberately, and now with evidence rather
+than an argument.
+
 Numbers: next migration 129; next § 168; next drive 116; vitest 1105;
 CHECK 93; door 26; allowlist 29; anon roster 12; durable baseline
 unchanged.
