@@ -64,6 +64,15 @@ your time.
   with one name and upload a CV with another, **your typed name and
   address are kept** and the trail notes the disagreement. That is G.1,
   ruled deliberately.
+- **The Network screen grows people named after files.** Upload
+  `avery-penhallow-cv.pdf` and a profile called `avery-penhallow-cv`
+  appears. A recruiter upload creates its row *before* anyone has read
+  the CV, so it is keyed on the filename, then re-keyed onto the real
+  person once parsing finishes — and the filename-shaped one is left
+  behind. **Known, cosmetic, and already written up** (§194). Nothing
+  reads those rows and no do-not-contact flag rides on them. Worth
+  telling us how noisy it actually gets in practice — that is the open
+  question — but it is not a new finding.
 
 ---
 

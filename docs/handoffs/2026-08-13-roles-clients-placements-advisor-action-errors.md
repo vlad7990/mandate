@@ -14157,3 +14157,60 @@ Numbers: migration **135** applied; next migration **136**; next §
 **194**; next drive **127**; **vitest 1159** (was 1146); CHECK 99; door
 26; allowlist 31; **anon roster 14**; capability map 36. Deployed
 `mandate-mu8vv9hjh`.
+
+## 194. §193 CONFIRMED — THE DECLARED IDENTITY IS LAW — 2026-08-27
+
+The founder's written word: *"I confirm §193 — keep the declared-identity
+version."*
+
+So the boundary is ruled, not merely accepted: **a relationship link
+freezes when the subject declared their own identity, and resolves as
+before when nobody did.** G.1, G.2 and G.3 land as built and driven in
+drive 126. What §192 found in production — an applicant's typed name and
+address overwritten from a file, the row silently re-keyed onto a
+stranger's relationship record, the do-not-contact gate answering for
+the wrong human — is closed at two independent layers.
+
+The rule in one line, for whoever meets this next: **a CV is evidence
+about a person; it is not the person.** When someone has told us who
+they are, that is the answer we keep, and the file's disagreement is
+reported rather than resolved.
+
+### The residue this leaves, named honestly
+
+The ruling settles the *safety* question and deliberately does not
+settle a *litter* one. Because a recruiter upload inserts before it
+knows who the person is, every upload still mints a throwaway
+`name:<filename>` profile and abandons it on the re-key. That is where
+§192's orphans came from, and it is still true today: **upload
+`avery-penhallow-cv.pdf` and a person called `avery-penhallow-cv`
+appears in the Network screen.**
+
+It is cosmetic, not dangerous — no DNC rides on it, nothing reads it —
+but human QA will hit it in loop 1 within minutes of the first upload.
+It is therefore recorded in the charter as known behaviour, and offered
+as its own small slice rather than folded into a confirmed ruling. The
+shape, if it is ever wanted: do not key a row from a name-only identity
+at insert; let the ruled fill-if-null path key it once the parser knows
+who the person is. Compatible with this ruling, but it changes when
+profiles are minted and therefore touches the Network surface, which
+makes it a gate rather than a footnote.
+
+### Where the product stands
+
+**Nothing agent-buildable remains.** The judgment programme is law end to
+end (§189), the apply door is law and driven open (§190, §192), the
+identity boundary is law (§193, this entry), and the QA enablement slice
+is built, driven and confirmed.
+
+Human QA now waits on four founder-owned acts, in this order:
+**leaked-password protection toggled first** — testers are about to set
+real passwords — then the sending domain verified with Resend, then the
+service-role key rotated, then two testers invited through the real
+`/request-access` → approve → `/join` path. Then loop 1 of the charter,
+which is the first time this system's judgment meets a stranger's CV
+with a human watching.
+
+Numbers unchanged by confirmation: next migration **136**; next §
+**195**; next drive **127**; vitest 1159; CHECK 99; door 26; allowlist
+31; anon roster 14; capability map 36. Deployed `mandate-mu8vv9hjh`.
