@@ -196,6 +196,12 @@ export const ACTIVITY_EVENT_TYPES = [
   "admin_grant_approved",
   "admin_grant_rejected",
   "admin_grant_expired",
+  // 130 (§177) — the role seam's remedy. Written by the CALIBRATION
+  // AGENT through record_agent_event under its own session, so it is
+  // deliberately NOT app-recordable below. Sibling of
+  // 'calibration_derived': that one answers "what matters", this one
+  // answers "which role".
+  "calibration_rederived",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -398,6 +404,7 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   weekly_report_generated: "mandates",
 
   calibration_derived: "mandates",
+  calibration_rederived: "mandates",
   job_spec_generated: "mandates",
   shortlist_report_generated: "mandates",
   copilot_answered: "mandates",

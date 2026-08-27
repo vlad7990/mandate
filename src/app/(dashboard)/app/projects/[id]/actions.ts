@@ -18,6 +18,11 @@ import {
   type RoleAnalysisResult,
 } from "@/lib/ai/role-analysis-agent";
 import { runRoleAnalysis } from "@/lib/ai/run-role-analysis";
+import { assertCalibrationMatchesSpec } from "@/lib/calibration/spec-drift";
+import {
+  runRoleRederivationAndPersist,
+  type RoleDiff,
+} from "@/lib/ai/rederive-role";
 import { runClientPsychology } from "@/lib/ai/run-client-psychology";
 import type { ClientPsychology } from "@/lib/ai/client-psychology-agent";
 import { runCompanyCultureAndPersist } from "@/lib/ai/run-company-culture";
@@ -137,6 +142,15 @@ export async function runRoleAnalysisAction(
     ) {
       throw new Error("Project belongs to a different organisation.");
     }
+
+    // §177 (F-A) — the role seam's door. Ranking compares candidates
+    // against the calibration's weights AND its role_title; a stale
+    // role produces a defensible-looking leaderboard for the wrong job.
+    await assertCalibrationMatchesSpec(
+      supabase,
+      projectId,
+      project.calibration_model
+    );
 
     type CandRow = {
       id: string;
@@ -843,6 +857,83 @@ export async function applyCalibrationSuggestionAction(
       from: bridge.before[bridge.dimension] ?? 0,
       to: bridge.after[bridge.dimension] ?? 0,
     };
+  });
+}
+
+/**
+ * §177 (F-A) — the REMEDY behind the role seam's door.
+ *
+ * The recruiter asks; the Calibration Agent reads the finalised spec,
+ * restates the role identity from it, and stamps the calibration with
+ * the spec's id so the door clears. Deliberately explicit: finalising a
+ * spec does NOT trigger this, because a click labelled "mark as final"
+ * must not silently rewrite the basis of every past score, and must not
+ * fire an Anthropic call the recruiter did not ask for.
+ *
+ * Ruling A.5: dimension_weights are not touched. If the role moved far
+ * enough that the weights are wrong, the returned diff is how the
+ * recruiter finds out — this seam answers "which role", never "what
+ * matters".
+ */
+export async function rederiveCalibrationFromSpecAction(
+  projectId: string
+): Promise<ActionResult<RoleDiff>> {
+  return runAction(SUBJECT, async () => {
+    if (!projectId) throw new Error("Missing projectId.");
+
+    const auth = await requireActiveUser();
+    const supabase = await createServerSupabaseClient();
+
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id, organization_id")
+      .eq("id", projectId)
+      .maybeSingle<{ id: string; organization_id: string | null }>();
+    if (!project) throw new Error("Project not found.");
+    if (
+      project.organization_id &&
+      project.organization_id !== auth.organizationId
+    ) {
+      throw new Error("Project belongs to a different organisation.");
+    }
+
+    const run = await runRoleRederivationAndPersist(projectId);
+    switch (run.status) {
+      case "ready":
+        break;
+      case "no_final_spec":
+        throw new Error(
+          "No finalised job spec for this project. Mark a version as final before recalibrating the role."
+        );
+      case "agent_unavailable":
+        throw new Error(
+          "The Calibration Agent could not run — an operator has suspended " +
+            "it or its credentials are absent. The calibration stands unchanged."
+        );
+      case "unavailable":
+        throw new Error("Project not found.");
+      default:
+        throw new Error(
+          "Re-deriving the role from the final spec failed. Try again."
+        );
+    }
+
+    // The history snapshot wears the RECRUITER's face — they asked for
+    // the change, matching applyCalibrationSuggestionAction above.
+    try {
+      await recordCalibrationSnapshot(projectId, run.calibration, {
+        change_type: "recalibration",
+        change_reason: `Role re-derived from final job spec v${run.diff.spec_version}: ${run.diff.change_summary}`,
+      });
+    } catch (err) {
+      console.error("[rederive] history snapshot failed", err);
+    }
+
+    revalidatePath(`/app/projects/${projectId}`);
+    revalidatePath(`/app/projects/${projectId}/spec`);
+    revalidatePath(`/app/projects/${projectId}/ranking`);
+    revalidatePath(`/app/projects/${projectId}/candidates`);
+    return run.diff;
   });
 }
 

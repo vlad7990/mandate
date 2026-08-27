@@ -13,6 +13,7 @@ import {
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
+import { assertCalibrationMatchesSpec } from "@/lib/calibration/spec-drift";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 import { recordActivity } from "@/lib/activity/record";
@@ -85,6 +86,15 @@ export async function uploadAndParseCv(
         `Failed to load project for parsing: ${projectError?.message ?? "not found"}`
       );
     }
+
+    // §177 (F-A) — the role seam's door, BEFORE anything is created.
+    // A refusal must leave no placeholder row and no uploaded bytes
+    // behind, so it sits above the insert rather than beside the parse.
+    await assertCalibrationMatchesSpec(
+      supabase,
+      projectId,
+      project.calibration_model
+    );
 
     // Insert the candidate row first so we have an id for the storage path
     // and so the candidate appears in the list (cv_processing=true) while

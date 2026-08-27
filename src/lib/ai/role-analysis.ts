@@ -66,6 +66,19 @@ export type CalibrationModel = Pick<
 > & {
   dimension_weights?: DimensionWeights;
   weights_rationale?: string;
+  /**
+   * §177 (F-A), ruling A.2 — the id of the FINAL job spec this role
+   * identity was derived from, or absent/null when it came from intake's
+   * reading of the one-line input.
+   *
+   * Deliberately a JSONB field rather than a column with an FK: a real
+   * `projects -> job_specs` reference would close a cycle against
+   * `job_specs.project_id -> projects`, the shape that breeds PGRST201
+   * ambiguity on bare embeds. See spec-drift.ts, which fails closed on
+   * any value that is not a live spec id, buying back what the FK would
+   * have enforced.
+   */
+  derived_from_spec_id?: string | null;
 };
 
 export type CompanyContext = {

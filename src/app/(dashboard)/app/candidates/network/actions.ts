@@ -14,6 +14,7 @@ import {
   type CompanyContext,
 } from "@/lib/ai/role-analysis";
 import { runRankerScoring } from "@/lib/ranking/agent-ranker";
+import { assertCalibrationMatchesSpec } from "@/lib/calibration/spec-drift";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 
@@ -101,6 +102,16 @@ export async function addPersonToProjectAction(
     if (target.organization_id !== auth.organizationId) {
       throw new Error("Target project belongs to a different organisation.");
     }
+
+    // §177 (F-A) — the role seam's door, on the TARGET project. Copying
+    // into a mandate re-parses against that mandate's calibration, so a
+    // stale target would produce exactly the mis-scoped verdict §175
+    // found. Refuses before the row is created or the file copied.
+    await assertCalibrationMatchesSpec(
+      supabase,
+      targetProjectId,
+      target.calibration_model
+    );
 
     // Reject when the same person is already in this project. Identity
     // proxy mirrors the network aggregator: email > linkedin > name.

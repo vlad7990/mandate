@@ -54,6 +54,8 @@ import {
   normaliseFlagArray,
 } from "@/lib/intelligence/overlays";
 import { ProjectPoller } from "./project-poller";
+import { RoleDriftBanner } from "./role-drift-banner";
+import { computeSpecDrift } from "@/lib/calibration/spec-drift";
 import { computeMandateGaps } from "@/lib/ai/client-interview-agent";
 import {
   ClientInterviewPanel,
@@ -99,6 +101,10 @@ type SpecState = {
   hasAny: boolean;
   hasFinal: boolean;
   isGenerating: boolean;
+  /** §177 — the final spec's id, so the role seam's drift is computed
+   * from the rows this page already reads rather than a second query. */
+  finalSpecId: string | null;
+  finalSpecVersion: number | null;
 };
 
 const HEALTH_CHIP: Record<HealthStatus, ChipTone> = {
@@ -197,14 +203,26 @@ export default async function ProjectPage({
   // tile state and the "Build / Open Job Spec" CTA.
   const { data: specRows } = await supabase
     .from("job_specs")
-    .select("id, is_final, is_generating")
+    .select("id, version, is_final, is_generating")
     .eq("project_id", id);
 
+  const finalRow = (specRows ?? []).find((r) => r.is_final) ?? null;
   const spec: SpecState = {
     hasAny: (specRows?.length ?? 0) > 0,
-    hasFinal: (specRows ?? []).some((r) => r.is_final),
+    hasFinal: Boolean(finalRow),
     isGenerating: (specRows ?? []).some((r) => r.is_generating),
+    finalSpecId: finalRow?.id ?? null,
+    finalSpecVersion: finalRow?.version ?? null,
   };
+
+  // §177 (F-A) — is the role being scored the role the finalised spec
+  // describes? Same predicate the door uses, so the banner and the
+  // refusal can never disagree.
+  const roleDrift = computeSpecDrift({
+    finalSpecId: spec.finalSpecId,
+    finalSpecVersion: spec.finalSpecVersion,
+    calibration,
+  });
 
   // Project health drives the weekly summary card. Computed here (not in
   // the card component) so it stays in the same server-component pass as
@@ -451,7 +469,16 @@ export default async function ProjectPage({
             summary={project.recalibration_summary}
           />
         )}
-        {spec.hasFinal && <BuildSourcingCta projectId={project.id} />}
+        {roleDrift.stale && (
+          <RoleDriftBanner
+            projectId={project.id}
+            specVersion={roleDrift.finalSpecVersion}
+            currentTitle={calibration.role_title ?? null}
+          />
+        )}
+        {spec.hasFinal && !roleDrift.stale && (
+          <BuildSourcingCta projectId={project.id} />
+        )}
       </>
     ),
     panels: (

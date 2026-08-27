@@ -552,6 +552,18 @@ export function describeActivity(event: ActivityEventRow): string {
         ? "Re-derived the scoring calibration from onboarding"
         : "Derived the scoring calibration from onboarding";
     }
+    // 130 (§177): names BOTH titles, because the whole point of the
+    // event is that the role being scored has changed identity.
+    case "calibration_rederived": {
+      const from = str(d, "from_title");
+      const to = str(d, "to_title");
+      const version = num(d, "spec_version");
+      const suffix = version != null ? ` (spec v${version})` : "";
+      if (from && to && from !== to) {
+        return `Re-derived the role from the final job spec: "${from}" → "${to}"${suffix}`;
+      }
+      return `Re-derived the role from the final job spec${suffix}`;
+    }
     case "job_spec_generated": {
       const version = num(d, "version");
       const trigger = str(d, "trigger");

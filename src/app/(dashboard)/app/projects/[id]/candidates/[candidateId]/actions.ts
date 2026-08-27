@@ -10,6 +10,7 @@ import {
   ensureCandidateEvaluation,
 } from "@/lib/ai/generate-evaluation";
 import { runCvParseAndPersist } from "@/lib/candidates/agent-parser";
+import { assertCalibrationMatchesSpec } from "@/lib/calibration/spec-drift";
 import {
   normaliseDimensionNotes,
   PRESENT_DECISIONS,
@@ -122,6 +123,14 @@ export async function retryParseAction(
         company_context: Record<string, unknown> | null;
       }>();
     if (pErr || !project) throw new Error("Project not found.");
+
+    // §177 (F-A) — the role seam's door. A retry re-runs the SAME
+    // judgment, so it refuses on the same terms as the first attempt.
+    await assertCalibrationMatchesSpec(
+      supabase,
+      projectId,
+      project.calibration_model
+    );
 
     const { data: blob, error: dlErr } = await supabase.storage
       .from("cvs")
