@@ -12692,3 +12692,122 @@ education/certifications/phone schema gap.
 
 Numbers: next migration 130; next § 177; next drive 118; vitest 1110;
 CHECK 97; door 26; allowlist 29; anon roster 12.
+
+## 177. GATE DRAFT — F-A, THE UNWATCHED ROLE SEAM — 2026-08-26
+
+**DRAFTED. Nothing built. Awaiting the founder's word.** Chosen over
+§176 by the founder ("do F-A instead"); §176 stands drafted and unbuilt.
+
+### What the map actually shows — worse than §175 said
+
+There are **two sources of role truth** and the highest-stakes consumer
+reads only the one that is never updated.
+
+`grep -rln "job_specs" src/` returns fifteen files. **Neither candidate
+evaluation nor CV parse is among them.**
+`projects/[id]/candidates/actions.ts:75` selects exactly
+`calibration_model, company_context` — the spec is not read, not
+consulted, not available. Same in `candidates/network/actions.ts`.
+
+Who reads the **spec**: sourcing (`generate-sourcing.ts:195`, hard
+`.eq("is_final", true)`), interview plans, client interviews, and the
+spec UI. Who reads the **calibration model**: parse, evaluation,
+ranking/role analysis (`actions.ts:198`), shortlist, copilot, the HM and
+client portals, mandate-gap computation.
+
+And `calibration_model.role_title` / `inferred_scope` are written
+**once**, at intake. Verified exhaustively — the only post-intake
+writers are `applyCalibrationSuggestionAction` (`actions.ts:799`) and
+`recalibration/recalibrate.ts:101`, and **both write
+`dimension_weights` alone**, spreading the rest through unchanged.
+`finalize_job_spec` touches `job_specs` only.
+
+So: the Role Spec Agent can write a role that contradicts the
+calibration model, a recruiter can mark it final, and every scoring
+agent keeps scoring the one-liner's first inference. On the RBC project
+it already has — the spec says twice that infrastructure /
+production-estate experience does **not** satisfy the requirement, and
+the evaluation marked the candidate down for lacking exactly that, then
+returned `do_not_include`.
+
+**The precedent already exists in the codebase.** Sourcing refuses:
+
+> "No finalised job spec for this project. Mark a version as final
+> before generating sourcing queries."
+
+Sourcing — which produces a search string — fails closed on a missing
+final spec. Evaluation — which produces a verdict about a named person
+— is gated on nothing.
+
+### The proposed shape: door + remedy, never a silent rewrite
+
+Rejected outright: **re-deriving the calibration silently when a spec
+is finalised.** It would make "mark as final" mutate the basis of every
+past score without asking, and it would fire an AI call from a click —
+against the lesson already written into `spec/actions.ts`, that spend
+must never be triggered by a path the user didn't intend.
+
+Proposed instead, mirroring sourcing:
+
+1. **A door.** Evaluation and ranking refuse when a final spec exists
+   and the calibration was not derived from it. The refusal names the
+   remedy, exactly as sourcing's does.
+2. **A remedy.** An explicit *Recalibrate from final spec* action that
+   re-derives role identity, records a trail event, and **shows the
+   before/after diff** — the surfaces for this already exist
+   (`spec-diff-panel`, `recalibration_summary`). The change is never
+   silent and never automatic.
+
+### Rulings needed before a line is written
+
+- **A.1 — what counts as stale.** Proposed: identity, not time —
+  `calibration_model.derived_from_spec_id` ≠ the current final spec's
+  id. Timestamps invite clock skew and say nothing about *which* spec.
+- **A.2 — where the stamp lives.** Proposed: **inside the
+  `calibration_model` JSONB, not a new column.** A real FK from
+  `projects` → `job_specs` would close a cycle against
+  `job_specs.project_id → projects` and is precisely the shape that
+  breeds PGRST201 ambiguity on bare embeds. It would also force an
+  AMBIGUOUS_PAIRS regeneration in `embed-ambiguity.test.ts`. JSONB
+  costs referential integrity and buys none of that risk. **This is a
+  real trade and the founder should rule it.**
+- **A.3 — projects with NO final spec.** This is the RBC project's
+  actual state (`is_final: false`). Proposed: **the door does not
+  fire** — never finalising is early, not drifted, and blocking it
+  would break every mandate before its spec lands. The stricter reading
+  — evaluation requires a final spec at all, as sourcing does — is
+  defensible and would have prevented the RBC verdict outright. It is
+  also a much larger behavioural change. **Founder's call.**
+- **A.4 — which consumers get the door.** Proposed: candidate
+  evaluation and ranking/role analysis only — the two that produce
+  client-facing verdicts. NOT copilot, NOT the portal weight displays,
+  NOT mandate-gap computation; those are advisory or read-only and
+  blocking them is hostile.
+- **A.5 — does the remedy touch `dimension_weights`?** Proposed:
+  **NO.** Weights carry accumulated human judgment — health suggestions
+  applied, HM feedback interpreted, `recalibration_summary` written.
+  Overwriting them would silently discard it. But if the role changed
+  materially the old weights may no longer be valid, so: **surface the
+  question in the diff, do not answer it for the recruiter.**
+- **A.6 — the trail.** Proposed: one new event, `calibration_rederived`,
+  visibility `org` → activity **CHECK 97 → 98** and `describe.test.ts`
+  updated. No event on refusal (sourcing's refusals record none either).
+
+### Cost, and what it disturbs
+
+Migration 130 only if A.2 goes to a column; **under the proposal there
+is no DDL at all** beyond the CHECK bump for A.6. Guards touched:
+`describe.test.ts` (CHECK count + recordable list). `embed-ambiguity.test.ts`
+is untouched under the JSONB proposal and **must be regenerated** if the
+founder rules a column instead. New door → 27 if the refusal is modelled
+as an intent door rather than an action-level throw; sourcing's is a
+plain throw, so proposed: **plain throw, door stays 26.**
+
+**Drive 118 writes itself:** finalise the RBC spec, watch evaluation
+refuse, run the remedy, read the diff (*Head of IT Operations* →
+*Global Head of CM Operations, Regulatory, and Supervisory Technology*),
+re-evaluate, confirm the verdict changes. That is the seam closing in
+production against the exact case that exposed it.
+
+Numbers unchanged until built: next migration 130; next § 178; next
+drive 118; vitest 1110; CHECK 97; door 26; allowlist 29; anon roster 12.
