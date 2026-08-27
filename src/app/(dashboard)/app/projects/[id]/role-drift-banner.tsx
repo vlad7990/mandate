@@ -46,7 +46,12 @@ export function RoleDriftBanner({
             ? `Role re-derived: "${result.before.role_title}" → "${result.after.role_title}"`
             : "Role re-derived from the final job spec"
         );
-        router.refresh();
+        // NO router.refresh() here. Found by drive 118: refreshing
+        // immediately re-renders the server component, which no longer
+        // considers the mandate stale — so this banner unmounts and takes
+        // the receipt with it. The recruiter saw a toast for four seconds
+        // and nothing else. The refresh moves to the acknowledgement
+        // below, so the diff survives until it has been read.
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Could not re-derive the role."
@@ -85,6 +90,13 @@ export function RoleDriftBanner({
           Scoring weights were not changed. If this role moved far enough
           that the weights no longer match it, adjust them in Optimise.
         </p>
+        <button
+          type="button"
+          onClick={() => router.refresh()}
+          className="mt-3 border border-secondary-fixed-dim/60 px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-secondary-fixed-dim transition-colors hover:bg-secondary-fixed-dim/15"
+        >
+          Continue
+        </button>
       </div>
     );
   }
