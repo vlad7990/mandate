@@ -13214,3 +13214,91 @@ client-facing pitches, is still drafted and unbuilt.
 Numbers now: next migration 132; next § **182**; next drive **120**;
 vitest **1127**; CHECK 98; door 26; allowlist 30; anon roster 12.
 Deployed `mandate-oygd7fb7b`.
+
+## 182. GATE DRAFT — CONTESTED VERDICTS + ADVISORY MODE — 2026-08-26
+
+**DRAFTED. Nothing built. Awaiting the founder's word.** Chosen by the
+founder ("Lets start with the Recruiter and Founder enhancements") from
+the five-item judgment roadmap. §176 and §181 stand drafted; this gate
+does not depend on either, and says where it touches them.
+
+One programme, two slices, one premise from drive 118: **the system's
+errors are not directionally predictable** — the mis-scoped role
+FLATTERED the candidate — so no mental correction factor exists. The
+recruiter slice converts unpredictable error into visible disagreement;
+the founder slice changes what a verdict IS for a reader who has no
+calibration of their own to check it against.
+
+### Slice R — the contested verdict (recruiter enhancement)
+
+Before a negative verdict stands, an independent pass tries to REFUTE
+it. Agreement passes silently; disagreement surfaces as a flag the
+recruiter resolves. **Never auto-overturned** — the skeptic is a second
+opinion, not a second judge.
+
+- **R.1 — when it runs.** Proposed: on `tier_3`/`tier_4` OR
+  `do_not_include` only. Those are the verdicts that silently cost a
+  placement (the false negative nobody audits, §175's exact case), and
+  gating on them keeps the cost to one extra call on the minority of
+  evaluations. Positive verdicts get audited by reality — the client
+  meets the candidate.
+- **R.2 — who runs it.** Proposed: the SAME Evaluator principal, under a
+  NEW capability slug `verify_evaluation` (sonnet-5, same tier as the
+  judgment it audits — auditing sonnet-5 with a weaker model inverts
+  the point). New slug = CAPABILITY_MODEL entry + tripwire test update;
+  registry tables untouched (map governs, §154).
+- **R.3 — the refuter's charge.** Prompted to build the STRONGEST
+  honest case that the verdict is wrong, from the same profile — not to
+  re-evaluate. Output: `agrees: boolean`, strongest counter-argument,
+  and the specific evidence the original verdict under-weighted.
+- **R.4 — storage and trail.** Stored under
+  `cv_structured.evaluation.second_opinion` (no migration). ONE new
+  event `evaluation_contested`, written only on disagreement, by the
+  agent — which means CHECK 98 → 99 **and `record_agent_event`
+  allowlist 30 → 31 in the same migration**, per drive 118's lesson:
+  the event allowlist is the thing §177 got wrong once already.
+- **R.5 — render.** A contested verdict keeps its tier but wears the
+  flag and the counter-argument beside it, in the report and on the
+  candidate page. An uncontested negative says so too, in one quiet
+  line — silence should be distinguishable from "not checked".
+
+### Slice F — advisory mode (founder enhancement)
+
+For the reader with no independent calibration, the verdict stops being
+an answer and becomes a set of questions to take into the interview.
+
+- **F.1 — the trigger. NEEDS A RULING.** `is_founder` is the platform
+  bit, deliberately not a role — keying UX on it would be wrong.
+  Inferring from "org has no active recruiter" is fragile (one
+  role-change silently flips every mandate's rendering). Proposed: an
+  **explicit org-level toggle** `advisory_mode boolean not null default
+  false` on `organizations` — **migration 132** — surfaced in
+  /app/settings, `org:manage`-gated. Default OFF so the existing org is
+  untouched.
+- **F.2 — what changes: the RENDER, never the data.** Same evaluation,
+  same stored row. Advisory mode leads with `alignment_test.question`
+  and each gap's `role_mismatch` as "TEST AT INTERVIEW" items; tier and
+  recommendation demote to a secondary line prefixed "Based only on the
+  CV". **Never hidden** — a founder who cannot see `do_not_include` at
+  all is being managed, not assisted.
+- **F.3 — the skeptic in advisory mode.** Runs identically. It is MORE
+  important where no human can supply the disagreement themselves.
+
+### Interactions, stated
+
+§176 (evidence grades) would sharpen the refuter's charge and the
+advisory framing, but neither slice reads a field §176 adds — no
+dependency, no blocking. §181 stays drafted; its education fields reach
+the refuter automatically since the profile travels whole.
+
+### Cost
+
+One sonnet-5 call per negative verdict (R.1 keeps this the minority
+case). Migration 132 (one column + CHECK 99 + allowlist 31). Drive 120
+writes itself: evaluate the founder CV (§181 showed the corrected role
+scores it 4/3/3/3/4 — a negative verdict is guaranteed), watch the
+skeptic run, read agreement or contest; flip advisory mode, watch the
+same row re-render as questions; flip back; teardown exact.
+
+Numbers unchanged until built: next migration 132; next § **183**; next
+drive 120; vitest 1127; CHECK 98; door 26; allowlist 30; anon roster 12.
