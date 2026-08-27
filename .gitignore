@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 evals/fixtures/cvs/*
 !evals/fixtures/cvs/.gitkeep
+# §185 — the judgment sheet carries the founder's verdicts about real
+# people; the manifest names them. Never committed.
+evals/judgment-harness/output/

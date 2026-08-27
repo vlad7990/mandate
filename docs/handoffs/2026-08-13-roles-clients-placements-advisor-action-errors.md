@@ -13563,3 +13563,76 @@ founder spends an hour at n=10.
 
 Numbers unchanged until built: next migration 133; next § **186**; next
 drive 122; vitest 1141; CHECK 99; door 26; allowlist 31; anon roster 12.
+
+## 186. §185 BUILT AND DRIVEN — THE HARNESS CLOSES THE AUTHORSHIP LOOP — 2026-08-27
+
+**DRAFTED — awaiting the founder's word. No completion declared.**
+Built under delegated confirmation ("continue as you believe appropriate
+next build"); rulings exercised are H.1–H.4 as drafted.
+
+### As built
+
+`evals/judgment-harness/` + `vitest.harness.config.ts` + `npm run
+harness`. Three commands via HARNESS_CMD: **ingest** (walk
+`evals/fixtures/cvs/`, drive each CV through the LIVE seams — human
+session creates the row and uploads the bytes under RLS, then
+`runCvParseAndPersist`, `ensureCandidateEvaluation` with its refuter,
+`runRankerScoring` at ≥2 candidates — then write `judgment-sheet.md`
+with the system's half filled and every founder field empty),
+**score** (parse the filled sheet: verdict concordance, tier
+concordance, Spearman rank correlation, every disagreement verbatim —
+the disagreements ARE the finding), **teardown** (storage first via the
+API under the live session, then the rows; the throwaway project and
+the agents' trail events remain — real history of a real run).
+
+Decisions worth naming: the harness holds NO service key — it signs in
+as the founder (HARNESS_EMAIL/PASSWORD) and everything it touches, it
+touches under RLS. It re-checks §177's door itself, because it sits
+below the action layer where the door lives. A separate vitest config
+so `npm run eval` can never trigger a harness ingest. `output/` is
+gitignored — the sheet carries the founder's verdicts about real
+people. Runs under MANDATE_EVAL=1, so the RULED capability map, not a
+live registry override; stated in the README rather than discovered.
+
+### Drive 122 — n=1, the loop end to end
+
+Throwaway project minted by SQL (calibration cloned from RBC), drive
+recruiter as the human session. In order:
+
+1. **The cost gate held**: without HARNESS_CONFIRM=yes the run printed
+   the estimate and created NOTHING — zero candidates, verified.
+2. **Ingest, 96 seconds**: parse → evaluation `tier_4 / do_not_include`,
+   fit 4/5/4/3/5 — the §176 grades riding along: top gap "No evidenced
+   headcount or budget at required scale **[not_stated]**" → refuter ran
+   and concurred → ranking correctly skipped at n=1 → sheet written
+   with the system's half filled and the founder's empty.
+3. **Score**, against drive-fixture answers deliberately filled as a
+   DISAGREEMENT: concordance 0/1, the disagreement rendered verbatim
+   with the system's verdict, the fixture tier, and the note.
+4. **The harness's own teardown** removed its candidate and its file
+   under the recruiter's RLS grants — verified zero rows, zero objects.
+
+Then the drive's SQL teardown: project, persona, events, output files.
+**Baseline exact**: users 26 / auth 26 / projects 2 / events 77 /
+candidates 1 / cv objects 1.
+
+### What this hands the founder
+
+§128's testing half is now a one-hour exercise with a printed price
+tag. Drop 8–10 CVs in `evals/fixtures/cvs/`, create one throwaway
+mandate in the app, run three commands, fill one markdown file. The
+report that comes back is the first judgment evidence whose expectation
+the machine did not author — and the CONTESTED refuter path, never yet
+seen live, gets its first honest chance inside that batch.
+
+**The judgment roadmap now stands:** §176 evidence grades BUILT (§184) ·
+skeptic + advisory mode BUILT (§183) · harness BUILT (this entry) —
+all three pending the founder's word — and ONE item remains unbuilt:
+the verdict-vs-outcome ledger, which needs real pipeline outcomes to
+mean anything and therefore properly waits BEHIND the CV batch rather
+than ahead of it.
+
+Numbers unchanged (no migration, no schema, no door): next migration
+133; next § **187**; next drive **123**; vitest 1141; CHECK 99; door
+26; allowlist 31; anon roster 12. Not deployed — the harness is
+founder-machine tooling, nothing of it ships to Vercel.
