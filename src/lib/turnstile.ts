@@ -20,6 +20,19 @@ import { captureSeamError } from "@/lib/observability/sentry";
 
 const VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
+/**
+ * §190 — the apply door's gate. verifyTurnstile()'s 'disabled' mode
+ * fails OPEN, which is right for the marketing form and wrong for a
+ * public CV-upload endpoint. The apply page and its route both consult
+ * this and stay CLOSED until the founder's keys land.
+ */
+export function turnstileConfigured(): boolean {
+  return Boolean(
+    process.env.TURNSTILE_SECRET_KEY &&
+      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  );
+}
+
 export type TurnstileVerdict =
   | { ok: true; mode: "verified" | "disabled" | "outage" }
   | { ok: false };

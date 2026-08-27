@@ -27,7 +27,9 @@ import {
 // "/join" is the staff-invitation door (§135): its visitor has no account
 // by definition, so like the other token doors it must bypass the session
 // entirely — the token in the URL is the whole credential.
-const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/invite/", "/invite", "/candidate/", "/candidate", "/join/", "/join", "/api/demo", "/api/cron/", "/api/webhooks/", "/api/health"];
+// "/apply" is the inbound application door (§190): the token in the URL
+// is the whole credential, same trust shape as /hm, /invite and /join.
+const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/invite/", "/invite", "/candidate/", "/candidate", "/join/", "/join", "/apply/", "/apply", "/api/demo", "/api/cron/", "/api/webhooks/", "/api/health"];
 
 // Public-facing pages that unauthenticated users SHOULD see. We still
 // run the session refresh on these so authenticated visitors can be

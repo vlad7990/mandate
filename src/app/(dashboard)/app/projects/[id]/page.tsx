@@ -55,6 +55,7 @@ import {
 } from "@/lib/intelligence/overlays";
 import { ProjectPoller } from "./project-poller";
 import { RoleDriftBanner } from "./role-drift-banner";
+import { ApplicationsPanel } from "./applications-panel";
 import { computeSpecDrift } from "@/lib/calibration/spec-drift";
 import { computeMandateGaps } from "@/lib/ai/client-interview-agent";
 import {
@@ -95,6 +96,8 @@ type ProjectRow = {
   recalibration_summary: RecalibrationSummary | null;
   client_psychology: ClientPsychology | null;
   health_suggestions: HealthSuggestionsBlob | null;
+  /** §190 — the apply door's token. NULL = closed. */
+  apply_token: string | null;
 };
 
 type SpecState = {
@@ -178,7 +181,7 @@ export default async function ProjectPage({
   const { data, error } = await supabase
     .from("projects")
     .select(
-      "id, title, company_name, client_id, one_line_input, status, created_at, intake_error, calibration_model, company_context, recalibration_summary, client_psychology, health_suggestions, onboarding_responses"
+      "id, title, company_name, client_id, one_line_input, status, created_at, intake_error, calibration_model, company_context, recalibration_summary, client_psychology, health_suggestions, onboarding_responses, apply_token"
     )
     .eq("id", id)
     .single();
@@ -495,6 +498,17 @@ export default async function ProjectPage({
             initial={project.health_suggestions}
             healthStatus={health.status}
             weights={project.calibration_model?.dimension_weights ?? null}
+          />
+        )}
+        {ready && (
+          <ApplicationsPanel
+            projectId={project.id}
+            initialToken={project.apply_token}
+            turnstileReady={Boolean(
+              process.env.TURNSTILE_SECRET_KEY &&
+                process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+            )}
+            origin={"https://getmandate.io"}
           />
         )}
         {ready && (

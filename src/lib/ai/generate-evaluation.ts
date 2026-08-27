@@ -332,6 +332,20 @@ async function ensureUnderAgentSession(
     return { status: "ready", evaluation: existing };
   }
 
+  // §190 (the §183 cost artifact, closed): concurrent page loads each
+  // scheduled a generation — one candidate, two sonnet-5 calls. The
+  // claim is an atomic conditional stamp with a five-minute TTL; the
+  // loser returns quietly and the winner's write lands for both.
+  const { data: claimed } = await supabase.rpc("claim_evaluation", {
+    p_candidate_id: candidateId,
+  });
+  if (claimed === false) {
+    console.log(
+      `[evaluation] generation already in flight for ${candidateId} — skipping duplicate`
+    );
+    return { status: "unavailable" };
+  }
+
   // Cache miss — build the input and call the agent.
   const { data: project, error: pErr } = await supabase
     .from("projects")
@@ -473,6 +487,8 @@ async function ensureUnderAgentSession(
     ...cvStructured,
     [EVALUATION_KEY]: evaluation,
   };
+  // The claim dies with the landing — a later regenerate claims fresh.
+  delete (next as Record<string, unknown>)["evaluation_claim"];
 
   const { error: updateError } = await supabase
     .from("candidates")
