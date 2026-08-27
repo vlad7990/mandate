@@ -12811,3 +12811,126 @@ production against the exact case that exposed it.
 
 Numbers unchanged until built: next migration 130; next § 178; next
 drive 118; vitest 1110; CHECK 97; door 26; allowlist 29; anon roster 12.
+
+## 178. §177 BUILT AND DRIVEN — THE ROLE SEAM HAS A WATCHER — 2026-08-26
+
+**DRAFTED — awaiting the founder's word. No completion declared.**
+
+Founder's rulings: **A.2 JSONB**, **A.3 the door does not fire without a
+final spec**, defaults on A.1/A.4/A.5/A.6.
+
+### As built
+
+`spec-drift.ts` holds the predicate and the door.
+`calibration_model.derived_from_spec_id` must equal the project's current
+final spec; anything else — absent, empty, non-string, a superseded
+version — reads stale and refuses. A.3's branch is first and deliberate:
+**no final spec means EARLY, not drifted.** Four scoring entry points
+pass the door — CV upload, retry-parse, network copy (on the TARGET
+project), and role analysis — and each refuses BEFORE anything is
+created, so a refusal leaves no placeholder row and no uploaded bytes.
+
+`rederive-role.ts` is the remedy: the CALIBRATION AGENT reads the
+finalised spec under its own session (`job_specs_agent_select` already
+made that lawful), restates the role, stamps the spec id, and returns a
+before/after. It reuses the `derive_calibration` capability rather than
+minting one, so the model registry and its tripwire are untouched.
+**Not** wired into `finalize_job_spec`, by design.
+
+`door-sites.test.ts` pins the door at every scoring call site BY SOURCE
+TEXT. Mutation-tested three ways — and the FIRST VERSION WAS WRONG: it
+passed when a call was deleted but its import remained, because
+`includes(DOOR)` matched the import line. It now matches the
+invocation. What it cannot catch (a rename) is caught by `tsc`, and the
+test says so rather than implying cover it does not have.
+
+Migration 130: activity CHECK 97 → 98, no other DDL.
+
+### What the drive found — and §177 was wrong about a number
+
+**Drive 118 ran live in prod as a minted recruiter through the browser.**
+Three findings, none of them visible to tsc / vitest / eslint / build:
+
+1. **THE TRAIL WAS EMPTY.** §177 asserted "allowlist stays 29." That was
+   a misreading: the 29 is not agent PRINCIPALS, it is the allowlist
+   **inside `record_agent_event`** naming which events an agent may
+   write. `calibration_rederived` was absent, the function raised, the
+   seam caught it with `captureSeamError`, and the re-derivation
+   succeeded with **no trail at all**. Migration 131 admits it —
+   **allowlist 29 → 30** — with PUBLIC EXECUTE revoked in the same
+   breath so the anon roster stayed 12. Found ONLY because the trail was
+   read back. The standing lesson earned its place again.
+
+2. **THE RECEIPT COULD NEVER BE SEEN.** The before/after panel was
+   unreachable code in production. `{stale && <RoleDriftBanner/>}` turns
+   the element into `false` the instant the remedy clears the drift, so
+   React unmounts the component and the diff it holds in state goes with
+   it. My first fix — dropping `router.refresh()` — did nothing, because
+   the ACTION's own `revalidatePath` re-renders the tree anyway. The
+   banner is now always mounted and gates itself on
+   `!stale && !diff → null`.
+
+3. **A MEASUREMENT ARTIFACT, not a defect.** The refusal toast read as
+   missing three times before I clicked and observed inside a SINGLE
+   evaluation. Sonner had auto-dismissed it between tool calls. Same
+   class as drive 117's `innerText` / `text-transform` artifact: **the
+   measurement lied, not the product.** Recorded because I reported it
+   as a defect before it was one.
+
+### The drive, in order
+
+A.3 proven first: spec at "Spec draft", **no banner, no button**. Spec
+finalised through the UI (which asks for confirmation). Banner appears;
+the Build Sourcing CTA correctly withholds itself. **Three upload
+attempts refused** with the exact sentence — and candidates stayed 1,
+CV objects stayed 1: *the refusal created nothing.* Remedy pressed; the
+receipt now renders, and the agent's own `change_summary` names the
+§175 defect unprompted:
+
+> "the former implied an infrastructure or IT-run mandate that the
+> specification explicitly excludes"
+
+`Head of IT Operations` → `Global Head of CM Operations, Regulatory, and
+Supervisory Technology`. Weights **untouched** (10/8/9/7/8, identical to
+the snapshot — A.5 proven). Trail: `calibration_rederived`, actor
+**Calibration Agent**, visibility `org`, both titles and the spec
+version in the detail, **no spec text**. Door then CLEARED: the same CV
+refused three times parsed straight through.
+
+### The result that inverts the intuition
+
+Re-scored against the CORRECT role, the candidate scores **lower**, not
+higher: **4 / 3 / 3 / 3 / 4** against §175's 7 / 5 / 6 / 6 / 7.
+
+**The mis-scoped role was flattering him.** §175 read the drift as
+potentially unfair to the candidate; it was the opposite. "Head of IT
+Operations" sat far closer to his CIO/infrastructure background than the
+post-trade and regulatory application mandate the spec actually
+describes. The false negative was real, but its direction was not what
+the audit assumed — worth recording, because it is the kind of thing
+only a live re-run can settle.
+
+Worth noting too: the new evaluation's language is markedly more careful
+about evidence — *"cannot be scored above 4 because no named programme
+… is present"*, *"unverifiable"* — where §175's said *"significantly
+below"*. That is §176's defect class improving on its own once the role
+is precise. It does **not** close §176; it suggests the two are related.
+
+### Teardown — exact
+
+users 26 / auth 26 / events 77 / candidates 1 / cv objects 1 / scores 1
+(the original candidate's, untouched) / spec `is_final` false /
+`role_title` restored and the whole `calibration_model` verified
+**byte-identical to the pre-drive snapshot** / no stamp / anon roster
+12. The uploaded CV was removed through the storage API, as a recruiter
+holding `cvs_org_delete`, BEFORE the persona was deleted — SQL against
+`storage.objects` would have left the bytes behind.
+
+**A NEW TRAP for the list:** Playwright MCP is rooted at the **iCloud
+clone**, not the live repo, so a file to be uploaded must be staged
+inside that root. It was removed at teardown; anything left there is
+personal data sitting in a stale copy.
+
+Numbers now: next migration **132**; next § **179**; next drive **119**;
+vitest **1120**; CHECK **98**; door 26; **allowlist 30**; anon roster 12.
+Deployed `mandate-ne3e4ibe4`.
