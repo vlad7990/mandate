@@ -53,13 +53,15 @@ The founder added Turnstile keys and redeployed. The door **opened**:
   risks** — an applicant gets the identical judgment chain to a recruiter upload
 - Trail: `candidate_cv_submitted` + `candidate_parsed`
 
-**UNMEASURED — verify or state honestly as unproven in §192:** the evaluation,
-the refuter, and the **verdict_ledger row** had not appeared when the session
-ended. Either the `after()` chain was still running or it was cut off by the
-function timeout (parse ~80s + eval ~90s + refuter ~40s is near Vercel's
-ceiling). **Do not claim the full chain fired without evidence.** If it matters,
-re-run one submission and watch it, or check whether the row exists before
-teardown.
+**MEASURED AFTER THE WAIT — the full chain fired.** It was still running, not
+cut off. Verified in prod before teardown: evaluation present
+(**tier_3 / do_not_include**), refuter ran and **concurred**, and **one
+`verdict_ledger` row** written with `refuter: 'concurred'`. So an applicant who
+submitted their own CV through a public link was parsed, evaluated,
+second-opinioned and **scored into the ledger automatically, with no recruiter
+involved** — §190 and §188 composing exactly as designed. That is §192's
+headline. (Latency note worth recording: the `after()` chain took materially
+longer than the ~90s the earlier drives led me to expect — budget for it.)
 
 ## THE FINDING DRIVE 125 SURFACED (needs a founder ruling)
 
