@@ -13302,3 +13302,106 @@ same row re-render as questions; flip back; teardown exact.
 
 Numbers unchanged until built: next migration 132; next § **183**; next
 drive 120; vitest 1127; CHECK 98; door 26; allowlist 30; anon roster 12.
+
+## 183. §182 BUILT AND DRIVEN — THE VERDICT GETS A SKEPTIC AND A QUIETER VOICE — 2026-08-27
+
+**DRAFTED — awaiting the founder's word. No completion declared.**
+Built as confirmed ("confirm §182 as proposed"); all rulings taken as
+drafted.
+
+### As built
+
+**Slice R.** `verify-evaluation.ts`: before a `tier_3`/`tier_4`/
+`do_not_include` stands, the refuter builds the strongest honest case it
+is wrong — same tier as the judgment it audits (`verify_evaluation` →
+sonnet-5, thinking disabled; capability map 35 → 36, tripwire updated).
+Attached BEFORE persist, so report and audit land as one write.
+Fail-soft: absence renders as "not checked", distinguishable from
+concurrence. **Skills deliberately not injected** — the org's skills
+steer the evaluator, and steering the skeptic with the same instructions
+would correlate their errors, which is the failure this seam exists to
+break. The guard pins the absent import; mutation-tested (widening the
+R.1 trigger and injecting skills both fail).
+
+**Slice F.** `organizations.advisory_mode` — explicit, admin-thrown,
+default off. Render-only: the report leads with **Test at Interview**
+(the alignment test's question as "Ask first", then each gap's mismatch
+as a thing to probe rather than a fact about the person) and the verdict
+demotes to a "Based only on the CV" line — chips intact, **never
+hidden**. The flag rides the candidate page's existing org read; the
+settings card is admin-gated three deep (render, action, RLS —
+`organizations_role_update` already existed, so no new policy).
+
+Migration 132: `advisory_mode` + CHECK 98 → 99 + `record_agent_event`
+allowlist 30 → 31 **in one migration** — §178's lesson applied rather
+than re-learned. Anon roster stayed 12 (the revoke rode the same file).
+vitest 1127 → 1132.
+
+### Drive 120 — live in prod, two personas, teardown exact
+
+Fresh upload rather than a force-regenerate, **deliberately: the
+baseline candidate's evaluation is §175's exhibit** and regenerating it
+would have destroyed the audit's evidence. Verified at teardown:
+`generated_at` still 2026-04-30.
+
+The evaluation came back `tier_4 / do_not_include` and the refuter ran —
+**and concurred.** The trail read back consistent both ways: `agrees:
+true`, zero `evaluation_contested` rows — exactly what R.4 specifies for
+concurrence. The concurrence line renders under the full verdict.
+
+**The refuter's output is worth quoting, because it did four things the
+gate hoped for and one §176 will have to fix:**
+
+1. It held the evidence line: *"'no named systems/regimes/headcount' is
+   an absence-of-evidence problem, not proof of absence."*
+2. It concluded honestly that this argues *"for a clarifying screening
+   call, not for overturning a do_not_include"* — refutation attempted,
+   verdict survives, which is the R.3 contract working as charged.
+3. **It read §181's fields:** *"PMI-IPMA Level A and Certified Scrum
+   Master certifications indicate formal large-programme governance
+   credentials not discussed in the evaluation"* — the education slice
+   feeding the skeptic one slice later.
+4. Its `underweighted_evidence` named real things (the 2010–2012
+   capital-markets density, the quantified outcomes discounted as
+   "generic").
+5. **The time anchor is still wrong:** it wrote *"eight-year consulting
+   gap since 2017"* — the run date makes it nine. Third distinct value
+   for the same interval (seven, eight; never nine). §176 carries the
+   fix (run date passed into the prompt) and this is more evidence it
+   is needed.
+
+Advisory mode: flipped ON as Ada through the settings card (toast, DB
+read back `true`), the SAME stored evaluation re-rendered — Test at
+Interview leading, "Ask first" carrying the sharpest question, verdict
+demoted to "Based only on the CV" with tier and `do_not_include` still
+visible, second opinion intact — then OFF, DB read back `false`.
+
+**Teardown exact:** users 26 / auth 26 / events 77 / candidates 1 / cv
+objects 1 / advisory_mode false / **active admins 1** (Ada was a second
+admin for the drive's duration — minted and removed by SQL, where
+`auth.uid()` is NULL and the §173 guard deliberately stands aside) /
+exhibit untouched / anon roster 12. Storage via API before the persona
+went; staged file removed from the Playwright root.
+
+### Observed, not §182's defect
+
+Two `candidate_evaluated` events landed for one candidate — two page
+loads each scheduled a generation while the first was still in flight
+(the pending→schedule pattern has no in-flight marker). Pre-existing,
+costs one duplicate sonnet-5 call under concurrent loads, surfaced here
+because the trail was read back. Noted for a later cost slice; not
+fixed under this gate.
+
+### What this does NOT claim
+
+The refuter concurring once is one data point on the concurrence path;
+**the CONTESTED path — the flag, the warn panel, the
+`evaluation_contested` event — has run only against the database and
+unit guards, never live**, because one honest CV cannot make the
+refuter disagree on demand. The §128 CVs will exercise it naturally.
+Advisory mode is a render truth, proven; whether it changes founder
+BEHAVIOUR is not provable from inside the product.
+
+Numbers now: next migration **133**; next § **184**; next drive **121**;
+vitest **1132**; CHECK **99**; door 26; **allowlist 31**; anon roster
+12; capability map **36**. Deployed `mandate-jhzo1m2vi`.
