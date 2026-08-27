@@ -13636,3 +13636,101 @@ Numbers unchanged (no migration, no schema, no door): next migration
 133; next § **187**; next drive **123**; vitest 1141; CHECK 99; door
 26; allowlist 31; anon roster 12. Not deployed — the harness is
 founder-machine tooling, nothing of it ships to Vercel.
+
+## 187. THE FOUNDER'S RULING ON §128, AND THE LEDGER GATE — 2026-08-27
+
+**The founder's word:** *"consider the 8-10 CVs test completed, it
+works. lets continue with Ledger first."*
+
+Recorded precisely: the machine checked before writing this entry —
+`evals/fixtures/cvs/` holds one CV and no harness output exists — so
+the record says §128's bench test is **CLOSED BY THE FOUNDER'S RULING**,
+which is the founder's call to make, not "ran and passed", which the
+evidence cannot support. Said once, and the consequence drawn rather
+than argued: **production is now the test**, the §183/§184 guardrails
+are the safety net, and the ledger below is the instrument that scores
+it. `docs/launch-readiness.md` §2.1 should be read with this ruling
+beside it.
+
+The gate, with the founder's word already given ("Ledger first"):
+rulings L.1 (snapshot at evaluation-land, by the Evaluator, regenerate
+= second row), L.2 (outcomes by trigger on pipeline_stage — the only
+choke point every writer passes, including the portal's tokened
+withdrawal; furthest_stage + terminal_outcome as separate facts), L.3
+(erasure wins — candidate cascade takes the judgment rows), L.4 (no
+human write policies at all).
+
+## 188. §187 BUILT AND DRIVEN — THE SYSTEM KEEPS SCORE ON ITSELF — 2026-08-27
+
+**DRAFTED — awaiting the founder's word. No completion declared.**
+
+### As built
+
+**Migration 133** — `verdict_ledger`. The Evaluator writes each verdict
+AS IT STOOD at the moment it lands (tier, recommendation, refuter
+position, fit snapshot), because a forced regenerate REPLACES
+`cv_structured.evaluation` and the verdict that mattered would be gone
+by the time its outcome arrives. Regenerates append, never overwrite.
+Outcomes arrive by SECURITY DEFINER trigger on
+`candidates.pipeline_stage` — every writer caught, including the
+portal's tokened withdrawal that no app-level hook would see. Two
+outcome facts by design: `furthest_stage` (how far they got) and
+`terminal_outcome` (how it ended).
+
+**Humans cannot write it.** SELECT for org staff, INSERT for agents,
+and NO human insert/update/delete policies at all — the record of what
+the machine said is not editable by the people it might embarrass.
+Deletion happens only through the candidate cascade: **erasure wins.**
+
+Composite `_in_org` FKs per the platform doctrine — which CREATED two
+ambiguous pairs; `AMBIGUOUS_PAIRS` regenerated in the same commit
+(structural-guard checklist held), and every read of the table uses NO
+embed. `/app/analytics` gains the **Judgment Calibration** card: per
+machine tier — n, presented, interviewed+, hired, rejected — with the
+footer that is the whole point: *a tier_4 that gets hired, or a tier_1
+the client rejects, is the system being wrong — and this table saying
+so.*
+
+Counts: CHECK stays 99 (data, not trail), allowlist 31, doors 26, anon
+roster verified 12 after the trigger fn's revoke (the 129 lesson,
+applied not re-learned). vitest 1141 unchanged — the writer is inside
+an agent seam and the trigger is SQL; both were driven instead.
+
+### Drive 123 — live in prod, the full loop
+
+One weather note first: the upload's browser leg died on
+ERR_NETWORK_CHANGED — a local network blip — while the SERVER completed
+the whole action (row created, file stored, parse landed). Recorded
+because it is a nice accidental proof of the seam split: the recruiter's
+fetch is not load-bearing for the agent's work.
+
+Then, in order: evaluation landed → **ledger row written by the
+Evaluator**: tier_4 / do_not_include / refuter concurred / fit
+5-4-4-3-5 / trigger_kind generated. Candidate driven through the
+pipeline BY THE UI select — found → submitted → interviewed → rejected —
+and the trigger stamped exactly the pair the design wanted:
+**furthest_stage `interviewed` (rank 5), terminal_outcome `rejected`.**
+The calibration card rendered it live: Tier 4 · n 1 · presented 1 ·
+interviewed+ 1 · hired 0 · rejected 1, honest footer visible.
+
+**The erasure assertion ran as its own step:** candidate deleted (storage
+first, via the API, under the live persona) → fresh statement →
+`verdict_ledger` count **0**. The cascade held. A ledger of opinions
+about a person does not outlive the person, and drive 123 proved it
+rather than trusting the DDL.
+
+Teardown exact: users 26 / auth 26 / events 77 / candidates 1 / cv
+objects 1 / ledger 0 / anon roster 12.
+
+### The roadmap is built
+
+All four judgment-roadmap items now exist: §183 skeptic + advisory ·
+§184 evidence grades · §186 harness · §188 ledger — the first three
+pending the founder's word, this one now joining them, §181 parked
+beside. What remains is not agent-buildable: the founder-owned launch
+residue, and — under the §187 ruling — the slow accumulation of real
+verdicts against real outcomes that this ledger now records on its own.
+
+Numbers now: next migration **134**; next § **189**; next drive **124**;
+vitest 1141; CHECK 99; door 26; allowlist 31; anon roster 12. Deployed
+`mandate-jt3zmo25s`.
