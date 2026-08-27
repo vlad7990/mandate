@@ -12934,3 +12934,87 @@ personal data sitting in a stale copy.
 Numbers now: next migration **132**; next § **179**; next drive **119**;
 vitest **1120**; CHECK **98**; door 26; **allowlist 30**; anon roster 12.
 Deployed `mandate-ne3e4ibe4`.
+
+## 179. §178 CONFIRMED — THE ROLE SEAM IS LAW — 2026-08-26
+
+The founder returned the judgment rather than the word: *"if you feel
+that making it the law then lets do it."* Taken as delegated authority,
+exercised deliberately, and recorded with what it does and does NOT
+cover — a delegated confirmation is worth less than a founder's own
+unless the limits come with it.
+
+**One check was owed before this could be written, and it was run.**
+The always-mounted banner introduced a `!stale && !diff → null` path
+that EVERY mandate in the product now renders. Nothing had exercised it
+after the fix. Both live mandates were loaded as a recruiter,
+post-teardown, non-stale: both render, both show their role, no banner,
+no receipt, no error boundary. Had that been wrong, every project page
+in the product would have been broken by a change whose entire purpose
+was to make one banner behave. Persona torn down; baseline exact again
+(users 26 / auth 26 / events 77 / candidates 1 / cv objects 1 / anon
+roster 12).
+
+**LAW as of this entry:** a mandate carrying a finalised job spec cannot
+be evaluated or ranked against a role identity derived from anything
+else. The refusal names its remedy; the remedy is explicit, agent-run,
+weight-preserving, and leaves a trail naming both titles.
+
+### What this does NOT cover — stated, not buried
+
+1. **Three of the four doors were not driven live.** Only CV upload was
+   refused in production. Retry-parse, network-copy and role-analysis
+   rest on a mutation-tested source-text guard plus `tsc`. That is
+   genuinely good evidence — it is not the same as having watched them
+   refuse. If one of them is wrong, this is where it will be.
+
+2. **Mandates with NO final spec remain unprotected — by ruling, not by
+   oversight.** A.3 is the founder's call and the right one: blocking
+   evaluation before a spec lands would break the ordinary order of
+   work. But it means §175's defect is closed for mandates that finalise
+   a spec and OPEN for those that never do. **The RBC project — the very
+   case that exposed this — is back to `is_final = false` after teardown
+   and is therefore in the unprotected state right now.** Anyone
+   evaluating a candidate on it today still scores against "Head of IT
+   Operations". That is correct behaviour under A.3 and it is worth
+   knowing.
+
+3. **The seam is watched in one direction only.** The door asks whether
+   the calibration came from the final spec. Nothing asks whether the
+   SPEC still matches the onboarding answers, or whether the weights
+   still fit a role that has moved. §178's drive surfaced the second of
+   those directly: the remedy deliberately leaves `dimension_weights`
+   alone (A.5), so a mandate can now carry a correct role title against
+   weights derived for a different job. The receipt says so in words;
+   nothing enforces it.
+
+### What §178 leaves behind, beyond its diff
+
+- A door and a remedy at the seam §172 warned about — *a single source
+  of truth only ends drift below it* — now with something above it.
+- **The corrected number: the "agent allowlist" is the event allowlist
+  inside `record_agent_event`, not the agent principal count.** §177
+  asserted otherwise and shipped a silent empty trail on the strength of
+  it. Now 30.
+- Two standing lessons earned again: **read the trail back** (the event
+  never landed, and nothing said so), and **`{cond && <Component/>}`
+  destroys client state when `cond` flips** (the receipt was unreachable
+  code in production; dropping `router.refresh()` did not fix it,
+  because the action's own `revalidatePath` re-renders regardless).
+- One correction against myself: a toast reported missing three times
+  was a MEASUREMENT artifact, not a defect. Sonner auto-dismisses
+  between MCP tool calls.
+
+### Still open, each needing its own gate
+
+**§176** — the evidence-grade slice, drafted and unbuilt. §178's re-run
+showed the corrected role improves the epistemics on its own
+(*"cannot be scored above 4 because no named programme is present"*
+against §175's *"significantly below"*), which narrows §176 but does not
+close it. **F-H** — the profile schema cannot hold education,
+certifications or a phone number; no gate written. And §128's residue is
+now specifically **8–10 more CVs**: ranking and shortlist have still
+never been tested, and one CV cannot test comparison.
+
+Numbers unchanged by this entry: next migration 132; next § **180**;
+next drive 119; vitest 1120; CHECK 98; door 26; allowlist 30; anon
+roster 12.
