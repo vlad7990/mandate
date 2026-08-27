@@ -13119,3 +13119,98 @@ column is still empty, which is the D.3 ruling made visible.
 
 Numbers unchanged until built: next migration 132; next § **181**; next
 drive 119; vitest 1120; CHECK 98; door 26; allowlist 30; anon roster 12.
+
+## 181. §180 BUILT AND DRIVEN — THE PROFILE HOLDS A QUALIFICATION — 2026-08-26
+
+**DRAFTED — awaiting the founder's word. No completion declared.**
+
+Founder's rulings: **D.3(a) do not parse phone at all**, **D.4 education
+reaches the evaluation but NOT ranking**, defaults on D.1/D.2/D.5/D.6.
+
+### As built
+
+`CANDIDATE_PROFILE_SCHEMA` gains `education` (objects — `degree`,
+`field`, `institution`, `year`) and `certifications` (plain strings),
+both **required**, both empty-array-when-absent. Objects for education
+because the **institution** is the part a hiring manager asks about;
+strings for certifications because CVs do not separate issuer from name
+("PMI – IPMA – Level A Certified") and an `issuer` field would invite
+the model to invent one. `year` is nullable and the prompt forbids
+inferring it from surrounding dates.
+
+**D.3(a) is enforced twice, deliberately.** The schema has no phone
+field — but a schema alone cannot stop a model parking a number inside
+`location` or `summary`, so the parsing prompt says it in terms: *the
+candidate's phone is theirs to give, not ours to take from a document a
+recruiter may have uploaded without them.*
+
+**D.4** required more than adding fields.
+`generate-evaluation.ts:98` serialises the profile object whole, so the
+new fields arrive by construction — **but arriving is not reading.** The
+evaluation prompt is now told to check a named qualification against
+them, and told that an empty array means *the CV does not evidence it*,
+not that the candidate lacks it. **A CV is not a transcript.** That
+sentence is load-bearing: without it this becomes §176's defect wearing
+a fourth hat. `trimProfile` stays clean — a degree is a gate against a
+stated requirement, not a comparison axis.
+
+`profile-fields.test.ts` pins all four rulings. **Nothing pinned this
+schema before**, which is how the gap survived unnoticed. Mutation-tested
+four ways — required-list, a smuggled phone field, an education leak
+into ranking, deletion of the transcript rule — each caught.
+
+**No migration.** The profile lives in `cv_structured` jsonb. Next
+migration stays 132; no door, no event, no CHECK change.
+
+### Drive 119 — live in prod, teardown exact
+
+Same CV, uploaded by a minted recruiter. Every qualification survived:
+
+- **MBA, Finance — Kharkiv State University of Food & Trade Technology**
+- **BS, Accounting & Audit —** same institution
+- **PMI – IPMA – Level A Certified**, **Certified Scrum Master**
+
+Institution transcribed exactly, ampersand and all. **Both years `null`,
+not invented** — the CV states none, and the prompt's prohibition held.
+Both panels render on the profile tab.
+
+**D.3(a) proven against the whole 17.6 KB profile, not just the fields.**
+The number IS on that CV. Searched the serialised profile for the area
+code, the exchange, the line, and the words phone/mobile/telephone:
+**all false.** Nothing was smuggled. `candidates.phone` still `null`,
+and the profile carries no `phone` key at all.
+
+**Teardown exact:** users 26 / auth 26 / events 77 / candidates 1 / cv
+objects 1 / scores 1 / spec `is_final` false / `role_title` unchanged /
+anon roster 12. CV object removed through the storage API while the
+persona still held `cvs_org_delete`; staged file removed from the
+Playwright root.
+
+### Two notes worth keeping
+
+**A backtick inside a template literal broke the build.** The evaluation
+prompt is a template literal; writing `` `education` `` inside it
+terminated the string. Same family as the git-commit backtick trap
+already on the list, in a place nobody had been bitten yet. Caught by
+`tsc`, which is exactly what `tsc` is for.
+
+**The `text-transform` artifact recurred**, and was recognised this
+time: a case-sensitive check for "Certified Scrum Master" reported it
+absent while the chip plainly rendered "CERTIFIED SCRUM MASTER". Third
+appearance across drives 117–119. Case-insensitively, or not at all.
+
+### What this does NOT do
+
+`education` now reaches the evaluation prompt, so **scores can move**.
+Every evaluation generated before today was made blind to
+qualifications; a regenerate may return a different number. That is the
+intended consequence of D.4 and it is stated so it is never a surprise.
+
+It also does not close **§176** — it narrows it. The transcript rule
+handles evidence-honesty for *this* field; the general defect, where
+"unattributed" becomes "no evidence of" across risks, gaps and
+client-facing pitches, is still drafted and unbuilt.
+
+Numbers now: next migration 132; next § **182**; next drive **120**;
+vitest **1127**; CHECK 98; door 26; allowlist 30; anon roster 12.
+Deployed `mandate-oygd7fb7b`.
