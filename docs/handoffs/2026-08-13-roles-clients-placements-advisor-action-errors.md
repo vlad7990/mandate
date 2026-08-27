@@ -13734,3 +13734,31 @@ verdicts against real outcomes that this ledger now records on its own.
 Numbers now: next migration **134**; next § **189**; next drive **124**;
 vitest 1141; CHECK 99; door 26; allowlist 31; anon roster 12. Deployed
 `mandate-jt3zmo25s`.
+
+## 189. FIVE CONFIRMATIONS — THE JUDGMENT PROGRAMME IS LAW — 2026-08-27
+
+The founder's written word: *"I confirm §181, §183, §184, §186, §188."*
+
+All five land against their entries as drafted and driven:
+
+- **§181 — LAW.** The profile holds a qualification; the parser never
+  takes a phone number. (F-H closed.)
+- **§183 — LAW.** Contested verdicts + advisory mode: the refuter on
+  every negative verdict, never auto-overturning; the org-level
+  advisory render that leads with questions and never hides the tier.
+- **§184 — LAW.** Evidence grades on all four claim families; a
+  not_stated claim is never a comparative; elapsed time anchors on
+  run_date. (F-D, F-G, F-C closed — with §179 and §181, ALL FOUR §175
+  defects are now closed law.)
+- **§186 — LAW.** The judgment harness: machine-written runner,
+  founder-written verdicts, neither sees the other's half.
+- **§188 — LAW.** The verdict ledger: every verdict as it stood, scored
+  by the pipeline; humans cannot write it; erasure wins.
+
+The judgment programme opened by §175's audit is closed end to end —
+found, gated, ruled, built, driven, confirmed. What §128's waived bench
+test would have measured, the ledger now measures in production.
+
+Numbers unchanged by confirmation: next migration 134; next § **190**;
+next drive 124; vitest 1141; CHECK 99; door 26; allowlist 31; anon
+roster 12.
