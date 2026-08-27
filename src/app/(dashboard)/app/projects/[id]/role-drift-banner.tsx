@@ -22,10 +22,15 @@ import type { RoleDiff } from "@/lib/ai/rederive-role";
  * asks, and the diff comes back so they can see what the role became.
  */
 export function RoleDriftBanner({
+  stale,
   projectId,
   specVersion,
   currentTitle,
 }: {
+  /** Server-computed drift. The component stays MOUNTED either way — see
+   * the note at its call site — so that the receipt below survives the
+   * re-render the remedy's revalidatePath triggers. */
+  stale: boolean;
   projectId: string;
   specVersion: number | null;
   currentTitle: string | null;
@@ -92,7 +97,10 @@ export function RoleDriftBanner({
         </p>
         <button
           type="button"
-          onClick={() => router.refresh()}
+          onClick={() => {
+            setDiff(null);
+            router.refresh();
+          }}
           className="mt-3 border border-secondary-fixed-dim/60 px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-secondary-fixed-dim transition-colors hover:bg-secondary-fixed-dim/15"
         >
           Continue
@@ -100,6 +108,9 @@ export function RoleDriftBanner({
       </div>
     );
   }
+
+  // Nothing to say: no drift, and no receipt outstanding.
+  if (!stale && !diff) return null;
 
   return (
     <div className="border border-warn/60 bg-warn/10 p-4">

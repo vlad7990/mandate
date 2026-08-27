@@ -469,13 +469,19 @@ export default async function ProjectPage({
             summary={project.recalibration_summary}
           />
         )}
-        {roleDrift.stale && (
-          <RoleDriftBanner
-            projectId={project.id}
-            specVersion={roleDrift.finalSpecVersion}
-            currentTitle={calibration.role_title ?? null}
-          />
-        )}
+        {/* ALWAYS mounted, never conditionally rendered. Drive 118: with
+            `{stale && <RoleDriftBanner/>}` the element became `false` the
+            moment the remedy cleared the drift, React unmounted the
+            component, and the diff receipt it was holding in state went
+            with it — unreachable in production. Keeping the instance in
+            the tree lets it survive the server re-render that
+            revalidatePath triggers. */}
+        <RoleDriftBanner
+          stale={roleDrift.stale}
+          projectId={project.id}
+          specVersion={roleDrift.finalSpecVersion}
+          currentTitle={calibration.role_title ?? null}
+        />
         {spec.hasFinal && !roleDrift.stale && (
           <BuildSourcingCta projectId={project.id} />
         )}
