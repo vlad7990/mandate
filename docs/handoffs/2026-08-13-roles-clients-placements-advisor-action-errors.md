@@ -13762,3 +13762,75 @@ test would have measured, the ledger now measures in production.
 Numbers unchanged by confirmation: next migration 134; next § **190**;
 next drive 124; vitest 1141; CHECK 99; door 26; allowlist 31; anon
 roster 12.
+
+## 190. THE APPLY LINK, BUILT FAIL-CLOSED — 2026-08-27
+
+**DRAFTED — awaiting the founder's word.** Built under the founder's
+"develop everything you have recommended above". Scope note honoured
+from the recommendation itself: a public CV-upload endpoint does not
+open without a bot challenge, so with the founder's Turnstile keys
+absent the whole door ships DARK — built, wired, honestly refusing.
+
+### As built
+
+Migration 134. `projects.apply_token` (NULL = closed; opening mints a
+fresh uuid, so an old link dies the moment a new one is born). **The
+anon roster grows 12 → 14, deliberately and named:**
+`verify_apply_token` (the page's only read — role title, company, open;
+not one byte more) and `submit_application` (the door's only write —
+token re-validated inside, §177's door mirrored in SQL, candidate
+inserted with `source='apply'` and `subject_notified_at=now()` because
+the Art.13 notice is ON the form — the one row-creation path where the
+subject already knows). Rate scope `apply` on the MONEY tier: 5 per
+IP-hour, 50 global per day, unreachable limiter refuses. Trail rides
+the existing `candidate_cv_submitted` with `detail.source='apply'` — no
+CHECK change.
+
+The route: Turnstile-configured gate BEFORE the body is read →
+limitClosed → verifyTurnstile → file checks → definer insert → service
+storage under the org prefix (073's shape — the applicant holds no
+grant) → `after()`: **§177's TS door, then parse → evaluation → refuter
+→ the §188 ledger** — an applicant gets exactly the judgment chain a
+recruiter upload gets, guardrails and all.
+
+**`claim_evaluation` closes §183's cost artifact**: concurrent page
+loads race for an atomic five-minute claim; the loser skips the
+duplicate sonnet-5 call; the claim dies when the evaluation lands.
+
+**The §177 guard earned its keep on the very next slice:**
+door-sites.test.ts failed the build because the new route called
+`runCvParseAndPersist` without the TS door — the SQL mirror gated
+submission, but the guard was right to demand the literal at the
+judgment too. Added, not argued with.
+
+### Drive 124 — the closed state, live in prod
+
+Recruiter panel: Open minted the link AND showed the dark warning
+("REFUSING submissions: Turnstile keys are not configured", naming both
+env vars). Anon by wire: valid token → role + company + "not open right
+now", NO form; POST → **403 before the body**; invalid token → "not
+valid". Close via the panel → token NULL. Teardown exact: users 26 /
+auth 26 / events 77 / candidates 1 / cv objects 1 / rate_limit 0 /
+**anon roster 14 (the new ruled number)**.
+
+**Stated plainly: the OPEN path has never run live.** It is key-gated
+dark — the Deep Infra/bounce-webhook precedent — and every seam behind
+it (parse, evaluation, refuter, ledger, claim) was proven individually
+in drives 121–124 and the harness. The day the founder's Turnstile keys
+land and Vercel redeploys, drive 125's script is one submission long.
+
+## 191. WHERE THIS LEAVES THE PRODUCT — 2026-08-27
+
+Every item from the recommended list is now done or founder-owned:
+words confirmed (§189) · unblockers surfaced (founder's hour: Turnstile
+— now lighting a built door rather than a hypothetical — sending
+domain, key rotation, leaked-password toggle, UptimeRobot) · apply link
+built fail-closed (§190) · in-flight fix folded in (§190) · "stop
+building and run a search" — which is where this thread now honestly
+points. The development queue is empty until a real search generates
+the next real requirement.
+
+Numbers: next migration **135**; next § **192**; next drive **125**;
+vitest **1146**; CHECK 99; door 26; allowlist 31; **anon roster 14
+(ruled: +verify_apply_token, +submit_application)**; capability map 36.
+Deployed `mandate-fia28n0qh`.
