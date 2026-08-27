@@ -13405,3 +13405,161 @@ BEHAVIOUR is not provable from inside the product.
 Numbers now: next migration **133**; next § **184**; next drive **121**;
 vitest **1132**; CHECK **99**; door 26; **allowlist 31**; anon roster
 12; capability map **36**. Deployed `mandate-jhzo1m2vi`.
+
+## 184. §176 BUILT AND DRIVEN — THE SYSTEM STOPS ASSERTING WHAT IT DOES NOT KNOW — 2026-08-27
+
+**DRAFTED — awaiting the founder's word. No completion declared.**
+Built under DELEGATED confirmation ("continue with your suggested list
+and approach to priorities") — recorded as such, with the rulings
+exercised being exactly the D.1–D.5 defaults §176 proposed, D.2
+included. If any ruling lands differently on review, this entry is
+where to object.
+
+### As built
+
+**The structural half.** Four claim families — profile `risks[]` and
+`development_areas[]`, evaluation `gaps[]`, psychology `watch_outs[]` —
+carry a REQUIRED `evidence_grade`: `evidenced | unattributed |
+not_stated`. One shared item schema (`gradedClaimItemSchema`) so the
+four families cannot drift on what a grade is. With
+`additionalProperties: false` an ungraded machine claim is impossible
+to emit.
+
+**The prompt half — what a schema cannot hold.** D.2: a `not_stated`
+claim is NEVER phrased as a comparative, pinned in the evaluation and
+positioning prompts — the two that write client-facing language. F-C:
+`run_date` injected into parse, evaluation, psychology and refuter,
+with "never against your own sense of today's date". Pins assert on the
+EXPORTED prompt strings — runtime values — so only deleting a rule can
+un-guard it, and that fails the suite.
+
+**Three authors, one reader.** Storage now legitimately holds plain
+strings (pre-§176 rows), graded objects (new parses), and strings again
+(recruiter edits — a manual edit re-authors the list as human-curated
+and machine grades DROP, deliberately: a human's judgment wears no
+machine grade, which is D.3's own logic). `normalizeClaims` reads all
+three and drops junk rather than rendering `[object Object]`. D.3
+honoured: no backfill; §175's exhibit stays as written and was verified
+untouched at teardown.
+
+No migration — the shapes live in `cv_structured`/psychology JSONB.
+vitest 1132 → 1141. Mutation-tested three ways, each caught.
+
+### Drive 121 — the defect class died on camera
+
+Same CV, fresh upload, live in prod. Set §175's exhibit beside what the
+same document produces now:
+
+> **Then (§175):** "Team scale and budget authority **significantly
+> below** RBC role requirements" — a flat comparative minted from a CV
+> that states no headcount.
+>
+> **Now:** "**The CV does not state headcount for any role**; without
+> managers-of-managers evidence at ~300–500 scale, the candidate cannot
+> be credibly positioned…" — `evidence_grade: not_stated`, worded as a
+> fact about the document.
+
+All three grades used, each correctly: the consulting arc is
+`evidenced` (it IS on the CV), the employer-less page-2 sections are
+`unattributed`, the silences are `not_stated`.
+
+**And the time anchor finally held.** Four runs of this seam produced
+seven, seven, eight — and now, with run_date in the prompt: *"not
+evidenced for the past **nine years**"* in the parse and *"**Nine years**
+in external consulting"* in a gap headline. First correct value, in
+both seams, same run.
+
+One flag adjudicated rather than waved through: a broad regex found
+"below" in the recommendation_rationale — read in full, it compares
+**the system's own dimension scores to the tier threshold**, which is
+not a D.2 violation (D.2 governs not_stated claims about the person).
+Recorded because the check that found it was cruder than the rule it
+checks.
+
+Surface: grade tags on the signals ledger, chips on the gaps ("NOT
+STATED ON CV" twice), refuter concurred again on a tier_4 /
+do_not_include. Teardown exact: users 26 / auth 26 / events 77 /
+candidates 1 / cv objects 1 / exhibit `generated_at` unchanged / anon
+roster 12.
+
+### What this does NOT close
+
+The grades govern the four ruled families. The evaluation's NARRATIVE
+prose (executive summary, verdict narrative) is constrained by prompt
+rules but carries no per-sentence grades — a determined wrong sentence
+can still appear there, caught only by the refuter and the recruiter.
+And the D.2 rule in the positioning prompt has not yet been driven
+against a generated pitch — the §128 CV batch will exercise it
+naturally.
+
+**With this, all four §175 defects have a shipped answer:** F-A §179
+(law) · F-H §181 (parked at the founder's word) · F-D/F-G/F-C this
+entry. The judgment roadmap's remaining items: the benchmark harness
+(§185, drafted next) and the verdict-vs-outcome ledger.
+
+Numbers now: next migration 133; next § **185**; next drive **122**;
+vitest **1141**; CHECK 99; door 26; allowlist 31; anon roster 12.
+Deployed `mandate-frouimo4e`.
+
+## 185. GATE DRAFT — THE JUDGMENT BENCHMARK HARNESS — 2026-08-27
+
+**DRAFTED. Nothing built. Awaiting the founder's word.** The next item
+on the confirmed roadmap, and the one that unblocks the item that
+outranks everything: §128's 8–10 real CVs.
+
+### The premise
+
+Every §-numbered proof so far shares one author: the person who wrote
+the fixture also wrote the expectation. The harness breaks that — I
+write the RUNNER, the founder writes the VERDICTS, and neither can see
+the other's half while working. What it buys: the founder's CV drop
+becomes a one-hour exercise instead of an afternoon, and the result is
+the first falsifiable test of the system's judgment.
+
+### The shape
+
+`evals/judgment-harness/` (or scripts/ — F.1 below):
+
+1. **Ingest**: walk `evals/fixtures/cvs/*.pdf|docx`, drive each through
+   the LIVE seams (parse → evaluate → refuter) against a project the
+   founder names, exactly as an upload would — agent sessions, doors,
+   trails, the lot. No mocks: the §128 test is of the product, not of a
+   test double.
+2. **Sheet**: emit `judgment-sheet.md` — per candidate, the system's
+   verdict column (fit dimensions, tier, recommendation, top gap with
+   its grade, refuter's position) beside an EMPTY founder column
+   (agree? / your tier / would present? / notes).
+3. **Rank**: after all parses land, one ranking run over the full set;
+   the sheet gains the leaderboard beside an empty founder ordering.
+4. **Score**: a second command reads the filled sheet back and reports
+   agreement — verdict concordance, rank correlation, and every
+   disagreement listed verbatim. THAT report is the §128 deliverable.
+
+### Rulings needed
+
+- **H.1 — where it runs.** Proposed: against PRODUCTION, as a
+  recruiter-credentialed run with the same teardown discipline as a
+  drive, on a founder-named THROWAWAY project (not RBC — its baseline
+  candidate is the §175 exhibit). Alternative: a Supabase branch —
+  cleaner isolation, but then the harness tests the branch, not the
+  product, and the §128 claim weakens.
+- **H.2 — cost ceiling.** 10 CVs ≈ 10 parses + 10 evaluations + up to
+  10 refuter calls + 1 ranking — roughly 30 sonnet-5-class calls per
+  full run. Proposed: a `--limit` flag and a printed cost estimate
+  before the run asks for confirmation.
+- **H.3 — persistence of the run.** Proposed: candidates STAY in the
+  throwaway project until the founder has filled the sheet (the whole
+  point is reading them in the product too), then one teardown command
+  the harness itself prints. Not auto-teardown — the founder decides
+  when the reading is done.
+- **H.4 — the founder's half.** The sheet is markdown the founder edits
+  by hand. No UI, no forms — the deliverable is a judgment, not a
+  feature.
+
+Cost of building: harness + sheet writer + scorer, all agent-runnable;
+no migration, no new door, no schema change. Drive 122 = a dry run with
+the ONE CV on hand, proving the loop end to end with n=1 before the
+founder spends an hour at n=10.
+
+Numbers unchanged until built: next migration 133; next § **186**; next
+drive 122; vitest 1141; CHECK 99; door 26; allowlist 31; anon roster 12.
