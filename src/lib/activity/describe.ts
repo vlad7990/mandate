@@ -436,6 +436,17 @@ export function describeActivity(event: ActivityEventRow): string {
           : trigger === "upload"
             ? " from an upload"
             : "";
+      // G.2: when the subject declared their own identity and the file
+      // disagreed, the trail says so. The alternative — resolving it
+      // silently — is the defect class §175 named: the system asserting
+      // what it does not know. It does not know which is current; it
+      // knows whose answer it kept.
+      if (d.identity_conflict === true) {
+        return (
+          `Parsed the CV${source} — the file's details differ from the ` +
+          `ones the applicant gave; theirs were kept`
+        );
+      }
       return `Parsed the CV${source}${
         d.identity_changed === true ? " and updated the candidate's details" : ""
       }`;

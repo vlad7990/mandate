@@ -176,6 +176,11 @@ export async function POST(
         company: project?.company_context ?? {},
         trigger: "upload",
         priorName: fullName,
+        // G.1 — this is the one path where the subject declared their own
+        // identity, under the Art.13 notice on the form. The CV may not
+        // overwrite it; a stale or borrowed file must not be able to
+        // rename an applicant or re-address their mail.
+        declaredIdentity: { fullName, email: email || null },
       });
       if (parsed.ok) {
         await ensureCandidateEvaluation(created.candidate_id, created.project_id, {

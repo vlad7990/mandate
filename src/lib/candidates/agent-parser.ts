@@ -4,6 +4,7 @@ import { parseCv } from "@/lib/ai/parse-cv";
 import type { CandidateProfile } from "@/lib/ai/cv-parsing";
 import type { CalibrationModel, CompanyContext } from "@/lib/ai/role-analysis";
 import { captureSeamError } from "@/lib/observability/sentry";
+import { resolveParsedIdentity, type DeclaredIdentity } from "./identity";
 
 /**
  * The CV Parsing Agent's one job, as a principal (076, slice three of
@@ -52,6 +53,21 @@ export async function runCvParseAndPersist(args: {
   /** The name the row carried before the parse (the filename fallback,
    * or the copied row's name) — for the identity_changed flag. */
   priorName?: string | null;
+  /**
+   * The identity the SUBJECT declared about themselves — G.1, ruled in
+   * the QA gate after §192 found the overwrite.
+   *
+   * Present only on the apply door, where a person typed their own name
+   * and address and was shown the Art.13 notice against those exact
+   * details. When present it WINS: the CV may not overwrite it. Absent
+   * for a recruiter upload, where there is no declared identity to
+   * defend and the CV is the only identity there is.
+   *
+   * The CV's claim is never discarded — it stays in `cv_structured`
+   * verbatim (G.2), and a disagreement is recorded on the trail rather
+   * than silently resolved.
+   */
+  declaredIdentity?: DeclaredIdentity | null;
 }): Promise<CvParseRunResult> {
   const session = await signInCvParser();
   if (!session.ok) {
@@ -106,16 +122,22 @@ export async function runCvParseAndPersist(args: {
       return { ok: false, kind: "parse_failed", reason: message };
     }
 
-    const identityChanged =
-      (parsed.full_name ?? null) !== (args.priorName ?? null);
+    // G.1/G.2 — whose answer wins about who this person is. The rule and
+    // its reasoning live in ./identity, where a test can reach them.
+    const identity = resolveParsedIdentity({
+      parsedName: parsed.full_name,
+      parsedEmail: parsed.email,
+      priorName: args.priorName,
+      declared: args.declaredIdentity,
+    });
 
     const { error: updateError, count: updateCount } = await session.client
       .from("candidates")
       .update(
         {
           cv_url: args.cvPath,
-          full_name: parsed.full_name || args.priorName || "Untitled candidate",
-          email: parsed.email,
+          full_name: identity.fullName,
+          email: identity.email,
           linkedin_url: parsed.linkedin_url,
           current_title: parsed.current_title,
           current_company: parsed.current_company,
@@ -155,7 +177,12 @@ export async function runCvParseAndPersist(args: {
       p_detail: {
         agent_kind: "cv_parser",
         trigger: args.trigger,
-        identity_changed: identityChanged,
+        identity_changed: identity.identityChanged,
+        // G.2: honest on the trail. `identity_conflict` says the file
+        // disagreed with the person about who they are, and that the
+        // person's own answer was the one kept.
+        identity_declared: identity.identityDeclared,
+        identity_conflict: identity.identityConflict,
       },
     });
     if (eventErr) {
