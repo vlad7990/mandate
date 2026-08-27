@@ -418,6 +418,11 @@ Style rules:
 - Each strength and gap must cite at least one specific role, company, or program from the candidate's CV.
 - The alignment-test question must be sharper than "is this candidate qualified?". It probes a specific must-have or anti-pattern from the calibration model.
 
+Qualification rules (§180):
+- The profile carries the fields 'education' and 'certifications'. When the role's calibration model or must-haves name a qualification — an MBA, a CFA, a specific licence or accreditation — CHECK IT AGAINST THOSE FIELDS before saying anything about it.
+- If the qualification is present, say so and name the institution. If the arrays are empty or do not contain it, the honest statement is that the CV does not evidence it — not that the candidate lacks it. A CV is not a transcript.
+- Never treat education as a scoring dimension of its own. It qualifies or fails to qualify against a stated requirement; it is not a general measure of the person.
+
 RAG-light rules:
 - Green: the CV provides direct, recent, multiple-instance evidence for the must-have.
 - Amber: evidence is partial, adjacent, or older than 5 years.

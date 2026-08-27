@@ -8,6 +8,7 @@ import {
   ARCHETYPES,
   type Archetype,
   type CandidateProfile,
+  type EducationEntry,
   type FitDimensions,
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
@@ -610,6 +611,11 @@ export default async function CandidateProfilePage({
             title="Transformation"
             items={profile.transformation_experience ?? []}
           />
+          {/* §180 (F-H). Before this, a spec could require an MBA the
+              evaluator had no way to check, because the parser was
+              forbidden to read one. */}
+          <EducationCard entries={profile.education ?? []} />
+          <ChipCard title="Certifications" items={profile.certifications ?? []} />
         </div>
       </div>
     </>
@@ -1389,6 +1395,53 @@ function EditableSignalCard({
           placeholder={`Click to add ${title.toLowerCase()}.`}
           ariaLabel={title.toLowerCase()}
         />
+      </div>
+    </Panel>
+  );
+}
+
+/**
+ * §180 (F-H). Not a ChipCard: the institution is the part a hiring
+ * manager asks about, and flattening "MBA, Finance — Kharkiv State
+ * University of Food & Trade Technology" into a chip loses exactly
+ * that. Absent years render as nothing rather than a guess.
+ */
+function EducationCard({ entries }: { entries: EducationEntry[] }) {
+  return (
+    <Panel
+      title="Education"
+      meta={
+        <PanelMeta>
+          <span className="tabular-nums">{entries.length}</span>
+        </PanelMeta>
+      }
+    >
+      <div className={PANEL_BODY}>
+        {entries.length === 0 ? (
+          <p className="text-[13px] leading-relaxed text-outline">
+            None stated on the CV.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {entries.map((e, i) => (
+              <li key={i} className="text-[13px] leading-relaxed">
+                <span className="text-on-surface">
+                  {e.degree}
+                  {e.field ? `, ${e.field}` : ""}
+                </span>
+                {e.institution && (
+                  <span className="text-on-surface-variant">
+                    {" — "}
+                    {e.institution}
+                  </span>
+                )}
+                {e.year && (
+                  <span className="text-outline tabular-nums">{` (${e.year})`}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </Panel>
   );

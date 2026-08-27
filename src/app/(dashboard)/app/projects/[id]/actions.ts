@@ -227,6 +227,13 @@ export async function runRoleAnalysisAction(
  * Strip the heaviest fields from the parsed profile so the prompt
  * stays compact. The agent doesn't need the full role history or full
  * tech exposure list to rank against the calibration weights.
+ *
+ * §180 (F-H), ruling D.4: `education` and `certifications` are
+ * deliberately NOT here. A qualification is a gate against a stated
+ * requirement — checked in the evaluation, which receives the whole
+ * profile — not a comparison axis between candidates. Ranking asks who
+ * is stronger; a degree does not answer that. Pinned by
+ * profile-fields.test.ts, which fails if either appears below.
  */
 function trimProfile(profile: Partial<CandidateProfile>): Partial<CandidateProfile> {
   return {

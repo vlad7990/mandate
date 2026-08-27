@@ -57,6 +57,20 @@ export type CandidateRole = {
   summary: string;
 };
 
+/**
+ * §180 (F-H). Objects rather than strings because the INSTITUTION is
+ * what a hiring manager asks about — "MBA, Finance — Kharkiv State
+ * University of Food & Trade Technology" loses its point if flattened.
+ * Every field but the degree is nullable: CVs routinely omit the year,
+ * and a required year is an invitation to invent one.
+ */
+export type EducationEntry = {
+  degree: string;
+  field: string | null;
+  institution: string | null;
+  year: string | null;
+};
+
 export type FitDimensions = {
   technical: number;
   domain: number;
@@ -79,6 +93,9 @@ export type CandidateProfile = {
   scale: string;
   tech_exposure: string[];
   transformation_experience: string[];
+  /** §180 (F-H). Empty array when the CV states none — never absent. */
+  education: EducationEntry[];
+  certifications: string[];
   archetype: Archetype;
 
   // ---- Review fields (Candidate Review Agent) ----
@@ -110,6 +127,11 @@ export const CANDIDATE_PROFILE_SCHEMA = {
     "scale",
     "tech_exposure",
     "transformation_experience",
+    // §180 (F-H): REQUIRED, not optional. An optional field lets the
+    // model skip the question; a required empty array is the
+    // honest-absence shape the rest of this schema already uses.
+    "education",
+    "certifications",
     "archetype",
     "summary",
     "strengths",
@@ -197,6 +219,42 @@ export const CANDIDATE_PROFILE_SCHEMA = {
       description:
         "Specific change-management / transformation experiences (M&A integrations, turnarounds, rebuilds).",
     },
+    education: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["degree", "field", "institution", "year"],
+        properties: {
+          degree: {
+            type: "string",
+            description: "The qualification as written (e.g. 'MBA', 'BSc', 'PhD').",
+          },
+          field: {
+            type: ["string", "null"],
+            description: "Subject, if stated (e.g. 'Finance'). Null otherwise.",
+          },
+          institution: {
+            type: ["string", "null"],
+            description:
+              "Awarding institution exactly as written on the CV. Null if not stated. Never abbreviate or normalise it.",
+          },
+          year: {
+            type: ["string", "null"],
+            description:
+              "Year of award as written. Null if the CV does not state one — do NOT infer it from anything else.",
+          },
+        },
+      },
+      description:
+        "Degrees and academic qualifications, most senior first. Empty array if the CV lists none.",
+    },
+    certifications: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "Professional certifications exactly as written (e.g. 'PMI – IPMA – Level A Certified', 'Certified Scrum Master'). Keep the issuer inside the string as the CV presents it — do not split it out. Empty array if the CV lists none.",
+    },
     archetype: {
       type: "string",
       enum: [...ARCHETYPES],
@@ -260,6 +318,8 @@ Output strictly conforms to the provided JSON schema. Each fit_dimensions value 
 Parsing rules:
 - Be conservative: if a field isn't on the CV, return null (for optional scalars) or an empty array (for lists).
 - Roles must be in reverse chronological order (most recent first). Use 'present' as end_date for the current role.
+- education / certifications: transcribe what the CV states. Keep the institution exactly as written — never abbreviate, translate or "correct" it. If the CV gives no year, return null rather than inferring one from the surrounding dates. Return an empty array only when the CV genuinely lists none.
+- NEVER return a telephone number, in any field. The candidate's phone is theirs to give, not ours to take from a document a recruiter may have uploaded without them. There is deliberately no field for it in this schema; do not smuggle one into location, summary or any other string.
 - Archetype: classify based on the dominant pattern across roles. Builder = built from zero, founded or first-engineer style trajectories. Operator = scaled mature systems / managed steady-state. Transformer = post-merger integration, turnarounds, modernisation programs. Infrastructure = deep platform / SRE / IT-ops focus.
 
 Review rules:
