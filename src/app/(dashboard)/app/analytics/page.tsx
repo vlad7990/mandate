@@ -72,7 +72,7 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 export default async function PortfolioAnalyticsPage() {
   const supabase = await createServerSupabaseClient();
 
-  const [metrics, candidatesQ, objectivesQ, keyResultsQ, membersQ] = await Promise.all([
+  const [metrics, candidatesQ, objectivesQ, keyResultsQ, membersQ, ledgerQ] = await Promise.all([
     computePortfolioMetrics(),
     supabase.from("candidates").select("pipeline_stage, created_at"),
     supabase
@@ -90,6 +90,16 @@ export default async function PortfolioAnalyticsPage() {
       .order("created_at", { ascending: true })
       .returns<KeyResultRow[]>(),
     supabase.from("users").select("id, full_name, email"),
+    // §187 — the verdict ledger. NO embed, deliberately: verdict_ledger
+    // carries composite _in_org twins, and a bare embed on a twinned
+    // pair returns nothing while looking like truth.
+    supabase
+      .from("verdict_ledger")
+      .select(
+        "tier, recommendation, refuter, furthest_stage, furthest_rank, terminal_outcome"
+      )
+      .order("evaluated_at", { ascending: false })
+      .returns<VerdictLedgerRow[]>(),
   ]);
 
   const candidates = (candidatesQ.data ?? []) as CandidateLite[];
@@ -412,6 +422,11 @@ export default async function PortfolioAnalyticsPage() {
           </ul>
         </section>
       )}
+
+      {/* §187 — judgment calibration. The machine's verdicts against
+          what actually happened. Empty until evaluations land — and the
+          empty state says exactly what will fill it, per house law. */}
+      <JudgmentCalibrationCard rows={ledgerQ.data ?? []} />
     </PageShell>
   );
 }
@@ -436,6 +451,91 @@ function bucketByWeek(
     }
   }
   return buckets;
+}
+
+type VerdictLedgerRow = {
+  tier: string;
+  recommendation: string;
+  refuter: string;
+  furthest_stage: string;
+  furthest_rank: number;
+  terminal_outcome: string | null;
+};
+
+const LEDGER_TIERS = ["tier_1", "tier_2", "tier_3", "tier_4"] as const;
+
+/**
+ * §187 — the calibration question, per tier: when the machine said this,
+ * what happened? "Presented" = the candidate reached `submitted` or
+ * beyond (furthest_rank ≥ 4), which is the human overruling or agreeing
+ * with the machine in the only way that counts — an act, not a rating.
+ */
+function JudgmentCalibrationCard({ rows }: { rows: VerdictLedgerRow[] }) {
+  const contested = rows.filter((r) => r.refuter === "contested").length;
+  return (
+    <ChartCard
+      title="Judgment Calibration"
+      icon={IconAnalytics}
+      subtitle={`${String(rows.length).padStart(2, "0")} verdicts · ${String(contested).padStart(2, "0")} contested`}
+    >
+      {rows.length === 0 ? (
+        <p className="text-body-main text-on-surface-variant leading-relaxed">
+          No verdicts recorded yet. From now on, every evaluation the
+          Evaluator lands writes its verdict here as it stood, and the
+          pipeline writes back what actually happened — presented,
+          interviewed, hired, rejected. This panel is the system keeping
+          score on its own judgment.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full font-mono-data text-body-main">
+            <thead>
+              <tr className="text-outline uppercase tracking-widest text-mono-label font-mono-label">
+                <th className="text-left py-1.5 pr-4">Machine said</th>
+                <th className="text-right px-2">n</th>
+                <th className="text-right px-2">Presented</th>
+                <th className="text-right px-2">Interviewed+</th>
+                <th className="text-right px-2">Hired</th>
+                <th className="text-right pl-2">Rejected</th>
+              </tr>
+            </thead>
+            <tbody>
+              {LEDGER_TIERS.map((tier) => {
+                const of = rows.filter((r) => r.tier === tier);
+                if (of.length === 0) return null;
+                const presented = of.filter((r) => r.furthest_rank >= 4).length;
+                const interviewed = of.filter((r) => r.furthest_rank >= 5).length;
+                const hired = of.filter((r) => r.terminal_outcome === "hired").length;
+                const rejected = of.filter(
+                  (r) => r.terminal_outcome === "rejected"
+                ).length;
+                return (
+                  <tr key={tier} className="border-t border-outline-variant/40">
+                    <td className="py-1.5 pr-4 text-on-surface uppercase">
+                      {tier.replace("tier_", "Tier ")}
+                    </td>
+                    <td className="text-right px-2 tabular-nums">{of.length}</td>
+                    <td className="text-right px-2 tabular-nums">{presented}</td>
+                    <td className="text-right px-2 tabular-nums">{interviewed}</td>
+                    <td className="text-right px-2 tabular-nums text-secondary-fixed-dim">
+                      {hired}
+                    </td>
+                    <td className="text-right pl-2 tabular-nums text-outline">
+                      {rejected}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p className="mt-3 font-mono-label text-mono-label text-outline uppercase tracking-widest">
+            A tier_4 that gets hired, or a tier_1 the client rejects, is the
+            system being wrong — and this table saying so.
+          </p>
+        </div>
+      )}
+    </ChartCard>
+  );
 }
 
 function ChartCard({

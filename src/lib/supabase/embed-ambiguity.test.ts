@@ -100,6 +100,7 @@ shortlists:users skills:clients skills:projects sourcing_run_candidates:candidat
 sourcing_run_candidates:sourcing_runs sourcing_run_results:candidates
 sourcing_run_results:sourcing_runs sourcing_runs:projects sourcing_runs:sourcing_runs
 sourcing_runs:users staff_invitations:users tasks:users
+verdict_ledger:candidates verdict_ledger:projects
 `
   .split(/\s+/)
   .filter(Boolean);

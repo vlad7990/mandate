@@ -509,6 +509,37 @@ async function ensureUnderAgentSession(
     );
   }
 
+  // §187 — the verdict ledger: the verdict AS IT STOOD, written by the
+  // Evaluator under its own session (verdict_ledger_agent_insert), at
+  // the moment it landed. A forced regenerate REPLACES the evaluation
+  // key in cv_structured, so this row is the only place the verdict
+  // survives to meet its outcome. Fail-soft: a ledger miss is logged,
+  // never blocks the evaluation — but it is read back in the drive.
+  {
+    const { error: ledgerErr } = await supabase.from("verdict_ledger").insert({
+      organization_id: project.organization_id,
+      project_id: projectId,
+      candidate_id: candidateId,
+      tier: evaluation.final_verdict.tier,
+      recommendation: evaluation.recommendation,
+      refuter: evaluation.second_opinion
+        ? evaluation.second_opinion.agrees
+          ? "concurred"
+          : "contested"
+        : "not_run",
+      fit_dimensions: (profile.fit_dimensions ?? null) as unknown,
+      trigger_kind: options?.trigger === "regenerate" ? "regenerated" : "generated",
+      evaluated_at: evaluation.generated_at,
+    });
+    if (ledgerErr) {
+      console.error(
+        "[evaluation] verdict ledger insert failed",
+        candidateId,
+        ledgerErr
+      );
+    }
+  }
+
   // §182 R.4 — the contested flag rides the trail, on disagreement ONLY.
   // Concurrence is visible on the report itself; an event for every
   // agreement would bury the signal the event exists to carry. Read back
