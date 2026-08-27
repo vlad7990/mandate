@@ -14007,3 +14007,153 @@ Numbers: next migration **135**; next § **193**; next drive **126**;
 vitest 1146; CHECK 99; door 26; allowlist 31; anon roster 14; capability
 map 36. Deployed `mandate-fia28n0qh` plus the founder's post-Turnstile
 redeploy.
+
+## 193. THE APPLICANT KEEPS THEIR OWN NAME — 2026-08-27
+
+**DRAFTED — awaiting the founder's word.** The founder's written word
+opening it: *"I confirm §192 and the QA gate — build the slice."* §192
+is law. The QA gate's five recommendations are taken as ruled, having
+been drafted with their reasoning and the cost of each alternative.
+
+### A deviation from the literal ruling, stated first
+
+The gate ruled G.3 as *key on insert only, never re-key*. **Building it
+surfaced a fact the gate did not have, and the literal rule would have
+caused a regression worse than the defect.**
+
+A recruiter upload **inserts before it knows who the person is.** The
+placeholder row carries `full_name = <the filename>` — literally
+`drive123-cv` — and no email, so the insert-time key is
+`name:drive123-cv|`. The re-key is what later moves that row onto the
+real person once the parser has read the CV. Freeze it at insert and
+every upload is stranded on a filename-shaped relationship record
+forever, and the DNC gate then reads a *junk* profile instead of a
+*wrong* one. That is not an improvement.
+
+(It also names §192's orphans exactly: `drive118-cv`, `drive119-cv`,
+`drive121-cv` are abandoned filename keys, litter shed by the re-key.)
+
+So migration 135 implements the ruling's **intent at its real
+boundary**: the link freezes when the identity was **declared by the
+subject**, and resolves as before when it was not. A recruiter upload
+has no declared identity to defend — the CV is the only identity there
+is, and reading it is the entire point of the upload. An apply row has
+one, given under the Art.13 notice printed on the form.
+
+Reverting to the literal rule is a one-line change if the founder
+prefers it. It is flagged rather than buried because it is a safety
+ruling, and a silent reinterpretation of one would be the worse sin.
+
+### As built — two guards, neither trusting the other
+
+**G.1, in TypeScript.** The parser no longer writes the CV's name or
+address over an applicant's typed ones. A declared identity that gave no
+address does **not** get one mined from the CV — the same refusal
+§190's D.3 made for phone numbers, applied to the field that carries the
+identity key.
+
+**G.3, in SQL.** Migration 135 holds the link underneath, for any path
+that reaches the table by another road. Same shape as §177's door: SQL
+at the row, TS at the judgment, neither assuming the other ran. The
+replaced function was revoked and **the roster counted: 14, unchanged**
+(the 110/121/125 doctrine, applied rather than re-learned).
+
+**G.2.** The CV's claim is never discarded — `cv_structured` keeps it
+verbatim — and the disagreement is **reported rather than resolved**.
+`identity_conflict` rides the trail and `describe.ts` renders it.
+
+**One lie caught before it shipped.** `identity_changed` was computed
+from the CV's claim, so a row whose declared identity was *kept
+untouched* would have announced *"and updated the candidate's details"*.
+It now reads off the value actually written. The trail may not claim a
+change it did not make — §175's doctrine, met in a two-line flag.
+
+**The decision is a pure function** (`lib/candidates/identity.ts`) so
+its guard asserts **behaviour**, not source text. Only the SQL half
+falls back to source text, and says so in its own header. **Both halves
+were mutation-tested before being trusted** — removing the `apply` guard
+and letting the CV win each fail the suite.
+
+### Drive 126 — live in prod, the case that used to break
+
+Recruiter panel minted the link. The public form rendered with the
+Art.13 notice. The applicant typed **`Drive 126 Applicant` /
+`drive126.applicant@example.com`** and uploaded a CV belonging to
+someone else entirely — **`Avery Penhallow` /
+`avery.penhallow@example.com`** — both identity columns in conflict, the
+address among them, which is the field the key prefers.
+
+After the chain completed, in one statement:
+
+| | value |
+|---|---|
+| row name / email | **Drive 126 Applicant / drive126.applicant@example.com** |
+| what the CV said | Avery Penhallow / avery.penhallow@example.com |
+| `network_profile_id` | **unchanged**, `email:drive126.applicant@example.com` |
+| profiles in the org | **2** — no Avery profile was ever minted |
+| trail | `identity_declared: true`, `identity_conflict: true`, `identity_changed: false` |
+
+**Every one of those five would have flipped the other way yesterday.**
+
+The activity feed said it in plain English, read live off the screen:
+*"Parsed the CV from an upload — the file's details differ from the ones
+the applicant gave; theirs were kept."* The candidate is named **Drive
+126 Applicant** everywhere in the feed. A stale, borrowed or wrong CV can
+no longer rename an applicant or re-address their mail, and — the point
+of the whole slice — can no longer answer the do-not-contact gate for
+somebody else.
+
+The rest of the chain was unaffected: parse → evaluation (tier_4 /
+do_not_include) → **refuter concurred** → one ledger row, attached to a
+candidate carrying the declared identity. **Submit to ledger: 67
+seconds** (drive 125 measured 93s; budget the range, not a point).
+
+**On the no-regression half, precisely:** the recruiter path was proven
+in a **rolled-back transaction against production** — an `apply` row
+held its link across an identity overwrite while an `upload` row
+re-keyed, *the two differing only by `source`*. That differential is
+also the mutation proof: the guard demonstrably discriminates. It was
+not driven through the browser, and this entry does not claim it was.
+
+Teardown exact, in the ruled order, and this time counting what §192
+learned to count: storage object first under the live persona →
+candidate → **ledger 0 in a fresh statement** (third proof) →
+`apply_token` NULL → **the applicant's `network_profile` deleted, which
+does NOT cascade** → persona from `public.users` then `auth.users` →
+events → `rate_limit` → `inference_runs` → staged CV and screenshot
+removed from the iCloud clone. Baseline restored on every line: users 26
+/ agents 25 / auth 26 / events 77 / candidates 1 / **network_profiles
+1** / ledger 0 / rate_limit 0 / inference_runs 0 / **open apply doors
+0** / cvs objects 1 / anon roster 14. §175 exhibit untouched
+(`2026-04-30T21:25:13.543Z`).
+
+### The QA charter
+
+`docs/handoffs/2026-08-27-human-qa-charter.md`. Entry through the **real**
+request → approve → `/join` path, because per migration 114 approval is
+a provisioning act and standing up the QA org *is* the first test. The
+known-dark list, so testers do not file five decisions as defects. A
+known-**behaviour** list, which is the more useful one: the ~95s chain,
+the sample banner that cannot be acted on, and the long-draft clipboard
+fallback. The five loops **in dependency order** — loops 2–5 need what
+loop 1 creates, and running them first buys a pass of empty screens. The
+permission seams across all five staff and three external roles. And
+§128's D3 rule: findings land as a punch list, never as fixes.
+
+**Correction to the gate.** Its item 5 said the mailto ceiling was
+unmeasured. It was not: §128 F-2 measured it (2,290 characters) and
+shipped `mail-draft.ts` with a clipboard fallback, wired at all six call
+sites. The gate was reading a Phase 0 document that predates the fix.
+The trap moves to the charter as known behaviour, not as a task.
+
+### What is left
+
+Nothing agent-buildable. QA now waits on the founder's hour, in this
+order: **leaked-password protection first** — testers are about to set
+real passwords — then the sending domain, then the service-role key.
+Then invite two testers and run loop 1.
+
+Numbers: migration **135** applied; next migration **136**; next §
+**194**; next drive **127**; **vitest 1159** (was 1146); CHECK 99; door
+26; allowlist 31; **anon roster 14**; capability map 36. Deployed
+`mandate-mu8vv9hjh`.
