@@ -20,6 +20,7 @@ import {
   type CandidateEvaluation,
   type DimensionRow,
   type Recommendation,
+  type SecondOpinion,
   type VerdictTier,
 } from "@/lib/ai/candidate-evaluation";
 import { type DimensionKey } from "@/lib/ai/onboarding-analysis";
@@ -95,6 +96,7 @@ export function EvaluationReport({
   candidateTitle,
   candidateCompany,
   projectId,
+  advisoryMode = false,
 }: {
   evaluation: CandidateEvaluation;
   candidateId: string;
@@ -102,6 +104,11 @@ export function EvaluationReport({
   candidateTitle: string | null;
   candidateCompany: string | null;
   projectId: string;
+  /** §182 slice F — org-level flag (organizations.advisory_mode). Render
+   * only: same stored evaluation, different emphasis. Advisory mode
+   * leads with what to TEST at interview and demotes the verdict to a
+   * secondary line — never hides it. */
+  advisoryMode?: boolean;
 }) {
   return (
     <Panel
@@ -133,6 +140,8 @@ export function EvaluationReport({
       }
     >
       <div className={cn(PANEL_BODY, "flex flex-col gap-6")}>
+        {advisoryMode && <AdvisoryQuestionsSection evaluation={evaluation} />}
+
         <ScoringTable rows={evaluation.scoring_table} />
 
         <ProfileSummarySection summary={evaluation.profile_summary} />
@@ -149,6 +158,8 @@ export function EvaluationReport({
           verdict={evaluation.final_verdict}
           recommendation={evaluation.recommendation}
           rationale={evaluation.recommendation_rationale}
+          secondOpinion={evaluation.second_opinion ?? null}
+          advisoryMode={advisoryMode}
         />
 
         <PositioningSection positioning={evaluation.positioning} />
@@ -594,11 +605,48 @@ function FinalVerdictSection({
   verdict,
   recommendation,
   rationale,
+  secondOpinion,
+  advisoryMode,
 }: {
   verdict: CandidateEvaluation["final_verdict"];
   recommendation: Recommendation;
   rationale: string;
+  secondOpinion: SecondOpinion | null;
+  advisoryMode: boolean;
 }) {
+  // §182 slice F — advisory demotion. Same data, quieter voice: the tier
+  // and recommendation become one prefixed line instead of the H1-scale
+  // verdict block. Never hidden — a reader who cannot see
+  // "do_not_include" at all is being managed, not assisted.
+  if (advisoryMode) {
+    return (
+      <section className="space-y-2">
+        <MastHead tone="neutral" label="CV-Only Assessment" />
+        <div className="bg-surface-container-low border border-outline-variant px-4 py-3 space-y-2">
+          <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+            Based only on the CV
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <StatusChip tone={VERDICT_TONE[verdict.tier]} intensity="soft">
+              {VERDICT_TIER_LABELS[verdict.tier]}
+            </StatusChip>
+            <StatusChip
+              tone={RECOMMENDATION_TONE[recommendation]}
+              intensity="soft"
+            >
+              {RECOMMENDATION_LABELS[recommendation]}
+            </StatusChip>
+          </div>
+          <p className="text-body-main text-on-surface-variant leading-relaxed">
+            {rationale} A CV cannot settle this — the questions above are
+            how to test it in the room.
+          </p>
+        </div>
+        <SecondOpinionBlock secondOpinion={secondOpinion} />
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-2">
       <MastHead tone="primary" label="Final Verdict" />
@@ -651,6 +699,114 @@ function FinalVerdictSection({
             {rationale}
           </p>
         </div>
+      </div>
+      <SecondOpinionBlock secondOpinion={secondOpinion} />
+    </section>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// 7b. The second opinion (§182 slice R)
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Absent = not checked (older report, positive verdict, or the refuter
+ * failed) — renders nothing, so silence stays distinguishable from
+ * concurrence. Agreement is one quiet line; disagreement wears the flag
+ * and the counter-argument. The verdict above is never altered.
+ */
+function SecondOpinionBlock({
+  secondOpinion,
+}: {
+  secondOpinion: SecondOpinion | null;
+}) {
+  if (!secondOpinion) return null;
+
+  if (secondOpinion.agrees) {
+    return (
+      <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-1.5">
+        <IconCheck size={13} />
+        Second opinion concurred — an independent refuter pass could not
+        overturn this verdict
+      </p>
+    );
+  }
+
+  return (
+    <div className="border border-warn/60 bg-warn/10 px-4 py-3 space-y-2">
+      <p className="font-mono-label text-mono-label text-warn uppercase tracking-widest">
+        Contested — second opinion disagrees with this verdict
+      </p>
+      <p className="text-body-main text-on-surface leading-relaxed">
+        {secondOpinion.counter_argument}
+      </p>
+      {secondOpinion.underweighted_evidence.length > 0 && (
+        <ul className="space-y-1">
+          {secondOpinion.underweighted_evidence.map((item, i) => (
+            <li
+              key={i}
+              className="text-body-main text-on-surface-variant leading-snug pl-3 border-l-2 border-warn/40"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+        The verdict stands until a recruiter resolves this — it is a second
+        opinion, not a second judge
+      </p>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// 0. Advisory questions (§182 slice F) — rendered FIRST in advisory mode
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * For the reader with no calibration of their own, the verdict stops
+ * being an answer and becomes the interview's agenda: the alignment
+ * test's sharpest question first, then each gap's mismatch as a thing
+ * to probe in the room rather than a fact about the person.
+ */
+function AdvisoryQuestionsSection({
+  evaluation,
+}: {
+  evaluation: CandidateEvaluation;
+}) {
+  const gaps = evaluation.gaps ?? [];
+  return (
+    <section className="space-y-2">
+      <MastHead
+        tone="primary"
+        label="Test at Interview"
+        meta={
+          <span className="tabular-nums">
+            {(gaps.length + 1).toString().padStart(2, "0")} questions
+          </span>
+        }
+      />
+      <div className="bg-surface-container-low border border-outline-variant divide-y divide-outline-variant/40">
+        <div className="px-4 py-3 space-y-1">
+          <p className="font-mono-label text-mono-label text-primary uppercase tracking-widest">
+            Ask first
+          </p>
+          <p className="text-body-main text-on-surface leading-relaxed">
+            {evaluation.alignment_test.question}
+          </p>
+        </div>
+        {gaps.map((gap, i) => (
+          <div key={i} className="px-4 py-3 space-y-1">
+            <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+              {gap.headline}
+            </p>
+            <p className="text-body-main text-on-surface-variant leading-relaxed">
+              {gap.role_mismatch} The CV does not settle this either way —
+              ask for the specifics.
+            </p>
+          </div>
+        ))}
       </div>
     </section>
   );

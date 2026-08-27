@@ -26,6 +26,7 @@ import {
 } from "./role-analysis";
 import { TIER_BANDS, type Tier } from "@/lib/ranking/scoring-engine";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
+import { isNegativeVerdict, runSecondOpinion } from "./verify-evaluation";
 
 
 // We expose the evaluation through the candidate's existing
@@ -439,6 +440,25 @@ async function ensureUnderAgentSession(
 
   if (!evaluation) return { status: "failed" };
 
+  // §182 slice R — the contested verdict. Negative verdicts only (R.1):
+  // they are the ones that silently cost a placement and that nobody
+  // audits. Attached BEFORE persist so the report and its audit land as
+  // one write — a crash between them cannot leave a negative verdict
+  // standing unexamined while claiming otherwise. Fail-soft: a refuter
+  // failure leaves the key absent, which renders as "not checked".
+  if (isNegativeVerdict(evaluation)) {
+    const secondOpinion = await runSecondOpinion(
+      {
+        profile,
+        role_title: evaluation.role_title,
+        company_name: evaluation.company_name,
+        evaluation,
+      },
+      { projectId }
+    );
+    if (secondOpinion) evaluation.second_opinion = secondOpinion;
+  }
+
   // Persist by spreading the existing JSON so we never clobber the
   // parser-produced fields (the D6 pin — the evaluator writes ONE key).
   // On a forced regenerate the same spread REPLACES the evaluation key:
@@ -482,6 +502,30 @@ async function ensureUnderAgentSession(
       candidateId,
       eventErr
     );
+  }
+
+  // §182 R.4 — the contested flag rides the trail, on disagreement ONLY.
+  // Concurrence is visible on the report itself; an event for every
+  // agreement would bury the signal the event exists to carry. Read back
+  // in drive 120 rather than trusted — write_activity_event swallows.
+  if (evaluation.second_opinion && !evaluation.second_opinion.agrees) {
+    const { error: contestErr } = await supabase.rpc("record_agent_event", {
+      p_event_type: "evaluation_contested",
+      p_project_id: projectId,
+      p_candidate_id: candidateId,
+      p_detail: {
+        agent_kind: "evaluator",
+        tier: evaluation.final_verdict.tier,
+        recommendation: evaluation.recommendation,
+      },
+    });
+    if (contestErr) {
+      console.error(
+        "[evaluation] failed to record the contested event",
+        candidateId,
+        contestErr
+      );
+    }
   }
 
   return { status: "ready", evaluation };

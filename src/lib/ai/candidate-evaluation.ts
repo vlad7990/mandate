@@ -151,6 +151,25 @@ export type Positioning = {
   objection_handling: string;
 };
 
+/**
+ * §182 slice R — the contested verdict. Attached AFTER generation by the
+ * refuter pass (verify-evaluation.ts); never part of the model's own
+ * output schema, so the judge cannot see or shape its own audit.
+ * Absent on evaluations older than §182 and on positive verdicts —
+ * absence means "not checked", which the render distinguishes from
+ * "checked and concurred".
+ */
+export type SecondOpinion = {
+  schema_version: 1;
+  generated_at: string;
+  /** True = the refuter could not build an honest case against the verdict. */
+  agrees: boolean;
+  /** The strongest honest case that the verdict is wrong. Present either way. */
+  counter_argument: string;
+  /** Specific profile evidence the original verdict under-weighted. */
+  underweighted_evidence: string[];
+};
+
 export type CandidateEvaluation = {
   /** Schema version — bump when shape changes so older reports can be regenerated. */
   schema_version: 1;
@@ -173,6 +192,8 @@ export type CandidateEvaluation = {
   recommendation: Recommendation;
   /** 1 sentence justifying the recommendation. */
   recommendation_rationale: string;
+  /** §182 — refuter output on negative verdicts. See SecondOpinion. */
+  second_opinion?: SecondOpinion;
 };
 
 // ────────────────────────────────────────────────────────────────────────

@@ -70,8 +70,9 @@ beforeEach(() => {
 });
 
 describe("the capability map", () => {
-  it("holds exactly the 35 ruled capabilities", () => {
-    expect(Object.keys(CAPABILITY_MODEL)).toHaveLength(35);
+  it("holds exactly the 36 ruled capabilities", () => {
+    // 35 + verify_evaluation (§182 slice R, the founder's word).
+    expect(Object.keys(CAPABILITY_MODEL)).toHaveLength(36);
   });
 
   it("pins the RULED mapping (§150 flip word) — any edit here without a gate behind it is the defect this tripwire exists to catch", () => {
@@ -80,6 +81,8 @@ describe("the capability map", () => {
       run_relationship: "claude-haiku-4-5",
       run_target_companies: "claude-haiku-4-5",
       generate_evaluation: "claude-sonnet-5",
+      // §182: the refuter audits generate_evaluation at the same tier.
+      verify_evaluation: "claude-sonnet-5",
     };
     for (const [capability, model] of Object.entries(CAPABILITY_MODEL)) {
       expect(model, capability).toBe(

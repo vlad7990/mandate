@@ -202,6 +202,10 @@ export const ACTIVITY_EVENT_TYPES = [
   // 'calibration_derived': that one answers "what matters", this one
   // answers "which role".
   "calibration_rederived",
+  // 132 (§182) — the refuter disagreed with a negative verdict. Written
+  // by the EVALUATOR through record_agent_event, on disagreement ONLY —
+  // concurrence is visible on the report itself. Not app-recordable.
+  "evaluation_contested",
 ] as const;
 
 export type ActivityEventType = (typeof ACTIVITY_EVENT_TYPES)[number];
@@ -390,6 +394,7 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   candidates_ranked: "mandates",
   candidate_parsed: "mandates",
   candidate_evaluated: "mandates",
+  evaluation_contested: "mandates",
   candidate_positioned: "mandates",
   candidate_researched: "mandates",
   candidate_triangulated: "mandates",

@@ -37,6 +37,10 @@ export const CAPABILITY_MODEL = {
   interpret_feedback: "claude-sonnet-4-6",
   parse_cv: "claude-sonnet-4-6",
   run_candidate_research: "claude-sonnet-4-6",
+  // §182 slice R — the refuter. Same tier as generate_evaluation, the
+  // judgment it audits: auditing sonnet-5 with a weaker model inverts
+  // the point.
+  verify_evaluation: "claude-sonnet-5",
   run_candidate_search: "claude-sonnet-4-6",
   run_client_psychology: "claude-sonnet-4-6",
   run_company_culture: "claude-sonnet-4-6",
@@ -110,4 +114,6 @@ export const CAPABILITY_THINKING: Partial<
   Record<Capability, { type: "adaptive" | "disabled" }>
 > = {
   generate_evaluation: { type: "disabled" },
+  // §182 — same setting as the seam it audits, for the same reason.
+  verify_evaluation: { type: "disabled" },
 };

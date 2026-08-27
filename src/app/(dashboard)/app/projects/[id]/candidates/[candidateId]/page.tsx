@@ -214,6 +214,7 @@ export default async function CandidateProfilePage({
     redirect(`/app/projects/${id}/candidates`);
   }
 
+
   if (candidate.project_id !== id) {
     redirect(`/app/projects/${id}/candidates`);
   }
@@ -507,13 +508,17 @@ export default async function CandidateProfilePage({
     (termsRows ?? []).find((t) => t.project_id === projectId) ?? null
   );
 
+  // §182 slice F rides the existing org read — advisory mode is keyed
+  // on the VIEWER's org (the RLS select policy admits only that row),
+  // because it is about who is reading, not whose mandate it is.
   const { data: orgRow } = access?.organizationId
     ? await supabase
         .from("organizations")
-        .select("base_currency")
+        .select("base_currency, advisory_mode")
         .eq("id", access.organizationId)
-        .maybeSingle<{ base_currency: string }>()
+        .maybeSingle<{ base_currency: string; advisory_mode: boolean }>()
     : { data: null };
+  const advisoryMode = orgRow?.advisory_mode ?? false;
 
   const notices = (
     <>
@@ -631,6 +636,7 @@ export default async function CandidateProfilePage({
           candidateTitle={candidate.current_title}
           candidateCompany={candidate.current_company}
           projectId={project.id}
+          advisoryMode={advisoryMode}
         />
       ) : profile.fit_dimensions ? (
         <EvaluationPendingPanel

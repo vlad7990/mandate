@@ -552,6 +552,14 @@ export function describeActivity(event: ActivityEventRow): string {
         ? "Re-derived the scoring calibration from onboarding"
         : "Derived the scoring calibration from onboarding";
     }
+    // 132 (§182): the detail carries enums only — the counter-argument
+    // itself lives on the report, never in the trail.
+    case "evaluation_contested": {
+      const tier = str(d, "tier");
+      return tier
+        ? `Second opinion contested a ${tier.replace("tier_", "tier ")} verdict`
+        : "Second opinion contested a negative verdict";
+    }
     // 130 (§177): names BOTH titles, because the whole point of the
     // event is that the role being scored has changed identity.
     case "calibration_rederived": {

@@ -435,11 +435,12 @@ describe("the vocabulary", () => {
    * answered event = 87; 120 adds the model registry's two admin
    * acts = 89; 123 adds the invoice lifecycle's three human acts = 92;
    * 126 adds the send = 93; 129 adds the four admin-grant events = 97;
-   * 130 adds the role seam's rederivation = 98.
+   * 130 adds the role seam's rederivation = 98; 132 adds the contested
+   * verdict = 99.
    */
-  it("mirrors the live CHECK's ninety-eight event types", () => {
-    expect(ACTIVITY_EVENT_TYPES).toHaveLength(98);
-    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(98);
+  it("mirrors the live CHECK's ninety-nine event types", () => {
+    expect(ACTIVITY_EVENT_TYPES).toHaveLength(99);
+    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(99);
   });
 
   it("describes the OKR acts with titles and outcomes, never amounts", () => {

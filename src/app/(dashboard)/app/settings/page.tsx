@@ -13,12 +13,15 @@ import {
   IconShield,
   IconSpark,
 } from "@/components/icons";
+import { AdvisoryModeCard } from "./advisory-mode-card";
 
 type OrgRow = {
   id: string;
   name: string;
   slug: string;
   created_at: string | null;
+  /** §182 slice F — the advisory-mode switch. */
+  advisory_mode: boolean;
 };
 
 type ErasureRequestRow = {
@@ -81,7 +84,7 @@ export default async function SettingsPage() {
     profile.organization_id
       ? supabase
           .from("organizations")
-          .select("id, name, slug, created_at")
+          .select("id, name, slug, created_at, advisory_mode")
           .eq("id", profile.organization_id)
           .maybeSingle<OrgRow>()
       : Promise.resolve({ data: null as OrgRow | null }),
@@ -178,6 +181,13 @@ export default async function SettingsPage() {
           )}
         </nav>
       </header>
+
+      {/* §182 slice F — advisory mode. Admin-gated like Members: the
+          route renders it only for org:manage, and the action + RLS
+          refuse everyone else. */}
+      {org && can(parseRole(profile.role), "org:manage") && (
+        <AdvisoryModeCard initial={org.advisory_mode} />
+      )}
 
       {/* Account — the caller's own profile, editable (071). Every staff
           role sees this, viewer included: the two self-service edits are
