@@ -516,6 +516,7 @@ export function EditableList({
   projectId,
   field,
   items,
+  tags,
   marker,
   markerClass,
   emptyLabel,
@@ -526,6 +527,9 @@ export function EditableList({
   projectId: string;
   field: CandidateEditableField;
   items: string[];
+  /** §176 — read-only provenance tag per item (aligned by index), shown
+   * after the text and never persisted. Null = no tag. */
+  tags?: (string | null)[];
   marker: string;
   markerClass: string;
   emptyLabel: string;
@@ -661,6 +665,11 @@ export function EditableList({
               className="flex-1 min-w-0 text-left hover:text-primary transition-colors focus-visible:outline-none focus-visible:underline"
             >
               {item}
+              {tags?.[i] && (
+                <span className="ml-2 border border-outline-variant px-1 py-px font-mono-label text-[9px] uppercase tracking-widest text-outline align-middle whitespace-nowrap">
+                  {tags[i]}
+                </span>
+              )}
             </button>
           )}
           {editingIndex !== i && (

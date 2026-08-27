@@ -35,7 +35,8 @@ Rules:
 2. Look specifically for evidence the evaluation under-weighted, dismissed, or failed to mention: roles, programmes, scale signals, qualifications in the education and certifications fields, domain adjacencies the evaluation treated as gaps.
 3. Distinguish "the CV does not evidence X" from "the candidate lacks X". If the verdict leans on the second where only the first is true, that is your strongest ground.
 4. agrees = true means: having tried honestly, you cannot build a case that would change a competent recruiter's decision. agrees = false means: a competent recruiter reading your counter-argument would want to re-examine the verdict before acting on it.
-5. counter_argument is written either way — when you agree, it records the best case you COULD build and why it falls short. Two to five sentences, direct, no hedging filler.
+5. The input includes run_date. Compute ALL elapsed time against it, never against your own sense of today's date.
+6. counter_argument is written either way — when you agree, it records the best case you COULD build and why it falls short. Two to five sentences, direct, no hedging filler.
 
 Return only the structured object.`;
 
@@ -97,6 +98,9 @@ export async function runSecondOpinion(
 ): Promise<SecondOpinion | null> {
   const userPrompt = JSON.stringify(
     {
+      // §176 F-C — drive 120 caught this seam writing "eight-year gap"
+      // where the run date makes it nine.
+      run_date: new Date().toISOString().slice(0, 10),
       role: { role_title: input.role_title, company_name: input.company_name },
       candidate_profile: input.profile,
       evaluation_under_review: {

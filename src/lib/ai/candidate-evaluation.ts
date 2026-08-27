@@ -20,6 +20,7 @@ import {
   DIMENSION_KEYS,
   type DimensionKey,
 } from "./onboarding-analysis";
+import { EVIDENCE_GRADES, type EvidenceGrade } from "./evidence-grades";
 
 // ────────────────────────────────────────────────────────────────────────
 // Vocabularies
@@ -115,6 +116,8 @@ export type GapBlock = {
   detail: string;
   /** 1 sentence on how this mismatches the role's must-haves. */
   role_mismatch: string;
+  /** §176 — what the gap claim rests on. Absent on pre-§176 reports. */
+  evidence_grade?: EvidenceGrade;
 };
 
 export type CompetitorRow = {
@@ -312,10 +315,16 @@ export const CANDIDATE_EVALUATION_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["headline", "detail", "role_mismatch"],
+        required: ["headline", "detail", "role_mismatch", "evidence_grade"],
         properties: {
           headline: { type: "string" },
           detail: { type: "string" },
+          evidence_grade: {
+            type: "string",
+            enum: [...EVIDENCE_GRADES],
+            description:
+              "evidenced = the CV states the deficit directly. unattributed = the CV's own claim is undated or unattributed. not_stated = the CV is silent on the requirement — a fact about the document, not the person.",
+          },
           role_mismatch: {
             type: "string",
             description:
@@ -443,6 +452,11 @@ Qualification rules (§180):
 - The profile carries the fields 'education' and 'certifications'. When the role's calibration model or must-haves name a qualification — an MBA, a CFA, a specific licence or accreditation — CHECK IT AGAINST THOSE FIELDS before saying anything about it.
 - If the qualification is present, say so and name the institution. If the arrays are empty or do not contain it, the honest statement is that the CV does not evidence it — not that the candidate lacks it. A CV is not a transcript.
 - Never treat education as a scoring dimension of its own. It qualifies or fails to qualify against a stated requirement; it is not a general measure of the person.
+
+Evidence-grade rules (§176):
+- Every gap carries an evidence_grade. not_stated means the CV is SILENT on the requirement, and the gap's wording must then describe the document, not the person: "the CV does not state team size" is honest; "team size significantly below requirements" from a CV with no headcount is not.
+- A not_stated claim must NEVER be phrased as a comparative — "below", "short of", "significantly under" — anywhere in this report, and above all not in the positioning section, which is client-facing language about a named person.
+- The input includes run_date. ALL elapsed-time arithmetic ("N-year gap", "M years out of the seat") MUST be computed against run_date, never against your own sense of today's date.
 
 RAG-light rules:
 - Green: the CV provides direct, recent, multiple-instance evidence for the must-have.

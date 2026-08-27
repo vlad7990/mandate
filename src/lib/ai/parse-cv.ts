@@ -122,6 +122,11 @@ async function buildUserMessage(
   const contextHeader = `Role context:
 ${JSON.stringify(
   {
+    // §176 F-C — the run date, injected so elapsed-time arithmetic has
+    // an anchor other than the model's training clock. Three sightings
+    // of the drift (seven, then eight, for an interval of nine years)
+    // paid for this line.
+    run_date: new Date().toISOString().slice(0, 10),
     calibration: ctx.calibration,
     company: ctx.company,
     dimension_weights: ctx.calibration.dimension_weights ?? null,

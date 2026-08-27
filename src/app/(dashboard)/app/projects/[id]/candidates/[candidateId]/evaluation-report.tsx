@@ -23,6 +23,7 @@ import {
   type SecondOpinion,
   type VerdictTier,
 } from "@/lib/ai/candidate-evaluation";
+import { EVIDENCE_GRADE_LABELS } from "@/lib/ai/evidence-grades";
 import { type DimensionKey } from "@/lib/ai/onboarding-analysis";
 import { EvaluationActions } from "./evaluation-actions";
 
@@ -478,9 +479,17 @@ function GapsSection({ gaps }: { gaps: CandidateEvaluation["gaps"] }) {
               <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-error">
                 Gap
               </span>
-              <h4 className="text-[13px] font-semibold leading-snug text-on-surface">
+              <h4 className="text-[13px] font-semibold leading-snug text-on-surface flex-1">
                 {g.headline}
               </h4>
+              {/* §176 — the claim's grade, shown always on this internal
+                  surface. Absent on pre-§176 reports (D.3: old rows are
+                  not backfilled with a judgment nobody made). */}
+              {g.evidence_grade && (
+                <span className="shrink-0 border border-outline-variant px-1.5 py-px font-mono-label text-[9px] uppercase tracking-widest text-on-surface-variant whitespace-nowrap">
+                  {EVIDENCE_GRADE_LABELS[g.evidence_grade]}
+                </span>
+              )}
             </header>
             <p className="text-body-main text-on-surface-variant leading-relaxed">
               {g.detail}

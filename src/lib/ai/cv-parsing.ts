@@ -7,6 +7,11 @@
 // Client-safe: components import the archetype/pipeline enums and helper
 // types. The server-only parser imports the schema and system prompt.
 
+import {
+  gradedClaimItemSchema,
+  type MaybeGraded,
+} from "./evidence-grades";
+
 export const ARCHETYPES = [
   "Builder",
   "Operator",
@@ -101,8 +106,12 @@ export type CandidateProfile = {
   // ---- Review fields (Candidate Review Agent) ----
   summary: string;
   strengths: string[];
-  development_areas: string[];
-  risks: string[];
+  /** §176 — machine-authored negative claims carry their evidence grade.
+   * Strings still appear here: pre-§176 rows, and recruiter edits (a
+   * manual edit re-authors the list; a human's judgment wears no
+   * machine grade). Read through normalizeClaims/claimText. */
+  development_areas: MaybeGraded[];
+  risks: MaybeGraded[];
 
   // ---- Fit analysis vs the project's calibration_model.dimension_weights ----
   fit_dimensions: FitDimensions;
@@ -273,15 +282,17 @@ export const CANDIDATE_PROFILE_SCHEMA = {
     },
     development_areas: {
       type: "array",
-      items: { type: "string" },
-      description:
-        "2–4 development areas — softer than 'weaknesses', framed as growth edges.",
+      items: gradedClaimItemSchema(
+        "One development area — softer than a 'weakness', framed as a growth edge."
+      ),
+      description: "2–4 development areas, each carrying its evidence grade.",
     },
     risks: {
       type: "array",
-      items: { type: "string" },
-      description:
-        "2–3 hiring risks (retention, comp sensitivity, culture fit, gaps).",
+      items: gradedClaimItemSchema(
+        "One hiring risk (retention, comp sensitivity, culture fit, gaps). State what the CV supports; a gap in the DOCUMENT is phrased as what the CV does not state, never as a deficit of the person."
+      ),
+      description: "2–3 hiring risks, each carrying its evidence grade.",
     },
     fit_dimensions: {
       type: "object",
@@ -317,6 +328,8 @@ Output strictly conforms to the provided JSON schema. Each fit_dimensions value 
 
 Parsing rules:
 - Be conservative: if a field isn't on the CV, return null (for optional scalars) or an empty array (for lists).
+- The role context includes run_date — the date this parse is executing. ALL elapsed-time arithmetic ("N years of experience", "M years since X") MUST be computed against run_date, never against your own sense of today's date. If a role says "2017 - Present" and run_date is 2026, that is nine years, not whatever your training data suggests.
+- Every risk and development_area is an object carrying an evidence_grade. Grade honestly: evidenced = the CV states it, dated and attributed; unattributed = stated but undated or tied to no employer; not_stated = the CV is silent. A not_stated claim must be WORDED as a fact about the document ("the CV does not state team size"), never as a fact about the person ("team size below requirements").
 - Roles must be in reverse chronological order (most recent first). Use 'present' as end_date for the current role.
 - education / certifications: transcribe what the CV states. Keep the institution exactly as written — never abbreviate, translate or "correct" it. If the CV gives no year, return null rather than inferring one from the surrounding dates. Return an empty array only when the CV genuinely lists none.
 - NEVER return a telephone number, in any field. The candidate's phone is theirs to give, not ours to take from a document a recruiter may have uploaded without them. There is deliberately no field for it in this schema; do not smuggle one into location, summary or any other string.

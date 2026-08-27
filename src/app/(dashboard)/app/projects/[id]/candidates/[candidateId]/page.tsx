@@ -13,6 +13,12 @@ import {
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import {
+  EVIDENCE_GRADE_LABELS,
+  claimGrade,
+  claimText,
+  type MaybeGraded,
+} from "@/lib/ai/evidence-grades";
+import {
   type CalibrationModel,
   type CompanyContext,
 } from "@/lib/ai/role-analysis";
@@ -1188,8 +1194,8 @@ function SignalsLedger({
   candidateId: string;
   projectId: string;
   strengths: string[] | undefined;
-  development: string[] | undefined;
-  risks: string[] | undefined;
+  development: MaybeGraded[] | undefined;
+  risks: MaybeGraded[] | undefined;
 }) {
   // Three signal columns in one ledger rather than three cards. The tone
   // lives in the column heading now: a 2px coloured left rule on each column
@@ -1244,8 +1250,18 @@ function SignalColumn({
   title: string;
   tone: "secondary" | "warn" | "danger";
   marker: string;
-  items: string[];
+  items: MaybeGraded[];
 }) {
+  // §176 — the internal surface shows the grade always. Text and tags
+  // split here so EditableList keeps editing plain strings: a manual
+  // edit re-authors the whole list as recruiter-curated and machine
+  // grades drop, which is the honest provenance (a human's judgment
+  // wears no machine grade).
+  const texts = items.map(claimText);
+  const tags = items.map((it) => {
+    const grade = claimGrade(it);
+    return grade && grade !== "evidenced" ? EVIDENCE_GRADE_LABELS[grade] : null;
+  });
   const headingClass =
     tone === "secondary"
       ? "text-secondary-fixed-dim"
@@ -1267,7 +1283,8 @@ function SignalColumn({
         candidateId={candidateId}
         projectId={projectId}
         field={field}
-        items={items}
+        items={texts}
+        tags={tags}
         marker={marker}
         markerClass={headingClass}
         emptyLabel="No items yet — add the first."

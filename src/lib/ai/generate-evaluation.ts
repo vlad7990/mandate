@@ -96,7 +96,12 @@ export async function generateCandidateEvaluation(
   // so the Skills Studio read runs under skills_agent_select.
   client?: SupabaseClient
 ): Promise<CandidateEvaluation> {
-  const userPrompt = JSON.stringify(input, null, 2);
+  // §176 F-C: run_date rides the prompt so elapsed time has an anchor.
+  const userPrompt = JSON.stringify(
+    { run_date: new Date().toISOString().slice(0, 10), ...input },
+    null,
+    2
+  );
   const system = await applySkillsToPrompt(CANDIDATE_EVALUATION_SYSTEM_PROMPT, {
     projectId: input.skill_context?.project_id ?? null,
     organizationId: input.skill_context?.organization_id ?? null,

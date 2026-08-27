@@ -2,6 +2,10 @@
 // profile for one candidate from their structured CV, AI evaluation,
 // and recruiter notes. Distinct from the candidate evaluation (which
 // is technical-fit-against-role) — psychology is candidate-intrinsic.
+import {
+  gradedClaimItemSchema,
+  type MaybeGraded,
+} from "./evidence-grades";
 //
 // Client-safe: types only. The runner imports the schema + prompt.
 
@@ -135,8 +139,9 @@ export type CandidatePsychology = {
   /** 2–3 sentence narrative integrating the above into a recruiter
    * pitch — what the on-the-job behaviour looks like. */
   narrative_summary: string;
-  /** 1–2 short flags worth surfacing on the candidate card. */
-  watch_outs: string[];
+  /** 1–2 short flags worth surfacing on the candidate card. §176:
+   * graded objects from new runs; strings on pre-§176 rows. */
+  watch_outs: MaybeGraded[];
 };
 
 export const PSYCHOLOGY_SCHEMA = {
@@ -190,9 +195,11 @@ export const PSYCHOLOGY_SCHEMA = {
     },
     watch_outs: {
       type: "array",
-      items: { type: "string" },
+      items: gradedClaimItemSchema(
+        "One short flag (≤ 12 words) the recruiter should surface to the hiring manager pre-interview."
+      ),
       description:
-        "0–2 short flags (≤ 12 words each) the recruiter should surface to the hiring manager pre-interview. Empty array when there's nothing material.",
+        "0–2 flags, each carrying its evidence grade. Empty array when there's nothing material.",
     },
   },
 } as const;
@@ -216,7 +223,8 @@ Output strictly conforms to the JSON schema. No preamble. No markdown inside str
 
 Array length discipline (the schema cannot enforce these — YOU must):
 - motivation_drivers: 2–4 entries, ordered by descending weight.
-- watch_outs: 0–2 entries. Empty array is preferred over filler.
+- watch_outs: 0–2 entries, each carrying an evidence_grade. A not_stated flag is worded as a fact about the document ("the CV does not evidence recent team leadership"), never as a fact about the person. Empty array is preferred over filler.
+- The input includes run_date. ALL elapsed-time arithmetic ("N-year gap") MUST be computed against run_date, never against your own sense of today's date.
 
 Numeric bounds:
 - Every confidence and motivation_drivers[*].weight is integer 0–100 inclusive. Calibrate honestly: low confidence (<60) when the CV is thin or ambiguous; high confidence (>80) only when at least three concrete signals back the read.

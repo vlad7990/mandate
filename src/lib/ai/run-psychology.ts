@@ -50,7 +50,12 @@ export async function runPsychology(
   input: PsychologyInput,
   ctx: RunPsychologyContext
 ): Promise<CandidatePsychology> {
-  const userPrompt = JSON.stringify(input, null, 2);
+  // §176 F-C: run_date rides the prompt so elapsed time has an anchor.
+  const userPrompt = JSON.stringify(
+    { run_date: new Date().toISOString().slice(0, 10), ...input },
+    null,
+    2
+  );
   const baseSystem = await applySkillsToPrompt(PSYCHOLOGY_SYSTEM_PROMPT, {
     projectId: ctx.projectId,
     organizationId: ctx.organizationId,

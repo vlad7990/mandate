@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import {
+  EVIDENCE_GRADE_LABELS,
+  normalizeClaims,
+} from "@/lib/ai/evidence-grades";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -199,14 +203,22 @@ export function PsychologyPanel({
             {profile.narrative_summary}
           </p>
 
-          {profile.watch_outs.length > 0 && (
+          {normalizeClaims(profile.watch_outs).length > 0 && (
             <ul className="bg-tertiary/10 border-l-2 border-l-tertiary px-3 py-2 space-y-1">
-              {profile.watch_outs.map((w, i) => (
+              {/* §176 — graded objects on new rows, strings on old ones;
+                  the normaliser reads both and junk drops rather than
+                  rendering as [object Object]. */}
+              {normalizeClaims(profile.watch_outs).map((w, i) => (
                 <li
                   key={i}
                   className="font-mono-data text-body-main text-tertiary"
                 >
-                  ⚠ {w}
+                  ⚠ {w.claim}
+                  {w.grade && w.grade !== "evidenced" && (
+                    <span className="ml-2 border border-tertiary/40 px-1 py-px font-mono-label text-[9px] uppercase tracking-widest align-middle whitespace-nowrap">
+                      {EVIDENCE_GRADE_LABELS[w.grade]}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
