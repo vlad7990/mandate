@@ -12522,3 +12522,173 @@ Numbers unchanged: next migration 130; next § 174; next drive 118;
 vitest 1110; CHECK 97; door 26; allowlist 29; anon roster 12.
 
 §173 now stands complete as drafted — still awaiting the founder's word.
+
+## 174. §173 CONFIRMED — TWO-PERSON ADMIN GRANTS ARE LAW — 2026-08-26
+
+The founder's word ("confirmed") lands against §173 as drafted and
+driven. **No single administrator can create another administrator.**
+A grant is proposed by one admin and approved by a second; the proposer
+cannot approve their own request; the trail names both parties.
+
+As built and now law: migration 129, `admin_grant_requests`, activity
+CHECK 97 (the four `admin_grant_*` events), the proposer/approver split
+in the UI, and drive 117's live proof in production — Ada proposes and
+sees only Withdraw, Ben approves and sees only Approve/Decline, the
+trail reads *proposed by Ada → approved by Ben*.
+
+**The lesson §173 leaves behind is the one worth keeping:** a green
+database drive is not a drive. §173's database layer was proven before
+the UI was ever opened, and the UI then produced a toast that said "is
+now Admin" over a *pending* request and a panel that rendered nothing
+while the row sat in the table. Both were invisible to tsc, vitest,
+eslint and build. Drive the surface, or you have not driven it.
+
+Numbers unchanged by this entry: next migration 130; vitest 1110;
+CHECK 97; door 26; allowlist 29; anon roster 12.
+
+## 175. FIRST JUDGMENT AUDIT — THE SYSTEM MEETS A REAL DOCUMENT — 2026-08-26
+
+**Nothing was built and nothing was fixed.** This entry records an
+audit. Findings live in
+`docs/handoffs/2026-08-26-first-judgment-audit.md`.
+
+Every drive to date tested *plumbing* — permissions, refusals, trails,
+teardowns — against fixtures written and then deleted by their own
+author. §128 exists because that cannot falsify **judgment**. This is
+the first look at judgment, against the only real CV in the database:
+the founder's own, uploaded 2026-04-30, parsed clean, carried through
+evaluation, psychology and a positioning kit with three client-facing
+emails.
+
+**A trap closed on the way in.** Agent principals cannot read the `cvs`
+bucket — `can_read_org()` admits only
+`admin | manager | recruiter | researcher | viewer`, so the CV Parsing
+Agent sees bytes at upload time and never again. Correct by design, and
+it means no agent can re-read a CV to check its own work. The file came
+in via `evals/fixtures/cvs/`, located by exact byte match (582,147) to
+the stored object.
+
+**The parser was largely exonerated.** Four of six suspicions raised
+before the PDF was read were WRONG, and wrong in the parser's favour —
+`"Difecto CIO"` is verbatim in the source document, the three
+2010–2012 roles really are listed together under an ADDITIONAL ROLES
+heading, `location: null` is honest (the CV has no address, and the
+parser correctly declined to infer one from an area code), and the
+flexcpo/ESP mismatch is the CV's own. **The withdrawals are recorded
+rather than edited out**, because a findings document that hides its
+own false positives cannot be trusted about its true ones.
+
+**The decisive question was ruled.** The CV states **no headcount
+anywhere**. So the evaluation's "does not provide team size for any
+role" is true and the parser dropped nothing — the `do_not_include`
+verdict is not built on lost data.
+
+**What survived, and one thing worse than first suspected:**
+
+- **The evaluator contradicts the parse it was handed.** The parser
+  captured *"IT infrastructure overhaul including cloud migration"* into
+  `transformation_experience`; the evaluator then scored technical 5/10
+  on the grounds that the CV *"provides no evidence of hands-on IT
+  infrastructure ownership."* The source bullets are unattributed and
+  undated, so discounting them is defensible — asserting they do not
+  exist is not.
+- **Elapsed time is computed against the wrong "now."** The CV reads
+  "2017 - Present"; the parse got it right; the output says a
+  *"seven-year"* gap where the run date makes it **nine**. Corroborated
+  by `years_experience: 15` against sixteen years of roles. It reaches
+  client-facing email text.
+- **The schema cannot hold education.** `CANDIDATE_PROFILE_SCHEMA` sets
+  `additionalProperties: false` and has no education, certifications or
+  phone field. An MBA, a BS, PMI–IPMA Level A and a Certified Scrum
+  Master are discarded at parse time. `public.candidates` carries a
+  `phone` column that no CV parse can ever populate.
+- **The role the candidate was scored against is not the role in the
+  spec** — see §176 and the seam finding (F-A), which is the same
+  standing lesson §172 left behind: *a single source of truth only ends
+  drift below it.* `calibration_model.role_title` is written once at
+  intake and never revised — not by the Role Spec Agent, not by
+  `finalize_job_spec` (verified by definition), not by feedback
+  recalibration. Every scoring agent reads it. Sourcing refuses a
+  non-final spec; evaluation is gated on nothing.
+
+**The through-line, and the reason §176 exists:** the system converts
+*"unattributed / undated / not quantified"* into *"no evidence of"* and
+*"significantly below"*. The scoring table gets it right — *"cannot
+substantiate"*, *"Evidence for this must-have is absent"* — and the
+risks array, the gap headlines and the client-facing pitches then
+restate it as settled fact about a named person.
+
+**Credit, recorded deliberately:** `risks[2]` reads *"CV metrics appear
+high-level and difficult to verify; credibility risk in due
+diligence."* That is the single most obvious real-world problem with
+the document, and the system caught it unprompted. That is judgment,
+not plumbing, and it is the best evidence yet that the thing works.
+
+**What this audit could NOT test:** ranking and shortlist.
+`comparison.competitors` is `[]` and says so itself. One CV cannot test
+comparison. The §128 residue is now specifically *8–10 more CVs*, not
+"real-CV testing" in general.
+
+## 176. GATE DRAFT — THE EVIDENCE-GRADE SLICE — 2026-08-26
+
+**DRAFTED. Nothing built. Awaiting the founder's word.**
+
+One defect wearing three hats, all from §175: the system asserts things
+it does not know about a named person, in documents that go to clients.
+
+- **F-D** — absence restated as fact (`risks[1]`: team scale
+  *"significantly below"* requirements, from a CV with no headcount).
+- **F-G** — the evaluator denying evidence its own parse recorded.
+- **F-C** — elapsed time computed against an internal "now" rather than
+  the run date.
+
+All three are the same class: **a claim made without the evidence to
+make it.** They belong in one slice.
+
+### The shape
+
+Prompt-only is the wrong instrument — prompts drift and nothing guards
+them. The house doctrine is structural, and there is already a law that
+is this one's sibling: *illustrative data carries a visible label at the
+point of display.* This extends it — **an unevidenced negative claim
+carries its evidence grade at the point of display.**
+
+Proposed: every negative-claim object in the schemas
+(`risks[]`, `development_areas[]`, evaluation `gaps[]`, psychology
+`watch_outs[]`) gains a **required** `evidence_grade`. With
+`additionalProperties: false` already set, the model becomes
+structurally unable to emit an ungraded negative claim. The run date is
+passed into the prompt explicitly and the model is forbidden from
+computing elapsed time from internal knowledge.
+
+### Rulings needed before a line is written
+
+- **D.1 — the grades.** Proposed three: `not_stated` (the CV is silent),
+  `unattributed` (the CV claims it, undated or tied to no employer),
+  `evidenced` (claimed, dated, attributed). Three or more?
+- **D.2 — the client-facing rule.** This is the real question and it is
+  the founder's alone. Proposed: a claim graded `not_stated` may appear
+  in client-facing pitches and emails **only** as what the CV does not
+  state — never as a comparative ("below", "short of", "significantly
+  under"). Internal surfaces show the grade always.
+- **D.3 — the stored row.** The one existing evaluation is the founder's
+  own and is now this audit's exhibit. Proposed: **leave it**,
+  ungraded, and let old rows render without a grade rather than
+  backfilling a judgment no one made.
+- **D.4 — scope.** Proposed: parse-stage `risks[]` too, not evaluation
+  alone — `risks[1]` was a parse-stage claim.
+- **D.5 — the guard.** What fails the build if this regresses? A
+  source-text guard cannot lint model output. Proposed: a schema test
+  pinning `evidence_grade` as required in each object, plus a render
+  test that a `not_stated` claim never reaches a comparative phrase in
+  the client-facing templates. Mutation-tested before trusted, per the
+  standing lesson.
+
+**Explicitly NOT in this slice**, each its own gate when its turn
+comes: **F-A** the unwatched spec/calibration seam (the larger and
+more consequential of the two, and the one that decides whether
+evaluation may score against a stale role at all), and **F-H** the
+education/certifications/phone schema gap.
+
+Numbers: next migration 130; next § 177; next drive 118; vitest 1110;
+CHECK 97; door 26; allowlist 29; anon roster 12.
