@@ -13018,3 +13018,104 @@ never been tested, and one CV cannot test comparison.
 Numbers unchanged by this entry: next migration 132; next § **180**;
 next drive 119; vitest 1120; CHECK 98; door 26; allowlist 30; anon
 roster 12.
+
+## 180. GATE DRAFT — F-H, THE PROFILE CANNOT HOLD A QUALIFICATION — 2026-08-26
+
+**DRAFTED. Nothing built. Awaiting the founder's word.** Chosen by the
+founder ("do F-H next"). §176 stands drafted and unbuilt.
+
+### The map, and it is worse than a missing field
+
+`grep -rn "education" src/` returns **nothing**. Not a stripped field,
+not a TODO — the concept does not exist anywhere in the product.
+`certifications` likewise. `CANDIDATE_PROFILE_SCHEMA`
+(`src/lib/ai/cv-parsing.ts:97`) sets `additionalProperties: false`, so
+the model is structurally forbidden from returning either even if it
+reads them off the page. Nothing pins that schema — no test asserts its
+shape today.
+
+**The sharp edge is where this meets the Job Spec Builder.**
+`job-spec-analysis.ts` produces *"5–6 must-have qualifications"* into
+Required Experience. So a recruiter can finalise a spec that says "MBA
+required" or "CFA charterholder", and the evaluation **cannot verify
+it** — not because the CV is silent, but because the parser was
+forbidden to look. Under §176's defect class the evaluator then reports
+the absence as a fact about the person. §175's subject carries an MBA in
+Finance, a BS in Accounting & Audit, PMI–IPMA Level A and a Certified
+Scrum Master; all four were discarded at parse time.
+
+**And `public.candidates.phone` is a column no CV parse can ever fill.**
+Worth stating precisely, because it decides D.3 below: today a
+candidate's phone arrives by exactly two routes — the candidate typing
+it into the token portal under their own hand
+(`candidate/[token]/actions.ts`), or a copy from another record. **The
+emptiness of that column currently MEANS something.** It means nobody
+has been given the number.
+
+### Rulings needed before a line is written
+
+- **D.1 — shape.** Proposed: `education` as objects —
+  `{ degree, field, institution, year }`, nullable within — because the
+  institution is precisely what a hiring manager asks about, and
+  §175's CV proves the point ("MBA, Finance — Kharkiv State University
+  of Food & Trade Technology"). `certifications` as a plain
+  `string[]`, because CVs rarely separate issuer from name cleanly
+  ("PMI – IPMA – Level A Certified") and an `issuer` field would invite
+  the model to invent one.
+- **D.2 — required or optional.** Proposed: **required, empty array when
+  absent**, matching every other field in this schema. Optional fields
+  let the model skip the question; a required empty array is the
+  honest-absence shape the house already uses.
+- **D.3 — phone. THE ONE THAT IS NOT MECHANICAL.** Three options:
+  **(a)** do not parse it at all; **(b)** parse into `cv_structured`
+  only, never into the `candidates.phone` column; **(c)** parse and
+  populate the column. **Proposed: (a).** A CV reaches this system by
+  recruiter upload as often as by the candidate's own hand, so "they
+  sent it, therefore they gave it" does not hold. Filling the column
+  from a parse converts a number the candidate *provided* into one the
+  system *mined*, destroys the provenance signal the empty column
+  carries, and enlarges the Art.14 footprint this product already has a
+  notification duty about. If the founder wants the number visible,
+  **(b)** is the honest middle. **(c)** should be chosen only
+  deliberately.
+- **D.4 — does education reach the EVALUATION? Blast radius.** Proposed:
+  **yes to the evaluation prompt, no to `trimProfile`.** Yes, because a
+  spec can require a qualification and the evaluator must be able to
+  check it rather than report it absent. No to `trimProfile`
+  (`projects/[id]/actions.ts:231`), which deliberately keeps the ranking
+  prompt compact — a degree is a qualification gate, not a comparison
+  axis. **Consequence to be stated plainly: this changes scores.** Every
+  evaluation to date was made blind to education, so a re-run may move a
+  dimension. That is the point, and it should still be a decision rather
+  than a surprise.
+- **D.5 — backfill.** Proposed: **leave the existing row.** Consistent
+  with §176's D.3 and with §175's exhibit standing. New parses gain the
+  fields; nothing is rewritten under a judgment nobody made.
+- **D.6 — the guard.** Nothing currently pins `CANDIDATE_PROFILE_SCHEMA`
+  at all. Proposed: a schema test asserting `education` and
+  `certifications` are present AND in `required`, plus
+  `additionalProperties: false` still set — mutation-tested before it is
+  trusted, per the standing lesson. If D.4 goes yes, a second assertion
+  that education reaches the evaluation input and does NOT reach
+  `trimProfile`.
+
+### Cost, and what it disturbs
+
+**Under this proposal there is NO migration at all** — the profile lives
+in `cv_structured` (jsonb) and needs no DDL; next migration stays 132.
+That holds only while D.3 is (a) or (b); ruling (c) touches no schema
+either, but changes what the parser writes to a typed column and would
+want its own line in the drive. No new door, no new event, no CHECK
+change, anon roster untouched.
+
+Render surface is settled and small: the candidate profile tab already
+has `ChipCard` for list fields (`certifications` drops straight in) and
+`EditableSignalCard`/`ChipCard` neighbours for a modest education block.
+
+**Drive 119 writes itself:** finalise nothing, upload the same CV, and
+read back whether the MBA, the BS, the PMI–IPMA Level A and the
+Certified Scrum Master all survive the parse — then confirm the phone
+column is still empty, which is the D.3 ruling made visible.
+
+Numbers unchanged until built: next migration 132; next § **181**; next
+drive 119; vitest 1120; CHECK 98; door 26; allowlist 30; anon roster 12.
