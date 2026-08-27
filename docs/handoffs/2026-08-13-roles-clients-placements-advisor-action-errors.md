@@ -13834,3 +13834,176 @@ Numbers: next migration **135**; next § **192**; next drive **125**;
 vitest **1146**; CHECK 99; door 26; allowlist 31; **anon roster 14
 (ruled: +verify_apply_token, +submit_application)**; capability map 36.
 Deployed `mandate-fia28n0qh`.
+
+## 192. §190 IS LAW — AND THE OPEN DOOR RAN, START TO LEDGER — 2026-08-27
+
+The founder's written word: *"I confirm §190."* The apply link is law.
+And this time the confirmation arrives with the other half attached: the
+founder added the Turnstile keys and redeployed, which lit the door that
+§190 shipped dark. Drive 125 walked through it.
+
+### Drive 125 — the open path, live in prod
+
+The path §190 had to state plainly had *never run* now has.
+
+Recruiter panel minted the link and the dark warning disappeared — the
+key-gate flipping visibly, which is the cheapest possible proof it was a
+gate and not a hope. The public page rendered the form, the Art.13
+notice and the Turnstile widget; the widget solved; the submission was
+accepted; the applicant saw *"Application received… a person decides
+what happens next."* The row landed `source='apply'` with
+`subject_notified_at` stamped, exactly as the notice-on-the-form ruling
+requires.
+
+Then the part that matters. **The whole judgment chain fired, with no
+recruiter anywhere in it**, and the trail records it in order:
+
+| | event | at |
+|---|---|---|
+| submitted | `candidate_cv_submitted` | 15:44:22 |
+| parsed | `candidate_parsed` | 15:45:04 |
+| evaluated | `candidate_evaluated` | 15:45:55 |
+
+Parse carried §181's education fields and §176's graded risks. Evaluation
+landed tier_3 / do_not_include. **The §182 refuter ran and concurred**,
+and one `verdict_ledger` row was written with `refuter: 'concurred'`.
+
+That is §192's headline, and it deserves saying without hedging: *an
+applicant who submitted their own CV through a public link was parsed,
+evaluated, second-opinioned and scored into the ledger automatically.*
+§190 and §188 composed exactly as designed, and the guardrails the
+judgment programme spent §181–§188 building applied to a stranger's
+upload with nobody watching.
+
+**Latency, measured rather than remembered.** The session's impression
+was that the `after()` chain ran materially longer than the ~90s the
+earlier drives suggested. The telemetry says otherwise and the
+telemetry wins: parse 40.2s (sonnet-4-6, 15,815 in / 1,699 out) +
+evaluation 39.0s (sonnet-5, 19,017 / 3,713) + refuter 11.4s (sonnet-5,
+5,853 / 687) = **90.6s of model time, 93s wall from submit to ledger
+row**, zero retries, all three `ok`. The chain was never slow; *polling
+it* felt slow. Recorded so the next drive budgets ~95s and does not
+re-learn this by staring at a page.
+
+### The finding: the parser overwrites the identity the applicant typed
+
+The applicant typed `Drive 125 Applicant` /
+`drive125.applicant@example.com`. The stored row read **`Vladimir
+Breygin` / `vlad@flexcpo.com`** — both identity columns overwritten from
+the CV by `runCvParseAndPersist`, which persists the identity columns by
+design.
+
+That is existing parser behaviour, not new code. It lands differently on
+an apply form: the self-declared details are *the ones the subject
+consented to give*, and a CV's may be years stale. It sits directly
+beside §190's D.3 ruling — don't mine a phone number out of a CV — and
+the same logic arguably says don't overwrite a typed email either.
+
+**Teardown turned this from a cosmetic complaint into a real one.** The
+overwrite does not stop at the candidate row:
+
+- `candidates_link_network_profile` fires `BEFORE INSERT OR UPDATE OF
+  email, linkedin_url, full_name, current_company`.
+- It recomputes `candidate_identity_key`, in which **email wins**
+  (`email:` → `linkedin:` → `name:|company`).
+- So the parser's overwrite *re-keys the identity* and re-points
+  `network_profile_id` at whichever profile matches the **CV's** person
+  — creating it, or attaching to one that already exists.
+
+In drive 125 that is precisely what happened: insert created a profile
+for `Drive 125 Applicant`; the parser's overwrite re-pointed the row at
+the pre-existing `Vladimir Breygin` profile (the §175 exhibit's own),
+orphaning the applicant's. Both identities were the founder's, so it was
+harmless here. Structurally it is not:
+
+> **`send-candidate-message.ts` reads `network_profiles.dnc` *through
+> that link*.** An applicant whose CV carries a different person's email
+> — a stale file, a shared template, the wrong attachment — is silently
+> joined to that person's relationship record, and the do-not-contact
+> gate then answers for the wrong human. In both directions.
+
+DNC is the one flag in this system whose whole job is to be
+unconditionally right about a person. A parser guess must not be able to
+move it.
+
+**Gate drafted, nothing fixed.** House rule: this is the founder's
+ruling to make. The shape of it:
+
+- **G.1** On `source='apply'`, does the typed identity win over the CV's
+  — for `email` and `full_name` both, or email only? (Recommendation:
+  both, and only for `apply`; a recruiter upload has no typed identity
+  to defend.)
+- **G.2** When they disagree, is the CV's identity *discarded* or *kept
+  visibly beside* the declared one, so a recruiter can see the mismatch
+  rather than have it silently resolved? (Recommendation: keep and
+  surface — the §175 doctrine is that the system must not assert what it
+  does not know, and "these two disagree" is knowledge.)
+- **G.3** Should `resolve_network_profile` ever re-key an existing row
+  at all, or only ever key on insert? (This is the DNC question, and it
+  is separable from G.1/G.2 — it bites recruiter uploads too.)
+
+G.3 is the one I would rule on first: it is the only one with a safety
+consequence, and it is the only one that is already true today.
+
+### Teardown found a second thing: profiles outlive the drives
+
+Verifying against the durable baseline turned up **8 `network_profiles`
+against a baseline of 1** — orphans left by drives 118, 119, 120, 121,
+123 and 125, plus one more. `candidates.network_profile_id` is `ON
+DELETE SET NULL`; the profile is the *parent*, so deleting a candidate
+never touches it. Every one of those teardowns was recorded "exact". It
+wasn't.
+
+Swept to baseline here, along with 26 `inference_runs` (pure telemetry,
+no personal data, baseline 0) accumulated the same way. **The standing
+lesson: a teardown is exact against the baseline you actually check,
+and a table nobody counts is a table that drifts.** The per-drive count
+now belongs in the checklist.
+
+There is a live question underneath the housekeeping, and it belongs
+with G.1–G.3: §188's erasure principle is *"a ledger of opinions about a
+person does not outlive the person"*, proven in drive 123 when
+`verdict_ledger` cascaded to 0. But the **network profile does** outlive
+it — name and email both — and for an apply-sourced subject who never
+had a relationship with the agency, that is a retention question the
+founder should answer rather than inherit by default. (For a sourced
+candidate it is arguably the feature: the network is *supposed* to
+remember people across mandates.)
+
+### Teardown
+
+Exact, in the ruled order, verified in a fresh statement: storage object
+deleted via the API under the live persona *before* she was removed →
+candidate deleted → **`verdict_ledger` 0** (cascade held, second
+proof) → `apply_token` NULL on both projects (the public door closed) →
+persona removed from `public.users` then `auth.users` → events swept →
+`rate_limit` cleared → staged CV removed from the iCloud clone.
+
+Baseline restored on every line: users 26 / agents 25 / auth 26 / events
+77 / candidates 1 / job_specs 1 (`is_final` false) / **network_profiles
+1** / cvs objects 1 / ledger 0 / rate_limit 0 / **open apply doors 0** /
+inference_runs 0 / active_admins 1 / advisory_mode false. The §175
+exhibit is untouched — `generated_at 2026-04-30T21:25:13.543Z`, stage
+`found`, still pointing at profile `892f5568`.
+
+Note for the next teardown: the candidate delete **cascaded its three
+activity events**, so only the three `member_*` rows from provisioning
+needed sweeping. Deleting `public.users` minted nothing — member-audit
+fires on UPDATE, not DELETE.
+
+### Where this leaves it
+
+The development queue is still empty and the honest next step is
+unchanged from §191: run a real search. What changed today is that the
+front door is open and proven — the apply link fills the pipeline, the
+ledger keeps score, and a stranger's CV now receives the same judgment
+chain, refuter included, that the founder's own uploads do.
+
+The one thing standing in front of that is G.1–G.3. An open apply link
+that can attach an applicant to someone else's do-not-contact record
+should not be handed to a real mandate before the founder has ruled.
+
+Numbers: next migration **135**; next § **193**; next drive **126**;
+vitest 1146; CHECK 99; door 26; allowlist 31; anon roster 14; capability
+map 36. Deployed `mandate-fia28n0qh` plus the founder's post-Turnstile
+redeploy.
