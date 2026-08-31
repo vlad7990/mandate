@@ -14214,3 +14214,121 @@ with a human watching.
 Numbers unchanged by confirmation: next migration **136**; next §
 **195**; next drive **127**; vitest 1159; CHECK 99; door 26; allowlist
 31; anon roster 14; capability map 36. Deployed `mandate-mu8vv9hjh`.
+
+## 195. THE LAUNCH PASS — THE FRONT DOOR ADMITS A STRANGER — 2026-08-31
+
+The founder, ready to launch, asked whether another pass was needed.
+Two rulings came out of the asking:
+
+- **Launch means opening the front door, not taking money.** Marketing
+  public, `/request-access` open to strangers, every account still
+  approved by hand. **Stripe stays parked and is NOT a blocker** — the
+  invoicing programme (§158–§162) already issues and sends a real
+  invoice, so billing is manual by choice rather than by gap.
+- **Launch now; production is the test.** The §128 ruling extended from
+  judgment quality to the whole product. Recorded here as a DECISION.
+  **Human QA never ran** — the charter written in §193 was never used;
+  at the moment of this entry the database holds 1 organisation, 1
+  human, 0 invitations, 0 waitlist rows. The first person other than
+  the founder to use this product will be a customer. That is a
+  legitimate call with the founder-approval gate in front of it, and it
+  is written down as a call rather than as a pass.
+
+### The advisor sweep — the checklist's own line, closed against the tool
+
+**0 ERRORs, security and performance.** The rest was checked by
+COMPOSITION, not by count, because a number tells you nothing about
+whether the right things are on the list:
+
+- **14 anon-executable definer functions** — exactly the ruled roster,
+  name for name.
+- **4 tables with RLS and no policy** — `inference_runs`,
+  `ops_heartbeats`, `rate_limit`, `rate_limit_policy`. All deliberate
+  deny-all infrastructure; none is reachable through PostgREST by
+  design.
+- **49 multiple-permissive-policies, 74 unused indexes** — the first is
+  inherent to a schema where every table carries several role-scoped
+  policies; the second is what an empty database looks like.
+- **`auth_leaked_password_protection` — STILL WARN.** Flagged as
+  ordering-critical on 2026-08-27 and still open at launch.
+
+### Migration 136 — the two unindexed FKs
+
+The one genuinely actionable finding, and the checklist line it closes.
+Both were on `verdict_ledger`: the composite `_in_org` twins
+(`organization_id, candidate_id`) and (`organization_id, project_id`)
+had no covering index. They are checked on every candidate and project
+DELETE, because both cascade. **The ledger is the one table designed to
+grow without bound** — a row per verdict, forever, and §188 forbids
+humans pruning it — so this was the cheapest it will ever be to add. No
+FK added, so no `AMBIGUOUS_PAIRS` regeneration; no function touched, so
+the roster stays 14.
+
+### Drive 127 — the door nobody had opened
+
+**The finding worth the whole pass.** `verifyTurnstile` is key-gated: no
+secret means verification is off *and the widget never renders*. The
+founder's keys landed on 2026-08-27, which lit the apply door (proven,
+drives 125–126) — and **also lit `/request-access`, which had never run
+in its lit state.** §138's drive 100 proved street-to-desk when the
+captcha was dark.
+
+That is the §190 pattern exactly, and it sat on the one path the launch
+consists of. A captcha that refused every submission would have made the
+front door fail *silently*: strangers see a form, submit it, get a
+thank-you, and no row is ever written.
+
+Driven live in production:
+
+- Widget **present** with the live site key, token auto-solved. It does
+  not appear in the accessibility tree — a real trap for anyone
+  checking this by snapshot alone, and the reason this was verified
+  against the DOM and then by submitting.
+- Submission **accepted**; the applicant saw *"Request received — we'll
+  be in touch within 48 hours."*
+- **The row landed** in `waitlist`, full fidelity.
+- The approval half was read in code rather than driven, since it is
+  §138/§144 law: `/ops/waitlist` surfaces the row and approval inserts
+  an organisation plus a staff invitation under
+  `organizations_founder_insert`. R2 holds — approval issues an
+  invitation, never an account.
+
+Gate order on that route confirmed by reading it: the 088 limiter
+(3/hr/IP) runs BEFORE Turnstile, and both fail OPEN by ruling — because
+a broken captcha must not close the only door a new customer has. A
+token that verifies as *wrong* is still refused. That is the check
+answering rather than the check failing.
+
+Teardown exact: waitlist row deleted, `rate_limit` swept. Baseline
+otherwise untouched.
+
+### A discipline that ends today
+
+Worth naming while it is still true: **the durable-baseline model stops
+working at launch.** Every teardown to date asserted exact global counts
+against a fixed baseline. From tomorrow, rows are *supposed* to
+accumulate — and the founder's own use this morning already moved it
+(events 77 → **81**, `inference_runs` 0 → **4**, from two weekly reports
+and two search-health runs, all `ok`). Those are real product history,
+not drive residue, and they stay.
+
+What replaces it is the QA gate's D3 ruling, which was written for a QA
+org and now applies to real ones: **assert against the house org, scope
+by `organization_id`, and never assert a global count again.** The
+§192 rider still stands — count `network_profiles` and `inference_runs`,
+the two tables that drifted through six drives because nobody did.
+
+### The state at launch
+
+Nothing agent-buildable is open. Advisor sweep clean, front door proven
+lit, judgment chain law and driven three times (§188, §192, §193).
+Founder-owned and still open, in order: **leaked-password protection**,
+the sending domain, the service-role key. The first is the only one that
+gets harder after strangers arrive, because passwords set under a weak
+policy stay weak.
+
+Numbers: migration **136** applied; next migration **137**; next §
+**196**; next drive **128**; vitest 1159; CHECK 99; door 26; allowlist
+31; anon roster 14; capability map 36. **New baseline: events 81,
+inference_runs accumulating by design.** Deployed `mandate-mu8vv9hjh`
+(no app change — 136 is DB-only).
