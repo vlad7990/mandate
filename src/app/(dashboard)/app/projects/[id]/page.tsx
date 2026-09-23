@@ -4,10 +4,17 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { isSampleId } from "@/lib/sample";
 import { SampleProjectDetail } from "@/components/sample/sample-project-detail";
 import {
+  AGENT_TILES,
   type AgentTileAction,
-  type AgentTileKey,
-  type AgentTileState,
 } from "@/components/projects/agent-tiles";
+import {
+  agentStackMeta,
+  agentStackStates,
+  calibrationTileAction,
+  hasOnboardingAnswers,
+  specTileAction,
+  type AgentStackFacts,
+} from "@/lib/projects/agent-stack";
 import {
   type CalibrationModel,
   type CompanyContext,
@@ -146,23 +153,26 @@ function hasCalibrationWeights(row: ProjectRow): boolean {
   return typeof row.calibration_model?.dimension_weights?.technical === "number";
 }
 
-function tileStates(
-  row: ProjectRow,
-  spec: SpecState
-): Record<AgentTileKey, AgentTileState> {
-  const ready = isAnalysisReady(row);
-  const calibrated = hasCalibrationWeights(row);
-  let role_spec: AgentTileState;
-  if (spec.hasFinal) role_spec = "complete";
-  else if (spec.isGenerating || spec.hasAny) role_spec = "active";
-  else if (calibrated) role_spec = "active";
-  else role_spec = "queued";
-
+/**
+ * §197 — the facts the agent stack reasons from. Assembled here (the page
+ * owns the queries) and interpreted in src/lib/projects/agent-stack.ts, so
+ * the states, the CTAs and the panel's meta line can never disagree about
+ * whether anything is actually running.
+ */
+function agentStackFacts(row: ProjectRow, spec: SpecState): AgentStackFacts {
+  const analysisReady = isAnalysisReady(row);
   return {
-    intake: ready ? "complete" : "active",
-    company_research: ready ? "complete" : "active",
-    role_spec,
-    calibration: calibrated ? "complete" : ready ? "active" : "queued",
+    analysisReady,
+    intakeFailed: !analysisReady && Boolean(row.intake_error),
+    calibrated: hasCalibrationWeights(row),
+    onboardingAnswered: hasOnboardingAnswers(
+      (row.onboarding_responses ?? null) as Record<string, unknown> | null
+    ),
+    spec: {
+      hasAny: spec.hasAny,
+      hasFinal: spec.hasFinal,
+      isGenerating: spec.isGenerating,
+    },
   };
 }
 
@@ -286,12 +296,12 @@ export default async function ProjectPage({
       ).length
     : 0;
 
-  const specAction: AgentTileAction = {
-    label: spec.hasAny ? "Open Job Spec" : "Build Job Spec",
-    href: `/app/projects/${project.id}/spec`,
-    enabled: calibrated,
-    disabledHint: calibrated ? undefined : "Awaiting calibration",
-  };
+  const stackFacts = agentStackFacts(project, spec);
+  const specAction: AgentTileAction = specTileAction(project.id, stackFacts);
+  const calibrationAction: AgentTileAction = calibrationTileAction(
+    project.id,
+    stackFacts
+  );
 
   const projectStatus = (project.status ?? "active").toLowerCase();
   const statusTone: ChipTone =
@@ -414,14 +424,12 @@ export default async function ProjectPage({
     canRetryIntake,
     calibrated,
     stages,
-    agentStates: tileStates(project, spec),
+    agentStates: agentStackStates(stackFacts),
     specAction,
-    // Four agents run on this surface. The comp badges seventeen.
-    agentMeta: ready
-      ? `4 agents · ${calibrated ? "calibrated" : "calibration pending"}`
-      : intakeFailed
-        ? "Intake failed — retry to continue"
-        : "Live analysis in progress",
+    calibrationAction,
+    // The count derives from the grid (§138's lesson: no denominator left
+    // to go stale). The comp badges seventeen; four run on this surface.
+    agentMeta: agentStackMeta(stackFacts, AGENT_TILES.length),
     modules: ready
       ? PROJECT_MODULES.map((m) => ({ href: m.href(project.id), label: m.label }))
       : [],

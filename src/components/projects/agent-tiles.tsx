@@ -2,7 +2,19 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { IconArrowRight } from "@/components/icons";
 
-export type AgentTileState = "idle" | "active" | "complete" | "queued";
+/**
+ * `blocked` (§197) is the state the grid was missing: work that cannot
+ * proceed until a PERSON acts. It used to render as `active`, so the
+ * mandate page claimed an agent was working when the chain was waiting on
+ * the recruiter. See src/lib/projects/agent-stack.ts for the rule —
+ * `active` means mid-run, and nothing else may borrow it.
+ */
+export type AgentTileState =
+  | "idle"
+  | "active"
+  | "complete"
+  | "queued"
+  | "blocked";
 
 export type AgentTileKey =
   | "intake"
@@ -25,6 +37,12 @@ export type AgentTileAction = {
   disabledHint?: string;
 };
 
+/**
+ * Declaration order IS the rendered order, and it follows the real
+ * dependency: the job spec is generated FROM the scoring model, so
+ * CALIBRATE precedes SPEC (founder's ruling, §197). AGENTS.md §4/§5 still
+ * states the reverse; the document is wrong, not this.
+ */
 export const AGENT_TILES: AgentTileDef[] = [
   {
     key: "intake",
@@ -39,16 +57,16 @@ export const AGENT_TILES: AgentTileDef[] = [
     description: "Maps industry, business model, org context.",
   },
   {
-    key: "role_spec",
-    name: "Role Spec",
-    shortLabel: "SPEC",
-    description: "Generates the recruiter-editable job spec.",
-  },
-  {
     key: "calibration",
     name: "Calibration",
     shortLabel: "CALIBRATE",
     description: "Builds the multi-dimension scoring model.",
+  },
+  {
+    key: "role_spec",
+    name: "Role Spec",
+    shortLabel: "SPEC",
+    description: "Generates the recruiter-editable job spec.",
   },
 ];
 
@@ -58,13 +76,30 @@ const STATE_TONE: Record<AgentTileState, string> = {
     "border-primary-container bg-primary-container/10 text-primary shadow-[0_0_15px_rgba(37,99,235,0.15)]",
   complete: "border-secondary/40 bg-secondary/5 text-secondary",
   queued: "border-outline-variant/60 bg-surface-container-lowest text-outline",
+  // Warn, not danger: nothing is broken, someone is needed. Deliberately
+  // NOT the primary glow — that read is reserved for a live agent.
+  blocked: "border-warn/50 bg-warn/5 text-warn",
 };
 
-const STATE_LABEL: Record<AgentTileState, string> = {
+export const AGENT_TILE_STATE_LABEL: Record<AgentTileState, string> = {
   idle: "STAND-BY",
   active: "ACTIVE",
   complete: "COMPLETE",
   queued: "QUEUED",
+  blocked: "NEEDS YOU",
+};
+
+/**
+ * Which states pulse. Data, not a JSX condition, so the rule "only a live
+ * agent pulses" can be pinned by a test — the lie §197 fixed was exactly
+ * a pulse over work that was not running.
+ */
+export const AGENT_TILE_STATE_PULSES: Record<AgentTileState, boolean> = {
+  idle: false,
+  active: true,
+  complete: false,
+  queued: false,
+  blocked: false,
 };
 
 type AgentTilesProps = {
@@ -98,11 +133,11 @@ export function AgentTiles({ states, actions }: AgentTilesProps) {
                 width. Inline, the flex gap keeps them apart and the pair
                 reads as one unit. Same idiom as StatusChip's `dot`. */}
             <div className="flex items-center justify-end gap-1.5 mb-3">
-              {state === "active" && (
+              {AGENT_TILE_STATE_PULSES[state] && (
                 <span className="w-2 h-2 bg-primary animate-pulse shrink-0" />
               )}
               <span className="font-mono-label text-mono-label uppercase tracking-wider">
-                {STATE_LABEL[state]}
+                {AGENT_TILE_STATE_LABEL[state]}
               </span>
             </div>
             <div className="font-mono-label text-mono-label text-outline uppercase tracking-wider mb-1">

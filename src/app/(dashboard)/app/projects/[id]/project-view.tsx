@@ -76,6 +76,8 @@ export type ProjectVm = {
   stages: Stage[];
   agentStates: Record<AgentTileKey, AgentTileState>;
   specAction: AgentTileAction;
+  /** §197 — the act that unblocks the chain, on the tile that is blocked. */
+  calibrationAction: AgentTileAction;
   agentMeta: string;
   modules: { href: string; label: string }[];
   roleFields: { label: string; value: string }[];
@@ -341,7 +343,13 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
             meta={<PanelMeta>{vm.agentMeta}</PanelMeta>}
           >
             <div className="p-[18px]">
-              <AgentTiles states={vm.agentStates} actions={{ role_spec: vm.specAction }} />
+              <AgentTiles
+                states={vm.agentStates}
+                actions={{
+                  calibration: vm.calibrationAction,
+                  role_spec: vm.specAction,
+                }}
+              />
             </div>
           </Panel>
 
