@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { AGENTS } from "./agents";
+import { AGENTS, AGENT_PHASES } from "./agents";
 
 /**
  * The marketing roster may not drift from the platform's.
@@ -87,4 +87,58 @@ describe("the marketed roster and the platform roster", () => {
       expect(a.output.trim().length, `${a.kind} has no output line`).toBeGreaterThan(0);
     }
   });
+});
+
+/**
+ * Reading order on /platform is `AGENT_PHASES` order, then roster order
+ * within each phase. That makes the array a CLAIM ABOUT THE PIPELINE,
+ * not just a list — and a claim nothing checked.
+ *
+ * It was wrong twice, independently: AGENTS.md put Role Spec before
+ * Calibration, and so did this file, while the code has always refused
+ * to build a spec without calibration weights. The two surfaces drifted
+ * the same way and neither caught the other, because the roster guard
+ * above joins on `kind` and never reads AGENTS.md.
+ *
+ * So the dependencies are pinned here, against the doors that enforce
+ * them in the product. Only edges with a real door are listed — this is
+ * not an attempt to encode the whole pipeline, which would break on
+ * every editorial reshuffle and teach people to delete the test.
+ */
+describe("the roster reads in the order the pipeline runs", () => {
+  const phaseRank = new Map(AGENT_PHASES.map((p, i) => [p.key, i]));
+
+  /** Position on the rendered page: phase first, then roster order. */
+  function position(kind: string): number {
+    const index = AGENTS.findIndex((a) => a.kind === kind);
+    expect(index, `${kind} is not in the roster`).toBeGreaterThanOrEqual(0);
+    const phase = AGENTS[index].phase;
+    // "always" agents render outside the phase rail; none is pinned below.
+    const rank = phaseRank.get(phase as never) ?? phaseRank.size;
+    return rank * 1000 + index;
+  }
+
+  const EDGES: ReadonlyArray<readonly [string, string, string]> = [
+    [
+      "calibration",
+      "rolespec",
+      "generate-job-spec consumes calibration_model.dimension_weights, " +
+        "and /app/projects/[id]/spec redirects away without them",
+    ],
+    [
+      "rolespec",
+      "boolean_search",
+      "generate-sourcing selects job_specs where is_final and returns " +
+        "no_final_spec otherwise — sourcing needs a FINALISED spec",
+    ],
+  ];
+
+  for (const [before, after, why] of EDGES) {
+    it(`puts ${before} before ${after}`, () => {
+      expect(
+        position(before),
+        `${before} must read before ${after}: ${why}`
+      ).toBeLessThan(position(after));
+    });
+  }
 });

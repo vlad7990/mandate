@@ -74,12 +74,6 @@ export const AGENTS: readonly Agent[] = [
     addOn: true,
   },
   {
-    kind: "rolespec",
-    name: "Role Spec",
-    phase: "define",
-    output: "A versioned specification you edit and approve",
-  },
-  {
     kind: "interviewer",
     name: "Interviewer",
     phase: "define",
@@ -88,11 +82,25 @@ export const AGENTS: readonly Agent[] = [
   },
 
   // ── CALIBRATE — make the judgement explicit before anyone is judged
+  //
+  // Calibration comes BEFORE Role Spec, and the order here is the
+  // pipeline's, not an editorial choice. generate-job-spec consumes
+  // calibration_model.dimension_weights; /spec redirects away without
+  // them. This file listed Role Spec under "define", ahead of
+  // Calibration, until 2026-09-23 — the same inversion AGENTS.md
+  // carried, one surface over. Nothing catches drift between the two:
+  // the roster guard joins on `kind` and never reads AGENTS.md.
   {
     kind: "calibration",
     name: "Calibration",
     phase: "calibrate",
     output: "A weighted scoring model you can argue with before it scores anyone",
+  },
+  {
+    kind: "rolespec",
+    name: "Role Spec",
+    phase: "calibrate",
+    output: "A versioned specification you edit and approve",
   },
   {
     kind: "psychology",
