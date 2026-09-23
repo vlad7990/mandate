@@ -275,6 +275,17 @@ export function ComparisonPdfDocument(props: {
             ))}
           </View>
 
+          {/* §196 slice 2 — a mandate's custom axes get their OWN table
+              rather than more columns in the one above.
+              MASTER_TABLE_FIXED_WIDTH already consumes 298 of 523 points;
+              three more score columns would leave the candidate name
+              under 150, below the 180 the width guard protects, and
+              react-pdf does not error on an overrun — it prints the last
+              column off the right margin. A second table costs a little
+              vertical space and keeps every axis legible with its FULL
+              label, which a 26-point column never could. */}
+          <CustomDimensionsTable rows={rows} />
+
           {/* Tiered market view */}
           <SectionHeader label="03 · Tiered Market View" />
           {TIER_ORDER.map((tier) => {
@@ -602,6 +613,86 @@ function SlateBlock({
           )}
         </View>
       ))}
+    </View>
+  );
+}
+
+/**
+ * §196 slice 2 — the axes beyond the five, one row per candidate.
+ *
+ * Renders nothing at all when the mandate has no custom dimensions,
+ * which is most mandates: an empty "Custom dimensions" heading on a
+ * client-facing PDF would imply a section that failed to fill rather
+ * than one that does not apply.
+ */
+function CustomDimensionsTable({ rows }: { rows: ComparisonRow[] }) {
+  const custom = (rows[0]?.dimensions ?? []).filter((d) => d.isCustom);
+  if (custom.length === 0 || rows.length === 0) return null;
+
+  // The name column keeps the same floor as the master table; the axes
+  // share what is left.
+  const nameCol = 180;
+  const axisCol = (PDF_CONTENT_WIDTH - nameCol) / custom.length;
+
+  return (
+    <View style={{ marginTop: 10 }}>
+      <SectionHeader
+        label="02b · Custom Dimensions"
+        meta={`Role-specific axes · included in the overall above`}
+      />
+      <View style={PDF_STYLES.table}>
+        <View style={PDF_STYLES.thead} fixed>
+          <Text style={[PDF_STYLES.th, { width: nameCol }]}>Candidate</Text>
+          {custom.map((d) => (
+            <Text
+              key={d.key}
+              style={[PDF_STYLES.thNum, { width: axisCol }]}
+            >
+              {`${d.label}${d.weight === null ? "" : ` (w${d.weight})`}`}
+            </Text>
+          ))}
+        </View>
+        {rows.map((r) => (
+          <View key={r.candidate_id} style={PDF_STYLES.tbodyRow} wrap={false}>
+            <Text style={[PDF_STYLES.td, { width: nameCol }]}>
+              {r.full_name}
+            </Text>
+            {r.dimensions
+              .filter((d) => d.isCustom)
+              .map((d) => (
+                <Text
+                  key={d.key}
+                  style={[
+                    PDF_STYLES.td,
+                    PDF_STYLES.tdNum,
+                    {
+                      width: axisCol,
+                      color:
+                        d.score === null
+                          ? PDF_COLORS.textMuted
+                          : scoreColor(d.score),
+                    },
+                  ]}
+                >
+                  {/* Not assessed prints as an em-dash, never as 0 — on
+                      paper especially, a 0 reads as a measured failure
+                      and cannot be hovered for a tooltip. */}
+                  {d.score === null ? "—" : d.score}
+                </Text>
+              ))}
+          </View>
+        ))}
+      </View>
+      <Text
+        style={{
+          fontSize: 7.5,
+          color: PDF_COLORS.textMuted,
+          marginTop: 3,
+        }}
+      >
+        An em-dash means the candidate was not assessed on that axis — they
+        are excluded from it when the overall is calculated, not scored zero.
+      </Text>
     </View>
   );
 }

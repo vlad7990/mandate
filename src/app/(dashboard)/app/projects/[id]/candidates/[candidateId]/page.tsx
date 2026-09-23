@@ -35,6 +35,7 @@ import {
 } from "@/lib/ai/generate-evaluation";
 import { type Tier } from "@/lib/ranking/tiers";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
+import { approvedCustomDimensions } from "@/lib/calibration/custom-dimensions";
 import { ContactFieldsRail } from "./contact-fields";
 import {
   ArchetypeSelect,
@@ -641,6 +642,9 @@ export default async function CandidateProfilePage({
           candidateName={candidate.full_name}
           candidateTitle={candidate.current_title}
           candidateCompany={candidate.current_company}
+          customDimensionLabels={approvedCustomDimensions(
+            project.calibration_model
+          ).map((d) => d.label)}
           projectId={project.id}
           advisoryMode={advisoryMode}
         />

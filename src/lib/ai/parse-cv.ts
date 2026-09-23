@@ -7,11 +7,12 @@ import {
   runInference,
 } from "./inference";
 import {
-  CANDIDATE_PROFILE_SCHEMA,
+  buildCandidateProfileSchema,
   CV_PARSING_SYSTEM_PROMPT,
   type CandidateProfile,
 } from "./cv-parsing";
 import type { CalibrationModel, CompanyContext } from "./role-analysis";
+import { approvedCustomDimensions } from "@/lib/calibration/custom-dimensions";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 
 
@@ -55,12 +56,19 @@ export async function parseCv(
     throw new Error(`Unsupported MIME type for CV parse: ${mimeType}`);
   }
 
-  const userMessage = await buildUserMessage(fileBytes, mimeType, ctx);
+  const approved = approvedCustomDimensions(ctx.calibration);
+  const userMessage = await buildUserMessage(fileBytes, mimeType, ctx, approved);
   const system = await applySkillsToPrompt(CV_PARSING_SYSTEM_PROMPT, {
     projectId: ctx.projectId ?? null,
     organizationId: ctx.organizationId ?? null,
     client: options?.skillClient,
   });
+
+  // §196 — the schema is mandate-shaped. APPROVED dimensions only: a
+  // proposal the recruiter hasn't signed for must not reach the model,
+  // or the act of proposing would start scoring candidates on its own.
+  // Zero approved (the common case) returns the unchanged constant.
+  const schema = buildCandidateProfileSchema(approved);
 
   const request = {
     max_tokens: 4096,
@@ -69,7 +77,7 @@ export async function parseCv(
     output_config: {
       format: {
         type: "json_schema" as const,
-        schema: CANDIDATE_PROFILE_SCHEMA,
+        schema,
       },
     },
   };
@@ -117,8 +125,18 @@ type AnthropicContentBlock =
 async function buildUserMessage(
   fileBytes: Uint8Array,
   mimeType: string,
-  ctx: ParseContext
+  ctx: ParseContext,
+  approved: readonly { key: string; label: string; definition: string; weight: number }[]
 ): Promise<AnthropicContentBlock[]> {
+  // §196 — the calibration goes into the prompt wholesale, and it
+  // carries PROPOSED dimensions the recruiter has not signed for. Those
+  // must not ride along: there is no schema field for them, but a model
+  // reading "this role also values X" will let X colour the scores it
+  // CAN write. Approval has to gate the context, not just the output,
+  // or an unapproved axis still moves the ranking.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { custom_dimensions: _withheld, ...calibration } = ctx.calibration;
+
   const contextHeader = `Role context:
 ${JSON.stringify(
   {
@@ -127,9 +145,17 @@ ${JSON.stringify(
     // of the drift (seven, then eight, for an interval of nine years)
     // paid for this line.
     run_date: new Date().toISOString().slice(0, 10),
-    calibration: ctx.calibration,
+    calibration,
     company: ctx.company,
     dimension_weights: ctx.calibration.dimension_weights ?? null,
+    custom_dimensions: approved.length
+      ? approved.map((d) => ({
+          key: d.key,
+          label: d.label,
+          definition: d.definition,
+          weight: d.weight,
+        }))
+      : undefined,
   },
   null,
   2

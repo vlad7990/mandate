@@ -7,6 +7,7 @@ import {
   type PositioningResult,
 } from "./positioning-agent";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
+import { calibrationForPrompt } from "@/lib/calibration/custom-dimensions";
 import { signInPositioningAgent } from "@/lib/agents/session";
 import { captureSeamError } from "@/lib/observability/sentry";
 
@@ -197,7 +198,11 @@ async function runUnderAgentSession(
     role: {
       role_title: project.title,
       company_name: project.company_name,
-      calibration: project.calibration_model ?? {},
+      // §196 — approved axes only; a proposal is not a criterion.
+      calibration:
+        calibrationForPrompt(
+          project.calibration_model as { custom_dimensions?: unknown } | null
+        ) ?? {},
       company_context: project.company_context ?? {},
     },
     candidate: {

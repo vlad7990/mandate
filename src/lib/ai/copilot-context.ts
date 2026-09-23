@@ -77,7 +77,10 @@ export async function loadCopilotProjectContext(
       supabase
         .from("candidate_scores")
         .select(
-          "candidate_id, technical_score, domain_score, leadership_score, regulatory_score, transformation_score, overall_score, tier, rank_position, previous_rank"
+          // §196 slice 2 — custom_scores rides along, or the copilot
+          // explains a ranking from five of its six inputs the first
+          // time a recruiter asks "why is she above him?".
+          "candidate_id, technical_score, domain_score, leadership_score, regulatory_score, transformation_score, custom_scores, overall_score, tier, rank_position, previous_rank"
         )
         .eq("project_id", projectId)
         .order("rank_position", { ascending: true }),
@@ -201,6 +204,12 @@ export async function loadCopilotProjectContext(
       title: project.title,
       company_name: project.company_name,
       status: project.status,
+      // §196 slice 2 — DELIBERATELY the whole model, proposals and
+      // rationale included. Every other seam narrows to approved axes
+      // because it writes something a client reads; the copilot answers
+      // the RECRUITER, and a pending proposal with the agent's argument
+      // for it is exactly what they need to decide whether to approve.
+      // Narrowing here would hide their own deliberation from them.
       calibration_model: project.calibration_model,
       company_context: trimCompanyContext(project.company_context),
       recalibration_summary: project.recalibration_summary,

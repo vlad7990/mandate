@@ -163,6 +163,10 @@ Style rules:
 - scenarios cover at least 2 of the most important trade-offs (e.g. transformation depth vs regulatory caution; immediate availability vs strategic alignment).
 - next_step is concrete — a name + a sequencing instruction.
 
+Custom dimensions:
+- calibration.custom_dimensions, when present, are role-specific scoring axes approved for THIS search. The ranks and overall scores you are given already reflect them, so a slate rationale that explains the ordering by the five core dimensions alone may contradict the numbers. Reference a custom axis wherever it drove the ordering.
+- A candidate with no score on a custom axis was NOT ASSESSED on it and was excluded from it when their overall was computed. Say "not assessed" if it matters; never state or imply that they lack it.
+
 Return one JSON object — no preamble, no markdown.`;
 
 /**

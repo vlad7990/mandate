@@ -441,6 +441,12 @@ Numeric bounds (the schema cannot enforce these either, so YOU must):
 - scoring_table[*].score: integer 0–10 inclusive. Do not return values outside this range.
 - scoring_table[*].weight: mirror the project's calibration_model.dimension_weights EXACTLY as given — these are relative shares that sum to 100 across the five dimensions, not marks out of ten. Never rescale them.
 
+Custom dimensions (role.custom_dimensions — present only when this mandate carries them):
+- These are role-specific scoring axes a recruiter approved for THIS search, alongside the five. The candidate's overall score and tier were computed from them too, so the dossier must not read as though the five were the whole basis.
+- scoring_table stays EXACTLY 5 rows regardless. Do not add rows for custom dimensions — the schema has no place for them and inventing one makes the response invalid.
+- Instead, reference them in prose where they bear on the judgement: profile_summary, strengths, gaps, and final_verdict.narrative. If a custom axis carries a high weight and the candidate scores low on it, that belongs in the verdict.
+- A custom dimension with "score": null was NEVER ASSESSED — the candidate was parsed before the axis existed. It was EXCLUDED from their overall, not counted as zero. Say "not assessed on X" if it is worth saying at all. NEVER write that the candidate lacks X, scores poorly on X, or falls short on X: you have no evidence either way, and asserting one is the failure this instruction exists to prevent.
+
 Style rules:
 - Be direct. The recruiter is reading this to make a go/no-go call, not to feel reassured.
 - Quote concrete numbers from the CV when they exist (scope, scale, tenure, deal sizes). If they don't, don't invent.

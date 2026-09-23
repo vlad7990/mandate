@@ -7,6 +7,10 @@ import {
   type OnboardingResponses,
 } from "./onboarding-analysis";
 import type { CalibrationModel } from "./role-analysis";
+import {
+  customDimensionsOf,
+  mergeProposals,
+} from "@/lib/calibration/custom-dimensions";
 import { signInCalibrationAgent } from "@/lib/agents/session";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { captureSeamError } from "@/lib/observability/sentry";
@@ -114,10 +118,23 @@ export async function runCalibrationDerivationAndPersist(
       project.calibration_model?.dimension_weights
     );
 
+    // §196 — the agent's proposals fold into what the mandate already
+    // carries. `mergeProposals` is where the approval invariant lives:
+    // this runs again on every feedback-driven recalibration, and an
+    // agent that could overwrite an approved dimension would quietly
+    // re-author the criteria a recruiter signed for. New proposals land
+    // "proposed" and score NOTHING until a human clicks.
+    const existingCustom = customDimensionsOf(project.calibration_model);
+    const customDimensions = mergeProposals(
+      existingCustom,
+      derived.custom_dimensions ?? []
+    );
+
     const mergedCalibration: Partial<CalibrationModel> = {
       ...(project.calibration_model ?? {}),
       dimension_weights: derived.dimension_weights,
       weights_rationale: derived.weights_rationale,
+      custom_dimensions: customDimensions,
     };
 
     // The agent's merge-write: ONLY the derived keys change; the
@@ -171,6 +188,17 @@ export async function runCalibrationDerivationAndPersist(
         anti_patterns: responses.anti_patterns.length,
         stakeholders: responses.stakeholders.length,
         priority_signals: responses.priority_signals.length,
+        // §196 — counts, as everywhere else on this trail. The
+        // dimensions' text is on the row; the trail says how many the
+        // agent put forward and how many a human had already signed for,
+        // which is what an auditor asking "who chose the criteria?"
+        // needs.
+        custom_proposed: customDimensions.filter(
+          (d) => d.status === "proposed"
+        ).length,
+        custom_approved: customDimensions.filter(
+          (d) => d.status === "approved"
+        ).length,
       },
     });
     if (eventErr) {

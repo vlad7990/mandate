@@ -6,6 +6,7 @@ import {
   buildComparisonGrid,
 } from "@/lib/comparison/evidence-index";
 import { extractEvidence } from "@/lib/comparison/evidence-extractors";
+import { hasCustomDimensions } from "@/lib/ranking/dimension-rows";
 import type { CandidateProfile } from "@/lib/ai/cv-parsing";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import {
@@ -154,6 +155,11 @@ export default async function HiringManagerPublicPage({
   // being asked about the slate, not about everyone the search touched.
   const scoreByCandidate = new Map(scores.map((s) => [s.candidate_id, s]));
   const weights = project.calibration_model?.dimension_weights ?? null;
+  // §196 slice 2 — the evidence grid covers the five core dimensions
+  // only (there is no honest evidence extractor for a bespoke axis), so
+  // when the mandate scores on more than five the grid declares its own
+  // scope rather than passing for the whole basis of the ranking.
+  const coreOnly = hasCustomDimensions(project.calibration_model);
   const evidenceGrid = buildComparisonGrid(
     portalCandidates.map((pc) => {
       const source = candidates.find((c) => c.id === pc.id);
@@ -187,6 +193,7 @@ export default async function HiringManagerPublicPage({
       mode="hiring_manager"
       submitHandle={token}
       evidenceGrid={evidenceGrid}
+      evidenceCoreOnly={coreOnly}
       clientInterview={buildPortalClientInterview(interviewQ.data ?? null)}
       // The token door: anonymous, so it asks for a name, and it holds
       // no "your previous answers" — a share link has no author to

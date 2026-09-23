@@ -8,6 +8,7 @@ import {
 import type { CalibrationModel } from "./role-analysis";
 import type { CandidateProfile } from "./cv-parsing";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
+import { calibrationForPrompt } from "@/lib/calibration/custom-dimensions";
 
 
 export type ComparisonInputCandidate = {
@@ -46,7 +47,15 @@ export async function generateComparisonAnalysis(
     throw new Error("Comparison capped at 3 candidates.");
   }
 
-  const userPrompt = JSON.stringify(input, null, 2);
+  // §196 slice 2 — a PROPOSED custom axis must not reach the model. It
+  // cannot be scored (no schema field), but an axis the model is told
+  // the role values will colour the prose it does write, and this
+  // analysis is read by a hiring manager.
+  const userPrompt = JSON.stringify(
+    { ...input, calibration: calibrationForPrompt(input.calibration) ?? {} },
+    null,
+    2
+  );
   const system = await applySkillsToPrompt(COMPARISON_SYSTEM_PROMPT, {
     projectId: input.skill_context?.project_id ?? null,
     organizationId: input.skill_context?.organization_id ?? null,

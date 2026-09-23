@@ -6,6 +6,7 @@ import {
   type ShortlistReport,
 } from "./shortlist-report";
 import type { CalibrationModel, CompanyContext } from "./role-analysis";
+import { calibrationForPrompt } from "@/lib/calibration/custom-dimensions";
 import type { CandidateProfile } from "./cv-parsing";
 import { signInShortlistAgent } from "@/lib/agents/session";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
@@ -230,7 +231,9 @@ export async function runShortlistReportAndPersist(
             role_structure: project.calibration_model?.role_structure ?? null,
           },
           company_context: project.company_context ?? {},
-          calibration: project.calibration_model ?? {},
+          // §196 — approved axes only, rationale stripped: this report
+          // is written for the client.
+          calibration: calibrationForPrompt(project.calibration_model) ?? {},
           recruiter_narrative: sl.narrative.trim() || null,
           slate,
         },

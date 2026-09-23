@@ -8,6 +8,7 @@ import {
   buildComparisonGrid,
 } from "@/lib/comparison/evidence-index";
 import { extractEvidence } from "@/lib/comparison/evidence-extractors";
+import { hasCustomDimensions } from "@/lib/ranking/dimension-rows";
 import type { CandidateProfile } from "@/lib/ai/cv-parsing";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import {
@@ -147,6 +148,11 @@ export default async function PortalMandatePage({
   };
 
   const weights = payload.project.calibration_model?.dimension_weights ?? null;
+  // §196 slice 2 — the evidence grid covers the five core dimensions
+  // only (there is no honest evidence extractor for a bespoke axis), so
+  // when the mandate scores on more than five the grid declares its own
+  // scope rather than passing for the whole basis of the ranking.
+  const coreOnly = hasCustomDimensions(payload.project.calibration_model);
   const evidenceGrid = buildComparisonGrid(
     portalCandidates.map((pc) => {
       const source = candById.get(pc.id);
@@ -190,6 +196,7 @@ export default async function PortalMandatePage({
         submitHandle={payload.project.id}
         submitPath={`/portal/api/mandates/${payload.project.id}/submit`}
         evidenceGrid={evidenceGrid}
+        evidenceCoreOnly={coreOnly}
         clientInterview={buildPortalClientInterview(payload.client_interview)}
         // The signed-in door (127 D1(b)): the caller is named, active,
         // share-verified and grant-checked — a stronger principal than

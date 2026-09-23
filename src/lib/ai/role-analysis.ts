@@ -58,7 +58,10 @@ export type RoleAnalysis = {
   business_model: string;
 };
 
-import type { DimensionWeights } from "./onboarding-analysis";
+import type {
+  CustomDimension,
+  DimensionWeights,
+} from "./onboarding-analysis";
 
 export type CalibrationModel = Pick<
   RoleAnalysis,
@@ -66,6 +69,14 @@ export type CalibrationModel = Pick<
 > & {
   dimension_weights?: DimensionWeights;
   weights_rationale?: string;
+  /**
+   * §196 — industry-specific scoring axes riding alongside the five.
+   * Absent on every mandate calibrated before this slice, which is why
+   * nothing reads this field directly: go through
+   * `approvedCustomDimensions` in lib/calibration/custom-dimensions,
+   * which treats absent, malformed and unapproved identically.
+   */
+  custom_dimensions?: CustomDimension[];
   /**
    * §177 (F-A), ruling A.2 — the id of the FINAL job spec this role
    * identity was derived from, or absent/null when it came from intake's

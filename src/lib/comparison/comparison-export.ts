@@ -14,6 +14,7 @@ import {
   type ComparisonGrid,
   type CoverageState,
 } from "./evidence-index";
+import type { DimensionRow } from "@/lib/ranking/dimension-rows";
 
 const DIMENSION_LABEL: Record<DimensionKey, string> = {
   technical: "Technical",
@@ -37,6 +38,19 @@ export type ComparisonRow = {
   leadership: number;
   regulatory: number;
   transformation: number;
+  /**
+   * §196 slice 2 — EVERY axis `overall` was computed from, core five
+   * first then the mandate's approved custom dimensions, with null
+   * scores where this candidate was never assessed.
+   *
+   * The five flat fields above stay: the evidence engine, the market
+   * insight and `blindSpots` are all keyed on `DimensionKey` and are
+   * deliberately NOT generalised (there is no honest evidence extractor
+   * for a custom axis — see dimension-rows.ts). Everything that RENDERS
+   * a breakdown beside `overall` reads this list instead, so a printed
+   * table and a screen table cannot disagree about what counted.
+   */
+  dimensions: DimensionRow[];
   /** From cv_structured.evaluation when present. */
   evaluation: CandidateEvaluation | null;
   /** Lifted from cv_structured.summary for slate cards. */
@@ -443,17 +457,41 @@ export function comparisonToMarkdown({
     : "";
   lines.push(`Ranked across all candidates evaluated.${weightHeader}`);
   lines.push("");
+  // §196 slice 2 — markdown has no column-width ceiling, so a custom
+  // axis is simply another column. Taken from the first row: every row
+  // is built from one calibration model and so carries the same axes.
+  const customAxes = (rows[0]?.dimensions ?? []).filter((d) => d.isCustom);
+  const customHeads = customAxes.map((d) => ` ${escapeCell(d.label)} |`).join("");
+  const customAligns = customAxes.map(() => " ---: |").join("");
+
   lines.push(
-    "| # | Candidate | Title | Tier | Overall | Tech | Domain | Lead | Regul | Xform |"
+    `| # | Candidate | Title | Tier | Overall | Tech | Domain | Lead | Regul | Xform |${customHeads}`
   );
-  lines.push("| ---: | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |");
+  lines.push(
+    `| ---: | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |${customAligns}`
+  );
   for (const r of rows) {
     const titleCell = `${r.current_title ?? "—"}${r.current_company ? ` @ ${r.current_company}` : ""}`;
+    // An unassessed axis prints an em-dash. In an exported table a 0
+    // cannot be hovered for an explanation and reads as a measured
+    // failure — see `unassessedSentence`, printed below the table.
+    const customCells = customAxes
+      .map((axis) => {
+        const cell = r.dimensions.find((d) => d.key === axis.key);
+        return ` ${cell?.score ?? "—"} |`;
+      })
+      .join("");
     lines.push(
-      `| ${r.rank} | ${escapeCell(r.full_name)} | ${escapeCell(titleCell)} | ${TIER_BANDS[r.tier].label.split(" · ")[0]} | ${r.overall.toFixed(2)} | ${r.technical} | ${r.domain} | ${r.leadership} | ${r.regulatory} | ${r.transformation} |`
+      `| ${r.rank} | ${escapeCell(r.full_name)} | ${escapeCell(titleCell)} | ${TIER_BANDS[r.tier].label.split(" · ")[0]} | ${r.overall.toFixed(2)} | ${r.technical} | ${r.domain} | ${r.leadership} | ${r.regulatory} | ${r.transformation} |${customCells}`
     );
   }
   lines.push("");
+  if (customAxes.length > 0) {
+    lines.push(
+      `_Custom dimensions are role-specific axes included in the Overall score. An em-dash means the candidate was not assessed on that axis and was excluded from it, not scored zero._`
+    );
+    lines.push("");
+  }
 
   // Tiered market view
   lines.push("## 2. Tiered Market View");
@@ -634,10 +672,22 @@ export function comparisonToHtml({
           <td class="score-cell" style="color:${scoreColor(r.leadership)}">${r.leadership}</td>
           <td class="score-cell" style="color:${scoreColor(r.regulatory)}">${r.regulatory}</td>
           <td class="score-cell" style="color:${scoreColor(r.transformation)}">${r.transformation}</td>
+          ${r.dimensions
+            .filter((d) => d.isCustom)
+            .map((d) =>
+              d.score === null
+                ? `<td class="score-cell" style="color:#94a3b8" title="Not assessed — excluded from the overall, not scored zero">—</td>`
+                : `<td class="score-cell" style="color:${scoreColor(d.score)}">${d.score}</td>`
+            )
+            .join("")}
         </tr>
       `
     )
     .join("");
+
+  // §196 slice 2 — the custom axes this mandate scores on, for the
+  // table head and the caveat beneath it.
+  const customAxesHtml = (rows[0]?.dimensions ?? []).filter((d) => d.isCustom);
 
   const tierSections = (["tier_1", "tier_2", "tier_3", "tier_4"] as Tier[])
     .map((tier) => {
@@ -725,10 +775,23 @@ export function comparisonToHtml({
         <th>#</th><th>Candidate</th><th>Title</th><th>Tier</th>
         <th style="text-align:right">Overall</th>
         <th style="text-align:right">Tech</th><th style="text-align:right">Domain</th><th style="text-align:right">Lead</th><th style="text-align:right">Regul</th><th style="text-align:right">Xform</th>
+        ${customAxesHtml
+          .map(
+            (d) =>
+              `<th style="text-align:right">${esc(d.label)}${
+                d.weight === null ? "" : ` <span style="color:#94a3b8">w${d.weight}</span>`
+              }</th>`
+          )
+          .join("")}
       </tr>
     </thead>
     <tbody>${rowsHtml}</tbody>
   </table>
+  ${
+    customAxesHtml.length > 0
+      ? `<div class="meta">Custom dimensions are role-specific axes included in the Overall score. An em-dash means the candidate was not assessed on that axis and was excluded from it, not scored zero.</div>`
+      : ""
+  }
 
   <h2>Tiered Market View</h2>
   ${tierSections}

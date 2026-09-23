@@ -8,6 +8,7 @@ import {
   type CandidateProfile,
 } from "@/lib/ai/cv-parsing";
 import { runRankerScoring } from "@/lib/ranking/agent-ranker";
+import { approvedCustomDimensions } from "@/lib/calibration/custom-dimensions";
 import { type Tier } from "@/lib/ranking/tiers";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
@@ -57,6 +58,7 @@ type ScoreRow = {
   leadership_score: number | null;
   regulatory_score: number | null;
   transformation_score: number | null;
+  custom_scores: Record<string, unknown> | null;
   overall_score: number | null;
   tier: string | null;
   rank_position: number | null;
@@ -133,7 +135,7 @@ export default async function RankingPage({
   const { data: scoreRows } = await supabase
     .from("candidate_scores")
     .select(
-      "candidate_id, technical_score, domain_score, leadership_score, regulatory_score, transformation_score, overall_score, tier, rank_position, previous_rank, rank_changed_at, rank_change_reason, updated_at"
+      "candidate_id, technical_score, domain_score, leadership_score, regulatory_score, transformation_score, custom_scores, overall_score, tier, rank_position, previous_rank, rank_changed_at, rank_change_reason, updated_at"
     )
     .eq("project_id", id)
     .order("rank_position", { ascending: true });
@@ -175,6 +177,9 @@ export default async function RankingPage({
           leadership_score: score.leadership_score,
           regulatory_score: score.regulatory_score,
           transformation_score: score.transformation_score,
+          // §196 slice 2 — the axes beyond the five that produced this
+          // overall. Absent on rows scored before slice 1.
+          custom_scores: score.custom_scores ?? {},
           overall_score: score.overall_score,
           tier: score.tier as Tier,
           rank_position: score.rank_position,
@@ -264,6 +269,9 @@ export default async function RankingPage({
           calibrationWeights={
             project.calibration_model?.dimension_weights ?? null
           }
+          // §196 slice 2 — the approved custom axes, so the chip row
+          // shows every dimension the saved overall was computed from.
+          customDimensions={approvedCustomDimensions(project.calibration_model)}
           entries={ranked}
         />
       )}

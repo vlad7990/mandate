@@ -94,6 +94,10 @@ export type ProjectVm = {
   /** The client-interview panel (117) — rendered in the left column
    * right after the "Information required" rail it feeds from. */
   clientInterview?: React.ReactNode;
+  /** §196 — the custom-dimension approval panel. A slot, like
+   * clientInterview, because the panel is a client component with its
+   * own state and this view is server-rendered. */
+  scoringDimensions?: React.ReactNode;
   /** Rendered above the grid: recalibration, sourcing CTA. */
   banners?: React.ReactNode;
   /** Rendered full-width below the grid: search + intelligence panels. */
@@ -395,6 +399,8 @@ export function ProjectView({ vm }: { vm: ProjectVm }) {
               </ul>
             </Panel>
           )}
+
+          {vm.scoringDimensions}
 
           {vm.clientInterview}
         </div>

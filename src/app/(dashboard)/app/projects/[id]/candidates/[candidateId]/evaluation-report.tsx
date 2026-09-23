@@ -96,6 +96,7 @@ export function EvaluationReport({
   candidateName,
   candidateTitle,
   candidateCompany,
+  customDimensionLabels = [],
   projectId,
   advisoryMode = false,
 }: {
@@ -104,6 +105,11 @@ export function EvaluationReport({
   candidateName: string;
   candidateTitle: string | null;
   candidateCompany: string | null;
+  /** §196 — the mandate's approved custom axes. The agent's scoring
+   * table is a fixed five rows, so these are named beneath it on screen
+   * and in the PDF: an overall computed from more axes than the table
+   * shows is a number the reader cannot check. */
+  customDimensionLabels?: string[];
   projectId: string;
   /** §182 slice F — org-level flag (organizations.advisory_mode). Render
    * only: same stored evaluation, different emphasis. Advisory mode
@@ -135,6 +141,7 @@ export function EvaluationReport({
             candidateName={candidateName}
             candidateTitle={candidateTitle}
             candidateCompany={candidateCompany}
+            customDimensionLabels={customDimensionLabels}
             projectId={projectId}
           />
         </>
@@ -144,6 +151,13 @@ export function EvaluationReport({
         {advisoryMode && <AdvisoryQuestionsSection evaluation={evaluation} />}
 
         <ScoringTable rows={evaluation.scoring_table} />
+        {customDimensionLabels.length > 0 && (
+          <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+            This table covers the five core dimensions. This role is also
+            scored on {customDimensionLabels.join(", ")}, which the overall
+            score and tier reflect.
+          </p>
+        )}
 
         <ProfileSummarySection summary={evaluation.profile_summary} />
 

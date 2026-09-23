@@ -76,10 +76,21 @@ export function EvidenceGrid({
   projectId,
   grid,
   variant = "internal",
+  coreOnlyNote = false,
 }: {
   projectId?: string;
   grid: ComparisonGrid;
   variant?: EvidenceGridVariant;
+  /**
+   * §196 slice 2 — set when the mandate scores on custom axes this grid
+   * does NOT cover. The grid's cells come from hand-written extractors
+   * mapping particular parsed facts to particular dimensions; there is
+   * no honest generic extractor for a bespoke axis, and inventing one
+   * would fabricate coverage — the same judgment that already keeps
+   * `regulatory` out of `fromCvProfile`. So the grid stays at five and
+   * declares its own scope rather than passing for the whole picture.
+   */
+  coreOnlyNote?: boolean;
 }) {
   if (grid.candidates.length === 0) {
     return (
@@ -103,6 +114,15 @@ export function EvidenceGrid({
         </h2>
         <Legend />
       </header>
+
+      {coreOnlyNote && (
+        <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
+          Covers the five core dimensions. This mandate&apos;s custom axes are
+          scored but carry no evidence trail — they are assessed from the CV
+          against their stated definition, with no corroborating source to
+          grade.
+        </p>
+      )}
 
       {spots.length > 0 && (
         <div className="flex items-start gap-2 border border-tertiary/50 bg-tertiary/10 px-3 py-2 text-tertiary">

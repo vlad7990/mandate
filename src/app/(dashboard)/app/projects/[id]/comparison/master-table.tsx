@@ -11,35 +11,28 @@ import {
   IconSelector,
 } from "@/components/icons";
 
-type SortKey =
-  | "rank"
-  | "full_name"
-  | "tier"
-  | "overall"
-  | "technical"
-  | "domain"
-  | "leadership"
-  | "regulatory"
-  | "transformation";
+// §196 slice 2 — the dimension columns are no longer a fixed five, so a
+// sort key is any string: the four fixed columns plus one per axis the
+// mandate actually scores on.
+type SortKey = string;
 
 type SortDir = "asc" | "desc";
 
-const COLUMNS: Array<{
+type Column = {
   key: SortKey;
   label: string;
   align: "left" | "right";
   numeric: boolean;
   width?: string;
-}> = [
+  /** Set on dimension columns; absent on rank/name/tier/overall. */
+  dimensionKey?: string;
+};
+
+const FIXED_COLUMNS: Column[] = [
   { key: "rank", label: "#", align: "right", numeric: true, width: "48px" },
   { key: "full_name", label: "Candidate", align: "left", numeric: false },
   { key: "tier", label: "Tier", align: "left", numeric: false, width: "112px" },
   { key: "overall", label: "Overall", align: "right", numeric: true, width: "84px" },
-  { key: "technical", label: "Tech", align: "right", numeric: true, width: "64px" },
-  { key: "domain", label: "Domain", align: "right", numeric: true, width: "72px" },
-  { key: "leadership", label: "Lead", align: "right", numeric: true, width: "64px" },
-  { key: "regulatory", label: "Regul", align: "right", numeric: true, width: "72px" },
-  { key: "transformation", label: "Xform", align: "right", numeric: true, width: "72px" },
 ];
 
 const TIER_PILL: Record<Tier, string> = {
@@ -66,6 +59,23 @@ export function MasterScoringTable({
   const [sortKey, setSortKey] = useState<SortKey>("rank");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
+  // Columns come from the first row's dimension list — every row carries
+  // the same axes because they are built from one calibration model.
+  const columns = useMemo<Column[]>(() => {
+    const dims = rows[0]?.dimensions ?? [];
+    return [
+      ...FIXED_COLUMNS,
+      ...dims.map((d) => ({
+        key: `dim:${d.key}`,
+        label: d.short,
+        align: "right" as const,
+        numeric: true,
+        width: "72px",
+        dimensionKey: d.key,
+      })),
+    ];
+  }, [rows]);
+
   const sorted = useMemo(() => {
     const list = [...rows];
     list.sort((a, b) => {
@@ -91,7 +101,7 @@ export function MasterScoringTable({
     setSortKey(key);
     // Numeric columns (and tier) read more naturally as desc-first; the
     // recruiter wants the strongest scores at the top of the list.
-    const col = COLUMNS.find((c) => c.key === key);
+    const col = columns.find((c) => c.key === key);
     setSortDir(col?.numeric || key === "tier" ? "desc" : "asc");
   };
 
@@ -100,7 +110,7 @@ export function MasterScoringTable({
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="bg-surface-container-high border-b border-outline-variant">
-            {COLUMNS.map((col) => (
+            {columns.map((col) => (
               <th
                 key={col.key}
                 scope="col"
@@ -181,13 +191,11 @@ export function MasterScoringTable({
                     {r.overall.toFixed(2)}
                   </span>
                 </td>
-                {(["technical", "domain", "leadership", "regulatory", "transformation"] as const).map(
-                  (k) => (
-                    <td key={k} className="px-3 py-2.5 text-right">
-                      <ScoreCell value={r[k]} />
-                    </td>
-                  )
-                )}
+                {r.dimensions.map((d) => (
+                  <td key={d.key} className="px-3 py-2.5 text-right">
+                    <ScoreCell value={d.score} label={d.label} />
+                  </td>
+                ))}
               </tr>
             );
           })}
@@ -199,18 +207,46 @@ export function MasterScoringTable({
   function sortValue(row: ComparisonRow, key: SortKey): number | string {
     if (key === "tier") return TIER_NUMERIC[row.tier];
     if (key === "full_name") return row.full_name;
-    return row[key];
+    if (key === "rank") return row.rank;
+    if (key === "overall") return row.overall;
+    if (key.startsWith("dim:")) {
+      const dimKey = key.slice(4);
+      const score = row.dimensions.find((d) => d.key === dimKey)?.score;
+      // An unassessed axis sorts to the BOTTOM in either direction
+      // rather than tying with a genuine zero — -1 is outside the 0-10
+      // scale, so it can never collide with a real score.
+      return score ?? -1;
+    }
+    return row.rank;
   }
 }
 
-function ScoreCell({ value }: { value: number }) {
+function ScoreCell({
+  value,
+  label,
+}: {
+  /** null = never assessed on this axis. Never renders as 0. */
+  value: number | null;
+  label: string;
+}) {
+  if (value === null) {
+    return (
+      <span
+        className="inline-flex items-center justify-end min-w-[2.25rem] px-1.5 py-0.5 font-mono-data text-mono-data tabular-nums text-outline border border-outline-variant/50 border-dashed"
+        title={`Not assessed on ${label} — excluded from this candidate's score, not counted as zero`}
+        aria-label={`${label}: not assessed, excluded from the score`}
+      >
+        —
+      </span>
+    );
+  }
   return (
     <span
       className={cn(
         "inline-flex items-center justify-end min-w-[2.25rem] px-1.5 py-0.5 font-mono-data text-mono-data tabular-nums font-semibold",
         scoreToneBg(value)
       )}
-      aria-label={`Score ${value} out of 10`}
+      aria-label={`${label}: score ${value} out of 10`}
     >
       {value}
     </span>

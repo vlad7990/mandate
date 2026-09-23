@@ -15,6 +15,8 @@ import {
   type Tier,
 } from "@/lib/ranking/tiers";
 import { tierForScore, weightedOverall } from "@/lib/ranking/scoring-math";
+import { buildDimensionRows } from "@/lib/ranking/dimension-rows";
+import type { CustomDimension } from "@/lib/ai/onboarding-analysis";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import { MastHead, type MastTone } from "@/components/ui/mast-head";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
@@ -52,6 +54,9 @@ export type LeaderboardScore = {
   leadership_score: number;
   regulatory_score: number;
   transformation_score: number;
+  /** §196 — scores for the mandate's approved custom axes, by slug. An
+   * absent key means NOT ASSESSED, never zero. */
+  custom_scores: Record<string, unknown>;
   overall_score: number;
   /** Saved tier from the calibrated run. Other perspectives recompute. */
   tier: Tier;
@@ -135,28 +140,15 @@ const PERSPECTIVE_WEIGHTS: Record<
   },
 };
 
-const DIMENSIONS: Array<{
-  key: keyof FitDimensions;
-  scoreField: keyof Pick<
-    LeaderboardScore,
-    | "technical_score"
-    | "domain_score"
-    | "leadership_score"
-    | "regulatory_score"
-    | "transformation_score"
-  >;
-  short: string;
-}> = [
-  { key: "technical", scoreField: "technical_score", short: "TECH" },
-  { key: "domain", scoreField: "domain_score", short: "DOMAIN" },
-  { key: "leadership", scoreField: "leadership_score", short: "LEAD" },
-  { key: "regulatory", scoreField: "regulatory_score", short: "REGUL" },
-  {
-    key: "transformation",
-    scoreField: "transformation_score",
-    short: "XFORM",
-  },
-];
+// §196 slice 2 — the dimension strip is no longer a fixed five, so its
+// column count varies. Tailwind needs whole class names at build time,
+// hence a lookup rather than a template string.
+const DIMENSION_GRID_COLS: Record<5 | 6 | 7 | 8, string> = {
+  5: "md:grid-cols-5",
+  6: "md:grid-cols-3 lg:grid-cols-6",
+  7: "md:grid-cols-4 lg:grid-cols-7",
+  8: "md:grid-cols-4 lg:grid-cols-8",
+};
 
 const TIER_MAST: Record<Tier, MastTone> = {
   tier_1: "secondary",
@@ -179,10 +171,17 @@ const ARCHETYPE_TONE: Record<Archetype, ChipTone> = {
 export function PerspectiveLeaderboard({
   projectId,
   calibrationWeights,
+  customDimensions = [],
   entries,
 }: {
   projectId: string;
   calibrationWeights: CalibrationModel["dimension_weights"] | null;
+  /**
+   * §196 — the mandate's APPROVED custom axes. The saved overall was
+   * computed from these as well as the five, so the strip must show
+   * them or the number is unexplained.
+   */
+  customDimensions?: CustomDimension[];
   entries: LeaderboardEntry[];
 }) {
   const [perspective, setPerspective] = useState<PerspectiveKey>("calibrated");
@@ -206,6 +205,12 @@ export function PerspectiveLeaderboard({
           regulatory: e.score.regulatory_score,
           transformation: e.score.transformation_score,
         };
+        // §196 — no custom axes here, deliberately. These lenses are
+        // fixed hypotheticals ("what if regulatory were maxed?") defined
+        // on the five; a mandate's own custom axis has no position in
+        // someone else's thought experiment. The banner below says so,
+        // because a silently different basis would look like the
+        // calibrated ranking and rank differently.
         const overall = weightedOverall(fit, weights);
         return {
           entry: e,
@@ -316,6 +321,7 @@ export function PerspectiveLeaderboard({
         active={perspective}
         onChange={setPerspective}
         calibratedAvailable={Boolean(calibrationWeights)}
+        customDimensionCount={customDimensions.length}
       />
 
       {perspective !== "calibrated" && movers.length > 0 && (
@@ -332,6 +338,7 @@ export function PerspectiveLeaderboard({
               tier={tier}
               projectId={projectId}
               perspective={perspective}
+              customDimensions={customDimensions}
               rows={list}
             />
           );
@@ -349,10 +356,13 @@ function PerspectiveTabs({
   active,
   onChange,
   calibratedAvailable,
+  customDimensionCount,
 }: {
   active: PerspectiveKey;
   onChange: (next: PerspectiveKey) => void;
   calibratedAvailable: boolean;
+  /** §196 — how many approved custom axes the mandate carries. */
+  customDimensionCount: number;
 }) {
   return (
     <nav aria-label="Ranking perspective" className="space-y-2">
@@ -387,6 +397,19 @@ function PerspectiveTabs({
           </span>
         )}
       </p>
+      {/* §196 slice 2 — these lenses are fixed hypotheticals defined on
+          the five core dimensions, so on a mandate carrying custom axes
+          they rank on a NARROWER basis than the calibrated view. Without
+          this line the two leaderboards look like the same measurement
+          disagreeing, rather than two different measurements. */}
+      {active !== "calibrated" && customDimensionCount > 0 && (
+        <p className="font-mono-label text-mono-label text-warn uppercase tracking-wider">
+          This lens weights the five core dimensions only —{" "}
+          {customDimensionCount} custom{" "}
+          {customDimensionCount === 1 ? "axis is" : "axes are"} excluded from
+          the ordering below
+        </p>
+      )}
     </nav>
   );
 }
@@ -442,11 +465,13 @@ function TierSection({
   tier,
   projectId,
   perspective,
+  customDimensions,
   rows,
 }: {
   tier: Tier;
   projectId: string;
   perspective: PerspectiveKey;
+  customDimensions: CustomDimension[];
   rows: Array<{
     candidate: LeaderboardCandidate;
     score: LeaderboardScore;
@@ -482,6 +507,7 @@ function TierSection({
             key={r.candidate.id}
             projectId={projectId}
             perspective={perspective}
+            customDimensions={customDimensions}
             row={r}
           />
         ))}
@@ -493,10 +519,12 @@ function TierSection({
 function CandidateRow({
   projectId,
   perspective,
+  customDimensions,
   row,
 }: {
   projectId: string;
   perspective: PerspectiveKey;
+  customDimensions: CustomDimension[];
   row: {
     candidate: LeaderboardCandidate;
     score: LeaderboardScore;
@@ -614,13 +642,24 @@ function CandidateRow({
           </span>
         </div>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 px-4 py-3 border-t border-outline-variant/40 bg-surface-container-lowest/40">
-        {DIMENSIONS.map((dim) => (
-          <DimensionBar
-            key={dim.key}
-            label={dim.short}
-            value={score[dim.scoreField]}
-          />
+      {/* §196 slice 2 — every axis the saved overall was computed from,
+          not just the five. A custom axis this candidate was never
+          assessed on renders as "—", not as 0: they were excluded from
+          it, and a zero would read as a measured failure. */}
+      <div
+        className={cn(
+          "grid grid-cols-2 gap-3 px-4 py-3 border-t border-outline-variant/40 bg-surface-container-lowest/40",
+          DIMENSION_GRID_COLS[
+            Math.min(8, 5 + customDimensions.length) as 5 | 6 | 7 | 8
+          ]
+        )}
+      >
+        {buildDimensionRows({
+          calibration: { custom_dimensions: customDimensions },
+          core: score,
+          customScores: score.custom_scores,
+        }).map((dim) => (
+          <DimensionBar key={dim.key} label={dim.short} value={dim.score} />
         ))}
       </div>
     </li>
@@ -664,7 +703,40 @@ function PerspectiveDeltaChip({
   );
 }
 
-function DimensionBar({ label, value }: { label: string; value: number }) {
+function DimensionBar({
+  label,
+  value,
+}: {
+  label: string;
+  /** null = never assessed on this axis. Distinct from a score of 0. */
+  value: number | null;
+}) {
+  // §196 slice 2 — honest absence. An unassessed axis shows an em-dash
+  // and an empty track, and its aria-label says "not assessed" rather
+  // than reporting a value of zero to a screen reader.
+  if (value === null) {
+    return (
+      <div className="space-y-1 opacity-60">
+        <div className="flex items-baseline justify-between">
+          <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+            {label}
+          </span>
+          <span className="font-mono-data text-mono-data tabular-nums text-outline">
+            —
+          </span>
+        </div>
+        <div
+          className="grid grid-cols-10 gap-0.5"
+          role="img"
+          aria-label={`${label}: not assessed — excluded from this candidate's score`}
+        >
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="h-1.5 bg-surface-container-high" aria-hidden />
+          ))}
+        </div>
+      </div>
+    );
+  }
   const v = Math.max(0, Math.min(10, value));
   const colorClass =
     v >= 7

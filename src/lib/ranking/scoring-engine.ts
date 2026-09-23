@@ -7,10 +7,12 @@ import type {
   FitDimensions,
 } from "@/lib/ai/cv-parsing";
 import { TIER_BANDS, TIER_ORDER, type Tier } from "./tiers";
+import { approvedCustomDimensions } from "@/lib/calibration/custom-dimensions";
 import {
   clamp10,
   tierForScore,
   weightedOverall,
+  type CustomDimensionScore,
 } from "./scoring-math";
 
 // Re-export the client-safe tier vocabulary + scoring math so existing
@@ -33,6 +35,14 @@ export type ScoredCandidate = {
   tier: Tier;
   rank: number;           // 1-indexed
   previousRank: number | null;
+  /** §196 — scores for the mandate's approved custom dimensions, keyed
+   * by slug. Only assessed axes appear; a missing key means this
+   * candidate was never measured on it, not that they scored zero. */
+  customScores: Record<string, number>;
+  /** Approved dimensions this candidate carries NO score for. Drives the
+   * "scored on 5 of 6 axes" disclosure — the number alone would imply a
+   * measurement that never happened. */
+  unassessedCustom: string[];
 };
 
 /**
@@ -95,6 +105,16 @@ export async function computeAndStoreScores(
   }
   const weights = project.calibration_model?.dimension_weights ?? null;
 
+  // §196 — the mandate's APPROVED custom dimensions, read fresh on every
+  // run. This is the reconciliation point: a candidate's stored profile
+  // may carry a score for a dimension that has since been removed or
+  // un-approved (nothing rewrites cv_structured when that happens), and
+  // may lack one for a dimension approved after they were parsed.
+  // Authority is the calibration model, now — not whatever the profile
+  // happens to hold. Removing a dimension therefore stops it counting
+  // immediately, without touching a single candidate row.
+  const customDims = approvedCustomDimensions(project.calibration_model);
+
   // Pull all candidates that have a parsed profile. Unparsed rows
   // (cv_processing=true or cv_structured = '{}') are excluded — they have
   // no fit_dimensions to score against.
@@ -115,11 +135,18 @@ export async function computeAndStoreScores(
       const profile = (row.cv_structured ?? {}) as Partial<CandidateProfile>;
       const fit = profile.fit_dimensions;
       if (!fit) return null;
-      return { id: row.id as string, fit };
+      return {
+        id: row.id as string,
+        fit,
+        custom: profile.custom_fit_dimensions ?? {},
+      };
     })
     .filter(
-      (x): x is { id: string; fit: FitDimensions } =>
-        x != null && hasAllDims(x.fit)
+      (x): x is {
+        id: string;
+        fit: FitDimensions;
+        custom: Record<string, number>;
+      } => x != null && hasAllDims(x.fit)
     );
 
   // Pull existing score rows so we can capture previous_rank +
@@ -157,7 +184,28 @@ export async function computeAndStoreScores(
   // Compute scores + tier per candidate, then sort to assign ranks.
   const scored: ScoredCandidate[] = parsed
     .map((c) => {
-      const overall = weightedOverall(c.fit, weights ?? undefined);
+      // Reconcile this candidate's stored scores against the mandate's
+      // CURRENT approved dimensions. A raw value that isn't a finite
+      // number is treated as unassessed rather than coerced to 0 — an
+      // unreadable score is not evidence of a low one.
+      const customScores: Record<string, number> = {};
+      const unassessedCustom: string[] = [];
+      const custom: CustomDimensionScore[] = customDims.map((dim) => {
+        const raw = c.custom[dim.key];
+        const assessed = typeof raw === "number" && Number.isFinite(raw);
+        if (assessed) {
+          customScores[dim.key] = clamp10(raw);
+        } else {
+          unassessedCustom.push(dim.key);
+        }
+        return {
+          key: dim.key,
+          weight: dim.weight,
+          score: assessed ? clamp10(raw) : null,
+        };
+      });
+
+      const overall = weightedOverall(c.fit, weights ?? undefined, custom);
       return {
         scoreRowId: existingIds.get(c.id) ?? null,
         candidateId: c.id,
@@ -170,6 +218,8 @@ export async function computeAndStoreScores(
         tier: tierForScore(overall),
         rank: 0, // assigned below
         previousRank: previousRanks.get(c.id) ?? null,
+        customScores,
+        unassessedCustom,
       };
     })
     .sort((a, b) => b.overall - a.overall)
@@ -215,6 +265,7 @@ export async function computeAndStoreScores(
       regulatory_score: s.regulatory,
       transformation_score: s.transformation,
       overall_score: s.overall,
+      custom_scores: s.customScores,
       tier: s.tier,
       rank_position: s.rank,
       previous_rank: s.previousRank,
@@ -226,6 +277,17 @@ export async function computeAndStoreScores(
         : {}),
       analysis: {
         weights_snapshot: weights,
+        // §196 — the custom axes this score was computed against, and
+        // which of them this candidate was never measured on. Without
+        // the snapshot a past score becomes unexplainable the moment a
+        // recruiter removes a dimension: the number would survive with
+        // no record of what produced it.
+        custom_dimensions_snapshot: customDims.map((d) => ({
+          key: d.key,
+          label: d.label,
+          weight: d.weight,
+        })),
+        unassessed_custom: s.unassessedCustom,
         computed_at: now,
       },
       updated_at: now,

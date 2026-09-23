@@ -20,13 +20,40 @@ export function tierForScore(overall: number): Tier {
 }
 
 /**
+ * §196 — an approved custom dimension, paired with this candidate's
+ * score on it. `score` is null when the candidate has not been assessed
+ * on the axis: parsed before the dimension was approved, or parsed while
+ * it was still only proposed.
+ */
+export type CustomDimensionScore = {
+  key: string;
+  weight: number;
+  score: number | null;
+};
+
+/**
  * Weighted average of per-dimension scores using the project's
  * calibration_model.dimension_weights. Falls back to a flat average when
  * weights are missing or all-zero so candidates always get a score.
+ *
+ * §196 — `custom` carries approved custom dimensions. They enter the
+ * same weighted average as the core five; there is no separate score and
+ * no second ranking. An axis a recruiter approved is an axis that counts.
+ *
+ * UNASSESSED DIMENSIONS ARE EXCLUDED, NOT ZEROED. A candidate uploaded
+ * before the dimension existed has no score on it, and scoring that as 0
+ * would punish them for the timing of their upload — the system
+ * asserting a deficit it has no evidence for. Excluding the dimension
+ * from BOTH sides of the fraction scores them on what was actually
+ * assessed, which is the honest answer. The cost is real and worth
+ * naming: two candidates can then be ranked against each other on
+ * different bases, so the leaderboard has to say which candidates are
+ * missing an axis rather than let the number imply they were measured.
  */
 export function weightedOverall(
   fit: FitDimensions,
-  weights: CalibrationWeights | null | undefined
+  weights: CalibrationWeights | null | undefined,
+  custom: readonly CustomDimensionScore[] = []
 ): number {
   const dims: Array<keyof FitDimensions> = [
     "technical",
@@ -35,10 +62,25 @@ export function weightedOverall(
     "regulatory",
     "transformation",
   ];
-  if (!weights) {
-    const sum = dims.reduce((acc, d) => acc + clamp10(fit[d]), 0);
-    return round2(sum / dims.length);
-  }
+
+  // Only assessed dimensions carry weight — see the note above.
+  const scoredCustom = custom.filter(
+    (c) => typeof c.score === "number" && Number.isFinite(c.score)
+  );
+
+  const flatAverage = () => {
+    const coreSum = dims.reduce((acc, d) => acc + clamp10(fit[d]), 0);
+    const customSum = scoredCustom.reduce(
+      (acc, c) => acc + clamp10(c.score),
+      0
+    );
+    return round2(
+      (coreSum + customSum) / (dims.length + scoredCustom.length)
+    );
+  };
+
+  if (!weights) return flatAverage();
+
   let weightedSum = 0;
   let weightTotal = 0;
   for (const d of dims) {
@@ -47,10 +89,12 @@ export function weightedOverall(
     weightedSum += score * weight;
     weightTotal += weight;
   }
-  if (weightTotal === 0) {
-    const sum = dims.reduce((acc, d) => acc + clamp10(fit[d]), 0);
-    return round2(sum / dims.length);
+  for (const c of scoredCustom) {
+    const weight = clamp10(c.weight);
+    weightedSum += clamp10(c.score) * weight;
+    weightTotal += weight;
   }
+  if (weightTotal === 0) return flatAverage();
   return round2(weightedSum / weightTotal);
 }
 

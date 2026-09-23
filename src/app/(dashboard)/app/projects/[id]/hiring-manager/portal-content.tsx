@@ -74,6 +74,13 @@ export type PortalProps = {
    */
   evidenceGrid?: ComparisonGrid | null;
   /**
+   * §196 slice 2 — true when the mandate scores on custom axes the
+   * evidence grid does not cover. Both portal doors pass it, so a
+   * hiring manager reading the grid knows its scope rather than taking
+   * five rows for the whole basis of the ranking.
+   */
+  evidenceCoreOnly?: boolean;
+  /**
    * The mandate's APPROVED client-interview question set (117) — drafts
    * never reach the portal. Null/absent hides the section entirely.
    */
@@ -95,6 +102,7 @@ export function PortalContent({
   submitHandle,
   submitPath,
   evidenceGrid,
+  evidenceCoreOnly = false,
   clientInterview,
   interviewAnswerDoor,
 }: PortalProps) {
@@ -119,7 +127,11 @@ export function PortalContent({
           manager should see what is still unknown before they are asked to
           give a verdict on it. */}
       {evidenceGrid && evidenceGrid.candidates.length > 0 && (
-        <EvidenceGrid grid={evidenceGrid} variant="client" />
+        <EvidenceGrid
+          grid={evidenceGrid}
+          variant="client"
+          coreOnlyNote={evidenceCoreOnly}
+        />
       )}
       {/* Before the feedback form: the search team's questions are the
           mandate's own unknowns, and the client should meet them before

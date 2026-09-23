@@ -9,6 +9,7 @@ import {
 import { type CandidateEvaluation } from "@/lib/ai/candidate-evaluation";
 import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import { TIER_BANDS, TIER_ORDER, type Tier } from "@/lib/ranking/scoring-engine";
+import { buildDimensionRows, hasCustomDimensions } from "@/lib/ranking/dimension-rows";
 import {
   buildMarketInsight,
   type ComparisonContext,
@@ -65,6 +66,7 @@ type ScoreRow = {
   leadership_score: number | null;
   regulatory_score: number | null;
   transformation_score: number | null;
+  custom_scores: Record<string, unknown> | null;
   overall_score: number | null;
   tier: string | null;
   rank_position: number | null;
@@ -117,7 +119,7 @@ export default async function ComparisonDashboardPage({
     supabase
       .from("candidate_scores")
       .select(
-        "candidate_id, technical_score, domain_score, leadership_score, regulatory_score, transformation_score, overall_score, tier, rank_position"
+        "candidate_id, technical_score, domain_score, leadership_score, regulatory_score, transformation_score, custom_scores, overall_score, tier, rank_position"
       )
       .eq("project_id", id)
       .order("rank_position", { ascending: true }),
@@ -162,6 +164,12 @@ export default async function ComparisonDashboardPage({
         leadership: score.leadership_score ?? 0,
         regulatory: score.regulatory_score ?? 0,
         transformation: score.transformation_score ?? 0,
+        // §196 slice 2 — every axis this overall was computed from.
+        dimensions: buildDimensionRows({
+          calibration: project.calibration_model,
+          core: score,
+          customScores: score.custom_scores,
+        }),
         evaluation,
         headline: extractHeadline(profile),
       } satisfies ComparisonRow;
@@ -254,7 +262,20 @@ export default async function ComparisonDashboardPage({
               highest"; the grid answers "what do we actually know" — and a
               recruiter who reads the ranking first tends not to go looking for
               the gaps behind it. */}
-          <EvidenceGrid projectId={project.id} grid={evidenceGrid} />
+          <EvidenceGrid
+            projectId={project.id}
+            grid={evidenceGrid}
+            // §196 slice 2 — the grid covers the five core dimensions
+            // only. Its cells come from hand-written extractors that map
+            // specific parsed CV facts to specific dimensions, and there
+            // is no honest generic extractor for a custom axis; the same
+            // reasoning that keeps `regulatory` out of fromCvProfile
+            // keeps custom axes out of the whole grid. When the mandate
+            // scores on more than five, the grid must SAY it covers
+            // fewer — a reader counting rows would otherwise take the
+            // grid for the full picture.
+            coreOnlyNote={hasCustomDimensions(project.calibration_model)}
+          />
 
           <Section
             tone="primary"

@@ -55,6 +55,11 @@ import {
 } from "@/lib/intelligence/overlays";
 import { ProjectPoller } from "./project-poller";
 import { RoleDriftBanner } from "./role-drift-banner";
+import { ScoringDimensionsPanel } from "./scoring-dimensions-panel";
+import {
+  approvedCustomDimensions,
+  customDimensionsOf,
+} from "@/lib/calibration/custom-dimensions";
 import { ApplicationsPanel } from "./applications-panel";
 import { computeSpecDrift } from "@/lib/calibration/spec-drift";
 import { computeMandateGaps } from "@/lib/ai/client-interview-agent";
@@ -198,6 +203,10 @@ export default async function ProjectPage({
   // the button.
   const access = await getAccess();
   const canRetryIntake = can(access?.role, "mandates:write");
+  // Same capability, named for what it gates here: approving a scoring
+  // dimension changes what candidates are ranked on, so readers get the
+  // state and never the controls.
+  const canEditDimensions = canRetryIntake;
   const calibrated = hasCalibrationWeights(project);
   const calibration = (project.calibration_model ?? {}) as Partial<CalibrationModel>;
   const company = (project.company_context ?? {}) as Partial<CompanyContext>;
@@ -364,6 +373,28 @@ export default async function ProjectPage({
   const weights = calibration.dimension_weights;
   const stakeholders = validStakeholders(project.onboarding_responses);
 
+  // §196 — custom scoring dimensions, and how many already-scored
+  // candidates carry no score for each approved one. The count is the
+  // honest-absence disclosure: approving an axis does not retroactively
+  // measure anyone, and a leaderboard that showed the axis without
+  // saying who was left out of it would imply a measurement that never
+  // happened.
+  const customDimensions = customDimensionsOf(calibration);
+  const approvedCustom = approvedCustomDimensions(calibration);
+  const unassessedByKey: Record<string, number> = {};
+  if (approvedCustom.length > 0) {
+    const { data: customScoreRows } = await supabase
+      .from("candidate_scores")
+      .select("custom_scores")
+      .eq("project_id", project.id);
+    for (const dim of approvedCustom) {
+      unassessedByKey[dim.key] = (customScoreRows ?? []).filter((row) => {
+        const scores = (row.custom_scores ?? {}) as Record<string, unknown>;
+        return typeof scores[dim.key] !== "number";
+      }).length;
+    }
+  }
+
   const intakeFailed = !ready && Boolean(project.intake_error);
 
   const vm: ProjectVm = {
@@ -410,12 +441,22 @@ export default async function ProjectPage({
       { label: "Business model", value: company.business_model ?? "—" },
     ],
     inferredScope: calibration.inferred_scope ?? null,
+    // The calibrated bar answers "what is this mandate scored on?", so
+    // approved custom axes belong in it. Proposed ones do not: they
+    // score nothing, and a bar is a claim about what counts.
     weights: weights
-      ? DIMENSION_KEYS.map((k: DimensionKey) => ({
-          key: k,
-          label: k,
-          value: Math.max(0, Math.min(10, weights[k] ?? 0)),
-        }))
+      ? [
+          ...DIMENSION_KEYS.map((k: DimensionKey) => ({
+            key: k,
+            label: k,
+            value: Math.max(0, Math.min(10, weights[k] ?? 0)),
+          })),
+          ...approvedCustom.map((d) => ({
+            key: d.key,
+            label: d.label,
+            value: d.weight,
+          })),
+        ]
       : [],
     weightsRationale: calibration.weights_rationale ?? null,
     health: health
@@ -455,6 +496,15 @@ export default async function ProjectPage({
       ready && Array.isArray(calibration.missing_information)
         ? calibration.missing_information
         : [],
+    scoringDimensions: ready ? (
+      <ScoringDimensionsPanel
+        projectId={project.id}
+        initial={customDimensions}
+        weights={weights ?? null}
+        unassessedByKey={unassessedByKey}
+        canWrite={canEditDimensions}
+      />
+    ) : undefined,
     clientInterview: ready ? (
       <ClientInterviewPanel
         projectId={project.id}

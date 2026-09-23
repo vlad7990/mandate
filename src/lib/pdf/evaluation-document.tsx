@@ -33,6 +33,18 @@ export type EvaluationPdfMeta = {
   candidate_name: string;
   candidate_title: string | null;
   candidate_company: string | null;
+  /**
+   * §196 slice 2 — labels of the mandate's approved custom axes, if any.
+   *
+   * The scoring table below is the EVALUATION AGENT's own output and its
+   * schema is a fixed five rows, so it cannot list these. That is fine
+   * as far as it goes — but the overall score and tier this document
+   * carries were computed from the custom axes too, and a five-row
+   * table presented as the basis of a verdict it did not wholly produce
+   * is the §175 defect. Naming them under the table costs one line and
+   * keeps the document honest about its own scope.
+   */
+  custom_dimension_labels?: string[];
 };
 
 export function EvaluationPdfDocument(props: {
@@ -150,6 +162,19 @@ export function EvaluationPdfDocument(props: {
               </View>
             ))}
           </View>
+          {(meta.custom_dimension_labels?.length ?? 0) > 0 && (
+            <Text
+              style={{
+                fontSize: 7.5,
+                color: PDF_COLORS.textMuted,
+                marginTop: 3,
+              }}
+            >
+              This table covers the five core dimensions. This role is also
+              scored on {meta.custom_dimension_labels!.join(", ")}, which the
+              overall score and tier reflect.
+            </Text>
+          )}
 
           {/* 2. Profile summary */}
           <SectionHeader label="02 · Executive Summary" />

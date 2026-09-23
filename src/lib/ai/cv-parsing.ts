@@ -116,6 +116,15 @@ export type CandidateProfile = {
   // ---- Fit analysis vs the project's calibration_model.dimension_weights ----
   fit_dimensions: FitDimensions;
   fit_summary: string;
+  /**
+   * §196 — scores for the mandate's APPROVED custom dimensions, keyed by
+   * slug. Absent on every profile parsed before this slice, and absent
+   * on any mandate carrying no approved custom dimensions — which is the
+   * normal case. Never read this directly; the scoring engine reconciles
+   * it against the mandate's current approved list, because a profile
+   * can carry a score for a dimension that has since been removed.
+   */
+  custom_fit_dimensions?: Record<string, number>;
 };
 
 export const EMPTY_PROFILE: Partial<CandidateProfile> = {};
@@ -322,6 +331,72 @@ export const CANDIDATE_PROFILE_SCHEMA = {
   },
 } as const;
 
+// ────────────────────────────────────────────────────────────────────────
+// §196 — the parse schema becomes a FUNCTION of the mandate.
+//
+// CANDIDATE_PROFILE_SCHEMA above is `additionalProperties: false` at
+// every level, deliberately: it is what stops the model inventing fields
+// (and, per the prompt, what stops a phone number being smuggled into
+// the profile). That strictness is the reason custom dimensions cannot
+// simply be appended to `fit_dimensions` — the model would be refused.
+//
+// So instead of loosening the schema for everyone, the schema is BUILT
+// per call from the mandate's approved dimensions. The model is handed
+// the exact keys it is permitted to score and no others, which keeps the
+// closed-world guarantee intact while making the world mandate-shaped.
+//
+// When a mandate has no approved custom dimensions — the common case —
+// the field is not merely empty, it is ABSENT. The model is never told
+// the concept exists, and the returned schema is byte-identical to the
+// constant above. Nothing changes for the mandates that don't need this.
+// ────────────────────────────────────────────────────────────────────────
+
+export type CustomDimensionForParse = {
+  key: string;
+  label: string;
+  definition: string;
+};
+
+export function buildCandidateProfileSchema(
+  customDimensions: readonly CustomDimensionForParse[] = []
+): Record<string, unknown> {
+  if (customDimensions.length === 0) {
+    return CANDIDATE_PROFILE_SCHEMA as unknown as Record<string, unknown>;
+  }
+
+  const properties: Record<string, unknown> = {};
+  for (const dim of customDimensions) {
+    properties[dim.key] = {
+      type: "integer",
+      description: `${dim.label} — ${dim.definition}`,
+    };
+  }
+
+  const base = CANDIDATE_PROFILE_SCHEMA as unknown as {
+    required: readonly string[];
+    properties: Record<string, unknown>;
+  };
+
+  return {
+    ...CANDIDATE_PROFILE_SCHEMA,
+    // Required, on the §180 (F-H) precedent: an optional field lets the
+    // model skip the question, and a skipped custom dimension is a
+    // candidate silently excluded from an axis the recruiter approved.
+    required: [...base.required, "custom_fit_dimensions"],
+    properties: {
+      ...base.properties,
+      custom_fit_dimensions: {
+        type: "object",
+        additionalProperties: false,
+        required: customDimensions.map((d) => d.key),
+        properties,
+        description:
+          "Role-specific scoring axes for THIS mandate, integer 0–10 each, scored against the definition given for each key. Score these exactly as honestly as fit_dimensions: if the CV does not evidence the axis, score low (≤ 4) rather than guessing generously.",
+      },
+    },
+  };
+}
+
 export const CV_PARSING_SYSTEM_PROMPT = `You are an executive-search analyst combining the duties of a CV Parsing Agent and a Candidate Review Agent. You receive a candidate's CV (as a PDF document or extracted text) plus the role brief and calibration model the candidate is being evaluated against.
 
 Output strictly conforms to the provided JSON schema. Each fit_dimensions value MUST be an integer between 0 and 10 inclusive. Do not return values outside that range.
@@ -339,6 +414,7 @@ Review rules:
 - summary: tight, no marketing fluff. State what the candidate has actually shipped, with at least one quantitative anchor if the CV provides one.
 - strengths / development_areas / risks: 3–5 / 2–4 / 2–3 items. Short phrases (3–8 words). No prose paragraphs.
 - fit_dimensions: integer 0–10 per dimension. Be honest — the recruiter benefits from differentiation, not flattery. If the CV doesn't evidence a dimension, score low (≤ 4).
+- custom_fit_dimensions: present in the schema ONLY when this mandate carries role-specific scoring axes; when it is absent, there is nothing to do. When present, score each key against the definition supplied with it, on the same 0–10 scale and to the same standard as fit_dimensions. Score the definition you were given, not your own sense of what the label ought to mean. A CV silent on the axis scores low — never infer the experience from an adjacent one.
 - fit_summary: 1–2 sentences. Call out the highest-weighted dimensions in the role's calibration model and how the candidate maps to them.
 
 Return one JSON object — no preamble, no markdown.`;

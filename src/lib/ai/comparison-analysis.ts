@@ -72,6 +72,7 @@ Style rules:
 - Reference candidates by name in prose (synthesis / risk_vector / optimal_pivot), not by id.
 - "stronger"/"weaker" callouts are *relative to the other candidates in the set*, not absolute scores. A 7/10 can be "stronger" if peers are at 5/10.
 - The dominant role weights matter most. If the role weights regulatory at 9/10 and transformation at 4/10, fluctuations in regulatory should drive the synthesis.
+- calibration.custom_dimensions, when present, are role-specific axes a recruiter approved for this search. They carry weights on the same 0-10 scale and the candidates' overall scores reflect them, so treat a heavily-weighted custom axis exactly as you would a heavily-weighted core one. A candidate with no score on a custom axis was NOT ASSESSED on it and was excluded from it — never describe that as weakness, a gap, or a low score.
 - No bullet points or markdown inside string values. Plain prose, single paragraph per field.
 
 Return one JSON object — no preamble.`;

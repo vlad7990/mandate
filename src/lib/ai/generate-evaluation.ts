@@ -26,6 +26,10 @@ import {
 } from "./role-analysis";
 import { TIER_BANDS, type Tier } from "@/lib/ranking/scoring-engine";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
+import {
+  approvedCustomDimensions,
+  calibrationForPrompt,
+} from "@/lib/calibration/custom-dimensions";
 import { isNegativeVerdict, runSecondOpinion } from "./verify-evaluation";
 
 
@@ -69,6 +73,19 @@ export type EvaluationInput = {
     calibration: Partial<CalibrationModel>;
     company: Partial<CompanyContext>;
     weights: DimensionWeights | null;
+    /**
+     * §196 slice 2 — the mandate's approved custom axes with this
+     * candidate's score on each. `score: null` means never assessed:
+     * they were excluded from the axis when the overall was computed,
+     * NOT scored zero, and the prompt is told to say so rather than
+     * treat absence as a deficit.
+     */
+    custom_dimensions?: Array<{
+      label: string;
+      definition: string;
+      weight: number;
+      score: number | null;
+    }>;
   };
   competitors: EvaluationInputCompetitor[];
   /** Skill-injection context. Optional so unit-test callers don't have to thread it. */
@@ -367,13 +384,14 @@ async function ensureUnderAgentSession(
   // Subject's own score row (rank, tier, overall) for the comparison panel.
   const { data: subjectScore } = await supabase
     .from("candidate_scores")
-    .select("rank_position, overall_score, tier")
+    .select("rank_position, overall_score, tier, custom_scores")
     .eq("project_id", projectId)
     .eq("candidate_id", candidateId)
     .maybeSingle<{
       rank_position: number | null;
       overall_score: number | null;
       tier: string | null;
+      custom_scores: Record<string, unknown> | null;
     }>();
 
   // Top three OTHER ranked candidates in the project, by rank ascending.
@@ -446,9 +464,24 @@ async function ensureUnderAgentSession(
     role: {
       role_title: calibration.role_title ?? project.title,
       company_name: company.company_name ?? project.company_name,
-      calibration,
+      // §196 slice 2 — APPROVED axes only. A proposal is not a
+      // criterion, and this agent writes the prose a client reads.
+      calibration: calibrationForPrompt(calibration) ?? {},
       company,
       weights,
+      // The axes beyond the five, with what this candidate scored on
+      // them. Without these the evaluator explains a rank it was only
+      // shown part of the basis for — and contradicting the leaderboard
+      // in client-facing prose is the §175 defect exactly.
+      custom_dimensions: approvedCustomDimensions(calibration).map((d) => ({
+        label: d.label,
+        definition: d.definition,
+        weight: d.weight,
+        score:
+          typeof subjectScore?.custom_scores?.[d.key] === "number"
+            ? (subjectScore.custom_scores[d.key] as number)
+            : null,
+      })),
     },
     competitors,
     skill_context: {

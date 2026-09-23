@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { DimensionRow } from "@/lib/ranking/dimension-rows";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { MastHead } from "@/components/ui/mast-head";
 import { PrintPanelButton } from "@/components/ui/print-report-button";
@@ -26,7 +27,6 @@ import {
 } from "@/components/icons";
 import {
   type Archetype,
-  type FitDimensions,
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import {
@@ -56,7 +56,12 @@ export type PoolCandidate = {
   tier: string | null;
   /** Recruiter override tier from candidates.recruiter_assessment. */
   recruiter_tier: string | null;
-  fit_dimensions: FitDimensions | null;
+  /**
+   * §196 slice 2 — every axis this candidate's overall was computed
+   * from, core five then approved custom. A null score means NOT
+   * ASSESSED and renders as an empty track, never as zero.
+   */
+  dimensions: DimensionRow[];
   headline: string | null;
 };
 
@@ -77,13 +82,32 @@ const SLATE_PRESETS = [
   { value: 5, label: "Top 5" },
 ];
 
-const FIT_DIMENSION_LABELS: Record<keyof FitDimensions, string> = {
-  technical: "Technical",
-  domain: "Domain",
-  leadership: "Leadership",
-  regulatory: "Regulatory",
-  transformation: "Transformation",
-};
+/** The three core axes a submission card has always led with. */
+const SLATE_CARD_CORE: readonly string[] = [
+  "leadership",
+  "domain",
+  "transformation",
+];
+
+/** That editorial trio, plus every custom axis this mandate scores on. */
+function slateCardDimensions(rows: DimensionRow[]): DimensionRow[] {
+  return rows.filter((r) => r.isCustom || SLATE_CARD_CORE.includes(r.key));
+}
+
+/**
+ * One label for the whole spark strip. The individual bars are
+ * decorative `title`s that assistive tech does not reliably announce, so
+ * the strip carries the scores — including which axes were not assessed.
+ */
+function dimensionStripLabel(rows: DimensionRow[]): string {
+  return rows
+    .map((r) =>
+      r.score === null
+        ? `${r.label}: not assessed`
+        : `${r.label}: ${r.score} out of 10`
+    )
+    .join("; ");
+}
 
 const ARCHETYPE_TONE: Record<Archetype, ChipTone> = {
   Builder: "primary",
@@ -595,17 +619,23 @@ function PoolCard({
             {candidate.overall != null ? candidate.overall.toFixed(1) : "—"}
           </span>
         </div>
-        {candidate.fit_dimensions && (
-          <div className="grid grid-cols-5 gap-1 mt-3">
-            {(
-              ["technical", "domain", "leadership", "regulatory", "transformation"] as const
-            ).map((d) => {
-              const v = clamp10(candidate.fit_dimensions?.[d]);
+        {candidate.dimensions.some((d) => d.score !== null) && (
+          <div
+            className="flex gap-1 mt-3"
+            role="img"
+            aria-label={dimensionStripLabel(candidate.dimensions)}
+          >
+            {candidate.dimensions.map((dim) => {
+              const v = clamp10(dim.score);
               return (
                 <span
-                  key={d}
-                  className="h-1 bg-surface-container-low overflow-hidden"
-                  title={`${FIT_DIMENSION_LABELS[d]}: ${v}/10`}
+                  key={dim.key}
+                  className="h-1 flex-1 bg-surface-container-low overflow-hidden"
+                  title={
+                    dim.score === null
+                      ? `${dim.label}: not assessed — excluded from the score, not counted as zero`
+                      : `${dim.label}: ${v}/10`
+                  }
                 >
                   <span
                     className={cn(
@@ -755,23 +785,39 @@ function SlateCard({
           </div>
         </div>
 
-        {candidate.fit_dimensions && (
+        {candidate.dimensions.length > 0 && (
           <div className="space-y-2">
-            {(
-              ["leadership", "domain", "transformation"] as const
-            ).map((d) => {
-              const v = clamp10(candidate.fit_dimensions?.[d]);
+            {/* The slate card has always shown an editorial THREE of the
+                five — leadership, domain, transformation — because a
+                submission card is a summary, not the scoring table.
+                §196 appends the mandate's custom axes to that trio
+                rather than replacing it: a bespoke axis is the most
+                role-specific thing on the card, and omitting it here
+                while it moved the rank shown above would be the exact
+                unexplained-number defect this slice exists to close. */}
+            {slateCardDimensions(candidate.dimensions).map((dim) => {
+              const v = clamp10(dim.score);
+              const unassessed = dim.score === null;
               return (
-                <div key={d} className="space-y-1">
+                <div key={dim.key} className="space-y-1">
                   <div className="flex justify-between font-mono-label text-mono-label text-outline uppercase tracking-wider">
-                    <span>{FIT_DIMENSION_LABELS[d]}</span>
+                    <span>{dim.label}</span>
                     <span
                       className={cn(
                         "tabular-nums",
-                        v >= 7 ? "text-secondary-fixed-dim" : "text-on-surface"
+                        unassessed
+                          ? "text-outline"
+                          : v >= 7
+                            ? "text-secondary-fixed-dim"
+                            : "text-on-surface"
                       )}
+                      title={
+                        unassessed
+                          ? "Not assessed — excluded from the score, not counted as zero"
+                          : undefined
+                      }
                     >
-                      {v.toFixed(1)}
+                      {unassessed ? "—" : v.toFixed(1)}
                     </span>
                   </div>
                   <div className="h-1 bg-surface-container-low w-full overflow-hidden">

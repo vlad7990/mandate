@@ -3,10 +3,11 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   type Archetype,
   type CandidateProfile,
-  type FitDimensions,
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import { normalizeReport } from "@/lib/ai/shortlist-report";
+import { buildDimensionRows } from "@/lib/ranking/dimension-rows";
+import type { CalibrationModel } from "@/lib/ai/role-analysis";
 import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { ShortlistBuilder, type PoolCandidate } from "./shortlist-builder";
 import { isSampleId } from "@/lib/sample";
@@ -16,6 +17,8 @@ type ProjectRow = {
   id: string;
   title: string;
   company_name: string;
+  /** §196 — needed to know which axes this mandate scores on. */
+  calibration_model: Partial<CalibrationModel> | null;
 };
 
 type ShortlistRow = {
@@ -46,6 +49,7 @@ type ScoreLite = {
   leadership_score: number | null;
   regulatory_score: number | null;
   transformation_score: number | null;
+  custom_scores: Record<string, unknown> | null;
   overall_score: number | null;
   rank_position: number | null;
   tier: string | null;
@@ -66,7 +70,7 @@ export default async function ShortlistPage({
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("id, title, company_name")
+    .select("id, title, company_name, calibration_model")
     .eq("id", id)
     .single<ProjectRow>();
 
@@ -92,7 +96,7 @@ export default async function ShortlistPage({
     supabase
       .from("candidate_scores")
       .select(
-        "candidate_id, technical_score, domain_score, leadership_score, regulatory_score, transformation_score, overall_score, rank_position, tier"
+        "candidate_id, technical_score, domain_score, leadership_score, regulatory_score, transformation_score, custom_scores, overall_score, rank_position, tier"
       )
       .eq("project_id", id),
   ]);
@@ -118,7 +122,13 @@ export default async function ShortlistPage({
         overall: score?.overall_score ?? null,
         tier: score?.tier ?? null,
         recruiter_tier: recruiter.tier,
-        fit_dimensions: extractFit(score),
+        // §196 slice 2 — every axis the rank shown on this card was
+        // computed from, not the five the card used to assume.
+        dimensions: buildDimensionRows({
+          calibration: project.calibration_model,
+          core: score ?? null,
+          customScores: score?.custom_scores,
+        }),
         headline: profile.summary?.split(/(?<=[.!?])\s/)[0] ?? null,
       };
     })
@@ -150,21 +160,3 @@ export default async function ShortlistPage({
   );
 }
 
-function extractFit(score: ScoreLite | undefined): FitDimensions | null {
-  if (!score) return null;
-  const dims = [
-    score.technical_score,
-    score.domain_score,
-    score.leadership_score,
-    score.regulatory_score,
-    score.transformation_score,
-  ];
-  if (dims.some((v) => typeof v !== "number")) return null;
-  return {
-    technical: score.technical_score ?? 0,
-    domain: score.domain_score ?? 0,
-    leadership: score.leadership_score ?? 0,
-    regulatory: score.regulatory_score ?? 0,
-    transformation: score.transformation_score ?? 0,
-  };
-}

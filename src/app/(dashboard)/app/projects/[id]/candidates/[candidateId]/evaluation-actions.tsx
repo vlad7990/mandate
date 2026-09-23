@@ -28,6 +28,10 @@ type Props = {
    * rendered an em-dash where the candidate's seat belongs. */
   candidateTitle: string | null;
   candidateCompany: string | null;
+  /** §196 — labels of the mandate's approved custom axes, named under
+   * the exported scoring table so a fixed five-row table is not read as
+   * the whole basis of the verdict above it. */
+  customDimensionLabels?: string[];
   projectId: string;
 };
 
@@ -37,6 +41,7 @@ export function EvaluationActions({
   candidateName,
   candidateTitle,
   candidateCompany,
+  customDimensionLabels = [],
   projectId,
 }: Props) {
   const router = useRouter();
@@ -78,6 +83,9 @@ export function EvaluationActions({
               candidate_name: candidateName,
               candidate_title: candidateTitle,
               candidate_company: candidateCompany,
+              // §196 slice 2 — the agent's scoring table is a fixed five
+              // rows; the overall it sits under is not.
+              custom_dimension_labels: customDimensionLabels,
             }}
           />
         ).toBlob();
