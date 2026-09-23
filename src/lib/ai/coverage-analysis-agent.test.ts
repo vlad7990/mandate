@@ -45,10 +45,30 @@ describe("the schema is the first line of the dimension guarantee", () => {
     }
   });
 
-  test("findings are capped, so the output stays actionable", () => {
-    expect(
-      COVERAGE_ANALYSIS_SCHEMA.properties.coverage_findings.maxItems
-    ).toBe(MAX_FINDINGS);
+  // This test used to assert `maxItems` on the SCHEMA — and passed for
+  // months while the schema was rejected by the API on every call
+  // (Anthropic's structured-output subset does not support maxItems, so
+  // the whole request 400s). It was testing the presence of a broken
+  // field. Drive 128 found the same keyword freshly shipped in the
+  // calibration schema and this one by the same sweep.
+  //
+  // The cap is now asserted where it actually holds: on the normaliser,
+  // which is what the runner's output passes through.
+  test("findings are capped by the normaliser, so the output stays actionable", () => {
+    const overlong = {
+      coverage_findings: Array.from({ length: MAX_FINDINGS + 4 }, (_, i) => ({
+        dimension: "companies",
+        finding: `finding ${i}`,
+        suggested_change: `change ${i}`,
+      })),
+      suggested_next_version: null,
+    };
+    const out = normalizeCoverageAnalysis(overlong);
+    expect(out.coverage_findings.length).toBe(MAX_FINDINGS);
+  });
+
+  test("the cap is stated to the model, since the schema cannot carry it", () => {
+    expect(COVERAGE_ANALYSIS_SYSTEM_PROMPT).toContain(String(MAX_FINDINGS));
   });
 
   test("suggested_next_version is nullable — a wide search should say so", () => {

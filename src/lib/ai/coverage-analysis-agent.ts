@@ -67,8 +67,12 @@ export const COVERAGE_ANALYSIS_SCHEMA = {
   required: ["coverage_findings", "suggested_next_version"],
   properties: {
     coverage_findings: {
+      // NO `maxItems` — Anthropic's structured-output subset rejects it
+      // with a 400 on the whole request, so this schema could never have
+      // returned anything. Pre-existing; found by drive 128 while
+      // tracing the same fault in the calibration schema. The bound is
+      // stated in the prompt and re-enforced on read.
       type: "array",
-      maxItems: MAX_FINDINGS,
       items: {
         type: "object",
         additionalProperties: false,
@@ -115,8 +119,8 @@ export const COVERAGE_ANALYSIS_SCHEMA = {
             "A short name for the next version, in the register of the existing ones (\"Adjacent institutions\", \"Vendor-side operators\").",
         },
         changes: {
+          // NO `maxItems` — see coverage_findings above.
           type: "array",
-          maxItems: MAX_CHANGES,
           items: { type: "string" },
           description:
             "The specific edits that would make the next version, each one actionable against the Boolean strings.",
@@ -151,6 +155,8 @@ Only when the findings justify one. A search that is already appropriately wide 
 You analyse structural search aperture only: titles, companies, industries, geography, seniority bands, and over-tight exclusions. Those are the only dimensions available to you.
 
 You never analyse, infer, estimate or comment on the demographic composition of a candidate pool — including but not limited to gender, ethnicity, age, nationality, religion, disability, or any proxy for them (names, schools as ethnic proxies, graduation years as age proxies, career gaps as caregiving proxies). This is not a stylistic preference. Inferring protected characteristics about a candidate pool is unlawful processing under GDPR Art. 9 and creates disparate-impact exposure under Title VII, and it is not what widening a funnel means. If you notice yourself reaching for such an observation, the correct output is a structural finding instead — "the search reaches only two employers" rather than any claim about who works at them.
+
+Array bounds (the schema cannot express these — Anthropic's structured-output subset rejects maxItems — so YOU must hold them): at most ${MAX_FINDINGS} coverage_findings, and at most ${MAX_CHANGES} changes in suggested_next_version. Fewer is better; return only findings that would change what the recruiter searches next.
 
 Return strict JSON matching the schema.`;
 

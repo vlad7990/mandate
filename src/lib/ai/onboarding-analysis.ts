@@ -195,10 +195,21 @@ export const CALIBRATION_WEIGHTS_SCHEMA = {
         "1–2 sentence summary of which signals from the onboarding answers drove the highest-weighted dimensions. No bullet points; plain prose.",
     },
     custom_dimensions: {
+      // NO `maxItems`. Anthropic's structured-output schema subset
+      // REJECTS it outright — "For 'array' type, property 'maxItems' is
+      // not supported" — and the rejection is a 400 on the whole
+      // request, so shipping it here did not merely lose the cap, it
+      // broke derive_calibration ENTIRELY. Drive 128 found it in
+      // production; tsc, vitest and next build all passed, because none
+      // of them sends the schema to the API.
+      //
+      // The cap is enforced where it always really was: the prompt
+      // states the maximum, `mergeProposals` slices to
+      // CUSTOM_DIMENSIONS_MAX, and `normaliseCustomDimensions` caps
+      // again on read. Losing the schema-level bound costs nothing.
       type: "array",
-      maxItems: CUSTOM_DIMENSIONS_MAX,
       description:
-        "Industry-specific scoring axes the five core dimensions cannot honestly carry for THIS role. Return an empty array when the five are sufficient — that is the expected answer for most roles, not a failure.",
+        `Industry-specific scoring axes the five core dimensions cannot honestly carry for THIS role. AT MOST ${CUSTOM_DIMENSIONS_MAX}. Return an empty array when the five are sufficient — that is the expected answer for most roles, not a failure.`,
       items: {
         type: "object",
         additionalProperties: false,
