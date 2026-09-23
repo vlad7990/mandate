@@ -26,16 +26,39 @@ Output: Industry, business model, org structure, tech maturity, regulatory env
 Trigger: After company research
 Output: Dynamic questionnaire, captures must-haves, anti-patterns, priorities
 
-### 4. Role Spec Agent
-Trigger: Onboarding complete
+### 4. Calibration Agent
+Trigger: Onboarding submitted — `submitOnboarding` calls
+`runCalibrationDerivationAndPersist` directly
+Output: Scoring model — dimension weights, the rationale for them, and
+(§196) 0–3 proposed industry-specific dimensions
+
+### 5. Role Spec Agent
+Trigger: Calibration weights exist. `/app/projects/[id]/spec` redirects
+away without them and the tile reads "awaiting calibration"
 Output: AI-generated job spec, version controlled, recruiter editable
 
-### 5. Calibration Agent
-Trigger: Onboarding data + role spec finalised
-Output: Scoring model with dimension weights
+> **These two ran the other way round in this document until 2026-09-23,
+> and the code was always the authority.** The spec generator consumes
+> `calibration_model.dimension_weights`, so it cannot run before the
+> weights exist; the order above is the one the doors enforce.
+>
+> There IS an edge back from spec to calibration, and it is narrower than
+> the old wording suggested: once a job spec is marked FINAL, the
+> Calibration Agent can re-derive the mandate's ROLE IDENTITY from it
+> (§177/§178 — `rederive-role.ts`). By ruling A.5 that pass leaves
+> `dimension_weights` untouched. It answers "which role", never "what
+> matters". Weights move only through onboarding, feedback
+> recalibration, or a recruiter's own edit.
+>
+> §196 adds a second human gate here: a proposed custom dimension scores
+> nothing until someone with `mandates:write` approves it. Deriving a
+> weight tunes an axis a human wrote; deriving a dimension invents the
+> criterion people are ranked by.
 
 ### 6. Boolean Search Agent
-Trigger: Calibration complete
+Trigger: A FINALISED job spec, not merely calibration. `generate-sourcing`
+selects `job_specs` where `is_final`, and returns `no_final_spec` when
+there is none — the recruiter must mark a version final first
 Output: LinkedIn Boolean, Google X-Ray, ATS queries (exact/broad/adjacent)
 
 ### 7. CV Parsing Agent
