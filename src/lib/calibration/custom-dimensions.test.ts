@@ -8,7 +8,9 @@ import {
   normaliseCustomDimensions,
 } from "./custom-dimensions";
 import {
+  CUSTOM_DEFINITION_MAX,
   CUSTOM_DIMENSIONS_MAX,
+  CUSTOM_LABEL_MAX,
   type CustomDimension,
   type CustomDimensionProposal,
 } from "@/lib/ai/onboarding-analysis";
@@ -295,5 +297,59 @@ describe("buildManualDimension", () => {
     expect(out.ok).toBe(true);
     if (!out.ok) return;
     expect(out.dimension.key).toBe("leadership_2");
+  });
+});
+
+describe("truncation lands on a word boundary", () => {
+  // Drive 128 produced "…and no P&L owne" from a hard .slice(0, 400).
+  // The definition is the text a CV is scored against, so a cut that
+  // eats half a word — or the whole "what a 0 looks like" clause — is a
+  // scoring defect, not a cosmetic one.
+  const long = (n: number) =>
+    Array.from({ length: n }, (_, i) => `word${i}`).join(" ");
+
+  it("leaves a definition that fits completely untouched", () => {
+    const definition = "A 10 has run an options book. A 0 has not.";
+    const out = normaliseCustomDimensions([dim({ definition })]);
+    expect(out[0].definition).toBe(definition);
+    expect(out[0].definition).not.toContain("…");
+  });
+
+  it("never cuts mid-word", () => {
+    const out = normaliseCustomDimensions([dim({ definition: long(200) })]);
+    const text = out[0].definition;
+    expect(text.endsWith("…")).toBe(true);
+    // Every surviving token is a whole one.
+    const tokens = text.slice(0, -1).trim().split(/\s+/);
+    for (const t of tokens) expect(t).toMatch(/^word\d+$/);
+  });
+
+  it("honours the bound including the ellipsis", () => {
+    const out = normaliseCustomDimensions([dim({ definition: long(300) })]);
+    expect(out[0].definition.length).toBeLessThanOrEqual(
+      CUSTOM_DEFINITION_MAX
+    );
+  });
+
+  it("drops dangling punctuation before the ellipsis", () => {
+    const definition = `${long(60)}, and then more text that will not fit ${long(60)}`;
+    const out = normaliseCustomDimensions([dim({ definition })]);
+    expect(out[0].definition).not.toMatch(/[,;:\s]…$/);
+  });
+
+  it("falls back to a hard cut when one token eats the whole budget", () => {
+    // No space to back off to — better a hard cut than an empty string.
+    const definition = "x".repeat(CUSTOM_DEFINITION_MAX + 50);
+    const out = normaliseCustomDimensions([dim({ definition })]);
+    expect(out[0].definition.length).toBeLessThanOrEqual(CUSTOM_DEFINITION_MAX);
+    expect(out[0].definition.length).toBeGreaterThan(
+      CUSTOM_DEFINITION_MAX * 0.9
+    );
+  });
+
+  it("applies to labels too — a chip reading 'FX options market-maki' is no better", () => {
+    const out = normaliseCustomDimensions([dim({ label: long(40) })]);
+    expect(out[0].label.endsWith("…")).toBe(true);
+    expect(out[0].label.length).toBeLessThanOrEqual(CUSTOM_LABEL_MAX);
   });
 });

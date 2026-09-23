@@ -25,8 +25,39 @@ import {
 
 const CORE_KEYS = new Set<string>(DIMENSION_KEYS);
 
+/**
+ * Trim to a bound WITHOUT cutting a word in half.
+ *
+ * Drive 128 produced "…no options pricing, no Greeks management, and no
+ * P&L owne" — a hard `.slice()` at 400. On a label that is merely ugly.
+ * On a DEFINITION it is worse than ugly: the definition is the text the
+ * CV parser scores a candidate against, and the clause a mid-sentence
+ * cut usually eats is the "what a 0 looks like" half, which is exactly
+ * the half that stops the model scoring generously by default.
+ *
+ * So: back off to the last space, drop any dangling punctuation, and end
+ * with an ellipsis so the cut is VISIBLE — to the recruiter approving it
+ * and to the model reading it. A silently shortened definition reads as
+ * a complete one.
+ *
+ * The back-off is capped: if the last space is in the first 60% of the
+ * budget (a single very long token), take the hard cut instead rather
+ * than throw most of the text away.
+ */
+function truncateAtWord(input: string, max: number): string {
+  const s = input.trim();
+  if (s.length <= max) return s;
+
+  // Leave room for the ellipsis so the result honours `max`.
+  const budget = Math.max(1, max - 1);
+  const cut = s.slice(0, budget);
+  const lastSpace = cut.lastIndexOf(" ");
+  const body = lastSpace > budget * 0.6 ? cut.slice(0, lastSpace) : cut;
+  return `${body.replace(/[\s,;:.—–-]+$/, "")}…`;
+}
+
 function str(v: unknown, max: number): string {
-  return typeof v === "string" ? v.trim().slice(0, max) : "";
+  return typeof v === "string" ? truncateAtWord(v, max) : "";
 }
 
 /** Same 0–10 integer clamp the core weights use. */

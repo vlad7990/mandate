@@ -84,7 +84,21 @@ export const CUSTOM_DIMENSIONS_MAX = 3;
 export const CUSTOM_DIMENSION_KEY_RE = /^[a-z][a-z0-9_]{1,39}$/;
 
 export const CUSTOM_LABEL_MAX = 60;
-export const CUSTOM_DEFINITION_MAX = 400;
+
+/**
+ * Drive 128 raised this from 400. A definition is required to say what a
+ * 10 looks like AND what a 0 looks like, and the live agent's first
+ * proposal ran 420 characters — so the bound was cutting the "what a 0
+ * looks like" clause off the end of a well-formed answer. That clause is
+ * the one that stops the model scoring generously by default, which
+ * makes the truncation a scoring defect, not a cosmetic one.
+ *
+ * Still bounded: this text rides in every CV parse prompt for the
+ * mandate, so it is not free. 600 fits the two-part answer the schema
+ * asks for with room to spare, and `truncateAtWord` now makes any cut
+ * land on a word boundary and show an ellipsis.
+ */
+export const CUSTOM_DEFINITION_MAX = 600;
 export const CUSTOM_RATIONALE_MAX = 400;
 
 /** "proposed" = derived but unwitnessed; contributes NOTHING to any
@@ -228,7 +242,7 @@ export const CALIBRATION_WEIGHTS_SCHEMA = {
           definition: {
             type: "string",
             description:
-              "What a 10 looks like and what a 0 looks like, in one or two sentences. This text is what a CV gets scored against, so be concrete and observable — name the experience, instruments, scale or accountability that evidences it. Vagueness here becomes noise in the ranking.",
+              `What a 10 looks like and what a 0 looks like, in one or two sentences and UNDER ${CUSTOM_DEFINITION_MAX} characters — longer is truncated, and the end of your answer is the part that describes a 0. This text is what a CV gets scored against, so be concrete and observable — name the experience, instruments, scale or accountability that evidences it. Vagueness here becomes noise in the ranking.`,
           },
           rationale: {
             type: "string",
