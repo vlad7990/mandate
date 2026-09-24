@@ -62,8 +62,19 @@ const NETWORK = {
   uploadThroughput: (750 * 1024) / 8,
 };
 
-/** A selector that only exists if the marketing stylesheet loaded. */
-const CSS_CANARY = ".m-hero-trust";
+/**
+ * An element that exists on EVERY marketing route and carries a
+ * max-width only the marketing stylesheet gives it.
+ *
+ * It used to be `.m-hero-trust`, which lives in the homepage hero and
+ * nowhere else — so every sub-page run printed "the marketing
+ * stylesheet did NOT load / these numbers are meaningless" while the
+ * stylesheet was served perfectly well (§198 verified the chunk by
+ * hand: `.m-hero-trust`'s RULE was in it; the ELEMENT was not on the
+ * page). A tripwire that fires on healthy routes is one people learn to
+ * read past, which is exactly what it must never become.
+ */
+const CSS_CANARY = ".m-container";
 
 async function probe(browser, vp) {
   const context = await browser.newContext({
