@@ -64,7 +64,9 @@ export function parseHandbookMarkdown(
   const blocks: HandbookBlock[] = [];
 
   let paragraph: string[] = [];
-  let list: { ordered: boolean; items: HandbookInline[][] } | null = null;
+  // Items are held as RAW text and parsed at flush, so a wrapped line can
+  // be appended to the one above it before any inline parsing happens.
+  let list: { ordered: boolean; items: string[] } | null = null;
 
   const flushParagraph = () => {
     if (paragraph.length > 0) {
@@ -77,7 +79,11 @@ export function parseHandbookMarkdown(
   };
   const flushList = () => {
     if (list) {
-      blocks.push({ kind: "list", ordered: list.ordered, items: list.items });
+      blocks.push({
+        kind: "list",
+        ordered: list.ordered,
+        items: list.items.map(parseInline),
+      });
       list = null;
     }
   };
@@ -124,7 +130,23 @@ export function parseHandbookMarkdown(
         flushList();
         list = { ordered, items: [] };
       }
-      list.items.push(parseInline(item));
+      list.items.push(item);
+      continue;
+    }
+
+    // Continuation of the item above (§198). An authored list item wraps
+    // at ~72 columns and the second line is INDENTED; that used to end
+    // the list, render as a stray paragraph, and make the next item open
+    // a fresh list counting from 1 again. Live on the public handbook
+    // since §138, in 25 of 27 authored files, because no test ever
+    // rendered a wrapped item.
+    //
+    // Deliberately narrower than markdown's lazy continuation: the
+    // indent is required. An UNindented line still ends the list, which
+    // is the behaviour this parser already documented and tested — the
+    // defect was only ever about wrapping, so only wrapping changes.
+    if (list && /^\s/.test(line)) {
+      list.items[list.items.length - 1] += ` ${trimmed}`;
       continue;
     }
 

@@ -111,3 +111,61 @@ describe("parseHandbookMarkdown", () => {
     });
   });
 });
+
+describe("wrapped list items (§198)", () => {
+  // The defect the tab-guide drive surfaced: authored markdown wraps at
+  // ~72 columns, so most list items in docs/ are two lines. They used to
+  // break the list in half.
+  it("keeps a wrapped item whole and the numbering continuous", () => {
+    const { blocks } = parseHandbookMarkdown(
+      "t",
+      [
+        "# T",
+        "",
+        "1. Scan the trail for what happened.",
+        "2. Filter by type — mandates, placements — to",
+        "   answer a specific question.",
+        "3. Use it to check an agent's work.",
+      ].join("\n")
+    );
+    expect(blocks).toHaveLength(1);
+    const list = blocks[0];
+    expect(list.kind).toBe("list");
+    if (list.kind !== "list") return;
+    expect(list.ordered).toBe(true);
+    expect(list.items).toHaveLength(3);
+    expect(list.items[1].map((r) => r.text).join("")).toBe(
+      "Filter by type — mandates, placements — to answer a specific question."
+    );
+  });
+
+  it("parses inline marks that span the wrap", () => {
+    const { blocks } = parseHandbookMarkdown(
+      "t",
+      ["# T", "", "- An **instruction that", "  wraps** mid-phrase."].join("\n")
+    );
+    const list = blocks[0];
+    if (list.kind !== "list") throw new Error("expected a list");
+    expect(list.items[0]).toEqual([
+      { kind: "text", text: "An " },
+      { kind: "strong", text: "instruction that wraps" },
+      { kind: "text", text: " mid-phrase." },
+    ]);
+  });
+
+  it("still ends the list at a blank line", () => {
+    const { blocks } = parseHandbookMarkdown(
+      "t",
+      ["# T", "", "- One.", "", "A following paragraph."].join("\n")
+    );
+    expect(blocks.map((b) => b.kind)).toEqual(["list", "paragraph"]);
+  });
+
+  it("still ends the list at a heading", () => {
+    const { blocks } = parseHandbookMarkdown(
+      "t",
+      ["# T", "", "- One.", "## Next"].join("\n")
+    );
+    expect(blocks.map((b) => b.kind)).toEqual(["list", "heading"]);
+  });
+});
