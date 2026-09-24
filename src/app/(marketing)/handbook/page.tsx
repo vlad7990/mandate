@@ -10,6 +10,7 @@ import {
   type HandbookInline,
   type HandbookSection,
 } from "@/lib/handbook/markdown";
+import { loadAllTabGuides } from "@/lib/tab-guides/server";
 
 export const dynamic = "force-static";
 
@@ -62,6 +63,7 @@ function loadSections(): HandbookSection[] {
 
 export default function HandbookPage() {
   const sections = loadSections();
+  const tabGuides = loadAllTabGuides();
 
   return (
     <>
@@ -97,6 +99,14 @@ export default function HandbookPage() {
                     {s.title}
                   </a>
                 ))}
+                {/* The numbering derives from the chapter count, so
+                    adding a ninth chapter cannot leave this one stale. */}
+                <a href="#tab-guides" className="m-handbook__index-link">
+                  <span className="m-handbook__index-num" aria-hidden>
+                    {String(sections.length + 1).padStart(2, "0")}
+                  </span>
+                  Every screen, and what you do on it
+                </a>
               </nav>
 
               {sections.map((s) => (
@@ -114,6 +124,40 @@ export default function HandbookPage() {
                   ))}
                 </section>
               ))}
+
+              {/*
+                §198 D5 — the same words the in-product help panel serves,
+                published. One source of truth, two surfaces: a prospect
+                sees the real shape of the workspace before asking for a
+                seat, and a user gets one page to read end to end instead
+                of nineteen panels to hunt. `tab-guides.test.ts` watches
+                both.
+              */}
+              <section
+                id="tab-guides"
+                className="m-handbook__section"
+                aria-labelledby="tab-guides-title"
+              >
+                <h2 id="tab-guides-title" className="m-handbook__title">
+                  Every screen, and what you do on it
+                </h2>
+                <p>
+                  One guide per tab of the workspace, in the order the rail
+                  lists them. Inside the product the same text is a panel
+                  behind the <code>?</code> in the top bar, on whichever
+                  screen you are standing on. Each says what the screen is
+                  for, what you do, how you know you are done — and, the
+                  section worth reading first, what it will not do.
+                </p>
+                {tabGuides.map((g) => (
+                  <div key={g.slug} id={`tab-${g.slug}`}>
+                    <h3>{g.title}</h3>
+                    {g.blocks.map((b, i) => (
+                      <Block key={i} block={b} shift />
+                    ))}
+                  </div>
+                ))}
+              </section>
             </div>
           </div>
         </section>
@@ -129,12 +173,21 @@ export default function HandbookPage() {
   );
 }
 
-function Block({ block }: { block: HandbookBlock }) {
+/**
+ * `shift` drops every heading one level. The tab guides are nested a
+ * level deeper than a handbook chapter (their title is already an h3),
+ * so without it a guide's own sections would render as siblings of the
+ * guide they belong to — a flat outline for a screen reader.
+ */
+function Block({ block, shift }: { block: HandbookBlock; shift?: boolean }) {
   if (block.kind === "heading") {
-    return block.level === 2 ? (
+    const level = shift ? block.level + 1 : block.level;
+    return level === 2 ? (
       <h3>{block.text}</h3>
-    ) : (
+    ) : level === 3 ? (
       <h4>{block.text}</h4>
+    ) : (
+      <h5>{block.text}</h5>
     );
   }
   if (block.kind === "list") {

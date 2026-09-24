@@ -6,6 +6,7 @@ import { isNavItemActive, navFor } from "./nav-model";
 import { type Role } from "@/lib/auth/roles";
 import { truncateCrumb, useBreadcrumbs } from "./breadcrumbs";
 import { CommandPalette } from "./command-palette";
+import { TabGuide } from "./tab-guide";
 import { IconChevronRight } from "@/components/icons";
 
 /**
@@ -79,7 +80,16 @@ export function Topbar({ role }: { role: Role | null }) {
         })}
       </nav>
 
+      {/*
+        The one help affordance in the product (§198). It lives here
+        rather than on each page because `PageHeader` is on three screens
+        and the Topbar is on all nineteen — one insertion point, keyed on
+        the pathname, and a tab added to the nav model tomorrow inherits
+        it. It renders nothing on a screen outside the nav model (a
+        mandate's inner pages), which is D4's scope, not an omission.
+      */}
       <div className="ml-auto flex shrink-0 items-center gap-2.5">
+        <TabGuide role={role} />
         <CommandPalette role={role} />
       </div>
     </header>
