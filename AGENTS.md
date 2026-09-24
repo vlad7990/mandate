@@ -34,7 +34,9 @@ Output: Scoring model — dimension weights, the rationale for them, and
 
 ### 5. Role Spec Agent
 Trigger: Calibration weights exist. `/app/projects/[id]/spec` redirects
-away without them and the tile reads "awaiting calibration"
+away without them, and the SPEC tile reads QUEUED over a disabled CTA
+hinted "Calibrate first" (§197 — the hint names the remedy, and the
+CALIBRATE tile beside it carries the act)
 Output: AI-generated job spec, version controlled, recruiter editable
 
 > **These two ran the other way round in this document until 2026-09-23,
