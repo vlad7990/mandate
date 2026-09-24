@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CapabilityGate } from "@/components/auth/capability-gate";
+import { hasCapability } from "@/lib/auth/access";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
@@ -127,6 +128,11 @@ export default async function SkillsStudioPage() {
 
   const totalActive = skills.filter((s) => s.is_active).length;
 
+  // §199 — read once here and handed to every row, from the SAME source
+  // `CapabilityGate` reads, so the header's affordance and the rows'
+  // controls can never disagree about who may author a skill.
+  const canAuthor = await hasCapability("skills:write");
+
   // A skill is the most abstract object in the product, and the empty state
   // could only ever describe one. Three worked examples teach the shape —
   // trigger, instruction, scope — and make the precedence line above them
@@ -159,7 +165,20 @@ export default async function SkillsStudioPage() {
             into every agent run
           </p>
         </div>
-        <CapabilityGate capability="skills:write">
+        {/*
+          The fallback the gate's own doc asks for (§199): with the row
+          controls now gated too, a reader without `skills:write` sees a
+          screen with no controls anywhere, and silence would read as
+          broken rather than as restricted.
+        */}
+        <CapabilityGate
+          capability="skills:write"
+          fallback={
+            <p className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
+              Read-only · skills are authored by an admin
+            </p>
+          }
+        >
           <Link
             href="/app/settings/skills/new"
             prefetch={false}
@@ -224,7 +243,7 @@ export default async function SkillsStudioPage() {
                 ) : (
                   <ul className="space-y-2">
                     {list.map((s) => (
-                      <SkillRow key={s.id} skill={s} />
+                      <SkillRow key={s.id} skill={s} canAuthor={canAuthor} />
                     ))}
                   </ul>
                 )}

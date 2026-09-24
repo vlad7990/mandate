@@ -29,7 +29,33 @@ export type SkillRowData = {
   updated_at: string;
 };
 
-export function SkillRow({ skill }: { skill: SkillRowData }) {
+/**
+ * `canAuthor` is REQUIRED, not optional with a friendly default (§199).
+ *
+ * The controls below used to render for every reader. `skills:write` is
+ * an admin-only capability and the list itself is `org:read`, so a
+ * recruiter or viewer saw live-looking Pause / Edit / Delete buttons
+ * that could not work: the action's `requireActionContext` threw
+ * `ForbiddenError`, `runAction` rethrows that by design (it is the guard
+ * layer, not an outcome), so the authored refusal never reached the
+ * client and the toast said "Toggle failed." Edit simply bounced to
+ * /app/no-access.
+ *
+ * That is exactly what `CapabilityGate` exists to prevent — *a disabled
+ * button is a promise the product cannot keep* — but the gate is an
+ * async server component and these handlers are client-side, so the
+ * decision has to arrive as a prop. Required, so tsc refuses any new
+ * render site that forgets to make it.
+ *
+ * Presentation only. The server action is still the barrier.
+ */
+export function SkillRow({
+  skill,
+  canAuthor,
+}: {
+  skill: SkillRowData;
+  canAuthor: boolean;
+}) {
   const router = useRouter();
   const [togglePending, startToggle] = useTransition();
   const [deletePending, startDelete] = useTransition();
@@ -135,6 +161,7 @@ export function SkillRow({ skill }: { skill: SkillRowData }) {
             </p>
           )}
         </div>
+        {canAuthor && (
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
@@ -169,6 +196,7 @@ export function SkillRow({ skill }: { skill: SkillRowData }) {
             Delete
           </button>
         </div>
+        )}
       </div>
     </li>
   );
