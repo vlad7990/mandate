@@ -168,9 +168,14 @@ describe("runCandidateSearchAsAgent — the pool-search seam", () => {
     await runCandidateSearchAsAgent(
       "ops leaders",
       { ...NO_FILTERS, ownerIds: ["rec-a"], excludeIdentityKeys: ["email:x@y.z"] },
-      "mandate"
+      "mandate",
+      "p-target"
     );
 
+    // Drive 132's finding: the search is deliberately NOT filtered to the
+    // mandate, so without this the event landed with no mandate at all —
+    // "a suggestion ran" was true and unanswerable as "for what".
+    expect(rpc.mock.calls[0][1].p_project_id).toBe("p-target");
     const detail = rpc.mock.calls[0][1].p_detail;
     expect(detail.trigger).toBe("mandate");
     expect(detail.owner_scoped).toBe(true);

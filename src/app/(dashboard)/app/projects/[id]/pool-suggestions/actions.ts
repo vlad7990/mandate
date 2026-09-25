@@ -135,7 +135,8 @@ export async function suggestFromPoolAction(
         ownerIds: scope.kind === "org" ? null : scope.ownerIds,
         excludeIdentityKeys,
       },
-      "mandate"
+      "mandate",
+      projectId
     );
 
     if (run.status === "agent_unavailable") {

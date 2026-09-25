@@ -134,7 +134,18 @@ export async function runCandidateSearchAsAgent(
    * typing on Pool search; "mandate" is the reuse suggester asking on a
    * mandate's behalf. Same agent, same judgment, different question.
    */
-  trigger: "query" | "mandate" = "query"
+  trigger: "query" | "mandate" = "query",
+  /**
+   * The mandate this run was asked on behalf of, for the trail ONLY.
+   *
+   * It is not `filters.projectId`, and that is the point: a mandate-driven
+   * suggestion deliberately searches the WHOLE trawl rather than one
+   * mandate's rows, so the filter must stay null while the event still
+   * records which search prompted it. Drive 132 caught this — the event
+   * landed with no mandate at all, which made "a suggestion ran" true but
+   * unanswerable as "for what".
+   */
+  trailProjectId: string | null = null
 ): Promise<CandidateSearchRun> {
   const session = await signInCandidateSearchAgent();
   if (!session.ok) {
@@ -263,7 +274,7 @@ export async function runCandidateSearchAsAgent(
     // filters were applied, never the query's text, never a name.
     const { error: eventErr } = await supabase.rpc("record_agent_event", {
       p_event_type: "candidate_search_answered",
-      p_project_id: filters.projectId,
+      p_project_id: trailProjectId ?? filters.projectId,
       p_detail: {
         agent_kind: "candidate_search",
         trigger,
