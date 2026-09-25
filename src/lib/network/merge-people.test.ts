@@ -110,6 +110,54 @@ describe("describePeopleConfirm", () => {
     expect(text).toContain("Be aware:");
     expect(text).toContain("cannot be undone");
   });
+
+  // §204, from drive 136: the confirm read "1 candidate record move across"
+  // to the founder's face — a singular noun with a plural verb, on the one
+  // sentence a recruiter reads before an irreversible act.
+  it("agrees with itself about number", () => {
+    const one = describePeopleConfirm(
+      person({ id: "keep" }),
+      person({ id: "drop", candidates: 1 })
+    );
+    expect(one).toContain("1 candidate record moves across");
+    expect(one).not.toContain("record move across");
+
+    const many = describePeopleConfirm(
+      person({ id: "keep" }),
+      person({ id: "drop", candidates: 4 })
+    );
+    expect(many).toContain("4 candidate records move across");
+  });
+
+  // §202's lesson, one object up. Drive 136 read: Keep "Sable Ashworth-Kinne"
+  // and merge "Sable Ashworth-Kinne" into them? — true, and useless. Two
+  // records of one human is the COMMON case here, not the edge.
+  it("tells two identically-named people apart by what split them", () => {
+    const text = describePeopleConfirm(
+      person({ id: "keep", displayName: "Sable Ashworth-Kinne" }),
+      person({
+        id: "drop",
+        displayName: "Sable Ashworth-Kinne",
+        identityKey: "name:sable ashworth-kinne|northbridge industrial",
+      })
+    );
+    expect(text).toContain("keyed on email");
+    expect(text).toContain("keyed on name");
+    expect(text).not.toContain(
+      'Keep "Sable Ashworth-Kinne" and merge "Sable Ashworth-Kinne"'
+    );
+  });
+
+  it("leaves genuinely different names alone", () => {
+    const text = describePeopleConfirm(
+      person({ id: "keep", displayName: "Rowan Delacroix" }),
+      person({ id: "drop", displayName: "R. Delacroix" })
+    );
+    expect(text).toContain(
+      'Keep "Rowan Delacroix" and merge "R. Delacroix" into them?'
+    );
+    expect(text).not.toContain("keyed on");
+  });
 });
 
 describe("describePeopleReceipt", () => {

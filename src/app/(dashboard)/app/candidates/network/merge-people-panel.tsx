@@ -80,8 +80,9 @@ export function MergePeoplePanel({
       </p>
       <p className="mt-2 max-w-3xl text-[12px] leading-relaxed text-outline">
         What merges is the PERSON — their relationship, their suppression and
-        their history. The candidate records keep their own identifiers, so the
-        table above still groups by the identifier each record carries.
+        their history. The candidate records keep their own identifiers, but the
+        table above groups by the person, so a merged pair becomes one row
+        holding both records.
       </p>
 
       {!canMerge ? (

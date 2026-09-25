@@ -46,7 +46,9 @@ export function previewPeopleMerge(
 
   if (discard.candidates > 0) {
     carries.push(
-      `${discard.candidates} candidate ${discard.candidates === 1 ? "record" : "records"} move across`
+      `${discard.candidates} candidate ${
+        discard.candidates === 1 ? "record moves" : "records move"
+      } across`
     );
   }
   carries.push(
@@ -73,13 +75,29 @@ export function previewPeopleMerge(
   return { carries, warnings };
 }
 
+/**
+ * How a person is named in the confirm. §202's lesson, one object up: the
+ * pair this tool exists for is two records of the SAME human, so the two
+ * names are usually identical and "Keep X and merge X into them?" is true
+ * and useless. What always differs is the identifier that split them —
+ * which is the very thing the recruiter is deciding about — so it is said
+ * out loud, exactly as the dropdowns say it.
+ */
+function nameFor(person: MergeablePerson): string {
+  const kind = person.identityKey.split(":")[0];
+  return kind ? `${person.displayName} (keyed on ${kind})` : person.displayName;
+}
+
 export function describePeopleConfirm(
   keep: MergeablePerson,
   discard: MergeablePerson
 ): string {
   const { carries, warnings } = previewPeopleMerge(keep, discard);
+  const sameName = keep.displayName.trim() === discard.displayName.trim();
   const lines = [
-    `Keep "${keep.displayName}" and merge "${discard.displayName}" into them?`,
+    sameName
+      ? `Keep ${nameFor(keep)} and merge ${nameFor(discard)} into them?`
+      : `Keep "${keep.displayName}" and merge "${discard.displayName}" into them?`,
     "",
     "What carries over:",
     ...carries.map((c) => `  · ${c}`),

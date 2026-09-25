@@ -174,6 +174,26 @@ describe("only pre-row code computes person identity", () => {
   });
 });
 
+describe("the panel does not describe a page that no longer exists", () => {
+  // §203 added an honest sentence: the table still groups by identifier. §204
+  // made that sentence false, and a stale honesty note is worse than none —
+  // it is §175's class with a citation. Drive 136 read it on the live page.
+  const panel = code(
+    path.join(
+      process.cwd(),
+      "src/app/(dashboard)/app/candidates/network/merge-people-panel.tsx"
+    )
+  );
+
+  it("says the table groups by the PERSON", () => {
+    expect(panel).toMatch(/table above groups by the person/);
+  });
+
+  it("no longer claims the table groups by each record's identifier", () => {
+    expect(panel).not.toMatch(/still groups by the identifier/);
+  });
+});
+
 describe("the badge counts what the page folds (migration 144)", () => {
   const RAW = fs.readFileSync(
     path.join(process.cwd(), "supabase", "migrations", "144_count_people_by_person.sql"),
