@@ -167,15 +167,20 @@ export function IntakeForm({ mandates }: { mandates: IntakeMandate[] }) {
       let message: string;
       try {
         const result = unwrap(await uploadAndParseCv(form));
-        // 141 — three outcomes, and each is told apart on its own row.
-        // A skipped file cost nothing; a discarded one cost a parse and
-        // says so; a flagged one was kept and needs a human.
+        // 141 — both duplicate outcomes wear the SAME chip, deliberately.
+        //
+        // Drive 133 found them wearing different ones: a byte-identical
+        // file already in the MANDATE read "SKIPPED" while the identical
+        // file already in the BATCH read "DUPLICATE". Same fact, same
+        // cost (nothing), two words — and the summary line counted only
+        // one of them, so a batch that caught two duplicates reported
+        // one. "Skipped" also belongs to the oversize and empty files,
+        // which are a different thing entirely.
+        //
+        // What separates the two duplicate cases is the MESSAGE, which
+        // says whether a parse was run; the chip says what it is.
         const status: FileState["status"] =
-          result.outcome === "parsed"
-            ? "parsed"
-            : result.outcome === "same_file_skipped"
-              ? "skipped"
-              : "duplicate";
+          result.outcome === "parsed" ? "parsed" : "duplicate";
         setFiles((prev) =>
           prev.map((f, idx) =>
             idx === i

@@ -114,6 +114,15 @@ describe("the bulk intake form skips repeats inside one batch", () => {
     expect(src).toContain('f.status === "duplicate"');
     expect(src).not.toContain("message?.startsWith");
   });
+
+  it("gives BOTH duplicate outcomes the same chip", () => {
+    // Drive 133 found the in-mandate skip reading "SKIPPED" and the
+    // in-batch one reading "DUPLICATE" — same fact, same cost, two words,
+    // and the summary counted one of the two. `same_file_skipped` must
+    // not be mapped to any status of its own.
+    expect(src).not.toMatch(/same_file_skipped"?\s*\n?\s*\?\s*"skipped"/);
+    expect(src).toContain('result.outcome === "parsed" ? "parsed" : "duplicate"');
+  });
 });
 
 describe("person identity is declared exactly once", () => {
