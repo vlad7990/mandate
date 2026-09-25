@@ -10,6 +10,10 @@ import {
 import { loadRelationshipProfiles } from "@/lib/network/profile-resolver";
 import { type Archetype } from "@/lib/ai/cv-parsing";
 import { NetworkTable } from "./network-table";
+import { MergePeoplePanel } from "./merge-people-panel";
+import type { MergeablePerson } from "@/lib/network/merge-people";
+import { getAccess } from "@/lib/auth/access";
+import { can } from "@/lib/auth/roles";
 import { PageShell, TerminalTitle } from "@/components/ui/page-shell";
 import { cookies } from "next/headers";
 import { SAMPLE_DISMISSED_COOKIE, shouldShowSample } from "@/lib/sample";
@@ -36,6 +40,28 @@ export default async function NetworkPage() {
   ]);
   const profiles = Object.fromEntries(profileMap);
   const isFounder = viewerRow?.is_founder === true;
+
+  // §203 — the merge panel's list. Built from the SAME profile rows the
+  // relationship overlay uses, so the two cannot disagree about who
+  // exists. The candidate count per person is read off the network
+  // overview's own fold rather than a second query with a second identity
+  // rule — `identity_key` is what both sides key on.
+  const appearancesByKey = new Map<string, number>();
+  for (const person of overview.people) {
+    appearancesByKey.set(person.identity_key, person.appearances?.length ?? 0);
+  }
+  const mergeablePeople: MergeablePerson[] = Array.from(profileMap.values())
+    .map((profile) => ({
+      id: profile.id,
+      displayName: profile.display_name,
+      identityKey: profile.identity_key,
+      relationshipState: profile.relationship_state,
+      dnc: profile.dnc,
+      dncReason: profile.dnc_reason,
+      candidates: appearancesByKey.get(profile.identity_key) ?? 0,
+    }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  const access = await getAccess();
 
   // A network of nobody is the least legible empty state in the product:
   // the page's whole idea is that a row is a *person folded from several
@@ -106,6 +132,10 @@ export default async function NetworkPage() {
           activeProjects={overview.active_projects}
           profiles={profiles}
           isFounder={isFounder}
+        />
+        <MergePeoplePanel
+          people={mergeablePeople}
+          canMerge={can(access?.role, "candidates:write")}
         />
       </section>
     </PageShell>
