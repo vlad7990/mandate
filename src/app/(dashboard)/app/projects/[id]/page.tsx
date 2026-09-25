@@ -41,6 +41,8 @@ import { normaliseRecruiterAssessment } from "@/lib/recruiter-assessment";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { IconArrowRight, IconRefresh } from "@/components/icons";
 import { ProjectView, type ProjectVm, type Stage } from "./project-view";
+import { PoolSuggestionsPanel } from "./pool-suggestions/pool-suggestions-panel";
+import { Panel, PanelMeta } from "@/components/projects/panel";
 import {
   CandidateSearchPanel,
   type SearchCandidate,
@@ -574,6 +576,20 @@ export default async function ProjectPage({
             projectId={project.id}
             candidates={searchCandidates}
           />
+        )}
+        {/*
+          §200 slice 3 — the reuse suggester, beside the filter it
+          complements: "Find candidates" narrows a list you already know
+          how to read; this one asks the agent who in reach fits THIS
+          role, and nothing is added until a human ticks a box.
+        */}
+        {ready && canEditDimensions && (
+          <Panel
+            title="Suggest from our pool"
+            meta={<PanelMeta>Candidate Search Agent · proposes only</PanelMeta>}
+          >
+            <PoolSuggestionsPanel projectId={project.id} />
+          </Panel>
         )}
         {ready && (
           <ClientIntelligencePanel

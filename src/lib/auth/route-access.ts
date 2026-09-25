@@ -78,6 +78,12 @@ export const ROUTE_RULES: readonly RouteRule[] = [
   { pattern: "/app/settings/invoice-templates", capability: "org:manage", prefix: true },
   { pattern: "/app/placements/invoices", capability: "fees:read", prefix: true },
 
+  // --- Bulk CV intake (§200) ----------------------------------------------
+  // Uploading a CV creates candidates, so the page is gated exactly like
+  // the single upload it loops: `candidates:write`. A viewer can read the
+  // pool everywhere else and simply is not offered this.
+  { pattern: "/app/candidates/intake", capability: "candidates:write" },
+
   // --- Skills studio ------------------------------------------------------
   // A skill rewrites how every candidate in the org is scored, so authoring
   // one is an admin act. Reading the list is not — a recruiter needs to know

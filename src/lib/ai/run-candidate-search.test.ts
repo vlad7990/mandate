@@ -38,6 +38,9 @@ const CANDIDATES = [
     archetype: "Operator",
     pipeline_stage: "matched",
     cv_structured: { summary: "Ops leader. Deep supply-chain history." },
+    created_by: "rec-a",
+    email: "harmon@vale.test",
+    linkedin_url: null,
   },
   {
     id: "c2",
@@ -48,6 +51,10 @@ const CANDIDATES = [
     archetype: "Builder",
     pipeline_stage: "screening",
     cv_structured: {},
+    // Unowned: a pre-140 row, in EVERY trawl by ruling.
+    created_by: null,
+    email: "iris@coldwater.test",
+    linkedin_url: null,
   },
 ];
 const PROJECTS = [{ id: "p1", title: "COO Search" }];
@@ -87,6 +94,12 @@ const MATCH_JSON = JSON.stringify({
 
 const NO_FILTERS = { projectId: null, archetype: null, stage: null, tier: null };
 
+/** What the model was actually handed, as ids. */
+function pooledIds(): string[] {
+  const payload = JSON.parse(mocks.create.mock.calls[0][0].messages[0].content);
+  return payload.candidates.map((c: { id: string }) => c.id);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.applySkills.mockResolvedValue("SYSTEM+SKILLS");
@@ -98,6 +111,71 @@ describe("runCandidateSearchAsAgent — the pool-search seam", () => {
     const run = await runCandidateSearchAsAgent("ops leaders", NO_FILTERS);
     expect(run.status).toBe("agent_unavailable");
     expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  // §200 — the trawl. A SCOPE, not a boundary: RLS is untouched and the
+  // same reader can open any of these rows elsewhere.
+  it("narrows the haystack to the trawl, and keeps every unowned row", async () => {
+    const { session } = agentSession();
+    mocks.signIn.mockResolvedValue(session);
+    mocks.create.mockResolvedValue({
+      content: [{ type: "text", text: MATCH_JSON }],
+    });
+
+    await runCandidateSearchAsAgent(
+      "ops leaders",
+      { ...NO_FILTERS, ownerIds: ["someone-else"] },
+      "mandate"
+    );
+
+    // c1 belongs to rec-a and is out of scope; c2 is UNOWNED and stays.
+    expect(pooledIds()).toEqual(["c2"]);
+  });
+
+  it("searches everything when no trawl is given — Pool search is unchanged", async () => {
+    const { session } = agentSession();
+    mocks.signIn.mockResolvedValue(session);
+    mocks.create.mockResolvedValue({
+      content: [{ type: "text", text: MATCH_JSON }],
+    });
+
+    await runCandidateSearchAsAgent("ops leaders", NO_FILTERS);
+    expect(pooledIds()).toEqual(["c1", "c2"]);
+  });
+
+  it("does not propose someone already on the mandate", async () => {
+    const { session } = agentSession();
+    mocks.signIn.mockResolvedValue(session);
+    mocks.create.mockResolvedValue({
+      content: [{ type: "text", text: MATCH_JSON }],
+    });
+
+    await runCandidateSearchAsAgent(
+      "ops leaders",
+      { ...NO_FILTERS, excludeIdentityKeys: ["email:harmon@vale.test"] },
+      "mandate"
+    );
+    expect(pooledIds()).toEqual(["c2"]);
+  });
+
+  it("records what prompted the run, and never whose CVs it saw", async () => {
+    const { session, rpc } = agentSession();
+    mocks.signIn.mockResolvedValue(session);
+    mocks.create.mockResolvedValue({
+      content: [{ type: "text", text: MATCH_JSON }],
+    });
+
+    await runCandidateSearchAsAgent(
+      "ops leaders",
+      { ...NO_FILTERS, ownerIds: ["rec-a"], excludeIdentityKeys: ["email:x@y.z"] },
+      "mandate"
+    );
+
+    const detail = rpc.mock.calls[0][1].p_detail;
+    expect(detail.trigger).toBe("mandate");
+    expect(detail.owner_scoped).toBe(true);
+    expect(detail.excluded).toBe(1);
+    expect(JSON.stringify(detail)).not.toContain("rec-a");
   });
 
   it("judges the agent-side pool with skills and records counts, no query text", async () => {
@@ -142,6 +220,9 @@ describe("runCandidateSearchAsAgent — the pool-search seam", () => {
         archetype_filter: false,
         stage_filter: false,
         tier_filter: false,
+        // §200 — counts only, never whose CVs the trawl saw.
+        owner_scoped: false,
+        excluded: 0,
       },
     });
     const detailText = JSON.stringify(rpc.mock.calls[0][1]);

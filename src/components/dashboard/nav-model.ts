@@ -184,6 +184,19 @@ export const NAV: readonly NavItem[] = [
     group: "search",
     child: true,
   },
+  /**
+   * §200 — bulk CV intake. A child of Candidates for the same reason Pool
+   * search is: it acts on the same pool. Capability-gated because it
+   * creates candidates, so a viewer is never offered a door that bounces.
+   */
+  {
+    href: "/app/candidates/intake",
+    label: "CV intake",
+    icon: "candidates",
+    group: "search",
+    child: true,
+    capability: "candidates:write",
+  },
   {
     href: "/app/candidates/network",
     label: "Network",

@@ -192,9 +192,6 @@ export async function uploadAndParseCv(
       throw new Error(result.reason);
     }
 
-    // userId reserved for a future audit-trail column on candidates.
-    void userId;
-
     // Navigation is the client's job — see submitOnboarding for the
     // revalidate-plus-redirect hang this replaces.
     revalidatePath(`/app/projects/${projectId}/candidates`);
