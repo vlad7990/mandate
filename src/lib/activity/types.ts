@@ -114,6 +114,13 @@ export const ACTIVITY_EVENT_TYPES = [
   // anchored to the survivor, for 141's cascade reason.
   "candidates_merged",
 
+  // 143: two PEOPLE in the network folded into one. Written inside
+  // `merge_network_profiles`' own transaction, like 142's — the door stays
+  // at 27. The detail carries the alias key, because that key is what
+  // makes the merge durable and is the thing to look for if a person ever
+  // appears to have re-split.
+  "network_profiles_merged",
+
   // 106: the task domain. Assigning is the desk's act (gated
   // can_manage_desk inside the RPC); completing rides the actor
   // stamp — the RLS pin already proved the right. Labels snapshot
@@ -406,6 +413,7 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   candidate_stage_changed: "mandates",
   candidate_duplicate_discarded: "mandates",
   candidates_merged: "mandates",
+  network_profiles_merged: "mandates",
 
   task_assigned: "mandates",
   task_completed: "mandates",

@@ -122,6 +122,18 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Merged ${other ? `"${other}"` : "another record"} into this one${tail}`;
     }
 
+    // 143 — two PEOPLE folded into one. The alias key is named because it
+    // is what keeps the merge durable: if a person ever looks re-split,
+    // that key is the thing to look for.
+    case "network_profiles_merged": {
+      const kept = str(d, "kept");
+      const mergedIn = str(d, "merged_in");
+      const n = num(d, "candidates");
+      const dnc = d.dnc_carried === true;
+      const records = n == null ? "" : `, carrying ${n} candidate ${n === 1 ? "record" : "records"}`;
+      return `Merged ${mergedIn ? `"${mergedIn}"` : "another person"} into ${kept ? `"${kept}"` : "this person"}${records}${dnc ? " — do-not-contact carried across" : ""}`;
+    }
+
     case "task_assigned": {
       const title = str(d, "task_title");
       const to = str(d, "to_label");
