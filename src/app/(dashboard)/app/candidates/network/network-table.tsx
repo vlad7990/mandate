@@ -57,7 +57,8 @@ export function NetworkTable({
 }: {
   people: NetworkPerson[];
   activeProjects: NetworkProject[];
-  /** Durable relationship overlay (098), keyed by identity_key. */
+  /** Durable relationship overlay (098), keyed by profile id (§204 — a
+   * merge moves which profile a row belongs to, and nothing else). */
   profiles: Record<string, RelationshipProfile>;
   isFounder: boolean;
 }) {
@@ -242,10 +243,10 @@ export function NetworkTable({
           <ul className="space-y-2">
             {visible.map((p) => (
               <NetworkCard
-                key={p.identity_key}
+                key={p.profile_id}
                 person={p}
                 activeProjects={activeProjects}
-                profile={profiles[p.identity_key] ?? null}
+                profile={profiles[p.profile_id] ?? null}
                 isFounder={isFounder}
               />
             ))}

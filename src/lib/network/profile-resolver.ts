@@ -25,9 +25,16 @@ export type RelationshipProfile = {
 };
 
 /**
- * All relationship profiles for the caller's org, keyed by
- * identity_key — the same key the network aggregator folds people on,
- * so the overlay joins without a second identity rule.
+ * All relationship profiles for the caller's org, keyed by **profile id** —
+ * the same thing the network aggregator folds people on, so the overlay
+ * joins on a real database id and no identity rule runs at render time.
+ *
+ * §204 — this map used to be keyed on `identity_key`, and after §203's merge
+ * that silently stopped matching: the loser's profile is DELETED and its key
+ * survives only in `network_profile_aliases`, which nothing here reads. The
+ * merged person's second row therefore found no profile, and a missing
+ * profile renders exactly like an unsuppressed contact. Proven live, on a
+ * suppressed person: `overlay rows found for that key: 0`.
  */
 export async function loadRelationshipProfiles(): Promise<
   Map<string, RelationshipProfile>
@@ -40,7 +47,7 @@ export async function loadRelationshipProfiles(): Promise<
     );
   const map = new Map<string, RelationshipProfile>();
   for (const row of (data ?? []) as RelationshipProfile[]) {
-    map.set(row.identity_key, row);
+    map.set(row.id, row);
   }
   return map;
 }

@@ -44,11 +44,16 @@ export default async function NetworkPage() {
   // §203 — the merge panel's list. Built from the SAME profile rows the
   // relationship overlay uses, so the two cannot disagree about who exists.
   //
-  // The per-person record count is read off `network_profile_id`, NOT off
-  // the overview's fold on `identity_key`. Drive 135 showed why: after a
-  // merge the two candidate rows still compute DIFFERENT identity keys —
-  // that is the whole reason the person was split — so counting by key
-  // reported "1 record" for somebody who now holds two.
+  // The per-person record count is read off `network_profile_id`. Drive 135
+  // showed why: counting by identity key reported "1 record" for somebody
+  // who now holds two, because a merged person's rows still compute
+  // different keys — which is the whole reason they were split.
+  //
+  // §204 — the table now folds on that same column, so panel and table
+  // finally agree about who is one person. This count is deliberately NOT
+  // taken from the fold: the fold is windowed (CANDIDATE_ROW_CAP) and a
+  // merge is irreversible, so the number in front of that decision counts
+  // every record, not the recent ones.
   const { data: profileCounts } = await supabase
     .from("candidates")
     .select("network_profile_id")
@@ -113,6 +118,23 @@ export default async function NetworkPage() {
           recently updated candidate records. Older records are not counted in
           the figures below, so a long-standing contact may be missing or show
           fewer appearances than they have.
+        </p>
+      )}
+
+      {/* §204/D2 — a CV still being read has no person yet (§196/139), so it
+          is not a row here. Saying so beats a just-uploaded candidate
+          silently missing from a page whose count the recruiter trusts. */}
+      {overview.people_pending > 0 && (
+        <p
+          role="status"
+          className="border border-outline-variant bg-surface-container-low px-4 py-3 text-body-main text-on-surface-variant"
+        >
+          {overview.people_pending === 1
+            ? "One candidate record is still being read"
+            : `${overview.people_pending} candidate records are still being read`}{" "}
+          and {overview.people_pending === 1 ? "is" : "are"} not counted as
+          people yet. They appear here once their CV has been parsed and there
+          is something to identify them by.
         </p>
       )}
 
@@ -351,7 +373,7 @@ function PeopleListCard({
         <ol className="space-y-1">
           {people.map((p, i) => (
             <li
-              key={p.identity_key}
+              key={p.profile_id}
               className="flex items-baseline gap-2 font-mono-data text-body-main"
             >
               <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums w-6">
