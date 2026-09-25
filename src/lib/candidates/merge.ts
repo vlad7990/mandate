@@ -115,6 +115,35 @@ export function previewMerge(
 }
 
 /**
+ * How one record is named in the confirm.
+ *
+ * Drive 134 read `Keep "Tobias Kleinschmidt" and discard "Tobias
+ * Kleinschmidt"?` — true, and useless. The pair this tool exists for is
+ * flagged BECAUSE the names match, so the common case is the one where
+ * the name alone distinguishes nothing.
+ *
+ * So when the names are identical, the first field that actually DIFFERS
+ * is appended. Chosen over always showing the title because a suffix that
+ * is also identical on both sides would add noise without adding
+ * information — and over showing an id, which means nothing to a reader.
+ */
+function label(self: RecordSummary, other: RecordSummary): string {
+  if (self.fullName !== other.fullName) return `"${self.fullName}"`;
+
+  const candidates: Array<[string | null, string | null]> = [
+    [self.currentTitle, other.currentTitle],
+    [self.stage, other.stage],
+    [self.cvName, other.cvName],
+  ];
+  for (const [mine, theirs] of candidates) {
+    if (mine && mine !== theirs) return `"${self.fullName}" (${mine})`;
+  }
+  // Nothing on the summary tells them apart. Say so rather than implying
+  // a difference that is not on screen.
+  return `"${self.fullName}" (added ${self.createdAt.slice(0, 10)})`;
+}
+
+/**
  * The confirm text, verbatim. A test asserts these words because the
  * sentence IS the safeguard — this is the last thing standing between a
  * recruiter and an irreversible delete.
@@ -125,7 +154,7 @@ export function describeConfirm(
   preview: MergePreview
 ): string {
   const lines = [
-    `Keep "${keep.fullName}" and discard "${discard.fullName}"?`,
+    `Keep ${label(keep, discard)} and discard ${label(discard, keep)}?`,
     "",
   ];
   if (preview.keeps.length > 0) {

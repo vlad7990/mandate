@@ -136,6 +136,48 @@ describe("describeConfirm — the last thing before an irreversible delete", () 
     expect(text).toContain("2 notes move across");
   });
 
+  it("distinguishes two records that share a name (drive 134)", () => {
+    // The pair this tool exists for is flagged BECAUSE the names match,
+    // so `Keep "X" and discard "X"?` is the COMMON case, not the edge.
+    const keep = rec({
+      id: "keep",
+      fullName: "Tobias Kleinschmidt",
+      currentTitle: "Head of Securities Settlement",
+    });
+    const discard = rec({
+      id: "drop",
+      fullName: "Tobias Kleinschmidt",
+      currentTitle: "Graduate Analyst, Treasury Operations",
+    });
+    const text = describeConfirm(keep, discard, previewMerge(keep, discard));
+    expect(text).toContain(
+      'Keep "Tobias Kleinschmidt" (Head of Securities Settlement) and discard "Tobias Kleinschmidt" (Graduate Analyst, Treasury Operations)?'
+    );
+  });
+
+  it("falls back through stage, then the date added, when titles match too", () => {
+    const keep = rec({ id: "keep", currentTitle: "Same", stage: "interviewed" });
+    const discard = rec({ id: "drop", currentTitle: "Same", stage: "found" });
+    expect(
+      describeConfirm(keep, discard, previewMerge(keep, discard))
+    ).toContain('"James Chen" (interviewed)');
+
+    const twinA = rec({ id: "a", createdAt: "2026-09-01T00:00:00Z" });
+    const twinB = rec({ id: "b", createdAt: "2026-09-04T00:00:00Z" });
+    // Nothing on the summary tells them apart — say that, rather than
+    // implying a difference the reader cannot see.
+    expect(describeConfirm(twinA, twinB, previewMerge(twinA, twinB))).toContain(
+      '"James Chen" (added 2026-09-01)'
+    );
+  });
+
+  it("uses the bare name when the names already differ", () => {
+    const keep = rec({ id: "keep", fullName: "James Chen" });
+    const discard = rec({ id: "drop", fullName: "J. Chen" });
+    const text = describeConfirm(keep, discard, previewMerge(keep, discard));
+    expect(text).toContain('Keep "James Chen" and discard "J. Chen"?');
+  });
+
   it("omits the carried-over section entirely when nothing is carried", () => {
     const keep = rec({ id: "keep" });
     const discard = rec({ id: "drop" });
