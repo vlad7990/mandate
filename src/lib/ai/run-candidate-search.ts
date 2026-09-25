@@ -10,7 +10,7 @@ import type { CandidateProfile } from "./cv-parsing";
 import { signInCandidateSearchAgent } from "@/lib/agents/session";
 import { applySkillsToPrompt } from "@/lib/skills/skill-injector";
 import { captureSeamError } from "@/lib/observability/sentry";
-import { identityKey } from "@/lib/candidate-identity";
+import { personKey } from "@/lib/network/person-key";
 
 
 export async function runCandidateSearch(
@@ -82,11 +82,16 @@ export type CandidateSearchFilters = {
    */
   ownerIds?: readonly string[] | null;
   /**
-   * §200 — identity keys already present in the mandate being suggested
-   * for. Suggesting someone who is already there wastes the reader's
-   * attention and the add would refuse them anyway.
+   * §200 — the people already present in the mandate being suggested for.
+   * Suggesting someone who is already there wastes the reader's attention
+   * and the add would refuse them anyway.
+   *
+   * §204 — these are `personKey` values (profile id, else the computed key),
+   * not raw identity keys. On identity keys a MERGED person was suggested
+   * again under their other key, and the copy that followed was permitted —
+   * minting exactly the duplicate row §201/§202 exist to prevent.
    */
-  excludeIdentityKeys?: readonly string[] | null;
+  excludePersonKeys?: readonly string[] | null;
 };
 
 export type CandidateSearchRun =
@@ -118,6 +123,9 @@ type PoolRow = {
   created_by: string | null;
   email: string | null;
   linkedin_url: string | null;
+  /** §204 — the durable person, so "already on this mandate" survives a
+   * merge. NULL while the CV is still being read (§196/139). */
+  network_profile_id: string | null;
 };
 
 type ScoreRow = {
@@ -164,7 +172,7 @@ export async function runCandidateSearchAsAgent(
       supabase
         .from("candidates")
         .select(
-          "id, project_id, full_name, current_title, current_company, archetype, pipeline_stage, cv_structured, created_by, email, linkedin_url"
+          "id, project_id, full_name, current_title, current_company, archetype, pipeline_stage, cv_structured, created_by, email, linkedin_url, network_profile_id"
         ),
       supabase.from("projects").select("id, title"),
       supabase
@@ -185,8 +193,8 @@ export async function runCandidateSearchAsAgent(
     // The same structural narrowing the page shows: filters shrink the
     // haystack; the agent ranks what's left.
     const owners = filters.ownerIds ? new Set(filters.ownerIds) : null;
-    const excluded = filters.excludeIdentityKeys
-      ? new Set(filters.excludeIdentityKeys)
+    const excluded = filters.excludePersonKeys
+      ? new Set(filters.excludePersonKeys)
       : null;
 
     const filtered = pool.filter((c) => {
@@ -204,11 +212,12 @@ export async function runCandidateSearchAsAgent(
       if (
         excluded &&
         excluded.has(
-          identityKey({
+          personKey({
             full_name: c.full_name,
             email: c.email,
             linkedin_url: c.linkedin_url,
             current_company: c.current_company,
+            network_profile_id: c.network_profile_id,
           })
         )
       ) {
@@ -288,7 +297,7 @@ export async function runCandidateSearchAsAgent(
         // Counts only, never ids: the trail says HOW MUCH the trawl saw,
         // not whose CVs they were.
         owner_scoped: Boolean(filters.ownerIds),
-        excluded: filters.excludeIdentityKeys?.length ?? 0,
+        excluded: filters.excludePersonKeys?.length ?? 0,
       },
     });
     if (eventErr) {

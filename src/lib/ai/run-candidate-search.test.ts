@@ -41,6 +41,7 @@ const CANDIDATES = [
     created_by: "rec-a",
     email: "harmon@vale.test",
     linkedin_url: null,
+    network_profile_id: "np-harmon",
   },
   {
     id: "c2",
@@ -55,19 +56,38 @@ const CANDIDATES = [
     created_by: null,
     email: "iris@coldwater.test",
     linkedin_url: null,
+    network_profile_id: "np-iris",
   },
 ];
+
+// §204 — the same human as c1 AFTER a merge: their second record keys on
+// name|company, not on the email, which is the whole reason they were two
+// profiles. The merge repointed this row onto Harmon's person.
+const MERGED_SECOND_RECORD = {
+  id: "c3",
+  project_id: "p2",
+  full_name: "Harmon Vale",
+  current_title: "Chief Operating Officer",
+  current_company: "Acme",
+  archetype: "Operator",
+  pipeline_stage: "matched",
+  cv_structured: {},
+  created_by: null,
+  email: null,
+  linkedin_url: null,
+  network_profile_id: "np-harmon",
+};
 const PROJECTS = [{ id: "p1", title: "COO Search" }];
 const SCORES = [
   { candidate_id: "c1", overall_score: 7.4, tier: "tier_1" },
   { candidate_id: "c2", overall_score: 6.1, tier: "tier_2" },
 ];
 
-function agentSession() {
+function agentSession(candidates: unknown[] = CANDIDATES) {
   const rpc = vi.fn().mockResolvedValue({ error: null });
   const signOut = vi.fn().mockResolvedValue(undefined);
   const tables: Record<string, unknown[]> = {
-    candidates: CANDIDATES,
+    candidates,
     projects: PROJECTS,
     candidate_scores: SCORES,
   };
@@ -152,10 +172,57 @@ describe("runCandidateSearchAsAgent — the pool-search seam", () => {
 
     await runCandidateSearchAsAgent(
       "ops leaders",
-      { ...NO_FILTERS, excludeIdentityKeys: ["email:harmon@vale.test"] },
+      { ...NO_FILTERS, excludePersonKeys: ["np-harmon"] },
       "mandate"
     );
     expect(pooledIds()).toEqual(["c2"]);
+  });
+
+  // §204 — the defect this slice closes. The exclusion used to compare
+  // COMPUTED identity keys, so a merged person's second record (which keys
+  // differently by construction — that is why they were split) was proposed
+  // again, and the copy that followed was permitted. Mandate membership is
+  // now asked of the person, so both records drop out together.
+  it("does not propose a MERGED person whose other record keys differently", async () => {
+    const { session } = agentSession([...CANDIDATES, MERGED_SECOND_RECORD]);
+    mocks.signIn.mockResolvedValue(session);
+    mocks.create.mockResolvedValue({
+      content: [{ type: "text", text: MATCH_JSON }],
+    });
+
+    await runCandidateSearchAsAgent(
+      "ops leaders",
+      { ...NO_FILTERS, excludePersonKeys: ["np-harmon"] },
+      "mandate"
+    );
+
+    expect(pooledIds()).toEqual(["c2"]);
+  });
+
+  // The other half of the same rule: a row with NO person yet (§196/139 —
+  // a CV still being read) still has to answer "already on this mandate?",
+  // and answers it on its computed key.
+  it("excludes a person-less row on its computed key", async () => {
+    const pending = {
+      ...MERGED_SECOND_RECORD,
+      id: "c4",
+      full_name: "Pending Person",
+      current_company: "Nowhere",
+      network_profile_id: null,
+    };
+    const { session } = agentSession([...CANDIDATES, pending]);
+    mocks.signIn.mockResolvedValue(session);
+    mocks.create.mockResolvedValue({
+      content: [{ type: "text", text: MATCH_JSON }],
+    });
+
+    await runCandidateSearchAsAgent(
+      "ops leaders",
+      { ...NO_FILTERS, excludePersonKeys: ["key:name:pending person|nowhere"] },
+      "mandate"
+    );
+
+    expect(pooledIds()).toEqual(["c1", "c2"]);
   });
 
   it("records what prompted the run, and never whose CVs it saw", async () => {
@@ -167,7 +234,7 @@ describe("runCandidateSearchAsAgent — the pool-search seam", () => {
 
     await runCandidateSearchAsAgent(
       "ops leaders",
-      { ...NO_FILTERS, ownerIds: ["rec-a"], excludeIdentityKeys: ["email:x@y.z"] },
+      { ...NO_FILTERS, ownerIds: ["rec-a"], excludePersonKeys: ["np-someone"] },
       "mandate",
       "p-target"
     );

@@ -21,9 +21,11 @@ import type { ActionResult } from "@/lib/actions/result";
 // to the shared one character for character. Four transcriptions of the
 // person-identity rule existed (here, the module, and SQL in 040 and 073)
 // and the module's own header exists to warn against exactly that. The
-// three that must stay in step are documented there; this fourth was pure
+// ones that must stay in step are documented there; this fourth was pure
 // drift risk, in the file holding the product's oldest duplicate refusal.
-import { identityKey } from "@/lib/candidate-identity";
+// §204 — and the question this file asks is about rows that ALREADY EXIST,
+// so it reads the durable person rather than recomputing anything.
+import { personKey } from "@/lib/network/person-key";
 
 /** Sentence subject for a failure this file did not author. See `runAction`. */
 const SUBJECT = "The candidate copy";
@@ -65,7 +67,7 @@ export async function addPersonToProjectAction(
       supabase
         .from("candidates")
         .select(
-          "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, cv_url, cv_structured"
+          "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, cv_url, cv_structured, network_profile_id"
         )
         .eq("id", sourceCandidateId)
         .single<{
@@ -84,6 +86,11 @@ export async function addPersonToProjectAction(
           archetype: string | null;
           cv_url: string | null;
           cv_structured: unknown;
+          // §204 — REQUIRED here, not optional: `PersonKeyRow` makes this
+          // field optional, so omitting it from the row type would leave
+          // `personKey` silently falling back to the computed key on every
+          // copy, and tsc would have nothing to say about it.
+          network_profile_id: string | null;
         }>(),
       supabase
         .from("projects")
@@ -120,12 +127,18 @@ export async function addPersonToProjectAction(
       target.calibration_model
     );
 
-    // Reject when the same person is already in this project. Identity
-    // proxy mirrors the network aggregator: email > linkedin > name.
-    const dupKey = identityKey(source);
+    // Reject when the same person is already in this project. §204 — this
+    // asks the network aggregator's question and now reads its answer: the
+    // durable person (098), falling back to the computed key only for a row
+    // that has no person yet. On the key alone, a MERGED person could be
+    // copied in a second time under their other key — the duplicate §201
+    // and §202 exist to prevent, admitted by the door they were built for.
+    const dupKey = personKey(source);
     const { data: existingRows } = await supabase
       .from("candidates")
-      .select("id, full_name, email, linkedin_url, current_company")
+      .select(
+        "id, full_name, email, linkedin_url, current_company, network_profile_id"
+      )
       .eq("project_id", targetProjectId);
     type ExistingRow = {
       id: string;
@@ -133,9 +146,10 @@ export async function addPersonToProjectAction(
       email: string | null;
       linkedin_url: string | null;
       current_company: string | null;
+      network_profile_id: string | null;
     };
     const dup = ((existingRows ?? []) as ExistingRow[]).find(
-      (r) => identityKey(r) === dupKey
+      (r) => personKey(r) === dupKey
     );
     if (dup) {
       throw new Error(

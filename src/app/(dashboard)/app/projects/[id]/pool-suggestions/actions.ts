@@ -7,7 +7,7 @@ import { runAction } from "@/lib/actions/run";
 import { type ActionResult } from "@/lib/actions/result";
 import { runCandidateSearchAsAgent } from "@/lib/ai/run-candidate-search";
 import { agentErrorMessage } from "@/lib/ai/agent-errors";
-import { identityKey } from "@/lib/candidate-identity";
+import { personKey } from "@/lib/network/person-key";
 import { describeTrawl, trawlScopeFor, type DeskMember } from "@/lib/desk/trawl";
 import { buildPoolQuery } from "@/lib/calibration/pool-query";
 import { type CalibrationModel } from "@/lib/ai/role-analysis";
@@ -109,21 +109,27 @@ export async function suggestFromPoolAction(
     const scope = trawlScopeFor(parseRole(me?.role ?? null), actor.userId, members);
 
     // People already on this mandate are not suggestions. Computed from
-    // the same identity rule the copy uses, so the list and the add can
-    // never disagree about who is already here.
+    // the same rule the copy uses, so the list and the add can never
+    // disagree about who is already here.
+    //
+    // §204 — that rule is now `personKey`: the durable person first, the
+    // computed key only when there is no person yet. On the computed key
+    // alone, somebody MERGED (§203) was suggested again under their other
+    // key, because a merge cannot change what a row's fields compute to.
     const { data: already } = await supabase
       .from("candidates")
-      .select("full_name, email, linkedin_url, current_company")
+      .select("full_name, email, linkedin_url, current_company, network_profile_id")
       .eq("project_id", projectId);
 
-    const excludeIdentityKeys = (
+    const excludePersonKeys = (
       (already ?? []) as Array<{
         full_name: string;
         email: string | null;
         linkedin_url: string | null;
         current_company: string | null;
+        network_profile_id: string | null;
       }>
-    ).map(identityKey);
+    ).map(personKey);
 
     const run = await runCandidateSearchAsAgent(
       query,
@@ -133,7 +139,7 @@ export async function suggestFromPoolAction(
         stage: null,
         tier: null,
         ownerIds: scope.kind === "org" ? null : scope.ownerIds,
-        excludeIdentityKeys,
+        excludePersonKeys,
       },
       "mandate",
       projectId

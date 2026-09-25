@@ -153,8 +153,16 @@ describe("person identity is declared exactly once", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("the copy-into-mandate refusal reads the shared rule", () => {
+  it("the copy-into-mandate refusal reads a shared rule, never its own", () => {
+    // 141's point was that this file must not transcribe person identity
+    // privately for a fourth time. §204 changed WHICH shared rule it reads:
+    // the question here is about rows that already exist, so it asks
+    // `personKey` (durable person first), and that module is the only place
+    // the computed key is reached from. The claim is unchanged — no private
+    // copy — so the assertion moves with it rather than being deleted.
     const src = read("app/(dashboard)/app/candidates/network/actions.ts");
-    expect(src).toContain('from "@/lib/candidate-identity"');
+    expect(src).toContain('from "@/lib/network/person-key"');
+    const personKey = read("lib/network/person-key.ts");
+    expect(personKey).toContain('from "@/lib/candidate-identity"');
   });
 });
