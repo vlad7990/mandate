@@ -100,6 +100,13 @@ export const ACTIVITY_EVENT_TYPES = [
   // inside `record_activity_event` on can_write_candidates().
   "candidate_stage_changed",
 
+  // 141: a CV was uploaded, parsed, and found to be somebody already in
+  // this mandate, so the new row and its file were dropped (gate D2).
+  // Same candidate-writer gate. The event hangs off the SURVIVING row —
+  // `activity_events.candidate_id` is ON DELETE CASCADE, so naming the
+  // discarded row would delete the record of its own discarding.
+  "candidate_duplicate_discarded",
+
   // 106: the task domain. Assigning is the desk's act (gated
   // can_manage_desk inside the RPC); completing rides the actor
   // stamp — the RLS pin already proved the right. Labels snapshot
@@ -253,6 +260,8 @@ export const APP_RECORDABLE_EVENTS = [
   // 104 — the pipeline move (dropdown or board drag). Writer-gated
   // inside the RPC on can_write_candidates().
   "candidate_stage_changed",
+  // 141 — the duplicate discard: the same candidate-writer gate.
+  "candidate_duplicate_discarded",
   // 106 — the task domain: desk-gated assignment, actor-stamped
   // completion.
   "task_assigned",
@@ -388,6 +397,7 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   skill_deleted: "mandates",
 
   candidate_stage_changed: "mandates",
+  candidate_duplicate_discarded: "mandates",
 
   task_assigned: "mandates",
   task_completed: "mandates",

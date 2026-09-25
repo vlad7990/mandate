@@ -17,6 +17,13 @@ import { runRankerScoring } from "@/lib/ranking/agent-ranker";
 import { assertCalibrationMatchesSpec } from "@/lib/calibration/spec-drift";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
+// 141 — this file used to declare its own private `identityKey`, identical
+// to the shared one character for character. Four transcriptions of the
+// person-identity rule existed (here, the module, and SQL in 040 and 073)
+// and the module's own header exists to warn against exactly that. The
+// three that must stay in step are documented there; this fourth was pure
+// drift risk, in the file holding the product's oldest duplicate refusal.
+import { identityKey } from "@/lib/candidate-identity";
 
 /** Sentence subject for a failure this file did not author. See `runAction`. */
 const SUBJECT = "The candidate copy";
@@ -342,20 +349,3 @@ async function replicateCvAndReparse(args: {
   }
 }
 
-function identityKey(row: {
-  full_name: string;
-  email: string | null;
-  linkedin_url: string | null;
-  current_company: string | null;
-}): string {
-  if (row.email && row.email.trim().length > 0) {
-    return `email:${row.email.trim().toLowerCase()}`;
-  }
-  if (row.linkedin_url && row.linkedin_url.trim().length > 0) {
-    return `linkedin:${row.linkedin_url
-      .trim()
-      .toLowerCase()
-      .replace(/\/$/, "")}`;
-  }
-  return `name:${row.full_name.trim().toLowerCase()}|${(row.current_company ?? "").trim().toLowerCase()}`;
-}

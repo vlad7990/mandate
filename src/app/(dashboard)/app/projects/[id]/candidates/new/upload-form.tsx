@@ -92,8 +92,17 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
         const formData = new FormData();
         formData.set("projectId", projectId);
         formData.set("cv", file);
-        const { candidateId } = unwrap(await uploadAndParseCv(formData));
-        router.push(`/app/projects/${projectId}/candidates/${candidateId}`);
+        const result = unwrap(await uploadAndParseCv(formData));
+        // 141 — a skipped or discarded duplicate is not an error, so it is
+        // not a red toast; it is the answer to what the recruiter asked.
+        // `candidateId` is the surviving record either way, so the
+        // navigation below always lands somewhere real.
+        if (result.message) {
+          toast(result.message, { duration: 12_000 });
+        }
+        router.push(
+          `/app/projects/${projectId}/candidates/${result.candidateId}`
+        );
       } catch (err) {
         const msg =
           err instanceof Error ? err.message : "Upload + parse failed.";

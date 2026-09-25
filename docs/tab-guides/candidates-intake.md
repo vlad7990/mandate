@@ -35,9 +35,24 @@ It will not score anyone against a mandate that has not been calibrated.
 The CV is still read and the person still created, but there is nothing
 to judge them against until onboarding has run.
 
-It does not detect that two CVs in your stack are the same person, and it
-does not look for that person elsewhere in the pool — **Network** is
-where a human is folded together across mandates.
+**It will not parse the same person into this mandate twice — but what it
+can be sure of depends on when it looks.** Before anything is uploaded it
+compares the file itself, so the same document twice in one batch, or a
+file already in this mandate, is skipped outright and costs nothing. Only
+after a CV has been read does it know whose it is: if that person is
+already here under the same email address or LinkedIn profile, the record
+just created is removed, the existing one is left exactly as it stands,
+and the row tells you the file you uploaded was not kept.
+
+Where the only thing shared is a name and an employer, **both records
+stay**. Two people really do share a name at one large firm, so that pair
+is flagged for you on the candidate's own screen rather than merged. There
+is no merge tool here: if they are one person, delete the record you do
+not want.
+
+The same file under a **different** mandate is not a duplicate at all. It
+is reported and parsed anyway — one person in two searches is two records,
+each scored against its own role.
 
 Uploading records you as the person who brought each candidate in. That
 governs which CVs the reuse agent draws on when it makes suggestions for

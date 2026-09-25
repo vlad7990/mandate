@@ -17,6 +17,17 @@ import { assertCalibrationMatchesSpec } from "@/lib/calibration/spec-drift";
 import { runAction } from "@/lib/actions/run";
 import type { ActionResult } from "@/lib/actions/result";
 import { recordActivity } from "@/lib/activity/record";
+import {
+  sha256Hex,
+  matchFile,
+  classifyAgainstMandate,
+  describeSkippedFile,
+  describeDiscard,
+  describeAmbiguous,
+  describeOtherMandate,
+  type PoolCandidate,
+  type UploadReport,
+} from "@/lib/candidates/dedupe";
 
 /** Sentence subject for a failure this file did not author. See `runAction`. */
 const SUBJECT = "The candidate update";
@@ -35,17 +46,46 @@ async function requireAuth(): Promise<AuthContext> {
 const ACCEPTED_MIME_TYPES = new Set([PDF_MIME, DOCX_MIME]);
 const MAX_FILE_BYTES = 10 * 1024 * 1024; // mirrors the bucket's file_size_limit
 
+/** The columns both dedupe checks read. One shape, one select list. */
+const POOL_COLUMNS =
+  "id, project_id, full_name, email, linkedin_url, current_company, pipeline_stage";
+
+export type UploadAndParseResult = UploadReport & {
+  /**
+   * The row that now represents this person in this mandate — the new one
+   * when the parse stood, the SURVIVING one when the upload was skipped or
+   * discarded. The single-file form navigates here, so a recruiter whose
+   * duplicate was dropped lands on the real record rather than a 404.
+   */
+  candidateId: string;
+};
+
 /**
  * Upload a CV file to the cvs storage bucket and parse it via the
- * combined CV-Parsing + Candidate-Review agent. Returns the new
- * candidate's id; the upload form navigates to the profile.
+ * combined CV-Parsing + Candidate-Review agent. Returns the candidate's
+ * id and what happened to the upload.
  *
  * Synchronous: the action waits for both upload and Anthropic to land
  * before returning. UI shows a loading state.
+ *
+ * ## Dedupe (141, gate 2026-09-25)
+ *
+ * Two checks, because identity is only known after the parse:
+ *
+ * · BEFORE anything is created — the SHA-256 of the bytes. A byte-identical
+ *   file already in this mandate is refused with nothing spent, no row and
+ *   no stored object, in the same place §177's spec-drift door sits and for
+ *   the same reason. The same file in ANOTHER mandate is reported and
+ *   parsed anyway (D4) — that is reuse, not duplication.
+ *
+ * · AFTER the parse — `identityKey` against the rest of this mandate. A
+ *   STRONG match (email or LinkedIn) discards the row that was just made
+ *   (D2); a name|company-only match keeps both rows and flags one for a
+ *   human (D3), because two people really do share a name at one employer.
  */
 export async function uploadAndParseCv(
   formData: FormData
-): Promise<ActionResult<{ candidateId: string }>> {
+): Promise<ActionResult<UploadAndParseResult>> {
   return runAction(SUBJECT, async () => {
     const projectId = String(formData.get("projectId") ?? "");
     const file = formData.get("cv");
@@ -96,6 +136,45 @@ export async function uploadAndParseCv(
       project.calibration_model
     );
 
+    // 141 — the file's own identity, computed from the bytes the SERVER
+    // received. The bulk-intake form hashes in the browser too, to skip
+    // repeats inside one batch, but that hash is never sent and never
+    // trusted: this is the one that decides anything.
+    const fileBytes = new Uint8Array(await file.arrayBuffer());
+    const fileHash = await sha256Hex(fileBytes);
+
+    const { data: sameFileRows } = await supabase
+      .from("candidates")
+      .select(POOL_COLUMNS)
+      .eq("organization_id", organizationId)
+      .eq("cv_sha256", fileHash);
+
+    const fileMatch = matchFile(
+      projectId,
+      (sameFileRows ?? []) as PoolCandidate[]
+    );
+
+    // D1's cheap half. Certain — the same bytes are the same document —
+    // and it refuses BEFORE the row and the object exist, so a skipped
+    // file leaves nothing behind and costs nothing.
+    if (fileMatch.kind === "same_mandate") {
+      return {
+        candidateId: fileMatch.candidateId,
+        outcome: "same_file_skipped",
+        message: describeSkippedFile(fileMatch.label),
+        ambiguousOf: null,
+      };
+    }
+
+    // D4: the same file under another mandate is a FACT, not a refusal.
+    // Refusing would block a legitimate second search and would save
+    // nothing anyway — reuse re-parses against the target's calibration
+    // regardless, so the second parse buys a verdict, it is not waste.
+    const otherMandateNote =
+      fileMatch.kind === "other_mandate"
+        ? describeOtherMandate(fileMatch.label)
+        : null;
+
     // Insert the candidate row first so we have an id for the storage path
     // and so the candidate appears in the list (cv_processing=true) while
     // the AI call runs. cv_url is filled in once upload completes.
@@ -113,6 +192,9 @@ export async function uploadAndParseCv(
         // §200 — who brought this person in. Scopes the reuse agent's
         // trawl and nothing else; it never narrows who may read the row.
         created_by: userId,
+        // 141 — recorded on the row that is about to hold this file, so
+        // the NEXT upload of the same document can be refused for free.
+        cv_sha256: fileHash,
       })
       .select("id")
       .single<{ id: string }>();
@@ -128,8 +210,8 @@ export async function uploadAndParseCv(
     const storagePath = `${organizationId}/${projectId}/${candidateId}/cv.${ext}`;
 
     // Upload to storage. RLS on storage.objects scopes to {org}/... so the
-    // user can only insert under their own org folder.
-    const fileBytes = new Uint8Array(await file.arrayBuffer());
+    // user can only insert under their own org folder. (The bytes were
+    // already read above, to hash them before anything was created.)
     const { error: uploadError } = await supabase.storage
       .from("cvs")
       .upload(storagePath, fileBytes, {
@@ -181,7 +263,15 @@ export async function uploadAndParseCv(
           })
           .eq("id", candidateId);
         revalidatePath(`/app/projects/${projectId}/candidates`);
-        return { candidateId };
+        // No identity was ever read, so there is nothing to compare. The
+        // row stands unjudged rather than being guessed at — §139's rule
+        // one door down.
+        return {
+          candidateId,
+          outcome: "parsed" as const,
+          message: otherMandateNote,
+          ambiguousOf: null,
+        };
       }
       // A real parse failure keeps today's contract: the row carries the
       // error and the recruiter sees the sentence. Written here as well as
@@ -192,10 +282,150 @@ export async function uploadAndParseCv(
       throw new Error(result.reason);
     }
 
+    // -----------------------------------------------------------------
+    // 141 — D1's second half: now we know who this is.
+    // -----------------------------------------------------------------
+    //
+    // The parser has written the identity columns, which means the
+    // 098/139 trigger has ALREADY resolved this row's person and filled
+    // `network_profile_id`. Nothing below re-derives identity; it reads
+    // what the parse produced and asks the one question the database
+    // does not answer on its own — is this person twice in THIS mandate.
+    const { data: parsedRow } = await supabase
+      .from("candidates")
+      .select("full_name, email, linkedin_url, current_company")
+      .eq("id", candidateId)
+      .single<{
+        full_name: string;
+        email: string | null;
+        linkedin_url: string | null;
+        current_company: string | null;
+      }>();
+
+    if (!parsedRow) {
+      // The row was read back as nothing. That is a fact about our read,
+      // not about the candidate, so nothing is discarded on the strength
+      // of it — the parse stands.
+      revalidatePath(`/app/projects/${projectId}/candidates`);
+      return {
+        candidateId,
+        outcome: "parsed" as const,
+        message: otherMandateNote,
+        ambiguousOf: null,
+      };
+    }
+
+    const { data: othersHere } = await supabase
+      .from("candidates")
+      .select(POOL_COLUMNS)
+      .eq("project_id", projectId)
+      .neq("id", candidateId);
+
+    const person = classifyAgainstMandate(
+      parsedRow,
+      (othersHere ?? []) as PoolCandidate[]
+    );
+
+    // D2 — a strong match. The existing row carries the recruiter's work;
+    // this one carries a fresh parse and nothing else. So this one goes,
+    // and the sentence says BOTH halves: which record survived, and that
+    // the file just uploaded was not kept. Silently dropping a document
+    // somebody chose is the failure this refuses to commit.
+    if (person.kind === "duplicate") {
+      // The object first. If the row went first and this failed, the
+      // surviving pointer would be to bytes that are gone, which is the
+      // worse of the two half-states. Storage deletes are API-only.
+      const { error: removeError } = await supabase.storage
+        .from("cvs")
+        .remove([storagePath]);
+      if (removeError) {
+        console.error(
+          "[candidates/actions] duplicate discard left its object behind",
+          removeError.message
+        );
+      }
+
+      const { error: deleteError } = await supabase
+        .from("candidates")
+        .delete()
+        .eq("id", candidateId);
+
+      if (deleteError) {
+        // The discard failed. Do NOT claim it happened — fall through to
+        // the flag, so the recruiter gets a row they can see and act on
+        // rather than a sentence about a deletion that did not occur.
+        await supabase
+          .from("candidates")
+          .update({
+            identity_review_of: person.candidateId,
+            identity_review_label: person.label,
+            identity_review_at: new Date().toISOString(),
+          })
+          .eq("id", candidateId);
+        revalidatePath(`/app/projects/${projectId}/candidates`);
+        return {
+          candidateId,
+          outcome: "parsed" as const,
+          message: `${person.label} is already in this mandate, but the duplicate record could not be removed: ${deleteError.message}. Both records are here.`,
+          ambiguousOf: { candidateId: person.candidateId, label: person.label },
+        };
+      }
+
+      // ⚠️ The event hangs off the SURVIVING row. `candidate_id` is ON
+      // DELETE CASCADE (053), so an event naming the row we just deleted
+      // would be deleted by the act it exists to record.
+      await recordActivity(supabase, {
+        eventType: "candidate_duplicate_discarded",
+        projectId,
+        candidateId: person.candidateId,
+        detail: {
+          file_name: file.name,
+          matched_on: person.matchedOn,
+        },
+      });
+
+      revalidatePath(`/app/projects/${projectId}/candidates`);
+      return {
+        candidateId: person.candidateId,
+        outcome: "duplicate_discarded" as const,
+        message: describeDiscard(person.label, person.matchedOn, person.stage),
+        ambiguousOf: null,
+      };
+    }
+
+    // D3 — name and employer only, on both sides. Two people really do
+    // share a name at one large employer, so both rows stand and the new
+    // one carries a flag. Nobody is merged and nothing is deleted on a
+    // heuristic; that is §175's defect class, and the importer already
+    // rules this way for exactly the same reason.
+    if (person.kind === "ambiguous") {
+      await supabase
+        .from("candidates")
+        .update({
+          identity_review_of: person.candidateId,
+          identity_review_label: person.label,
+          identity_review_at: new Date().toISOString(),
+        })
+        .eq("id", candidateId);
+
+      revalidatePath(`/app/projects/${projectId}/candidates`);
+      return {
+        candidateId,
+        outcome: "parsed" as const,
+        message: describeAmbiguous(person.label),
+        ambiguousOf: { candidateId: person.candidateId, label: person.label },
+      };
+    }
+
     // Navigation is the client's job — see submitOnboarding for the
     // revalidate-plus-redirect hang this replaces.
     revalidatePath(`/app/projects/${projectId}/candidates`);
-    return { candidateId };
+    return {
+      candidateId,
+      outcome: "parsed" as const,
+      message: otherMandateNote,
+      ambiguousOf: null,
+    };
   });
 }
 

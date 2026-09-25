@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { uploadAndParseCv } from "../../projects/[id]/candidates/actions";
+import { sha256Hex } from "@/lib/candidates/dedupe";
 import { IconClose, IconRefresh, IconArrowRight } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { unwrap } from "@/lib/actions/result";
@@ -25,9 +26,18 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 type FileState = {
   file: File;
-  status: "waiting" | "parsing" | "parsed" | "failed" | "skipped";
+  status: "waiting" | "parsing" | "parsed" | "failed" | "skipped" | "duplicate";
   message?: string;
   candidateId?: string;
+  /**
+   * SHA-256 of the bytes, computed in the browser purely to skip repeats
+   * inside one batch. NEVER sent: the server hashes what it received and
+   * that hash is the one that decides anything. Null when Web Crypto was
+   * unavailable — which means "cannot skip", never "not a duplicate".
+   */
+  sha?: string | null;
+  /** D3: parsed and KEPT, but a human was asked to look. */
+  flagged?: boolean;
 };
 
 /**
@@ -55,31 +65,71 @@ export function IntakeForm({ mandates }: { mandates: IntakeMandate[] }) {
   const pending = files.filter((f) => f.status === "waiting").length;
   const canRun = Boolean(mandateId) && pending > 0 && !running;
 
-  function addFiles(list: FileList | null) {
+  async function addFiles(list: FileList | null) {
     if (!list) return;
     setDone(false);
+
+    // 141 — hash before touching state, so the list the recruiter sees is
+    // already deduped instead of appearing and then correcting itself.
+    const incoming = await Promise.all(
+      Array.from(list).map(async (file) => {
+        try {
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          return { file, sha: await sha256Hex(bytes) };
+        } catch {
+          // Web Crypto needs a secure context, and a file that cannot be
+          // read cannot be hashed. Either way the honest answer is "we do
+          // not know", which sends the file through to the server rather
+          // than skipping it on an absence of evidence.
+          return { file, sha: null };
+        }
+      })
+    );
+
     setFiles((prev) => {
       const room = MAX_FILES - prev.length;
       if (room <= 0) {
         toast.error(`That is the cap — ${MAX_FILES} files per batch.`);
         return prev;
       }
-      const incoming = Array.from(list);
       const dropped = incoming.length - room;
-      const next = incoming.slice(0, room).map<FileState>((file) => {
+
+      // Every hash already in the list, so a second drag of the same
+      // folder is caught as surely as one drag containing two copies.
+      const seen = new Map<string, string>();
+      for (const f of prev) {
+        if (f.sha && f.status !== "skipped" && f.status !== "duplicate") {
+          if (!seen.has(f.sha)) seen.set(f.sha, f.file.name);
+        }
+      }
+
+      const next = incoming.slice(0, room).map<FileState>(({ file, sha }) => {
         // Refused here rather than at the server, because a 12 MB file
         // should not cost an upload before anyone says it is too big.
         if (file.size > MAX_FILE_BYTES) {
           return {
             file,
+            sha,
             status: "skipped",
             message: `${(file.size / 1024 / 1024).toFixed(1)} MB — over the 10 MB limit.`,
           };
         }
         if (file.size === 0) {
-          return { file, status: "skipped", message: "The file is empty." };
+          return { file, sha, status: "skipped", message: "The file is empty." };
         }
-        return { file, status: "waiting" };
+        // The same bytes twice in one batch. Certain, and free: no upload,
+        // no row, no parse. This is the case the whole slice was asked for.
+        const twin = sha ? seen.get(sha) : undefined;
+        if (twin) {
+          return {
+            file,
+            sha,
+            status: "duplicate",
+            message: `The same file as ${twin}, already in this batch. It will not be uploaded or parsed.`,
+          };
+        }
+        if (sha) seen.set(sha, file.name);
+        return { file, sha, status: "waiting" };
       });
       if (dropped > 0) {
         toast.error(
@@ -116,10 +166,27 @@ export function IntakeForm({ mandates }: { mandates: IntakeMandate[] }) {
 
       let message: string;
       try {
-        const { candidateId } = unwrap(await uploadAndParseCv(form));
+        const result = unwrap(await uploadAndParseCv(form));
+        // 141 — three outcomes, and each is told apart on its own row.
+        // A skipped file cost nothing; a discarded one cost a parse and
+        // says so; a flagged one was kept and needs a human.
+        const status: FileState["status"] =
+          result.outcome === "parsed"
+            ? "parsed"
+            : result.outcome === "same_file_skipped"
+              ? "skipped"
+              : "duplicate";
         setFiles((prev) =>
           prev.map((f, idx) =>
-            idx === i ? { ...f, status: "parsed", candidateId } : f
+            idx === i
+              ? {
+                  ...f,
+                  status,
+                  candidateId: result.candidateId,
+                  message: result.message ?? undefined,
+                  flagged: result.ambiguousOf !== null,
+                }
+              : f
           )
         );
         continue;
@@ -159,6 +226,11 @@ export function IntakeForm({ mandates }: { mandates: IntakeMandate[] }) {
 
   const parsed = files.filter((f) => f.status === "parsed").length;
   const failed = files.filter((f) => f.status === "failed").length;
+  // A status of its own rather than a flavour of "skipped", which also
+  // covers oversize and empty files: this is the number that answers
+  // "did it dedupe", and it must not be inferred from a message string.
+  const duplicates = files.filter((f) => f.status === "duplicate").length;
+  const flagged = files.filter((f) => f.flagged).length;
 
   return (
     <div className="space-y-5">
@@ -319,7 +391,10 @@ export function IntakeForm({ mandates }: { mandates: IntakeMandate[] }) {
 
         {done && (
           <p className="font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant">
-            {parsed} parsed{failed > 0 ? ` · ${failed} failed` : ""}
+            {parsed} parsed
+            {duplicates > 0 ? ` · ${duplicates} duplicate` : ""}
+            {flagged > 0 ? ` · ${flagged} flagged` : ""}
+            {failed > 0 ? ` · ${failed} failed` : ""}
           </p>
         )}
 
@@ -351,14 +426,22 @@ function StatusChip({
       : state.status === "parsing"
         ? "PARSING"
         : state.status === "parsed"
-          ? "PARSED"
+          ? // D3 kept this row and asked for a human. Saying PARSED alone
+            // would be true and would hide the only part that needs doing.
+            state.flagged
+            ? "FLAGGED"
+            : "PARSED"
           : state.status === "failed"
             ? "FAILED"
-            : "SKIPPED";
+            : state.status === "duplicate"
+              ? "DUPLICATE"
+              : "SKIPPED";
 
   const tone =
     state.status === "parsed"
-      ? "border-secondary/40 text-secondary"
+      ? state.flagged
+        ? "border-warn/50 text-warn"
+        : "border-secondary/40 text-secondary"
       : state.status === "failed"
         ? "border-error/50 text-error"
         : state.status === "parsing"
@@ -379,7 +462,12 @@ function StatusChip({
     </span>
   );
 
-  if (state.status === "parsed" && candidateHref) {
+  // A discarded duplicate points at the row that SURVIVED — the recruiter
+  // asked about this person and there is a real record to show them.
+  if (
+    (state.status === "parsed" || state.status === "duplicate") &&
+    candidateHref
+  ) {
     return (
       <Link href={candidateHref} prefetch={false} className="shrink-0">
         {chip}

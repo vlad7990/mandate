@@ -90,6 +90,21 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Moved the candidate from ${from} to ${to}`;
     }
 
+    // 141 — the event hangs off the row that SURVIVED, so the sentence is
+    // written from that row's point of view: something was uploaded, it
+    // turned out to be this person again, and it was dropped.
+    case "candidate_duplicate_discarded": {
+      const file = str(d, "file_name");
+      const on = str(d, "matched_on");
+      const how =
+        on === "email"
+          ? " (same email address)"
+          : on === "linkedin"
+            ? " (same LinkedIn profile)"
+            : "";
+      return `Discarded a duplicate CV upload${file ? ` — ${file}` : ""}${how}; this record was kept unchanged`;
+    }
+
     case "task_assigned": {
       const title = str(d, "task_title");
       const to = str(d, "to_label");

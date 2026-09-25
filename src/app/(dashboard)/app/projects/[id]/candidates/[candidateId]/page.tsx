@@ -144,6 +144,10 @@ type CandidateRow = {
   source_kind: string | null;
   sourced_at: string | null;
   subject_notified_at: string | null;
+  /** 141 (D3) — the name|company-only match a human was asked to settle. */
+  identity_review_of: string | null;
+  identity_review_label: string | null;
+  identity_review_at: string | null;
 };
 
 const ARCHETYPE_BLURBS: Record<Archetype, string> = {
@@ -205,7 +209,7 @@ export default async function CandidateProfilePage({
     supabase
       .from("candidates")
       .select(
-        "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, pipeline_stage, cv_url, cv_structured, cv_processing, cv_parse_error, recruiter_assessment, updated_at, source_kind, sourced_at, subject_notified_at"
+        "id, project_id, full_name, email, linkedin_url, twitter_url, github_url, website_url, phone, location, current_title, current_company, archetype, pipeline_stage, cv_url, cv_structured, cv_processing, cv_parse_error, recruiter_assessment, updated_at, source_kind, sourced_at, subject_notified_at, identity_review_of, identity_review_label, identity_review_at"
       )
       .eq("id", candidateId)
       .single<CandidateRow>(),
@@ -529,6 +533,52 @@ export default async function CandidateProfilePage({
 
   const notices = (
     <>
+      {/*
+        141 (gate D3) — this row matched another in the same mandate on
+        name and employer alone. That is a heuristic, not a finding: two
+        people really do share a name at one large employer, which is why
+        nothing was merged and nothing was deleted. The notice says what
+        matched AND what did not, so the reader can tell a fact from an
+        inference — §175's rule, on the screen where the inference landed.
+
+        `identity_review_at` is what marks the flag, not the pointer: the
+        FK is ON DELETE SET NULL, so the other row can go while the fact
+        that a human was asked remains. The label is a snapshot and still
+        reads when the pointer is gone.
+      */}
+      {candidate.identity_review_at && candidate.identity_review_label && (
+        <div
+          role="note"
+          className="mb-5 flex items-start gap-3 border border-warn/60 bg-warn/10 px-4 py-3"
+        >
+          <span className="mt-px shrink-0 font-mono-label text-[10px] font-bold uppercase tracking-[0.1em] text-warn">
+            Check
+          </span>
+          <div>
+            <div className="text-[13px] font-semibold text-on-surface">
+              Possibly the same person as {candidate.identity_review_label}
+            </div>
+            <p className="mt-1 text-[13px] leading-relaxed text-on-surface-variant">
+              Both records are in this mandate under the same name and
+              employer, and nothing stronger connects them — no shared email
+              address, no shared LinkedIn profile. That may be two records of
+              one person, or two people who share a name at one large
+              employer. Nothing has been merged and nothing has been deleted.
+              If they are the same person, delete the record you do not want.
+            </p>
+            {candidate.identity_review_of && (
+              <Link
+                href={`/app/projects/${projectId}/candidates/${candidate.identity_review_of}`}
+                prefetch={false}
+                className="mt-2 inline-block font-mono-label text-[11px] uppercase tracking-[0.1em] text-primary underline underline-offset-2"
+              >
+                Open the other record
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
       {parseError && (
         <div
           role="alert"

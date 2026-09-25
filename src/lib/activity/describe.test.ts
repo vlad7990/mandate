@@ -374,6 +374,12 @@ describe("the vocabulary", () => {
       // can_write_candidates(), and it files under mandates like the
       // rest of the candidate events.
       "candidate_stage_changed",
+      // 141: the duplicate CV upload that was parsed, recognised and
+      // dropped — the same candidate-writer gate, and it files under
+      // mandates beside the pipeline move. The event hangs off the row
+      // that SURVIVED: candidate_id cascades on delete, so anchoring it
+      // to the discarded row would erase the record of the discard.
+      "candidate_duplicate_discarded",
       // 106: the task domain — assignment desk-gated inside the RPC,
       // completion actor-stamped. Desk work files under mandates.
       "task_assigned",
@@ -412,6 +418,7 @@ describe("the vocabulary", () => {
       const expected =
         type === "mandate_reassigned" ||
         type === "candidate_stage_changed" ||
+        type === "candidate_duplicate_discarded" ||
         type.startsWith("skill_") ||
         type.startsWith("task_") ||
         type.startsWith("objective_") ||
@@ -436,11 +443,33 @@ describe("the vocabulary", () => {
    * acts = 89; 123 adds the invoice lifecycle's three human acts = 92;
    * 126 adds the send = 93; 129 adds the four admin-grant events = 97;
    * 130 adds the role seam's rederivation = 98; 132 adds the contested
-   * verdict = 99; 140 adds the reporting line's move = 100.
+   * verdict = 99; 140 adds the reporting line's move = 100; 141 adds the
+   * discarded duplicate CV = 101.
    */
-  it("mirrors the live CHECK's one hundred event types", () => {
-    expect(ACTIVITY_EVENT_TYPES).toHaveLength(100);
-    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(100);
+  it("mirrors the live CHECK's hundred-and-one event types", () => {
+    expect(ACTIVITY_EVENT_TYPES).toHaveLength(101);
+    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(101);
+  });
+
+  it("describes a discarded duplicate from the surviving row's side", () => {
+    // The event hangs off the record that was KEPT, so the sentence has to
+    // read as something that happened TO it — not as if this record were
+    // the one thrown away.
+    expect(
+      describeActivity(
+        event("candidate_duplicate_discarded", {
+          file_name: "jane-doe-cv.pdf",
+          matched_on: "email",
+        })
+      )
+    ).toBe(
+      "Discarded a duplicate CV upload — jane-doe-cv.pdf (same email address); this record was kept unchanged"
+    );
+    // Detail is snapshotted by the writer, so a row from an older shape
+    // must still read rather than printing "undefined".
+    expect(describeActivity(event("candidate_duplicate_discarded", {}))).toBe(
+      "Discarded a duplicate CV upload; this record was kept unchanged"
+    );
   });
 
   it("describes the OKR acts with titles and outcomes, never amounts", () => {
