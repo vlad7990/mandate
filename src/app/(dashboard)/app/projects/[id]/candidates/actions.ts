@@ -110,6 +110,9 @@ export async function uploadAndParseCv(
         pipeline_stage: "found",
         cv_processing: true,
         source: "upload",
+        // §200 — who brought this person in. Scopes the reuse agent's
+        // trawl and nothing else; it never narrows who may read the row.
+        created_by: userId,
       })
       .select("id")
       .single<{ id: string }>();

@@ -494,6 +494,19 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Moved ${who} to another organization`;
     }
 
+    // 140 (§200): whose desk a member sits on. Names are snapshots, for
+    // the same reason org names are above — the sentence has to stay
+    // readable after the manager's account is gone.
+    case "member_manager_changed": {
+      const who = str(d, "member") ?? "a member";
+      const from = str(d, "from");
+      const to = str(d, "to");
+      if (to && from) return `Moved ${who} from ${from}'s desk to ${to}'s`;
+      if (to) return `Put ${who} on ${to}'s desk`;
+      if (from) return `Took ${who} off ${from}'s desk`;
+      return `Changed whose desk ${who} sits on`;
+    }
+
     // 067–070: the External Identity programme. Names and emails are
     // snapshots on the detail — the invitation row outlives nobody.
     case "external_invited": {

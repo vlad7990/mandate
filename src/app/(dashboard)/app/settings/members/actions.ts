@@ -146,6 +146,84 @@ export async function setMemberRoleAction(
 }
 
 /**
+ * Whose desk a member sits on (§200, migration 140).
+ *
+ * What this is NOT: a permission. The reporting line scopes which CVs the
+ * reuse agent trawls on someone's behalf and nothing else — every
+ * candidate in the org stays readable by every active member, exactly as
+ * before. The header of 140 is the record of that decision.
+ *
+ * The structural rules (same org, an active manager or admin at the head,
+ * no self-report, no two-cycle) live in `guard_user_privilege_changes`,
+ * so they hold for a hand-written UPDATE too. They are not restated here:
+ * the trigger raises a readable sentence and this passes it through, the
+ * same arrangement the last-admin rule uses above.
+ */
+export async function setMemberManagerAction(
+  targetUserId: string,
+  managerId: string | null
+): Promise<ActionResult<"applied">> {
+  // Its own subject: a failure here must not read "The role change".
+  return runAction<"applied">("The desk change", async () => {
+    const actor = await requireActionContext("org:manage");
+    const supabase = await createServerSupabaseClient();
+
+    const { data: target, error: readError } = await supabase
+      .from("users")
+      .select("id, organization_id, is_founder, role, manager_id")
+      .eq("id", targetUserId)
+      .single<{
+        id: string;
+        organization_id: string | null;
+        is_founder: boolean;
+        role: string | null;
+        manager_id: string | null;
+      }>();
+
+    if (readError || !target) {
+      throw new Error("That member is not visible from your organisation.");
+    }
+    if (target.organization_id !== actor.organizationId) {
+      throw new Error("That member belongs to a different organisation.");
+    }
+    if (target.is_founder) {
+      throw new Error(
+        "Founder accounts are managed by Mandate and cannot be changed here."
+      );
+    }
+    if (parseRole(target.role) === "agent") {
+      throw new Error(
+        "Agent principals are managed from the operator console, not the members screen."
+      );
+    }
+
+    if (target.manager_id === managerId) {
+      return "applied"; // No-op: don't spend a write or a revalidation.
+    }
+
+    const { data: updated, error: updateError } = await supabase
+      .from("users")
+      .update({ manager_id: managerId, updated_at: new Date().toISOString() })
+      .eq("id", targetUserId)
+      .select("id");
+
+    if (updateError) throw new Error(updateError.message);
+
+    // Same reasoning as the role write: RLS refusing the row is SILENT —
+    // the statement succeeds and touches nothing — so the returned row is
+    // what separates "done" from "quietly refused".
+    if (!updated || updated.length === 0) {
+      throw new Error(
+        "The change was refused. You may no longer have admin access to this organisation."
+      );
+    }
+
+    revalidatePath("/app/settings/members");
+    return "applied";
+  });
+}
+
+/**
  * Suspending or restoring a colleague (§134 D3).
  *
  * Same discipline as the role writer: capability gate first, refusals in

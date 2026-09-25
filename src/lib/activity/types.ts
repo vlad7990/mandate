@@ -56,6 +56,7 @@ export const ACTIVITY_EVENT_TYPES = [
   "member_status_changed",
   "member_founder_changed",
   "member_org_changed",
+  "member_manager_changed",
 
   "shortlist_published",
   "report_exported",
@@ -348,6 +349,7 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
   member_status_changed: "members",
   member_founder_changed: "members",
   member_org_changed: "members",
+  member_manager_changed: "members",
 
   admin_grant_proposed: "members",
   admin_grant_approved: "members",

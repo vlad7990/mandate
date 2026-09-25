@@ -5,6 +5,7 @@ import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
 import { PageShell } from "@/components/ui/page-shell";
 import { MastHead } from "@/components/ui/mast-head";
 import { RolePicker } from "./role-picker";
+import { DeskPicker, type DeskHead } from "./desk-picker";
 import { MemberStatusButtons } from "./member-status-buttons";
 import { StaffInvitePanel, type OpenInvitationRow } from "./invite-panel";
 import { PendingGrantsPanel, type PendingGrantRow } from "./pending-grants-panel";
@@ -41,6 +42,8 @@ type MemberRow = {
   is_founder: boolean;
   organization_id: string | null;
   created_at: string | null;
+  /** §200 — whose desk they sit on. Scopes the reuse agent's trawl only. */
+  manager_id: string | null;
 };
 
 const STATUS_TONE: Record<string, string> = {
@@ -68,12 +71,22 @@ export default async function MembersPage() {
   const { data } = await supabase
     .from("users")
     .select(
-      "id, email, full_name, role, status, is_founder, organization_id, created_at"
+      "id, email, full_name, role, status, is_founder, organization_id, created_at, manager_id"
     )
     .eq("organization_id", access.organizationId ?? "")
     .order("created_at", { ascending: true });
 
   const members = (data ?? []) as MemberRow[];
+
+  // §200 — who may head a desk. The database refuses anyone else (140),
+  // so offering a wider list would be a control that cannot work.
+  const deskHeads: DeskHead[] = members
+    .filter(
+      (m) =>
+        m.status === "active" &&
+        (parseRole(m.role) === "manager" || parseRole(m.role) === "admin")
+    )
+    .map((m) => ({ id: m.id, label: m.full_name?.trim() || m.email }));
 
   const activeAdmins = members.filter(
     (m) => m.status === "active" && parseRole(m.role) === "admin"
@@ -190,15 +203,15 @@ export default async function MembersPage() {
           it their containing block, so the clip applies.
         */}
         <div className="relative min-w-0 max-w-full overflow-x-auto border border-outline-variant bg-surface-container-low">
-          <table className="w-full border-collapse sm:min-w-[720px]">
+          <table className="w-full border-collapse sm:min-w-[860px]">
             <thead>
               <tr className="border-b border-outline-variant">
-                {["Name", "Email", "Status", "Joined", "Role"].map((h, i) => (
+                {["Name", "Email", "Status", "Joined", "Desk", "Role"].map((h, i) => (
                   <th
                     key={h}
                     scope="col"
                     className={`px-4 py-2.5 font-mono-label text-mono-label uppercase tracking-widest text-outline ${
-                      i === 4 ? "text-right" : "text-left"
+                      i === 5 ? "text-right" : "text-left"
                     }`}
                   >
                     {h}
@@ -250,6 +263,22 @@ export default async function MembersPage() {
                     </td>
                     <td className="px-4 py-3 font-mono-data text-on-surface-variant tabular-nums">
                       {formatDate(member.created_at)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <DeskPicker
+                        userId={member.id}
+                        displayName={member.full_name?.trim() || member.email}
+                        currentManagerId={member.manager_id}
+                        heads={deskHeads}
+                        disabled={locked}
+                        disabledReason={
+                          isAgent
+                            ? "Agent principals are managed from Platform ops"
+                            : locked
+                              ? "Founder accounts are managed by Mandate"
+                              : undefined
+                        }
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">

@@ -182,6 +182,10 @@ export async function addPersonToProjectAction(
         cv_structured: cleanCv,
         cv_processing: !!source.cv_url,
         source: "network_copy",
+        // §200 — the copy belongs to whoever reused the person, not to
+        // whoever first uploaded them: it is a new row on a new mandate,
+        // and the trawl should offer it back to the person who chose it.
+        created_by: auth.userId,
       })
       .select("id")
       .single<{ id: string }>();
