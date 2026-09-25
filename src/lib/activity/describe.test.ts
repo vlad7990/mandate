@@ -444,11 +444,15 @@ describe("the vocabulary", () => {
    * 126 adds the send = 93; 129 adds the four admin-grant events = 97;
    * 130 adds the role seam's rederivation = 98; 132 adds the contested
    * verdict = 99; 140 adds the reporting line's move = 100; 141 adds the
-   * discarded duplicate CV = 101.
+   * discarded duplicate CV = 101; 142 adds the merge = 102.
+   *
+   * Note 142 grows the CHECK without growing the app-recordable door: the
+   * merge event is written inside `merge_candidates` itself, so it shares
+   * that transaction and cannot be skipped.
    */
-  it("mirrors the live CHECK's hundred-and-one event types", () => {
-    expect(ACTIVITY_EVENT_TYPES).toHaveLength(101);
-    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(101);
+  it("mirrors the live CHECK's hundred-and-two event types", () => {
+    expect(ACTIVITY_EVENT_TYPES).toHaveLength(102);
+    expect(new Set(ACTIVITY_EVENT_TYPES).size).toBe(102);
   });
 
   it("describes a discarded duplicate from the surviving row's side", () => {

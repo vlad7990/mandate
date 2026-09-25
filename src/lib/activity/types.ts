@@ -107,6 +107,13 @@ export const ACTIVITY_EVENT_TYPES = [
   // discarded row would delete the record of its own discarding.
   "candidate_duplicate_discarded",
 
+  // 142: two records of one person were merged. Written by
+  // `merge_candidates` itself rather than through the app-recordable
+  // door, so it shares the merge's transaction and cannot be skipped —
+  // which is why the door stays at 27 while this vocabulary grows. Also
+  // anchored to the survivor, for 141's cascade reason.
+  "candidates_merged",
+
   // 106: the task domain. Assigning is the desk's act (gated
   // can_manage_desk inside the RPC); completing rides the actor
   // stamp — the RLS pin already proved the right. Labels snapshot
@@ -398,6 +405,7 @@ export const ACTIVITY_GROUP_OF: Record<ActivityEventType, ActivityGroup> = {
 
   candidate_stage_changed: "mandates",
   candidate_duplicate_discarded: "mandates",
+  candidates_merged: "mandates",
 
   task_assigned: "mandates",
   task_completed: "mandates",

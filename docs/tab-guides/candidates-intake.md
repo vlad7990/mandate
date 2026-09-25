@@ -46,9 +46,12 @@ and the row tells you the file you uploaded was not kept.
 
 Where the only thing shared is a name and an employer, **both records
 stay**. Two people really do share a name at one large firm, so that pair
-is flagged for you on the candidate's own screen rather than merged. There
-is no merge tool here: if they are one person, delete the record you do
-not want.
+is flagged for you on the candidate's own screen rather than merged. If
+they are one person, that flag is where you resolve it: **Merge these
+records** shows you both side by side, you choose which one to keep, and
+everything written about the other — notes, feedback, history — moves
+across. What cannot move is named before you confirm, and the merge cannot
+be undone. A record carrying a placement is never the one discarded.
 
 The same file under a **different** mandate is not a duplicate at all. It
 is reported and parsed anyway — one person in two searches is two records,

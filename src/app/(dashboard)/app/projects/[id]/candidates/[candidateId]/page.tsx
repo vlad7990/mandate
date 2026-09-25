@@ -47,6 +47,8 @@ import {
 import { EvaluationReport } from "./evaluation-report";
 import { CandidateNotesPanel, type CandidateNote } from "./notes-panel";
 import { PlacementPanel } from "./placement-panel";
+import { MergePanel } from "./merge-panel";
+import type { RecordSummary } from "@/lib/candidates/merge";
 import { getAccess } from "@/lib/auth/access";
 import { can } from "@/lib/auth/roles";
 import { canReadPlacementFees } from "@/lib/fees/access";
@@ -531,6 +533,15 @@ export default async function CandidateProfilePage({
     : { data: null };
   const advisoryMode = orgRow?.advisory_mode ?? false;
 
+  // §202 — the merge affordance's data. Only built when §201 has actually
+  // flagged this row against another, so an unflagged record pays for
+  // nothing. Both sides are read the same way and from the same columns:
+  // a side-by-side where the two halves were gathered differently is a
+  // side-by-side that can lie about the difference.
+  const mergePair = candidate.identity_review_at
+    ? await loadMergePair(supabase, candidate.id, candidate.identity_review_of)
+    : null;
+
   const notices = (
     <>
       {/*
@@ -564,7 +575,14 @@ export default async function CandidateProfilePage({
               address, no shared LinkedIn profile. That may be two records of
               one person, or two people who share a name at one large
               employer. Nothing has been merged and nothing has been deleted.
-              If they are the same person, delete the record you do not want.
+              {/*
+                §202 — this sentence used to end "delete the record you do
+                not want", and there is no delete-candidate action in the
+                product. It instructed the reader to do something the
+                product cannot do: §199's doctrine, committed one screen
+                over by the slice that shipped this notice. The affordance
+                below is the honest version of that instruction.
+              */}
             </p>
             {candidate.identity_review_of && (
               <Link
@@ -574,6 +592,14 @@ export default async function CandidateProfilePage({
               >
                 Open the other record
               </Link>
+            )}
+            {mergePair && (
+              <MergePanel
+                projectId={projectId}
+                thisRecord={mergePair.thisRecord}
+                otherRecord={mergePair.otherRecord}
+                canMerge={can(access?.role, "candidates:write")}
+              />
             )}
           </div>
         </div>
@@ -1727,6 +1753,78 @@ function EvaluationPendingPanel({
 
 // Forces TS to treat ARCHETYPES as imported even if unused above (it's referenced by Archetype).
 void ARCHETYPES;
+
+/**
+ * §202 — what each half of a flagged pair carries, for the merge
+ * side-by-side.
+ *
+ * ONE query shape for BOTH records, deliberately. A comparison built from
+ * two differently-gathered halves can show a difference that is an
+ * artefact of how it was read rather than of what is there — and this
+ * particular comparison is what a recruiter uses to decide which record
+ * to destroy.
+ *
+ * Returns null if the other row has gone. `identity_review_of` is
+ * ON DELETE SET NULL (141) while `identity_review_at` is what marks a row
+ * as flagged, so a stale flag whose partner is already deleted is a real
+ * state — and it must not render a merge against nothing.
+ */
+async function loadMergePair(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  thisId: string,
+  otherId: string | null
+): Promise<{ thisRecord: RecordSummary; otherRecord: RecordSummary } | null> {
+  if (!otherId) return null;
+
+  const { data: rows } = await supabase
+    .from("candidates")
+    .select(
+      "id, full_name, pipeline_stage, cv_url, email, linkedin_url, current_title, current_company, created_at"
+    )
+    .in("id", [thisId, otherId]);
+
+  if (!rows || rows.length !== 2) return null;
+
+  const ids = [thisId, otherId];
+  const { data: scoreRows } = await supabase
+    .from("candidate_scores")
+    .select("candidate_id, overall_score")
+    .in("candidate_id", ids);
+  const { data: noteRows } = await supabase
+    .from("candidate_notes")
+    .select("candidate_id")
+    .in("candidate_id", ids);
+  // Named FK, never a bare embed: the composite `_in_org` twin makes an
+  // unqualified `candidates(...)` embed return nothing (§158's F-1).
+  const { data: placementRows } = await supabase
+    .from("placements")
+    .select("candidate_id")
+    .in("candidate_id", ids);
+
+  const summarize = (row: (typeof rows)[number]): RecordSummary => ({
+    id: row.id,
+    fullName: row.full_name,
+    stage: row.pipeline_stage,
+    score:
+      (scoreRows ?? []).find((s) => s.candidate_id === row.id)?.overall_score ??
+      null,
+    notes: (noteRows ?? []).filter((n) => n.candidate_id === row.id).length,
+    // Filename only — the storage path is nobody's business on screen.
+    cvName: row.cv_url ? (row.cv_url.split("/").pop() ?? null) : null,
+    email: row.email,
+    linkedinUrl: row.linkedin_url,
+    currentTitle: row.current_title,
+    currentCompany: row.current_company,
+    hasPlacement: (placementRows ?? []).some((p) => p.candidate_id === row.id),
+    createdAt: row.created_at,
+  });
+
+  const thisRow = rows.find((r) => r.id === thisId);
+  const otherRow = rows.find((r) => r.id === otherId);
+  if (!thisRow || !otherRow) return null;
+
+  return { thisRecord: summarize(thisRow), otherRecord: summarize(otherRow) };
+}
 
 /**
  * First non-empty stakeholder is treated as the hiring manager — same

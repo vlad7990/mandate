@@ -105,6 +105,23 @@ export function describeActivity(event: ActivityEventRow): string {
       return `Discarded a duplicate CV upload${file ? ` — ${file}` : ""}${how}; this record was kept unchanged`;
     }
 
+    // 142 — written inside merge_candidates' own transaction, anchored to
+    // the record that survived. The dropped half is named because that is
+    // the part a reader of the trail would otherwise never learn.
+    case "candidates_merged": {
+      const other = str(d, "discarded_label");
+      const dropped = d.dropped;
+      const droppedKeys =
+        dropped && typeof dropped === "object" && !Array.isArray(dropped)
+          ? Object.keys(dropped as Record<string, unknown>)
+          : [];
+      const tail =
+        droppedKeys.length > 0
+          ? `; dropped ${droppedKeys.map((k) => k.replace(/_/g, " ")).join(", ")}`
+          : "";
+      return `Merged ${other ? `"${other}"` : "another record"} into this one${tail}`;
+    }
+
     case "task_assigned": {
       const title = str(d, "task_title");
       const to = str(d, "to_label");
