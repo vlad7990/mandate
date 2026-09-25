@@ -42,13 +42,21 @@ export default async function NetworkPage() {
   const isFounder = viewerRow?.is_founder === true;
 
   // §203 — the merge panel's list. Built from the SAME profile rows the
-  // relationship overlay uses, so the two cannot disagree about who
-  // exists. The candidate count per person is read off the network
-  // overview's own fold rather than a second query with a second identity
-  // rule — `identity_key` is what both sides key on.
-  const appearancesByKey = new Map<string, number>();
-  for (const person of overview.people) {
-    appearancesByKey.set(person.identity_key, person.appearances?.length ?? 0);
+  // relationship overlay uses, so the two cannot disagree about who exists.
+  //
+  // The per-person record count is read off `network_profile_id`, NOT off
+  // the overview's fold on `identity_key`. Drive 135 showed why: after a
+  // merge the two candidate rows still compute DIFFERENT identity keys —
+  // that is the whole reason the person was split — so counting by key
+  // reported "1 record" for somebody who now holds two.
+  const { data: profileCounts } = await supabase
+    .from("candidates")
+    .select("network_profile_id")
+    .not("network_profile_id", "is", null);
+  const countByProfile = new Map<string, number>();
+  for (const row of profileCounts ?? []) {
+    const key = row.network_profile_id as string;
+    countByProfile.set(key, (countByProfile.get(key) ?? 0) + 1);
   }
   const mergeablePeople: MergeablePerson[] = Array.from(profileMap.values())
     .map((profile) => ({
@@ -58,7 +66,7 @@ export default async function NetworkPage() {
       relationshipState: profile.relationship_state,
       dnc: profile.dnc,
       dncReason: profile.dnc_reason,
-      candidates: appearancesByKey.get(profile.identity_key) ?? 0,
+      candidates: countByProfile.get(profile.id) ?? 0,
     }))
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
   const access = await getAccess();

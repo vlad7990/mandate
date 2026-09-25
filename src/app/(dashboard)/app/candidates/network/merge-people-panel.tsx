@@ -78,6 +78,11 @@ export function MergePeoplePanel({
         the old identifier so the join survives and a future CV under it
         rejoins this person.
       </p>
+      <p className="mt-2 max-w-3xl text-[12px] leading-relaxed text-outline">
+        What merges is the PERSON — their relationship, their suppression and
+        their history. The candidate records keep their own identifiers, so the
+        table above still groups by the identifier each record carries.
+      </p>
 
       {!canMerge ? (
         <p className="mt-3 font-mono-label text-mono-label uppercase tracking-widest text-outline">
