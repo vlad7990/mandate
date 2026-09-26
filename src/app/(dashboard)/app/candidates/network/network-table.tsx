@@ -1,16 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-import {
-  ARCHETYPES,
-  PIPELINE_LABELS,
-  PIPELINE_STAGES,
-  type Archetype,
-  type PipelineStage,
-} from "@/lib/ai/cv-parsing";
-import { TIER_BANDS, TIER_ORDER, type Tier } from "@/lib/ranking/tiers";
+import { type Archetype } from "@/lib/ai/cv-parsing";
+import { TIER_BANDS, type Tier } from "@/lib/ranking/tiers";
 import type {
   NetworkPerson,
   NetworkProject,
@@ -18,14 +12,6 @@ import type {
 import { AddToSearchButton } from "./add-to-search-button";
 import { RelationshipCard } from "./relationship-card";
 import type { RelationshipProfile } from "@/lib/network/profile-resolver";
-import {
-  IconArrowDown,
-  IconArrowUp,
-  IconSearch,
-} from "@/components/icons";
-
-type SortKey = "best_score" | "average_score" | "last_active" | "name";
-type SortDir = "asc" | "desc";
 
 const TIER_TONE: Record<Tier, string> = {
   tier_1: "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim",
@@ -43,12 +29,20 @@ const ARCHETYPE_TONE: Record<Archetype, string> = {
 };
 
 /**
- * People per page. Each row is a card carrying appearances, scores and
- * project chips, so the whole pool in one list was both a long scroll and a
- * large amount of DOM.
+ * The people on THIS PAGE.
+ *
+ * §205 — this component used to hold the whole pool and do the work: search,
+ * five filters, four sorts and pagination, all in the browser over up to
+ * 2,000 candidate rows' worth of folded people. All of that now happens in
+ * Postgres (migration 145) with the page's state in the URL, so what is left
+ * here is the rendering — and the card's own local state, which is the only
+ * state that was ever really local: whether the relationship panel is open.
+ *
+ * Deleting the client-side filters was not optional once the table pages. A
+ * search box that filters the current page while the header counts the whole
+ * pool is two different answers to one question on one screen — §175's class,
+ * which this page has now been bitten by twice.
  */
-const PER_PAGE = 25;
-
 export function NetworkTable({
   people,
   activeProjects,
@@ -62,294 +56,26 @@ export function NetworkTable({
   profiles: Record<string, RelationshipProfile>;
   isFounder: boolean;
 }) {
-  const [query, setQuery] = useState("");
-  const [archetypeFilter, setArchetypeFilter] = useState<string>("");
-  const [tierFilter, setTierFilter] = useState<string>("");
-  const [domainFilter, setDomainFilter] = useState<string>("");
-  const [stageFilter, setStageFilter] = useState<string>("");
-  const [yearsFilter, setYearsFilter] = useState<string>("");
-  const [sortKey, setSortKey] = useState<SortKey>("best_score");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [page, setPage] = useState(1);
-
-  // Domain options come from the actual data — capped + sorted.
-  const domainOptions = useMemo(() => {
-    const set = new Set<string>();
-    for (const p of people) {
-      if (p.domain) set.add(p.domain);
-    }
-    return Array.from(set).sort();
-  }, [people]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return people.filter((p) => {
-      if (archetypeFilter && p.archetype !== archetypeFilter) return false;
-      if (tierFilter && p.best_tier !== tierFilter) return false;
-      if (domainFilter && p.domain !== domainFilter) return false;
-      if (stageFilter) {
-        const stages = new Set(p.appearances.map((a) => a.pipeline_stage));
-        if (!stages.has(stageFilter as PipelineStage)) return false;
-      }
-      if (yearsFilter) {
-        const y = p.years_experience ?? 0;
-        if (yearsFilter === "0-5" && y > 5) return false;
-        if (yearsFilter === "6-10" && (y < 6 || y > 10)) return false;
-        if (yearsFilter === "11-20" && (y < 11 || y > 20)) return false;
-        if (yearsFilter === "21+" && y < 21) return false;
-      }
-      if (q.length === 0) return true;
-      const haystack = [
-        p.full_name,
-        p.current_title,
-        p.current_company,
-        p.domain,
-        ...p.tech_exposure,
-      ]
-        .filter((s): s is string => !!s)
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [
-    people,
-    query,
-    archetypeFilter,
-    tierFilter,
-    domainFilter,
-    stageFilter,
-    yearsFilter,
-  ]);
-
-  const sorted = useMemo(() => {
-    const list = [...filtered];
-    list.sort((a, b) => {
-      const av = sortValue(a, sortKey);
-      const bv = sortValue(b, sortKey);
-      if (typeof av === "number" && typeof bv === "number") {
-        return sortDir === "asc" ? av - bv : bv - av;
-      }
-      const aStr = String(av).toLowerCase();
-      const bStr = String(bv).toLowerCase();
-      if (aStr === bStr) return 0;
-      const cmp = aStr < bStr ? -1 : 1;
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-    return list;
-  }, [filtered, sortKey, sortDir]);
-
-  const pageCount = Math.max(1, Math.ceil(sorted.length / PER_PAGE));
-  // A filter change can leave the current page past the end of the new
-  // result set; clamp rather than showing an empty page.
-  const currentPage = Math.min(page, pageCount);
-  const visible = sorted.slice(
-    (currentPage - 1) * PER_PAGE,
-    currentPage * PER_PAGE
-  );
-
-  return (
-    <div className="space-y-3">
-      <div className="bg-surface-container-low border border-outline-variant p-4 space-y-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <IconSearch size={20} className="text-primary shrink-0" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, title, company, domain, skills"
-            className="flex-1 min-w-[260px] bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface focus:border-primary focus:outline-none transition-colors"
-          />
-          <SortControls
-            sortKey={sortKey}
-            sortDir={sortDir}
-            onChange={(k, d) => {
-              setSortKey(k);
-              setSortDir(d);
-            }}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-          <FilterSelect
-            label="Archetype"
-            value={archetypeFilter}
-            onChange={setArchetypeFilter}
-            options={[
-              { value: "", label: "All archetypes" },
-              ...ARCHETYPES.map((a) => ({ value: a, label: a })),
-            ]}
-          />
-          <FilterSelect
-            label="Best tier"
-            value={tierFilter}
-            onChange={setTierFilter}
-            options={[
-              { value: "", label: "All tiers" },
-              ...TIER_ORDER.map((t) => ({
-                value: t,
-                label: TIER_BANDS[t].label.split(" · ")[0],
-              })),
-            ]}
-          />
-          <FilterSelect
-            label="Pipeline stage"
-            value={stageFilter}
-            onChange={setStageFilter}
-            options={[
-              { value: "", label: "Any stage" },
-              ...PIPELINE_STAGES.map((s) => ({
-                value: s,
-                label: PIPELINE_LABELS[s],
-              })),
-            ]}
-          />
-          <FilterSelect
-            label="Domain"
-            value={domainFilter}
-            onChange={setDomainFilter}
-            options={[
-              { value: "", label: "All domains" },
-              ...domainOptions.map((d) => ({ value: d, label: d })),
-            ]}
-          />
-          <FilterSelect
-            label="Years"
-            value={yearsFilter}
-            onChange={setYearsFilter}
-            options={[
-              { value: "", label: "Any" },
-              { value: "0-5", label: "0–5" },
-              { value: "6-10", label: "6–10" },
-              { value: "11-20", label: "11–20" },
-              { value: "21+", label: "21+" },
-            ]}
-          />
-        </div>
-      </div>
-
-      <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
-        Showing {visible.length === 0 ? 0 : (currentPage - 1) * PER_PAGE + 1}–
-        {(currentPage - 1) * PER_PAGE + visible.length} of {sorted.length}
-        {sorted.length === people.length ? "" : ` filtered from ${people.length}`}{" "}
-        people
+  if (people.length === 0) {
+    return (
+      <p className="font-mono-label text-mono-label text-outline italic uppercase tracking-widest text-center px-2 py-12">
+        No people match the current filters.
       </p>
-
-      {sorted.length === 0 ? (
-        <p className="font-mono-label text-mono-label text-outline italic uppercase tracking-widest text-center px-2 py-12">
-          No people match the current filters.
-        </p>
-      ) : (
-        <>
-          <ul className="space-y-2">
-            {visible.map((p) => (
-              <NetworkCard
-                key={p.profile_id}
-                person={p}
-                activeProjects={activeProjects}
-                profile={profiles[p.profile_id] ?? null}
-                isFounder={isFounder}
-              />
-            ))}
-          </ul>
-          <NetworkPager
-            page={currentPage}
-            pageCount={pageCount}
-            onPage={setPage}
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-function sortValue(p: NetworkPerson, key: SortKey): string | number {
-  switch (key) {
-    case "best_score":
-      return p.best_score ?? -1;
-    case "average_score":
-      return p.average_score ?? -1;
-    case "last_active":
-      return new Date(p.last_active_at).getTime();
-    case "name":
-      return p.full_name;
+    );
   }
-}
 
-function SortControls({
-  sortKey,
-  sortDir,
-  onChange,
-}: {
-  sortKey: SortKey;
-  sortDir: SortDir;
-  onChange: (k: SortKey, d: SortDir) => void;
-}) {
-  const opts: Array<{ value: SortKey; label: string }> = [
-    { value: "best_score", label: "Best score" },
-    { value: "average_score", label: "Avg score" },
-    { value: "last_active", label: "Most recent" },
-    { value: "name", label: "Alphabetical" },
-  ];
   return (
-    <div className="flex items-center gap-2">
-      <select
-        value={sortKey}
-        onChange={(e) => {
-          const k = e.target.value as SortKey;
-          onChange(k, k === "name" ? "asc" : "desc");
-        }}
-        className="bg-surface-container-lowest border border-outline-variant px-2 py-1.5 text-on-surface text-body-main focus:border-primary focus:outline-none transition-colors"
-      >
-        {opts.map((o) => (
-          <option key={o.value} value={o.value}>
-            Sort: {o.label}
-          </option>
-        ))}
-      </select>
-      <button
-        type="button"
-        onClick={() => onChange(sortKey, sortDir === "asc" ? "desc" : "asc")}
-        aria-label={`Toggle sort direction (currently ${sortDir})`}
-        className="w-8 h-8 border border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary flex items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
-      >
-        {sortDir === "asc" ? (
-          <IconArrowUp size={16} />
-        ) : (
-          <IconArrowDown size={16} />
-        )}
-      </button>
-    </div>
-  );
-}
-
-function FilterSelect({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
-  return (
-    <label className="block space-y-1">
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
-        {label}
-      </span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-surface-container-lowest border border-outline-variant px-2 py-1.5 text-on-surface text-body-main focus:border-primary focus:outline-none transition-colors"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <ul className="space-y-2 p-3">
+      {people.map((p) => (
+        <NetworkCard
+          key={p.profile_id}
+          person={p}
+          activeProjects={activeProjects}
+          profile={profiles[p.profile_id] ?? null}
+          isFounder={isFounder}
+        />
+      ))}
+    </ul>
   );
 }
 
@@ -560,54 +286,4 @@ function formatRelative(iso: string): string {
   const day = Math.round(hr / 24);
   if (day < 30) return `${day}d ago`;
   return `${Math.round(day / 30)}mo ago`;
-}
-
-/**
- * Pager for the deduped people list.
- *
- * Client-side, unlike the candidate and mandate lists: the set being paged
- * is already in memory because folding rows into people needs all of them at
- * once. This bounds what gets rendered, not what gets fetched — the fetch is
- * bounded by CANDIDATE_ROW_CAP instead.
- */
-function NetworkPager({
-  page,
-  pageCount,
-  onPage,
-}: {
-  page: number;
-  pageCount: number;
-  onPage: (p: number) => void;
-}) {
-  if (pageCount <= 1) return null;
-
-  const button =
-    "px-3 py-1.5 border border-outline-variant font-mono-label text-mono-label uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:border-primary enabled:hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
-
-  return (
-    <nav
-      aria-label="Network pages"
-      className="flex items-center justify-between gap-3 pt-1"
-    >
-      <button
-        type="button"
-        className={button}
-        onClick={() => onPage(page - 1)}
-        disabled={page <= 1}
-      >
-        Previous
-      </button>
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest tabular-nums">
-        Page {page} / {pageCount}
-      </span>
-      <button
-        type="button"
-        className={button}
-        onClick={() => onPage(page + 1)}
-        disabled={page >= pageCount}
-      >
-        Next
-      </button>
-    </nav>
-  );
 }

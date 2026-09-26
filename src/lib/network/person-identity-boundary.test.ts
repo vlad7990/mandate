@@ -148,8 +148,10 @@ describe("only pre-row code computes person identity", () => {
   it("READS the person on every query that then asks who somebody is", () => {
     // Each pair is (file, the call site that consumes the row). The
     // assertion is about the query feeding that exact call.
+    // §205 — the aggregator dropped off this list because it no longer
+    // queries candidates at all: the fold runs in Postgres now, and
+    // network-sql-parity.test.ts guards that the SQL groups on the column.
     const sites: Array<[string, string]> = [
-      ["src/lib/network/network-aggregator.ts", "const key = c.network_profile_id;"],
       ["src/lib/ai/run-candidate-search.ts", "personKey({"],
       [
         "src/app/(dashboard)/app/projects/[id]/pool-suggestions/actions.ts",
