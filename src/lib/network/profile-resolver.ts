@@ -36,15 +36,27 @@ export type RelationshipProfile = {
  * profile renders exactly like an unsuppressed contact. Proven live, on a
  * suppressed person: `overlay rows found for that key: 0`.
  */
-export async function loadRelationshipProfiles(): Promise<
-  Map<string, RelationshipProfile>
-> {
+export async function loadRelationshipProfiles(
+  /**
+   * §205 — the profiles for the people ON SCREEN. Omit for every profile in
+   * the org, which the merge panel needs and the table no longer does: once
+   * the table pages, fetching the whole org's relationships to decorate 25
+   * rows is the same mistake the fold itself just stopped making.
+   */
+  profileIds?: readonly string[]
+): Promise<Map<string, RelationshipProfile>> {
   const supabase = await createServerSupabaseClient();
-  const { data } = await supabase
+  let query = supabase
     .from("network_profiles")
     .select(
       "id, identity_key, display_name, relationship_state, dnc, dnc_reason, dnc_set_at, dnc_set_by, disposition, follow_up_at, follow_up_note, last_meaningful_contact_at, updated_at"
     );
+  if (profileIds) {
+    // An empty page must fetch NOTHING, not everything — `.in()` with an
+    // empty list is the honest expression of that.
+    query = query.in("id", profileIds as string[]);
+  }
+  const { data } = await query;
   const map = new Map<string, RelationshipProfile>();
   for (const row of (data ?? []) as RelationshipProfile[]) {
     map.set(row.id, row);
