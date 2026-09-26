@@ -15,14 +15,22 @@ import path from "node:path";
  */
 
 const ROOT = process.cwd();
-const RAW = fs.readFileSync(
-  path.join(ROOT, "supabase", "migrations", "145_network_fold_in_postgres.sql"),
-  "utf8"
-);
 /** Comments stripped before asserting about code — §202's lesson. */
-const SQL = RAW.split("\n")
-  .map((l) => l.replace(/--.*$/, ""))
-  .join("\n");
+function sql(file: string): string {
+  return fs
+    .readFileSync(path.join(ROOT, "supabase", "migrations", file), "utf8")
+    .split("\n")
+    .map((l) => l.replace(/--.*$/, ""))
+    .join("\n");
+}
+
+/**
+ * 146 supersedes 145's fold: the function became a VIEW because Postgres
+ * could not inline the function, and five trigram indexes became one
+ * generated column because a five-way OR planned as a Seq Scan. Drive 137
+ * measured both. The guards read the CURRENT definition; 145 stays history.
+ */
+const SQL = sql("146_network_fold_as_a_view.sql");
 
 function src(rel: string): string {
   return fs
@@ -63,21 +71,30 @@ describe("the SQL fold and the TypeScript fold describe the same person", () => 
     expect(columns.sort()).toEqual(keys.sort());
   });
 
-  it("groups on the person and excludes rows that have none", () => {
-    // Bound to the BASE cte, not the function: `c.network_profile_id AS pid`
-    // also appears in the search CTE, so asserting it anywhere in the body
-    // proves the vocabulary exists and nothing about what the fold groups on.
-    // Mutation testing caught exactly that — §202's lesson, fourth costume.
-    const base = SQL.slice(SQL.indexOf("base AS ("), SQL.indexOf("people AS ("));
-    expect(base).toMatch(/c\.network_profile_id AS pid/);
-    // §196/139 + §204 D2: no person yet is not a person.
-    expect(base).toMatch(/WHERE c\.network_profile_id IS NOT NULL/);
-
-    const grouped = SQL.slice(
-      SQL.indexOf("people AS ("),
-      SQL.indexOf("CREATE OR REPLACE FUNCTION public.network_people(")
+  it("is a VIEW, so the planner folds it into the caller rather than materialising every person", () => {
+    // As a function this was a `Function Scan`: 830 ms at 2,135 people
+    // against 8 ms for the same SQL as a view (drive 137).
+    expect(SQL).toMatch(
+      /CREATE OR REPLACE VIEW public\.network_people_folded\s+WITH \(security_invoker = true\)/
     );
-    expect(grouped).toMatch(/GROUP BY b\.pid/);
+    expect(SQL).toMatch(
+      /DROP FUNCTION IF EXISTS public\.network_people_folded\(/
+    );
+  });
+
+  it("groups on the person and excludes rows that have none", () => {
+    // Bound to the view's inner scan, not the file: `network_profile_id`
+    // appears in several places, and asserting it anywhere proves the
+    // vocabulary exists and nothing about what the fold groups on. Mutation
+    // testing caught exactly that — §202's lesson, fourth costume.
+    const view = SQL.slice(
+      SQL.indexOf("CREATE OR REPLACE VIEW public.network_people_folded"),
+      SQL.indexOf("COMMENT ON VIEW")
+    );
+    expect(view).toMatch(/c\.network_profile_id AS pid/);
+    // §196/139 + §204 D2: no person yet is not a person.
+    expect(view).toMatch(/WHERE c\.network_profile_id IS NOT NULL/);
+    expect(view).toMatch(/GROUP BY b\.pid/);
   });
 
   it("keeps the canonical record as the newest one (D3)", () => {
@@ -130,14 +147,22 @@ describe("paging is honest", () => {
 });
 
 describe("the figures describe the pool, not the page (D2)", () => {
-  it("reads the same fold the table reads, with the same filters", () => {
+  it("reads the same fold and the same predicate the table reads", () => {
     const rollup = SQL.slice(
       SQL.indexOf("CREATE OR REPLACE FUNCTION public.network_people_rollup("),
-      SQL.indexOf("CREATE OR REPLACE FUNCTION public.network_domains(")
+      SQL.indexOf("COMMENT ON FUNCTION public.network_people_rollup")
     );
-    expect(rollup).toMatch(
-      /FROM public\.network_people_folded\(\s*p_q, p_archetype, p_tier, p_domain, p_stage, p_years\)/
+    expect(rollup).toMatch(/FROM public\.network_people_folded v/);
+    expect(rollup).toMatch(/public\.network_people_matches\(/);
+    // The search is a semijoin in both callers; it must be the SAME one.
+    const searchLine = /m\.cv_search LIKE '%' \|\| lower\(btrim\(p_q\)\) \|\| '%'/;
+    expect(rollup).toMatch(searchLine);
+    const paged = SQL.slice(
+      SQL.indexOf("CREATE OR REPLACE FUNCTION public.network_people("),
+      SQL.indexOf("COMMENT ON FUNCTION public.network_people(")
     );
+    expect(paged).toMatch(searchLine);
+    expect(paged).toMatch(/public\.network_people_matches\(/);
   });
 
   it("puts the rollup on the page's header and tiles, never the loaded rows", () => {
@@ -154,7 +179,9 @@ describe("the figures describe the pool, not the page (D2)", () => {
   });
 
   it("offers every domain in the pool to the filter, not this page's", () => {
-    expect(SQL).toMatch(/CREATE OR REPLACE FUNCTION public\.network_domains\(/);
+    expect(sql("145_network_fold_in_postgres.sql")).toMatch(
+      /CREATE OR REPLACE FUNCTION public\.network_domains\(/
+    );
     expect(PAGE).toMatch(/options: page\.domains\.map/);
   });
 
@@ -175,26 +202,41 @@ describe("every filter the page offers is applied in SQL", () => {
     expect(AGGREGATOR).toContain("p_q: f.q?.trim() || null");
   });
 
-  it("narrows on each one in the fold", () => {
-    expect(SQL).toMatch(/p_archetype IS NULL OR p\.archetype = p_archetype/);
-    expect(SQL).toMatch(/p_domain\s+IS NULL OR p\.domain = p_domain/);
-    expect(SQL).toMatch(/p_stage\s+IS NULL OR p_stage = ANY/);
-    expect(SQL).toMatch(/p_tier\s+IS NULL OR p\.best_tier_rank =/);
-    expect(SQL).toMatch(/p_years IS NULL OR CASE p_years/);
+  it("narrows on each one, in the rule both callers share", () => {
+    const matches = SQL.slice(
+      SQL.indexOf("CREATE OR REPLACE FUNCTION public.network_people_matches("),
+      SQL.indexOf("COMMENT ON FUNCTION public.network_people_matches")
+    );
+    expect(matches).toMatch(/p_archetype IS NULL OR p_row_archetype = p_archetype/);
+    expect(matches).toMatch(/p_domain\s+IS NULL OR p_row_domain = p_domain/);
+    expect(matches).toMatch(/p_tier\s+IS NULL OR p_row_tier = p_tier/);
+    expect(matches).toMatch(/p_stage\s+IS NULL OR p_stage = ANY/);
+    expect(matches).toMatch(/p_years IS NULL OR CASE p_years/);
   });
 
-  it("searches the five fields the box promises, against indexed columns", () => {
-    const matched = SQL.slice(SQL.indexOf("matched AS ("), SQL.indexOf("base AS ("));
+  it("searches the five fields the box promises, from one indexed column", () => {
+    // The five-way OR across five indexes planned as a Seq Scan (EXPLAIN,
+    // drive 137) and detoasted a 15 KB CV per row: 403 ms. One generated
+    // column with one GIN index: 1 ms.
+    const column = SQL.slice(
+      SQL.indexOf("ADD COLUMN IF NOT EXISTS cv_search"),
+      SQL.indexOf("COMMENT ON COLUMN public.candidates.cv_search")
+    );
     for (const field of [
-      "c.full_name ILIKE",
-      "c.current_title ILIKE",
-      "c.current_company ILIKE",
-      "(c.cv_structured ->> 'domain') ILIKE",
-      "((c.cv_structured -> 'tech_exposure')::text) ILIKE",
+      "full_name",
+      "current_title",
+      "current_company",
+      "cv_structured ->> 'domain'",
+      "(cv_structured -> 'tech_exposure')::text",
     ]) {
-      expect(matched, field).toContain(field);
+      expect(column, field).toContain(field);
     }
-    // 617 ms per keystroke unindexed was the measurement that bought these.
+    expect(column).toContain("STORED");
+    expect(column).toContain("lower(");
+    expect(SQL).toMatch(
+      /CREATE INDEX IF NOT EXISTS candidates_cv_search_trgm\s+ON public\.candidates USING gin \(cv_search extensions\.gin_trgm_ops\)/
+    );
+    // …and the superseded five are dropped rather than left to slow writes.
     for (const index of [
       "candidates_full_name_trgm",
       "candidates_current_title_trgm",
@@ -202,7 +244,7 @@ describe("every filter the page offers is applied in SQL", () => {
       "candidates_cv_domain_trgm",
       "candidates_cv_tech_trgm",
     ]) {
-      expect(SQL, index).toContain(index);
+      expect(SQL, index).toContain(`DROP INDEX IF EXISTS public.${index}`);
     }
   });
 });
@@ -249,18 +291,16 @@ describe("the cap and its client-side machinery are gone", () => {
 describe("scope (D4)", () => {
   it("keeps every function SECURITY INVOKER, so RLS still scopes the org", () => {
     // 045's comment: a DEFINER function here aggregates one organisation's
-    // pool into another's count.
+    // pool into another's count. The view needs saying explicitly — a view
+    // runs as its OWNER unless it is told otherwise, which would leak the
+    // whole table past RLS.
     expect(SQL).not.toMatch(/SECURITY\s+DEFINER/i);
-    expect(SQL.match(/LANGUAGE sql\s+STABLE/g)?.length).toBe(4);
+    expect(SQL).toMatch(/WITH \(security_invoker = true\)/);
+    expect(SQL.match(/LANGUAGE sql\s+(STABLE|IMMUTABLE)/g)?.length).toBe(3);
   });
 
   it("grants the ruled roles and revokes anon on every function", () => {
-    for (const fn of [
-      "network_people_folded",
-      "network_people",
-      "network_people_rollup",
-      "network_domains",
-    ]) {
+    for (const fn of ["network_people", "network_people_rollup"]) {
       const revokes = SQL.match(
         new RegExp(`REVOKE ALL ON FUNCTION public\\.${fn}\\([^)]*\\) FROM public, anon`)
       );
@@ -273,9 +313,16 @@ describe("scope (D4)", () => {
       expect(grants, `grant missing for ${fn}`).not.toBeNull();
     }
     expect(SQL).not.toMatch(/TO anon/);
+    // and the view itself
+    expect(SQL).toMatch(/REVOKE ALL ON public\.network_people_folded FROM public, anon/);
+    expect(SQL).toMatch(
+      /GRANT SELECT ON public\.network_people_folded TO authenticated, service_role/
+    );
   });
 
   it("writes nothing — this slice is a read path", () => {
     expect(SQL).not.toMatch(/\bINSERT INTO\b|\bUPDATE\b\s+public\.|\bDELETE FROM\b/);
+    // The one schema change is a DERIVED column: generated, never written.
+    expect(SQL).toMatch(/GENERATED ALWAYS AS/);
   });
 });
