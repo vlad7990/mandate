@@ -31,7 +31,23 @@ export async function runCandidateSearch(
   );
 
   const response = await runInference("run_candidate_search", {
-    max_tokens: 2500,
+    /**
+     * The ANSWER's budget, and drive 138 found it two steps behind the
+     * question's (§206). 2,500 was sized when a search returned two or
+     * three matches; the schema's cap is 25, and a full slate of 25 with
+     * the one-sentence rationale the prompt demands measures **2,394
+     * output tokens** (measured against the cap's 200 candidates: 25
+     * matches, rationales averaging 203 characters). The first capped
+     * search in production stopped at exactly 2,500 — the JSON was
+     * truncated mid-object, the parse threw, and a search that had already
+     * cost 79k input tokens returned an error instead of a slate.
+     *
+     * 4,500 is §152's evaluation budget and ~1.9× the measured answer.
+     * Do not tighten it towards the measurement: the answer's size grows
+     * with the MATCH count, and above a few hundred candidates every
+     * search returns the full 25.
+     */
+    max_tokens: 4500,
     system: options?.system ?? CANDIDATE_SEARCH_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userPrompt }],
     output_config: {
@@ -131,10 +147,13 @@ export const POOL_JUDGE_CAP = 200;
  * D2 — what the query returns. The six fields the payload actually uses,
  * read as JSON paths rather than by selecting `cv_structured` whole.
  *
- * The column averages **14,875 bytes** a row (measured, same four CVs) and
- * was selected for every row the agent could see in order to use six
- * fields of it — a 2,000-candidate pool shipped ~30 MB into the function on
- * every search. The paths below are roughly 1 KB a row. This is the same
+ * The column stores **14,875 bytes** a row and serialises to **30,005
+ * bytes** of JSON (both measured on this organisation's four real CVs:
+ * `pg_column_size` is what Postgres keeps, `length(cv_structured::text)` is
+ * what crosses the wire — and the wire is the one that was being paid).
+ * It was selected for every row the agent could see in order to use six
+ * fields of it, so a 2,000-candidate pool shipped ~60 MB into the function
+ * on every search. The paths below are roughly 1 KB a row. This is the same
  * defect §205 removed from the Network page, in the one place §205
  * deliberately did not touch.
  *

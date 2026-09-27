@@ -121,6 +121,12 @@ export default async function CandidateSearchPage({
   // stitching, the sample gate, and the empty short-circuit. The AGENT
   // re-reads and re-filters the pool under its own session (the seam's
   // split): both sessions are org-scoped, so the two views agree.
+  //
+  // §206 — this display read is still unbounded in ROWS, deliberately: the
+  // matches the agent returns are stitched against it, so a short read here
+  // would drop people from the results. It ships identity fields only now,
+  // which is why that is affordable. Bounding it needs the matched ids
+  // fetched on their own, which is a different change.
   const filtered = candidates.filter((c) => {
     if (filterProject && c.project_id !== filterProject) return false;
     if (filterArchetype && c.archetype !== filterArchetype) return false;
