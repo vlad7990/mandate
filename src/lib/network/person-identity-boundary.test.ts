@@ -112,10 +112,11 @@ describe("only pre-row code computes person identity", () => {
     const fold = code(
       path.join(process.cwd(), "src/lib/network/network-aggregator.ts")
     );
-    // The rows change, not merely the vocabulary: the bucket key IS the
-    // column, and a person carries it out.
-    expect(fold).toMatch(/const key = c\.network_profile_id;/);
-    expect(fold).toMatch(/profile_id,/);
+    // §205 — the fold itself moved into Postgres, so what this file must do is
+    // READ it and carry the profile id out. The SQL side is guarded in
+    // network-sql-parity.test.ts.
+    expect(fold).toMatch(/\.from\("network_people_folded"\)/);
+    expect(fold).toMatch(/profile_id: row\.profile_id,/);
 
     const resolver = code(
       path.join(process.cwd(), "src/lib/network/profile-resolver.ts")

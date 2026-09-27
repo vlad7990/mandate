@@ -1,11 +1,7 @@
 import "server-only";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import {
-  type Archetype,
-  type CandidateProfile,
-  type PipelineStage,
-} from "@/lib/ai/cv-parsing";
-import { TIER_ORDER, type Tier } from "@/lib/ranking/tiers";
+import { type Archetype, type PipelineStage } from "@/lib/ai/cv-parsing";
+import { type Tier } from "@/lib/ranking/tiers";
 
 // Aggregator for the Global Executive Network view.
 //
@@ -104,10 +100,13 @@ export type NetworkPerson = {
  * record fell outside the window.
  *
  * The fold now runs in Postgres (migration 145) on `network_profile_id`, and
- * this module reads one page of people. `foldRowsIntoPeople` below stays as
- * the SHAPE authority — the fixtures test it, and a guard proves the SQL
- * agrees with it — because two implementations of one rule drift silently,
- * which is what §201 and §204 both cost.
+ * this module reads one page of people.
+ *
+ * The gate expected a TypeScript fold to stay here as the shape authority.
+ * It is gone instead, deliberately: once the page reads the view, nothing
+ * calls it, and an implementation with no caller is the drift it was meant to
+ * guard against. The shape is held by `network-sql-parity.test.ts`, which
+ * compares the view's own columns to the row type below.
  */
 
 /** Filters the page understands. Every one of them is applied in SQL. */
@@ -171,7 +170,6 @@ type PersonRow = {
   project_count: number;
   shortlisted_before: boolean;
   is_returning: boolean;
-  appearances: unknown;
 };
 
 /** PostgREST returns `numeric` as a string; a silent NaN here would sort the
@@ -182,21 +180,10 @@ function num(value: number | string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function personFromRow(row: PersonRow): NetworkPerson {
-  const appearances = Array.isArray(row.appearances)
-    ? (row.appearances as Array<Record<string, unknown>>).map((a) => ({
-        candidate_id: String(a.candidate_id),
-        project_id: String(a.project_id),
-        project_title: (a.project_title as string) ?? "(unknown project)",
-        project_status: (a.project_status as string | null) ?? null,
-        pipeline_stage: (a.pipeline_stage ?? null) as PipelineStage | null,
-        rank: num(a.rank as number | string | null),
-        overall_score: num(a.overall_score as number | string | null),
-        tier: (a.tier ?? null) as Tier | null,
-        updated_at: String(a.updated_at),
-      }))
-    : [];
-
+function personFromRow(
+  row: PersonRow,
+  appearances: NetworkAppearance[]
+): NetworkPerson {
   const average = num(row.average_score);
 
   return {
@@ -238,11 +225,24 @@ const EMPTY_ROLLUP: NetworkRollup = {
 /**
  * One page of the network, its figures, and the filter's own options.
  *
- * The rollup deliberately does NOT come from `people`: under paging that
- * array is 25 rows, and a headline computed from it would describe a page
- * while wearing the word "network" — which is exactly how the old window made
- * the page wrong. It reads the same fold the table reads, filtered the same
- * way (migration 145).
+ * §205 — THE PAGE READS THE VIEW DIRECTLY, and that is a measurement, not a
+ * preference. At 2,135 people, the same fold:
+ *
+ *   the view with ORDER BY + LIMIT, as PostgREST sends it:      13 ms
+ *   ... inside a SQL function taking the filters as parameters: 785 ms
+ *   ... inside a plpgsql function with EXECUTE ... USING:       209 ms
+ *
+ * A function returning a ROW SET is planned once with the filters as
+ * parameters — so it cannot prune what a NULL filter makes irrelevant — and
+ * copies every row through a tuplestore. Sending the filters as literals, the
+ * way every other list in this product does, avoids both. The rollup is the
+ * exception that proves the rule: it returns ONE value, and as plpgsql with a
+ * custom plan per call it costs 12 ms.
+ *
+ * The rollup deliberately does NOT come from `people`: under paging that array
+ * is 25 rows, and a headline computed from it would describe a page while
+ * wearing the word "network" — which is how the old 2,000-row window made this
+ * page wrong in the first place.
  */
 export async function loadNetworkPage(input: {
   filters: NetworkFilters;
@@ -254,8 +254,9 @@ export async function loadNetworkPage(input: {
 }): Promise<NetworkPage> {
   const supabase = await createServerSupabaseClient();
   const f = input.filters;
-  const args = {
-    p_q: f.q?.trim() || null,
+  const q = f.q?.trim() || null;
+  const rpcArgs = {
+    p_q: q,
     p_archetype: f.archetype || null,
     p_tier: f.tier || null,
     p_domain: f.domain || null,
@@ -263,15 +264,49 @@ export async function loadNetworkPage(input: {
     p_years: f.years || null,
   };
 
-  const [peopleQ, rollupQ, projectsQ, domainsQ] = await Promise.all([
-    supabase.rpc("network_people", {
-      ...args,
-      p_sort: input.sort,
-      p_dir: input.dir,
-      p_limit: input.perPage + 1,
-      p_offset: input.offset,
-    }),
-    supabase.rpc("network_people_rollup", args),
+  // The page, straight off the fold. Every clause here has a twin inside
+  // `network_people_matches` (migration 146), which is what the rollup uses —
+  // the guard in network-sql-parity.test.ts holds the two lists together.
+  let page = supabase
+    .from("network_people_folded")
+    .select(
+      "profile_id, canonical_candidate_id, full_name, current_title, current_company, email, linkedin_url, archetype, domain, years_experience, tech_exposure, best_tier, best_score, average_score, last_active_at, appearance_count, project_count, shortlisted_before, is_returning"
+    )
+    .order(SORT_COLUMNS[input.sort], {
+      ascending: input.dir === "asc",
+      nullsFirst: false,
+    })
+    // The tiebreak is load-bearing: without a total order, two people on the
+    // same score sit in an undefined relative position, and OFFSET paging can
+    // then show one twice or never while the pager looks fine.
+    .order("last_active_at", { ascending: false, nullsFirst: false })
+    .order("profile_id", { ascending: true })
+    .range(input.offset, input.offset + input.perPage);
+
+  if (q) page = page.ilike("search_text", `%${q}%`);
+  if (f.archetype) page = page.eq("archetype", f.archetype);
+  if (f.tier) page = page.eq("best_tier", f.tier);
+  if (f.domain) page = page.eq("domain", f.domain);
+  if (f.stage) page = page.contains("stages", [f.stage]);
+  if (f.years) {
+    // `coalesce(years, 0)` in SQL: a person with no stated experience reads as
+    // 0, so they belong in the first bucket rather than in none of them.
+    const bucket = YEARS_BUCKETS[f.years];
+    if (bucket) {
+      if (bucket.min === 0) {
+        page = page.or(
+          `years_experience.is.null,years_experience.lte.${bucket.max}`
+        );
+      } else {
+        page = page.gte("years_experience", bucket.min);
+        if (bucket.max != null) page = page.lte("years_experience", bucket.max);
+      }
+    }
+  }
+
+  const [pageQ, rollupQ, projectsQ, domainsQ] = await Promise.all([
+    page,
+    supabase.rpc("network_people_rollup", rpcArgs),
     supabase
       .from("projects")
       .select("id, title, company_name, status")
@@ -279,15 +314,24 @@ export async function loadNetworkPage(input: {
     supabase.rpc("network_domains"),
   ]);
 
-  const rows = (peopleQ.data ?? []) as PersonRow[];
+  const rows = (pageQ.data ?? []) as PersonRow[];
   const hasMore = rows.length > input.perPage;
-  const people = rows.slice(0, input.perPage).map(personFromRow);
+  const onPage = rows.slice(0, input.perPage);
+
+  // Appearances for the people ON THIS PAGE — one indexed read, not a jsonb
+  // gather inside the fold. Measured at 0 ms against a 2,136-row pool.
+  const appearances = await loadAppearances(
+    supabase,
+    onPage.map((r) => r.profile_id)
+  );
 
   const projects = (projectsQ.data ?? []) as NetworkProject[];
   const rollup = (rollupQ.data as NetworkRollup | null) ?? EMPTY_ROLLUP;
 
   return {
-    people,
+    people: onPage.map((row) =>
+      personFromRow(row, appearances.get(row.profile_id) ?? [])
+    ),
     hasMore,
     rollup,
     active_projects: projects.filter((p) => (p.status ?? "active") === "active"),
@@ -297,171 +341,69 @@ export async function loadNetworkPage(input: {
   };
 }
 
-/** A candidate row as the fold reads it. The SQL in migration 145 reads the
- * same columns; `network-fold.test.ts` drives this shape, and
- * `network-sql-parity.test.ts` proves the two agree. */
-export type NetworkCandidateRow = {
+/** Sort keys to view columns. The keys are the page's allowlist. */
+const SORT_COLUMNS: Record<NetworkSort, string> = {
+  best_score: "best_score",
+  average_score: "average_score",
+  last_active: "last_active_at",
+  name: "full_name",
+};
+
+const YEARS_BUCKETS: Record<string, { min: number; max: number | null }> = {
+  "0-5": { min: 0, max: 5 },
+  "6-10": { min: 6, max: 10 },
+  "11-20": { min: 11, max: 20 },
+  "21+": { min: 21, max: null },
+};
+
+type AppearanceRow = {
   id: string;
-  project_id: string | null;
-  full_name: string;
-  email: string | null;
-  linkedin_url: string | null;
-  current_title: string | null;
-  current_company: string | null;
-  archetype: string | null;
-  pipeline_stage: string | null;
-  cv_structured: unknown;
-  updated_at: string;
-  /** The durable person (098). NULL while the CV is still being read and
-   * the only identity signal is a name — §196/139. */
-  network_profile_id: string | null;
-};
-
-export type NetworkScoreRow = {
-  candidate_id: string;
   project_id: string;
-  rank_position: number | null;
-  overall_score: number | null;
-  tier: string | null;
+  pipeline_stage: string | null;
+  updated_at: string;
+  network_profile_id: string;
+  projects: Array<{ title: string | null; status: string | null }> | { title: string | null; status: string | null } | null;
+  candidate_scores:
+    | Array<{ rank_position: number | null; overall_score: number | null; tier: string | null }>
+    | null;
 };
 
-/**
- * The fold: candidate rows → people. Pure, so it can be driven by fixtures
- * rather than inferred from a screenshot.
- *
- * Rows arrive `updated_at` DESC; the most recent row of a person is
- * canonical and supplies the facts shown (D3 — the fold changes WHICH rows
- * sit together, not whose account of the person is authoritative; the
- * documents still speak, not the survivor profile's display name).
- */
-export function foldRowsIntoPeople(
-  candidateRows: NetworkCandidateRow[],
-  scoreRows: NetworkScoreRow[],
-  projects: NetworkProject[]
-): { people: NetworkPerson[]; people_pending: number } {
-  type CandidateRow = NetworkCandidateRow;
-  type ScoreRow = NetworkScoreRow;
+async function loadAppearances(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  profileIds: string[]
+): Promise<Map<string, NetworkAppearance[]>> {
+  const out = new Map<string, NetworkAppearance[]>();
+  if (profileIds.length === 0) return out;
 
-  const projectById = new Map<string, NetworkProject>();
-  for (const p of projects) projectById.set(p.id, p);
+  // NAME THE FK on every embed (§158's standing lesson: a bare embed of a
+  // table with two paths to the same parent nulls the whole thing).
+  const { data } = await supabase
+    .from("candidates")
+    .select(
+      "id, project_id, pipeline_stage, updated_at, network_profile_id, projects!candidates_project_id_fkey(title, status), candidate_scores!candidate_scores_candidate_id_fkey(rank_position, overall_score, tier)"
+    )
+    .in("network_profile_id", profileIds)
+    .not("project_id", "is", null)
+    .order("updated_at", { ascending: false });
 
-  // Index scores by candidate row id (NOT person identity).
-  const scoreByCandidateId = new Map<string, ScoreRow>();
-  for (const s of scoreRows) scoreByCandidateId.set(s.candidate_id, s);
-
-  // Bucket candidate rows by the person they belong to. A row with no
-  // person yet is held back rather than folded (D2) — it is a CV being
-  // read, not somebody named after their file.
-  const buckets = new Map<string, CandidateRow[]>();
-  let people_pending = 0;
-  for (const c of candidateRows) {
-    const key = c.network_profile_id;
-    if (!key) {
-      people_pending += 1;
-      continue;
-    }
-    const arr = buckets.get(key) ?? [];
-    arr.push(c);
-    buckets.set(key, arr);
+  for (const row of (data ?? []) as unknown as AppearanceRow[]) {
+    const score = row.candidate_scores?.[0] ?? null;
+    const project = Array.isArray(row.projects) ? row.projects[0] : row.projects;
+    const list = out.get(row.network_profile_id) ?? [];
+    list.push({
+      candidate_id: row.id,
+      project_id: row.project_id,
+      project_title: project?.title ?? "(unknown project)",
+      project_status: project?.status ?? null,
+      pipeline_stage: (row.pipeline_stage ?? null) as PipelineStage | null,
+      rank: num(score?.rank_position ?? null),
+      overall_score: num(score?.overall_score ?? null),
+      tier: (score?.tier ?? null) as Tier | null,
+      updated_at: row.updated_at,
+    });
+    out.set(row.network_profile_id, list);
   }
-
-  const people: NetworkPerson[] = Array.from(buckets.entries()).map(
-    ([profile_id, rows]) => {
-      // Most recent row is canonical (rows are already updated_at desc).
-      const canonical = rows[0];
-      const profile = (canonical.cv_structured ?? {}) as Partial<CandidateProfile>;
-
-      const appearances: NetworkAppearance[] = rows
-        .filter((r) => r.project_id != null)
-        .map((r) => {
-          const score = scoreByCandidateId.get(r.id);
-          const project = r.project_id
-            ? projectById.get(r.project_id) ?? null
-            : null;
-          return {
-            candidate_id: r.id,
-            project_id: r.project_id as string,
-            project_title: project?.title ?? "(unknown project)",
-            project_status: project?.status ?? null,
-            pipeline_stage: (r.pipeline_stage ?? null) as PipelineStage | null,
-            rank: score?.rank_position ?? null,
-            overall_score: score?.overall_score ?? null,
-            tier: (score?.tier as Tier | null) ?? null,
-            updated_at: r.updated_at,
-          };
-        });
-
-      const scoredAppearances = appearances.filter(
-        (a) => a.overall_score != null
-      );
-      const best_score =
-        scoredAppearances.length > 0
-          ? Math.max(...scoredAppearances.map((a) => a.overall_score ?? 0))
-          : null;
-      const average_score =
-        scoredAppearances.length > 0
-          ? scoredAppearances.reduce(
-              (sum, a) => sum + (a.overall_score ?? 0),
-              0
-            ) / scoredAppearances.length
-          : null;
-      const best_tier = bestTier(appearances.map((a) => a.tier));
-
-      const shortlisted_before = appearances.some(
-        (a) =>
-          (a.tier && (a.tier === "tier_1" || a.tier === "tier_2")) ||
-          (a.pipeline_stage &&
-            [
-              "shortlisted",
-              "submitted",
-              "interviewed",
-              "passed_rounds",
-              "finalist",
-              "offer",
-              "hired",
-            ].includes(a.pipeline_stage))
-      );
-
-      const last_active_at =
-        appearances.length > 0
-          ? appearances
-              .map((a) => a.updated_at)
-              .sort()
-              .pop() ?? canonical.updated_at
-          : canonical.updated_at;
-
-      return {
-        profile_id,
-        canonical_candidate_id: canonical.id,
-        full_name: canonical.full_name,
-        current_title: canonical.current_title,
-        current_company: canonical.current_company,
-        email: canonical.email,
-        linkedin_url: canonical.linkedin_url,
-        archetype: (canonical.archetype as Archetype | null) ?? null,
-        domain: profile.domain ?? null,
-        years_experience: profile.years_experience ?? null,
-        tech_exposure: (profile.tech_exposure ?? []).slice(0, 8),
-        best_tier,
-        best_score,
-        average_score:
-          average_score != null ? round2(average_score) : null,
-        last_active_at,
-        appearances,
-        shortlisted_before,
-        returning: new Set(appearances.map((a) => a.project_id)).size >= 2,
-      };
-    }
-  );
-
-  // Sort by best_score desc by default; null scores sink to the bottom.
-  people.sort((a, b) => {
-    const av = a.best_score ?? -1;
-    const bv = b.best_score ?? -1;
-    return bv - av;
-  });
-
-  return { people, people_pending };
+  return out;
 }
 
 /**
@@ -473,8 +415,8 @@ export function foldRowsIntoPeople(
  * them here; now `count_network_people()` returns one integer.
  *
  * §204 — that function counts DISTINCT `network_profile_id`, excluding rows
- * with no person yet (migration 144), which is exactly what
- * `foldRowsIntoPeople` above does. The badge and the page therefore answer
+ * with no person yet (migration 144), which is exactly what the
+ * `network_people_folded` view does. The badge and the page therefore answer
  * the same question; while the badge counted derived keys, a merge moved the
  * page by one and the badge by nothing.
  */
@@ -488,21 +430,6 @@ export async function countNetworkPeople(): Promise<number> {
 // identityKey lives in @/lib/candidate-identity and is NO LONGER READ HERE
 // (§204). Its remaining consumers all ask the other question — "who is this
 // INCOMING thing?" — before a row, and therefore a person, exists.
-
-function bestTier(tiers: Array<Tier | null>): Tier | null {
-  let best: Tier | null = null;
-  for (const t of tiers) {
-    if (!t) continue;
-    if (!best) {
-      best = t;
-      continue;
-    }
-    if (TIER_ORDER.indexOf(t) < TIER_ORDER.indexOf(best)) {
-      best = t;
-    }
-  }
-  return best;
-}
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
