@@ -31,6 +31,8 @@ export function PoolSuggestionsPanel({ projectId }: { projectId: string }) {
   const [suggestions, setSuggestions] = useState<PoolSuggestion[] | null>(null);
   const [trawl, setTrawl] = useState<string | null>(null);
   const [intent, setIntent] = useState<string | null>(null);
+  /** §206 D3 — set only when the ceiling cut somebody out of the read. */
+  const [judgedNote, setJudgedNote] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
 
@@ -43,6 +45,7 @@ export function PoolSuggestionsPanel({ projectId }: { projectId: string }) {
           setSuggestions(null);
           setTrawl(null);
           setIntent(null);
+          setJudgedNote(null);
           setNote(
             "This mandate has no scoring model yet, so there is no role to " +
               "match anyone against. Run onboarding first."
@@ -53,6 +56,7 @@ export function PoolSuggestionsPanel({ projectId }: { projectId: string }) {
           setSuggestions([]);
           setTrawl(result.trawl);
           setIntent(null);
+          setJudgedNote(null);
           setNote(
             "Nothing to draw on — every CV in reach is already on this " +
               "mandate, or there are none yet."
@@ -62,6 +66,7 @@ export function PoolSuggestionsPanel({ projectId }: { projectId: string }) {
         setSuggestions(result.suggestions);
         setTrawl(result.trawl);
         setIntent(result.intent);
+        setJudgedNote(result.judgedNote);
         setNote(
           result.suggestions.length === 0
             ? "The agent found nobody in reach worth proposing for this role."
@@ -149,6 +154,16 @@ export function PoolSuggestionsPanel({ projectId }: { projectId: string }) {
       {intent && (
         <p className="text-body-main leading-relaxed text-on-surface-variant">
           <span className="text-outline">Searched for:</span> {intent}
+        </p>
+      )}
+
+      {/*
+        §206 D3 — the ceiling, stated where the slate is read. A cut list
+        that does not say it was cut reads as the whole pool's answer.
+      */}
+      {judgedNote && (
+        <p className="border-l-2 border-warn/60 bg-warn/5 px-3 py-2 text-body-main leading-relaxed text-on-surface-variant">
+          {judgedNote}
         </p>
       )}
 

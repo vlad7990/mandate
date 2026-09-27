@@ -5,7 +5,10 @@ import { requireActionContext } from "@/lib/auth/access";
 import { parseRole } from "@/lib/auth/roles";
 import { runAction } from "@/lib/actions/run";
 import { type ActionResult } from "@/lib/actions/result";
-import { runCandidateSearchAsAgent } from "@/lib/ai/run-candidate-search";
+import {
+  describeJudgedPool,
+  runCandidateSearchAsAgent,
+} from "@/lib/ai/run-candidate-search";
 import { agentErrorMessage } from "@/lib/ai/agent-errors";
 import { personKey } from "@/lib/network/person-key";
 import { describeTrawl, trawlScopeFor, type DeskMember } from "@/lib/desk/trawl";
@@ -33,6 +36,11 @@ export type PoolSuggestionsResult =
       trawl: string;
       /** The restatement of the role the agent searched against. */
       intent: string;
+      /**
+       * §206 D3 — present only when the ceiling read less than the trawl
+       * holds, so a cut slate never reads as the whole pool's answer.
+       */
+      judgedNote: string | null;
     }
   | { status: "empty_pool"; trawl: string }
   | { status: "no_calibration" };
@@ -205,11 +213,18 @@ export async function suggestFromPoolAction(
       })
       .filter((s): s is PoolSuggestion => s !== null);
 
+    // `describeTrawl` says what the agent was ALLOWED to look at, so it
+    // takes the in-scope count; what it actually read is the note's job.
+    // This panel has no filters to narrow, so it states the fact and stops
+    // rather than advising an action the reader cannot take.
+    const clause = describeJudgedPool(run);
+
     return {
       status: "ready",
       suggestions,
-      trawl: describeTrawl(scope, run.poolSize),
+      trawl: describeTrawl(scope, run.inScope),
       intent: run.result.parsed_criteria.intent,
+      judgedNote: clause ? `${clause} — the rest were not read.` : null,
     };
   });
 }

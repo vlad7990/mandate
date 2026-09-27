@@ -10,7 +10,10 @@ import {
   type PipelineStage,
 } from "@/lib/ai/cv-parsing";
 import { TIER_BANDS, TIER_ORDER, type Tier } from "@/lib/ranking/tiers";
-import { runCandidateSearchAsAgent } from "@/lib/ai/run-candidate-search";
+import {
+  describeJudgedPool,
+  runCandidateSearchAsAgent,
+} from "@/lib/ai/run-candidate-search";
 import { agentErrorMessage } from "@/lib/ai/agent-errors";
 import type { CandidateSearchResult } from "@/lib/ai/candidate-search";
 import { SetBreadcrumbs } from "@/components/dashboard/breadcrumbs";
@@ -37,7 +40,6 @@ type CandidateRow = {
   archetype: string | null;
   pipeline_stage: string | null;
   cv_processing: boolean;
-  cv_structured: unknown;
 };
 
 type ProjectLite = { id: string; title: string };
@@ -88,10 +90,14 @@ export default async function CandidateSearchPage({
   if (!user) redirect("/auth/signin");
 
   const [candidatesQ, projectsQ, scoresQ] = await Promise.all([
+    // §206 — `cv_structured` is NOT read here. This session's rows are for
+    // display stitching and the filter counts, and the column averages
+    // 14.9 KB while nothing on this screen renders a field of it. The
+    // AGENT reads the six fields it judges on, as JSON paths.
     supabase
       .from("candidates")
       .select(
-        "id, project_id, full_name, current_title, current_company, archetype, pipeline_stage, cv_processing, cv_structured"
+        "id, project_id, full_name, current_title, current_company, archetype, pipeline_stage, cv_processing"
       )
       .order("updated_at", { ascending: false }),
     supabase
@@ -137,7 +143,9 @@ export default async function CandidateSearchPage({
 
   let searchResult: CandidateSearchResult | null = null;
   let searchError: string | null = null;
-  let poolSearched = 0;
+  let poolJudged = 0;
+  /** §206 D3 — stated whenever the cap read less than the filters admit. */
+  let judgedNote: string | null = null;
 
   if (query.length > 0) {
     if (filtered.length === 0) {
@@ -151,10 +159,17 @@ export default async function CandidateSearchPage({
         tier: filterTier || null,
       });
       switch (run.status) {
-        case "ready":
+        case "ready": {
           searchResult = run.result;
-          poolSearched = run.poolSize;
+          poolJudged = run.judged;
+          const clause = describeJudgedPool(run);
+          // The advice belongs to this screen: it has the filters that
+          // change what gets read.
+          judgedNote = clause
+            ? `${clause} — narrow the filters to change what was read.`
+            : null;
           break;
+        }
         case "empty_pool":
           searchResult = emptyPoolResult;
           break;
@@ -238,7 +253,8 @@ export default async function CandidateSearchPage({
           candidatesById={candidateById}
           scoresById={scoreById}
           projectsById={projectById}
-          poolSize={poolSearched}
+          poolJudged={poolJudged}
+          judgedNote={judgedNote}
         />
       ) : null}
     </div>
@@ -378,14 +394,16 @@ function SearchResults({
   candidatesById,
   scoresById,
   projectsById,
-  poolSize,
+  poolJudged,
+  judgedNote,
 }: {
   query: string;
   result: CandidateSearchResult;
   candidatesById: Map<string, CandidateRow>;
   scoresById: Map<string, ScoreLite>;
   projectsById: Map<string, string>;
-  poolSize: number;
+  poolJudged: number;
+  judgedNote: string | null;
 }) {
   const matches = result.matches.filter((m) => candidatesById.has(m.candidate_id));
 
@@ -420,10 +438,20 @@ function SearchResults({
             />
           </div>
           <div className="font-mono-label text-mono-label text-outline uppercase tracking-widest pt-2 border-t border-outline-variant/40">
-            Pool searched: <span className="text-on-surface tabular-nums">{poolSize}</span>{" "}
+            Pool judged: <span className="text-on-surface tabular-nums">{poolJudged}</span>{" "}
             · Matches returned:{" "}
             <span className="text-on-surface tabular-nums">{matches.length}</span>
           </div>
+
+          {/*
+            §206 D3 — a cut list that does not say so reads as a complete
+            answer. Stated next to the count it qualifies, not in the trail.
+          */}
+          {judgedNote && (
+            <p className="border-l-2 border-warn/60 bg-warn/5 px-3 py-2 text-body-main leading-relaxed text-on-surface-variant">
+              {judgedNote}
+            </p>
+          )}
         </div>
       </article>
 

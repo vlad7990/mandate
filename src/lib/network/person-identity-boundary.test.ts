@@ -56,13 +56,39 @@ const FILES = walk(SRC);
 function selectFeeding(body: string, marker: string): string {
   const at = body.indexOf(marker);
   expect(at, `marker not found: ${marker}`).toBeGreaterThan(-1);
+
   // The CANDIDATES read above the call site — not merely the nearest
   // select, which in the aggregator is the scores query sitting beside it.
-  const from = body.lastIndexOf('.from("candidates")', at);
-  expect(from, `no candidates read above: ${marker}`).toBeGreaterThan(-1);
-  const sel = /\.select\(\s*(?:\n\s*)?"([^"]*)"/.exec(body.slice(from, at));
-  expect(sel, `no .select() on that read: ${marker}`).not.toBeNull();
-  return sel![1];
+  //
+  // §206 added two wrinkles, and both are ways this guard could have gone
+  // quiet: the read that feeds `personKey` now names its columns through a
+  // constant, and a HEAD count of the same table sits between the two. A
+  // head count returns no rows, so it can never feed a person — skip it and
+  // keep looking upwards, then resolve the constant. Assert the columns that
+  // arrive, never the spelling of the call.
+  let cursor = at;
+  for (;;) {
+    const from = body.lastIndexOf('.from("candidates")', cursor);
+    expect(from, `no candidates read above: ${marker}`).toBeGreaterThan(-1);
+    const sel =
+      /\.select\(\s*(?:\n\s*)?(?:"([^"]*)"|([A-Za-z_][A-Za-z0-9_]*))\s*(,\s*\{[^}]*\})?/.exec(
+        body.slice(from, cursor)
+      );
+    expect(sel, `no .select() on that read: ${marker}`).not.toBeNull();
+    if (/head\s*:\s*true/.test(sel![3] ?? "")) {
+      cursor = from - 1;
+      continue;
+    }
+    if (sel![1] !== undefined) return sel![1];
+    // A named list of columns: return its definition, so dropping a column
+    // from the constant fails here exactly as dropping it inline would.
+    const token = sel![2];
+    const def = new RegExp(
+      `const\\s+${token}\\s*=\\s*\\[([\\s\\S]*?)\\]\\s*\\n?\\s*\\.join`
+    ).exec(body);
+    expect(def, `cannot resolve the select constant ${token}`).not.toBeNull();
+    return def![1];
+  }
 }
 
 /**
