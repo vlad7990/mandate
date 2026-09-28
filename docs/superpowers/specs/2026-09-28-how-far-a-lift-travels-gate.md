@@ -232,3 +232,40 @@ gone. Then the withdrawal path against a drifted key. Teardown exact.
   not pretend to (D4).
 - **It does not add an un-merge**, which remains the inherited gap under all
   of this.
+
+---
+
+## Part 5 — As driven
+
+**Drive 141** (2026-09-28, migrations 154–156) proved the SQL half live and
+caught the `PERFORM` / `FOUND` defect on its first merge.
+
+**Drive 142** (2026-09-28, commit c588f4c, prod `mandate-ncp9tf5a8`) proved
+the half that lives on screen. Three people in the founder's org: A carrying
+a January erasure, C carrying a copy of it, B suppressed by a recruiter in
+March. A was merged into B **through the product's merge panel**, so B ended
+holding two unlifted reasons with C's copy still pointing at the one that
+moved.
+
+  S1  D3 — the card listed BOTH reasons: the January erasure with "they
+      requested erasure via their portal · 2026-01-14 · set by the system ·
+      governs the badge", and the March one with "a recruiter decided ·
+      2026-03-09 · set by Vladimir Breygin". The setter's name is the
+      named-FK embed working; a bare embed over `set_by`/`lifted_by` would
+      have answered 300 and rendered every reason setter-less.
+  S2  D2 — "Lift this reason" on the erasure row READ the reach and named
+      it: *"This also lifts 1 other person"*, listing Drive142 Ada Lint and
+      Drive142 Cass Reach — carried copy. Counted at that moment: 0 lifted
+      rows, 3 standing, 2 suppressed people. The preview wrote nothing.
+  S3  Confirming lifted exactly the two rows shown. B is **still suppressed**
+      — their own March reason now governs the badge, and the button reverted
+      from "Clear every reason" to "Clear suppression". C is free
+      (`relationship_state` back to `cold`). Two separate `network_dnc_cleared`
+      receipts, one per person, the copy's marked `carried: true`.
+
+Teardown exact against all twelve counts: candidates 4, network_profiles 4,
+network_suppressions 0, suppressed 0, aliases 0, folded 4, portal_tokens 0,
+erasure_requests 0, activity_events 134, orphan profiles 0, users 27,
+projects 4.
+
+**§208 is closed — SQL and screen.**
