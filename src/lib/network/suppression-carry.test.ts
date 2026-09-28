@@ -53,10 +53,15 @@ function latestDefining(fn: string): string {
 }
 
 function body(fn: string): string {
-  const file = latestDefining(fn);
-  const text = sql(file);
+  const text = sql(latestDefining(fn));
   const from = text.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
-  const to = text.indexOf("COMMENT ON FUNCTION", from);
+  // To the function's OWN terminator. Slicing to the next COMMENT worked
+  // until 155 put several functions in one file with no comment between
+  // them — the helper then captured the merge as well, and three guards
+  // quietly started asserting about the wrong function.
+  const ends = [text.indexOf("\n$$;", from), text.indexOf("\n$function$;", from)]
+    .filter((i) => i > -1);
+  const to = ends.length ? Math.min(...ends) : -1;
   return text.slice(from, to === -1 ? undefined : to);
 }
 
@@ -64,12 +69,14 @@ const CARRY = body("carry_network_suppression");
 const TRIGGER = body("candidates_link_network_profile");
 
 describe("§207 — the carry itself", () => {
-  it("can only ever raise: no branch writes dnc false or clears the reason", () => {
-    // Monotone is the whole rule. A carry that could lower a suppression
-    // would be a worse defect than the one it fixes.
-    expect(CARRY).toMatch(/SET\s+dnc\s*=\s*true/);
+  it("can only ever raise: it records rows and writes no column", () => {
+    // Monotone is the whole rule. §208 made it structural — the carry has no
+    // UPDATE in it at all, so there is no longer any way for it to lower
+    // anything even by accident. The derived columns have one writer
+    // (refresh_network_suppression) and this is not it.
+    expect(CARRY).toMatch(/record_network_suppression\(/);
+    expect(CARRY).not.toMatch(/UPDATE public\.network_profiles/);
     expect(CARRY).not.toMatch(/dnc\s*=\s*false/);
-    expect(CARRY).not.toMatch(/dnc_reason\s*=\s*NULL/i);
   });
 
   it("returns without writing when the source is not suppressed", () => {
@@ -78,19 +85,23 @@ describe("§207 — the carry itself", () => {
 
   it("carries the ORIGINAL reason, when and who — never a fresh stamp", () => {
     // A suppression wearing today's date and nobody's name has lost the two
-    // facts that make it answerable.
-    expect(CARRY).toMatch(/dnc_reason\s*=\s*v_from\.dnc_reason/);
-    expect(CARRY).toMatch(/dnc_set_at\s*=\s*v_from\.dnc_set_at/);
-    expect(CARRY).toMatch(/dnc_set_by\s*=\s*v_from\.dnc_set_by/);
-    // The two ways to restamp it, both absent.
-    expect(CARRY).not.toMatch(/dnc_set_at\s*=\s*now\(\)/);
-    expect(CARRY).not.toMatch(/dnc_set_by\s*=\s*\(SELECT auth\.uid\(\)\)/);
+    // facts that make it answerable. §208: the copy is a row that takes the
+    // original's reason, set_at and set_by, and names the row it came from.
+    expect(CARRY).toMatch(
+      /record_network_suppression\(\s*\n?\s*p_to, v_row\.reason, 'carried', v_row\.set_by, v_row\.set_at, v_row\.id/
+    );
+    expect(CARRY).not.toMatch(/now\(\)/);
+    expect(CARRY).not.toMatch(/auth\.uid\(\)/);
   });
 
-  it("keeps the destination's own suppression when it came first", () => {
-    expect(CARRY).toMatch(
-      /IF v_to\.dnc[\s\S]*?v_from\.dnc_set_at\s*<\s*v_to\.dnc_set_at[\s\S]*?RETURN false;/
-    );
+  it("cannot destroy the destination's own suppression, because it adds", () => {
+    // §207 compared the two and overwrote the loser — which is how a person
+    // who had asked for themselves lost their own reason (§208's Part 1).
+    // There is nothing left to compare: every reason is its own row and the
+    // EARLIEST governs, decided in one place.
+    expect(CARRY).not.toMatch(/v_to\.dnc_set_at/);
+    const gov = body("refresh_network_suppression");
+    expect(gov).toMatch(/ORDER BY s\.set_at ASC, s\.id ASC/);
   });
 
   it("refuses to cross an organisation", () => {
@@ -99,14 +110,20 @@ describe("§207 — the carry itself", () => {
     );
   });
 
-  it("opens the DNC guard's own door, the way set_network_dnc does", () => {
-    // Without this the write is refused by guard_network_dnc and the carry
-    // would fail every time — loudly, but in the hottest trigger there is.
-    expect(CARRY).toMatch(/set_config\('mandate\.allow_dnc_write',\s*'on',\s*true\)/);
+  it("opens the DNC guard's own door — in the ONE place that writes now", () => {
+    // §208 moved the write to the derivation, so that is where the door is
+    // opened. Without it guard_network_dnc refuses and every suppression in
+    // the product fails.
+    const refresh = body("refresh_network_suppression");
+    expect(refresh).toMatch(/set_config\('mandate\.allow_dnc_write',\s*'on',\s*true\)/);
+    expect(CARRY).not.toMatch(/allow_dnc_write/);
   });
 
   it("moves the relationship into do_not_contact with the flag", () => {
-    expect(CARRY).toMatch(/relationship_state\s*=\s*'do_not_contact'/);
+    const refresh = body("refresh_network_suppression");
+    expect(refresh).toMatch(/relationship_state\s*=\s*'do_not_contact'/);
+    // And back out of it only when nothing stands — 098's rule, kept.
+    expect(refresh).toMatch(/WHEN p\.relationship_state = 'do_not_contact'\s*\n?\s*THEN 'cold'/);
   });
 
   it("records the carry in the trail", () => {

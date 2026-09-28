@@ -31,9 +31,6 @@ import type { ActionResult } from "@/lib/actions/result";
 
 export type DeclineKind = "cannot_erase" | "not_subject";
 
-/** The system's fingerprint on a suppression this request itself set. */
-const ERASURE_DNC_REASON = "erasure requested via their portal";
-
 export async function closeErasureRequestAction(
   requestId: string,
   outcome: "resolved" | "declined",
@@ -72,27 +69,31 @@ export async function closeErasureRequestAction(
     // the suppression ONLY when this request is demonstrably what set it —
     // the system's own reason, and no human named as the setter.
     if (outcome === "declined" && declineKind === "not_subject" && updated.network_profile_id) {
-      const { data: profile } = await supabase
-        .from("network_profiles")
-        .select("id, dnc, dnc_reason, dnc_set_by")
-        .eq("id", updated.network_profile_id)
-        .maybeSingle<{
-          id: string;
-          dnc: boolean;
-          dnc_reason: string | null;
-          dnc_set_by: string | null;
-        }>();
+      // §208 — by LINEAGE, not by fingerprint. The row this request wrote is
+      // findable; §207 had to guess at it from the reason text and an absent
+      // setter, which also could not reach the copies a carry had made.
+      // Lifting the row lifts everything carried from it, and nothing else:
+      // a reason this person holds for themselves is a different row and
+      // stands untouched.
+      const { data: row } = await supabase
+        .from("network_suppressions")
+        .select("id")
+        .eq("profile_id", updated.network_profile_id)
+        .eq("source", "erasure")
+        .is("lifted_at", null)
+        .order("set_at", { ascending: true })
+        .limit(1)
+        .maybeSingle<{ id: string }>();
 
-      if (
-        profile?.dnc === true &&
-        profile.dnc_reason === ERASURE_DNC_REASON &&
-        profile.dnc_set_by === null
-      ) {
-        const { error: clearErr } = await supabase.rpc("clear_network_dnc", {
-          p_profile_id: profile.id,
-          p_reason:
-            "erasure request declined — the person who filed it was not the subject",
-        });
+      if (row) {
+        const { error: clearErr } = await supabase.rpc(
+          "lift_network_suppression",
+          {
+            p_suppression: row.id,
+            p_reason:
+              "erasure request declined — the person who filed it was not the subject",
+          }
+        );
         // Loud, not silent: the ticket is closed either way, and a
         // suppression left standing on somebody who never asked is a fact
         // the operator has to know about rather than discover later.

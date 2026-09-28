@@ -54,7 +54,13 @@ function latestDefining(fn: string): string {
 function body(fn: string): string {
   const text = sqlFile(latestDefining(fn));
   const from = text.indexOf(`CREATE OR REPLACE FUNCTION public.${fn}(`);
-  const to = text.indexOf("COMMENT ON FUNCTION", from);
+  // To the function's OWN terminator. Slicing to the next COMMENT worked
+  // until 155 put several functions in one file with no comment between
+  // them — the helper then captured the merge as well, and three guards
+  // quietly started asserting about the wrong function.
+  const ends = [text.indexOf("\n$$;", from), text.indexOf("\n$function$;", from)]
+    .filter((i) => i > -1);
+  const to = ends.length ? Math.min(...ends) : -1;
   return text.slice(from, to === -1 ? undefined : to);
 }
 
@@ -142,11 +148,14 @@ describe("§207 D1 — filing records who and what", () => {
   });
 
   it("suppresses the PERSON it resolved, not whatever still keys that way", () => {
-    // Before this, the UPDATE matched `identity_key = token key`, so a
+    // Before §207, the UPDATE matched `identity_key = token key`, so a
     // profile whose key had drifted since the link was issued was not the
-    // one suppressed — and nothing said so.
-    expect(FILE_REQUEST).toMatch(/np\.id = v_profile/);
-    expect(FILE_REQUEST).toMatch(/AND NOT np\.dnc/);
+    // one suppressed — and nothing said so. §208: it records a ledger row
+    // against that person, and writes no column at all.
+    expect(FILE_REQUEST).toMatch(
+      /record_network_suppression\(\s*\n?\s*v_profile, 'erasure requested via their portal', 'erasure'\)/
+    );
+    expect(FILE_REQUEST).not.toMatch(/UPDATE public\.network_profiles/);
   });
 });
 
@@ -231,22 +240,26 @@ describe("§207 D5 — a decline is two answers", () => {
 
   it("lifts the suppression only for not_subject", () => {
     expect(CLOSE).toMatch(/declineKind === "not_subject"/);
-    expect(CLOSE).toMatch(/rpc\("clear_network_dnc"/);
+    expect(CLOSE).toMatch(/rpc\(\s*\n?\s*"lift_network_suppression"/);
   });
 
-  it("lifts it only when THIS request is what set it", () => {
-    // A person suppressed for their own reasons keeps that suppression; the
-    // system's fingerprint is its own reason plus no human setter.
-    expect(CLOSE).toMatch(/dnc_reason === ERASURE_DNC_REASON/);
-    expect(CLOSE).toMatch(/dnc_set_by === null/);
+  it("lifts the row THIS request wrote — by lineage, not by fingerprint", () => {
+    // §208: the row is findable. §207 had to guess from the reason text and
+    // an absent setter, which also could not reach the copies a carry made.
+    // A reason this person holds for themselves is a different row, and
+    // lifting by id cannot touch it.
+    expect(CLOSE).toMatch(/\.from\("network_suppressions"\)/);
+    expect(CLOSE).toMatch(/\.eq\("source", "erasure"\)/);
+    expect(CLOSE).toMatch(/\.is\("lifted_at", null\)/);
+    expect(CLOSE).not.toMatch(/dnc_reason ===/);
   });
 
   it("never lifts anything for cannot_erase", () => {
-    const lift = CLOSE.indexOf('rpc("clear_network_dnc"');
+    const lift = CLOSE.indexOf('"lift_network_suppression"');
     const guard = CLOSE.indexOf('declineKind === "not_subject"');
     expect(guard).toBeGreaterThan(-1);
     expect(lift).toBeGreaterThan(guard);
-    expect(CLOSE).not.toMatch(/cannot_erase[\s\S]{0,400}clear_network_dnc/);
+    expect(CLOSE).not.toMatch(/cannot_erase[\s\S]{0,400}lift_network_suppression/);
   });
 
   it("tells the operator when the lift failed, rather than closing quietly", () => {
