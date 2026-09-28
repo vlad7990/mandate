@@ -67,6 +67,16 @@ describe("§208 D1 — the ledger, and the columns it derives", () => {
     expect(LEDGER).not.toMatch(/DELETE FROM public\.network_suppressions/);
   });
 
+  it("branches on the ROW it read, not on FOUND (drive 141)", () => {
+    // PERFORM sets FOUND. The derivation opened the guard's door with
+    // `PERFORM set_config(...)` between the read and the branch, so FOUND was
+    // true even when nothing was found and the suppressed branch ran with an
+    // empty row — dnc = true with a NULL reason, refused by the
+    // network_profiles_dnc_recorded CHECK on the drive's first merge.
+    expect(REFRESH).toMatch(/IF v_gov\.id IS NOT NULL THEN/);
+    expect(REFRESH).not.toMatch(/IF FOUND THEN/);
+  });
+
   it("derives the flag from the EARLIEST unlifted reason (D3)", () => {
     expect(REFRESH).toMatch(/lifted_at IS NULL/);
     expect(REFRESH).toMatch(/ORDER BY s\.set_at ASC, s\.id ASC/);
