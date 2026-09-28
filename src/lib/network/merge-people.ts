@@ -116,6 +116,8 @@ export type PeopleMergeReceipt = {
   aliases_moved: number;
   state: string;
   dnc_carried: boolean;
+  /** §207 D2 — open erasure requests now standing on the survivor. */
+  erasures_open?: number;
   filled: string[];
 };
 
@@ -139,6 +141,17 @@ export function describePeopleReceipt(r: PeopleMergeReceipt): string {
   // Last and never omitted: the half with consequences outside the app.
   if (r.dnc_carried) {
     parts.push("Do-not-contact carried across and now covers both records.");
+  }
+  // §207 D2 — an erasure request follows the person, and the recruiter who
+  // merged them is the one who most needs to know it now covers the rows
+  // they just brought together.
+  if ((r.erasures_open ?? 0) > 0) {
+    const n = r.erasures_open as number;
+    parts.push(
+      n === 1
+        ? "An open erasure request stands against this person and now covers every record."
+        : `${n} open erasure requests stand against this person and now cover every record.`
+    );
   }
   return parts.join(" ");
 }

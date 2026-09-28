@@ -117,6 +117,23 @@ export async function addPersonToProjectAction(
       throw new Error("Target project belongs to a different organisation.");
     }
 
+    // §207 D4 — the erasure gate's SECOND door. Copying this person onto
+    // another mandate duplicates their CV, their parsed profile and their
+    // contact details: it makes MORE of the data they have asked us to
+    // delete. Same question as the send ladder asks, through the same
+    // function, so the two doors can never disagree about who asked.
+    const { data: erasureOpen, error: erasureErr } = await supabase.rpc(
+      "candidate_erasure_open",
+      { p_candidate_id: sourceCandidateId }
+    );
+    // Fails CLOSED, like the send ladder: not knowing is not permission.
+    if (erasureErr || erasureOpen === true) {
+      throw new Error(
+        `${source.full_name} has an open erasure request — their record ` +
+          `cannot be copied onto another mandate while it stands.`
+      );
+    }
+
     // §177 (F-A) — the role seam's door, on the TARGET project. Copying
     // into a mandate re-parses against that mandate's calibration, so a
     // stale target would produce exactly the mis-scoped verdict §175

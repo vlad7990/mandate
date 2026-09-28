@@ -104,8 +104,13 @@ const ASKS_ABOUT_INCOMING_THINGS: Record<string, string> = {
     "§201 — is this uploaded CV somebody we already hold? asked pre-insert",
   "src/lib/sourcing/import.ts":
     "the importer, deciding duplicate/ambiguous before any row is written",
-  "src/lib/comms/send-candidate-message.ts":
-    "the erasure lookup, keyed on identity_key by 073 — named OUT of §204 (D4)",
+  // §207 slice 2 — `send-candidate-message.ts` LEFT this list. It was here
+  // because 073 keyed the erasure gate on a computed key and §204 named it
+  // out as unfinished business (D4). The gate now asks
+  // `candidate_erasure_open`, which reads the person, the person's
+  // pre-merge aliases, the key AND the rows the request froze — so the
+  // send ladder no longer computes an identity at all. This list is back
+  // to what it claims to be: only code that runs before a row exists.
 };
 
 describe("only pre-row code computes person identity", () => {

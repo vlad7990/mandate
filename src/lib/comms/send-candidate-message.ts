@@ -1,6 +1,5 @@
 import "server-only";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { identityKey } from "@/lib/candidate-identity";
 import {
   composeOutreach,
   noticeIdempotencyKey,
@@ -155,12 +154,16 @@ export async function sendCandidateMessage(
             .eq("id", candidate.network_profile_id)
             .maybeSingle<{ dnc: boolean; dnc_reason: string | null }>()
         : Promise.resolve({ data: null }),
-      supabase
-        .from("candidate_erasure_requests")
-        .select("id")
-        .eq("identity_key", identityKey(candidate))
-        .is("resolved_at", null)
-        .limit(1),
+      // §207 D1 — the erasure question, asked in ONE place of FOUR arms:
+      // the person, the person under a pre-merge alias, the key this row
+      // computes today, and the rows the request froze when it was filed.
+      // It used to be `.eq("identity_key", identityKey(candidate))` alone —
+      // a string the record stops computing the moment somebody merges the
+      // person (§204 D4) or corrects an email. The same function answers
+      // for the §200 copy door, so the two can never disagree.
+      supabase.rpc("candidate_erasure_open", {
+        p_candidate_id: input.candidateId,
+      }),
       email
         ? supabase
             .from("email_suppressions")
@@ -195,7 +198,10 @@ export async function sendCandidateMessage(
     pipelineStage: candidate.pipeline_stage,
     profileDnc: profileQ.data?.dnc === true,
     dncReason: profileQ.data?.dnc_reason ?? null,
-    erasureOpen: (erasureQ.data ?? []).length > 0,
+    // Fails CLOSED: a read that errored returns null, and a send that
+    // cannot establish whether somebody asked to be forgotten must not
+    // proceed as though they had not.
+    erasureOpen: erasureQ.error ? true : erasureQ.data === true,
     suppressed: suppressionQ.data ? { reason: suppressionQ.data.reason } : null,
     dailySendCap: policy.daily_send_cap,
     sentTodayOrgWide: dayCountQ.count ?? 0,
