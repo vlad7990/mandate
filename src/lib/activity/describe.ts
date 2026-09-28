@@ -752,6 +752,18 @@ export function describeActivity(event: ActivityEventRow): string {
     case "network_dnc_set": {
       const who = str(d, "person") ?? "the person";
       const reason = str(d, "reason");
+      // §207 — a CARRY has no clicker. The suppression moved because an
+      // identity edit repointed a record to a different person, and
+      // "Marked" would credit somebody with a decision they never made
+      // about this person (§175's class, in the trail this time).
+      if (str(d, "source") === "identity_edit") {
+        const from = str(d, "carried_from");
+        return (
+          `Carried ${who}'s do-not-contact onto their updated record` +
+          (from && from !== who ? ` (from ${from})` : "") +
+          (reason ? ` — ${reason}` : "")
+        );
+      }
       return `Marked ${who} do-not-contact${reason ? ` — ${reason}` : ""}`;
     }
     case "network_dnc_cleared":

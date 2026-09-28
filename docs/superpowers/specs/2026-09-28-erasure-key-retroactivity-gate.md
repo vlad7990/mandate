@@ -1,8 +1,36 @@
-# WHEN SOMEBODY ASKS TO BE FORGOTTEN, WHAT IS IT ATTACHED TO — THE GATE — 2026-09-28 — DRAFT
+# WHEN SOMEBODY ASKS TO BE FORGOTTEN, WHAT IS IT ATTACHED TO — THE GATE — 2026-09-28 — CONFIRMED
 
-**Awaiting the founder's word. Five rulings. D1 decides what a suppression is
-attached to; D3 decides whether this slice also closes the DO-NOT-CONTACT
-hole the probe below found, or leaves it for a gate of its own.**
+**CONFIRMED 2026-09-28. All five recommendations taken, with one revision
+and a build order:**
+
+- **D5 is SPLIT into two decline outcomes.** The blanket "a decline
+  suppresses" has a victim: a portal link can be forwarded, so the person
+  who files is not always the subject, and declining a mis-filed request
+  would silently kill outreach to a real candidate who never asked for
+  anything. So: *"we cannot erase this"* (retention, a client record) lifts
+  the gate and **sets DNC**; *"this was not the subject"* lifts it and
+  suppresses nothing, with the reason in the trail.
+- **Built DNC-first, in two slices.** Slice one is D3 alone — suppression
+  survives a repoint — because that is the live harm (0 erasure requests
+  exist; DNC is a door recruiters use today) and because it touches
+  `candidates_link_network_profile`, which fires on every candidate write
+  and deserves its own mutation pass and its own drive rather than riding
+  along with a schema change. Slice two is the erasure rule itself: D1's
+  union, D2's merge carry, D4's two doors, D5 as split above.
+- **A coupling the founder should know:** D1's record snapshot and D3 are
+  one mechanism. A request row names one person, so when an edit splits a
+  row onto a newly minted person there is no way to "move" the erasure
+  without stripping it from the original person's other records — the
+  frozen snapshot is what carries it. Which is why D1 keeps all three arms.
+
+*Slice one shipped as migration 151; drive 139's database legs are recorded
+in the commit. The original draft follows, unchanged.*
+
+---
+
+**Five rulings. D1 decides what a suppression is attached to; D3 decides
+whether this slice also closes the DO-NOT-CONTACT hole the probe below
+found, or leaves it for a gate of its own.**
 
 The ask: **"gate the erasure key retroactivity question."** §204 D4 named it
 and deliberately did not touch it: *the erasure gate still keys on
