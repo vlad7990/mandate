@@ -10,7 +10,10 @@ import {
   type NetworkRollup,
   type NetworkSort,
 } from "@/lib/network/network-aggregator";
-import { loadRelationshipProfiles } from "@/lib/network/profile-resolver";
+import {
+  loadRelationshipProfiles,
+  loadSuppressionLedger,
+} from "@/lib/network/profile-resolver";
 import { NetworkTable } from "./network-table";
 import { MergePeoplePanel } from "./merge-people-panel";
 import type { MergeablePerson } from "@/lib/network/merge-people";
@@ -104,8 +107,14 @@ export default async function NetworkPage({
 
   // The relationship overlay (#24, 098), for the people ON THIS PAGE, and
   // whether the viewer may clear a suppression (founder territory).
-  const [profileMap, { data: viewerRow }] = await Promise.all([
+  //
+  // §208 — the suppression LEDGER comes with it, scoped the same way: a
+  // person can hold several unlifted reasons, and the card lists them all
+  // (D3) and names who a lift would reach before it happens (D2). The
+  // profile's four dnc columns are derived from the first row of this.
+  const [profileMap, suppressionMap, { data: viewerRow }] = await Promise.all([
     loadRelationshipProfiles(page.people.map((p) => p.profile_id)),
+    loadSuppressionLedger(page.people.map((p) => p.profile_id)),
     supabase
       .from("users")
       .select("is_founder")
@@ -113,6 +122,7 @@ export default async function NetworkPage({
       .maybeSingle<{ is_founder: boolean }>(),
   ]);
   const profiles = Object.fromEntries(profileMap);
+  const suppressions = Object.fromEntries(suppressionMap);
   const isFounder = viewerRow?.is_founder === true;
 
   // §203 — the merge panel's list, from every profile in the org rather than
@@ -255,6 +265,7 @@ export default async function NetworkPage({
             people={page.people}
             activeProjects={page.active_projects}
             profiles={profiles}
+            suppressions={suppressions}
             isFounder={isFounder}
           />
           <Pagination

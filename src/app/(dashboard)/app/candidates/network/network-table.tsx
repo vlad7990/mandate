@@ -11,7 +11,10 @@ import type {
 } from "@/lib/network/network-aggregator";
 import { AddToSearchButton } from "./add-to-search-button";
 import { RelationshipCard } from "./relationship-card";
-import type { RelationshipProfile } from "@/lib/network/profile-resolver";
+import type {
+  RelationshipProfile,
+  SuppressionRecord,
+} from "@/lib/network/profile-resolver";
 
 const TIER_TONE: Record<Tier, string> = {
   tier_1: "border-secondary-fixed-dim/60 bg-secondary-fixed-dim/10 text-secondary-fixed-dim",
@@ -47,6 +50,7 @@ export function NetworkTable({
   people,
   activeProjects,
   profiles,
+  suppressions,
   isFounder,
 }: {
   people: NetworkPerson[];
@@ -54,6 +58,9 @@ export function NetworkTable({
   /** Durable relationship overlay (098), keyed by profile id (§204 — a
    * merge moves which profile a row belongs to, and nothing else). */
   profiles: Record<string, RelationshipProfile>;
+  /** §208 — every unlifted reason per profile id, earliest first. The
+   * overlay's four dnc columns carry only the first of these. */
+  suppressions: Record<string, SuppressionRecord[]>;
   isFounder: boolean;
 }) {
   if (people.length === 0) {
@@ -72,6 +79,7 @@ export function NetworkTable({
           person={p}
           activeProjects={activeProjects}
           profile={profiles[p.profile_id] ?? null}
+          suppressions={suppressions[p.profile_id] ?? []}
           isFounder={isFounder}
         />
       ))}
@@ -83,11 +91,13 @@ function NetworkCard({
   person,
   activeProjects,
   profile,
+  suppressions,
   isFounder,
 }: {
   person: NetworkPerson;
   activeProjects: NetworkProject[];
   profile: RelationshipProfile | null;
+  suppressions: SuppressionRecord[];
   isFounder: boolean;
 }) {
   const [showRelationship, setShowRelationship] = useState(false);
@@ -269,7 +279,11 @@ function NetworkCard({
         </div>
       </div>
       {showRelationship && (
-        <RelationshipCard profile={profile} isFounder={isFounder} />
+        <RelationshipCard
+          profile={profile}
+          suppressions={suppressions}
+          isFounder={isFounder}
+        />
       )}
     </li>
   );

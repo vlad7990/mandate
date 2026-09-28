@@ -5,31 +5,69 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { IconAlert, IconIntelligence, IconRefresh } from "@/components/icons";
-import type { RelationshipProfile } from "@/lib/network/profile-resolver";
+import type {
+  RelationshipProfile,
+  SuppressionRecord,
+} from "@/lib/network/profile-resolver";
 import {
   clearDncAction,
+  liftSuppressionAction,
   setDncAction,
+  suppressionReachAction,
   updateRelationshipAction,
+  type ReachedPerson,
 } from "./relationship-actions";
 import { unwrap } from "@/lib/actions/result";
+
+/** §208 D3 — which act put a reason here, in the reader's words. */
+const SOURCE_LABEL: Record<SuppressionRecord["source"], string> = {
+  recruiter: "A recruiter decided",
+  withdrawal: "They withdrew via their portal",
+  erasure: "They requested erasure via their portal",
+  carried: "Carried from another person",
+};
+
+/**
+ * A lift the founder has been shown but not yet confirmed. `ids` is what
+ * would be lifted; `reached` is who it touches, by name.
+ */
+type PendingLift = {
+  label: string;
+  ids: string[];
+  reason: string;
+  reached: ReachedPerson[];
+  /** Clearing the person lifts every reason standing against them. */
+  isWholePerson: boolean;
+};
 
 /**
  * The durable relationship overlay on a network person (#24, 098).
  * The agent maintains the record; the humans own every consequential
  * act: suppression (with a mandatory reason), and — founder only —
  * the un-suppression.
+ *
+ * §208 — suppression is a LEDGER, so this card no longer shows one reason.
+ * It lists every unlifted reason with its source (D3), and no lift happens
+ * until the founder has seen who else it reaches, named (D2).
  */
 export function RelationshipCard({
   profile,
+  suppressions = [],
   isFounder,
 }: {
   profile: RelationshipProfile | null;
+  /**
+   * Every UNLIFTED reason standing against this person, earliest first — so
+   * `suppressions[0]` is the row the badge's reason was derived from.
+   */
+  suppressions?: SuppressionRecord[];
   isFounder: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [act, setAct] = useState<string | null>(null);
   const [reason, setReason] = useState("");
+  const [lift, setLift] = useState<PendingLift | null>(null);
 
   if (!profile) {
     return (
@@ -63,6 +101,57 @@ export function RelationshipCard({
         setAct(null);
       }
     });
+  };
+
+  /**
+   * D2 — step one of every lift: ask who it reaches and show them. Nothing is
+   * written here. The founder confirms against the names, or cancels.
+   */
+  const review = (
+    label: string,
+    ids: string[],
+    isWholePerson: boolean
+  ) => {
+    if (pending) return;
+    const words = reason.trim();
+    if (words.length === 0 || ids.length === 0) return;
+    setAct(label);
+    start(async () => {
+      try {
+        const reached = unwrap(await suppressionReachAction(ids));
+        setLift({ label, ids, reason: words, reached, isWholePerson });
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Who this lift reaches could not be read — nothing was lifted."
+        );
+      } finally {
+        setAct(null);
+      }
+    });
+  };
+
+  /** Step two: the act itself, against exactly what was shown. */
+  const confirmLift = () => {
+    if (!lift) return;
+    const { ids, reason: words, isWholePerson } = lift;
+    run(
+      "confirm",
+      async () => {
+        if (isWholePerson) {
+          unwrap(await clearDncAction(profile.id, words));
+          return;
+        }
+        for (const id of ids) {
+          unwrap(await liftSuppressionAction(id, words));
+        }
+      },
+      isWholePerson
+        ? "Suppression cleared"
+        : "That reason was lifted — any other reason still stands"
+    );
+    setLift(null);
   };
 
   const d = profile.disposition ?? {};
@@ -109,17 +198,129 @@ export function RelationshipCard({
       </div>
 
       {profile.dnc && (
-        <div className="flex items-start gap-2 border border-error/50 bg-error/10 px-3 py-2 text-error">
-          <IconAlert size={14} className="mt-0.5" />
-          <div className="space-y-0.5">
-            <p className="font-mono-label text-mono-label uppercase tracking-widest">
-              Do not contact
-            </p>
-            <p className="font-mono-data text-body-main leading-snug">
-              {profile.dnc_reason ?? "No reason recorded."}
-              {profile.dnc_set_by === null && " Set by the system."}
-              {" Only a founder-level act with a recorded reason can clear this."}
-            </p>
+        <div className="border border-error/50 bg-error/10 px-3 py-2 text-error space-y-2">
+          <div className="flex items-start gap-2">
+            <IconAlert size={14} className="mt-0.5 shrink-0" />
+            <div className="space-y-0.5">
+              <p className="font-mono-label text-mono-label uppercase tracking-widest">
+                Do not contact
+                {suppressions.length > 1 &&
+                  ` · ${suppressions.length} reasons stand`}
+              </p>
+              {/* No ledger loaded for this surface — say what the derived
+                  columns say and nothing more. Rendering "no reasons" over an
+                  unread ledger would be §175's class: asserting what we do
+                  not know. */}
+              {suppressions.length === 0 ? (
+                <p className="font-mono-data text-body-main leading-snug">
+                  {profile.dnc_reason ?? "No reason recorded."}
+                  {profile.dnc_set_by === null && " Set by the system."}
+                  {" Only a founder-level act with a recorded reason can clear this."}
+                </p>
+              ) : (
+                <p className="font-mono-data text-body-main leading-snug">
+                  {suppressions.length > 1
+                    ? "Each is its own record. Lifting one leaves this person suppressed while any other stands."
+                    : "Only a founder-level act with a recorded reason can lift this."}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* D3 — every unlifted reason, with its source. The first governs
+              the badge above: it is the first time they said it. */}
+          {suppressions.length > 0 && (
+            <ol className="space-y-1.5">
+              {suppressions.map((s, i) => (
+                <li
+                  key={s.id}
+                  className="border-l-2 border-error/50 pl-2.5 space-y-0.5"
+                >
+                  <p className="font-mono-data text-body-main leading-snug">
+                    {s.reason}
+                  </p>
+                  <p className="font-mono-label text-mono-label uppercase tracking-widest text-error/70 flex flex-wrap gap-x-2">
+                    <span>{SOURCE_LABEL[s.source]}</span>
+                    <span className="tabular-nums">{s.set_at.slice(0, 10)}</span>
+                    <span>
+                      {s.set_by === null
+                        ? "set by the system"
+                        : s.set_by_name
+                          ? `set by ${s.set_by_name}`
+                          : "set by a member of your team"}
+                    </span>
+                    {i === 0 && <span>· governs the badge</span>}
+                  </p>
+                  {isFounder && (
+                    <button
+                      type="button"
+                      onClick={() => review(`lift:${s.id}`, [s.id], false)}
+                      disabled={pending || reason.trim().length === 0}
+                      className="font-mono-label text-mono-label uppercase tracking-widest underline decoration-dotted underline-offset-2 hover:no-underline disabled:opacity-50"
+                    >
+                      {pending && act === `lift:${s.id}`
+                        ? "Reading who this reaches…"
+                        : "Lift this reason"}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
+
+      {/* D2 — a lift is NEVER SILENT. Who it reaches, by name, before it
+          happens. Nothing has been written at this point. */}
+      {lift && (
+        <div className="border border-tertiary/60 bg-tertiary/10 px-3 py-2 space-y-2">
+          <p className="font-mono-label text-mono-label uppercase tracking-widest text-tertiary">
+            Confirm the lift
+          </p>
+          <p className="font-mono-data text-body-main text-on-surface leading-snug">
+            {lift.reached.length === 1
+              ? "This lifts one person. Nobody else holds a copy of it."
+              : `This also lifts ${lift.reached.length - 1} other ${
+                  lift.reached.length === 2 ? "person" : "people"
+                } — the suppression was carried to them, and lifting it here lifts it there too.`}
+          </p>
+          <ul className="space-y-0.5">
+            {lift.reached.map((r) => (
+              <li
+                key={r.suppressionId}
+                className="font-mono-data text-body-main text-on-surface-variant leading-snug"
+              >
+                · {r.displayName}
+                {!r.isOrigin && " — carried copy"}
+              </li>
+            ))}
+          </ul>
+          <p className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
+            Recorded reason · {lift.reason}
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={confirmLift}
+              disabled={pending}
+              className="px-3 py-1.5 border border-error/50 text-error font-mono-label text-mono-label uppercase tracking-widest hover:bg-error/10 transition-colors disabled:opacity-60"
+            >
+              {pending && act === "confirm" ? (
+                <IconRefresh size={14} className="animate-spin" />
+              ) : lift.isWholePerson ? (
+                "Clear every reason"
+              ) : (
+                "Lift it"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setLift(null)}
+              disabled={pending}
+              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container-high transition-colors disabled:opacity-60"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
@@ -210,29 +411,43 @@ export function RelationshipCard({
         )}
 
         {profile.dnc && isFounder && (
-          <span className="flex items-center gap-2">
+          <span className="flex items-center gap-2 flex-wrap">
             <input
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               disabled={pending}
-              placeholder="Reason (required to clear)"
+              placeholder="Reason (required to lift or clear)"
               className="px-2 py-1.5 bg-surface-container-lowest border border-outline-variant font-mono-data text-body-main text-on-surface placeholder:text-outline focus-visible:outline-none focus-visible:border-primary w-56"
             />
-            <button
-              type="button"
-              onClick={() =>
-                run(
-                  "clear",
-                  async () =>
-                    unwrap(await clearDncAction(profile.id, reason)),
-                  "Suppression cleared"
-                )
-              }
-              disabled={pending || reason.trim().length === 0}
-              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container-high transition-colors disabled:opacity-60"
-            >
-              Clear suppression
-            </button>
+            {suppressions.length > 0 ? (
+              <button
+                type="button"
+                onClick={() =>
+                  review(
+                    "clear",
+                    suppressions.map((s) => s.id),
+                    true
+                  )
+                }
+                disabled={pending || reason.trim().length === 0}
+                className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container-high transition-colors disabled:opacity-60"
+              >
+                {pending && act === "clear"
+                  ? "Reading who this reaches…"
+                  : suppressions.length > 1
+                    ? "Clear every reason"
+                    : "Clear suppression"}
+              </button>
+            ) : (
+              // dnc is DERIVED from the ledger, so a suppressed person with no
+              // ledger rows on screen means the rows were not read — not that
+              // there are none. A lift is never silent, and this is the one
+              // state where who it reaches cannot be named.
+              <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
+                Its reasons could not be read — who a lift reaches cannot be
+                shown, so nothing can be lifted here
+              </span>
+            )}
           </span>
         )}
       </div>
