@@ -257,3 +257,64 @@ moved reason as moved. Teardown exact.
 - **It does not revisit §207's four-arm gate or its fail-closed posture.**
 - **It does not recover which request wrote a suppression before this slice**
   where a profile holds several (D1's backfill says so rather than guessing).
+
+---
+
+## Part 5 — As ruled, and as driven
+
+**Ruled 2026-09-29.** D1, D2, D3 as recommended. **D4: RELAX THE INDEX** —
+the founder's call, against this gate's own recommendation. Several open
+erasure requests may stand against one person; the index keys on the
+IDENTITY instead. That makes D1's `suppression_id` load-bearing rather than
+merely correct: with two open requests on one person, "which row is this
+request's?" must be stored, not inferred.
+
+**Built** as migration 157 (applied as `a_request_owns_the_row_it_wrote`),
+commit a0a421b, prod `mandate-gc3nwhl6b`. One departure from Part 3: D2's
+stamp is a **BEFORE UPDATE OF profile_id trigger** rather than a line in
+`merge_network_profiles`, for the reason §208 made the derivation a trigger —
+the record of a move must not be something a future writer can forget.
+`merge_network_profiles` is therefore untouched by this slice; it stopped
+colliding because the index changed.
+
+**A GUARD WAS HOLDING THE DEFECT IN PLACE.** `erasure-binding.test.ts`
+asserted the decline READS `network_suppressions` and filters on
+`source='erasure'` — it required the very search §1.3 shows is a fingerprint.
+Rewritten to require the binding and forbid the search, and mutation-tested
+in its new direction.
+
+**Drive 143, live in production, teardown exact:**
+
+  S1  Two people each file an erasure through `candidate_portal_request_erasure`
+      — the function the portal calls. Both requests BOUND to their own
+      ledger row; both people suppressed.
+  S2  **The merge succeeded**, through the product's own merge panel, where
+      before 157 it aborted on `candidate_erasure_requests_open_idx`. The
+      survivor holds TWO unlifted erasure rows and TWO open requests, each
+      request still owning its own row. The moved row carries
+      `moved_from_label`; its `carried_from` is still NULL — a move is not a
+      copy.
+  S3  /ops showed **"SAME PERSON AS 1 OTHER"** on both rows, so two requests
+      that are one human do not read as two strangers.
+  S4  Declining the SECOND request `not_subject` lifted **its own** (moved)
+      row. The first request's row STANDS, its request still open, and the
+      person is **still suppressed**. Under §208 this decline would have
+      taken the earliest erasure row on the profile — the FIRST request's —
+      lifting a suppression nobody had declined and travelling to every copy
+      of it.
+  S5  A third person, suppressed by a recruiter, merged in: the card renders
+      **"CAME ACROSS WHEN DRIVE143 REX MOVED WAS MERGED IN · 2026-09-29"** on
+      that reason and on no other.
+
+Teardown exact against all twelve counts: candidates 4, network_profiles 4,
+network_suppressions 0, suppressed 0, aliases 0, folded 4, portal_tokens 0,
+erasure_requests 0, activity_events 134, orphan profiles 0, users 27,
+projects 4.
+
+**§209 is closed.**
+
+**Residue, found on the drive, NOT a defect of this slice:** the Network
+fold titles a row from its most recent candidate record, so the merged
+person's card was headed "Drive143 Rex Moved" while the profile's
+`display_name` — and the merge receipt — said Nell Park. Pre-existing; worth
+its own look.
