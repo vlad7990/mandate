@@ -15,6 +15,14 @@ export type ErasureRow = {
   organization_name: string;
   note: string | null;
   created_at: string;
+  /**
+   * §209 D4 — how many OTHER open requests stand against the same person.
+   * Since the open-request index was relaxed from one-per-person to
+   * one-per-identity, two rows here can be one human who asked twice under
+   * two identities, or two people a merge turned out to be one. A queue
+   * that shows those as two strangers is §175's class.
+   */
+  shares_person_with: number;
 };
 
 export function ErasureQueue({ rows }: { rows: ErasureRow[] }) {
@@ -68,6 +76,15 @@ export function ErasureQueue({ rows }: { rows: ErasureRow[] }) {
           className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3"
         >
           <span className="text-on-surface">{r.requester_label}</span>
+          {r.shares_person_with > 0 && (
+            <span
+              className="border border-tertiary/60 px-1.5 font-mono-label text-mono-label uppercase tracking-wider text-tertiary"
+              title="These requests are the same person under more than one identity — a merge, or two portal links. Each one still lifts only the suppression it set."
+            >
+              same person as {r.shares_person_with} other
+              {r.shares_person_with === 1 ? "" : "s"}
+            </span>
+          )}
           <span className="font-mono-label text-mono-label uppercase tracking-wider text-outline">
             {r.organization_name}
           </span>

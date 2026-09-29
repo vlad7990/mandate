@@ -243,14 +243,21 @@ describe("§207 D5 — a decline is two answers", () => {
     expect(CLOSE).toMatch(/rpc\(\s*\n?\s*"lift_network_suppression"/);
   });
 
-  it("lifts the row THIS request wrote — by lineage, not by fingerprint", () => {
-    // §208: the row is findable. §207 had to guess from the reason text and
-    // an absent setter, which also could not reach the copies a carry made.
-    // A reason this person holds for themselves is a different row, and
-    // lifting by id cannot touch it.
-    expect(CLOSE).toMatch(/\.from\("network_suppressions"\)/);
-    expect(CLOSE).toMatch(/\.eq\("source", "erasure"\)/);
-    expect(CLOSE).toMatch(/\.is\("lifted_at", null\)/);
+  it("lifts the row THIS request wrote — by the binding it stored", () => {
+    // §207 guessed from the reason text and an absent setter. §208 narrowed
+    // that to (profile, source='erasure', earliest unlifted) and its comment
+    // called it lineage — THIS ASSERTION USED TO REQUIRE THAT SEARCH, which
+    // made the guard hold the defect in place. §209 proved it was still a
+    // fingerprint: a merge puts two erasure rows on one person, and the
+    // search then lifts the OTHER request's row, which per §208 D2 travels
+    // to every copy of it.
+    //
+    // The request now carries the id its filing wrote, so there is no search
+    // left to make. A reason this person holds for themselves is a different
+    // row, and lifting by id cannot touch it.
+    expect(CLOSE).toMatch(/p_suppression: updated\.suppression_id,/);
+    expect(CLOSE).not.toMatch(/\.from\("network_suppressions"\)/);
+    expect(CLOSE).not.toMatch(/\.eq\("source", "erasure"\)/);
     expect(CLOSE).not.toMatch(/dnc_reason ===/);
   });
 

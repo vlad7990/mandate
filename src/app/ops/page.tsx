@@ -48,7 +48,7 @@ export default async function OpsOverviewPage() {
       .eq("status", "pending"),
     supabase
       .from("candidate_erasure_requests")
-      .select("id, organization_id, requester_label, note, created_at")
+      .select("id, organization_id, requester_label, note, created_at, network_profile_id")
       .eq("status", "open")
       .order("created_at", { ascending: true }),
   ]);
@@ -60,19 +60,34 @@ export default async function OpsOverviewPage() {
   const orgNameById = new Map(
     ((orgsQ.data ?? []) as OrgRow[]).map((o) => [o.id, o.name])
   );
-  const erasureRows: ErasureRow[] = (
-    (erasureQ.data ?? []) as {
-      id: string;
-      organization_id: string;
-      requester_label: string;
-      note: string | null;
-      created_at: string;
-    }[]
-  ).map((r) => ({
+  // §209 D4 — several open requests may now stand against one person.
+  // Count them before rendering so the queue can say so; two rows that are
+  // one human must not read as two strangers.
+  const openRequests = (erasureQ.data ?? []) as {
+    id: string;
+    organization_id: string;
+    requester_label: string;
+    note: string | null;
+    created_at: string;
+    network_profile_id: string | null;
+  }[];
+  const requestsPerPerson = new Map<string, number>();
+  for (const r of openRequests) {
+    // A request with no resolved person is nobody else's duplicate.
+    if (!r.network_profile_id) continue;
+    requestsPerPerson.set(
+      r.network_profile_id,
+      (requestsPerPerson.get(r.network_profile_id) ?? 0) + 1
+    );
+  }
+  const erasureRows: ErasureRow[] = openRequests.map((r) => ({
     id: r.id,
     requester_label: r.requester_label,
     organization_name: orgNameById.get(r.organization_id) ?? "unknown org",
     note: r.note,
+    shares_person_with: r.network_profile_id
+      ? (requestsPerPerson.get(r.network_profile_id) ?? 1) - 1
+      : 0,
     created_at: r.created_at,
   }));
 

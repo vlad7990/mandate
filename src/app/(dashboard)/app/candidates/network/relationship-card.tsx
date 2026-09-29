@@ -251,6 +251,21 @@ export function RelationshipCard({
                     </span>
                     {i === 0 && <span>· governs the badge</span>}
                   </p>
+                  {/* §209 D2/D3 — a reason that arrived with somebody else.
+                      Only ever rendered from a stamped move; when the moved-
+                      off person's name could not be read it says the move
+                      without naming them, rather than inventing a name. */}
+                  {s.moved_at && (
+                    <p className="font-mono-label text-mono-label uppercase tracking-widest text-error/70">
+                      {s.moved_from_label
+                        ? `Came across when ${s.moved_from_label} was merged in`
+                        : "Came across from a person merged in"}
+                      <span className="tabular-nums">
+                        {" · "}
+                        {s.moved_at.slice(0, 10)}
+                      </span>
+                    </p>
+                  )}
                   {isFounder && (
                     <button
                       type="button"

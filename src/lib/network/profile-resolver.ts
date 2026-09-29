@@ -41,6 +41,13 @@ export type SuppressionRecord = {
   set_by: string | null;
   /** The row this was copied from on a merge or a repoint, if any. */
   carried_from: string | null;
+  /**
+   * §209 D2 — the person this reason was filed against before a merge moved
+   * it onto this one, if it moved. A MOVE IS NOT A COPY: `carried_from` is
+   * what a lift follows, and this never widens one.
+   */
+  moved_from_label: string | null;
+  moved_at: string | null;
   /** The setter's name, when the viewer may read it. See the card. */
   set_by_name: string | null;
 };
@@ -75,7 +82,7 @@ export async function loadSuppressionLedger(
     // lesson from the placements defect — the composite-FK version of this
     // shipped to production once already.)
     .select(
-      "id, profile_id, reason, source, set_at, set_by, carried_from, setter:users!network_suppressions_set_by_fkey(full_name)"
+      "id, profile_id, reason, source, set_at, set_by, carried_from, moved_from_label, moved_at, setter:users!network_suppressions_set_by_fkey(full_name)"
     )
     .in("profile_id", profileIds as string[])
     .is("lifted_at", null)
@@ -92,6 +99,8 @@ export async function loadSuppressionLedger(
       set_at: row.set_at,
       set_by: row.set_by,
       carried_from: row.carried_from,
+      moved_from_label: row.moved_from_label,
+      moved_at: row.moved_at,
       set_by_name: row.setter?.full_name ?? null,
     });
     map.set(row.profile_id, list);

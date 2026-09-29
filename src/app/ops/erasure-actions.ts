@@ -59,37 +59,32 @@ export async function closeErasureRequestAction(
       })
       .eq("id", requestId)
       .eq("status", "open")
-      .select("id, network_profile_id")
-      .maybeSingle<{ id: string; network_profile_id: string | null }>();
+      .select("id, network_profile_id, suppression_id")
+      .maybeSingle<{
+        id: string;
+        network_profile_id: string | null;
+        suppression_id: string | null;
+      }>();
     if (error) throw new Error(error.message);
     if (!updated) throw new Error("That request is not open.");
 
     // D5, the half with teeth: a request filed by somebody who was not the
     // subject must not leave a real candidate quietly uncontactable. Lift
-    // the suppression ONLY when this request is demonstrably what set it —
-    // the system's own reason, and no human named as the setter.
-    if (outcome === "declined" && declineKind === "not_subject" && updated.network_profile_id) {
-      // §208 — by LINEAGE, not by fingerprint. The row this request wrote is
-      // findable; §207 had to guess at it from the reason text and an absent
-      // setter, which also could not reach the copies a carry had made.
-      // Lifting the row lifts everything carried from it, and nothing else:
-      // a reason this person holds for themselves is a different row and
-      // stands untouched.
-      const { data: row } = await supabase
-        .from("network_suppressions")
-        .select("id")
-        .eq("profile_id", updated.network_profile_id)
-        .eq("source", "erasure")
-        .is("lifted_at", null)
-        .order("set_at", { ascending: true })
-        .limit(1)
-        .maybeSingle<{ id: string }>();
-
-      if (row) {
+    // the suppression this request set — and no other.
+    if (outcome === "declined" && declineKind === "not_subject") {
+      // §209 D1 — BY THE BINDING. §208's version claimed lineage in its
+      // comment and re-found the row by (profile, source='erasure',
+      // earliest unlifted), which is the right row only while a profile
+      // holds one erasure row. A merge is what makes it hold two: declining
+      // the second lifted the FIRST — a suppression nobody declined — and
+      // that lift then travelled to every copy of the wrong row.
+      //
+      // The request now carries the id of the row its filing wrote.
+      if (updated.suppression_id) {
         const { error: clearErr } = await supabase.rpc(
           "lift_network_suppression",
           {
-            p_suppression: row.id,
+            p_suppression: updated.suppression_id,
             p_reason:
               "erasure request declined — the person who filed it was not the subject",
           }
@@ -103,6 +98,18 @@ export async function closeErasureRequestAction(
               `be lifted: ${clearErr.message}`
           );
         }
+      } else if (updated.network_profile_id) {
+        // Honest absence, not a fallback guess. Either this request never
+        // suppressed anybody, or it was filed before §209 against a person
+        // who by then held several erasure rows — and which of those it
+        // wrote is unknowable (the id was discarded at the time). Guessing
+        // here is the exact defect this slice closes, so it does not guess.
+        throw new Error(
+          "The request was closed as not-subject, but the suppression it " +
+            "set cannot be identified, so nothing was lifted. Clear it by " +
+            "hand from the person's relationship card, where every standing " +
+            "reason is listed."
+        );
       }
     }
 
