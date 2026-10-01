@@ -44,7 +44,7 @@ function readSurface(): Surface {
   const CREATE = /CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+public\.([a-z_0-9]+)\s*\(/gi;
   const DROP = /DROP\s+FUNCTION\s+(?:IF\s+EXISTS\s+)?public\.([a-z_0-9]+)\s*\(/gi;
   const REVOKE =
-    /REVOKE\s+ALL\s+ON\s+FUNCTION\s+public\.([a-z_0-9]+)\s*\([^)]*\)\s*\n?\s*FROM\s+([^;]+);/gi;
+    /REVOKE\s+(?:ALL|EXECUTE)\s+ON\s+FUNCTION\s+public\.([a-z_0-9]+)\s*\([^)]*\)\s*\n?\s*FROM\s+([^;]+);/gi;
   const GRANT =
     /GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+public\.([a-z_0-9]+)\s*\([^)]*\)\s*\n?\s*TO\s+([^;]+);/gi;
 
@@ -63,6 +63,11 @@ function readSurface(): Surface {
     for (const m of sql.matchAll(REVOKE)) {
       const roles = m[2].toLowerCase();
       if (/\bpublic\b/.test(roles) || /\banon\b/.test(roles)) revoked.add(m[1]);
+      // §211 — a revoke FROM anon removes the name from the EFFECTIVE anon
+      // set. Before this the model relied on a later non-anon GRANT to do the
+      // removal, so a BARE `REVOKE … FROM anon` (no trailing grant) left the
+      // name counted — the model, not the surface, was wrong.
+      if (/\bpublic\b/.test(roles) || /\banon\b/.test(roles)) grantedToAnon.delete(m[1]);
     }
     for (const m of sql.matchAll(GRANT)) {
       if (/\banon\b/.test(m[2].toLowerCase())) grantedToAnon.set(m[1], file);
@@ -76,7 +81,7 @@ const S = readSurface();
 const live = (fn: string) => !S.dropped.has(fn);
 
 /**
- * The ruled anon RPC surface, verbatim. Fourteen functions, each one a door
+ * The ruled anon RPC surface, verbatim. Twelve functions, each one a door
  * something outside the product has to be able to knock on.
  *
  * Adding a name here is a security decision. It should be made in a gate,
@@ -90,10 +95,13 @@ const RULED_ANON_SURFACE = [
   "candidate_portal_request_erasure",
   "candidate_portal_update_contact",
   "candidate_portal_withdraw",
-  // The three load-bearing ones named in 110's comments.
-  "check_rate_limit", //            the limiter, before a session exists
-  "record_email_delivery_event", // Resend's webhook
-  "run_guarantee_maintenance", //   Vercel Cron
+  // §211 — of 110's three "load-bearing" anon grants (limiter/webhook/cron),
+  // only the limiter remains: it alone runs BEFORE a session exists. The
+  // webhook (record_email_delivery_event) and cron (run_guarantee_maintenance)
+  // were SECURITY DEFINER writes whose only real protection was their route's
+  // secret; they bypassed that at the data door, so §211 revoked them to
+  // service_role and their routes now call them as service_role.
+  "check_rate_limit", // the limiter, before a session exists
   // The public apply link (134).
   "submit_application",
   "verify_apply_token",
@@ -143,7 +151,95 @@ describe("§210 — the anon surface is exactly the ruled set", () => {
   });
 
   it("the pinned list is the size the linter reports", () => {
-    expect(RULED_ANON_SURFACE.length).toBe(14);
+    expect(RULED_ANON_SURFACE.length).toBe(12);
+  });
+
+  it("the webhook and cron writes are off the anon surface (§211)", () => {
+    // Finding 1+2: these were SECURITY DEFINER writes reachable by anon, with
+    // authenticity only at their Next route. §211 revoked them to service_role.
+    for (const fn of ["record_email_delivery_event", "run_guarantee_maintenance"]) {
+      expect(RULED_ANON_SURFACE).not.toContain(fn);
+      expect(S.grantedToAnon.has(fn)).toBe(false);
+    }
+  });
+});
+
+describe("§211 — the open data doors are shut", () => {
+  const M159 = fs.readFileSync(
+    path.join(MIGRATIONS, "159_close_the_open_data_doors.sql"),
+    "utf8"
+  );
+
+  it("revokes BOTH functions from anon AND authenticated — not anon only", () => {
+    // The crux (D1): Finding 1's PRIMARY vector is an insider (an ordinary
+    // authenticated member who can read a provider_message_id). Revoking only
+    // anon would leave it open.
+    for (const sig of [
+      "record_email_delivery_event\\(text, text, text, text\\)",
+      "run_guarantee_maintenance\\(\\)",
+    ]) {
+      expect(M159).toMatch(
+        new RegExp(`REVOKE EXECUTE ON FUNCTION public\\.${sig}\\s*\\n?\\s*FROM anon, authenticated;`)
+      );
+    }
+  });
+
+  it("keeps service_role, so the routes can still call them", () => {
+    for (const sig of [
+      "record_email_delivery_event\\(text, text, text, text\\)",
+      "run_guarantee_maintenance\\(\\)",
+    ]) {
+      expect(M159).toMatch(
+        new RegExp(`GRANT EXECUTE ON FUNCTION public\\.${sig}\\s*\\n?\\s*TO service_role;`)
+      );
+    }
+  });
+
+  it("drops the bare anon SELECT on email_suppressions (D6)", () => {
+    expect(M159).toMatch(/REVOKE SELECT ON public\.email_suppressions FROM anon;/);
+  });
+
+  it("changes no function body — access control only (D3/D4)", () => {
+    expect(M159).not.toMatch(/CREATE OR REPLACE FUNCTION/);
+  });
+});
+
+describe("§211 — the routes call the shut doors as service_role", () => {
+  const WEBHOOK = fs.readFileSync(
+    path.join(process.cwd(), "src", "app", "api", "webhooks", "resend", "route.ts"),
+    "utf8"
+  );
+  const CRON = fs.readFileSync(
+    path.join(process.cwd(), "src", "app", "api", "cron", "maintenance", "route.ts"),
+    "utf8"
+  );
+
+  it("the webhook calls the RPC through the service-role client, not anon", () => {
+    expect(WEBHOOK).toMatch(/getServiceRoleSupabaseClient\(\)/);
+    expect(WEBHOOK).toMatch(/\.rpc\("record_email_delivery_event"/);
+    // The old anon client is gone — an anon/user client here would re-open it.
+    expect(WEBHOOK).not.toMatch(/NEXT_PUBLIC_SUPABASE_ANON_KEY/);
+    expect(WEBHOOK).not.toMatch(/createClient\(/);
+  });
+
+  it("the cron calls the RPC through the service-role client, not the user client", () => {
+    expect(CRON).toMatch(/getServiceRoleSupabaseClient\(\)/);
+    expect(CRON).toMatch(/\.rpc\("run_guarantee_maintenance"\)/);
+    // createServerSupabaseClient is the anon/user-context client — must not be
+    // what reaches this service_role-only RPC.
+    expect(CRON).not.toMatch(/createServerSupabaseClient/);
+  });
+
+  it("the webhook REJECTS a bad Svix signature before the write", () => {
+    // The authenticity boundary is still the route. Assert the REJECTION, not
+    // just the presence of a verify call: a mutation that removed the
+    // bad-signature 401 while leaving verifySvix() in place slipped past a
+    // presence-ordering check. The literal rejection must exist AND precede
+    // the RPC call.
+    const reject = WEBHOOK.indexOf('"bad signature"');
+    const call = WEBHOOK.indexOf('rpc("record_email_delivery_event"');
+    expect(reject, "the bad-signature rejection is gone").toBeGreaterThan(-1);
+    expect(call).toBeGreaterThan(reject);
   });
 });
 

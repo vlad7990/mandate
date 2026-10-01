@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import { CRON_HEARTBEAT_NAME } from "@/lib/status/heartbeat";
 import { runScheduledSweep } from "@/lib/sweep/run-scheduled-sweep";
@@ -56,7 +55,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const supabase = await createServerSupabaseClient();
+  // §211: run_guarantee_maintenance is service_role ONLY now — the CRON_SECRET
+  // checked above is the authenticity boundary, so the RPC no longer needs to
+  // be reachable by anon/authenticated (it was an unguarded SECURITY DEFINER
+  // write; vuln finding 2). The same service client the heartbeat uses below.
+  const supabase = getServiceRoleSupabaseClient();
   const { data, error } = await supabase.rpc("run_guarantee_maintenance");
 
   if (error) {

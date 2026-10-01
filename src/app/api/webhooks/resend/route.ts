@@ -1,13 +1,19 @@
-import { createClient } from "@supabase/supabase-js";
 import { createHmac, timingSafeEqual } from "crypto";
+import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 
 // The delivery webhook (099, spec §5.1): Resend's svix-signed events
 // update delivery_status and suppress bounced/complained addresses —
-// through `record_email_delivery_event`, which is inert without a
-// provider-named row. The signature is verified HERE, before the
-// database hears anything; without RESEND_WEBHOOK_SECRET the route
-// answers 503 and touches nothing (ships dormant until the founder
+// through `record_email_delivery_event`. The signature is verified HERE,
+// before the database hears anything; without RESEND_WEBHOOK_SECRET the
+// route answers 503 and touches nothing (ships dormant until the founder
 // wires the Resend dashboard).
+//
+// §211: the RPC is service_role ONLY. It is a SECURITY DEFINER write that
+// bypasses the _admin_insert-only RLS on email_suppressions, so leaving it
+// callable by anon/authenticated made the Svix check bypassable at the data
+// door (vuln finding 1 — a member could suppress arbitrary addresses). The
+// signature verified above IS the authenticity boundary; this route is the
+// only caller, through the service-role client below.
 //
 // Svix scheme: signature = base64(HMAC-SHA256(secret, "{id}.{timestamp}.{payload}"))
 // with the secret being the base64 payload of the "whsec_..." key;
@@ -94,14 +100,16 @@ export async function POST(request: Request) {
     ? event.data?.to?.[0]
     : event.data?.to;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
+  // service_role, because §211 revoked this RPC from anon/authenticated and
+  // the Svix signature above is what authorises reaching it. getService…()
+  // throws if SUPABASE_SERVICE_ROLE_KEY is absent — the same 503-when-
+  // unconfigured posture the anon path had.
+  let supabase;
+  try {
+    supabase = getServiceRoleSupabaseClient();
+  } catch {
     return new Response("storage not configured", { status: 503 });
   }
-  const supabase = createClient(url, anonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
   const { error } = await supabase.rpc("record_email_delivery_event", {
     p_provider_message_id: messageId,
     p_status: status,
