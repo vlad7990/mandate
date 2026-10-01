@@ -164,3 +164,42 @@ suppression list is needless surface. One line, same migration. Leave the
   route, which is now the real boundary because the door is shut.
 - It does not touch the other portal token doors (they legitimately take a
   token and are the intended anon surface).
+
+---
+
+## Part 5 — As ruled, and as driven
+
+**Ruled 2026-10-01.** D1 **service_role only** (revoke anon AND authenticated),
+build everything as recommended; D3/D4 declined. Built as **migration 159** +
+both route rewires + the §210 guard model fix, commit c069bdf, prod
+`mandate-ngfokjnfa`.
+
+**A guard was strengthened mid-build.** The webhook "verifies before the write"
+check tested *presence-ordering* (`verifySvix` appears before the call); a
+mutation that removed the bad-signature 401 while leaving `verifySvix()` in
+place slipped past it. Rewritten to assert the REJECTION itself precedes the
+call, and re-mutated. (The §211 *primary* control — service_role-only — was
+already caught; this was a secondary guard.)
+
+**Drive 144, live in production, over real HTTP with the publishable key only:**
+
+| call | before §211 | after §211 |
+|---|---|---|
+| `record_email_delivery_event` (anon) | HTTP 200 | **HTTP 401** permission denied |
+| `run_guarantee_maintenance` (anon) | open | **HTTP 401** permission denied |
+| `check_rate_limit` (anon, control) | — | HTTP 200 ✓ |
+
+- The **insider vector** (Finding 1's primary) is closed by the same grant:
+  `has_function_privilege('authenticated', …)` = false, verified live. An
+  authenticated JWT sets role=authenticated and hits the same 42501.
+- **Happy path intact:** both functions still EXECUTE under a privileged role
+  (`record_email_delivery_event('…nomatch…','bounced')` → 0 no-op, no write;
+  `run_guarantee_maintenance()` → 0 earned). The routes' service_role path works.
+- **Nothing written:** `email_suppressions` 0 before and after; the one
+  `rate_limit` row the control probe created was removed.
+
+Teardown exact: candidates 4, network_profiles 4, network_suppressions 0,
+suppressed 0, aliases 0, portal_tokens 0, erasure_requests 0, email_suppressions
+0, activity_events 134, users 27, projects 4, **anon surface 12**.
+
+**§211 is closed. Vuln Findings 1 and 2 are remediated and driven.**
