@@ -33,12 +33,29 @@ function salt(): string {
   return process.env.RATE_LIMIT_SALT ?? "mandate-rate-limit-fallback";
 }
 
-/** Vercel sets x-forwarded-for; unknown callers share one bucket. */
+/**
+ * The client IP that keys every per-IP limiter (the Tier-1 money doors and
+ * the Tier-2 credential doors). Read ONLY from platform-controlled headers,
+ * never a caller-nameable one.
+ *
+ * WHY LEFTMOST x-forwarded-for IS TRUSTED HERE (vuln finding 3, verified
+ * against Vercel docs 2026-10-01): "Vercel overwrites this header and does
+ * not forward external IPs to prevent spoofing" — so on this deployment a
+ * client CANNOT inject the leftmost value. The one documented exception is
+ * Enterprise "trusted proxy" mode, which this project does not use. If a
+ * route is ever served OFF Vercel's edge, that guarantee is gone and this
+ * must change — do not widen it to read an arbitrary client header.
+ *
+ * Absent both headers (local dev, a misconfig), callers share one "anon"
+ * bucket — a MORE restrictive fallback, never a bypass.
+ */
 export function clientIpFrom(headers: Headers): string {
+  // Leftmost non-empty segment of the Vercel-set XFF = the client Vercel saw.
   const xff = headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]!.trim();
-  const real = headers.get("x-real-ip");
-  if (real) return real.trim();
+  const first = xff?.split(",").map((s) => s.trim()).find(Boolean);
+  if (first) return first;
+  const real = headers.get("x-real-ip")?.trim();
+  if (real) return real;
   return "anon";
 }
 
