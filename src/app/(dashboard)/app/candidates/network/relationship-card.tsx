@@ -18,6 +18,7 @@ import {
   type ReachedPerson,
 } from "./relationship-actions";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 /** §208 D3 — which act put a reason here, in the reader's words. */
 const SOURCE_LABEL: Record<SuppressionRecord["source"], string> = {
@@ -378,7 +379,8 @@ export function RelationshipCard({
       )}
 
       <div className="flex items-center gap-2 flex-wrap">
-        <button
+        <Button
+          variant="primary"
           type="button"
           onClick={() =>
             run(
@@ -388,7 +390,7 @@ export function RelationshipCard({
             )
           }
           disabled={pending}
-          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+          className="flex"
         >
           {pending && act === "update" ? (
             <IconRefresh size={14} className="animate-spin" />
@@ -396,7 +398,7 @@ export function RelationshipCard({
             <IconIntelligence size={14} />
           )}
           Update relationship
-        </button>
+        </Button>
 
         {!profile.dnc && (
           <span className="flex items-center gap-2">

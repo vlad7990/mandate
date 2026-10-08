@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TIER_BANDS, type Tier } from "@/lib/ranking/tiers";
+import { Button } from "@/components/ui/button";
 import {
   IconArrowDown,
   IconArrowUp,
@@ -300,12 +301,14 @@ export function HmFeedbackForm({
 
         {!disabled && (
           <footer className="flex items-center justify-end pt-2 border-t border-outline-variant/40">
-            <button
+            <Button
+              variant="primary"
+              size="md"
               type="button"
               onClick={handleSubmit}
               disabled={pending || ratedCount === 0}
               aria-busy={pending ? true : undefined}
-              className="px-4 py-2 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="flex gap-2"
             >
               {pending ? (
                 <IconRefresh size={14} className="animate-spin" />
@@ -313,7 +316,7 @@ export function HmFeedbackForm({
                 <IconSend size={14} />
               )}
               {pending ? "Submitting" : "Submit Feedback"}
-            </button>
+            </Button>
           </footer>
         )}
       </div>

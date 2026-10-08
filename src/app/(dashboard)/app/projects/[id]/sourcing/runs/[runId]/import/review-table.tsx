@@ -16,6 +16,7 @@ import { IconCheckCircle, IconRefresh, IconLink } from "@/components/icons";
 import { promoteResultsAction } from "../../actions";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export type StagedRow = {
   id: string;
@@ -164,11 +165,12 @@ export function ReviewTable({
               {undecided} undecided
             </span>
           )}
-          <button
+          <Button
+            variant="primary"
             type="button"
             onClick={promote}
             disabled={pending || decisions.length === 0}
-            className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex"
           >
             {pending ? (
               <IconRefresh size={14} className="animate-spin" />
@@ -176,7 +178,7 @@ export function ReviewTable({
               <IconCheckCircle size={14} />
             )}
             Import {decisions.length} selected
-          </button>
+          </Button>
         </div>
       </header>
 

@@ -13,6 +13,7 @@ import {
   IconTrash,
 } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 export type SkillRowData = {
   id: string;
@@ -163,12 +164,12 @@ export function SkillRow({
         </div>
         {canAuthor && (
         <div className="flex items-center gap-2 shrink-0">
-          <button
+          <Button
             type="button"
             onClick={handleToggle}
             disabled={togglePending}
             aria-busy={togglePending ? true : undefined}
-            className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="flex"
           >
             {skill.is_active ? (
               <IconPause size={14} />
@@ -176,7 +177,7 @@ export function SkillRow({
               <IconPlay size={14} />
             )}
             {skill.is_active ? "Pause" : "Activate"}
-          </button>
+          </Button>
           <Link
             href={`/app/settings/skills/${skill.id}`}
             prefetch={false}
@@ -185,16 +186,17 @@ export function SkillRow({
             <IconPencil size={14} />
             Edit
           </Link>
-          <button
+          <Button
+            tone="danger"
             type="button"
             onClick={handleDelete}
             disabled={deletePending}
             aria-busy={deletePending ? true : undefined}
-            className="px-3 py-1.5 border border-outline-variant text-outline hover:border-error hover:text-error transition-colors font-mono-label text-mono-label uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error"
+            className="text-outline flex focus-visible:outline-error"
           >
             <IconTrash size={14} />
             Delete
-          </button>
+          </Button>
         </div>
         )}
       </div>

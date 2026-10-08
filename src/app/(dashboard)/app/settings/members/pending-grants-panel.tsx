@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { unwrap } from "@/lib/actions/result";
 import { decideAdminGrantAction } from "./actions";
+import { Button } from "@/components/ui/button";
 
 /**
  * Admin grants waiting on a second pair of eyes (129).
@@ -99,25 +100,27 @@ function PendingGrantItem({ row }: { row: PendingGrantRow }) {
             <span className="font-mono-label text-mono-label uppercase tracking-wider text-outline">
               Yours — another admin must approve
             </span>
-            <button
+            <Button
+              tone="danger"
               type="button"
               disabled={pending}
               onClick={() => decide("withdraw")}
-              className="border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-error hover:text-error disabled:opacity-40"
+              className="disabled:opacity-40"
             >
               Withdraw
-            </button>
+            </Button>
           </>
         ) : (
           <>
-            <button
+            <Button
+              tone="danger"
               type="button"
               disabled={pending}
               onClick={() => decide("reject")}
-              className="border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-error hover:text-error disabled:opacity-40"
+              className="disabled:opacity-40"
             >
               Decline
-            </button>
+            </Button>
             <button
               type="button"
               disabled={pending}

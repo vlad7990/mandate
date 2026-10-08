@@ -20,6 +20,7 @@ import {
 } from "./engagement-actions";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export type EngagementLaneRow = {
   id: string;
@@ -172,7 +173,8 @@ export function EngagementPanel({
                 }))}
                 className="w-auto min-w-48 bg-surface-container-lowest px-2 tracking-widest"
               />
-              <button
+              <Button
+                variant="primary"
                 type="button"
                 onClick={() =>
                   run(
@@ -190,7 +192,7 @@ export function EngagementPanel({
                   )
                 }
                 disabled={pending}
-                className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+                className="flex"
               >
                 {pending && act === "resolve" ? (
                   <IconRefresh size={14} className="animate-spin" />
@@ -198,7 +200,7 @@ export function EngagementPanel({
                   <IconCheckCircle size={14} />
                 )}
                 Resolve
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -222,7 +224,8 @@ export function EngagementPanel({
                 The Art. 14 notice is appended by Mandate at send time.
               </p>
               <div className="flex items-center gap-2 flex-wrap pt-1">
-                <button
+                <Button
+                  variant="primary"
                   type="button"
                   onClick={() =>
                     run(
@@ -239,7 +242,7 @@ export function EngagementPanel({
                     )
                   }
                   disabled={pending}
-                  className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+                  className="flex"
                 >
                   {pending && act === "send" ? (
                     <IconRefresh size={14} className="animate-spin" />
@@ -247,7 +250,7 @@ export function EngagementPanel({
                     <IconSend size={14} />
                   )}
                   Send via Mandate
-                </button>
+                </Button>
                 <button
                   type="button"
                   onClick={() =>

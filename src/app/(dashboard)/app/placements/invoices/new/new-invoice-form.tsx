@@ -7,6 +7,7 @@ import { IconArrowLeft, IconPlus } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 import { createInvoiceAction } from "../actions";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export function NewInvoiceForm({
   clients,
@@ -94,14 +95,16 @@ export function NewInvoiceForm({
           <IconArrowLeft size={14} />
           Back
         </Link>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           type="submit"
           disabled={submitDisabled}
-          className="flex items-center gap-2 btn-notch bg-primary-container px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex gap-2 disabled:opacity-50"
         >
           <IconPlus size={14} />
           {isPending ? "Creating…" : "Start draft"}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -19,6 +19,7 @@ import {
 } from "../../actions";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 /**
  * Paste or CSV → column mapping → stage.
@@ -172,11 +173,12 @@ export function ImportWizard({
                 {filename}
               </span>
             )}
-            <button
+            <Button
+              variant="primary"
               type="button"
               onClick={() => runPreview(overrides)}
               disabled={pending || !text.trim()}
-              className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex"
             >
               {pending ? (
                 <IconRefresh size={14} className="animate-spin" />
@@ -184,7 +186,7 @@ export function ImportWizard({
                 <IconCheck size={14} />
               )}
               Read rows
-            </button>
+            </Button>
           </div>
         </div>
       </section>
@@ -231,11 +233,13 @@ export function ImportWizard({
 
             {preview.sample.length > 0 && <SampleTable preview={preview} />}
 
-            <button
+            <Button
+              variant="primary"
+              size="md"
               type="button"
               onClick={stage}
               disabled={pending || preview.parsedCount === 0}
-              className="px-4 py-2 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex"
             >
               {pending ? (
                 <IconRefresh size={14} className="animate-spin" />
@@ -243,7 +247,7 @@ export function ImportWizard({
                 <IconUpload size={14} />
               )}
               Stage {preview.parsedCount} rows for review
-            </button>
+            </Button>
             <p className="font-mono-data text-body-main text-on-surface-variant">
               Staging records what this run returned. Nobody becomes a candidate
               until you confirm them on the next screen.

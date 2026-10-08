@@ -21,6 +21,7 @@ import {
   IconSpark,
 } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 export function GenerateReportButton({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -39,12 +40,14 @@ export function GenerateReportButton({ projectId }: { projectId: string }) {
     });
   };
   return (
-    <button
+    <Button
+      variant="primary"
+      size="md"
       type="button"
       onClick={handle}
       disabled={pending}
       aria-busy={pending ? true : undefined}
-      className="px-4 py-2 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="flex gap-2"
     >
       {pending ? (
         <IconRefresh size={14} className="animate-spin" />
@@ -52,7 +55,7 @@ export function GenerateReportButton({ projectId }: { projectId: string }) {
         <IconSpark size={14} />
       )}
       {pending ? "Generating" : "Generate Weekly Report"}
-    </button>
+    </Button>
   );
 }
 
@@ -120,27 +123,27 @@ export function ReportExportActions(props: ReportExportProps) {
   return (
     <>
       <div className="flex items-center gap-2 flex-wrap">
-        <button
+        <Button
           type="button"
           onClick={handleCopy}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           <IconCopy size={14} />
           Copy Markdown
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handleMarkdown}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           <IconDocument size={14} />
           Download .md
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handlePdf}
           disabled={pdfPending}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           {pdfPending ? (
             <IconRefresh size={14} className="animate-spin" />
@@ -148,15 +151,16 @@ export function ReportExportActions(props: ReportExportProps) {
             <IconDownload size={14} />
           )}
           {pdfPending ? "Building" : "Download PDF"}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
           type="button"
           onClick={() => setEmailOpen(true)}
-          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           <IconMail size={14} />
           Draft Client Email
-        </button>
+        </Button>
       </div>
 
       {emailOpen && (
@@ -252,22 +256,23 @@ function EmailDraftDialog({
           </label>
         </div>
         <footer className="px-5 py-3 border-t border-outline-variant bg-surface-container-low flex items-center justify-end gap-2">
-          <button
+          <Button
             type="button"
             onClick={() => copy(`Subject: ${subject}\n\n${body}`, "Subject + body")}
-            className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5"
+            className="flex"
           >
             <IconCopy size={14} />
             Copy Both
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             type="button"
             onClick={mailto}
-            className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5"
+            className="flex"
           >
             <IconSend size={14} />
             Open in Mail
-          </button>
+          </Button>
         </footer>
       </div>
     </div>

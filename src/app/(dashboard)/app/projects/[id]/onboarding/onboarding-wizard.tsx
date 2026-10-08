@@ -40,6 +40,7 @@ import {
   type IconProps,
 } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 type StepDef = {
   id: 1 | 2 | 3 | 4 | 5;
@@ -328,21 +329,25 @@ export function OnboardingWizard({
                   </button>
                 )}
                 {step < 5 ? (
-                  <button
+                  <Button
+                    variant="primary"
+                    size="lg"
                     type="button"
                     onClick={goNext}
-                    className="px-8 py-3 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2"
+                    className="transition-all flex gap-2"
                   >
                     Initiate Step {String(step + 1).padStart(2, "0")}
                     <IconArrowRight size={14} />
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
+                    variant="primary"
+                    size="lg"
                     type="button"
                     onClick={onSubmit}
                     disabled={isPending}
                     aria-busy={isPending}
-                    className="px-8 py-3 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="transition-all flex gap-2 disabled:opacity-70"
                   >
                     {isPending ? (
                       <>
@@ -352,7 +357,7 @@ export function OnboardingWizard({
                     ) : (
                       "Compile Calibration Model"
                     )}
-                  </button>
+                  </Button>
                 )}
               </div>
             </footer>

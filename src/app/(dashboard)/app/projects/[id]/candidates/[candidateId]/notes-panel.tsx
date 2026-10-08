@@ -34,6 +34,7 @@ import {
 import { NOTE_TYPES, type NoteType } from "./notes-constants";
 import { AUDIO_ACCEPT, validateAudioFile } from "@/lib/calls/audio";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 export type CandidateNote = {
   id: string;
@@ -378,24 +379,24 @@ function NoteComposer({
           Pin to top
         </label>
         <div className="flex items-center gap-2">
-          <button
+          <Button
             type="button"
             onClick={onDone}
             disabled={pending}
-            className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             type="button"
             onClick={handleSave}
             disabled={pending || content.trim().length === 0}
             aria-busy={pending ? true : undefined}
-            className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="flex"
           >
             {pending ? <IconRefresh size={14} className="animate-spin" /> : <IconCheck size={14} />}
             {pending ? "Saving" : "Save Note"}
-          </button>
+          </Button>
         </div>
       </footer>
     </article>
@@ -944,23 +945,25 @@ function LiveCallNotesModal({
             Saves as a Call note · duration {formatDuration(seconds)}
           </span>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              tone="danger"
               type="button"
               onClick={handleDiscard}
               disabled={pending}
-              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-error hover:text-error transition-colors disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error"
+              className="focus-visible:outline-error"
             >
               Discard
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="button"
               onClick={handleSave}
               disabled={pending || content.trim().length === 0}
-              className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="flex"
             >
               {pending ? <IconRefresh size={14} className="animate-spin" /> : <IconCheck size={14} />}
               {pending ? "Saving" : "End Call & Save Notes"}
-            </button>
+            </Button>
           </div>
         </footer>
       </div>

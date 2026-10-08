@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 import {
   closeErasureRequestAction,
   type DeclineKind,
@@ -94,24 +95,26 @@ export function ErasureQueue({ rows }: { rows: ErasureRow[] }) {
             </span>
           )}
           <span className="ml-auto flex items-center gap-2">
-            <button
+            <Button
+              tone="danger"
               type="button"
               disabled={pending}
               onClick={() => close(r, "declined", "not_subject")}
               title="The person who filed this was not the subject — a forwarded link. Lifts the suppression this request set."
-              className="border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-error hover:text-error disabled:opacity-40"
+              className="disabled:opacity-40"
             >
               Decline · not them
-            </button>
-            <button
+            </Button>
+            <Button
+              tone="danger"
               type="button"
               disabled={pending}
               onClick={() => close(r, "declined", "cannot_erase")}
               title="The data is retained under the retention verdict. They stay suppressed."
-              className="border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-error hover:text-error disabled:opacity-40"
+              className="disabled:opacity-40"
             >
               Decline · retained
-            </button>
+            </Button>
             <button
               type="button"
               disabled={pending}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { RankChangeReason } from "./rank-change-types";
+import { Button } from "@/components/ui/button";
 import {
   IconAnalytics,
   IconArrowDown,
@@ -275,13 +276,12 @@ function ExplanationModal({
         </div>
 
         <footer className="border-t border-outline-variant px-4 py-3 flex items-center justify-end">
-          <button
+          <Button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors"
           >
             Close
-          </button>
+          </Button>
         </footer>
       </div>
     </div>

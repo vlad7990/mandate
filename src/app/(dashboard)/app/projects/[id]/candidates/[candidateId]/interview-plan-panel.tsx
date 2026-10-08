@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { unwrap } from "@/lib/actions/result";
 import { normalizeMainstreamPlan } from "@/lib/ai/interviewer-agent";
+import { Button } from "@/components/ui/button";
 import {
   approveInterviewPlanAction,
   requestInterviewPlanAction,
@@ -106,14 +107,14 @@ export function InterviewPlanPanel({
             onboarding wizard first
           </p>
         )}
-        <button
+        <Button
+          variant="primary"
           type="button"
           onClick={generate}
           disabled={pending || !hasCalibration}
-          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] disabled:opacity-60"
         >
           {pending ? "Requesting…" : "Draft Interview Plan"}
-        </button>
+        </Button>
         <NoVerdictLine />
       </section>
     );
@@ -127,13 +128,12 @@ export function InterviewPlanPanel({
           The Interviewer Agent is drafting. This usually takes under a
           minute — refresh to check.
         </p>
-        <button
+        <Button
           type="button"
           onClick={() => router.refresh()}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors"
         >
           Refresh
-        </button>
+        </Button>
       </section>
     );
   }
@@ -143,14 +143,14 @@ export function InterviewPlanPanel({
       <section className="bg-surface-container-low border border-outline-variant p-4 space-y-3">
         <PanelHead status="failed" version={initial.version} />
         <p className="text-body-main text-error">{initial.generation_error}</p>
-        <button
+        <Button
+          variant="primary"
           type="button"
           onClick={generate}
           disabled={pending}
-          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] disabled:opacity-60"
         >
           {pending ? "Requesting…" : "Retry"}
-        </button>
+        </Button>
       </section>
     );
   }
@@ -163,23 +163,22 @@ export function InterviewPlanPanel({
         <PanelHead status={initial.status} version={initial.version} />
         <div className="flex items-center gap-2">
           {initial.status === "draft" && (
-            <button
+            <Button
+              variant="primary"
               type="button"
               onClick={approve}
               disabled={approving}
-              className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] disabled:opacity-60"
             >
               {approving ? "Approving…" : "Approve Plan"}
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
             onClick={generate}
             disabled={pending}
-            className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
           >
             {pending ? "Requesting…" : "Regenerate (new version)"}
-          </button>
+          </Button>
         </div>
       </div>
 

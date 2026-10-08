@@ -24,6 +24,7 @@ import {
 } from "./outreach-constants";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export type OutreachEntry = {
   id: string;
@@ -157,11 +158,12 @@ export function OutreachPanel({
             </p>
           )}
 
-          <button
+          <Button
+            variant="primary"
             type="button"
             onClick={submit}
             disabled={pending}
-            className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+            className="flex"
           >
             {pending ? (
               <IconRefresh size={14} className="animate-spin" />
@@ -169,7 +171,7 @@ export function OutreachPanel({
               <IconSend size={14} />
             )}
             Log contact
-          </button>
+          </Button>
         </div>
       </section>
 

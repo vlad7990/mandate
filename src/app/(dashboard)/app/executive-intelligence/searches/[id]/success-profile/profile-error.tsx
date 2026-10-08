@@ -11,6 +11,7 @@ import {
   IconRefresh,
 } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   searchId: string;
@@ -90,19 +91,21 @@ export function ProfileError({
             </p>
           </div>
 
-          <button
+          <Button
+            variant="primary"
+            size="lg"
             type="button"
             onClick={handleRetry}
             disabled={isPending}
             aria-busy={isPending ? true : undefined}
-            className="px-8 py-3 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="transition-all flex gap-2 disabled:opacity-70"
           >
             <IconRefresh
               size={16}
               className={isPending ? "animate-spin" : undefined}
             />
             {isPending ? "Retrying" : "Retry Generation"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

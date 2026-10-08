@@ -12,6 +12,7 @@ import {
   validateLogoFile,
 } from "@/lib/invoices/types";
 import { createTemplateAction, updateTemplateAction } from "./actions";
+import { Button } from "@/components/ui/button";
 
 export type TemplateFormInitial = {
   id: string | null;
@@ -298,14 +299,16 @@ export function TemplateForm({ initial }: { initial: TemplateFormInitial }) {
           <IconArrowLeft size={14} />
           Back
         </Link>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           type="submit"
           disabled={submitDisabled}
-          className="flex items-center gap-2 btn-notch bg-primary-container px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex gap-2 disabled:opacity-50"
         >
           <IconSave size={14} />
           {isPending ? "Saving…" : initial.id ? "Save template" : "Create template"}
-        </button>
+        </Button>
       </div>
     </form>
   );

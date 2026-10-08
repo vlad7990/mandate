@@ -12,6 +12,7 @@ import {
   IconSpark,
 } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   projectId: string;
@@ -78,12 +79,14 @@ export function JobSpecEmpty({ projectId, roleTitle, companyName }: Props) {
             </p>
           </div>
 
-          <button
+          <Button
+            variant="primary"
+            size="lg"
             type="button"
             onClick={handleGenerate}
             disabled={isPending}
             aria-busy={isPending ? true : undefined}
-            className="px-8 py-3 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="transition-all flex gap-2 disabled:opacity-70"
           >
             {isPending ? (
               <IconRefresh size={16} className="animate-spin" />
@@ -91,7 +94,7 @@ export function JobSpecEmpty({ projectId, roleTitle, companyName }: Props) {
               <IconSpark size={16} />
             )}
             {isPending ? "Initiating compile" : "Generate Job Spec"}
-          </button>
+          </Button>
 
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider">
             ~40 seconds · Claude Sonnet 4.6 · Five-section structured output

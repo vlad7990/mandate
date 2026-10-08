@@ -10,6 +10,7 @@ import {
   type MergeablePerson,
 } from "@/lib/network/merge-people";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 /**
  * Folding two people in the network into one.
@@ -120,14 +121,16 @@ export function MergePeoplePanel({
             </dl>
           )}
 
-          <button
+          <Button
+            variant="primary"
+            size="md"
             type="button"
             onClick={run}
             disabled={!ready}
-            className="btn-notch mt-4 bg-primary-container px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-4 text-[11px] font-semibold tracking-[0.1em] disabled:opacity-40"
           >
             {running ? "Merging…" : "Merge these two"}
-          </button>
+          </Button>
         </>
       )}
     </section>

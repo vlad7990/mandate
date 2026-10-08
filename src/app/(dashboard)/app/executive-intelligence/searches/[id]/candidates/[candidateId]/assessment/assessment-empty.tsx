@@ -13,6 +13,7 @@ import {
   IconRefresh,
 } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   searchId: string;
@@ -72,12 +73,14 @@ export function AssessmentEmpty({ searchId, candidateId, candidateName }: Props)
               summary.
             </p>
           </div>
-          <button
+          <Button
+            variant="primary"
+            size="lg"
             type="button"
             onClick={handleCreate}
             disabled={isPending}
             aria-busy={isPending ? true : undefined}
-            className="px-8 py-3 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="transition-all flex gap-2 disabled:opacity-70"
           >
             {isPending ? (
               <IconRefresh size={16} className="animate-spin" />
@@ -85,7 +88,7 @@ export function AssessmentEmpty({ searchId, candidateId, candidateName }: Props)
               <IconPlus size={16} />
             )}
             {isPending ? "Starting" : "Start Assessment"}
-          </button>
+          </Button>
           <p className="font-mono-label text-mono-label text-outline uppercase tracking-wider max-w-md normal-case">
             {ASSESSMENT_DISCLAIMER}
           </p>

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { IconCommit, IconRefresh } from "@/components/icons";
 import { createSourcingRunAction } from "./runs/actions";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 /**
  * Save the current Boolean set as a run, either as a new lineage or as a
@@ -56,14 +57,14 @@ export function CreateRunButton({
 
   if (!open) {
     return (
-      <button
+      <Button
         type="button"
         onClick={() => setOpen(true)}
-        className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="flex"
       >
         <IconCommit size={14} />
         {triggerLabel}
-      </button>
+      </Button>
     );
   }
 
@@ -108,15 +109,16 @@ export function CreateRunButton({
       </label>
 
       <div className="flex items-center gap-2">
-        <button
+        <Button
+          variant="primary"
           type="button"
           onClick={submit}
           disabled={pending}
-          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="flex"
         >
           {pending ? <IconRefresh size={14} className="animate-spin" /> : <IconCommit size={14} />}
           {pending ? "Saving" : "Save run"}
-        </button>
+        </Button>
         <button
           type="button"
           onClick={() => setOpen(false)}

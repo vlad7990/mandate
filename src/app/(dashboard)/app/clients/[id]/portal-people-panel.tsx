@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { MastHead } from "@/components/ui/mast-head";
 import { unwrap } from "@/lib/actions/result";
 import { ROLE_LABELS, type ExternalRole } from "@/lib/auth/roles";
+import { Button } from "@/components/ui/button";
 import {
   inviteExternalStaffAction,
   resendInvitationStaffAction,
@@ -340,13 +341,13 @@ function InviteExternalForm({
 
   if (!open) {
     return (
-      <button
+      <Button
+        size="md"
         type="button"
         onClick={() => setOpen(true)}
-        className="border border-outline-variant px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
       >
         + Invite to portal
-      </button>
+      </Button>
     );
   }
 

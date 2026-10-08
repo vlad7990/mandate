@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { unwrap } from "@/lib/actions/result";
 import { PIPELINE_LABELS, type PipelineStage } from "@/lib/ai/cv-parsing";
+import { Button } from "@/components/ui/button";
 import {
   updateContactAction,
   withdrawAction,
@@ -178,14 +179,15 @@ function SearchesCard({
               {stageWords(s.stage)}
             </span>
             {s.stage !== "withdrawn" && s.stage !== "hired" && (
-              <button
+              <Button
+                tone="danger"
                 type="button"
                 disabled={pending}
                 onClick={() => withdraw(s.project_id, s.role_title)}
-                className="ml-auto border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-error hover:text-error disabled:opacity-40"
+                className="ml-auto disabled:opacity-40"
               >
                 Withdraw
-              </button>
+              </Button>
             )}
           </li>
         ))}

@@ -8,6 +8,7 @@ import { addPersonToProjectAction } from "../../../candidates/network/actions";
 import { IconRefresh, IconSpark } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 /**
  * "Suggest from our pool" (§200 slice 3).
@@ -129,12 +130,12 @@ export function PoolSuggestionsPanel({ projectId }: { projectId: string }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
-        <button
+        <Button
           type="button"
           onClick={ask}
           disabled={asking || adding}
           aria-busy={asking ? true : undefined}
-          className="flex items-center gap-2 border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex gap-2 disabled:opacity-50"
         >
           {asking ? (
             <IconRefresh size={14} className="animate-spin" />
@@ -142,7 +143,7 @@ export function PoolSuggestionsPanel({ projectId }: { projectId: string }) {
             <IconSpark size={14} />
           )}
           {suggestions === null ? "Suggest from our pool" : "Ask again"}
-        </button>
+        </Button>
 
         {trawl && (
           <p className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
@@ -224,17 +225,19 @@ export function PoolSuggestionsPanel({ projectId }: { projectId: string }) {
           </ul>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
+            <Button
+              variant="primary"
+              size="md"
               type="button"
               onClick={addPicked}
               disabled={picked.size === 0 || adding}
               aria-busy={adding ? true : undefined}
-              className="btn-notch flex items-center gap-2 bg-primary-container px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex gap-2 text-[11px] font-semibold tracking-[0.1em] disabled:opacity-40"
             >
               {adding && <IconRefresh size={14} className="animate-spin" />}
               Add {picked.size > 0 ? picked.size : ""}{" "}
               {picked.size === 1 ? "person" : "people"}
-            </button>
+            </Button>
 
             {/* The bill and the consequence, before the click. */}
             <p className="font-mono-label text-mono-label uppercase tracking-widest text-outline tabular-nums">

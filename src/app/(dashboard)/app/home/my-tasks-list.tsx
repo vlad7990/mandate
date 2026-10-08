@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { IconChecklist } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 import { completeTaskAction } from "../desk/actions";
+import { Button } from "@/components/ui/button";
 
 type MyTask = {
   id: string;
@@ -86,14 +87,13 @@ export function MyTasksList({
                   <p className="mt-1 text-body-s text-on-surface-variant">{t.detail}</p>
                 )}
               </div>
-              <button
+              <Button
                 type="button"
                 disabled={busy === t.id}
                 onClick={() => complete(t)}
-                className="border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
               >
                 {busy === t.id ? "Completing…" : "Complete"}
-              </button>
+              </Button>
             </li>
           );
         })}

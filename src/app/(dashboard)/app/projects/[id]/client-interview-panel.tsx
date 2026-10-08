@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { unwrap } from "@/lib/actions/result";
 import { normalizeClientInterview } from "@/lib/ai/client-interview-agent";
 import { PrintPanelButton } from "@/components/ui/print-report-button";
+import { Button } from "@/components/ui/button";
 import {
   approveClientInterviewAction,
   requestClientInterviewAction,
@@ -127,14 +128,14 @@ export function ClientInterviewPanel({
             calibration is established. There is nothing to ask the client
           </p>
         )}
-        <button
+        <Button
+          variant="primary"
           type="button"
           onClick={generate}
           disabled={pending || !canCompose}
-          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] disabled:opacity-60"
         >
           {pending ? "Requesting…" : "Draft Client Questions"}
-        </button>
+        </Button>
         <NoVerdictLine />
       </section>
     );
@@ -148,13 +149,12 @@ export function ClientInterviewPanel({
           The Interviewer Agent is drafting. This usually takes under a
           minute — refresh to check.
         </p>
-        <button
+        <Button
           type="button"
           onClick={() => router.refresh()}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors"
         >
           Refresh
-        </button>
+        </Button>
       </section>
     );
   }
@@ -164,14 +164,14 @@ export function ClientInterviewPanel({
       <section className="bg-surface-container-low border border-outline-variant p-4 space-y-3">
         <PanelHead status="failed" version={initial.version} />
         <p className="text-body-main text-error">{initial.generation_error}</p>
-        <button
+        <Button
+          variant="primary"
           type="button"
           onClick={generate}
           disabled={pending}
-          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] disabled:opacity-60"
         >
           {pending ? "Requesting…" : "Retry"}
-        </button>
+        </Button>
       </section>
     );
   }
@@ -194,23 +194,22 @@ export function ClientInterviewPanel({
             <PrintPanelButton scopeId="client-interview-set" />
           )}
           {initial.status === "draft" && (
-            <button
+            <Button
+              variant="primary"
               type="button"
               onClick={approve}
               disabled={approving}
-              className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] disabled:opacity-60"
             >
               {approving ? "Approving…" : "Approve for Portal"}
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
             onClick={generate}
             disabled={pending}
-            className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
           >
             {pending ? "Requesting…" : "Regenerate (new version)"}
-          </button>
+          </Button>
         </div>
       </div>
 

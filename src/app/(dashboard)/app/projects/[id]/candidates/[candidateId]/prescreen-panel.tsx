@@ -26,6 +26,7 @@ import {
 } from "./prescreen-actions";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export type PrescreenRow = {
   id: string;
@@ -199,7 +200,8 @@ export function PrescreenPanel({
                 ]}
                 className="w-auto min-w-56 bg-surface-container-lowest px-2 tracking-widest"
               />
-              <button
+              <Button
+                variant="primary"
                 type="button"
                 onClick={() =>
                   run(
@@ -217,7 +219,7 @@ export function PrescreenPanel({
                   )
                 }
                 disabled={pending}
-                className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+                className="flex"
               >
                 {pending && act === "resolve" ? (
                   <IconRefresh size={14} className="animate-spin" />
@@ -225,7 +227,7 @@ export function PrescreenPanel({
                   <IconCheckCircle size={14} />
                 )}
                 Resolve
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -264,7 +266,8 @@ export function PrescreenPanel({
                 by Mandate at send time.
               </p>
               <div className="flex items-center gap-2 flex-wrap pt-1">
-                <button
+                <Button
+                  variant="primary"
                   type="button"
                   onClick={() =>
                     run(
@@ -281,7 +284,7 @@ export function PrescreenPanel({
                     )
                   }
                   disabled={pending}
-                  className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+                  className="flex"
                 >
                   {pending && act === "send" ? (
                     <IconRefresh size={14} className="animate-spin" />
@@ -289,7 +292,7 @@ export function PrescreenPanel({
                     <IconSend size={14} />
                   )}
                   Send invitation via Mandate
-                </button>
+                </Button>
               </div>
             </div>
           </div>

@@ -11,6 +11,7 @@ import {
   evaluationToMarkdown,
 } from "@/lib/ai/evaluation-export";
 import { regenerateWithHonestToast } from "./regenerate-evaluation";
+import { Button } from "@/components/ui/button";
 import {
   IconClose,
   IconCopy,
@@ -117,28 +118,28 @@ export function EvaluationActions({
   return (
     <>
       <div className="flex items-center gap-2 flex-wrap shrink-0">
-        <button
+        <Button
           type="button"
           onClick={handleDraftEmail}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           <IconMail size={14} />
           Draft Client Email
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handleDownload}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           <IconDownload size={14} />
           Markdown
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handleDownloadPdf}
           disabled={pdfPending}
           aria-busy={pdfPending ? true : undefined}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           {pdfPending ? (
             <IconRefresh size={14} className="animate-spin" />
@@ -146,17 +147,18 @@ export function EvaluationActions({
             <IconDownload size={14} />
           )}
           {pdfPending ? "Building" : "Download PDF"}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
           type="button"
           onClick={handleRegenerate}
           disabled={regenPending}
           aria-busy={regenPending ? true : undefined}
-          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           <IconRefresh size={14} className={cn(regenPending && "animate-spin")} />
           {regenPending ? "Regenerating" : "Regenerate"}
-        </button>
+        </Button>
       </div>
 
       {emailDraftOpen && (
@@ -322,22 +324,23 @@ function EmailDraftDialog({
             Edit freely before sending — these texts are starter prose.
           </span>
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
               onClick={handleCopyAll}
-              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="flex"
             >
               <IconCopy size={13} />
               Copy Both
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="button"
               onClick={handleMailto}
-              className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="flex"
             >
               <IconMail size={14} />
               Open in Mail
-            </button>
+            </Button>
           </div>
         </footer>
       </div>

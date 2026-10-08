@@ -13,6 +13,7 @@ import {
   reassignTaskAction,
 } from "./actions";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 const inputClass =
   "bg-surface-container-low border border-outline-variant px-3 py-2 text-body-main text-on-surface placeholder:text-outline focus:border-primary focus:ring-0 outline-none transition-colors";
@@ -139,13 +140,15 @@ export function TasksPanel({
           </span>
           <input type="date" name="due_on" className={inputClass} />
         </label>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           type="submit"
           disabled={pending}
-          className="btn-notch bg-primary-container px-4 py-2 font-mono-label text-mono-label uppercase tracking-widest text-on-primary-container transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+          className="transition-all"
         >
           {pending ? "Saving…" : "Create"}
-        </button>
+        </Button>
       </form>
 
       {tasks.length === 0 ? (

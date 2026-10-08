@@ -7,6 +7,7 @@ import { setMemberManagerAction } from "./actions";
 import { IconRefresh } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export type DeskHead = { id: string; label: string };
 
@@ -106,16 +107,16 @@ export function DeskPicker({
         className="w-auto min-w-44 px-2"
       />
 
-      <button
+      <Button
         type="button"
         onClick={apply}
         disabled={!dirty || isPending}
         aria-busy={isPending ? true : undefined}
-        className="flex items-center gap-1.5 border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-outline-variant disabled:hover:text-on-surface-variant"
+        className="flex disabled:opacity-40 disabled:hover:border-outline-variant disabled:hover:text-on-surface-variant"
       >
         {isPending && <IconRefresh size={14} className="animate-spin" />}
         Apply
-      </button>
+      </Button>
     </div>
   );
 }

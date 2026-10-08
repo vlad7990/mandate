@@ -23,6 +23,7 @@ import {
   type MarketInsight,
 } from "@/lib/comparison/comparison-export";
 import type { ComparisonGrid } from "@/lib/comparison/evidence-index";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   rows: ComparisonRow[];
@@ -96,28 +97,28 @@ export function ComparisonExportActions(props: Props) {
   return (
     <>
       <div className="flex items-center gap-2 flex-wrap">
-        <button
+        <Button
           type="button"
           onClick={handleDownloadMarkdown}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           <IconDocument size={14} />
           Download Markdown
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handleDownloadHtml}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           <IconPrint size={14} />
           Download HTML
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handleDownloadPdf}
           disabled={pdfPending}
           aria-busy={pdfPending ? true : undefined}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           {pdfPending ? (
             <IconRefresh size={14} className="animate-spin" />
@@ -125,15 +126,16 @@ export function ComparisonExportActions(props: Props) {
             <IconDownload size={14} />
           )}
           {pdfPending ? "Building" : "Download PDF"}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
           type="button"
           onClick={() => setEmailOpen(true)}
-          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex"
         >
           <IconMail size={14} />
           Draft Client Email
-        </button>
+        </Button>
       </div>
 
       {emailOpen && (
@@ -277,22 +279,23 @@ function EmailDraftDialog({
             Edit freely before sending — these texts are starter prose.
           </span>
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
               onClick={handleCopyAll}
-              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="flex"
             >
               <IconCopy size={14} />
               Copy Both
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="button"
               onClick={handleMailto}
-              className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="flex"
             >
               <IconSend size={14} />
               Open in Mail
-            </button>
+            </Button>
           </div>
         </footer>
       </div>

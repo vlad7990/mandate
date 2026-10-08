@@ -43,6 +43,7 @@ import {
   submitShortlistAction,
 } from "./actions";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 export type PoolCandidate = {
   id: string;
@@ -330,12 +331,12 @@ export function ShortlistBuilder({
                 pool column is a working surface and is height-locked to
                 the viewport, which is meaningless on paper. */}
             {slate.length > 0 && <PrintPanelButton scopeId="shortlist-slate" />}
-            <button
+            <Button
               type="button"
               onClick={handleGenerateReport}
               disabled={slate.length === 0 || reportPending || mutationPending}
               aria-busy={reportPending ? true : undefined}
-              className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="flex gap-2"
             >
               {reportPending ? (
                 <IconRefresh size={14} className="animate-spin" />
@@ -343,15 +344,16 @@ export function ShortlistBuilder({
                 <IconSpark size={14} />
               )}
               {reportPending ? "Generating" : report ? "Regenerate Report" : "Generate Report"}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="button"
               onClick={handleSubmit}
               disabled={
                 slate.length === 0 || submitPending || mutationPending
               }
               aria-busy={submitPending ? true : undefined}
-              className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="flex gap-2"
             >
               {submitPending ? (
                 <IconRefresh size={14} className="animate-spin" />
@@ -363,7 +365,7 @@ export function ShortlistBuilder({
                 : submittedAt
                   ? "Re-submit"
                   : "Finalize Submission"}
-            </button>
+            </Button>
           </div>
         </header>
 
@@ -415,14 +417,15 @@ export function ShortlistBuilder({
               aria-label="Custom slate size"
               className="w-14 bg-surface-container-lowest px-2 py-1.5 font-mono-data text-body-main text-on-surface tabular-nums focus:outline-none focus:bg-surface-container-low transition-colors"
             />
-            <button
+            <Button
+              variant="ghost"
               type="button"
               onClick={handleCustomSize}
               disabled={!customSize || mutationPending}
-              className="px-3 py-1.5 text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:bg-surface-container-high hover:text-primary transition-colors disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
+              className="text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
             >
               Apply
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -915,14 +918,16 @@ function ReportPreview({
             {companyName} · {report.candidates.length} candidate{report.candidates.length === 1 ? "" : "s"} · drafted {new Date().toISOString().slice(0, 10)}
           </div>
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           type="button"
           onClick={onCopy}
-          className="px-4 py-2 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 shrink-0"
+          className="transition-all flex gap-2 shrink-0"
         >
           <IconCopy size={14} />
           Copy Report
-        </button>
+        </Button>
       </header>
 
       <div className="px-6 py-5 space-y-6">

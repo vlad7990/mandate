@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/tier-comparison";
 import { updateRecruiterAssessment } from "./actions";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 // Recruiter override layer rendered below the AI evaluation report on
 // the candidate profile. Captures tier, present-decision, observed
@@ -365,14 +366,15 @@ export function RecruiterAssessmentPanel({
               : "Not yet saved"}
           </span>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              tone="danger"
               type="button"
               onClick={handleClear}
               disabled={pending}
-              className="px-3 py-1.5 border border-outline-variant text-outline hover:border-error hover:text-error font-mono-label text-mono-label uppercase tracking-widest transition-colors disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error"
+              className="text-outline focus-visible:outline-error"
             >
               Clear
-            </button>
+            </Button>
             <button
               type="button"
               onClick={handleSave}

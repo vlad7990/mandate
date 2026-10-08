@@ -15,6 +15,7 @@ import {
 } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export type SkillType = "role_skill" | "client_skill" | "search_skill";
 
@@ -369,11 +370,13 @@ export function SkillForm({
           <IconArrowLeft size={14} />
           Cancel
         </Link>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           type="submit"
           disabled={submitDisabled}
           aria-busy={isPending ? true : undefined}
-          className="px-4 py-2 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex gap-2"
         >
           {isPending ? (
             <IconRefresh size={14} className="animate-spin" />
@@ -385,7 +388,7 @@ export function SkillForm({
             : initial.id
               ? "Save Changes"
               : "Create Skill"}
-        </button>
+        </Button>
       </footer>
 
     </form>

@@ -11,6 +11,7 @@ import {
   type RecordSummary,
 } from "@/lib/candidates/merge";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 /**
  * The merge affordance on §201's identity-review notice.
@@ -82,13 +83,13 @@ export function MergePanel({
 
   if (!open) {
     return (
-      <button
+      <Button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 border border-outline-variant px-3 py-1.5 font-mono-label text-[11px] uppercase tracking-[0.1em] text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
+        className="mt-2 text-[11px] tracking-[0.1em]"
       >
         Merge these records
-      </button>
+      </Button>
     );
   }
 
@@ -181,14 +182,15 @@ function RecordCard({
         </p>
       )}
 
-      <button
+      <Button
+        variant="primary"
         type="button"
         onClick={onKeep}
         disabled={disabled}
-        className="btn-notch mt-3 w-full bg-primary-container px-3 py-1.5 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+        className="mt-3 w-full text-[11px] font-semibold tracking-[0.1em] disabled:opacity-40"
       >
         Keep this one
-      </button>
+      </Button>
     </div>
   );
 }

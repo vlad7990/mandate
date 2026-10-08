@@ -21,6 +21,7 @@ import {
   sendApprovedStrategyAction,
 } from "./strategy-actions";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 export type OutreachStrategyRow = {
   id: string;
@@ -109,11 +110,12 @@ export function OutreachStrategyPanel({
             approach for your approval. Sending stays your act — the
             approved draft opens in your own mail client.
           </p>
-          <button
+          <Button
+            variant="primary"
             type="button"
             onClick={draft}
             disabled={pending}
-            className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+            className="flex"
           >
             {pending && act === "draft" ? (
               <IconRefresh size={14} className="animate-spin" />
@@ -121,7 +123,7 @@ export function OutreachStrategyPanel({
               <IconIntelligence size={14} />
             )}
             Draft strategy
-          </button>
+          </Button>
         </div>
       )}
 
@@ -198,7 +200,8 @@ export function OutreachStrategyPanel({
           <div className="flex items-center gap-2 flex-wrap">
             {isDraft && (
               <>
-                <button
+                <Button
+                  variant="primary"
                   type="button"
                   onClick={() =>
                     run(
@@ -215,7 +218,7 @@ export function OutreachStrategyPanel({
                     )
                   }
                   disabled={pending}
-                  className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+                  className="flex"
                 >
                   {pending && act === "approve" ? (
                     <IconRefresh size={14} className="animate-spin" />
@@ -223,7 +226,7 @@ export function OutreachStrategyPanel({
                     <IconCheckCircle size={14} />
                   )}
                   Approve
-                </button>
+                </Button>
                 <button
                   type="button"
                   onClick={() =>
@@ -274,7 +277,8 @@ export function OutreachStrategyPanel({
 
             {isApproved && (
               <>
-                <button
+                <Button
+                  variant="primary"
                   type="button"
                   onClick={() =>
                     run(
@@ -293,7 +297,7 @@ export function OutreachStrategyPanel({
                     )
                   }
                   disabled={pending}
-                  className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+                  className="flex"
                 >
                   {pending && act === "send" ? (
                     <IconRefresh size={14} className="animate-spin" />
@@ -301,7 +305,7 @@ export function OutreachStrategyPanel({
                     <IconSend size={14} />
                   )}
                   Send via Mandate
-                </button>
+                </Button>
                 {canMailto && (
                   <button
                     type="button"

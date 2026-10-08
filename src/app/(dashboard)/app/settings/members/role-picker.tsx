@@ -8,6 +8,7 @@ import { STAFF_ROLES, ROLE_LABELS, type Role } from "@/lib/auth/roles";
 import { IconRefresh } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 /**
  * Role picker for one member.
@@ -106,7 +107,7 @@ export function RolePicker({
         className="w-auto min-w-32 px-2"
       />
 
-      <button
+      <Button
         type="button"
         onClick={apply}
         disabled={!dirty || isPending}
@@ -114,11 +115,11 @@ export function RolePicker({
         // `min-h-11 md:min-h-0` is the house touch floor, same as the
         // role select it sits beside: 44px where a finger is pointing,
         // released at `md` so the members row stays dense.
-        className="flex min-h-11 md:min-h-0 items-center gap-1.5 border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-outline-variant disabled:hover:text-on-surface-variant"
+        className="flex disabled:opacity-40 disabled:hover:border-outline-variant disabled:hover:text-on-surface-variant"
       >
         {isPending && <IconRefresh size={14} className="animate-spin" />}
         Apply
-      </button>
+      </Button>
     </div>
   );
 }

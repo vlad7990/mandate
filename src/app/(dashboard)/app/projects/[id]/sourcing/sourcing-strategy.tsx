@@ -20,6 +20,7 @@ import {
 } from "./actions";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 const ARCHETYPE_BLURBS: Record<
   Archetype,
@@ -137,11 +138,12 @@ export function TargetCompaniesPanel({ projectId }: { projectId: string }) {
             ]}
             className="h-auto w-auto min-w-48 bg-surface-container-lowest px-2 py-1 tracking-widest"
           />
-          <button
+          <Button
+            variant="primary"
             type="button"
             onClick={handleGenerate}
             disabled={pending}
-            className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="flex"
           >
             {pending ? (
               <IconRefresh size={14} className="animate-spin" />
@@ -155,7 +157,7 @@ export function TargetCompaniesPanel({ projectId }: { projectId: string }) {
               : report
                 ? "Regenerate"
                 : "Generate Target Companies"}
-          </button>
+          </Button>
         </div>
       </header>
 

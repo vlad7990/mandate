@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { unwrap } from "@/lib/actions/result";
 import { setMandateSharedAction } from "@/app/(dashboard)/app/clients/[id]/portal-people-actions";
+import { Button } from "@/components/ui/button";
 
 /**
  * The mandate's own view of the D2 share act. The token card above it is
@@ -79,15 +80,15 @@ export function PortalShareCard({
             : "Not shared — invisible to the client side"}
         </p>
         {canShare && (
-          <button
+          <Button
             type="button"
             onClick={toggle}
             disabled={pending}
             aria-busy={pending ? true : undefined}
-            className="ml-auto border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:opacity-40"
+            className="ml-auto tracking-wider disabled:opacity-40"
           >
             {pending ? "Working…" : shared ? "Withdraw" : "Share with client"}
-          </button>
+          </Button>
         )}
       </div>
 

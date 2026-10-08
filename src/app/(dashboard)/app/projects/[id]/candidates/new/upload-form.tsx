@@ -21,6 +21,7 @@ import {
   IconUpload,
 } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 const ACCEPTED_EXTENSIONS = ".pdf,.docx";
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -223,11 +224,13 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
             >
               Cancel
             </Link>
-            <button
+            <Button
+              variant="primary"
+              size="lg"
               type="submit"
               disabled={!file || isPending}
               aria-busy={isPending ? true : undefined}
-              className="px-8 py-3 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="transition-all flex gap-2 disabled:opacity-70"
             >
               {isPending ? (
                 <IconRefresh size={16} className="animate-spin" />
@@ -235,7 +238,7 @@ export function CvUploadForm({ projectId, roleTitle, companyName }: Props) {
                 <IconSpark size={16} />
               )}
               {isPending ? "Parsing CV…" : "Upload & Parse"}
-            </button>
+            </Button>
           </div>
         </form>
 

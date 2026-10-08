@@ -16,6 +16,7 @@ import {
 } from "./actions";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export type WaitlistInvitation = {
   token: string;
@@ -240,23 +241,24 @@ function RequestCard({
 
       {isPending && !approving && !issuedUrl && (
         <footer className="pt-3 border-t border-outline-variant/40 flex items-center justify-end gap-2">
-          <button
+          <Button
+            tone="danger"
             type="button"
             onClick={reject}
             disabled={pending}
-            className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-error hover:text-error transition-colors disabled:opacity-60"
           >
             Reject
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             type="button"
             onClick={() => setApproving(true)}
             disabled={pending}
-            className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+            className="flex"
           >
             <IconCheck size={14} />
             Approve
-          </button>
+          </Button>
         </footer>
       )}
 
@@ -439,26 +441,26 @@ function ApprovalPanel({
       )}
 
       <div className="flex items-center justify-end gap-2">
-        <button
+        <Button
           type="button"
           onClick={onCancel}
           disabled={pending}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
           type="button"
           onClick={submit}
           disabled={
             pending ||
             (mode === "new-org" ? !orgName.trim() || !slug.trim() : !orgChoice)
           }
-          className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+          className="flex"
         >
           <IconCheck size={14} />
           {pending ? "Provisioning…" : "Approve & Issue Invitation"}
-        </button>
+        </Button>
       </div>
     </div>
   );

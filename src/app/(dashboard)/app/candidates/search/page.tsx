@@ -31,6 +31,7 @@ import { cookies } from "next/headers";
 import { SAMPLE_DISMISSED_COOKIE, shouldShowSample } from "@/lib/sample";
 import { SampleSearchExample } from "@/components/sample/sample-sourcing";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 type CandidateRow = {
   id: string;
@@ -303,13 +304,15 @@ function SearchForm({
           placeholder="Senior post-trade engineering leaders with FCA exposure who've shipped a T+1 migration"
           className="min-w-0 flex-1 bg-transparent border-b border-outline-variant focus:border-primary focus:outline-none px-2 py-2 text-on-surface text-body-main placeholder:text-outline transition-colors"
         />
-        <button
+        <Button
+          variant="primary"
+          size="md"
           type="submit"
-          className="px-4 py-2 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex gap-2"
         >
           <IconSearch size={14} />
           Search
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

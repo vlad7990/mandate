@@ -8,6 +8,7 @@ import { approveUserAction, rejectUserAction } from "./actions";
 import { IconCheck, IconClose, IconRefresh } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   userId: string;
@@ -82,16 +83,17 @@ export function UserStatusActions({
           className="h-auto w-auto min-w-48 bg-surface-container-lowest px-2 py-1.5 text-on-surface-variant"
         />
       )}
-      <button
+      <Button
+        tone="danger"
         type="button"
         onClick={() => run("reject")}
         disabled={isPending}
         aria-busy={isPending ? true : undefined}
-        className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-error hover:text-error transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="flex"
       >
         <IconClose size={14} />
         {downLabel}
-      </button>
+      </Button>
       <button
         type="button"
         onClick={() => run("approve")}

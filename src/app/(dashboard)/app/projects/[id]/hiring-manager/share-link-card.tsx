@@ -9,6 +9,7 @@ import { generateHmTokenAction, revokeHmTokenAction } from "./actions";
 import { IconLink, IconRefresh, IconShare } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export type HmTokenRow = {
   id: string;
@@ -149,12 +150,14 @@ export function ShareLinkCard({
               className="w-full min-w-0 bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface focus:border-primary focus:outline-none transition-colors disabled:opacity-55"
             />
           </label>
-          <button
+          <Button
+            variant="primary"
+            size="md"
             type="button"
             onClick={handleGenerate}
             disabled={pending}
             aria-busy={pending ? true : undefined}
-            className="px-4 py-2 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="flex"
           >
             {pending ? (
               <IconRefresh size={14} className="animate-spin" />
@@ -162,7 +165,7 @@ export function ShareLinkCard({
               <IconLink size={14} />
             )}
             {pending ? "Minting" : "Generate Link"}
-          </button>
+          </Button>
         </div>
         <p className="font-mono-label text-mono-label text-outline uppercase tracking-widest leading-snug">
           Links expire after 30 days. Each recipient should get their own

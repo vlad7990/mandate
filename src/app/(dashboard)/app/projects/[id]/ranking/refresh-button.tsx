@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { refreshScoresAction } from "./actions";
 import { IconRefresh } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 export function RefreshScoresButton({
   projectId,
@@ -31,15 +32,16 @@ export function RefreshScoresButton({
   };
 
   return (
-    <button
+    <Button
+      size="md"
       type="button"
       onClick={handleClick}
       disabled={isPending}
       aria-busy={isPending ? true : undefined}
-      className="px-4 py-2 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+      className="flex gap-2"
     >
       <IconRefresh size={14} className={cn(isPending && "animate-spin")} />
       {isPending ? "Recomputing" : "Refresh Scores"}
-    </button>
+    </Button>
   );
 }

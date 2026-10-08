@@ -45,6 +45,7 @@ import {
   togglePsychologyFlagAction,
 } from "./actions";
 import { unwrap } from "@/lib/actions/result";
+import { Button } from "@/components/ui/button";
 
 // Section keys (annotations) and axis keys (flags + confidence
 // overrides). Stable strings — they get persisted into the JSONB
@@ -554,23 +555,24 @@ function AxisRowView({
                 className="w-full accent-primary"
               />
             </label>
-            <button
+            <Button
+              variant="primary"
               type="button"
               onClick={() => saveOverride(draft)}
               disabled={pending}
-              className="px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-1.5 disabled:opacity-60"
+              className="flex"
             >
               Save
-            </button>
+            </Button>
             {override !== null && (
-              <button
+              <Button
+                tone="danger"
                 type="button"
                 onClick={() => saveOverride(null)}
                 disabled={pending}
-                className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-error hover:text-error transition-colors disabled:opacity-60"
               >
                 Clear
-              </button>
+              </Button>
             )}
             <button
               type="button"
@@ -858,14 +860,13 @@ function RegenerateContextPanel({
         )}
       </p>
       <div className="flex items-center justify-end gap-2">
-        <button
+        <Button
           type="button"
           onClick={onCancel}
           disabled={pending}
-          className="px-3 py-1.5 border border-outline-variant text-on-surface-variant font-mono-label text-mono-label uppercase tracking-widest hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
         >
           Cancel
-        </button>
+        </Button>
         <button
           type="button"
           onClick={onSubmit}

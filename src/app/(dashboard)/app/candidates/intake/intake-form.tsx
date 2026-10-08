@@ -10,6 +10,7 @@ import { IconClose, IconRefresh, IconArrowRight } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { unwrap } from "@/lib/actions/result";
 import { SelectField } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export type IntakeMandate = {
   id: string;
@@ -381,17 +382,19 @@ export function IntakeForm({ mandates }: { mandates: IntakeMandate[] }) {
       </section>
 
       <section className="flex flex-wrap items-center gap-3">
-        <button
+        <Button
+          variant="primary"
+          size="md"
           type="button"
           onClick={run}
           disabled={!canRun}
           aria-busy={running ? true : undefined}
-          className="btn-notch flex items-center gap-2 bg-primary-container px-4 py-2 font-mono-label text-[11px] font-semibold uppercase tracking-[0.1em] text-on-primary-container transition-[filter,transform] hover:brightness-110 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex gap-2 text-[11px] font-semibold tracking-[0.1em] disabled:opacity-40"
         >
           {running && <IconRefresh size={14} className="animate-spin" />}
           Upload and parse
           {pending > 0 ? ` · ${pending}` : ""}
-        </button>
+        </Button>
 
         {/* The bill, before the click — not after it. */}
         <p className="font-mono-label text-mono-label uppercase tracking-widest text-outline tabular-nums">
