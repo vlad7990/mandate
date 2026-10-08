@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   // Rows the registry read (slice 4) returns; empty = no overrides,
   // the map governs — which is every pre-slice-4 test's assumption.
   assignmentRows: [] as { capability: string; model_id: string }[],
+  limitCeiling: vi.fn(),
   // Rows provider_models returns (C9). The default set in beforeEach is
   // PRODUCTION as of migration 162 — opus-5 registered at
   // `benchmarking`, never benchmarked — so the suite's baseline is the
@@ -28,6 +29,11 @@ vi.mock("@/lib/anthropic", () => ({
 }));
 vi.mock("@/lib/supabase-service-role", () => ({
   getServiceRoleSupabaseClient: mocks.getServiceClient,
+}));
+// C10: the hop ceiling. Allowed by default so every pre-C10 case keeps
+// its meaning; the ceiling's own block drives it directly.
+vi.mock("@/lib/rate-limit/server", () => ({
+  limitClosedServiceRole: mocks.limitCeiling,
 }));
 
 import {
@@ -88,6 +94,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.assignmentRows = [];
   mocks.providerModelRows = [...PRODUCTION_PROVIDER_MODELS];
+  mocks.limitCeiling.mockResolvedValue({
+    allowed: true,
+    reason: "ok",
+    retryAfterSeconds: 0,
+  });
   __resetRegistryCache();
   __resetEscalationWarnings();
   mocks.getServiceClient.mockImplementation(workingServiceClient);
@@ -726,6 +737,95 @@ describe("the escalation hop (Part G / O.5)", () => {
       expect(await attemptHop()).toBeNull();
       expect(await attemptHop()).toBeNull();
       expect(errorSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("consults the ceiling with the capability's own scope and the project as key", async () => {
+      activateOpus();
+      ok();
+      const first = await runInference("generate_evaluation", request, {
+        projectId: "proj-abc",
+      });
+      mocks.create.mockClear();
+      const second = await escalateInference(
+        "generate_evaluation",
+        request,
+        { projectId: "proj-abc" },
+        first
+      );
+      expect(second).not.toBeNull();
+      // Scope is per-capability so a runaway in one seam cannot spend
+      // another's allowance. The key is the raw project id — not hashed,
+      // because it is already a primary key in the same database.
+      expect(mocks.limitCeiling).toHaveBeenCalledWith(
+        "ai_escalation_generate_evaluation",
+        "proj-abc"
+      );
+    });
+
+    it("refuses the hop when the ceiling is spent — 5/hr/project is a circuit breaker, not a quota", async () => {
+      activateOpus();
+      mocks.limitCeiling.mockResolvedValue({
+        allowed: false,
+        reason: "key",
+        retryAfterSeconds: 3600,
+      });
+      expect(await attemptHop()).toBeNull();
+      expect(mocks.create).not.toHaveBeenCalled();
+      expect(mocks.update).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: "schema_failed" }),
+        expect.any(String)
+      );
+      expect(String(errorSpy.mock.calls[0][0])).toContain(
+        "ai_escalation_generate_evaluation ceiling"
+      );
+    });
+
+    it("refuses the hop when the global daily cap is spent — the cap that bounds the bill", async () => {
+      activateOpus();
+      mocks.limitCeiling.mockResolvedValue({
+        allowed: false,
+        reason: "global",
+        retryAfterSeconds: 7200,
+      });
+      expect(await attemptHop()).toBeNull();
+      expect(mocks.create).not.toHaveBeenCalled();
+    });
+
+    it("refuses the hop when the ceiling is UNREACHABLE — money fails closed", async () => {
+      // limitClosedServiceRole already returns allowed:false/unavailable
+      // for an unreachable limiter; the seam must not second-guess it.
+      // This also covers `check_rate_limit` RAISING on a scope with no
+      // policy row, which is why shipping this before migration 163 is
+      // safe: no row means no hop, which is where C9 already left it.
+      activateOpus();
+      mocks.limitCeiling.mockResolvedValue({
+        allowed: false,
+        reason: "unavailable",
+        retryAfterSeconds: 60,
+      });
+      expect(await attemptHop()).toBeNull();
+      expect(mocks.create).not.toHaveBeenCalled();
+    });
+
+    it("buckets a cron hop under no-project rather than failing or sharing a real project's allowance", async () => {
+      activateOpus();
+      ok();
+      const first = await runInference("generate_evaluation", request);
+      await escalateInference("generate_evaluation", request, undefined, first);
+      expect(mocks.limitCeiling).toHaveBeenCalledWith(
+        "ai_escalation_generate_evaluation",
+        "no-project"
+      );
+    });
+
+    it("checks activation BEFORE the ceiling — an inert pair spends no counter write", async () => {
+      // Ordering, not cosmetics: the activation read is a 60s cache, the
+      // ceiling check is a write. opus-5 is `benchmarking` here (the
+      // default), so the hop dies at activation and the ceiling is never
+      // consulted. A refactor that swaps these would burn ceiling budget
+      // on hops that could never fire.
+      expect(await attemptHop()).toBeNull();
+      expect(mocks.limitCeiling).not.toHaveBeenCalled();
     });
 
     it("reads provider_models only when a hop would otherwise fire — a dormant pair costs no query", async () => {

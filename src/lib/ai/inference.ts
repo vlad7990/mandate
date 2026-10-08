@@ -11,6 +11,7 @@ import {
   modelForCapability,
   type Capability,
 } from "./model-map";
+import { limitClosedServiceRole } from "@/lib/rate-limit/server";
 import { assignedModelForCapability, modelActivation } from "./registry";
 
 /**
@@ -24,12 +25,23 @@ import { assignedModelForCapability, modelActivation } from "./registry";
  * product Supabase client. It receives prompt strings and returns raw
  * responses — every read-under-RLS and write-under-RLS stays in the
  * callers, so provider choice can never change what an agent reads or
- * writes. Its ONLY database access is the service-role telemetry
- * insert below, which is fire-and-forget: a failed telemetry write
- * logs and never blocks, fails, or reshapes the model call it
- * describes. Skills keep influencing judgment only — they arrive here
+ * writes. Skills keep influencing judgment only — they arrive here
  * already applied to the system prompt, and nothing in this module
  * gives them (or the model) a say in model choice.
+ *
+ * Its database access is exactly three service-role touches, none of
+ * them product data, and the differences between them matter:
+ *
+ *   1. the telemetry insert below — fire-and-forget. A failed write
+ *      logs and never blocks, fails, or reshapes the model call it
+ *      describes.
+ *   2. the registry reads (`./registry`) — advisory on the primary
+ *      path. An unreadable registry falls back to the code map and the
+ *      call proceeds.
+ *   3. the escalation hop ceiling (C10) — the one check that REFUSES
+ *      on failure. It guards an optional retry, so refusing costs
+ *      nothing the product had before escalation existed. Nothing here
+ *      may ever gate a PRIMARY model call on a database read.
  *
  * NOT here, deliberately (each is a later slice behind its own gate):
  * caching, cost math, prices, retries beyond the SDK's own,
@@ -400,9 +412,10 @@ async function callModel(
  * the pair's from-model (the arming pin — parse_cv sits here until
  * its Haiku flip, and a founder registry override disarms a pair);
  * MANDATE_EVAL=1 (benchmarks measure ONE model; the fence stays law);
- * or — C9, 2026-10-08 — the pair's to-model is not `active` in
- * provider_models. One hop, never a chain: the caller marks a failed
- * second response itself and throws — 090's honest failure, unchanged.
+ * the pair's to-model is not `active` in provider_models (C9); or the
+ * capability's hop ceiling is spent or unreachable (C10). One hop, never
+ * a chain: the caller marks a failed second response itself and throws —
+ * 090's honest failure, unchanged.
  *
  * The to-model comes from the ruled pair map alone — this is not the
  * eval override, and product code still cannot name an arbitrary
@@ -437,6 +450,29 @@ async function callModel(
  * model is sanctioned. The conservative direction is the cheap one
  * here, so the pair stays disarmed until opus-5 is benchmarked and
  * activated through the models screen.
+ *
+ * THE HOP CEILING (C10, the founder's word 2026-10-08:
+ * 5/hour/project, 50/day globally; gate spec
+ * docs/superpowers/specs/2026-10-08-escalation-ceiling-gate.md). C9
+ * bounded WHICH model a hop may reach. It did not bound HOW MANY. The
+ * risk escalation carries is fan-out, not volume: it is triggered by
+ * failure, and failures correlate — a prompt regression or a provider
+ * format change does not produce one schema failure but one per call,
+ * so a 40-candidate intake becomes 40 premium retries. "One hop, never
+ * a chain" bounds a request; nothing bounded the aggregate.
+ *
+ * Caps are DATA (088's `rate_limit_policy`), so both numbers move
+ * without a deploy. The per-project hourly cap is a circuit breaker
+ * rather than a quota: if five consecutive evaluations fail the schema
+ * gate, the prompt is broken and a sixth premium retry buys nothing.
+ * The global daily cap is the one that bounds the bill.
+ *
+ * A ceiling that cannot be read REFUSES (Tier 1, money fails closed —
+ * 061's rule). `check_rate_limit` also RAISES on a scope with no policy
+ * row, which lands in the same refusal. So this code is safe to ship
+ * BEFORE migration 163 exists: no policy row means no hop, which is
+ * exactly where C9 already left it. There is no deploy order that opens
+ * a window of unbounded spend.
  */
 export async function escalateInference(
   capability: Capability,
@@ -449,10 +485,20 @@ export async function escalateInference(
   const pair = ESCALATION_PAIRS[capability];
   if (!pair) return null;
   if (runModelByResponse.get(failedResponse) !== pair.from) return null;
-  // Last, so the registry is read only when a hop would otherwise fire.
+  // Last two checks, in this order deliberately: the registry read is a
+  // 60-second cache, the ceiling check is a counter WRITE. Activation
+  // first means an inert pair consumes no ceiling budget.
   const activation = await modelActivation(pair.to);
   if (activation !== "active") {
     warnEscalationBlocked(capability, pair.to, activation);
+    return null;
+  }
+  const ceiling = await limitClosedServiceRole(
+    `ai_escalation_${capability}`,
+    opts?.projectId ?? NO_PROJECT_BUCKET
+  );
+  if (!ceiling.allowed) {
+    warnEscalationBlocked(capability, pair.to, "ceiling");
     return null;
   }
   return callModel(capability, request, opts?.projectId ?? null, {
@@ -462,24 +508,32 @@ export async function escalateInference(
   });
 }
 
+/** Cron paths carry no projectId and share one bucket. More
+ * restrictive, never a bypass — `clientIpFrom`'s "anon" reasoning. */
+const NO_PROJECT_BUCKET = "no-project";
+
+type EscalationBlockedReason = "not_active" | "unknown" | "ceiling";
+
 /** One line per (capability, model, reason) per process: a disarmed hop
  * is a condition someone should see once, not a line per failure. */
 const escalationBlockedWarned = new Set<string>();
 function warnEscalationBlocked(
   capability: Capability,
   model: string,
-  activation: "not_active" | "unknown"
+  reason: EscalationBlockedReason
 ): void {
-  const key = `${capability}:${model}:${activation}`;
+  const key = `${capability}:${model}:${reason}`;
   if (escalationBlockedWarned.has(key)) return;
   escalationBlockedWarned.add(key);
+  const why =
+    reason === "unknown"
+      ? `${model} is of unknown status (provider_models unreadable) — benchmark and activate it first`
+      : reason === "not_active"
+        ? `${model} is not active in provider_models — benchmark and activate it first`
+        : `the ai_escalation_${capability} ceiling is spent or unreachable`;
   console.error(
-    `[inference] escalation for ${capability} skipped: ${model} is ` +
-      (activation === "unknown"
-        ? "of unknown status (provider_models unreadable)"
-        : "not active in provider_models") +
-      " — benchmark and activate it first. The caller's original schema " +
-      "failure stands."
+    `[inference] escalation for ${capability} skipped: ${why}. ` +
+      "The caller's original schema failure stands."
   );
 }
 

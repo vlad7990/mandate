@@ -1,0 +1,108 @@
+-- 163 — THE ESCALATION HOP HAS A CEILING
+--
+-- Applied 2026-10-08 on founder authorisation. Rulings D1 and D2 of
+-- `docs/superpowers/specs/2026-10-08-escalation-ceiling-gate.md`: keep the
+-- pair, 5/hour/project, 50/day globally.
+--
+-- ## What 162 and C9 left open
+--
+-- 162 registered claude-opus-5 so the product could name the model its armed
+-- escalation targets. C9 then made `escalateInference` refuse a `to` model that
+-- is not `active`, which bounded WHICH model a hop may reach.
+--
+-- Neither bounded HOW MANY. Nothing in the inference seam counted calls at all.
+--
+-- ## Why that matters more than the volume suggests
+--
+-- Measured from `inference_runs` on 2026-10-08, before this migration:
+--
+--     76 runs, two months, $4.12 of model spend in the product's whole life
+--     every single run outcome = 'ok'
+--     0 schema_failed, 0 provider_error, 0 refused
+--     0 escalation hops, ever
+--
+-- So the hop's *precondition* has never occurred either — the escalation branch
+-- in generate-evaluation.ts has never been entered on any of the 7
+-- generate_evaluation runs that exist.
+--
+-- The risk escalation carries is not volume, it is FAN-OUT. A hop is triggered
+-- by failure, and failures correlate: a prompt regression, a provider-side
+-- format change, or a max_tokens squeeze does not produce one schema failure,
+-- it produces one per call until a human notices. generate_evaluation runs on
+-- every candidate, so a 40-candidate bulk intake against a newly-broken prompt
+-- is 40 sonnet-5 calls PLUS 40 opus-5 calls, and the second 40 are the
+-- expensive ones. "One hop, never a chain" bounds a request. Nothing bounded
+-- the aggregate.
+--
+-- ## Why a count, and not a dollar budget
+--
+-- Three reasons that compound, and the first is decisive:
+--
+--   1. claude-opus-5 has no price. 162 left price_input_per_mtok and
+--      price_output_per_mtok NULL on purpose, reasoning that invented numbers
+--      would become facts to cost reporting. That was right, and it means a
+--      dollar cap on the one model this ceiling exists to bound would either
+--      divide by NULL or be computed from a figure nobody measured. Prices come
+--      from the provider's published documentation, entered by a human.
+--   2. Cost is knowable only AFTER a call — tokens arrive in the response. A
+--      pre-call dollar check must estimate output tokens, and the estimate is
+--      worst exactly when it matters, on a runaway prompt.
+--   3. The thing being limited is "how many premium retries may we make", which
+--      is already a count. Converting it to dollars bounds it less precisely.
+--
+-- Dollars remain the right unit for the offline eval harness (C2), whose budget
+-- is a separate decision (D4) and which never escalates: MANDATE_EVAL=1 returns
+-- from escalateInference before any of this.
+--
+-- ## The numbers
+--
+-- `ai_escalation_generate_evaluation` — 5/hour/project, 50/day globally.
+--
+-- The per-project hourly cap is a CIRCUIT BREAKER, not a quota. If five
+-- consecutive evaluations on one mandate fail the deterministic schema gate,
+-- the prompt is broken and a sixth premium retry buys nothing — it spends money
+-- to re-learn the same fact. Five is deliberately low for that reason.
+--
+-- The global daily cap is the one that bounds the bill. 50/day is ~7x the
+-- entire historical generate_evaluation volume (7 runs, ever), so no legitimate
+-- pilot workload reaches it, while a runaway stops inside one day at a cost of
+-- at most 50 premium calls.
+--
+-- `ai_escalation_parse_cv` — 10/hour/project, 100/day. DORMANT today: parse_cv
+-- runs sonnet-4-6 and its pair's `from` is haiku-4-5, so the from-guard refuses
+-- the hop before the ceiling is consulted. It is here so that the Haiku flip
+-- which arms that pair does not ALSO need a migration — the pair arming and its
+-- ceiling existing should not be two separate acts of remembering. Its numbers
+-- are looser because a CV parse failure is more plausibly transient (one
+-- malformed PDF) than an evaluation schema failure, which is usually the
+-- prompt.
+--
+-- ## Deploy order does not matter
+--
+-- `check_rate_limit` RAISES on a scope with no policy row, by 088's design, so
+-- that a typo'd scope routes through the caller's own fail mode. The caller
+-- here is Tier 1 (money fails closed), so a raise means NO HOP. The seam code
+-- was therefore safe to ship before this migration, and is safe after it: there
+-- is no ordering that opens a window of unbounded spend.
+--
+-- ## What this does NOT do
+--
+-- It does not cap non-escalation AI spend. The 76 normal calls remain
+-- unbounded, deliberately — putting a counter write in front of the hottest
+-- path in the product to bound four dollars is the wrong trade, and is revisited
+-- when spend is legible (D3).
+--
+-- It does not make opus-5 usable. The hop stays inert until opus-5 is
+-- benchmarked and activated, which is C2 and still unauthorised.
+--
+-- Caps are DATA: both numbers move with an UPDATE, no deploy.
+
+INSERT INTO public.rate_limit_policy
+  (scope, per_key_limit, window_seconds, global_daily_limit)
+VALUES
+  ('ai_escalation_generate_evaluation', 5, 3600, 50),
+  ('ai_escalation_parse_cv', 10, 3600, 100)
+ON CONFLICT (scope) DO UPDATE
+  SET per_key_limit      = EXCLUDED.per_key_limit,
+      window_seconds     = EXCLUDED.window_seconds,
+      global_daily_limit = EXCLUDED.global_daily_limit;

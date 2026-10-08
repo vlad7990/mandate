@@ -1,5 +1,7 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import { captureSeamError } from "@/lib/observability/sentry";
 import { hashRateKey, type RateVerdict } from "./core";
 
@@ -17,6 +19,9 @@ import { hashRateKey, type RateVerdict } from "./core";
  *     sign-in is survivable, a lockout is a self-inflicted outage.
  *     Every fail-open is a Sentry capture, so "the limiter was down"
  *     is a fact we hold rather than a thing we assume.
+ *   * `limitClosedServiceRole` — Tier 1 from a context that has no
+ *     user session (C10). Same refusal semantics as `limitClosed`;
+ *     see its own comment for why the client differs.
  *
  * A REFUSAL is not a failure: when the check answers "no", both
  * tiers refuse — the split only governs what happens when the check
@@ -59,13 +64,25 @@ export function clientIpFrom(headers: Headers): string {
   return "anon";
 }
 
-async function check(scope: string, rawKey: string): Promise<RateVerdict> {
+async function check(
+  scope: string,
+  rawKey: string,
+  // How to obtain the client, not the client itself: a thrown
+  // getServiceRoleSupabaseClient() (a missing env) must land in the
+  // same catch as a failed RPC, so a misconfigured environment refuses
+  // a money door rather than crashing the caller.
+  clientFor: () => Promise<SupabaseClient> = createServerSupabaseClient,
+  // The hash exists because an IP or an email is personal data. A key
+  // that is already a database primary key gains nothing from it and
+  // loses the ops trail, so the caller may opt out (C10).
+  hashKey = true
+): Promise<RateVerdict> {
   try {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await clientFor();
     const { data, error } = await supabase
       .rpc("check_rate_limit", {
         p_scope: scope,
-        p_key: hashRateKey(rawKey, salt()),
+        p_key: hashKey ? hashRateKey(rawKey, salt()) : rawKey,
       })
       .maybeSingle<{
         allowed: boolean;
@@ -91,6 +108,33 @@ async function check(scope: string, rawKey: string): Promise<RateVerdict> {
 /** Tier 1 — money. Unreachable limiter = refusal. */
 export async function limitClosed(scope: string, rawKey: string): Promise<RateVerdict> {
   return check(scope, rawKey);
+}
+
+/**
+ * Tier 1 from a context with no user session (C10 — the escalation
+ * ceiling). Same refusal semantics as `limitClosed`; two things differ
+ * and both are deliberate.
+ *
+ * THE CLIENT. The one caller is the inference seam, and `inference.ts`
+ * states the law that it never holds a product Supabase client — every
+ * read-under-RLS stays in the callers, so provider choice can never
+ * change what an agent reads. A session client would break that. It
+ * would also not work: 32 of the product's 76 lifetime model calls came
+ * from the Monday sweep cron, where there is no user to have a session.
+ * `rate_limit` and `rate_limit_policy` are two of the four deny-all-RLS
+ * tables and `check_rate_limit` is SECURITY DEFINER, so service-role is
+ * the correct reach — it is an ops counter, not product data.
+ *
+ * THE KEY IS NOT HASHED. 088 hashes because "the database never learns
+ * a caller's address". This caller's key is a `project_id` — already a
+ * primary key in that same database — so hashing would obscure the ops
+ * trail and protect nothing.
+ */
+export async function limitClosedServiceRole(
+  scope: string,
+  rawKey: string
+): Promise<RateVerdict> {
+  return check(scope, rawKey, async () => getServiceRoleSupabaseClient(), false);
 }
 
 /** Tier 2 — identity. Unreachable limiter = allowed, captured above. */
