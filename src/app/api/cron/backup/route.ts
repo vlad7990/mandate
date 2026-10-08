@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceRoleSupabaseClient } from "@/lib/supabase-service-role";
 import { createS3Destination, type Destination } from "@/lib/backup/destination";
 import { runBackup } from "@/lib/backup/run";
+import { withRetries } from "@/lib/backup/retry";
 import { summaryLine, toHeartbeatDetail } from "@/lib/backup/report";
 
 /**
@@ -98,14 +99,22 @@ function resolveDestination():
 
   return {
     ok: true,
-    destination: createS3Destination({
-      endpoint: endpoint!,
-      region: region!,
-      bucket: bucket!,
-      accessKeyId: accessKeyId!,
-      secretAccessKey: secretAccessKey!,
-      prefix: process.env.BACKUP_S3_PREFIX,
-    }),
+    // Wrapped in bounded retries. The run already survives a failed
+    // object and picks it up next time, but "next time" is a day away
+    // and the commonest failure against object storage is a blip that
+    // clears in milliseconds. Three attempts, 200/400 ms apart, costs
+    // at most 600 ms of the 45 s budget per object and only on the
+    // unhappy path. 4xx is not retried — see retry.ts.
+    destination: withRetries(
+      createS3Destination({
+        endpoint: endpoint!,
+        region: region!,
+        bucket: bucket!,
+        accessKeyId: accessKeyId!,
+        secretAccessKey: secretAccessKey!,
+        prefix: process.env.BACKUP_S3_PREFIX,
+      })
+    ),
   };
 }
 
