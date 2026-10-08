@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, useId } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -363,19 +363,28 @@ function FilterSelect({
   onChange: (v: string) => void;
   options: Array<{ value: string; label: string }>;
 }) {
+  // Not a <label>: wrapping one around a SelectField looks like it names
+  // the control and does not. The trigger is a button, and HTML-AAM takes
+  // a button's name from its subtree, so the visible text is referenced
+  // explicitly instead.
+  const labelId = useId();
   return (
-    <label className="block space-y-1">
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+    <div className="block space-y-1">
+      <span
+        id={labelId}
+        className="font-mono-label text-mono-label text-outline uppercase tracking-widest"
+      >
         {label}
       </span>
       <SelectField
+        aria-labelledby={labelId}
         tone="text"
         value={value}
         onValueChange={onChange}
         options={options}
         className="h-auto w-full bg-surface-container-lowest px-2 py-1.5"
       />
-    </label>
+    </div>
   );
 }
 

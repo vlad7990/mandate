@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useId } from "react";
 import { cn } from "@/lib/utils";
 import {
   SECTION_DEFS,
@@ -143,12 +143,21 @@ function VersionPicker({
   versions: SpecVersionPayload[];
   onChange: (v: string) => void;
 }) {
+  // Not a <label>: wrapping one around a SelectField looks like it names
+  // the control and does not. The trigger is a button, and HTML-AAM takes
+  // a button's name from its subtree, so the visible text is referenced
+  // explicitly instead.
+  const labelId = useId();
   return (
-    <label className="block space-y-1">
-      <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
+    <div className="block space-y-1">
+      <span
+        id={labelId}
+        className="font-mono-label text-mono-label text-outline uppercase tracking-widest"
+      >
         {label}
       </span>
       <SelectField
+        aria-labelledby={labelId}
         tone="text"
         value={value}
         onValueChange={onChange}
@@ -164,7 +173,7 @@ function VersionPicker({
         }))}
         className="h-auto w-full bg-surface-container-lowest px-2 py-1.5"
       />
-    </label>
+    </div>
   );
 }
 

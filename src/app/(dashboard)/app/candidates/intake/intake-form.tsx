@@ -242,6 +242,7 @@ export function IntakeForm({ mandates }: { mandates: IntakeMandate[] }) {
     <div className="space-y-5">
       <section className="space-y-2">
         <label
+          id="mandate-label"
           htmlFor="mandate"
           className="block font-mono-label text-mono-label uppercase tracking-widest text-outline"
         >
@@ -249,6 +250,7 @@ export function IntakeForm({ mandates }: { mandates: IntakeMandate[] }) {
         </label>
         <SelectField
           id="mandate"
+          aria-labelledby="mandate-label"
           tone="text"
           value={mandateId}
           disabled={running}

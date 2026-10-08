@@ -89,11 +89,12 @@ export function DeskPicker({
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <label className="sr-only" htmlFor={`desk-${userId}`}>
+      <label id={`desk-${userId}-label`} className="sr-only" htmlFor={`desk-${userId}`}>
         Desk for {displayName}
       </label>
       <SelectField
         id={`desk-${userId}`}
+        aria-labelledby={`desk-${userId}-label`}
         tone="text"
         value={selected}
         disabled={isPending}

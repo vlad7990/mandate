@@ -87,7 +87,7 @@ export function RolePicker({
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <label className="sr-only" htmlFor={`role-${userId}`}>
+      <label id={`role-${userId}-label`} className="sr-only" htmlFor={`role-${userId}`}>
         Role for {displayName}
       </label>
       {/* Staff roles only: the members screen administers the org's own
@@ -95,6 +95,7 @@ export function RolePicker({
           the 067 XOR CHECK would refuse anyway. */}
       <SelectField
         id={`role-${userId}`}
+        aria-labelledby={`role-${userId}-label`}
         value={selected}
         disabled={isPending}
         onValueChange={(role) => setSelected(role as Role)}

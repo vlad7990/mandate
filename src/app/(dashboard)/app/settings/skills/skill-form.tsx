@@ -261,6 +261,7 @@ export function SkillForm({
                 // trap rather than a second guard.
                 <SelectField
                   id="skill-project"
+                  aria-labelledby="skill-project-label"
                   tone="text"
                   value={projectId}
                   onValueChange={setProjectId}
@@ -288,6 +289,7 @@ export function SkillForm({
               ) : (
                 <SelectField
                   id="skill-client"
+                  aria-labelledby="skill-client-label"
                   tone="text"
                   value={clientId}
                   onValueChange={setClientId}
@@ -405,7 +407,12 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
+      {/* `id` on the label, not only `htmlFor`, so a control whose
+          accessible name does NOT come from an associated label — a
+          SelectField renders a button, and HTML-AAM names a button from
+          its subtree — can point `aria-labelledby` here instead. */}
       <label
+        id={`${id}-label`}
         htmlFor={id}
         className="font-mono-label text-mono-label text-outline uppercase tracking-widest flex items-center gap-1"
       >

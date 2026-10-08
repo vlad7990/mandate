@@ -154,6 +154,7 @@ function PersonPicker({
   return (
     <div className="space-y-1">
       <label
+        id={`${id}-label`}
         htmlFor={id}
         className="block font-mono-label text-mono-label uppercase tracking-widest text-outline"
       >
@@ -161,6 +162,7 @@ function PersonPicker({
       </label>
       <SelectField
         id={id}
+        aria-labelledby={`${id}-label`}
         tone="text"
         value={value}
         disabled={disabled}
