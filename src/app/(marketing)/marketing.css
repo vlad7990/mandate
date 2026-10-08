@@ -4950,3 +4950,99 @@ details[open] > .m-faq__btn .m-faq__icon {
   border-left: 2px solid var(--line);
   padding-left: 1.25rem;
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   LEGAL
+
+   A reading column, not a landing page. These documents are read
+   under pressure — before signing, or after something went wrong —
+   so the only jobs here are measure, leading and a visible status.
+
+   Every document is currently unreviewed, so in practice this styles
+   the placeholder. The published branch is styled too, because the
+   day counsel signs off should be a content change and nothing else.
+   ───────────────────────────────────────────────────────────────── */
+.m-legal {
+  max-width: 68ch;
+  margin: 0 auto;
+  padding: 7rem 1.5rem 6rem;
+}
+
+.m-legal__head {
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2.5rem;
+}
+
+.m-legal__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+  margin-bottom: 0.75rem;
+}
+
+.m-legal__title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+}
+
+.m-legal__summary {
+  color: var(--fg-soft);
+  line-height: 1.6;
+}
+
+.m-legal__meta {
+  margin-top: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--fg-soft);
+}
+
+/* The placeholder carries no legal text. It says what is true: the
+   document is not finished and must not be relied on. The accent
+   edge marks it as a status, not as content. */
+.m-legal__pending {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 1.75rem;
+  background: var(--bg-elev-1, transparent);
+}
+
+.m-legal__pending-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+.m-legal__pending-body {
+  line-height: 1.7;
+  color: var(--fg-soft);
+}
+
+.m-legal__pending-body + .m-legal__pending-body {
+  margin-top: 1rem;
+}
+
+.m-legal__link {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.m-legal__body {
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 640px) {
+  .m-legal {
+    padding-top: 5rem;
+  }
+}

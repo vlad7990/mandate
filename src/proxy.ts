@@ -71,6 +71,15 @@ function isAlwaysPublic(pathname: string): boolean {
 function isPublicPage(pathname: string): boolean {
   if (PUBLIC_PAGES.has(pathname)) return true;
   if (pathname.startsWith("/auth/")) return true;
+  // Legal documents. A prefix rather than five entries, because the set
+  // is the registry in (marketing)/legal/_registry.ts and duplicating
+  // it here would let the two drift.
+  //
+  // Every one of these currently renders a placeholder saying the
+  // document is not reviewed and must not be relied on — the gate is in
+  // the registry, not here. The route is public so that someone looking
+  // for terms gets that honest answer instead of a sign-in redirect.
+  if (pathname.startsWith("/legal/")) return true;
   return false;
 }
 
