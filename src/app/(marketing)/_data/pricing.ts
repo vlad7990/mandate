@@ -49,7 +49,20 @@ export const TIERS: readonly Tier[] = [
     points: [
       "Full intelligence stack",
       "Ranking, comparison and shortlists",
-      "30-day evaluation history",
+      // "30-day evaluation history" was here and has been removed as a
+      // factual correction, not a commercial one. It had ZERO
+      // implementation: nothing in the product windows, expires or
+      // deletes an evaluation, verified across all 161 migrations.
+      //
+      // The obvious way to make it true is the wrong one. Deleting
+      // evaluations after 30 days would build a data-destroying job to
+      // enforce a price tier and would destroy the customer's own work
+      // product. If it ever returns it must be an entitlement-gated
+      // VISIBILITY window over data that is always retained — and that
+      // is a pricing feature, not a retention policy. Retention and
+      // deletion remain undecided (legal L4/L5).
+      //
+      // IF THE IMPLEMENTATION CONTAINS A DELETE, IT IS THE WRONG ONE.
       "Email support",
     ],
     cta: { label: "Request access", href: "/request-access" },
@@ -82,10 +95,27 @@ export const TIERS: readonly Tier[] = [
     headline: "Unlimited users + searches",
     points: [
       "Everything in Growth",
-      "Global Executive Network",
-      "Custom skills + agents",
+      // Was "Global Executive Network". It is not global and never has
+      // been: `network_profiles` is keyed UNIQUE (organization_id,
+      // identity_key), so a person exists once PER ORGANISATION and RLS
+      // scopes every read to the caller's org. It is the agency's own
+      // pool folded by person — genuinely useful, and not a shared
+      // database of executives. "Global" promised other people's data.
+      "Executive Network",
+      // Was "Custom skills + agents". Skills are real — Skills Studio
+      // is at /app/settings/skills with create, version and pause.
+      // Custom AGENTS do not exist in any form: the roster is fixed in
+      // code, there is no create path anywhere in the app, and
+      // /app/agents is a single read-only page. Half the claim was
+      // true, so half of it stays.
+      "Custom skills",
       "Dedicated success partner",
-      "SLA + onboarding workshop",
+      // Was "SLA + onboarding workshop". No Supabase plan below Team
+      // ($599/mo) carries an uptime SLA, and more to the point nothing
+      // in the product measures uptime — there is no availability
+      // figure to report against, so the commitment could not be
+      // honoured or even evidenced. The workshop is real and stays.
+      "Onboarding workshop",
     ],
     cta: { label: "Request access", href: "/request-access" },
   },
@@ -146,11 +176,14 @@ export const MATRIX: ReadonlyArray<{
     values: { starter: "no", growth: "yes", agency: "yes", ei: "no" },
   },
   {
-    feature: "Global Executive Network",
+    // Not "Global" — see the Agency tier card. Org-scoped by key and
+    // by RLS.
+    feature: "Executive Network",
     values: { starter: "no", growth: "no", agency: "yes", ei: "no" },
   },
   {
-    feature: "Custom skills + agents",
+    // "+ agents" removed: custom agents do not exist.
+    feature: "Custom skills",
     values: { starter: "no", growth: "no", agency: "yes", ei: "no" },
   },
   {
@@ -180,7 +213,9 @@ export const MATRIX: ReadonlyArray<{
     values: {
       starter: "Email",
       growth: "Priority",
-      agency: "Dedicated + SLA",
+      // "+ SLA" removed: no plan provides one and nothing measures
+      // uptime.
+      agency: "Dedicated",
       ei: "Follows plan",
     },
   },

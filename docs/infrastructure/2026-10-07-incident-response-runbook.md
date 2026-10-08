@@ -166,9 +166,21 @@ may read as data loss.
 2. **Use PG 17 client tools for any manual dump.** The local `pg_dump` is **14.19** and
    refuses to dump a 17.6 server — use `docker run --rm postgres:17 pg_dump …`. This bit the
    rehearsal and will bite an incident
-3. **`001_core_schema.sql` is 0 bytes**, so the repository cannot rebuild the base schema.
-   If the project itself is lost rather than the data, the schema must come from a dump —
-   which is why committing a `pg_dump --schema-only` reference snapshot is an activation step
+3. **Rebuilding the schema itself** — updated 2026-10-08, this item used to say the
+   repository could not do it.
+   - `001_core_schema.sql` is still 0 bytes and stays that way. **Do not fill it.**
+   - The repository now carries `supabase/schema-reference.sql`, a point-in-time snapshot
+     of the whole `public` schema, applied by `supabase/bootstrap/apply.sh` in dependency
+     order. It was tested on an empty database and reproduced production exactly: 73
+     tables, 154 functions, 261 + 10 policies, 75 triggers, 481 indexes, 328 foreign keys,
+     1,567 grants. RLS was exercised, not counted — `authenticated` and `anon` saw zero
+     rows. Procedure and limits: `schema-bootstrap.md`.
+   - **It is a snapshot, so check its date against the incident.** If schema changed after
+     it was generated, regenerate from the live database if one is reachable, or replay
+     the later migrations by hand. The baseline is not a substitute for the migration
+     history and must never be replayed alongside it.
+   - **This is schema, not data.** It gets you an empty database of the right shape. On
+     the Free plan there is still no database backup to put in it
 4. Re-create the 24 agent principals and their credentials if auth was lost
 
 ### 5.3 File restore
