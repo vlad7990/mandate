@@ -37,6 +37,44 @@ That last line is the whole argument for guarding the service-role key.
 
 ---
 
+## Tenant isolation, proved in both directions
+
+`supabase/bootstrap/isolation-check.sql`, run against the rebuilt database on
+2026-10-08. All nine checks passed; the run is one transaction and rolls back.
+
+It replaces the NULL-returning stub with the settable `auth.uid()` Supabase
+uses, so switching a session setting is switching user and the policies run
+for real. That matters: proving a schema denies everything is easy and nearly
+worthless — `USING (false)` would pass it. These check that the right rows get
+through *and* the wrong ones do not.
+
+| # | check | result |
+|---|---|---|
+| 1 | member of A sees their own candidate | 1 of 1 |
+| 2 | member of A sees org B's candidates | 0 |
+| 3 | member of B sees their own candidate | 1 of 1 |
+| 4 | member of A updates org B's candidate | 0 rows affected |
+| 5 | member of A deletes org B's candidate | 0 rows affected |
+| 6 | member of A inserts into org B | refused |
+| 7 | anon reads candidates | 0 |
+| 8 | **suspended** member of A reads their own org | 0 |
+| 9 | member of A lists organisations | 1 |
+
+Check 8 is the one worth noting: suspension is enforced in the policy
+predicates themselves, not only in the application, so a suspended account
+loses its own organisation's data and not merely the route guard.
+
+Check 8 also failed on its first run, usefully — a trigger refused the status
+update with *"only your name may be changed on your own account"*, because the
+session still carried that user's claim and the edit looked like a self-edit.
+That is the product working correctly, and it is now documented in the script.
+
+**Run it after any migration that adds a table or a policy.** A new table with
+RLS enabled and no policy denies everything, which checks 2 and 7 would pass
+and check 1 would catch.
+
+---
+
 ## What this does and does not close
 
 **Closes.** The repository can now describe and rebuild the shape of its own
@@ -149,9 +187,14 @@ trusted too little.
 - **Tested on PostgreSQL 14.19, production runs 17.6.** The baseline applied
   cleanly on 14, which is the stronger direction to test (14 accepts a subset
   of 17 syntax). It does not prove 17-specific behaviour.
-- **The stubs are not Supabase.** `auth.uid()` returns NULL, so policies were
-  proven to *deny*, not to *allow the right rows*. Proving the allow path needs
-  a real Supabase target and a real session.
+- **The stubs are not Supabase.** The prerequisites' `auth.uid()` returns NULL,
+  so on its own the bootstrap proves policies *deny* and nothing more — and a
+  policy of `USING (false)` would pass that on every table.
+  **This gap is now closed by `supabase/bootstrap/isolation-check.sql`**, which
+  installs the settable `auth.uid()` Supabase actually uses and exercises both
+  directions. See below. What is still unproven is anything specific to a real
+  Supabase deployment: the GoTrue JWT shape, storage enforcement, and the
+  PostgREST layer above the database.
 - **No data was restored.** Schema only.
 - **`supabase_vault` is absent from the stub path.** It is platform-provided
   and has no open-source equivalent. Nothing in `public` depends on it.
