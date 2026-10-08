@@ -30,10 +30,21 @@ Apply to the live DB via MCP `apply_migration` **and** write the numbered file i
 - Check `supabase/migrations/` for the current tip before taking a number.
 - **Also check `docs/superpowers/specs/`** — approved specs reserve numbers ahead of
   implementation, and have collided before.
-- ⚠️ `001_core_schema.sql` is **0 bytes**. The base schema (`organizations`, `users`,
-  `projects`, `candidates`, `candidate_scores`, `feedback`, `job_specs`,
-  `boolean_queries`) exists only in the live database. Read it over MCP before writing
-  any migration that touches those tables — there is no local fallback.
+- ⚠️ `001_core_schema.sql` is **0 bytes** and stays that way. The base schema
+  (`organizations`, `users`, `projects`, `candidates`, `candidate_scores`, `feedback`,
+  `job_specs`, `boolean_queries`) was only ever in the live database.
+  - Since 2026-10-08 there **is** a local fallback: `supabase/schema-reference.sql`, a
+    point-in-time snapshot of the whole `public` schema (73 tables, 154 functions, 261
+    policies, 75 triggers, 395 indexes), generated from the production catalogue by
+    `supabase/generate-schema-reference.sql`. Read it to learn the shape of a table
+    without a connection.
+  - **It is not a migration.** Do not replay it over `supabase/migrations/` — those
+    migrations ALTER the objects it describes — and do not paste it into `001`. It is the
+    base schema *after* 160 migrations, not the original, and a file labelled `001` that
+    actually holds current state breaks a rebuild in a way that is hard to diagnose.
+  - It is a snapshot, so it ages. **The live catalogue is still the authority** for
+    anything you are about to change; read over MCP before writing a migration that
+    touches these tables.
   - This list said `cvs` until 2026-10-07 and **there is no `cvs` table** — the
     assessment checked, and no table in the database has `cv` in its name. CV data
     lives in columns on `candidates` (`cv_url`, `cv_raw`, `cv_structured`,

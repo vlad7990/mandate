@@ -1,0 +1,9894 @@
+-- ─────────────────────────────────────────────────────────────────────
+-- SCHEMA REFERENCE — point-in-time snapshot of the live database
+--
+-- Generated 2026-10-08 from the production catalogue of Supabase project
+-- `xipyqnltkbtywxqyxupf` (Postgres 17.6, us-east-1) by
+-- `supabase/generate-schema-reference.sql`.
+--
+-- ## READ THIS BEFORE YOU USE IT
+--
+-- This is NOT a migration and NOT a pg_dump. It is a catalogue-derived
+-- description of what the database looked like on the date above.
+--
+--   * Do NOT replay it on top of `supabase/migrations/`. Those migrations
+--     ALTER the objects described here; applying both would conflict.
+--   * Do NOT paste it into `001_core_schema.sql`. That file is 0 bytes
+--     and stays that way. It was supposed to hold the ORIGINAL base
+--     schema, and the original is not recoverable from a live catalogue —
+--     what you see here is the base schema after 160 migrations of
+--     changes. A file that claims to be `001` but is really `current`
+--     would break a rebuild in a way that is hard to diagnose.
+--
+-- ## What it is good for
+--
+--   * Reading the schema without a database connection — the reason it
+--     exists. `001` being empty meant the repository could not describe
+--     its own tables.
+--   * Diffing against a future snapshot to see what changed.
+--   * Rebuilding by hand, with judgement, if the database were lost.
+--
+-- ## What it does not contain
+--
+--   * No data. Schema only.
+--   * Nothing from `auth`, `storage`, `realtime` or any other Supabase-
+--     managed schema — `public` only.
+--   * No role grants or ownership.
+--   * The `cvs` storage bucket, which no Supabase plan backs up and which
+--     this file cannot help with either.
+--
+-- A real `pg_dump --schema-only` remains the better artifact. It needs
+-- the database password and a Postgres 17 client; neither was available
+-- when this was generated. Replace this file when they are.
+-- ─────────────────────────────────────────────────────────────────────
+
+-- ======================= TABLES =======================
+
+CREATE TABLE activity_events (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  actor_id uuid,
+  actor_label text,
+  event_type text NOT NULL,
+  project_id uuid,
+  candidate_id uuid,
+  client_id uuid,
+  placement_id uuid,
+  target_user_id uuid,
+  detail jsonb NOT NULL DEFAULT '{}'::jsonb,
+  visibility text NOT NULL DEFAULT 'org'::text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT activity_events_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT activity_events_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT activity_events_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT activity_events_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+  CONSTRAINT activity_events_client_in_org FOREIGN KEY (organization_id, client_id) REFERENCES clients(organization_id, id),
+  CONSTRAINT activity_events_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT activity_events_pkey PRIMARY KEY (id),
+  CONSTRAINT activity_events_placement_id_fkey FOREIGN KEY (placement_id) REFERENCES placements(id) ON DELETE CASCADE,
+  CONSTRAINT activity_events_placement_in_org FOREIGN KEY (organization_id, placement_id) REFERENCES placements(organization_id, id),
+  CONSTRAINT activity_events_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT activity_events_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT activity_events_target_user_id_fkey FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT activity_events_type_known CHECK ((event_type = ANY (ARRAY['placement_recorded'::text, 'placement_status_changed'::text, 'placement_signoff_changed'::text, 'placement_deleted'::text, 'fee_recorded'::text, 'fee_updated'::text, 'fee_line_earned'::text, 'fee_line_cancelled'::text, 'fee_reversed'::text, 'fee_terms_created'::text, 'fee_terms_updated'::text, 'fee_terms_deleted'::text, 'client_contact_added'::text, 'client_contact_updated'::text, 'client_contact_removed'::text, 'member_role_changed'::text, 'member_status_changed'::text, 'member_founder_changed'::text, 'member_org_changed'::text, 'shortlist_published'::text, 'report_exported'::text, 'hm_portal_opened'::text, 'mandate_reassigned'::text, 'external_invited'::text, 'external_invitation_revoked'::text, 'external_invitation_resent'::text, 'external_joined'::text, 'external_role_changed'::text, 'external_status_changed'::text, 'mandate_shared'::text, 'mandate_unshared'::text, 'external_access_granted'::text, 'external_access_revoked'::text, 'candidate_portal_link_issued'::text, 'candidate_portal_link_revoked'::text, 'candidate_self_updated'::text, 'candidate_withdrew'::text, 'candidate_erasure_requested'::text, 'candidate_cv_submitted'::text, 'feedback_interpreted'::text, 'candidates_ranked'::text, 'candidate_parsed'::text, 'candidate_evaluated'::text, 'candidate_positioned'::text, 'candidate_researched'::text, 'candidate_triangulated'::text, 'candidate_profiled'::text, 'desk_digest_generated'::text, 'company_researched'::text, 'hm_researched'::text, 'culture_profiled'::text, 'sourcing_queries_generated'::text, 'intake_analyzed'::text, 'health_suggested'::text, 'weekly_report_generated'::text, 'calibration_derived'::text, 'job_spec_generated'::text, 'shortlist_report_generated'::text, 'copilot_answered'::text, 'success_profile_generated'::text, 'interview_plan_generated'::text, 'executive_context_researched'::text, 'candidate_search_answered'::text, 'sourcing_search_executed'::text, 'outreach_strategy_drafted'::text, 'relationship_updated'::text, 'network_dnc_set'::text, 'network_dnc_cleared'::text, 'engagement_updated'::text, 'prescreen_updated'::text, 'skill_created'::text, 'skill_updated'::text, 'skill_paused'::text, 'skill_activated'::text, 'skill_deleted'::text, 'candidate_stage_changed'::text, 'task_assigned'::text, 'task_completed'::text, 'objective_created'::text, 'objective_closed'::text, 'interview_plan_generation_requested'::text, 'interview_plan_generation_failed'::text, 'interview_plan_approved'::text, 'client_interview_generation_requested'::text, 'client_interview_generation_failed'::text, 'client_interview_approved'::text, 'client_interview_answered'::text, 'model_provider_added'::text, 'model_assignment_changed'::text, 'invoice_created'::text, 'invoice_issued'::text, 'invoice_voided'::text, 'invoice_sent'::text, 'admin_grant_proposed'::text, 'admin_grant_approved'::text, 'admin_grant_rejected'::text, 'admin_grant_expired'::text, 'calibration_rederived'::text, 'evaluation_contested'::text, 'member_manager_changed'::text, 'candidate_duplicate_discarded'::text, 'candidates_merged'::text, 'network_profiles_merged'::text]))),
+  CONSTRAINT activity_events_visibility_check CHECK ((visibility = ANY (ARRAY['org'::text, 'fees'::text, 'admin'::text])))
+);
+ALTER TABLE activity_events ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE admin_grant_requests (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  kind text NOT NULL,
+  target_user_id uuid,
+  target_email text,
+  target_full_name text,
+  proposed_by uuid NOT NULL,
+  status text NOT NULL DEFAULT 'pending'::text,
+  decided_by uuid,
+  decided_at timestamp with time zone,
+  expires_at timestamp with time zone NOT NULL DEFAULT (now() + '7 days'::interval),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT admin_grant_pending_undecided CHECK (((status <> 'pending'::text) OR ((decided_by IS NULL) AND (decided_at IS NULL)))),
+  CONSTRAINT admin_grant_requests_decided_by_fkey FOREIGN KEY (decided_by) REFERENCES users(id),
+  CONSTRAINT admin_grant_requests_kind_check CHECK ((kind = ANY (ARRAY['promotion'::text, 'invitation'::text]))),
+  CONSTRAINT admin_grant_requests_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT admin_grant_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT admin_grant_requests_proposed_by_fkey FOREIGN KEY (proposed_by) REFERENCES users(id),
+  CONSTRAINT admin_grant_requests_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'withdrawn'::text, 'expired'::text]))),
+  CONSTRAINT admin_grant_requests_target_user_id_fkey FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT admin_grant_target_shape CHECK ((((kind = 'promotion'::text) AND (target_user_id IS NOT NULL) AND (target_email IS NULL)) OR ((kind = 'invitation'::text) AND (target_email IS NOT NULL) AND (target_user_id IS NULL) AND (length(btrim(COALESCE(target_full_name, ''::text))) > 0))))
+);
+ALTER TABLE admin_grant_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE boolean_queries (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid,
+  organization_id uuid,
+  query_type text,
+  search_type text,
+  content text NOT NULL,
+  version integer DEFAULT 1,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT boolean_queries_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT boolean_queries_pkey PRIMARY KEY (id),
+  CONSTRAINT boolean_queries_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT boolean_queries_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT boolean_queries_query_type_check CHECK ((query_type = ANY (ARRAY['linkedin'::text, 'google_xray'::text, 'ats'::text]))),
+  CONSTRAINT boolean_queries_search_type_check CHECK ((search_type = ANY (ARRAY['exact'::text, 'broad'::text, 'adjacent'::text, 'competitor'::text])))
+);
+ALTER TABLE boolean_queries ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE calibration_history (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  snapshot jsonb NOT NULL,
+  change_type text NOT NULL,
+  change_reason text,
+  feedback_id uuid,
+  changed_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT calibration_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT calibration_history_feedback_id_fkey FOREIGN KEY (feedback_id) REFERENCES feedback(id) ON DELETE SET NULL,
+  CONSTRAINT calibration_history_feedback_in_org FOREIGN KEY (organization_id, feedback_id) REFERENCES feedback(organization_id, id),
+  CONSTRAINT calibration_history_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT calibration_history_pkey PRIMARY KEY (id),
+  CONSTRAINT calibration_history_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT calibration_history_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id)
+);
+ALTER TABLE calibration_history ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE candidate_erasure_requests (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  identity_key text NOT NULL,
+  requested_via_token uuid,
+  requester_label text NOT NULL,
+  note text,
+  status text NOT NULL DEFAULT 'open'::text,
+  resolved_by uuid,
+  resolved_at timestamp with time zone,
+  resolution_note text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  network_profile_id uuid,
+  covered_candidate_ids uuid[] NOT NULL DEFAULT '{}'::uuid[],
+  decline_kind text,
+  suppression_id uuid,
+  CONSTRAINT candidate_erasure_requests_network_profile_id_fkey FOREIGN KEY (network_profile_id) REFERENCES network_profiles(id) ON DELETE SET NULL,
+  CONSTRAINT candidate_erasure_requests_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_erasure_requests_pkey PRIMARY KEY (id),
+  CONSTRAINT candidate_erasure_requests_requested_via_token_fkey FOREIGN KEY (requested_via_token) REFERENCES candidate_portal_tokens(id),
+  CONSTRAINT candidate_erasure_requests_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES users(id),
+  CONSTRAINT candidate_erasure_requests_status_check CHECK ((status = ANY (ARRAY['open'::text, 'resolved'::text, 'declined'::text]))),
+  CONSTRAINT candidate_erasure_requests_suppression_id_fkey FOREIGN KEY (suppression_id) REFERENCES network_suppressions(id) ON DELETE SET NULL,
+  CONSTRAINT decline_kind_known CHECK (((decline_kind IS NULL) OR (decline_kind = ANY (ARRAY['cannot_erase'::text, 'not_subject'::text])))),
+  CONSTRAINT decline_says_which CHECK (((status = 'declined'::text) = (decline_kind IS NOT NULL))),
+  CONSTRAINT resolution_is_complete CHECK (((status = 'open'::text) = ((resolved_by IS NULL) AND (resolved_at IS NULL))))
+);
+ALTER TABLE candidate_erasure_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE candidate_notes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  candidate_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  created_by uuid,
+  note_type text NOT NULL DEFAULT 'general'::text,
+  content text NOT NULL,
+  is_pinned boolean NOT NULL DEFAULT false,
+  call_duration_minutes integer,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  audio_path text,
+  consent_confirmed boolean NOT NULL DEFAULT false,
+  transcript text,
+  transcript_error text,
+  CONSTRAINT candidate_notes_audio_needs_consent CHECK (((audio_path IS NULL) OR consent_confirmed)),
+  CONSTRAINT candidate_notes_audio_on_calls CHECK (((audio_path IS NULL) OR (note_type = 'call'::text))),
+  CONSTRAINT candidate_notes_call_duration_minutes_check CHECK (((call_duration_minutes IS NULL) OR (call_duration_minutes >= 0))),
+  CONSTRAINT candidate_notes_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_notes_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT candidate_notes_content_check CHECK ((length(btrim(content)) > 0)),
+  CONSTRAINT candidate_notes_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT candidate_notes_note_type_check CHECK ((note_type = ANY (ARRAY['general'::text, 'call'::text, 'meeting'::text, 'email'::text, 'interview'::text]))),
+  CONSTRAINT candidate_notes_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_notes_pkey PRIMARY KEY (id),
+  CONSTRAINT candidate_notes_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_notes_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT candidate_notes_transcript_needs_audio CHECK ((((transcript IS NULL) AND (transcript_error IS NULL)) OR (audio_path IS NOT NULL)))
+);
+ALTER TABLE candidate_notes ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE candidate_notifications (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  candidate_id uuid NOT NULL,
+  project_id uuid,
+  organization_id uuid NOT NULL,
+  channel text NOT NULL DEFAULT 'email'::text,
+  recipient text NOT NULL,
+  template_key text NOT NULL,
+  template_version text NOT NULL,
+  notice_version text NOT NULL,
+  provider text NOT NULL DEFAULT 'resend'::text,
+  provider_message_id text,
+  status text NOT NULL,
+  error text,
+  sent_at timestamp with time zone,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  idempotency_key text NOT NULL,
+  CONSTRAINT candidate_notifications_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_notifications_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT candidate_notifications_channel_check CHECK ((channel = 'email'::text)),
+  CONSTRAINT candidate_notifications_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT candidate_notifications_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT candidate_notifications_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_notifications_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT candidate_notifications_status_check CHECK ((status = ANY (ARRAY['sent'::text, 'failed'::text]))),
+  CONSTRAINT failed_requires_reason CHECK (((status <> 'failed'::text) OR (error IS NOT NULL))),
+  CONSTRAINT sent_requires_timestamp CHECK (((status = 'sent'::text) = (sent_at IS NOT NULL)))
+);
+ALTER TABLE candidate_notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE candidate_outreach (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  candidate_id uuid NOT NULL,
+  project_id uuid,
+  organization_id uuid NOT NULL,
+  channel text NOT NULL,
+  direction text NOT NULL DEFAULT 'outbound'::text,
+  subject text,
+  body text,
+  includes_privacy_notice boolean NOT NULL DEFAULT false,
+  occurred_at timestamp with time zone NOT NULL DEFAULT now(),
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  mission_id uuid,
+  thread_key text,
+  provider text,
+  provider_message_id text,
+  delivery_status text,
+  sent_by_principal boolean NOT NULL DEFAULT false,
+  idempotency_key text,
+  CONSTRAINT candidate_outreach_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_outreach_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT candidate_outreach_channel_check CHECK ((channel = ANY (ARRAY['email'::text, 'linkedin'::text, 'phone'::text, 'referral'::text, 'other'::text]))),
+  CONSTRAINT candidate_outreach_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT candidate_outreach_delivery_status_known CHECK (((delivery_status IS NULL) OR (delivery_status = ANY (ARRAY['queued'::text, 'sent'::text, 'delivered'::text, 'bounced'::text, 'complained'::text, 'failed'::text])))),
+  CONSTRAINT candidate_outreach_direction_check CHECK ((direction = ANY (ARRAY['outbound'::text, 'inbound'::text]))),
+  CONSTRAINT candidate_outreach_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_outreach_pkey PRIMARY KEY (id),
+  CONSTRAINT candidate_outreach_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_outreach_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT candidate_outreach_provider_coherent CHECK (((provider IS NOT NULL) OR ((provider_message_id IS NULL) AND (delivery_status IS NULL)))),
+  CONSTRAINT inbound_cannot_carry_notice CHECK ((NOT (includes_privacy_notice AND (direction = 'inbound'::text))))
+);
+ALTER TABLE candidate_outreach ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE candidate_portal_tokens (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  identity_key text NOT NULL,
+  token uuid NOT NULL DEFAULT gen_random_uuid(),
+  recipient_label text NOT NULL,
+  issued_by uuid,
+  expires_at timestamp with time zone NOT NULL,
+  revoked_at timestamp with time zone,
+  last_opened_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT candidate_portal_tokens_issued_by_fkey FOREIGN KEY (issued_by) REFERENCES users(id),
+  CONSTRAINT candidate_portal_tokens_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_portal_tokens_pkey PRIMARY KEY (id),
+  CONSTRAINT candidate_portal_tokens_token_key UNIQUE (token)
+);
+ALTER TABLE candidate_portal_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE candidate_scores (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  candidate_id uuid,
+  project_id uuid,
+  organization_id uuid,
+  technical_score integer,
+  domain_score integer,
+  leadership_score integer,
+  regulatory_score integer,
+  transformation_score integer,
+  overall_score numeric(4,2),
+  tier text,
+  rank_position integer,
+  analysis jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  previous_rank integer,
+  rank_changed_at timestamp with time zone,
+  rank_change_reason jsonb,
+  custom_scores jsonb NOT NULL DEFAULT '{}'::jsonb,
+  CONSTRAINT candidate_scores_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_scores_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT candidate_scores_custom_scores_is_object CHECK ((jsonb_typeof(custom_scores) = 'object'::text)),
+  CONSTRAINT candidate_scores_domain_score_check CHECK (((domain_score >= 0) AND (domain_score <= 10))),
+  CONSTRAINT candidate_scores_leadership_score_check CHECK (((leadership_score >= 0) AND (leadership_score <= 10))),
+  CONSTRAINT candidate_scores_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_scores_pkey PRIMARY KEY (id),
+  CONSTRAINT candidate_scores_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT candidate_scores_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT candidate_scores_regulatory_score_check CHECK (((regulatory_score >= 0) AND (regulatory_score <= 10))),
+  CONSTRAINT candidate_scores_technical_score_check CHECK (((technical_score >= 0) AND (technical_score <= 10))),
+  CONSTRAINT candidate_scores_tier_check CHECK ((tier = ANY (ARRAY['tier_1'::text, 'tier_2'::text, 'tier_3'::text, 'tier_4'::text]))),
+  CONSTRAINT candidate_scores_transformation_score_check CHECK (((transformation_score >= 0) AND (transformation_score <= 10)))
+);
+ALTER TABLE candidate_scores ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE candidates (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid,
+  project_id uuid,
+  full_name text NOT NULL,
+  email text,
+  linkedin_url text,
+  current_title text,
+  current_company text,
+  cv_url text,
+  cv_raw text,
+  cv_structured jsonb DEFAULT '{}'::jsonb,
+  archetype text,
+  pipeline_stage text DEFAULT 'found'::text,
+  source text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  cv_processing boolean NOT NULL DEFAULT false,
+  cv_parse_error text,
+  twitter_url text,
+  github_url text,
+  website_url text,
+  phone text,
+  location text,
+  recruiter_assessment jsonb,
+  source_kind text,
+  source_platform text,
+  source_url text,
+  sourced_at timestamp with time zone,
+  subject_notified_at timestamp with time zone,
+  network_profile_id uuid,
+  created_by uuid,
+  cv_sha256 text,
+  identity_review_of uuid,
+  identity_review_label text,
+  identity_review_at timestamp with time zone,
+  cv_search text DEFAULT lower(((((((((COALESCE(full_name, ''::text) || ' '::text) || COALESCE(current_title, ''::text)) || ' '::text) || COALESCE(current_company, ''::text)) || ' '::text) || COALESCE((cv_structured ->> 'domain'::text), ''::text)) || ' '::text) || COALESCE(((cv_structured -> 'tech_exposure'::text))::text, ''::text))),
+  CONSTRAINT candidates_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT candidates_identity_review_coherent CHECK (((identity_review_at IS NULL) = (identity_review_label IS NULL))),
+  CONSTRAINT candidates_identity_review_of_fkey FOREIGN KEY (identity_review_of) REFERENCES candidates(id) ON DELETE SET NULL,
+  CONSTRAINT candidates_network_profile_id_fkey FOREIGN KEY (network_profile_id) REFERENCES network_profiles(id) ON DELETE SET NULL,
+  CONSTRAINT candidates_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT candidates_pipeline_stage_check CHECK ((pipeline_stage = ANY (ARRAY['found'::text, 'reviewed'::text, 'matched'::text, 'shortlisted'::text, 'submitted'::text, 'interviewed'::text, 'passed_rounds'::text, 'finalist'::text, 'offer'::text, 'hired'::text, 'rejected'::text, 'withdrawn'::text]))),
+  CONSTRAINT candidates_pkey PRIMARY KEY (id),
+  CONSTRAINT candidates_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT candidates_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT candidates_source_kind_check CHECK (((source_kind IS NULL) OR (source_kind = ANY (ARRAY['applied'::text, 'sourced'::text, 'referred'::text, 'imported'::text]))))
+);
+ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE capability_assignments (
+  capability text NOT NULL,
+  model_id text NOT NULL,
+  updated_by uuid,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT capability_assignments_model_id_fkey FOREIGN KEY (model_id) REFERENCES provider_models(model_id),
+  CONSTRAINT capability_assignments_pkey PRIMARY KEY (capability)
+);
+ALTER TABLE capability_assignments ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE client_contacts (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  client_id uuid NOT NULL,
+  full_name text NOT NULL,
+  title text,
+  email text,
+  phone text,
+  linkedin_url text,
+  email_key text DEFAULT NULLIF(btrim(lower(email)), ''::text),
+  contact_type text NOT NULL DEFAULT 'hiring_manager'::text,
+  is_primary boolean NOT NULL DEFAULT false,
+  is_archived boolean NOT NULL DEFAULT false,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT client_contacts_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+  CONSTRAINT client_contacts_client_in_org FOREIGN KEY (organization_id, client_id) REFERENCES clients(organization_id, id) ON DELETE CASCADE,
+  CONSTRAINT client_contacts_contact_type_check CHECK ((contact_type = ANY (ARRAY['hiring_manager'::text, 'hr'::text, 'executive'::text, 'procurement'::text, 'finance'::text, 'other'::text]))),
+  CONSTRAINT client_contacts_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT client_contacts_full_name_check CHECK ((length(btrim(full_name)) > 0)),
+  CONSTRAINT client_contacts_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT client_contacts_pkey PRIMARY KEY (id)
+);
+ALTER TABLE client_contacts ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE client_interviews (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  version integer NOT NULL,
+  content_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  status text NOT NULL DEFAULT 'draft'::text,
+  prompt_version text,
+  model_version text,
+  is_generating boolean NOT NULL DEFAULT false,
+  generation_error text,
+  created_by uuid,
+  approved_by uuid,
+  approved_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT client_interviews_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES users(id),
+  CONSTRAINT client_interviews_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT client_interviews_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT client_interviews_pkey PRIMARY KEY (id),
+  CONSTRAINT client_interviews_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT client_interviews_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'approved'::text, 'archived'::text])))
+);
+ALTER TABLE client_interviews ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE client_notes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  client_id uuid NOT NULL,
+  contact_id uuid,
+  created_by uuid,
+  author_label text,
+  note_type text NOT NULL DEFAULT 'general'::text,
+  content text NOT NULL,
+  visibility text NOT NULL DEFAULT 'org'::text,
+  is_pinned boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  audio_path text,
+  consent_confirmed boolean NOT NULL DEFAULT false,
+  transcript text,
+  transcript_error text,
+  CONSTRAINT client_notes_audio_needs_consent CHECK (((audio_path IS NULL) OR consent_confirmed)),
+  CONSTRAINT client_notes_audio_on_calls CHECK (((audio_path IS NULL) OR (note_type = 'call'::text))),
+  CONSTRAINT client_notes_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+  CONSTRAINT client_notes_client_in_org FOREIGN KEY (organization_id, client_id) REFERENCES clients(organization_id, id) ON DELETE CASCADE,
+  CONSTRAINT client_notes_contact_id_fkey FOREIGN KEY (contact_id) REFERENCES client_contacts(id) ON DELETE SET NULL,
+  CONSTRAINT client_notes_contact_in_org FOREIGN KEY (organization_id, contact_id) REFERENCES client_contacts(organization_id, id),
+  CONSTRAINT client_notes_content_check CHECK ((length(btrim(content)) > 0)),
+  CONSTRAINT client_notes_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT client_notes_note_type_check CHECK ((note_type = ANY (ARRAY['general'::text, 'call'::text, 'meeting'::text, 'email'::text]))),
+  CONSTRAINT client_notes_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT client_notes_pkey PRIMARY KEY (id),
+  CONSTRAINT client_notes_transcript_needs_audio CHECK ((((transcript IS NULL) AND (transcript_error IS NULL)) OR (audio_path IS NOT NULL))),
+  CONSTRAINT client_notes_visibility_check CHECK ((visibility = ANY (ARRAY['org'::text, 'commercial'::text])))
+);
+ALTER TABLE client_notes ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE clients (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  name text NOT NULL,
+  name_key text DEFAULT lower(btrim(name)),
+  domain text,
+  industry text,
+  business_model text,
+  revenue_range text,
+  employee_count text,
+  funding_stage text,
+  ownership_structure text,
+  geographic_footprint text,
+  regulatory_environment text,
+  company_context jsonb NOT NULL DEFAULT '{}'::jsonb,
+  client_psychology jsonb,
+  company_context_refreshed_at timestamp with time zone,
+  client_psychology_refreshed_at timestamp with time zone,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT clients_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT clients_name_check CHECK ((length(btrim(name)) > 0)),
+  CONSTRAINT clients_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT clients_pkey PRIMARY KEY (id)
+);
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE desk_digests (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  content_json jsonb NOT NULL,
+  model_version text,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT desk_digests_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT desk_digests_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT desk_digests_pkey PRIMARY KEY (id)
+);
+ALTER TABLE desk_digests ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE email_suppressions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  address text NOT NULL,
+  reason text NOT NULL,
+  detail text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT email_suppressions_address_check CHECK (((address = lower(btrim(address))) AND (address <> ''::text))),
+  CONSTRAINT email_suppressions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT email_suppressions_pkey PRIMARY KEY (id),
+  CONSTRAINT email_suppressions_reason_check CHECK ((reason = ANY (ARRAY['bounce'::text, 'complaint'::text, 'manual'::text]))),
+  CONSTRAINT email_suppressions_unique UNIQUE (organization_id, address)
+);
+ALTER TABLE email_suppressions ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE engagement_states (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  state text NOT NULL DEFAULT 'awaiting_reply'::text,
+  escalation_reason text,
+  next_follow_up_at date,
+  draft jsonb,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT engagement_states_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT engagement_states_escalation_recorded CHECK (((state = 'escalated'::text) = (escalation_reason IS NOT NULL))),
+  CONSTRAINT engagement_states_lane_unique UNIQUE (candidate_id, project_id),
+  CONSTRAINT engagement_states_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT engagement_states_pkey PRIMARY KEY (id),
+  CONSTRAINT engagement_states_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT engagement_states_state_check CHECK ((state = ANY (ARRAY['awaiting_reply'::text, 'replied'::text, 'responding'::text, 'timing_follow_up'::text, 'declined'::text, 'interested'::text, 'escalated'::text, 'closed'::text])))
+);
+ALTER TABLE engagement_states ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE executive_assessments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  search_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  source_plan_id uuid,
+  version integer NOT NULL,
+  content_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  status text NOT NULL DEFAULT 'draft'::text,
+  created_by uuid,
+  approved_by uuid,
+  approved_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT executive_assessments_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES users(id),
+  CONSTRAINT executive_assessments_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT executive_assessments_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT executive_assessments_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT executive_assessments_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT executive_assessments_pkey PRIMARY KEY (id),
+  CONSTRAINT executive_assessments_search_id_fkey FOREIGN KEY (search_id) REFERENCES executive_searches(id) ON DELETE CASCADE,
+  CONSTRAINT executive_assessments_search_in_org FOREIGN KEY (organization_id, search_id) REFERENCES executive_searches(organization_id, id),
+  CONSTRAINT executive_assessments_source_plan_id_fkey FOREIGN KEY (source_plan_id) REFERENCES executive_interview_plans(id) ON DELETE SET NULL,
+  CONSTRAINT executive_assessments_source_plan_in_org FOREIGN KEY (organization_id, source_plan_id) REFERENCES executive_interview_plans(organization_id, id),
+  CONSTRAINT executive_assessments_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'approved'::text, 'archived'::text])))
+);
+ALTER TABLE executive_assessments ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE executive_audit_events (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  search_id uuid,
+  profile_id uuid,
+  actor_id uuid,
+  event_type text NOT NULL,
+  detail jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  plan_id uuid,
+  assessment_id uuid,
+  risk_review_id uuid,
+  CONSTRAINT executive_audit_events_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES users(id),
+  CONSTRAINT executive_audit_events_assessment_id_fkey FOREIGN KEY (assessment_id) REFERENCES executive_assessments(id) ON DELETE SET NULL,
+  CONSTRAINT executive_audit_events_assessment_in_org FOREIGN KEY (organization_id, assessment_id) REFERENCES executive_assessments(organization_id, id),
+  CONSTRAINT executive_audit_events_event_type_check CHECK ((event_type = ANY (ARRAY['search_created'::text, 'search_updated'::text, 'profile_generation_requested'::text, 'profile_generated'::text, 'profile_generation_failed'::text, 'profile_edited'::text, 'profile_new_version'::text, 'profile_regenerated'::text, 'profile_approved'::text, 'candidate_linked'::text, 'candidate_unlinked'::text, 'candidate_stage_changed'::text, 'interview_plan_generation_requested'::text, 'interview_plan_generated'::text, 'interview_plan_generation_failed'::text, 'interview_plan_edited'::text, 'interview_plan_new_version'::text, 'interview_plan_regenerated'::text, 'interview_plan_approved'::text, 'assessment_created'::text, 'assessment_edited'::text, 'assessment_new_version'::text, 'assessment_approved'::text, 'risk_review_generation_requested'::text, 'risk_review_generated'::text, 'risk_review_generation_failed'::text, 'risk_review_edited'::text, 'risk_review_new_version'::text, 'risk_review_regenerated'::text, 'risk_review_approved'::text, 'template_created'::text, 'template_updated'::text, 'template_deleted'::text]))),
+  CONSTRAINT executive_audit_events_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT executive_audit_events_pkey PRIMARY KEY (id),
+  CONSTRAINT executive_audit_events_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES executive_interview_plans(id) ON DELETE SET NULL,
+  CONSTRAINT executive_audit_events_plan_in_org FOREIGN KEY (organization_id, plan_id) REFERENCES executive_interview_plans(organization_id, id),
+  CONSTRAINT executive_audit_events_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES role_success_profiles(id) ON DELETE SET NULL,
+  CONSTRAINT executive_audit_events_profile_in_org FOREIGN KEY (organization_id, profile_id) REFERENCES role_success_profiles(organization_id, id),
+  CONSTRAINT executive_audit_events_risk_review_id_fkey FOREIGN KEY (risk_review_id) REFERENCES executive_risk_reviews(id) ON DELETE SET NULL,
+  CONSTRAINT executive_audit_events_risk_review_in_org FOREIGN KEY (organization_id, risk_review_id) REFERENCES executive_risk_reviews(organization_id, id),
+  CONSTRAINT executive_audit_events_search_id_fkey FOREIGN KEY (search_id) REFERENCES executive_searches(id) ON DELETE CASCADE,
+  CONSTRAINT executive_audit_events_search_in_org FOREIGN KEY (organization_id, search_id) REFERENCES executive_searches(organization_id, id)
+);
+ALTER TABLE executive_audit_events ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE executive_competencies (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid,
+  key text NOT NULL,
+  name text NOT NULL,
+  category text NOT NULL,
+  definition text NOT NULL,
+  positive_indicators text[] NOT NULL DEFAULT ARRAY[]::text[],
+  negative_indicators text[] NOT NULL DEFAULT ARRAY[]::text[],
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  is_global boolean NOT NULL DEFAULT false,
+  CONSTRAINT executive_competencies_category_check CHECK ((category = ANY (ARRAY['leadership'::text, 'functional'::text, 'operating'::text, 'governance'::text]))),
+  CONSTRAINT executive_competencies_global_has_no_org CHECK ((is_global = (organization_id IS NULL))),
+  CONSTRAINT executive_competencies_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT executive_competencies_pkey PRIMARY KEY (id)
+);
+ALTER TABLE executive_competencies ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE executive_interview_plans (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  search_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  source_profile_id uuid,
+  version integer NOT NULL,
+  content_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  status text NOT NULL DEFAULT 'draft'::text,
+  prompt_version text,
+  model_version text,
+  is_generating boolean NOT NULL DEFAULT false,
+  generation_error text,
+  created_by uuid,
+  approved_by uuid,
+  approved_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT executive_interview_plans_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES users(id),
+  CONSTRAINT executive_interview_plans_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT executive_interview_plans_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT executive_interview_plans_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT executive_interview_plans_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT executive_interview_plans_pkey PRIMARY KEY (id),
+  CONSTRAINT executive_interview_plans_search_id_fkey FOREIGN KEY (search_id) REFERENCES executive_searches(id) ON DELETE CASCADE,
+  CONSTRAINT executive_interview_plans_search_in_org FOREIGN KEY (organization_id, search_id) REFERENCES executive_searches(organization_id, id),
+  CONSTRAINT executive_interview_plans_source_profile_id_fkey FOREIGN KEY (source_profile_id) REFERENCES role_success_profiles(id) ON DELETE SET NULL,
+  CONSTRAINT executive_interview_plans_source_profile_in_org FOREIGN KEY (organization_id, source_profile_id) REFERENCES role_success_profiles(organization_id, id),
+  CONSTRAINT executive_interview_plans_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'approved'::text, 'archived'::text])))
+);
+ALTER TABLE executive_interview_plans ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE executive_risk_reviews (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  search_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  source_assessment_id uuid,
+  source_profile_id uuid,
+  source_plan_id uuid,
+  version integer NOT NULL,
+  content_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  status text NOT NULL DEFAULT 'draft'::text,
+  prompt_version text,
+  model_version text,
+  is_generating boolean NOT NULL DEFAULT false,
+  generation_error text,
+  created_by uuid,
+  approved_by uuid,
+  approved_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT executive_risk_reviews_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES users(id),
+  CONSTRAINT executive_risk_reviews_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT executive_risk_reviews_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT executive_risk_reviews_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT executive_risk_reviews_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT executive_risk_reviews_pkey PRIMARY KEY (id),
+  CONSTRAINT executive_risk_reviews_search_id_fkey FOREIGN KEY (search_id) REFERENCES executive_searches(id) ON DELETE CASCADE,
+  CONSTRAINT executive_risk_reviews_search_in_org FOREIGN KEY (organization_id, search_id) REFERENCES executive_searches(organization_id, id),
+  CONSTRAINT executive_risk_reviews_source_assessment_id_fkey FOREIGN KEY (source_assessment_id) REFERENCES executive_assessments(id) ON DELETE SET NULL,
+  CONSTRAINT executive_risk_reviews_source_assessment_in_org FOREIGN KEY (organization_id, source_assessment_id) REFERENCES executive_assessments(organization_id, id),
+  CONSTRAINT executive_risk_reviews_source_plan_id_fkey FOREIGN KEY (source_plan_id) REFERENCES executive_interview_plans(id) ON DELETE SET NULL,
+  CONSTRAINT executive_risk_reviews_source_plan_in_org FOREIGN KEY (organization_id, source_plan_id) REFERENCES executive_interview_plans(organization_id, id),
+  CONSTRAINT executive_risk_reviews_source_profile_id_fkey FOREIGN KEY (source_profile_id) REFERENCES role_success_profiles(id) ON DELETE SET NULL,
+  CONSTRAINT executive_risk_reviews_source_profile_in_org FOREIGN KEY (organization_id, source_profile_id) REFERENCES role_success_profiles(organization_id, id),
+  CONSTRAINT executive_risk_reviews_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'approved'::text, 'archived'::text])))
+);
+ALTER TABLE executive_risk_reviews ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE executive_role_templates (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid,
+  key text NOT NULL,
+  title text NOT NULL,
+  summary text NOT NULL DEFAULT ''::text,
+  role_family text NOT NULL DEFAULT 'other'::text,
+  intake_defaults jsonb NOT NULL DEFAULT '{}'::jsonb,
+  competency_weights jsonb NOT NULL DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  is_global boolean NOT NULL DEFAULT false,
+  created_by uuid,
+  CONSTRAINT executive_role_templates_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT executive_role_templates_global_has_no_org CHECK ((is_global = (organization_id IS NULL))),
+  CONSTRAINT executive_role_templates_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT executive_role_templates_pkey PRIMARY KEY (id)
+);
+ALTER TABLE executive_role_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE executive_search_candidates (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  search_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  stage text NOT NULL DEFAULT 'identified'::text,
+  added_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT executive_search_candidates_added_by_fkey FOREIGN KEY (added_by) REFERENCES users(id),
+  CONSTRAINT executive_search_candidates_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT executive_search_candidates_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT executive_search_candidates_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT executive_search_candidates_pkey PRIMARY KEY (id),
+  CONSTRAINT executive_search_candidates_search_id_fkey FOREIGN KEY (search_id) REFERENCES executive_searches(id) ON DELETE CASCADE,
+  CONSTRAINT executive_search_candidates_search_in_org FOREIGN KEY (organization_id, search_id) REFERENCES executive_searches(organization_id, id),
+  CONSTRAINT executive_search_candidates_stage_check CHECK ((stage = ANY (ARRAY['identified'::text, 'in_diligence'::text, 'advanced'::text, 'on_hold'::text, 'declined'::text])))
+);
+ALTER TABLE executive_search_candidates ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE executive_search_competencies (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  search_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  competency_id uuid NOT NULL,
+  weight integer NOT NULL DEFAULT 50,
+  rationale text NOT NULL DEFAULT ''::text,
+  source text NOT NULL DEFAULT 'manual'::text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  competency_is_global boolean NOT NULL DEFAULT false,
+  competency_org_id uuid DEFAULT 
+CASE
+    WHEN competency_is_global THEN NULL::uuid
+    ELSE organization_id
+END,
+  CONSTRAINT executive_search_competencies_competency_id_fkey FOREIGN KEY (competency_id) REFERENCES executive_competencies(id) ON DELETE CASCADE,
+  CONSTRAINT executive_search_competencies_competency_in_org FOREIGN KEY (competency_org_id, competency_id) REFERENCES executive_competencies(organization_id, id),
+  CONSTRAINT executive_search_competencies_competency_tier FOREIGN KEY (competency_id, competency_is_global) REFERENCES executive_competencies(id, is_global),
+  CONSTRAINT executive_search_competencies_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT executive_search_competencies_pkey PRIMARY KEY (id),
+  CONSTRAINT executive_search_competencies_search_id_fkey FOREIGN KEY (search_id) REFERENCES executive_searches(id) ON DELETE CASCADE,
+  CONSTRAINT executive_search_competencies_search_in_org FOREIGN KEY (organization_id, search_id) REFERENCES executive_searches(organization_id, id),
+  CONSTRAINT executive_search_competencies_source_check CHECK ((source = ANY (ARRAY['template'::text, 'ai'::text, 'manual'::text]))),
+  CONSTRAINT executive_search_competencies_weight_check CHECK (((weight >= 0) AND (weight <= 100)))
+);
+ALTER TABLE executive_search_competencies ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE executive_searches (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  created_by uuid,
+  template_id uuid,
+  status text NOT NULL DEFAULT 'draft'::text,
+  service_tier text NOT NULL DEFAULT 'standard'::text,
+  company_name text NOT NULL,
+  industry text,
+  business_model text,
+  revenue_range text,
+  employee_count text,
+  funding_stage text,
+  ownership_structure text,
+  geographic_footprint text,
+  regulatory_environment text,
+  role_title text NOT NULL,
+  role_family text NOT NULL DEFAULT 'other'::text,
+  is_new_role boolean,
+  reason_for_hire text,
+  reporting_line text,
+  board_exposure text,
+  team_size text,
+  budget_scope text,
+  business_situation text,
+  expected_90_day_outcomes text,
+  expected_first_year_outcomes text,
+  non_negotiables text,
+  preferred_leadership_style text,
+  company_context jsonb NOT NULL DEFAULT '{}'::jsonb,
+  company_context_status text NOT NULL DEFAULT 'none'::text,
+  company_context_error text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  client_id uuid,
+  template_is_global boolean NOT NULL DEFAULT false,
+  template_org_id uuid DEFAULT 
+CASE
+    WHEN template_is_global THEN NULL::uuid
+    ELSE organization_id
+END,
+  CONSTRAINT executive_searches_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
+  CONSTRAINT executive_searches_client_in_org FOREIGN KEY (organization_id, client_id) REFERENCES clients(organization_id, id),
+  CONSTRAINT executive_searches_company_context_status_check CHECK ((company_context_status = ANY (ARRAY['none'::text, 'generating'::text, 'ready'::text, 'failed'::text]))),
+  CONSTRAINT executive_searches_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT executive_searches_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT executive_searches_pkey PRIMARY KEY (id),
+  CONSTRAINT executive_searches_service_tier_check CHECK ((service_tier = ANY (ARRAY['standard'::text, 'premium'::text, 'enterprise'::text]))),
+  CONSTRAINT executive_searches_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'active'::text, 'on_hold'::text, 'closed'::text]))),
+  CONSTRAINT executive_searches_template_id_fkey FOREIGN KEY (template_id) REFERENCES executive_role_templates(id),
+  CONSTRAINT executive_searches_template_in_org FOREIGN KEY (template_org_id, template_id) REFERENCES executive_role_templates(organization_id, id),
+  CONSTRAINT executive_searches_template_tier FOREIGN KEY (template_id, template_is_global) REFERENCES executive_role_templates(id, is_global)
+);
+ALTER TABLE executive_searches ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE fee_terms (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  client_id uuid,
+  project_id uuid,
+  fee_model text NOT NULL,
+  fee_percentage numeric(6,3),
+  fixed_fee_amount numeric(14,2),
+  currency text NOT NULL,
+  fee_basis text NOT NULL DEFAULT 'total_first_year_cash'::text,
+  guarantee_days integer NOT NULL DEFAULT 90,
+  payment_terms_days integer NOT NULL DEFAULT 30,
+  instalment_plan jsonb NOT NULL DEFAULT '[]'::jsonb,
+  notes text,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT fee_terms_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+  CONSTRAINT fee_terms_client_in_org FOREIGN KEY (organization_id, client_id) REFERENCES clients(organization_id, id),
+  CONSTRAINT fee_terms_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fee_terms_currency_check CHECK ((currency ~ '^[A-Z]{3}$'::text)),
+  CONSTRAINT fee_terms_fee_basis_check CHECK ((fee_basis = ANY (ARRAY['base_salary'::text, 'total_first_year_cash'::text]))),
+  CONSTRAINT fee_terms_fee_model_check CHECK ((fee_model = ANY (ARRAY['contingent'::text, 'retained'::text, 'fixed'::text]))),
+  CONSTRAINT fee_terms_fee_percentage_check CHECK (((fee_percentage > (0)::numeric) AND (fee_percentage <= (100)::numeric))),
+  CONSTRAINT fee_terms_fixed_fee_amount_check CHECK ((fixed_fee_amount >= (0)::numeric)),
+  CONSTRAINT fee_terms_guarantee_days_check CHECK ((guarantee_days >= 0)),
+  CONSTRAINT fee_terms_instalment_plan_check CHECK (fee_instalment_plan_is_valid(instalment_plan)),
+  CONSTRAINT fee_terms_model_has_amount CHECK (
+CASE fee_model
+    WHEN 'contingent'::text THEN (fee_percentage IS NOT NULL)
+    WHEN 'fixed'::text THEN (fixed_fee_amount IS NOT NULL)
+    WHEN 'retained'::text THEN ((fee_percentage IS NOT NULL) OR (fixed_fee_amount IS NOT NULL))
+    ELSE NULL::boolean
+END),
+  CONSTRAINT fee_terms_one_scope CHECK (((client_id IS NULL) <> (project_id IS NULL))),
+  CONSTRAINT fee_terms_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT fee_terms_payment_terms_days_check CHECK ((payment_terms_days >= 0)),
+  CONSTRAINT fee_terms_pkey PRIMARY KEY (id),
+  CONSTRAINT fee_terms_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT fee_terms_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT fee_terms_retained_has_stages CHECK (((jsonb_typeof(instalment_plan) = 'array'::text) AND ((fee_model = 'retained'::text) = (jsonb_array_length(instalment_plan) > 0))))
+);
+ALTER TABLE fee_terms ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE feedback (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid,
+  organization_id uuid,
+  candidate_id uuid,
+  submitted_by uuid,
+  feedback_type text,
+  content text NOT NULL,
+  interpreted jsonb DEFAULT '{}'::jsonb,
+  triggered_recalibration boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  answers_json jsonb,
+  CONSTRAINT feedback_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id),
+  CONSTRAINT feedback_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT feedback_feedback_type_check CHECK ((feedback_type = ANY (ARRAY['recruiter_note'::text, 'hiring_manager'::text, 'interview_outcome'::text, 'hm_portal'::text, 'client_interview'::text]))),
+  CONSTRAINT feedback_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT feedback_pkey PRIMARY KEY (id),
+  CONSTRAINT feedback_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT feedback_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT feedback_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES users(id)
+);
+ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE hiring_manager_reviews (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  token_id uuid,
+  candidate_ratings jsonb NOT NULL DEFAULT '{}'::jsonb,
+  top_concern text NOT NULL DEFAULT ''::text,
+  priority_order uuid[] NOT NULL DEFAULT ARRAY[]::uuid[],
+  hm_label text NOT NULL DEFAULT ''::text,
+  submitted_at timestamp with time zone NOT NULL DEFAULT now(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  submitted_by_user_id uuid,
+  CONSTRAINT hiring_manager_reviews_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT hiring_manager_reviews_pkey PRIMARY KEY (id),
+  CONSTRAINT hiring_manager_reviews_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT hiring_manager_reviews_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT hiring_manager_reviews_submitted_by_user_id_fkey FOREIGN KEY (submitted_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT hiring_manager_reviews_token_id_fkey FOREIGN KEY (token_id) REFERENCES hiring_manager_tokens(id) ON DELETE SET NULL,
+  CONSTRAINT hiring_manager_reviews_token_in_org FOREIGN KEY (organization_id, token_id) REFERENCES hiring_manager_tokens(organization_id, id)
+);
+ALTER TABLE hiring_manager_reviews ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE hiring_manager_tokens (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  token uuid NOT NULL DEFAULT gen_random_uuid(),
+  label text NOT NULL DEFAULT ''::text,
+  created_by uuid,
+  expires_at timestamp with time zone NOT NULL,
+  revoked_at timestamp with time zone,
+  last_used_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  contact_id uuid,
+  CONSTRAINT hiring_manager_tokens_contact_id_fkey FOREIGN KEY (contact_id) REFERENCES client_contacts(id) ON DELETE SET NULL,
+  CONSTRAINT hiring_manager_tokens_contact_in_org FOREIGN KEY (organization_id, contact_id) REFERENCES client_contacts(organization_id, id),
+  CONSTRAINT hiring_manager_tokens_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT hiring_manager_tokens_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT hiring_manager_tokens_pkey PRIMARY KEY (id),
+  CONSTRAINT hiring_manager_tokens_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT hiring_manager_tokens_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT hiring_manager_tokens_token_key UNIQUE (token)
+);
+ALTER TABLE hiring_manager_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE inference_runs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  capability text NOT NULL,
+  model text NOT NULL,
+  provider text NOT NULL DEFAULT 'anthropic'::text,
+  input_tokens integer,
+  cached_input_tokens integer,
+  output_tokens integer,
+  latency_ms integer,
+  outcome text NOT NULL,
+  retries integer NOT NULL DEFAULT 0,
+  escalated_from text,
+  project_id uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  cache_creation_input_tokens integer,
+  CONSTRAINT inference_runs_outcome_check CHECK ((outcome = ANY (ARRAY['ok'::text, 'schema_failed'::text, 'provider_error'::text, 'refused'::text]))),
+  CONSTRAINT inference_runs_pkey PRIMARY KEY (id)
+);
+ALTER TABLE inference_runs ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE interview_plans (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  source_spec_id uuid,
+  version integer NOT NULL,
+  content_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  status text NOT NULL DEFAULT 'draft'::text,
+  prompt_version text,
+  model_version text,
+  is_generating boolean NOT NULL DEFAULT false,
+  generation_error text,
+  created_by uuid,
+  approved_by uuid,
+  approved_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT interview_plans_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES users(id),
+  CONSTRAINT interview_plans_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT interview_plans_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT interview_plans_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT interview_plans_pkey PRIMARY KEY (id),
+  CONSTRAINT interview_plans_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT interview_plans_source_spec_id_fkey FOREIGN KEY (source_spec_id) REFERENCES job_specs(id) ON DELETE SET NULL,
+  CONSTRAINT interview_plans_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'approved'::text, 'archived'::text])))
+);
+ALTER TABLE interview_plans ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE invitations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  client_id uuid NOT NULL,
+  contact_id uuid,
+  email text NOT NULL,
+  email_key text DEFAULT lower(btrim(email)),
+  full_name text NOT NULL,
+  role text NOT NULL,
+  grant_project_ids uuid[] NOT NULL DEFAULT '{}'::uuid[],
+  token uuid NOT NULL DEFAULT gen_random_uuid(),
+  invited_by uuid,
+  invited_by_label text NOT NULL DEFAULT ''::text,
+  expires_at timestamp with time zone NOT NULL DEFAULT (now() + '14 days'::interval),
+  revoked_at timestamp with time zone,
+  accepted_at timestamp with time zone,
+  accepted_user_id uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT invitations_accepted_user_id_fkey FOREIGN KEY (accepted_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT invitations_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+  CONSTRAINT invitations_contact_id_fkey FOREIGN KEY (contact_id) REFERENCES client_contacts(id) ON DELETE SET NULL,
+  CONSTRAINT invitations_email_check CHECK ((POSITION(('@'::text) IN (email)) > 1)),
+  CONSTRAINT invitations_full_name_check CHECK ((length(btrim(full_name)) > 0)),
+  CONSTRAINT invitations_grants_hm_only CHECK (((role = 'hiring_manager'::text) OR (grant_project_ids = '{}'::uuid[]))),
+  CONSTRAINT invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT invitations_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT invitations_pkey PRIMARY KEY (id),
+  CONSTRAINT invitations_role_check CHECK ((role = ANY (ARRAY['hiring_manager'::text, 'client_hr'::text, 'client_admin'::text]))),
+  CONSTRAINT invitations_token_key UNIQUE (token)
+);
+ALTER TABLE invitations ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE invoice_deliveries (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  invoice_id uuid NOT NULL,
+  to_address text NOT NULL,
+  to_label text,
+  from_address text NOT NULL,
+  subject text NOT NULL,
+  provider text NOT NULL DEFAULT 'resend'::text,
+  provider_message_id text,
+  delivery_status text NOT NULL DEFAULT 'sent'::text,
+  failure_detail text,
+  sent_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT invoice_deliveries_delivery_status_check CHECK ((delivery_status = ANY (ARRAY['sent'::text, 'delivered'::text, 'bounced'::text, 'complained'::text, 'failed'::text]))),
+  CONSTRAINT invoice_deliveries_failure_has_detail CHECK (((delivery_status <> 'failed'::text) OR (failure_detail IS NOT NULL))),
+  CONSTRAINT invoice_deliveries_from_address_check CHECK ((length(btrim(from_address)) > 0)),
+  CONSTRAINT invoice_deliveries_invoice_id_fkey FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
+  CONSTRAINT invoice_deliveries_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT invoice_deliveries_pkey PRIMARY KEY (id),
+  CONSTRAINT invoice_deliveries_sent_by_fkey FOREIGN KEY (sent_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT invoice_deliveries_subject_check CHECK ((length(btrim(subject)) > 0)),
+  CONSTRAINT invoice_deliveries_to_address_check CHECK ((length(btrim(to_address)) > 0))
+);
+ALTER TABLE invoice_deliveries ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE invoice_lines (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  invoice_id uuid NOT NULL,
+  placement_id uuid,
+  fee_line_id uuid,
+  label text NOT NULL,
+  sequence integer NOT NULL DEFAULT 1,
+  amount numeric(14,2) NOT NULL,
+  currency text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT invoice_lines_currency_check CHECK ((currency ~ '^[A-Z]{3}$'::text)),
+  CONSTRAINT invoice_lines_fee_line_id_fkey FOREIGN KEY (fee_line_id) REFERENCES placement_fee_lines(id) ON DELETE SET NULL,
+  CONSTRAINT invoice_lines_invoice_id_fkey FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
+  CONSTRAINT invoice_lines_label_check CHECK ((length(btrim(label)) > 0)),
+  CONSTRAINT invoice_lines_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT invoice_lines_pkey PRIMARY KEY (id),
+  CONSTRAINT invoice_lines_placement_id_fkey FOREIGN KEY (placement_id) REFERENCES placements(id) ON DELETE SET NULL
+);
+ALTER TABLE invoice_lines ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE invoice_templates (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  name text NOT NULL,
+  logo_path text,
+  structure jsonb NOT NULL DEFAULT '{}'::jsonb,
+  numbering_next integer NOT NULL DEFAULT 1,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT invoice_templates_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT invoice_templates_name_check CHECK ((length(btrim(name)) > 0)),
+  CONSTRAINT invoice_templates_numbering_next_check CHECK ((numbering_next >= 1)),
+  CONSTRAINT invoice_templates_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT invoice_templates_pkey PRIMARY KEY (id)
+);
+ALTER TABLE invoice_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE invoices (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  client_id uuid,
+  template_id uuid,
+  status text NOT NULL DEFAULT 'draft'::text,
+  invoice_number text,
+  issue_date date,
+  due_date date,
+  payment_terms_days integer NOT NULL DEFAULT 30,
+  currency text NOT NULL,
+  bill_to jsonb NOT NULL DEFAULT '{}'::jsonb,
+  from_snapshot jsonb,
+  total_amount numeric(14,2) NOT NULL DEFAULT 0,
+  notes text,
+  voided_at timestamp with time zone,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT invoices_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
+  CONSTRAINT invoices_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT invoices_currency_check CHECK ((currency ~ '^[A-Z]{3}$'::text)),
+  CONSTRAINT invoices_dates_ordered CHECK (((issue_date IS NULL) OR (due_date IS NULL) OR (due_date >= issue_date))),
+  CONSTRAINT invoices_draft_unnumbered CHECK (((status <> 'draft'::text) OR (invoice_number IS NULL))),
+  CONSTRAINT invoices_issued_is_complete CHECK (((status = 'draft'::text) OR ((invoice_number IS NOT NULL) AND (issue_date IS NOT NULL) AND (due_date IS NOT NULL) AND (from_snapshot IS NOT NULL)))),
+  CONSTRAINT invoices_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT invoices_payment_terms_days_check CHECK ((payment_terms_days >= 0)),
+  CONSTRAINT invoices_pkey PRIMARY KEY (id),
+  CONSTRAINT invoices_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'issued'::text, 'void'::text]))),
+  CONSTRAINT invoices_template_id_fkey FOREIGN KEY (template_id) REFERENCES invoice_templates(id) ON DELETE SET NULL,
+  CONSTRAINT invoices_total_amount_check CHECK ((total_amount >= (0)::numeric)),
+  CONSTRAINT invoices_void_has_time CHECK (((status = 'void'::text) = (voided_at IS NOT NULL)))
+);
+ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE job_specs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid,
+  organization_id uuid,
+  version integer NOT NULL DEFAULT 1,
+  content text NOT NULL,
+  is_final boolean DEFAULT false,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  content_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  is_generating boolean NOT NULL DEFAULT false,
+  generation_error text,
+  CONSTRAINT job_specs_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT job_specs_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT job_specs_pkey PRIMARY KEY (id),
+  CONSTRAINT job_specs_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT job_specs_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id)
+);
+ALTER TABLE job_specs ENABLE ROW LEVEL SECURITY;
+CREATE TABLE mandate_grants (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  client_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  granted_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT mandate_grants_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+  CONSTRAINT mandate_grants_granted_by_fkey FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT mandate_grants_one_per_user UNIQUE (project_id, user_id),
+  CONSTRAINT mandate_grants_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT mandate_grants_pkey PRIMARY KEY (id),
+  CONSTRAINT mandate_grants_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT mandate_grants_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+ALTER TABLE mandate_grants ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE mandate_shares (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  client_id uuid NOT NULL,
+  shared_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT mandate_shares_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+  CONSTRAINT mandate_shares_one_per_project UNIQUE (project_id),
+  CONSTRAINT mandate_shares_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT mandate_shares_pkey PRIMARY KEY (id),
+  CONSTRAINT mandate_shares_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT mandate_shares_shared_by_fkey FOREIGN KEY (shared_by) REFERENCES users(id) ON DELETE SET NULL
+);
+ALTER TABLE mandate_shares ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE model_providers (
+  name text NOT NULL,
+  adapter_kind text NOT NULL,
+  key_env_var text NOT NULL,
+  status text NOT NULL DEFAULT 'active'::text,
+  data_region text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT model_providers_adapter_kind_check CHECK ((adapter_kind = 'anthropic'::text)),
+  CONSTRAINT model_providers_key_env_var_check CHECK ((key_env_var ~ '^[A-Z][A-Z0-9_]*$'::text)),
+  CONSTRAINT model_providers_pkey PRIMARY KEY (name),
+  CONSTRAINT model_providers_status_check CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text])))
+);
+ALTER TABLE model_providers ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE network_profile_aliases (
+  organization_id uuid NOT NULL,
+  identity_key text NOT NULL,
+  profile_id uuid NOT NULL,
+  merged_by uuid,
+  merged_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT network_profile_aliases_merged_by_fkey FOREIGN KEY (merged_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT network_profile_aliases_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT network_profile_aliases_pkey PRIMARY KEY (organization_id, identity_key),
+  CONSTRAINT network_profile_aliases_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES network_profiles(id) ON DELETE CASCADE
+);
+ALTER TABLE network_profile_aliases ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE network_profiles (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  identity_key text NOT NULL,
+  display_name text NOT NULL,
+  primary_email text,
+  linkedin_url text,
+  relationship_state text NOT NULL DEFAULT 'cold'::text,
+  dnc boolean NOT NULL DEFAULT false,
+  dnc_reason text,
+  dnc_set_at timestamp with time zone,
+  dnc_set_by uuid,
+  disposition jsonb NOT NULL DEFAULT '{}'::jsonb,
+  follow_up_at date,
+  follow_up_note text,
+  last_meaningful_contact_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT network_profiles_dnc_recorded CHECK ((((NOT dnc) OR ((dnc_reason IS NOT NULL) AND (dnc_set_at IS NOT NULL))) AND ((relationship_state <> 'do_not_contact'::text) OR dnc))),
+  CONSTRAINT network_profiles_dnc_set_by_fkey FOREIGN KEY (dnc_set_by) REFERENCES users(id),
+  CONSTRAINT network_profiles_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT network_profiles_person_unique UNIQUE (organization_id, identity_key),
+  CONSTRAINT network_profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT network_profiles_relationship_state_check CHECK ((relationship_state = ANY (ARRAY['cold'::text, 'contacted'::text, 'engaged'::text, 'warm'::text, 'placed'::text, 'client_contact'::text, 'do_not_contact'::text])))
+);
+ALTER TABLE network_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE network_suppressions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  profile_id uuid NOT NULL,
+  reason text NOT NULL,
+  source text NOT NULL,
+  set_at timestamp with time zone NOT NULL DEFAULT now(),
+  set_by uuid,
+  carried_from uuid,
+  lifted_at timestamp with time zone,
+  lifted_by uuid,
+  lift_reason text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  moved_from_profile uuid,
+  moved_from_label text,
+  moved_at timestamp with time zone,
+  CONSTRAINT carried_rows_say_from_where CHECK ((((source = 'carried'::text) = (carried_from IS NOT NULL)) OR (carried_from IS NULL))),
+  CONSTRAINT lift_is_complete CHECK (((lifted_at IS NULL) = ((lifted_by IS NULL) AND (lift_reason IS NULL)))),
+  CONSTRAINT move_is_complete CHECK (((moved_at IS NULL) = (moved_from_profile IS NULL))),
+  CONSTRAINT network_suppressions_carried_from_fkey FOREIGN KEY (carried_from) REFERENCES network_suppressions(id) ON DELETE SET NULL,
+  CONSTRAINT network_suppressions_lifted_by_fkey FOREIGN KEY (lifted_by) REFERENCES users(id),
+  CONSTRAINT network_suppressions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT network_suppressions_pkey PRIMARY KEY (id),
+  CONSTRAINT network_suppressions_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES network_profiles(id) ON DELETE CASCADE,
+  CONSTRAINT network_suppressions_set_by_fkey FOREIGN KEY (set_by) REFERENCES users(id),
+  CONSTRAINT network_suppressions_source_check CHECK ((source = ANY (ARRAY['recruiter'::text, 'withdrawal'::text, 'erasure'::text, 'carried'::text])))
+);
+ALTER TABLE network_suppressions ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE objective_key_results (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  objective_id uuid NOT NULL,
+  kind text NOT NULL,
+  label text NOT NULL,
+  metric_source text,
+  target_value numeric(14,2),
+  currency text,
+  direction text NOT NULL DEFAULT 'at_least'::text,
+  attested_at timestamp with time zone,
+  attested_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT objective_key_results_attested_by_fkey FOREIGN KEY (attested_by) REFERENCES users(id),
+  CONSTRAINT objective_key_results_currency_check CHECK ((currency ~ '^[A-Z]{3}$'::text)),
+  CONSTRAINT objective_key_results_direction_check CHECK ((direction = ANY (ARRAY['at_least'::text, 'at_most'::text]))),
+  CONSTRAINT objective_key_results_kind_check CHECK ((kind = ANY (ARRAY['financial'::text, 'quantitative'::text, 'qualitative'::text]))),
+  CONSTRAINT objective_key_results_objective_id_fkey FOREIGN KEY (objective_id) REFERENCES objectives(id) ON DELETE CASCADE,
+  CONSTRAINT objective_key_results_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT objective_key_results_pkey PRIMARY KEY (id),
+  CONSTRAINT okr_attestation_is_qualitative CHECK (((kind = 'qualitative'::text) OR ((attested_at IS NULL) AND (attested_by IS NULL)))),
+  CONSTRAINT okr_attested_is_signed CHECK (((attested_at IS NULL) = (attested_by IS NULL))),
+  CONSTRAINT okr_currency_is_financial CHECK (((kind = 'financial'::text) = (currency IS NOT NULL))),
+  CONSTRAINT okr_metric_matches_kind CHECK (
+CASE kind
+    WHEN 'quantitative'::text THEN (metric_source = ANY (ARRAY['candidates_added'::text, 'stage_moves'::text, 'submissions'::text, 'interviews'::text, 'offers'::text, 'hires'::text, 'placements_started'::text, 'placements_sourced'::text, 'feedback_captured'::text, 'weekly_velocity'::text]))
+    WHEN 'financial'::text THEN (metric_source = ANY (ARRAY['fees_earned'::text, 'fees_billed_forecast'::text]))
+    ELSE (metric_source IS NULL)
+END),
+  CONSTRAINT okr_target_matches_kind CHECK (((kind = 'qualitative'::text) = (target_value IS NULL)))
+);
+ALTER TABLE objective_key_results ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE objectives (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  project_id uuid,
+  owner_user_id uuid NOT NULL,
+  title text NOT NULL,
+  detail text NOT NULL DEFAULT ''::text,
+  period_start date NOT NULL,
+  period_end date NOT NULL,
+  status text NOT NULL DEFAULT 'active'::text,
+  created_by uuid NOT NULL,
+  closed_at timestamp with time zone,
+  closed_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT objectives_closed_by_fkey FOREIGN KEY (closed_by) REFERENCES users(id),
+  CONSTRAINT objectives_closed_is_signed CHECK (((status = 'closed'::text) = (closed_by IS NOT NULL))),
+  CONSTRAINT objectives_closed_is_stamped CHECK (((status = 'closed'::text) = (closed_at IS NOT NULL))),
+  CONSTRAINT objectives_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT objectives_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT objectives_owner_user_id_fkey FOREIGN KEY (owner_user_id) REFERENCES users(id),
+  CONSTRAINT objectives_period_ordered CHECK ((period_end >= period_start)),
+  CONSTRAINT objectives_pkey PRIMARY KEY (id),
+  CONSTRAINT objectives_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT objectives_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'active'::text, 'closed'::text, 'abandoned'::text])))
+);
+ALTER TABLE objectives ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE ops_heartbeats (
+  name text NOT NULL,
+  last_ok_at timestamp with time zone NOT NULL DEFAULT now(),
+  detail jsonb,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT ops_heartbeats_pkey PRIMARY KEY (name)
+);
+ALTER TABLE ops_heartbeats ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE org_comms_policy (
+  organization_id uuid NOT NULL,
+  allowed_channels text[] NOT NULL DEFAULT '{email}'::text[],
+  daily_send_cap integer,
+  per_candidate_weekly_cap integer,
+  client_identity_disclosure text NOT NULL DEFAULT 'after_approval'::text,
+  compensation_discussion text NOT NULL DEFAULT 'human_only'::text,
+  auto_approve_strategies boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT org_comms_policy_allowed_channels_check CHECK ((allowed_channels <@ ARRAY['email'::text, 'phone'::text, 'other'::text])),
+  CONSTRAINT org_comms_policy_client_identity_disclosure_check CHECK ((client_identity_disclosure = ANY (ARRAY['never'::text, 'after_approval'::text, 'after_nda'::text, 'open'::text]))),
+  CONSTRAINT org_comms_policy_compensation_discussion_check CHECK ((compensation_discussion = ANY (ARRAY['human_only'::text, 'range_allowed'::text]))),
+  CONSTRAINT org_comms_policy_daily_send_cap_check CHECK ((daily_send_cap > 0)),
+  CONSTRAINT org_comms_policy_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT org_comms_policy_per_candidate_weekly_cap_check CHECK ((per_candidate_weekly_cap > 0)),
+  CONSTRAINT org_comms_policy_pkey PRIMARY KEY (organization_id)
+);
+ALTER TABLE org_comms_policy ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE organizations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  slug text NOT NULL,
+  logo_url text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  base_currency text NOT NULL DEFAULT 'USD'::text,
+  advisory_mode boolean NOT NULL DEFAULT false,
+  CONSTRAINT organizations_base_currency_iso CHECK ((base_currency ~ '^[A-Z]{3}$'::text)),
+  CONSTRAINT organizations_pkey PRIMARY KEY (id),
+  CONSTRAINT organizations_slug_key UNIQUE (slug)
+);
+ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE outreach_strategies (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  mission_id uuid,
+  content jsonb NOT NULL DEFAULT '{}'::jsonb,
+  status text NOT NULL DEFAULT 'draft'::text,
+  version integer NOT NULL DEFAULT 1,
+  created_by uuid NOT NULL,
+  approved_by uuid,
+  approved_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT outreach_strategies_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES users(id),
+  CONSTRAINT outreach_strategies_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT outreach_strategies_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT outreach_strategies_decision_recorded CHECK ((((status <> ALL (ARRAY['approved'::text, 'declined'::text])) OR ((approved_by IS NOT NULL) AND (approved_at IS NOT NULL))) AND ((status <> 'draft'::text) OR ((approved_by IS NULL) AND (approved_at IS NULL))))),
+  CONSTRAINT outreach_strategies_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT outreach_strategies_pkey PRIMARY KEY (id),
+  CONSTRAINT outreach_strategies_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT outreach_strategies_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'approved'::text, 'declined'::text, 'superseded'::text]))),
+  CONSTRAINT outreach_strategies_version_check CHECK ((version >= 1))
+);
+ALTER TABLE outreach_strategies ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE placement_fee_lines (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  placement_id uuid NOT NULL,
+  placement_fee_id uuid NOT NULL,
+  kind text NOT NULL DEFAULT 'instalment'::text,
+  label text NOT NULL,
+  sequence integer NOT NULL DEFAULT 1,
+  trigger text,
+  amount numeric(14,2) NOT NULL,
+  currency text NOT NULL,
+  base_currency text NOT NULL,
+  fx_rate numeric(18,8) NOT NULL DEFAULT 1,
+  base_amount numeric(14,2) DEFAULT round((amount * fx_rate), 2),
+  status text NOT NULL DEFAULT 'pending'::text,
+  earned_on date,
+  due_on date,
+  reason text,
+  reverses_line_id uuid,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT fee_lines_earned_has_date CHECK (((status <> 'earned'::text) OR (earned_on IS NOT NULL))),
+  CONSTRAINT fee_lines_reversal_points_somewhere CHECK (((kind = 'instalment'::text) OR (reverses_line_id IS NOT NULL) OR (reason IS NOT NULL))),
+  CONSTRAINT fee_lines_same_currency_rate_is_one CHECK (((currency <> base_currency) OR (fx_rate = (1)::numeric))),
+  CONSTRAINT fee_lines_sign_matches_kind CHECK (
+CASE kind
+    WHEN 'instalment'::text THEN (amount >= (0)::numeric)
+    ELSE (amount <= (0)::numeric)
+END),
+  CONSTRAINT placement_fee_lines_base_currency_check CHECK ((base_currency ~ '^[A-Z]{3}$'::text)),
+  CONSTRAINT placement_fee_lines_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT placement_fee_lines_currency_check CHECK ((currency ~ '^[A-Z]{3}$'::text)),
+  CONSTRAINT placement_fee_lines_fx_rate_check CHECK ((fx_rate > (0)::numeric)),
+  CONSTRAINT placement_fee_lines_kind_check CHECK ((kind = ANY (ARRAY['instalment'::text, 'reversal'::text, 'write_off'::text]))),
+  CONSTRAINT placement_fee_lines_label_check CHECK ((length(btrim(label)) > 0)),
+  CONSTRAINT placement_fee_lines_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT placement_fee_lines_pkey PRIMARY KEY (id),
+  CONSTRAINT placement_fee_lines_placement_fee_id_fkey FOREIGN KEY (placement_fee_id) REFERENCES placement_fees(id) ON DELETE CASCADE,
+  CONSTRAINT placement_fee_lines_placement_fee_in_org FOREIGN KEY (organization_id, placement_fee_id) REFERENCES placement_fees(organization_id, id),
+  CONSTRAINT placement_fee_lines_placement_id_fkey FOREIGN KEY (placement_id) REFERENCES placements(id) ON DELETE CASCADE,
+  CONSTRAINT placement_fee_lines_placement_in_org FOREIGN KEY (organization_id, placement_id) REFERENCES placements(organization_id, id),
+  CONSTRAINT placement_fee_lines_reverses_line_id_fkey FOREIGN KEY (reverses_line_id) REFERENCES placement_fee_lines(id) ON DELETE SET NULL,
+  CONSTRAINT placement_fee_lines_reverses_line_in_org FOREIGN KEY (organization_id, reverses_line_id) REFERENCES placement_fee_lines(organization_id, id),
+  CONSTRAINT placement_fee_lines_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'earned'::text, 'cancelled'::text]))),
+  CONSTRAINT placement_fee_lines_trigger_check CHECK ((trigger = ANY (ARRAY['engagement'::text, 'shortlist'::text, 'offer_accepted'::text, 'start_date'::text, 'guarantee_passed'::text])))
+);
+ALTER TABLE placement_fee_lines ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE placement_fees (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  placement_id uuid NOT NULL,
+  fee_model text NOT NULL,
+  fee_percentage numeric(6,3),
+  fee_basis text NOT NULL,
+  payment_terms_days integer NOT NULL DEFAULT 30,
+  terms_source text NOT NULL DEFAULT 'manual'::text,
+  fee_terms_id uuid,
+  currency text NOT NULL,
+  base_salary numeric(14,2),
+  guaranteed_bonus numeric(14,2),
+  other_cash numeric(14,2),
+  fee_basis_amount numeric(14,2),
+  total_fee_amount numeric(14,2) NOT NULL,
+  base_currency text NOT NULL,
+  fx_rate numeric(18,8) NOT NULL DEFAULT 1,
+  fx_rate_fixed_on date NOT NULL DEFAULT CURRENT_DATE,
+  total_fee_base_amount numeric(14,2) DEFAULT round((total_fee_amount * fx_rate), 2),
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT placement_fees_base_currency_check CHECK ((base_currency ~ '^[A-Z]{3}$'::text)),
+  CONSTRAINT placement_fees_base_salary_check CHECK ((base_salary >= (0)::numeric)),
+  CONSTRAINT placement_fees_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT placement_fees_currency_check CHECK ((currency ~ '^[A-Z]{3}$'::text)),
+  CONSTRAINT placement_fees_fee_basis_amount_check CHECK ((fee_basis_amount >= (0)::numeric)),
+  CONSTRAINT placement_fees_fee_basis_check CHECK ((fee_basis = ANY (ARRAY['base_salary'::text, 'total_first_year_cash'::text]))),
+  CONSTRAINT placement_fees_fee_model_check CHECK ((fee_model = ANY (ARRAY['contingent'::text, 'retained'::text, 'fixed'::text]))),
+  CONSTRAINT placement_fees_fee_percentage_check CHECK (((fee_percentage > (0)::numeric) AND (fee_percentage <= (100)::numeric))),
+  CONSTRAINT placement_fees_fee_terms_id_fkey FOREIGN KEY (fee_terms_id) REFERENCES fee_terms(id) ON DELETE SET NULL,
+  CONSTRAINT placement_fees_fee_terms_in_org FOREIGN KEY (organization_id, fee_terms_id) REFERENCES fee_terms(organization_id, id),
+  CONSTRAINT placement_fees_fx_rate_check CHECK ((fx_rate > (0)::numeric)),
+  CONSTRAINT placement_fees_guaranteed_bonus_check CHECK ((guaranteed_bonus >= (0)::numeric)),
+  CONSTRAINT placement_fees_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT placement_fees_other_cash_check CHECK ((other_cash >= (0)::numeric)),
+  CONSTRAINT placement_fees_payment_terms_days_check CHECK ((payment_terms_days >= 0)),
+  CONSTRAINT placement_fees_percentage_when_percentage_based CHECK (((fee_model = 'fixed'::text) OR (fee_percentage IS NOT NULL))),
+  CONSTRAINT placement_fees_pkey PRIMARY KEY (id),
+  CONSTRAINT placement_fees_placement_id_fkey FOREIGN KEY (placement_id) REFERENCES placements(id) ON DELETE CASCADE,
+  CONSTRAINT placement_fees_placement_id_key UNIQUE (placement_id),
+  CONSTRAINT placement_fees_placement_in_org FOREIGN KEY (organization_id, placement_id) REFERENCES placements(organization_id, id),
+  CONSTRAINT placement_fees_same_currency_rate_is_one CHECK (((currency <> base_currency) OR (fx_rate = (1)::numeric))),
+  CONSTRAINT placement_fees_terms_source_check CHECK ((terms_source = ANY (ARRAY['client'::text, 'mandate'::text, 'manual'::text]))),
+  CONSTRAINT placement_fees_total_fee_amount_check CHECK ((total_fee_amount >= (0)::numeric))
+);
+ALTER TABLE placement_fees ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE placements (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  client_id uuid,
+  status text NOT NULL DEFAULT 'offered'::text,
+  offer_date date NOT NULL,
+  declined_date date,
+  accepted_date date,
+  start_date date,
+  guarantee_days integer,
+  guarantee_ends_on date DEFAULT (start_date + guarantee_days),
+  fell_through_date date,
+  fell_through_reason text,
+  owner_user_id uuid,
+  sourced_by_user_id uuid,
+  notes text,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  signed_off_by_contact_id uuid,
+  signed_off_by_label text,
+  CONSTRAINT placements_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT placements_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT placements_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
+  CONSTRAINT placements_client_in_org FOREIGN KEY (organization_id, client_id) REFERENCES clients(organization_id, id),
+  CONSTRAINT placements_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT placements_dates_ordered CHECK ((((accepted_date IS NULL) OR (accepted_date >= offer_date)) AND ((start_date IS NULL) OR (accepted_date IS NULL) OR (start_date >= accepted_date)))),
+  CONSTRAINT placements_guarantee_days_check CHECK ((guarantee_days >= 0)),
+  CONSTRAINT placements_one_per_candidate_per_mandate UNIQUE (project_id, candidate_id),
+  CONSTRAINT placements_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT placements_owner_user_id_fkey FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT placements_pkey PRIMARY KEY (id),
+  CONSTRAINT placements_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT placements_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT placements_signed_off_by_contact_id_fkey FOREIGN KEY (signed_off_by_contact_id) REFERENCES client_contacts(id) ON DELETE SET NULL,
+  CONSTRAINT placements_signed_off_by_contact_in_org FOREIGN KEY (organization_id, signed_off_by_contact_id) REFERENCES client_contacts(organization_id, id),
+  CONSTRAINT placements_sourced_by_user_id_fkey FOREIGN KEY (sourced_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT placements_status_check CHECK ((status = ANY (ARRAY['offered'::text, 'declined'::text, 'accepted'::text, 'started'::text, 'fell_through'::text]))),
+  CONSTRAINT placements_status_has_date CHECK (
+CASE status
+    WHEN 'declined'::text THEN (declined_date IS NOT NULL)
+    WHEN 'accepted'::text THEN (accepted_date IS NOT NULL)
+    WHEN 'started'::text THEN ((accepted_date IS NOT NULL) AND (start_date IS NOT NULL))
+    WHEN 'fell_through'::text THEN (fell_through_date IS NOT NULL)
+    ELSE true
+END)
+);
+ALTER TABLE placements ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE prescreens (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  mission_id uuid,
+  status text NOT NULL DEFAULT 'proposed'::text,
+  question_set jsonb,
+  transcript jsonb NOT NULL DEFAULT '[]'::jsonb,
+  professional_evidence jsonb NOT NULL DEFAULT '{}'::jsonb,
+  interest_profile jsonb NOT NULL DEFAULT '{}'::jsonb,
+  escalation_reason text,
+  completed_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT prescreens_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT prescreens_completion_stamped CHECK (((status = 'complete'::text) = (completed_at IS NOT NULL))),
+  CONSTRAINT prescreens_escalation_recorded CHECK (((status = 'escalated'::text) = (escalation_reason IS NOT NULL))),
+  CONSTRAINT prescreens_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT prescreens_pkey PRIMARY KEY (id),
+  CONSTRAINT prescreens_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT prescreens_status_check CHECK ((status = ANY (ARRAY['proposed'::text, 'invited'::text, 'in_progress'::text, 'complete'::text, 'abandoned'::text, 'escalated'::text])))
+);
+ALTER TABLE prescreens ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE project_reports (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  week_starting date NOT NULL,
+  content jsonb NOT NULL,
+  generated_at timestamp with time zone NOT NULL DEFAULT now(),
+  generated_by uuid,
+  ai_model text NOT NULL DEFAULT ''::text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT project_reports_generated_by_fkey FOREIGN KEY (generated_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT project_reports_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT project_reports_pkey PRIMARY KEY (id),
+  CONSTRAINT project_reports_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT project_reports_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id)
+);
+ALTER TABLE project_reports ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE projects (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid,
+  created_by uuid,
+  title text NOT NULL,
+  company_name text NOT NULL,
+  one_line_input text NOT NULL,
+  status text DEFAULT 'active'::text,
+  company_context jsonb DEFAULT '{}'::jsonb,
+  calibration_model jsonb DEFAULT '{}'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  onboarding_responses jsonb NOT NULL DEFAULT '{}'::jsonb,
+  recalibration_summary jsonb,
+  client_psychology jsonb,
+  health_suggestions jsonb,
+  client_id uuid,
+  lead_recruiter_id uuid,
+  intake_error text,
+  apply_token uuid,
+  CONSTRAINT projects_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
+  CONSTRAINT projects_client_in_org FOREIGN KEY (organization_id, client_id) REFERENCES clients(organization_id, id),
+  CONSTRAINT projects_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT projects_lead_recruiter_id_fkey FOREIGN KEY (lead_recruiter_id) REFERENCES users(id),
+  CONSTRAINT projects_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT projects_pkey PRIMARY KEY (id),
+  CONSTRAINT projects_status_check CHECK ((status = ANY (ARRAY['active'::text, 'paused'::text, 'closed'::text, 'filled'::text])))
+);
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE provider_models (
+  model_id text NOT NULL,
+  provider text NOT NULL,
+  tier text,
+  supports_structured_output boolean NOT NULL DEFAULT true,
+  supports_tools boolean NOT NULL DEFAULT true,
+  supports_web_search boolean NOT NULL DEFAULT false,
+  supports_streaming boolean NOT NULL DEFAULT true,
+  context_window integer,
+  max_output_tokens integer,
+  cache_min_tokens integer,
+  price_input_per_mtok numeric,
+  price_output_per_mtok numeric,
+  status text NOT NULL DEFAULT 'benchmarking'::text,
+  benchmark_ref text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT provider_models_active_needs_evidence CHECK (((status <> 'active'::text) OR (benchmark_ref IS NOT NULL))),
+  CONSTRAINT provider_models_pkey PRIMARY KEY (model_id),
+  CONSTRAINT provider_models_provider_fkey FOREIGN KEY (provider) REFERENCES model_providers(name),
+  CONSTRAINT provider_models_status_check CHECK ((status = ANY (ARRAY['benchmarking'::text, 'active'::text, 'retired'::text]))),
+  CONSTRAINT provider_models_tier_check CHECK ((tier = ANY (ARRAY['economy'::text, 'standard'::text, 'premium'::text])))
+);
+ALTER TABLE provider_models ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE rate_limit (
+  bucket_key text NOT NULL,
+  count integer NOT NULL DEFAULT 0,
+  expires_at timestamp with time zone NOT NULL,
+  CONSTRAINT rate_limit_pkey PRIMARY KEY (bucket_key)
+);
+ALTER TABLE rate_limit ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE rate_limit_policy (
+  scope text NOT NULL,
+  per_key_limit integer NOT NULL,
+  window_seconds integer NOT NULL,
+  global_daily_limit integer,
+  CONSTRAINT rate_limit_policy_global_daily_limit_check CHECK (((global_daily_limit IS NULL) OR (global_daily_limit > 0))),
+  CONSTRAINT rate_limit_policy_per_key_limit_check CHECK ((per_key_limit > 0)),
+  CONSTRAINT rate_limit_policy_pkey PRIMARY KEY (scope),
+  CONSTRAINT rate_limit_policy_window_seconds_check CHECK ((window_seconds > 0))
+);
+ALTER TABLE rate_limit_policy ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE role_success_profiles (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  search_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  version integer NOT NULL,
+  content_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  status text NOT NULL DEFAULT 'draft'::text,
+  prompt_version text,
+  model_version text,
+  is_generating boolean NOT NULL DEFAULT false,
+  generation_error text,
+  created_by uuid,
+  approved_by uuid,
+  approved_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT role_success_profiles_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES users(id),
+  CONSTRAINT role_success_profiles_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT role_success_profiles_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT role_success_profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT role_success_profiles_search_id_fkey FOREIGN KEY (search_id) REFERENCES executive_searches(id) ON DELETE CASCADE,
+  CONSTRAINT role_success_profiles_search_in_org FOREIGN KEY (organization_id, search_id) REFERENCES executive_searches(organization_id, id),
+  CONSTRAINT role_success_profiles_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'approved'::text, 'archived'::text])))
+);
+ALTER TABLE role_success_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE shortlists (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  slate_size integer NOT NULL DEFAULT 3,
+  candidate_ids uuid[] NOT NULL DEFAULT ARRAY[]::uuid[],
+  narrative text NOT NULL DEFAULT ''::text,
+  report_content jsonb NOT NULL DEFAULT '{}'::jsonb,
+  submitted_at timestamp with time zone,
+  submitted_by uuid,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT shortlists_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT shortlists_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT shortlists_pkey PRIMARY KEY (id),
+  CONSTRAINT shortlists_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT shortlists_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT shortlists_slate_size_check CHECK (((slate_size >= 1) AND (slate_size <= 10))),
+  CONSTRAINT shortlists_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES users(id)
+);
+ALTER TABLE shortlists ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE skill_versions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  skill_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  version integer NOT NULL,
+  change_kind text NOT NULL,
+  name text NOT NULL,
+  description text NOT NULL,
+  skill_type text NOT NULL,
+  trigger_conditions text NOT NULL,
+  instructions text NOT NULL,
+  applies_to_project_id uuid,
+  applies_to_client_id uuid,
+  is_active boolean NOT NULL,
+  changed_by uuid,
+  changed_by_label text,
+  changed_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT skill_versions_change_kind_check CHECK ((change_kind = ANY (ARRAY['created'::text, 'updated'::text]))),
+  CONSTRAINT skill_versions_one_per_step UNIQUE (skill_id, version),
+  CONSTRAINT skill_versions_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT skill_versions_pkey PRIMARY KEY (id),
+  CONSTRAINT skill_versions_version_check CHECK ((version >= 1))
+);
+ALTER TABLE skill_versions ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE skills (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  created_by uuid,
+  name text NOT NULL,
+  description text NOT NULL DEFAULT ''::text,
+  skill_type text NOT NULL,
+  trigger_conditions text NOT NULL DEFAULT ''::text,
+  instructions text NOT NULL,
+  is_active boolean NOT NULL DEFAULT true,
+  applies_to_project_id uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  applies_to_client_id uuid,
+  CONSTRAINT skills_applies_to_client_id_fkey FOREIGN KEY (applies_to_client_id) REFERENCES clients(id) ON DELETE CASCADE,
+  CONSTRAINT skills_applies_to_client_in_org FOREIGN KEY (organization_id, applies_to_client_id) REFERENCES clients(organization_id, id),
+  CONSTRAINT skills_applies_to_project_id_fkey FOREIGN KEY (applies_to_project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT skills_applies_to_project_in_org FOREIGN KEY (organization_id, applies_to_project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT skills_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT skills_instructions_check CHECK ((length(btrim(instructions)) > 0)),
+  CONSTRAINT skills_name_check CHECK ((length(btrim(name)) > 0)),
+  CONSTRAINT skills_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT skills_pkey PRIMARY KEY (id),
+  CONSTRAINT skills_scope_matches_type CHECK ((((skill_type = 'role_skill'::text) AND (applies_to_project_id IS NOT NULL) AND (applies_to_client_id IS NULL)) OR ((skill_type = 'client_skill'::text) AND (applies_to_project_id IS NULL)) OR ((skill_type = 'search_skill'::text) AND (applies_to_project_id IS NULL) AND (applies_to_client_id IS NULL)))),
+  CONSTRAINT skills_skill_type_check CHECK ((skill_type = ANY (ARRAY['role_skill'::text, 'client_skill'::text, 'search_skill'::text])))
+);
+ALTER TABLE skills ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE sourcing_run_candidates (
+  run_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT sourcing_run_candidates_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT sourcing_run_candidates_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT sourcing_run_candidates_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT sourcing_run_candidates_pkey PRIMARY KEY (run_id, candidate_id),
+  CONSTRAINT sourcing_run_candidates_run_id_fkey FOREIGN KEY (run_id) REFERENCES sourcing_runs(id) ON DELETE CASCADE,
+  CONSTRAINT sourcing_run_candidates_run_in_org FOREIGN KEY (organization_id, run_id) REFERENCES sourcing_runs(organization_id, id)
+);
+ALTER TABLE sourcing_run_candidates ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE sourcing_run_results (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  run_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  full_name text NOT NULL,
+  current_title text,
+  current_company text,
+  location text,
+  profile_url text,
+  email text,
+  source_platform text NOT NULL,
+  raw jsonb NOT NULL DEFAULT '{}'::jsonb,
+  match_status text NOT NULL DEFAULT 'new'::text,
+  matched_candidate_id uuid,
+  promoted_candidate_id uuid,
+  promoted_at timestamp with time zone,
+  promoted_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT sourcing_run_results_match_status_check CHECK ((match_status = ANY (ARRAY['new'::text, 'duplicate'::text, 'ambiguous'::text]))),
+  CONSTRAINT sourcing_run_results_matched_candidate_id_fkey FOREIGN KEY (matched_candidate_id) REFERENCES candidates(id) ON DELETE SET NULL,
+  CONSTRAINT sourcing_run_results_matched_candidate_in_org FOREIGN KEY (organization_id, matched_candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT sourcing_run_results_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT sourcing_run_results_pkey PRIMARY KEY (id),
+  CONSTRAINT sourcing_run_results_promoted_by_fkey FOREIGN KEY (promoted_by) REFERENCES users(id),
+  CONSTRAINT sourcing_run_results_promoted_candidate_id_fkey FOREIGN KEY (promoted_candidate_id) REFERENCES candidates(id) ON DELETE SET NULL,
+  CONSTRAINT sourcing_run_results_promoted_candidate_in_org FOREIGN KEY (organization_id, promoted_candidate_id) REFERENCES candidates(organization_id, id),
+  CONSTRAINT sourcing_run_results_run_id_fkey FOREIGN KEY (run_id) REFERENCES sourcing_runs(id) ON DELETE CASCADE,
+  CONSTRAINT sourcing_run_results_run_in_org FOREIGN KEY (organization_id, run_id) REFERENCES sourcing_runs(organization_id, id)
+);
+ALTER TABLE sourcing_run_results ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE sourcing_runs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  project_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  parent_run_id uuid,
+  root_run_id uuid NOT NULL,
+  version integer NOT NULL,
+  label text,
+  status text NOT NULL DEFAULT 'draft'::text,
+  content_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  analysis_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  result_count integer NOT NULL DEFAULT 0,
+  imported_count integer NOT NULL DEFAULT 0,
+  executed_at timestamp with time zone,
+  executed_by uuid,
+  prompt_version text,
+  model_version text,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT sourcing_runs_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT sourcing_runs_executed_by_fkey FOREIGN KEY (executed_by) REFERENCES users(id),
+  CONSTRAINT sourcing_runs_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT sourcing_runs_parent_run_id_fkey FOREIGN KEY (parent_run_id) REFERENCES sourcing_runs(id) ON DELETE SET NULL,
+  CONSTRAINT sourcing_runs_parent_run_in_org FOREIGN KEY (organization_id, parent_run_id) REFERENCES sourcing_runs(organization_id, id),
+  CONSTRAINT sourcing_runs_pkey PRIMARY KEY (id),
+  CONSTRAINT sourcing_runs_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT sourcing_runs_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id),
+  CONSTRAINT sourcing_runs_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'executed'::text, 'archived'::text])))
+);
+ALTER TABLE sourcing_runs ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE staff_invitations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  email text NOT NULL,
+  email_key text DEFAULT lower(btrim(email)),
+  full_name text NOT NULL,
+  role text NOT NULL,
+  token uuid NOT NULL DEFAULT gen_random_uuid(),
+  invited_by uuid,
+  invited_by_label text,
+  expires_at timestamp with time zone NOT NULL DEFAULT (now() + '14 days'::interval),
+  revoked_at timestamp with time zone,
+  accepted_at timestamp with time zone,
+  accepted_user_id uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT staff_invitations_accepted_user_id_fkey FOREIGN KEY (accepted_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT staff_invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT staff_invitations_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT staff_invitations_pkey PRIMARY KEY (id),
+  CONSTRAINT staff_invitations_role_check CHECK ((role = ANY (ARRAY['admin'::text, 'manager'::text, 'recruiter'::text, 'researcher'::text, 'viewer'::text]))),
+  CONSTRAINT staff_invitations_token_key UNIQUE (token)
+);
+ALTER TABLE staff_invitations ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE tasks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  project_id uuid,
+  title text NOT NULL,
+  detail text NOT NULL DEFAULT ''::text,
+  status text NOT NULL DEFAULT 'open'::text,
+  due_on date,
+  assignee_id uuid,
+  created_by uuid NOT NULL,
+  completed_at timestamp with time zone,
+  completed_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT tasks_assignee_id_fkey FOREIGN KEY (assignee_id) REFERENCES users(id),
+  CONSTRAINT tasks_completed_by_fkey FOREIGN KEY (completed_by) REFERENCES users(id),
+  CONSTRAINT tasks_created_by_fkey FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT tasks_done_is_signed CHECK (((status = 'done'::text) = (completed_by IS NOT NULL))),
+  CONSTRAINT tasks_done_is_stamped CHECK (((status = 'done'::text) = (completed_at IS NOT NULL))),
+  CONSTRAINT tasks_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT tasks_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT tasks_status_check CHECK ((status = ANY (ARRAY['open'::text, 'done'::text, 'cancelled'::text])))
+);
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE users (
+  id uuid NOT NULL,
+  organization_id uuid,
+  email text NOT NULL,
+  full_name text,
+  role text NOT NULL DEFAULT 'viewer'::text,
+  avatar_url text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  is_founder boolean NOT NULL DEFAULT false,
+  status text NOT NULL DEFAULT 'pending'::text,
+  client_id uuid,
+  manager_id uuid,
+  CONSTRAINT users_client_boundary_check CHECK ((((role = ANY (ARRAY['admin'::text, 'manager'::text, 'recruiter'::text, 'researcher'::text, 'viewer'::text])) AND (client_id IS NULL)) OR ((role = 'agent'::text) AND (organization_id IS NOT NULL) AND (client_id IS NULL)) OR ((role = ANY (ARRAY['hiring_manager'::text, 'client_hr'::text, 'client_admin'::text])) AND (organization_id IS NULL) AND (client_id IS NOT NULL)))),
+  CONSTRAINT users_client_id_fkey FOREIGN KEY (client_id) REFERENCES clients(id),
+  CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
+  CONSTRAINT users_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT users_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT users_pkey PRIMARY KEY (id),
+  CONSTRAINT users_role_check CHECK ((role = ANY (ARRAY['admin'::text, 'manager'::text, 'recruiter'::text, 'researcher'::text, 'viewer'::text, 'agent'::text, 'hiring_manager'::text, 'client_hr'::text, 'client_admin'::text]))),
+  CONSTRAINT users_status_check CHECK ((status = ANY (ARRAY['active'::text, 'pending'::text, 'suspended'::text])))
+);
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE verdict_ledger (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  candidate_id uuid NOT NULL,
+  tier text NOT NULL,
+  recommendation text NOT NULL,
+  refuter text NOT NULL,
+  fit_dimensions jsonb,
+  trigger_kind text NOT NULL DEFAULT 'generated'::text,
+  evaluated_at timestamp with time zone NOT NULL DEFAULT now(),
+  furthest_stage text NOT NULL DEFAULT 'found'::text,
+  furthest_rank integer NOT NULL DEFAULT 0,
+  terminal_outcome text,
+  outcome_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT verdict_ledger_candidate_fkey FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT verdict_ledger_candidate_in_org FOREIGN KEY (organization_id, candidate_id) REFERENCES candidates(organization_id, id) ON DELETE CASCADE,
+  CONSTRAINT verdict_ledger_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  CONSTRAINT verdict_ledger_pkey PRIMARY KEY (id),
+  CONSTRAINT verdict_ledger_project_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT verdict_ledger_project_in_org FOREIGN KEY (organization_id, project_id) REFERENCES projects(organization_id, id) ON DELETE CASCADE,
+  CONSTRAINT verdict_ledger_recommendation_check CHECK ((recommendation = ANY (ARRAY['primary'::text, 'secondary'::text, 'do_not_include'::text]))),
+  CONSTRAINT verdict_ledger_refuter_check CHECK ((refuter = ANY (ARRAY['concurred'::text, 'contested'::text, 'not_run'::text]))),
+  CONSTRAINT verdict_ledger_terminal_outcome_check CHECK ((terminal_outcome = ANY (ARRAY['hired'::text, 'rejected'::text, 'withdrawn'::text]))),
+  CONSTRAINT verdict_ledger_tier_check CHECK ((tier = ANY (ARRAY['tier_1'::text, 'tier_2'::text, 'tier_3'::text, 'tier_4'::text]))),
+  CONSTRAINT verdict_ledger_trigger_kind_check CHECK ((trigger_kind = ANY (ARRAY['generated'::text, 'regenerated'::text])))
+);
+ALTER TABLE verdict_ledger ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE waitlist (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  full_name text NOT NULL,
+  email text NOT NULL,
+  company text,
+  role text,
+  referral_source text,
+  use_case text,
+  status text NOT NULL DEFAULT 'pending'::text,
+  notes text,
+  reviewed_by uuid,
+  reviewed_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  staff_invitation_id uuid,
+  CONSTRAINT waitlist_pkey PRIMARY KEY (id),
+  CONSTRAINT waitlist_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT waitlist_staff_invitation_id_fkey FOREIGN KEY (staff_invitation_id) REFERENCES staff_invitations(id) ON DELETE SET NULL
+);
+ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
+
+
+-- ======================= VIEWS =======================
+
+CREATE VIEW network_people_folded AS
+ SELECT pid AS profile_id,
+    (array_agg(id) FILTER (WHERE rn = 1))[1] AS canonical_candidate_id,
+    max(full_name) FILTER (WHERE rn = 1) AS full_name,
+    max(current_title) FILTER (WHERE rn = 1) AS current_title,
+    max(current_company) FILTER (WHERE rn = 1) AS current_company,
+    max(email) FILTER (WHERE rn = 1) AS email,
+    max(linkedin_url) FILTER (WHERE rn = 1) AS linkedin_url,
+    max(archetype) FILTER (WHERE rn = 1) AS archetype,
+    max(domain) FILTER (WHERE rn = 1) AS domain,
+    max(years) FILTER (WHERE rn = 1) AS years_experience,
+    (array_agg(tech) FILTER (WHERE rn = 1))[1] AS tech_exposure,
+        CASE min(
+            CASE tier
+                WHEN 'tier_1'::text THEN 1
+                WHEN 'tier_2'::text THEN 2
+                WHEN 'tier_3'::text THEN 3
+                WHEN 'tier_4'::text THEN 4
+                ELSE NULL::integer
+            END)
+            WHEN 1 THEN 'tier_1'::text
+            WHEN 2 THEN 'tier_2'::text
+            WHEN 3 THEN 'tier_3'::text
+            WHEN 4 THEN 'tier_4'::text
+            ELSE NULL::text
+        END AS best_tier,
+    max(overall_score) AS best_score,
+    avg(overall_score) AS average_score,
+    max(updated_at) AS last_active_at,
+    count(*) FILTER (WHERE project_id IS NOT NULL)::integer AS appearance_count,
+    count(DISTINCT project_id)::integer AS project_count,
+    COALESCE(bool_or((tier = ANY (ARRAY['tier_1'::text, 'tier_2'::text])) OR (pipeline_stage = ANY (ARRAY['shortlisted'::text, 'submitted'::text, 'interviewed'::text, 'passed_rounds'::text, 'finalist'::text, 'offer'::text, 'hired'::text]))), false) AS shortlisted_before,
+    count(DISTINCT project_id) >= 2 AS is_returning,
+    array_agg(DISTINCT pipeline_stage) FILTER (WHERE pipeline_stage IS NOT NULL) AS stages,
+    string_agg(cv_search, ' '::text) AS search_text
+   FROM ( SELECT c.network_profile_id AS pid,
+            c.id,
+            c.project_id,
+            c.full_name,
+            c.current_title,
+            c.current_company,
+            c.email,
+            c.linkedin_url,
+            c.archetype,
+            c.pipeline_stage,
+            c.updated_at,
+            c.cv_search,
+            c.cv_structured ->> 'domain'::text AS domain,
+                CASE
+                    WHEN jsonb_typeof(c.cv_structured -> 'years_experience'::text) = 'number'::text THEN (c.cv_structured ->> 'years_experience'::text)::numeric
+                    ELSE NULL::numeric
+                END AS years,
+            c.cv_structured -> 'tech_exposure'::text AS tech,
+            s.overall_score,
+            s.tier,
+            row_number() OVER (PARTITION BY c.network_profile_id ORDER BY c.updated_at DESC, c.id) AS rn
+           FROM candidates c
+             LEFT JOIN candidate_scores s ON s.candidate_id = c.id
+          WHERE c.network_profile_id IS NOT NULL) b
+  GROUP BY pid;
+
+CREATE VIEW sourcing_candidate_attribution AS
+ SELECT DISTINCT ON (src.candidate_id) src.candidate_id,
+    src.run_id AS attributed_run_id,
+    r.root_run_id AS attributed_root_run_id,
+    r.project_id,
+    r.organization_id,
+    r.executed_at AS attributed_at
+   FROM sourcing_run_candidates src
+     JOIN sourcing_runs r ON r.id = src.run_id
+  WHERE r.status = 'executed'::text AND r.executed_at IS NOT NULL
+  ORDER BY src.candidate_id, r.executed_at, r.id;
+
+-- ======================= INDEXES (non-constraint) =======================
+
+CREATE INDEX activity_events_actor_idx ON public.activity_events USING btree (actor_id);
+CREATE INDEX activity_events_candidate_idx ON public.activity_events USING btree (candidate_id, created_at DESC);
+CREATE INDEX activity_events_client_idx ON public.activity_events USING btree (client_id, created_at DESC);
+CREATE INDEX activity_events_org_candidate_idx ON public.activity_events USING btree (organization_id, candidate_id);
+CREATE INDEX activity_events_org_client_idx ON public.activity_events USING btree (organization_id, client_id);
+CREATE INDEX activity_events_org_idx ON public.activity_events USING btree (organization_id, created_at DESC);
+CREATE INDEX activity_events_org_placement_idx ON public.activity_events USING btree (organization_id, placement_id);
+CREATE INDEX activity_events_org_project_idx ON public.activity_events USING btree (organization_id, project_id);
+CREATE INDEX activity_events_placement_idx ON public.activity_events USING btree (placement_id, created_at DESC);
+CREATE INDEX activity_events_project_idx ON public.activity_events USING btree (project_id, created_at DESC);
+CREATE INDEX activity_events_target_idx ON public.activity_events USING btree (target_user_id);
+CREATE INDEX admin_grant_requests_decided_by_idx ON public.admin_grant_requests USING btree (decided_by);
+CREATE INDEX admin_grant_requests_org_idx ON public.admin_grant_requests USING btree (organization_id, status);
+CREATE INDEX admin_grant_requests_proposed_by_idx ON public.admin_grant_requests USING btree (proposed_by);
+CREATE INDEX admin_grant_requests_target_idx ON public.admin_grant_requests USING btree (target_user_id);
+CREATE INDEX assessments_approved_by_idx ON public.executive_assessments USING btree (approved_by);
+CREATE INDEX assessments_candidate_idx ON public.executive_assessments USING btree (candidate_id);
+CREATE INDEX assessments_candidate_version_idx ON public.executive_assessments USING btree (search_id, candidate_id, version DESC);
+CREATE INDEX assessments_created_by_idx ON public.executive_assessments USING btree (created_by);
+CREATE INDEX assessments_org_idx ON public.executive_assessments USING btree (organization_id);
+CREATE INDEX assessments_source_plan_idx ON public.executive_assessments USING btree (source_plan_id);
+CREATE INDEX boolean_queries_org_project_idx ON public.boolean_queries USING btree (organization_id, project_id);
+CREATE INDEX boolean_queries_project_canonical_idx ON public.boolean_queries USING btree (project_id, query_type, search_type, version DESC);
+CREATE INDEX calibration_history_changed_by_idx ON public.calibration_history USING btree (changed_by);
+CREATE INDEX calibration_history_feedback_id_idx ON public.calibration_history USING btree (feedback_id);
+CREATE INDEX calibration_history_org_feedback_idx ON public.calibration_history USING btree (organization_id, feedback_id);
+CREATE INDEX calibration_history_org_project_idx ON public.calibration_history USING btree (organization_id, project_id);
+CREATE INDEX calibration_history_organization_id_idx ON public.calibration_history USING btree (organization_id);
+CREATE INDEX calibration_history_project_idx ON public.calibration_history USING btree (project_id, created_at DESC);
+CREATE UNIQUE INDEX candidate_erasure_requests_open_key_idx ON public.candidate_erasure_requests USING btree (organization_id, identity_key) WHERE (status = 'open'::text);
+CREATE INDEX candidate_erasure_requests_org_idx ON public.candidate_erasure_requests USING btree (organization_id, created_at DESC);
+CREATE INDEX candidate_erasure_requests_profile_idx ON public.candidate_erasure_requests USING btree (network_profile_id);
+CREATE INDEX candidate_erasure_requests_requested_via_token_idx ON public.candidate_erasure_requests USING btree (requested_via_token);
+CREATE INDEX candidate_erasure_requests_resolved_by_idx ON public.candidate_erasure_requests USING btree (resolved_by);
+CREATE INDEX candidate_erasure_requests_suppression_idx ON public.candidate_erasure_requests USING btree (suppression_id);
+CREATE INDEX candidate_notes_candidate_idx ON public.candidate_notes USING btree (candidate_id, is_pinned DESC, created_at DESC);
+CREATE INDEX candidate_notes_created_by_idx ON public.candidate_notes USING btree (created_by);
+CREATE INDEX candidate_notes_org_candidate_idx ON public.candidate_notes USING btree (organization_id, candidate_id);
+CREATE INDEX candidate_notes_org_idx ON public.candidate_notes USING btree (organization_id);
+CREATE INDEX candidate_notes_org_project_idx ON public.candidate_notes USING btree (organization_id, project_id);
+CREATE INDEX candidate_notes_project_id_idx ON public.candidate_notes USING btree (project_id);
+CREATE INDEX candidate_notifications_candidate_idx ON public.candidate_notifications USING btree (candidate_id, created_at DESC);
+CREATE INDEX candidate_notifications_created_by_idx ON public.candidate_notifications USING btree (created_by);
+CREATE UNIQUE INDEX candidate_notifications_idempotency_idx ON public.candidate_notifications USING btree (idempotency_key);
+CREATE UNIQUE INDEX candidate_notifications_one_sent_idx ON public.candidate_notifications USING btree (candidate_id) WHERE (status = 'sent'::text);
+CREATE INDEX candidate_notifications_org_candidate_idx ON public.candidate_notifications USING btree (organization_id, candidate_id);
+CREATE INDEX candidate_notifications_org_idx ON public.candidate_notifications USING btree (organization_id);
+CREATE INDEX candidate_notifications_org_project_idx ON public.candidate_notifications USING btree (organization_id, project_id);
+CREATE INDEX candidate_notifications_project_idx ON public.candidate_notifications USING btree (project_id);
+CREATE INDEX candidate_outreach_candidate_idx ON public.candidate_outreach USING btree (candidate_id, occurred_at DESC);
+CREATE INDEX candidate_outreach_created_by_idx ON public.candidate_outreach USING btree (created_by);
+CREATE UNIQUE INDEX candidate_outreach_idempotency_key ON public.candidate_outreach USING btree (idempotency_key) WHERE (idempotency_key IS NOT NULL);
+CREATE INDEX candidate_outreach_org_candidate_idx ON public.candidate_outreach USING btree (organization_id, candidate_id);
+CREATE INDEX candidate_outreach_org_idx ON public.candidate_outreach USING btree (organization_id);
+CREATE INDEX candidate_outreach_org_project_idx ON public.candidate_outreach USING btree (organization_id, project_id);
+CREATE INDEX candidate_outreach_project_idx ON public.candidate_outreach USING btree (project_id);
+CREATE INDEX candidate_outreach_provider_message_idx ON public.candidate_outreach USING btree (provider_message_id) WHERE (provider_message_id IS NOT NULL);
+CREATE INDEX candidate_portal_tokens_issued_by_idx ON public.candidate_portal_tokens USING btree (issued_by);
+CREATE UNIQUE INDEX candidate_portal_tokens_live_idx ON public.candidate_portal_tokens USING btree (organization_id, identity_key) WHERE (revoked_at IS NULL);
+CREATE INDEX candidate_portal_tokens_org_idx ON public.candidate_portal_tokens USING btree (organization_id, created_at DESC);
+CREATE INDEX candidate_scores_candidate_id_idx ON public.candidate_scores USING btree (candidate_id);
+CREATE INDEX candidate_scores_org_candidate_idx ON public.candidate_scores USING btree (organization_id, candidate_id);
+CREATE INDEX candidate_scores_org_project_idx ON public.candidate_scores USING btree (organization_id, project_id);
+CREATE INDEX candidate_scores_project_rank_idx ON public.candidate_scores USING btree (project_id, rank_position);
+CREATE INDEX candidates_created_at_idx ON public.candidates USING btree (created_at DESC);
+CREATE INDEX candidates_created_by_idx ON public.candidates USING btree (created_by);
+CREATE INDEX candidates_cv_search_trgm ON public.candidates USING gin (cv_search gin_trgm_ops);
+CREATE INDEX candidates_cv_sha256_idx ON public.candidates USING btree (organization_id, cv_sha256) WHERE (cv_sha256 IS NOT NULL);
+CREATE INDEX candidates_identity_review_of_idx ON public.candidates USING btree (identity_review_of) WHERE (identity_review_of IS NOT NULL);
+CREATE INDEX candidates_network_profile_idx ON public.candidates USING btree (network_profile_id);
+CREATE UNIQUE INDEX candidates_org_id_idx ON public.candidates USING btree (organization_id, id);
+CREATE INDEX candidates_org_project_idx ON public.candidates USING btree (organization_id, project_id);
+CREATE INDEX candidates_pipeline_stage_idx ON public.candidates USING btree (pipeline_stage);
+CREATE INDEX candidates_project_id_idx ON public.candidates USING btree (project_id);
+CREATE INDEX candidates_source_kind_idx ON public.candidates USING btree (source_kind) WHERE (source_kind IS NOT NULL);
+CREATE INDEX candidates_updated_at_idx ON public.candidates USING btree (updated_at DESC);
+CREATE INDEX capability_assignments_model_idx ON public.capability_assignments USING btree (model_id);
+CREATE UNIQUE INDEX client_contacts_client_email_idx ON public.client_contacts USING btree (client_id, email_key);
+CREATE INDEX client_contacts_client_idx ON public.client_contacts USING btree (client_id, is_primary DESC, full_name);
+CREATE INDEX client_contacts_created_by_idx ON public.client_contacts USING btree (created_by);
+CREATE UNIQUE INDEX client_contacts_one_primary_idx ON public.client_contacts USING btree (client_id) WHERE is_primary;
+CREATE INDEX client_contacts_org_client_idx ON public.client_contacts USING btree (organization_id, client_id);
+CREATE UNIQUE INDEX client_contacts_org_id_idx ON public.client_contacts USING btree (organization_id, id);
+CREATE INDEX client_interviews_approved_by_idx ON public.client_interviews USING btree (approved_by);
+CREATE INDEX client_interviews_created_by_idx ON public.client_interviews USING btree (created_by);
+CREATE INDEX client_interviews_org_idx ON public.client_interviews USING btree (organization_id);
+CREATE INDEX client_interviews_project_version_idx ON public.client_interviews USING btree (project_id, version DESC);
+CREATE INDEX client_notes_client_idx ON public.client_notes USING btree (client_id, is_pinned DESC, created_at DESC);
+CREATE INDEX client_notes_contact_idx ON public.client_notes USING btree (contact_id);
+CREATE INDEX client_notes_created_by_idx ON public.client_notes USING btree (created_by);
+CREATE INDEX client_notes_org_client_idx ON public.client_notes USING btree (organization_id, client_id);
+CREATE INDEX client_notes_org_contact_idx ON public.client_notes USING btree (organization_id, contact_id);
+CREATE INDEX clients_created_by_idx ON public.clients USING btree (created_by);
+CREATE UNIQUE INDEX clients_org_id_idx ON public.clients USING btree (organization_id, id);
+CREATE UNIQUE INDEX clients_org_name_key_idx ON public.clients USING btree (organization_id, name_key);
+CREATE INDEX clients_organization_id_idx ON public.clients USING btree (organization_id);
+CREATE INDEX desk_digests_created_by_idx ON public.desk_digests USING btree (created_by);
+CREATE INDEX engagement_states_follow_up_idx ON public.engagement_states USING btree (organization_id, next_follow_up_at) WHERE (next_follow_up_at IS NOT NULL);
+CREATE INDEX engagement_states_org_idx ON public.engagement_states USING btree (organization_id);
+CREATE INDEX engagement_states_project_idx ON public.engagement_states USING btree (project_id);
+CREATE INDEX exec_search_candidates_added_by_idx ON public.executive_search_candidates USING btree (added_by);
+CREATE INDEX exec_search_candidates_candidate_idx ON public.executive_search_candidates USING btree (candidate_id);
+CREATE INDEX exec_search_candidates_org_idx ON public.executive_search_candidates USING btree (organization_id);
+CREATE INDEX exec_search_candidates_stage_idx ON public.executive_search_candidates USING btree (search_id, stage);
+CREATE INDEX exec_search_competencies_competency_idx ON public.executive_search_competencies USING btree (competency_id);
+CREATE INDEX exec_search_competencies_org_idx ON public.executive_search_competencies USING btree (organization_id);
+CREATE INDEX executive_assessments_org_candidate_idx ON public.executive_assessments USING btree (organization_id, candidate_id);
+CREATE UNIQUE INDEX executive_assessments_org_id_idx ON public.executive_assessments USING btree (organization_id, id);
+CREATE INDEX executive_assessments_org_search_idx ON public.executive_assessments USING btree (organization_id, search_id);
+CREATE INDEX executive_assessments_org_source_plan_idx ON public.executive_assessments USING btree (organization_id, source_plan_id);
+CREATE INDEX executive_audit_events_actor_idx ON public.executive_audit_events USING btree (actor_id);
+CREATE INDEX executive_audit_events_assessment_idx ON public.executive_audit_events USING btree (assessment_id);
+CREATE INDEX executive_audit_events_org_assessment_idx ON public.executive_audit_events USING btree (organization_id, assessment_id);
+CREATE INDEX executive_audit_events_org_idx ON public.executive_audit_events USING btree (organization_id, created_at DESC);
+CREATE INDEX executive_audit_events_org_plan_idx ON public.executive_audit_events USING btree (organization_id, plan_id);
+CREATE INDEX executive_audit_events_org_profile_idx ON public.executive_audit_events USING btree (organization_id, profile_id);
+CREATE INDEX executive_audit_events_org_risk_review_idx ON public.executive_audit_events USING btree (organization_id, risk_review_id);
+CREATE INDEX executive_audit_events_org_search_idx ON public.executive_audit_events USING btree (organization_id, search_id);
+CREATE INDEX executive_audit_events_plan_idx ON public.executive_audit_events USING btree (plan_id);
+CREATE INDEX executive_audit_events_profile_idx ON public.executive_audit_events USING btree (profile_id);
+CREATE INDEX executive_audit_events_risk_review_idx ON public.executive_audit_events USING btree (risk_review_id);
+CREATE INDEX executive_audit_events_search_idx ON public.executive_audit_events USING btree (search_id, created_at DESC);
+CREATE INDEX executive_competencies_category_idx ON public.executive_competencies USING btree (category);
+CREATE UNIQUE INDEX executive_competencies_global_key ON public.executive_competencies USING btree (key) WHERE (organization_id IS NULL);
+CREATE UNIQUE INDEX executive_competencies_id_global_idx ON public.executive_competencies USING btree (id, is_global);
+CREATE UNIQUE INDEX executive_competencies_org_id_idx ON public.executive_competencies USING btree (organization_id, id);
+CREATE UNIQUE INDEX executive_competencies_org_key ON public.executive_competencies USING btree (organization_id, key) WHERE (organization_id IS NOT NULL);
+CREATE INDEX executive_interview_plans_org_candidate_idx ON public.executive_interview_plans USING btree (organization_id, candidate_id);
+CREATE UNIQUE INDEX executive_interview_plans_org_id_idx ON public.executive_interview_plans USING btree (organization_id, id);
+CREATE INDEX executive_interview_plans_org_search_idx ON public.executive_interview_plans USING btree (organization_id, search_id);
+CREATE INDEX executive_interview_plans_org_source_profile_idx ON public.executive_interview_plans USING btree (organization_id, source_profile_id);
+CREATE INDEX executive_risk_reviews_org_candidate_idx ON public.executive_risk_reviews USING btree (organization_id, candidate_id);
+CREATE UNIQUE INDEX executive_risk_reviews_org_id_idx ON public.executive_risk_reviews USING btree (organization_id, id);
+CREATE INDEX executive_risk_reviews_org_search_idx ON public.executive_risk_reviews USING btree (organization_id, search_id);
+CREATE INDEX executive_risk_reviews_org_source_assessment_idx ON public.executive_risk_reviews USING btree (organization_id, source_assessment_id);
+CREATE INDEX executive_risk_reviews_org_source_plan_idx ON public.executive_risk_reviews USING btree (organization_id, source_plan_id);
+CREATE INDEX executive_risk_reviews_org_source_profile_idx ON public.executive_risk_reviews USING btree (organization_id, source_profile_id);
+CREATE INDEX executive_role_templates_created_by_idx ON public.executive_role_templates USING btree (created_by);
+CREATE UNIQUE INDEX executive_role_templates_global_key ON public.executive_role_templates USING btree (key) WHERE (organization_id IS NULL);
+CREATE UNIQUE INDEX executive_role_templates_id_global_idx ON public.executive_role_templates USING btree (id, is_global);
+CREATE UNIQUE INDEX executive_role_templates_org_id_idx ON public.executive_role_templates USING btree (organization_id, id);
+CREATE UNIQUE INDEX executive_role_templates_org_key ON public.executive_role_templates USING btree (organization_id, key) WHERE (organization_id IS NOT NULL);
+CREATE INDEX executive_search_candidates_org_candidate_idx ON public.executive_search_candidates USING btree (organization_id, candidate_id);
+CREATE INDEX executive_search_candidates_org_search_idx ON public.executive_search_candidates USING btree (organization_id, search_id);
+CREATE INDEX executive_search_competencies_competency_org_idx ON public.executive_search_competencies USING btree (competency_org_id, competency_id);
+CREATE INDEX executive_search_competencies_competency_tier_idx ON public.executive_search_competencies USING btree (competency_id, competency_is_global);
+CREATE INDEX executive_search_competencies_org_search_idx ON public.executive_search_competencies USING btree (organization_id, search_id);
+CREATE INDEX executive_searches_client_id_idx ON public.executive_searches USING btree (client_id);
+CREATE INDEX executive_searches_created_by_idx ON public.executive_searches USING btree (created_by);
+CREATE INDEX executive_searches_org_client_idx ON public.executive_searches USING btree (organization_id, client_id);
+CREATE UNIQUE INDEX executive_searches_org_id_idx ON public.executive_searches USING btree (organization_id, id);
+CREATE INDEX executive_searches_org_idx ON public.executive_searches USING btree (organization_id, created_at DESC);
+CREATE INDEX executive_searches_status_idx ON public.executive_searches USING btree (organization_id, status);
+CREATE INDEX executive_searches_template_idx ON public.executive_searches USING btree (template_id);
+CREATE INDEX executive_searches_template_org_idx ON public.executive_searches USING btree (template_org_id, template_id);
+CREATE INDEX executive_searches_template_tier_idx ON public.executive_searches USING btree (template_id, template_is_global);
+CREATE INDEX fee_lines_created_by_idx ON public.placement_fee_lines USING btree (created_by);
+CREATE INDEX fee_lines_earned_idx ON public.placement_fee_lines USING btree (organization_id, earned_on) WHERE (status = 'earned'::text);
+CREATE INDEX fee_lines_fee_idx ON public.placement_fee_lines USING btree (placement_fee_id);
+CREATE INDEX fee_lines_org_idx ON public.placement_fee_lines USING btree (organization_id);
+CREATE INDEX fee_lines_placement_idx ON public.placement_fee_lines USING btree (placement_id);
+CREATE INDEX fee_lines_reverses_idx ON public.placement_fee_lines USING btree (reverses_line_id);
+CREATE INDEX fee_terms_created_by_idx ON public.fee_terms USING btree (created_by);
+CREATE UNIQUE INDEX fee_terms_one_per_client ON public.fee_terms USING btree (client_id);
+CREATE UNIQUE INDEX fee_terms_one_per_project ON public.fee_terms USING btree (project_id);
+CREATE INDEX fee_terms_org_client_idx ON public.fee_terms USING btree (organization_id, client_id);
+CREATE UNIQUE INDEX fee_terms_org_id_idx ON public.fee_terms USING btree (organization_id, id);
+CREATE INDEX fee_terms_org_idx ON public.fee_terms USING btree (organization_id);
+CREATE INDEX fee_terms_org_project_idx ON public.fee_terms USING btree (organization_id, project_id);
+CREATE INDEX feedback_candidate_id_idx ON public.feedback USING btree (candidate_id);
+CREATE INDEX feedback_org_candidate_idx ON public.feedback USING btree (organization_id, candidate_id);
+CREATE UNIQUE INDEX feedback_org_id_idx ON public.feedback USING btree (organization_id, id);
+CREATE INDEX feedback_org_project_idx ON public.feedback USING btree (organization_id, project_id);
+CREATE INDEX feedback_project_created_idx ON public.feedback USING btree (project_id, created_at DESC);
+CREATE INDEX feedback_submitted_by_idx ON public.feedback USING btree (submitted_by);
+CREATE INDEX hiring_manager_reviews_org_project_idx ON public.hiring_manager_reviews USING btree (organization_id, project_id);
+CREATE INDEX hiring_manager_reviews_org_token_idx ON public.hiring_manager_reviews USING btree (organization_id, token_id);
+CREATE INDEX hiring_manager_reviews_token_id_idx ON public.hiring_manager_reviews USING btree (token_id);
+CREATE INDEX hiring_manager_tokens_created_by_idx ON public.hiring_manager_tokens USING btree (created_by);
+CREATE INDEX hiring_manager_tokens_org_contact_idx ON public.hiring_manager_tokens USING btree (organization_id, contact_id);
+CREATE UNIQUE INDEX hiring_manager_tokens_org_id_idx ON public.hiring_manager_tokens USING btree (organization_id, id);
+CREATE INDEX hiring_manager_tokens_org_project_idx ON public.hiring_manager_tokens USING btree (organization_id, project_id);
+CREATE INDEX hm_reviews_project_idx ON public.hiring_manager_reviews USING btree (project_id, submitted_at DESC);
+CREATE INDEX hm_reviews_submitted_by_idx ON public.hiring_manager_reviews USING btree (submitted_by_user_id);
+CREATE INDEX hm_tokens_contact_idx ON public.hiring_manager_tokens USING btree (contact_id);
+CREATE INDEX hm_tokens_project_idx ON public.hiring_manager_tokens USING btree (project_id, created_at DESC);
+CREATE INDEX hm_tokens_token_idx ON public.hiring_manager_tokens USING btree (token);
+CREATE INDEX idx_desk_digests_org_created ON public.desk_digests USING btree (organization_id, created_at DESC);
+CREATE INDEX idx_projects_lead_recruiter ON public.projects USING btree (organization_id, lead_recruiter_id);
+CREATE INDEX interview_plans_approved_by_idx ON public.executive_interview_plans USING btree (approved_by);
+CREATE INDEX interview_plans_candidate_idx ON public.executive_interview_plans USING btree (candidate_id);
+CREATE INDEX interview_plans_candidate_version_idx ON public.executive_interview_plans USING btree (search_id, candidate_id, version DESC);
+CREATE INDEX interview_plans_created_by_idx ON public.executive_interview_plans USING btree (created_by);
+CREATE INDEX interview_plans_mainstream_approved_by_idx ON public.interview_plans USING btree (approved_by);
+CREATE INDEX interview_plans_mainstream_candidate_idx ON public.interview_plans USING btree (candidate_id);
+CREATE INDEX interview_plans_mainstream_created_by_idx ON public.interview_plans USING btree (created_by);
+CREATE INDEX interview_plans_mainstream_org_idx ON public.interview_plans USING btree (organization_id);
+CREATE INDEX interview_plans_org_idx ON public.executive_interview_plans USING btree (organization_id);
+CREATE INDEX interview_plans_project_candidate_version_idx ON public.interview_plans USING btree (project_id, candidate_id, version DESC);
+CREATE INDEX interview_plans_source_profile_idx ON public.executive_interview_plans USING btree (source_profile_id);
+CREATE INDEX interview_plans_source_spec_idx ON public.interview_plans USING btree (source_spec_id);
+CREATE INDEX invitations_accepted_user_idx ON public.invitations USING btree (accepted_user_id);
+CREATE INDEX invitations_client_idx ON public.invitations USING btree (client_id, created_at DESC);
+CREATE INDEX invitations_contact_idx ON public.invitations USING btree (contact_id);
+CREATE INDEX invitations_invited_by_idx ON public.invitations USING btree (invited_by);
+CREATE UNIQUE INDEX invitations_live_per_client_email_idx ON public.invitations USING btree (client_id, email_key) WHERE ((revoked_at IS NULL) AND (accepted_at IS NULL));
+CREATE INDEX invitations_org_idx ON public.invitations USING btree (organization_id);
+CREATE INDEX invoice_deliveries_invoice_idx ON public.invoice_deliveries USING btree (invoice_id);
+CREATE INDEX invoice_deliveries_org_idx ON public.invoice_deliveries USING btree (organization_id);
+CREATE INDEX invoice_deliveries_provider_message_idx ON public.invoice_deliveries USING btree (provider_message_id) WHERE (provider_message_id IS NOT NULL);
+CREATE INDEX invoice_deliveries_sent_by_idx ON public.invoice_deliveries USING btree (sent_by);
+CREATE INDEX invoice_lines_fee_line_idx ON public.invoice_lines USING btree (fee_line_id);
+CREATE INDEX invoice_lines_invoice_idx ON public.invoice_lines USING btree (invoice_id);
+CREATE INDEX invoice_lines_org_idx ON public.invoice_lines USING btree (organization_id);
+CREATE INDEX invoice_lines_placement_idx ON public.invoice_lines USING btree (placement_id);
+CREATE INDEX invoice_templates_created_by_idx ON public.invoice_templates USING btree (created_by);
+CREATE UNIQUE INDEX invoice_templates_name_per_org ON public.invoice_templates USING btree (organization_id, name);
+CREATE INDEX invoice_templates_org_idx ON public.invoice_templates USING btree (organization_id);
+CREATE INDEX invoices_client_idx ON public.invoices USING btree (client_id);
+CREATE INDEX invoices_created_by_idx ON public.invoices USING btree (created_by);
+CREATE UNIQUE INDEX invoices_number_per_org ON public.invoices USING btree (organization_id, invoice_number) WHERE (invoice_number IS NOT NULL);
+CREATE INDEX invoices_org_idx ON public.invoices USING btree (organization_id);
+CREATE INDEX invoices_status_idx ON public.invoices USING btree (organization_id, status);
+CREATE INDEX invoices_template_idx ON public.invoices USING btree (template_id);
+CREATE INDEX job_specs_created_by_idx ON public.job_specs USING btree (created_by);
+CREATE INDEX job_specs_org_project_idx ON public.job_specs USING btree (organization_id, project_id);
+CREATE INDEX job_specs_project_version_idx ON public.job_specs USING btree (project_id, version DESC);
+CREATE INDEX mandate_grants_client_idx ON public.mandate_grants USING btree (client_id);
+CREATE INDEX mandate_grants_granted_by_idx ON public.mandate_grants USING btree (granted_by);
+CREATE INDEX mandate_grants_org_idx ON public.mandate_grants USING btree (organization_id);
+CREATE INDEX mandate_grants_user_idx ON public.mandate_grants USING btree (user_id);
+CREATE INDEX mandate_shares_client_idx ON public.mandate_shares USING btree (client_id);
+CREATE INDEX mandate_shares_org_idx ON public.mandate_shares USING btree (organization_id);
+CREATE INDEX mandate_shares_shared_by_idx ON public.mandate_shares USING btree (shared_by);
+CREATE INDEX network_profile_aliases_profile_idx ON public.network_profile_aliases USING btree (profile_id);
+CREATE INDEX network_profiles_dnc_set_by_idx ON public.network_profiles USING btree (dnc_set_by);
+CREATE INDEX network_profiles_follow_up_idx ON public.network_profiles USING btree (organization_id, follow_up_at) WHERE (follow_up_at IS NOT NULL);
+CREATE INDEX network_profiles_org_idx ON public.network_profiles USING btree (organization_id);
+CREATE INDEX network_suppressions_carried_idx ON public.network_suppressions USING btree (carried_from);
+CREATE INDEX network_suppressions_open_idx ON public.network_suppressions USING btree (profile_id) WHERE (lifted_at IS NULL);
+CREATE INDEX network_suppressions_org_idx ON public.network_suppressions USING btree (organization_id);
+CREATE INDEX objectives_closed_by_idx ON public.objectives USING btree (closed_by);
+CREATE INDEX objectives_created_by_idx ON public.objectives USING btree (created_by);
+CREATE INDEX objectives_org_owner_status_idx ON public.objectives USING btree (organization_id, owner_user_id, status);
+CREATE INDEX objectives_org_project_idx ON public.objectives USING btree (organization_id, project_id);
+CREATE INDEX objectives_owner_user_id_idx ON public.objectives USING btree (owner_user_id);
+CREATE INDEX objectives_project_id_idx ON public.objectives USING btree (project_id);
+CREATE INDEX okr_key_results_attested_by_idx ON public.objective_key_results USING btree (attested_by);
+CREATE INDEX okr_key_results_objective_idx ON public.objective_key_results USING btree (objective_id);
+CREATE INDEX okr_key_results_org_kind_idx ON public.objective_key_results USING btree (organization_id, kind);
+CREATE INDEX outreach_strategies_approved_by_idx ON public.outreach_strategies USING btree (approved_by);
+CREATE INDEX outreach_strategies_candidate_idx ON public.outreach_strategies USING btree (candidate_id, created_at DESC);
+CREATE INDEX outreach_strategies_created_by_idx ON public.outreach_strategies USING btree (created_by);
+CREATE UNIQUE INDEX outreach_strategies_one_live_draft ON public.outreach_strategies USING btree (candidate_id, project_id) WHERE (status = 'draft'::text);
+CREATE INDEX outreach_strategies_org_idx ON public.outreach_strategies USING btree (organization_id);
+CREATE INDEX outreach_strategies_project_idx ON public.outreach_strategies USING btree (project_id);
+CREATE UNIQUE INDEX placement_fee_lines_org_id_idx ON public.placement_fee_lines USING btree (organization_id, id);
+CREATE INDEX placement_fee_lines_org_placement_fee_idx ON public.placement_fee_lines USING btree (organization_id, placement_fee_id);
+CREATE INDEX placement_fee_lines_org_placement_idx ON public.placement_fee_lines USING btree (organization_id, placement_id);
+CREATE INDEX placement_fee_lines_org_reverses_line_idx ON public.placement_fee_lines USING btree (organization_id, reverses_line_id);
+CREATE INDEX placement_fees_created_by_idx ON public.placement_fees USING btree (created_by);
+CREATE INDEX placement_fees_org_fee_terms_idx ON public.placement_fees USING btree (organization_id, fee_terms_id);
+CREATE UNIQUE INDEX placement_fees_org_id_idx ON public.placement_fees USING btree (organization_id, id);
+CREATE INDEX placement_fees_org_idx ON public.placement_fees USING btree (organization_id);
+CREATE INDEX placement_fees_org_placement_idx ON public.placement_fees USING btree (organization_id, placement_id);
+CREATE INDEX placement_fees_terms_idx ON public.placement_fees USING btree (fee_terms_id);
+CREATE INDEX placements_candidate_idx ON public.placements USING btree (candidate_id);
+CREATE INDEX placements_client_idx ON public.placements USING btree (client_id);
+CREATE INDEX placements_created_by_idx ON public.placements USING btree (created_by);
+CREATE INDEX placements_org_candidate_idx ON public.placements USING btree (organization_id, candidate_id);
+CREATE INDEX placements_org_client_idx ON public.placements USING btree (organization_id, client_id);
+CREATE UNIQUE INDEX placements_org_id_idx ON public.placements USING btree (organization_id, id);
+CREATE INDEX placements_org_idx ON public.placements USING btree (organization_id);
+CREATE INDEX placements_org_project_idx ON public.placements USING btree (organization_id, project_id);
+CREATE INDEX placements_org_signed_off_by_contact_idx ON public.placements USING btree (organization_id, signed_off_by_contact_id);
+CREATE INDEX placements_owner_idx ON public.placements USING btree (owner_user_id);
+CREATE INDEX placements_project_idx ON public.placements USING btree (project_id);
+CREATE INDEX placements_signed_off_by_idx ON public.placements USING btree (signed_off_by_contact_id);
+CREATE INDEX placements_sourced_by_idx ON public.placements USING btree (sourced_by_user_id);
+CREATE INDEX placements_status_idx ON public.placements USING btree (organization_id, status);
+CREATE INDEX prescreens_candidate_idx ON public.prescreens USING btree (candidate_id, created_at DESC);
+CREATE UNIQUE INDEX prescreens_one_live_lane ON public.prescreens USING btree (candidate_id, project_id) WHERE (status <> 'abandoned'::text);
+CREATE INDEX prescreens_org_idx ON public.prescreens USING btree (organization_id);
+CREATE INDEX prescreens_project_idx ON public.prescreens USING btree (project_id);
+CREATE INDEX project_reports_generated_by_idx ON public.project_reports USING btree (generated_by);
+CREATE INDEX project_reports_org_project_idx ON public.project_reports USING btree (organization_id, project_id);
+CREATE INDEX project_reports_project_idx ON public.project_reports USING btree (project_id, generated_at DESC);
+CREATE INDEX project_reports_week_idx ON public.project_reports USING btree (project_id, week_starting DESC);
+CREATE UNIQUE INDEX projects_apply_token_idx ON public.projects USING btree (apply_token) WHERE (apply_token IS NOT NULL);
+CREATE INDEX projects_client_id_idx ON public.projects USING btree (client_id);
+CREATE INDEX projects_created_by_idx ON public.projects USING btree (created_by);
+CREATE INDEX projects_lead_recruiter_id_idx ON public.projects USING btree (lead_recruiter_id);
+CREATE INDEX projects_org_client_idx ON public.projects USING btree (organization_id, client_id);
+CREATE UNIQUE INDEX projects_org_id_idx ON public.projects USING btree (organization_id, id);
+CREATE INDEX provider_models_provider_idx ON public.provider_models USING btree (provider);
+CREATE INDEX rate_limit_expires_idx ON public.rate_limit USING btree (expires_at);
+CREATE INDEX risk_reviews_approved_by_idx ON public.executive_risk_reviews USING btree (approved_by);
+CREATE INDEX risk_reviews_candidate_idx ON public.executive_risk_reviews USING btree (candidate_id);
+CREATE INDEX risk_reviews_candidate_version_idx ON public.executive_risk_reviews USING btree (search_id, candidate_id, version DESC);
+CREATE INDEX risk_reviews_created_by_idx ON public.executive_risk_reviews USING btree (created_by);
+CREATE INDEX risk_reviews_org_idx ON public.executive_risk_reviews USING btree (organization_id);
+CREATE INDEX risk_reviews_source_assessment_idx ON public.executive_risk_reviews USING btree (source_assessment_id);
+CREATE INDEX risk_reviews_source_plan_idx ON public.executive_risk_reviews USING btree (source_plan_id);
+CREATE INDEX risk_reviews_source_profile_idx ON public.executive_risk_reviews USING btree (source_profile_id);
+CREATE INDEX role_success_profiles_approved_by_idx ON public.role_success_profiles USING btree (approved_by);
+CREATE INDEX role_success_profiles_created_by_idx ON public.role_success_profiles USING btree (created_by);
+CREATE UNIQUE INDEX role_success_profiles_org_id_idx ON public.role_success_profiles USING btree (organization_id, id);
+CREATE INDEX role_success_profiles_org_idx ON public.role_success_profiles USING btree (organization_id);
+CREATE INDEX role_success_profiles_org_search_idx ON public.role_success_profiles USING btree (organization_id, search_id);
+CREATE INDEX role_success_profiles_search_version_idx ON public.role_success_profiles USING btree (search_id, version DESC);
+CREATE INDEX shortlists_created_by_idx ON public.shortlists USING btree (created_by);
+CREATE INDEX shortlists_org_idx ON public.shortlists USING btree (organization_id);
+CREATE INDEX shortlists_org_project_idx ON public.shortlists USING btree (organization_id, project_id);
+CREATE INDEX shortlists_submitted_by_idx ON public.shortlists USING btree (submitted_by);
+CREATE INDEX skill_versions_org_idx ON public.skill_versions USING btree (organization_id);
+CREATE INDEX skill_versions_skill_idx ON public.skill_versions USING btree (skill_id, version DESC);
+CREATE INDEX skills_applies_to_client_id_idx ON public.skills USING btree (applies_to_client_id);
+CREATE INDEX skills_created_by_idx ON public.skills USING btree (created_by);
+CREATE INDEX skills_org_applies_to_client_idx ON public.skills USING btree (organization_id, applies_to_client_id);
+CREATE INDEX skills_org_applies_to_project_idx ON public.skills USING btree (organization_id, applies_to_project_id);
+CREATE INDEX skills_org_type_active_idx ON public.skills USING btree (organization_id, skill_type, is_active);
+CREATE INDEX skills_project_idx ON public.skills USING btree (applies_to_project_id) WHERE (applies_to_project_id IS NOT NULL);
+CREATE INDEX sourcing_run_candidates_candidate_idx ON public.sourcing_run_candidates USING btree (candidate_id);
+CREATE INDEX sourcing_run_candidates_org_candidate_idx ON public.sourcing_run_candidates USING btree (organization_id, candidate_id);
+CREATE INDEX sourcing_run_candidates_org_idx ON public.sourcing_run_candidates USING btree (organization_id);
+CREATE INDEX sourcing_run_candidates_org_run_idx ON public.sourcing_run_candidates USING btree (organization_id, run_id);
+CREATE INDEX sourcing_run_results_matched_idx ON public.sourcing_run_results USING btree (matched_candidate_id);
+CREATE INDEX sourcing_run_results_org_idx ON public.sourcing_run_results USING btree (organization_id);
+CREATE INDEX sourcing_run_results_org_matched_candidate_idx ON public.sourcing_run_results USING btree (organization_id, matched_candidate_id);
+CREATE INDEX sourcing_run_results_org_promoted_candidate_idx ON public.sourcing_run_results USING btree (organization_id, promoted_candidate_id);
+CREATE INDEX sourcing_run_results_org_run_idx ON public.sourcing_run_results USING btree (organization_id, run_id);
+CREATE INDEX sourcing_run_results_promoted_by_idx ON public.sourcing_run_results USING btree (promoted_by);
+CREATE INDEX sourcing_run_results_promoted_idx ON public.sourcing_run_results USING btree (promoted_candidate_id);
+CREATE INDEX sourcing_run_results_run_status_idx ON public.sourcing_run_results USING btree (run_id, match_status);
+CREATE INDEX sourcing_runs_created_by_idx ON public.sourcing_runs USING btree (created_by);
+CREATE INDEX sourcing_runs_executed_by_idx ON public.sourcing_runs USING btree (executed_by);
+CREATE UNIQUE INDEX sourcing_runs_org_id_idx ON public.sourcing_runs USING btree (organization_id, id);
+CREATE INDEX sourcing_runs_org_idx ON public.sourcing_runs USING btree (organization_id);
+CREATE INDEX sourcing_runs_org_parent_run_idx ON public.sourcing_runs USING btree (organization_id, parent_run_id);
+CREATE INDEX sourcing_runs_org_project_idx ON public.sourcing_runs USING btree (organization_id, project_id);
+CREATE INDEX sourcing_runs_parent_idx ON public.sourcing_runs USING btree (parent_run_id);
+CREATE INDEX sourcing_runs_project_created_idx ON public.sourcing_runs USING btree (project_id, created_at DESC);
+CREATE INDEX sourcing_runs_root_idx ON public.sourcing_runs USING btree (root_run_id);
+CREATE INDEX staff_invitations_accepted_user_idx ON public.staff_invitations USING btree (accepted_user_id);
+CREATE INDEX staff_invitations_invited_by_idx ON public.staff_invitations USING btree (invited_by);
+CREATE UNIQUE INDEX staff_invitations_live_email_idx ON public.staff_invitations USING btree (organization_id, email_key) WHERE ((revoked_at IS NULL) AND (accepted_at IS NULL));
+CREATE INDEX staff_invitations_org_idx ON public.staff_invitations USING btree (organization_id);
+CREATE INDEX tasks_assignee_id_idx ON public.tasks USING btree (assignee_id);
+CREATE INDEX tasks_completed_by_idx ON public.tasks USING btree (completed_by);
+CREATE INDEX tasks_created_by_idx ON public.tasks USING btree (created_by);
+CREATE INDEX tasks_org_assignee_status_idx ON public.tasks USING btree (organization_id, assignee_id, status);
+CREATE INDEX tasks_org_project_idx ON public.tasks USING btree (organization_id, project_id);
+CREATE INDEX tasks_project_id_idx ON public.tasks USING btree (project_id);
+CREATE UNIQUE INDEX unique_approved_assessment_per_candidate ON public.executive_assessments USING btree (search_id, candidate_id) WHERE (status = 'approved'::text);
+CREATE UNIQUE INDEX unique_approved_client_interview_per_project ON public.client_interviews USING btree (project_id) WHERE (status = 'approved'::text);
+CREATE UNIQUE INDEX unique_approved_plan_per_candidate ON public.executive_interview_plans USING btree (search_id, candidate_id) WHERE (status = 'approved'::text);
+CREATE UNIQUE INDEX unique_approved_profile_per_search ON public.role_success_profiles USING btree (search_id) WHERE (status = 'approved'::text);
+CREATE UNIQUE INDEX unique_approved_project_plan_per_candidate ON public.interview_plans USING btree (project_id, candidate_id) WHERE (status = 'approved'::text);
+CREATE UNIQUE INDEX unique_approved_risk_review_per_candidate ON public.executive_risk_reviews USING btree (search_id, candidate_id) WHERE (status = 'approved'::text);
+CREATE UNIQUE INDEX unique_assessment_version_per_candidate ON public.executive_assessments USING btree (search_id, candidate_id, version);
+CREATE UNIQUE INDEX unique_candidate_per_exec_search ON public.executive_search_candidates USING btree (search_id, candidate_id);
+CREATE UNIQUE INDEX unique_candidate_score_per_project ON public.candidate_scores USING btree (project_id, candidate_id);
+CREATE UNIQUE INDEX unique_client_interview_answer_per_person ON public.feedback USING btree (project_id, submitted_by) WHERE ((feedback_type = 'client_interview'::text) AND (submitted_by IS NOT NULL));
+CREATE UNIQUE INDEX unique_client_interview_version_per_project ON public.client_interviews USING btree (project_id, version);
+CREATE UNIQUE INDEX unique_competency_per_search ON public.executive_search_competencies USING btree (search_id, competency_id);
+CREATE UNIQUE INDEX unique_final_spec_per_project ON public.job_specs USING btree (project_id) WHERE is_final;
+CREATE UNIQUE INDEX unique_generating_client_interview_per_project ON public.client_interviews USING btree (project_id) WHERE is_generating;
+CREATE UNIQUE INDEX unique_generating_per_project ON public.job_specs USING btree (project_id) WHERE (is_generating = true);
+CREATE UNIQUE INDEX unique_generating_plan_per_candidate ON public.executive_interview_plans USING btree (search_id, candidate_id) WHERE is_generating;
+CREATE UNIQUE INDEX unique_generating_profile_per_search ON public.role_success_profiles USING btree (search_id) WHERE is_generating;
+CREATE UNIQUE INDEX unique_generating_project_plan_per_candidate ON public.interview_plans USING btree (project_id, candidate_id) WHERE is_generating;
+CREATE UNIQUE INDEX unique_generating_risk_review_per_candidate ON public.executive_risk_reviews USING btree (search_id, candidate_id) WHERE is_generating;
+CREATE UNIQUE INDEX unique_job_spec_version_per_project ON public.job_specs USING btree (project_id, version);
+CREATE UNIQUE INDEX unique_pending_admin_grant_email ON public.admin_grant_requests USING btree (organization_id, lower(target_email)) WHERE ((status = 'pending'::text) AND (target_email IS NOT NULL));
+CREATE UNIQUE INDEX unique_pending_admin_grant_user ON public.admin_grant_requests USING btree (organization_id, target_user_id) WHERE ((status = 'pending'::text) AND (target_user_id IS NOT NULL));
+CREATE UNIQUE INDEX unique_plan_version_per_candidate ON public.executive_interview_plans USING btree (search_id, candidate_id, version);
+CREATE UNIQUE INDEX unique_profile_version_per_search ON public.role_success_profiles USING btree (search_id, version);
+CREATE UNIQUE INDEX unique_project_plan_version_per_candidate ON public.interview_plans USING btree (project_id, candidate_id, version);
+CREATE UNIQUE INDEX unique_risk_review_version_per_candidate ON public.executive_risk_reviews USING btree (search_id, candidate_id, version);
+CREATE UNIQUE INDEX unique_shortlist_per_project ON public.shortlists USING btree (project_id);
+CREATE UNIQUE INDEX unique_sourcing_run_version_per_lineage ON public.sourcing_runs USING btree (root_run_id, version);
+CREATE INDEX users_client_id_idx ON public.users USING btree (client_id) WHERE (client_id IS NOT NULL);
+CREATE INDEX users_is_founder_idx ON public.users USING btree (is_founder) WHERE (is_founder = true);
+CREATE INDEX users_manager_id_idx ON public.users USING btree (manager_id);
+CREATE INDEX users_organization_id_idx ON public.users USING btree (organization_id);
+CREATE INDEX users_status_idx ON public.users USING btree (status);
+CREATE INDEX verdict_ledger_candidate_idx ON public.verdict_ledger USING btree (candidate_id);
+CREATE INDEX verdict_ledger_candidate_in_org_idx ON public.verdict_ledger USING btree (organization_id, candidate_id);
+CREATE INDEX verdict_ledger_org_idx ON public.verdict_ledger USING btree (organization_id, evaluated_at DESC);
+CREATE INDEX verdict_ledger_project_idx ON public.verdict_ledger USING btree (project_id);
+CREATE INDEX verdict_ledger_project_in_org_idx ON public.verdict_ledger USING btree (organization_id, project_id);
+CREATE UNIQUE INDEX waitlist_email_unique ON public.waitlist USING btree (lower(email));
+CREATE INDEX waitlist_reviewed_by_idx ON public.waitlist USING btree (reviewed_by);
+CREATE INDEX waitlist_staff_invitation_idx ON public.waitlist USING btree (staff_invitation_id);
+CREATE INDEX waitlist_status_idx ON public.waitlist USING btree (status, created_at DESC);
+
+-- ======================= TRIGGERS =======================
+
+CREATE TRIGGER activity_events_author_in_org BEFORE INSERT OR UPDATE ON public.activity_events FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('actor_id', 'target_user_id');
+CREATE TRIGGER calibration_history_author_in_org BEFORE INSERT OR UPDATE ON public.calibration_history FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('changed_by');
+CREATE TRIGGER candidate_notes_author_in_org BEFORE INSERT OR UPDATE ON public.candidate_notes FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER candidate_notifications_author_in_org BEFORE INSERT OR UPDATE ON public.candidate_notifications FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER candidate_outreach_author_in_org BEFORE INSERT OR UPDATE ON public.candidate_outreach FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER candidates_guard_subject_notified BEFORE UPDATE ON public.candidates FOR EACH ROW EXECUTE FUNCTION guard_subject_notified();
+CREATE TRIGGER candidates_link_network_profile BEFORE INSERT OR UPDATE OF email, linkedin_url, full_name, current_company ON public.candidates FOR EACH ROW EXECUTE FUNCTION candidates_link_network_profile();
+CREATE TRIGGER candidates_purge_staged_results BEFORE DELETE ON public.candidates FOR EACH ROW EXECUTE FUNCTION purge_staged_results_for_candidate();
+CREATE TRIGGER candidates_stamp_verdict_outcome AFTER UPDATE OF pipeline_stage ON public.candidates FOR EACH ROW EXECUTE FUNCTION stamp_verdict_outcome();
+CREATE TRIGGER capability_assignments_active_gate BEFORE INSERT OR UPDATE ON public.capability_assignments FOR EACH ROW EXECUTE FUNCTION guard_assignment_active_model();
+CREATE TRIGGER client_contacts_audit AFTER INSERT OR DELETE OR UPDATE ON public.client_contacts FOR EACH ROW EXECUTE FUNCTION audit_client_contacts();
+CREATE TRIGGER client_contacts_author_in_org BEFORE INSERT OR UPDATE ON public.client_contacts FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER client_contacts_single_primary BEFORE INSERT OR UPDATE OF is_primary, client_id ON public.client_contacts FOR EACH ROW EXECUTE FUNCTION demote_other_primary_contacts();
+CREATE TRIGGER client_interviews_guard BEFORE INSERT OR UPDATE ON public.client_interviews FOR EACH ROW EXECUTE FUNCTION guard_client_interviews();
+CREATE TRIGGER client_notes_author_in_org BEFORE INSERT OR UPDATE ON public.client_notes FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER client_notes_stamp_author BEFORE INSERT ON public.client_notes FOR EACH ROW EXECUTE FUNCTION stamp_client_note_author();
+CREATE TRIGGER clients_author_in_org BEFORE INSERT OR UPDATE ON public.clients FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER desk_digests_author_in_org BEFORE INSERT OR UPDATE ON public.desk_digests FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER executive_assessments_author_in_org BEFORE INSERT OR UPDATE ON public.executive_assessments FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('approved_by', 'created_by');
+CREATE TRIGGER executive_assessments_guard BEFORE INSERT OR UPDATE ON public.executive_assessments FOR EACH ROW EXECUTE FUNCTION guard_executive_assessments();
+CREATE TRIGGER executive_audit_events_author_in_org BEFORE INSERT OR UPDATE ON public.executive_audit_events FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('actor_id');
+CREATE TRIGGER executive_interview_plans_author_in_org BEFORE INSERT OR UPDATE ON public.executive_interview_plans FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('approved_by', 'created_by');
+CREATE TRIGGER executive_interview_plans_guard BEFORE INSERT OR UPDATE ON public.executive_interview_plans FOR EACH ROW EXECUTE FUNCTION guard_executive_interview_plans();
+CREATE TRIGGER executive_risk_reviews_author_in_org BEFORE INSERT OR UPDATE ON public.executive_risk_reviews FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('approved_by', 'created_by');
+CREATE TRIGGER executive_risk_reviews_guard BEFORE INSERT OR UPDATE ON public.executive_risk_reviews FOR EACH ROW EXECUTE FUNCTION guard_executive_risk_reviews();
+CREATE TRIGGER executive_search_candidates_author_in_org BEFORE INSERT OR UPDATE ON public.executive_search_candidates FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('added_by');
+CREATE TRIGGER executive_searches_author_in_org BEFORE INSERT OR UPDATE ON public.executive_searches FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER fee_terms_audit AFTER INSERT OR DELETE OR UPDATE ON public.fee_terms FOR EACH ROW EXECUTE FUNCTION audit_fee_terms();
+CREATE TRIGGER fee_terms_author_in_org BEFORE INSERT OR UPDATE ON public.fee_terms FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER feedback_author_in_org BEFORE INSERT OR UPDATE ON public.feedback FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('submitted_by');
+CREATE TRIGGER hiring_manager_reviews_author_in_org BEFORE INSERT OR UPDATE ON public.hiring_manager_reviews FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('submitted_by_user_id');
+CREATE TRIGGER hiring_manager_tokens_author_in_org BEFORE INSERT OR UPDATE ON public.hiring_manager_tokens FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER interview_plans_guard BEFORE INSERT OR UPDATE ON public.interview_plans FOR EACH ROW EXECUTE FUNCTION guard_interview_plans();
+CREATE TRIGGER invitations_audit AFTER INSERT OR UPDATE ON public.invitations FOR EACH ROW EXECUTE FUNCTION audit_invitations();
+CREATE TRIGGER invitations_integrity BEFORE INSERT OR UPDATE ON public.invitations FOR EACH ROW EXECUTE FUNCTION guard_invitation_integrity();
+CREATE TRIGGER invoice_lines_guard BEFORE INSERT OR DELETE OR UPDATE ON public.invoice_lines FOR EACH ROW EXECUTE FUNCTION guard_invoice_lines();
+CREATE TRIGGER invoice_lines_refresh_total AFTER INSERT OR DELETE OR UPDATE ON public.invoice_lines FOR EACH ROW EXECUTE FUNCTION refresh_invoice_total();
+CREATE TRIGGER invoices_guard BEFORE INSERT OR DELETE OR UPDATE ON public.invoices FOR EACH ROW EXECUTE FUNCTION guard_invoices();
+CREATE TRIGGER job_specs_author_in_org BEFORE INSERT OR UPDATE ON public.job_specs FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER mandate_grants_audit AFTER INSERT OR DELETE ON public.mandate_grants FOR EACH ROW EXECUTE FUNCTION audit_mandate_grants();
+CREATE TRIGGER mandate_grants_integrity BEFORE INSERT OR UPDATE ON public.mandate_grants FOR EACH ROW EXECUTE FUNCTION guard_mandate_grant_integrity();
+CREATE TRIGGER mandate_shares_audit AFTER INSERT OR DELETE ON public.mandate_shares FOR EACH ROW EXECUTE FUNCTION audit_mandate_shares();
+CREATE TRIGGER mandate_shares_integrity BEFORE INSERT OR UPDATE ON public.mandate_shares FOR EACH ROW EXECUTE FUNCTION guard_mandate_share_integrity();
+CREATE TRIGGER network_profiles_guard_dnc BEFORE UPDATE ON public.network_profiles FOR EACH ROW EXECUTE FUNCTION guard_network_dnc();
+CREATE TRIGGER network_suppressions_refresh AFTER INSERT OR DELETE OR UPDATE ON public.network_suppressions FOR EACH ROW EXECUTE FUNCTION network_suppressions_refresh();
+CREATE TRIGGER network_suppressions_stamp_move BEFORE UPDATE OF profile_id ON public.network_suppressions FOR EACH ROW EXECUTE FUNCTION network_suppressions_stamp_move();
+CREATE TRIGGER okr_key_results_author_in_org BEFORE INSERT OR UPDATE ON public.objective_key_results FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('attested_by');
+CREATE TRIGGER okr_key_results_guard_financial BEFORE INSERT OR UPDATE ON public.objective_key_results FOR EACH ROW EXECUTE FUNCTION guard_financial_key_results();
+CREATE TRIGGER objectives_author_in_org BEFORE INSERT OR UPDATE ON public.objectives FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by', 'owner_user_id', 'closed_by');
+CREATE TRIGGER objectives_guard_owner BEFORE INSERT OR UPDATE ON public.objectives FOR EACH ROW EXECUTE FUNCTION guard_objective_owner_changes();
+CREATE TRIGGER placement_fee_lines_audit AFTER INSERT OR UPDATE ON public.placement_fee_lines FOR EACH ROW EXECUTE FUNCTION audit_fee_lines();
+CREATE TRIGGER placement_fee_lines_author_in_org BEFORE INSERT OR UPDATE ON public.placement_fee_lines FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER placement_fees_audit AFTER INSERT OR UPDATE ON public.placement_fees FOR EACH ROW EXECUTE FUNCTION audit_placement_fees();
+CREATE TRIGGER placement_fees_author_in_org BEFORE INSERT OR UPDATE ON public.placement_fees FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER placements_audit AFTER INSERT OR DELETE OR UPDATE ON public.placements FOR EACH ROW EXECUTE FUNCTION audit_placements();
+CREATE TRIGGER placements_author_in_org BEFORE INSERT OR UPDATE ON public.placements FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by', 'owner_user_id', 'sourced_by_user_id');
+CREATE TRIGGER placements_sync_stage AFTER INSERT OR UPDATE OF status ON public.placements FOR EACH ROW EXECUTE FUNCTION sync_candidate_stage_with_placement();
+CREATE TRIGGER project_reports_author_in_org BEFORE INSERT OR UPDATE ON public.project_reports FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('generated_by');
+CREATE TRIGGER guard_lead_recruiter_changes BEFORE INSERT OR UPDATE ON public.projects FOR EACH ROW EXECUTE FUNCTION guard_lead_recruiter_changes();
+CREATE TRIGGER projects_author_in_org BEFORE INSERT OR UPDATE ON public.projects FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by', 'lead_recruiter_id');
+CREATE TRIGGER provider_models_activation_gate BEFORE INSERT OR UPDATE ON public.provider_models FOR EACH ROW EXECUTE FUNCTION guard_provider_model_status();
+CREATE TRIGGER role_success_profiles_author_in_org BEFORE INSERT OR UPDATE ON public.role_success_profiles FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('approved_by', 'created_by');
+CREATE TRIGGER role_success_profiles_guard BEFORE INSERT OR UPDATE ON public.role_success_profiles FOR EACH ROW EXECUTE FUNCTION guard_role_success_profiles();
+CREATE TRIGGER shortlists_author_in_org BEFORE INSERT OR UPDATE ON public.shortlists FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by', 'submitted_by');
+CREATE TRIGGER skills_author_in_org BEFORE INSERT OR UPDATE ON public.skills FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by');
+CREATE TRIGGER skills_record_version AFTER INSERT OR UPDATE ON public.skills FOR EACH ROW EXECUTE FUNCTION record_skill_version();
+CREATE TRIGGER sourcing_run_results_author_in_org BEFORE INSERT OR UPDATE ON public.sourcing_run_results FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('promoted_by');
+CREATE TRIGGER sourcing_runs_author_in_org BEFORE INSERT OR UPDATE ON public.sourcing_runs FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by', 'executed_by');
+CREATE TRIGGER sourcing_runs_guard BEFORE INSERT OR UPDATE ON public.sourcing_runs FOR EACH ROW EXECUTE FUNCTION guard_sourcing_runs();
+CREATE TRIGGER staff_invitations_admin_grant BEFORE INSERT ON public.staff_invitations FOR EACH ROW EXECUTE FUNCTION guard_admin_invitations();
+CREATE TRIGGER tasks_author_in_org BEFORE INSERT OR UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION guard_author_in_org('created_by', 'assignee_id', 'completed_by');
+CREATE TRIGGER tasks_guard_assignee BEFORE INSERT OR UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION guard_task_assignee_changes();
+CREATE TRIGGER guard_user_privilege_changes BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION guard_user_privilege_changes();
+CREATE TRIGGER users_audit AFTER UPDATE OF role, status, is_founder, organization_id ON public.users FOR EACH ROW EXECUTE FUNCTION audit_member_changes();
+CREATE TRIGGER users_manager_audit AFTER UPDATE OF manager_id ON public.users FOR EACH ROW EXECUTE FUNCTION audit_member_manager();
+
+
+-- ======================= ROW LEVEL SECURITY POLICIES =======================
+-- 261 policies. This is the real authorization boundary; the
+-- application layers above it are defence in depth.
+
+CREATE POLICY activity_events_select ON activity_events AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org) AND
+CASE visibility
+    WHEN 'org'::text THEN true
+    WHEN 'fees'::text THEN (( SELECT can_read_fees() AS can_read_fees) OR ((placement_id IS NOT NULL) AND is_placement_credited(placement_id)))
+    WHEN 'admin'::text THEN ( SELECT is_org_admin() AS is_org_admin)
+    ELSE false
+END));
+
+CREATE POLICY admin_grant_requests_admin_read ON admin_grant_requests AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND COALESCE(( SELECT is_org_admin() AS is_org_admin), false)));
+
+CREATE POLICY boolean_queries_agent_insert ON boolean_queries AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY boolean_queries_agent_select ON boolean_queries AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY boolean_queries_role_delete ON boolean_queries AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY boolean_queries_role_insert ON boolean_queries AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY boolean_queries_role_select ON boolean_queries AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY boolean_queries_role_update ON boolean_queries AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY calibration_history_agent_insert ON calibration_history AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY calibration_history_role_insert ON calibration_history AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY calibration_history_role_select ON calibration_history AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY candidate_erasure_requests_select ON candidate_erasure_requests AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((( SELECT can_read_org() AS can_read_org) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id))) OR (( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder))));
+
+CREATE POLICY candidate_erasure_requests_update ON candidate_erasure_requests AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder)))
+  WITH CHECK ((( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder)));
+
+CREATE POLICY candidate_notes_agent_select ON candidate_notes AS PERMISSIVE FOR SELECT TO authenticated
+  USING ((( SELECT is_agent() AS is_agent) AND (organization_id IS NOT NULL)));
+
+CREATE POLICY candidate_notes_role_delete ON candidate_notes AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY candidate_notes_role_insert ON candidate_notes AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY candidate_notes_role_select ON candidate_notes AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY candidate_notes_role_update ON candidate_notes AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY candidate_notifications_role_delete ON candidate_notifications AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY candidate_notifications_role_insert ON candidate_notifications AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY candidate_notifications_role_select ON candidate_notifications AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY candidate_notifications_role_update ON candidate_notifications AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY candidate_outreach_agent_select ON candidate_outreach AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY candidate_outreach_role_delete ON candidate_outreach AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY candidate_outreach_role_insert ON candidate_outreach AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY candidate_outreach_role_select ON candidate_outreach AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY candidate_outreach_role_update ON candidate_outreach AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY candidate_portal_tokens_select ON candidate_portal_tokens AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY candidate_portal_tokens_update ON candidate_portal_tokens AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY candidate_scores_agent_insert ON candidate_scores AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY candidate_scores_agent_select ON candidate_scores AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY candidate_scores_agent_update ON candidate_scores AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (( SELECT is_agent() AS is_agent))
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY candidate_scores_role_delete ON candidate_scores AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY candidate_scores_role_insert ON candidate_scores AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY candidate_scores_role_select ON candidate_scores AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY candidate_scores_role_update ON candidate_scores AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY candidates_agent_select ON candidates AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY candidates_agent_update ON candidates AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (( SELECT is_agent() AS is_agent))
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY candidates_role_delete ON candidates AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY candidates_role_insert ON candidates AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY candidates_role_select ON candidates AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY candidates_role_update ON candidates AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY capability_assignments_admin_all ON capability_assignments AS PERMISSIVE FOR ALL TO authenticated
+  USING (( SELECT is_org_admin() AS is_org_admin))
+  WITH CHECK (( SELECT is_org_admin() AS is_org_admin));
+
+CREATE POLICY client_contacts_role_delete ON client_contacts AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY client_contacts_role_insert ON client_contacts AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY client_contacts_role_select ON client_contacts AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY client_contacts_role_update ON client_contacts AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY client_interviews_agent_select ON client_interviews AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY client_interviews_agent_update ON client_interviews AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text)))
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text)));
+
+CREATE POLICY client_interviews_org_only ON client_interviews AS PERMISSIVE FOR ALL TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = current_user_org_id())))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = current_user_org_id())));
+
+CREATE POLICY client_notes_role_delete ON client_notes AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates) AND ((visibility <> 'commercial'::text) OR ( SELECT can_read_fees() AS can_read_fees))));
+
+CREATE POLICY client_notes_role_insert ON client_notes AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates) AND ((visibility <> 'commercial'::text) OR ( SELECT can_read_fees() AS can_read_fees))));
+
+CREATE POLICY client_notes_role_select ON client_notes AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org) AND
+CASE visibility
+    WHEN 'org'::text THEN true
+    WHEN 'commercial'::text THEN ( SELECT can_read_fees() AS can_read_fees)
+    ELSE false
+END));
+
+CREATE POLICY client_notes_role_update ON client_notes AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates) AND ((visibility <> 'commercial'::text) OR ( SELECT can_read_fees() AS can_read_fees))))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates) AND ((visibility <> 'commercial'::text) OR ( SELECT can_read_fees() AS can_read_fees))));
+
+CREATE POLICY clients_founder_select ON clients AS PERMISSIVE FOR SELECT TO authenticated
+  USING ((( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder)));
+
+CREATE POLICY clients_role_delete ON clients AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY clients_role_insert ON clients AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY clients_role_select ON clients AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY clients_role_update ON clients AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY desk_digests_agent_insert ON desk_digests AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (created_by = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY desk_digests_role_insert ON desk_digests AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_manage_desk() AS can_manage_desk)));
+
+CREATE POLICY desk_digests_role_select ON desk_digests AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_manage_desk() AS can_manage_desk)));
+
+CREATE POLICY email_suppressions_admin_insert ON email_suppressions AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin) AND (NOT ( SELECT is_agent() AS is_agent)) AND (reason = 'manual'::text)));
+
+CREATE POLICY email_suppressions_role_select ON email_suppressions AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY engagement_states_agent_insert ON engagement_states AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY engagement_states_agent_select ON engagement_states AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY engagement_states_agent_update ON engagement_states AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT is_agent() AS is_agent) AND (state <> 'escalated'::text)))
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND ((state <> 'escalated'::text) OR (escalation_reason IS NOT NULL))));
+
+CREATE POLICY engagement_states_role_select ON engagement_states AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY engagement_states_role_update ON engagement_states AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY executive_assessments_role_delete ON executive_assessments AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_assessments_role_insert ON executive_assessments AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_assessments_role_select ON executive_assessments AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY executive_assessments_role_update ON executive_assessments AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY exec_audit_role_insert ON executive_audit_events AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (actor_id = ( SELECT auth.uid() AS uid)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY exec_audit_role_select ON executive_audit_events AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY executive_audit_events_agent_insert ON executive_audit_events AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (actor_id = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY exec_competencies_role_delete ON executive_competencies AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY exec_competencies_role_insert ON executive_competencies AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY exec_competencies_role_select ON executive_competencies AS PERMISSIVE FOR SELECT TO authenticated
+  USING ((((organization_id IS NULL) OR (organization_id = ( SELECT current_user_org_id() AS current_user_org_id))) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY exec_competencies_role_update ON executive_competencies AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY executive_competencies_agent_select ON executive_competencies AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY executive_interview_plans_agent_select ON executive_interview_plans AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY executive_interview_plans_agent_update ON executive_interview_plans AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text)))
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text)));
+
+CREATE POLICY executive_interview_plans_role_delete ON executive_interview_plans AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_interview_plans_role_insert ON executive_interview_plans AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_interview_plans_role_select ON executive_interview_plans AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY executive_interview_plans_role_update ON executive_interview_plans AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_risk_reviews_role_delete ON executive_risk_reviews AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_risk_reviews_role_insert ON executive_risk_reviews AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_risk_reviews_role_select ON executive_risk_reviews AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY executive_risk_reviews_role_update ON executive_risk_reviews AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY exec_templates_role_delete ON executive_role_templates AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY exec_templates_role_insert ON executive_role_templates AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY exec_templates_role_select ON executive_role_templates AS PERMISSIVE FOR SELECT TO authenticated
+  USING ((((organization_id IS NULL) OR (organization_id = ( SELECT current_user_org_id() AS current_user_org_id))) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY exec_templates_role_update ON executive_role_templates AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY executive_search_candidates_role_delete ON executive_search_candidates AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_search_candidates_role_insert ON executive_search_candidates AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_search_candidates_role_select ON executive_search_candidates AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY executive_search_candidates_role_update ON executive_search_candidates AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_search_competencies_agent_select ON executive_search_competencies AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY executive_search_competencies_role_delete ON executive_search_competencies AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_search_competencies_role_insert ON executive_search_competencies AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_search_competencies_role_select ON executive_search_competencies AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY executive_search_competencies_role_update ON executive_search_competencies AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_searches_agent_select ON executive_searches AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY executive_searches_agent_update ON executive_searches AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (( SELECT is_agent() AS is_agent))
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY executive_searches_role_delete ON executive_searches AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_searches_role_insert ON executive_searches AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY executive_searches_role_select ON executive_searches AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY executive_searches_role_update ON executive_searches AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY fee_terms_role_delete ON fee_terms AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY fee_terms_role_insert ON fee_terms AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY fee_terms_role_select ON fee_terms AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_fees() AS can_read_fees)));
+
+CREATE POLICY fee_terms_role_update ON fee_terms AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY feedback_agent_select ON feedback AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY feedback_agent_update ON feedback AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (( SELECT is_agent() AS is_agent))
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY feedback_role_delete ON feedback AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY feedback_role_insert ON feedback AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY feedback_role_select ON feedback AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY feedback_role_update ON feedback AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY hiring_manager_reviews_role_delete ON hiring_manager_reviews AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY hiring_manager_reviews_role_insert ON hiring_manager_reviews AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY hiring_manager_reviews_role_select ON hiring_manager_reviews AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY hiring_manager_reviews_role_update ON hiring_manager_reviews AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY hiring_manager_tokens_role_delete ON hiring_manager_tokens AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY hiring_manager_tokens_role_insert ON hiring_manager_tokens AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY hiring_manager_tokens_role_select ON hiring_manager_tokens AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY hiring_manager_tokens_role_update ON hiring_manager_tokens AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY interview_plans_agent_select ON interview_plans AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY interview_plans_agent_update ON interview_plans AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text)))
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text)));
+
+CREATE POLICY interview_plans_org_only ON interview_plans AS PERMISSIVE FOR ALL TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = current_user_org_id())))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = current_user_org_id())));
+
+CREATE POLICY invitations_staff_select ON invitations AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY invoice_deliveries_insert ON invoice_deliveries AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY invoice_deliveries_select ON invoice_deliveries AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_fees() AS can_read_fees)));
+
+CREATE POLICY invoice_lines_delete ON invoice_lines AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY invoice_lines_insert ON invoice_lines AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY invoice_lines_select ON invoice_lines AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_fees() AS can_read_fees)));
+
+CREATE POLICY invoice_lines_update ON invoice_lines AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY invoice_templates_delete ON invoice_templates AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY invoice_templates_insert ON invoice_templates AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY invoice_templates_select ON invoice_templates AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_fees() AS can_read_fees)));
+
+CREATE POLICY invoice_templates_update ON invoice_templates AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY invoices_delete ON invoices AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY invoices_insert ON invoices AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY invoices_select ON invoices AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_fees() AS can_read_fees)));
+
+CREATE POLICY invoices_update ON invoices AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY job_specs_agent_select ON job_specs AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY job_specs_agent_update ON job_specs AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT is_agent() AS is_agent) AND (is_final = false)))
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (is_final = false)));
+
+CREATE POLICY job_specs_role_delete ON job_specs AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY job_specs_role_insert ON job_specs AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY job_specs_role_select ON job_specs AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY job_specs_role_update ON job_specs AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY mandate_grants_delete ON mandate_grants AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY mandate_grants_insert ON mandate_grants AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY mandate_grants_select ON mandate_grants AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY mandate_shares_delete ON mandate_shares AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY mandate_shares_insert ON mandate_shares AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY mandate_shares_select ON mandate_shares AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY model_providers_admin_all ON model_providers AS PERMISSIVE FOR ALL TO authenticated
+  USING (( SELECT is_org_admin() AS is_org_admin))
+  WITH CHECK (( SELECT is_org_admin() AS is_org_admin));
+
+CREATE POLICY org_network_aliases_only ON network_profile_aliases AS PERMISSIVE FOR ALL TO authenticated
+  USING ((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)))
+  WITH CHECK ((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)));
+
+CREATE POLICY network_profiles_agent_select ON network_profiles AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY network_profiles_agent_update ON network_profiles AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (( SELECT is_agent() AS is_agent))
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY network_profiles_role_select ON network_profiles AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY network_profiles_role_update ON network_profiles AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY org_network_suppressions_read ON network_suppressions AS PERMISSIVE FOR SELECT TO authenticated
+  USING ((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)));
+
+CREATE POLICY okr_key_results_role_insert ON objective_key_results AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND COALESCE(( SELECT can_write_okrs() AS can_write_okrs), false) AND (EXISTS ( SELECT 1
+   FROM objectives o
+  WHERE ((o.id = objective_key_results.objective_id) AND (o.organization_id = objective_key_results.organization_id) AND ((o.owner_user_id = ( SELECT auth.uid() AS uid)) OR COALESCE(( SELECT can_manage_desk() AS can_manage_desk), false))))) AND ((kind <> 'financial'::text) OR ( SELECT can_read_fees() AS can_read_fees))));
+
+CREATE POLICY okr_key_results_role_select ON objective_key_results AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org) AND ((kind <> 'financial'::text) OR ( SELECT can_read_fees() AS can_read_fees))));
+
+CREATE POLICY okr_key_results_role_update ON objective_key_results AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND COALESCE(( SELECT can_write_okrs() AS can_write_okrs), false) AND (EXISTS ( SELECT 1
+   FROM objectives o
+  WHERE ((o.id = objective_key_results.objective_id) AND (o.organization_id = objective_key_results.organization_id) AND ((o.owner_user_id = ( SELECT auth.uid() AS uid)) OR COALESCE(( SELECT can_manage_desk() AS can_manage_desk), false)))))))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND COALESCE(( SELECT can_write_okrs() AS can_write_okrs), false) AND (EXISTS ( SELECT 1
+   FROM objectives o
+  WHERE ((o.id = objective_key_results.objective_id) AND (o.organization_id = objective_key_results.organization_id) AND ((o.owner_user_id = ( SELECT auth.uid() AS uid)) OR COALESCE(( SELECT can_manage_desk() AS can_manage_desk), false))))) AND ((kind <> 'financial'::text) OR ( SELECT can_read_fees() AS can_read_fees)) AND ((attested_by IS NULL) OR (attested_by = ( SELECT auth.uid() AS uid)))));
+
+CREATE POLICY objectives_role_insert ON objectives AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND COALESCE(( SELECT can_write_okrs() AS can_write_okrs), false) AND (created_by = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY objectives_role_select ON objectives AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY objectives_role_update ON objectives AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (COALESCE(( SELECT can_manage_desk() AS can_manage_desk), false) OR (owner_user_id = ( SELECT auth.uid() AS uid)))))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (COALESCE(( SELECT can_manage_desk() AS can_manage_desk), false) OR (owner_user_id = ( SELECT auth.uid() AS uid))) AND ((closed_by IS NULL) OR (closed_by = ( SELECT auth.uid() AS uid)))));
+
+CREATE POLICY org_comms_policy_admin_insert ON org_comms_policy AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY org_comms_policy_admin_update ON org_comms_policy AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY org_comms_policy_agent_select ON org_comms_policy AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY org_comms_policy_role_select ON org_comms_policy AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY organizations_founder_insert ON organizations AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK ((( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder)));
+
+CREATE POLICY organizations_founder_select ON organizations AS PERMISSIVE FOR SELECT TO authenticated
+  USING ((( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder)));
+
+CREATE POLICY organizations_role_select ON organizations AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY organizations_role_update ON organizations AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)))
+  WITH CHECK (((id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY outreach_strategies_agent_insert ON outreach_strategies AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text) AND (created_by = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY outreach_strategies_agent_select ON outreach_strategies AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY outreach_strategies_agent_update ON outreach_strategies AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text)))
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text) AND (created_by = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY outreach_strategies_role_select ON outreach_strategies AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY outreach_strategies_role_update ON outreach_strategies AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients) AND ((approved_by IS NULL) OR (approved_by = ( SELECT auth.uid() AS uid)))));
+
+CREATE POLICY fee_lines_role_delete ON placement_fee_lines AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY fee_lines_role_insert ON placement_fee_lines AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY fee_lines_role_select ON placement_fee_lines AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (( SELECT can_read_fees() AS can_read_fees) OR is_placement_credited(placement_id))));
+
+CREATE POLICY fee_lines_role_update ON placement_fee_lines AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY placement_fees_role_delete ON placement_fees AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY placement_fees_role_insert ON placement_fees AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY placement_fees_role_select ON placement_fees AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (( SELECT can_read_fees() AS can_read_fees) OR is_placement_credited(placement_id))));
+
+CREATE POLICY placement_fees_role_update ON placement_fees AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY placements_role_delete ON placements AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY placements_role_insert ON placements AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY placements_role_select ON placements AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY placements_role_update ON placements AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY prescreens_agent_insert ON prescreens AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (status = 'proposed'::text)));
+
+CREATE POLICY prescreens_agent_select ON prescreens AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY prescreens_agent_update ON prescreens AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT is_agent() AS is_agent) AND (status = ANY (ARRAY['proposed'::text, 'invited'::text, 'in_progress'::text]))))
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (status <> 'abandoned'::text)));
+
+CREATE POLICY prescreens_role_select ON prescreens AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY prescreens_role_update ON prescreens AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY project_reports_agent_insert ON project_reports AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (generated_by = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY project_reports_role_delete ON project_reports AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY project_reports_role_insert ON project_reports AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY project_reports_role_select ON project_reports AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY project_reports_role_update ON project_reports AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY projects_agent_select ON projects AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY projects_agent_update ON projects AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (( SELECT is_agent() AS is_agent))
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY projects_role_delete ON projects AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY projects_role_insert ON projects AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY projects_role_select ON projects AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY projects_role_update ON projects AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY provider_models_admin_all ON provider_models AS PERMISSIVE FOR ALL TO authenticated
+  USING (( SELECT is_org_admin() AS is_org_admin))
+  WITH CHECK (( SELECT is_org_admin() AS is_org_admin));
+
+CREATE POLICY role_success_profiles_agent_select ON role_success_profiles AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY role_success_profiles_agent_update ON role_success_profiles AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text)))
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (status = 'draft'::text)));
+
+CREATE POLICY role_success_profiles_role_delete ON role_success_profiles AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY role_success_profiles_role_insert ON role_success_profiles AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY role_success_profiles_role_select ON role_success_profiles AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY role_success_profiles_role_update ON role_success_profiles AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_mandates() AS can_write_mandates)));
+
+CREATE POLICY shortlists_agent_select ON shortlists AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY shortlists_agent_update ON shortlists AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT is_agent() AS is_agent) AND (submitted_at IS NULL)))
+  WITH CHECK ((( SELECT is_agent() AS is_agent) AND (submitted_at IS NULL)));
+
+CREATE POLICY shortlists_role_delete ON shortlists AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY shortlists_role_insert ON shortlists AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY shortlists_role_select ON shortlists AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY shortlists_role_update ON shortlists AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_share_clients() AS can_share_clients)));
+
+CREATE POLICY skill_versions_role_select ON skill_versions AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY skills_agent_select ON skills AS PERMISSIVE FOR SELECT TO authenticated
+  USING (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY skills_role_delete ON skills AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY skills_role_insert ON skills AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY skills_role_select ON skills AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY skills_role_update ON skills AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)));
+
+CREATE POLICY sourcing_run_candidates_role_delete ON sourcing_run_candidates AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY sourcing_run_candidates_role_insert ON sourcing_run_candidates AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY sourcing_run_candidates_role_select ON sourcing_run_candidates AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY sourcing_run_candidates_role_update ON sourcing_run_candidates AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY sourcing_run_results_role_delete ON sourcing_run_results AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY sourcing_run_results_role_insert ON sourcing_run_results AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY sourcing_run_results_role_select ON sourcing_run_results AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY sourcing_run_results_role_update ON sourcing_run_results AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY sourcing_runs_role_delete ON sourcing_runs AS PERMISSIVE FOR DELETE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY sourcing_runs_role_insert ON sourcing_runs AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY sourcing_runs_role_select ON sourcing_runs AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY sourcing_runs_role_update ON sourcing_runs AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)))
+  WITH CHECK (((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_write_candidates() AS can_write_candidates)));
+
+CREATE POLICY staff_invitations_admin_insert ON staff_invitations AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (( SELECT is_org_admin() AS is_org_admin) OR ( SELECT is_current_user_founder() AS is_current_user_founder)) AND (invited_by = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY staff_invitations_admin_select ON staff_invitations AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (( SELECT is_org_admin() AS is_org_admin) OR ( SELECT is_current_user_founder() AS is_current_user_founder))));
+
+CREATE POLICY staff_invitations_admin_update ON staff_invitations AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (( SELECT is_org_admin() AS is_org_admin) OR ( SELECT is_current_user_founder() AS is_current_user_founder))))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (( SELECT is_org_admin() AS is_org_admin) OR ( SELECT is_current_user_founder() AS is_current_user_founder))));
+
+CREATE POLICY staff_invitations_founder_insert ON staff_invitations AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK ((( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder) AND (invited_by = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY staff_invitations_founder_select ON staff_invitations AS PERMISSIVE FOR SELECT TO authenticated
+  USING ((( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder)));
+
+CREATE POLICY tasks_role_insert ON tasks AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND COALESCE(( SELECT can_manage_desk() AS can_manage_desk), false) AND (created_by = ( SELECT auth.uid() AS uid))));
+
+CREATE POLICY tasks_role_select ON tasks AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY tasks_role_update ON tasks AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (COALESCE(( SELECT can_manage_desk() AS can_manage_desk), false) OR (assignee_id = ( SELECT auth.uid() AS uid)))))
+  WITH CHECK (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND (COALESCE(( SELECT can_manage_desk() AS can_manage_desk), false) OR (assignee_id = ( SELECT auth.uid() AS uid))) AND ((completed_by IS NULL) OR (completed_by = ( SELECT auth.uid() AS uid)))));
+
+CREATE POLICY users_select_client_externals ON users AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((client_id IS NOT NULL) AND ((( SELECT can_read_org() AS can_read_org) AND (client_org(client_id) = ( SELECT current_user_org_id() AS current_user_org_id))) OR (( SELECT is_client_admin() AS is_client_admin) AND (client_id = ( SELECT current_user_client_id() AS current_user_client_id))))));
+
+CREATE POLICY users_select_self_org_or_founder ON users AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((id = ( SELECT auth.uid() AS uid)) OR (( SELECT can_read_org() AS can_read_org) AND (( SELECT is_current_user_founder() AS is_current_user_founder) OR ((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)))))));
+
+CREATE POLICY users_update_client_externals ON users AS PERMISSIVE FOR UPDATE TO authenticated
+  USING (((client_id IS NOT NULL) AND ((( SELECT can_share_clients() AS can_share_clients) AND (client_org(client_id) = ( SELECT current_user_org_id() AS current_user_org_id))) OR (( SELECT is_client_admin() AS is_client_admin) AND (client_id = ( SELECT current_user_client_id() AS current_user_client_id))))))
+  WITH CHECK (((client_id IS NOT NULL) AND ((( SELECT can_share_clients() AS can_share_clients) AND (client_org(client_id) = ( SELECT current_user_org_id() AS current_user_org_id))) OR (( SELECT is_client_admin() AS is_client_admin) AND (client_id = ( SELECT current_user_client_id() AS current_user_client_id))))));
+
+CREATE POLICY users_update_org_admin_or_founder ON users AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT can_read_org() AS can_read_org) AND (( SELECT is_current_user_founder() AS is_current_user_founder) OR ((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)))))
+  WITH CHECK ((( SELECT can_read_org() AS can_read_org) AND (( SELECT is_current_user_founder() AS is_current_user_founder) OR ((organization_id IS NOT NULL) AND (organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT is_org_admin() AS is_org_admin)))));
+
+CREATE POLICY users_update_self ON users AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((id = ( SELECT auth.uid() AS uid)))
+  WITH CHECK ((id = ( SELECT auth.uid() AS uid)));
+
+CREATE POLICY verdict_ledger_agent_insert ON verdict_ledger AS PERMISSIVE FOR INSERT TO authenticated
+  WITH CHECK (( SELECT is_agent() AS is_agent));
+
+CREATE POLICY verdict_ledger_role_select ON verdict_ledger AS PERMISSIVE FOR SELECT TO authenticated
+  USING (((organization_id = ( SELECT current_user_org_id() AS current_user_org_id)) AND ( SELECT can_read_org() AS can_read_org)));
+
+CREATE POLICY waitlist_anon_insert ON waitlist AS PERMISSIVE FOR INSERT TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY waitlist_founder_select ON waitlist AS PERMISSIVE FOR SELECT TO authenticated
+  USING ((( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder)));
+
+CREATE POLICY waitlist_founder_update ON waitlist AS PERMISSIVE FOR UPDATE TO authenticated
+  USING ((( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder)))
+  WITH CHECK ((( SELECT can_read_org() AS can_read_org) AND ( SELECT is_current_user_founder() AS is_current_user_founder)));
+
+
+-- ======================= FUNCTIONS =======================
+-- 154 functions. The SECURITY DEFINER ones are the 069 doctrine
+-- and the RLS helpers these policies call; a rebuild needs them
+-- before the policies above will even create.
+
+CREATE OR REPLACE FUNCTION public.active_admin_count(p_org uuid)
+ RETURNS integer
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT count(*)::int
+    FROM public.users
+   WHERE organization_id = p_org
+     AND role = 'admin'
+     AND status = 'active'
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.allocate_and_insert_assessment(p_search_id uuid, p_candidate_id uuid, p_organization_id uuid, p_source_plan_id uuid, p_content_json jsonb, p_created_by uuid)
+ RETURNS TABLE(id uuid, version integer, was_existing boolean)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_locked_link_id uuid;
+  v_next_version   int;
+  v_inserted_id    uuid;
+BEGIN
+  SELECT esc.id INTO v_locked_link_id
+    FROM public.executive_search_candidates AS esc
+   WHERE esc.search_id = p_search_id AND esc.candidate_id = p_candidate_id
+   FOR UPDATE;
+  IF v_locked_link_id IS NULL THEN
+    RAISE EXCEPTION 'Candidate % is not linked to search % (or not accessible).', p_candidate_id, p_search_id
+      USING ERRCODE = 'P0002';
+  END IF;
+  SELECT COALESCE(MAX(ea.version), 0) + 1 INTO v_next_version
+    FROM public.executive_assessments AS ea
+   WHERE ea.search_id = p_search_id AND ea.candidate_id = p_candidate_id;
+  INSERT INTO public.executive_assessments (
+    search_id, candidate_id, organization_id, source_plan_id, version,
+    content_json, status, created_by
+  )
+  VALUES (
+    p_search_id, p_candidate_id, p_organization_id, p_source_plan_id, v_next_version,
+    p_content_json, 'draft', p_created_by
+  )
+  RETURNING executive_assessments.id INTO v_inserted_id;
+  RETURN QUERY SELECT v_inserted_id, v_next_version, false::boolean;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.allocate_and_insert_client_interview(p_project_id uuid, p_organization_id uuid, p_content_json jsonb, p_is_generating boolean, p_created_by uuid, p_prompt_version text, p_model_version text)
+ RETURNS TABLE(id uuid, version integer, was_existing boolean)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_locked_project uuid;
+  v_existing_id    uuid;
+  v_existing_ver   int;
+  v_next_version   int;
+  v_inserted_id    uuid;
+BEGIN
+  SELECT p.id
+    INTO v_locked_project
+    FROM public.projects AS p
+   WHERE p.id = p_project_id
+     AND p.organization_id = p_organization_id
+   FOR UPDATE;
+
+  IF v_locked_project IS NULL THEN
+    RAISE EXCEPTION 'Project % is not accessible in organization %.', p_project_id, p_organization_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  IF p_is_generating THEN
+    SELECT ci.id, ci.version
+      INTO v_existing_id, v_existing_ver
+      FROM public.client_interviews AS ci
+     WHERE ci.project_id = p_project_id
+       AND ci.is_generating = true
+     ORDER BY ci.version DESC
+     LIMIT 1;
+
+    IF v_existing_id IS NOT NULL THEN
+      RETURN QUERY SELECT v_existing_id, v_existing_ver, true::boolean;
+      RETURN;
+    END IF;
+  END IF;
+
+  SELECT COALESCE(MAX(ci.version), 0) + 1
+    INTO v_next_version
+    FROM public.client_interviews AS ci
+   WHERE ci.project_id = p_project_id;
+
+  INSERT INTO public.client_interviews (
+    project_id, organization_id, version, content_json, status,
+    is_generating, created_by, prompt_version, model_version
+  )
+  VALUES (
+    p_project_id, p_organization_id, v_next_version, p_content_json, 'draft',
+    p_is_generating, p_created_by, p_prompt_version, p_model_version
+  )
+  RETURNING client_interviews.id INTO v_inserted_id;
+
+  RETURN QUERY SELECT v_inserted_id, v_next_version, false::boolean;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.allocate_and_insert_interview_plan(p_search_id uuid, p_candidate_id uuid, p_organization_id uuid, p_source_profile_id uuid, p_content_json jsonb, p_is_generating boolean, p_created_by uuid, p_prompt_version text, p_model_version text)
+ RETURNS TABLE(id uuid, version integer, was_existing boolean)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_locked_link_id uuid;
+  v_existing_id    uuid;
+  v_existing_ver   int;
+  v_next_version   int;
+  v_inserted_id    uuid;
+BEGIN
+  SELECT esc.id
+    INTO v_locked_link_id
+    FROM public.executive_search_candidates AS esc
+   WHERE esc.search_id = p_search_id
+     AND esc.candidate_id = p_candidate_id
+   FOR UPDATE;
+
+  IF v_locked_link_id IS NULL THEN
+    RAISE EXCEPTION 'Candidate % is not linked to search % (or not accessible).', p_candidate_id, p_search_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  IF p_is_generating THEN
+    SELECT eip.id, eip.version
+      INTO v_existing_id, v_existing_ver
+      FROM public.executive_interview_plans AS eip
+     WHERE eip.search_id = p_search_id
+       AND eip.candidate_id = p_candidate_id
+       AND eip.is_generating = true
+     ORDER BY eip.version DESC
+     LIMIT 1;
+
+    IF v_existing_id IS NOT NULL THEN
+      RETURN QUERY SELECT v_existing_id, v_existing_ver, true::boolean;
+      RETURN;
+    END IF;
+  END IF;
+
+  SELECT COALESCE(MAX(eip.version), 0) + 1
+    INTO v_next_version
+    FROM public.executive_interview_plans AS eip
+   WHERE eip.search_id = p_search_id
+     AND eip.candidate_id = p_candidate_id;
+
+  INSERT INTO public.executive_interview_plans (
+    search_id, candidate_id, organization_id, source_profile_id, version,
+    content_json, status, is_generating, created_by, prompt_version, model_version
+  )
+  VALUES (
+    p_search_id, p_candidate_id, p_organization_id, p_source_profile_id, v_next_version,
+    p_content_json, 'draft', p_is_generating, p_created_by, p_prompt_version, p_model_version
+  )
+  RETURNING executive_interview_plans.id INTO v_inserted_id;
+
+  RETURN QUERY SELECT v_inserted_id, v_next_version, false::boolean;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.allocate_and_insert_job_spec(p_project_id uuid, p_organization_id uuid, p_content text, p_content_json jsonb, p_is_final boolean, p_is_generating boolean, p_created_by uuid)
+ RETURNS TABLE(id uuid, version integer, was_existing boolean)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_locked_project_id uuid;
+  v_existing_id       uuid;
+  v_existing_version  int;
+  v_next_version      int;
+  v_inserted_id       uuid;
+BEGIN
+  SELECT projects.id
+    INTO v_locked_project_id
+    FROM public.projects
+   WHERE projects.id = p_project_id
+   FOR UPDATE;
+
+  IF v_locked_project_id IS NULL THEN
+    RAISE EXCEPTION 'Project % not found or not accessible.', p_project_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  IF p_is_generating THEN
+    SELECT job_specs.id, job_specs.version
+      INTO v_existing_id, v_existing_version
+      FROM public.job_specs
+     WHERE job_specs.project_id  = p_project_id
+       AND job_specs.is_generating = true
+     ORDER BY job_specs.version DESC
+     LIMIT 1;
+
+    IF v_existing_id IS NOT NULL THEN
+      RETURN QUERY SELECT v_existing_id, v_existing_version, true::boolean;
+      RETURN;
+    END IF;
+  END IF;
+
+  SELECT COALESCE(MAX(job_specs.version), 0) + 1
+    INTO v_next_version
+    FROM public.job_specs
+   WHERE job_specs.project_id = p_project_id;
+
+  INSERT INTO public.job_specs (
+    project_id, organization_id, version,
+    content,    content_json,
+    is_final,   is_generating, created_by
+  )
+  VALUES (
+    p_project_id, p_organization_id, v_next_version,
+    p_content,    p_content_json,
+    p_is_final,   p_is_generating,   p_created_by
+  )
+  RETURNING job_specs.id INTO v_inserted_id;
+
+  RETURN QUERY SELECT v_inserted_id, v_next_version, false::boolean;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.allocate_and_insert_project_interview_plan(p_project_id uuid, p_candidate_id uuid, p_organization_id uuid, p_source_spec_id uuid, p_content_json jsonb, p_is_generating boolean, p_created_by uuid, p_prompt_version text, p_model_version text)
+ RETURNS TABLE(id uuid, version integer, was_existing boolean)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_locked_candidate uuid;
+  v_existing_id      uuid;
+  v_existing_ver     int;
+  v_next_version     int;
+  v_inserted_id      uuid;
+BEGIN
+  SELECT c.id
+    INTO v_locked_candidate
+    FROM public.candidates AS c
+   WHERE c.id = p_candidate_id
+     AND c.project_id = p_project_id
+   FOR UPDATE;
+
+  IF v_locked_candidate IS NULL THEN
+    RAISE EXCEPTION 'Candidate % does not belong to project % (or is not accessible).', p_candidate_id, p_project_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  IF p_is_generating THEN
+    SELECT ip.id, ip.version
+      INTO v_existing_id, v_existing_ver
+      FROM public.interview_plans AS ip
+     WHERE ip.project_id = p_project_id
+       AND ip.candidate_id = p_candidate_id
+       AND ip.is_generating = true
+     ORDER BY ip.version DESC
+     LIMIT 1;
+
+    IF v_existing_id IS NOT NULL THEN
+      RETURN QUERY SELECT v_existing_id, v_existing_ver, true::boolean;
+      RETURN;
+    END IF;
+  END IF;
+
+  SELECT COALESCE(MAX(ip.version), 0) + 1
+    INTO v_next_version
+    FROM public.interview_plans AS ip
+   WHERE ip.project_id = p_project_id
+     AND ip.candidate_id = p_candidate_id;
+
+  INSERT INTO public.interview_plans (
+    project_id, candidate_id, organization_id, source_spec_id, version,
+    content_json, status, is_generating, created_by, prompt_version, model_version
+  )
+  VALUES (
+    p_project_id, p_candidate_id, p_organization_id, p_source_spec_id, v_next_version,
+    p_content_json, 'draft', p_is_generating, p_created_by, p_prompt_version, p_model_version
+  )
+  RETURNING interview_plans.id INTO v_inserted_id;
+
+  RETURN QUERY SELECT v_inserted_id, v_next_version, false::boolean;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.allocate_and_insert_risk_review(p_search_id uuid, p_candidate_id uuid, p_organization_id uuid, p_source_profile_id uuid, p_source_plan_id uuid, p_content_json jsonb, p_is_generating boolean, p_created_by uuid, p_prompt_version text, p_model_version text)
+ RETURNS TABLE(id uuid, version integer, was_existing boolean)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_locked_link_id  uuid;
+  v_assessment_id   uuid;
+  v_existing_id     uuid;
+  v_existing_ver    int;
+  v_next_version    int;
+  v_inserted_id     uuid;
+BEGIN
+  -- Lock the candidate-linkage row. RLS scopes by org, so a NULL means the
+  -- candidate is not linked to this search (or not accessible).
+  SELECT esc.id
+    INTO v_locked_link_id
+    FROM public.executive_search_candidates AS esc
+   WHERE esc.search_id = p_search_id
+     AND esc.candidate_id = p_candidate_id
+   FOR UPDATE;
+
+  IF v_locked_link_id IS NULL THEN
+    RAISE EXCEPTION 'Candidate % is not linked to search % (or not accessible).', p_candidate_id, p_search_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  -- The gate: a risk review is analysis of an approved assessment, which
+  -- transitively requires the approved plan, profile, and linkage behind it.
+  SELECT ea.id
+    INTO v_assessment_id
+    FROM public.executive_assessments AS ea
+   WHERE ea.search_id = p_search_id
+     AND ea.candidate_id = p_candidate_id
+     AND ea.status = 'approved';
+
+  IF v_assessment_id IS NULL THEN
+    RAISE EXCEPTION 'Candidate % has no approved assessment for search % — approve one before generating a risk review.', p_candidate_id, p_search_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  IF p_is_generating THEN
+    SELECT err.id, err.version
+      INTO v_existing_id, v_existing_ver
+      FROM public.executive_risk_reviews AS err
+     WHERE err.search_id = p_search_id
+       AND err.candidate_id = p_candidate_id
+       AND err.is_generating = true
+     ORDER BY err.version DESC
+     LIMIT 1;
+
+    IF v_existing_id IS NOT NULL THEN
+      RETURN QUERY SELECT v_existing_id, v_existing_ver, true::boolean;
+      RETURN;
+    END IF;
+  END IF;
+
+  SELECT COALESCE(MAX(err.version), 0) + 1
+    INTO v_next_version
+    FROM public.executive_risk_reviews AS err
+   WHERE err.search_id = p_search_id
+     AND err.candidate_id = p_candidate_id;
+
+  INSERT INTO public.executive_risk_reviews (
+    search_id, candidate_id, organization_id, source_assessment_id,
+    source_profile_id, source_plan_id, version, content_json, status,
+    is_generating, created_by, prompt_version, model_version
+  )
+  VALUES (
+    p_search_id, p_candidate_id, p_organization_id, v_assessment_id,
+    p_source_profile_id, p_source_plan_id, v_next_version, p_content_json, 'draft',
+    p_is_generating, p_created_by, p_prompt_version, p_model_version
+  )
+  RETURNING executive_risk_reviews.id INTO v_inserted_id;
+
+  RETURN QUERY SELECT v_inserted_id, v_next_version, false::boolean;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.allocate_and_insert_sourcing_run(p_project_id uuid, p_organization_id uuid, p_parent_run_id uuid, p_label text, p_content_json jsonb, p_created_by uuid, p_prompt_version text, p_model_version text)
+ RETURNS TABLE(id uuid, version integer, root_run_id uuid)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_new_id uuid := gen_random_uuid();
+  v_root uuid; v_next_version int; v_parent_proj uuid;
+BEGIN
+  IF p_parent_run_id IS NULL THEN
+    v_root := v_new_id; v_next_version := 1;
+  ELSE
+    SELECT sr.root_run_id, sr.project_id INTO v_root, v_parent_proj
+      FROM public.sourcing_runs AS sr WHERE sr.id = p_parent_run_id FOR UPDATE;
+    IF v_root IS NULL THEN
+      RAISE EXCEPTION 'Parent sourcing run % not found (or not accessible).', p_parent_run_id USING ERRCODE='P0002';
+    END IF;
+    IF v_parent_proj <> p_project_id THEN
+      RAISE EXCEPTION 'Parent sourcing run % belongs to a different project.', p_parent_run_id USING ERRCODE='P0002';
+    END IF;
+    SELECT COALESCE(MAX(sr.version),0)+1 INTO v_next_version FROM public.sourcing_runs AS sr WHERE sr.root_run_id = v_root;
+  END IF;
+  INSERT INTO public.sourcing_runs (id, project_id, organization_id, parent_run_id, root_run_id, version, label, status, content_json, created_by, prompt_version, model_version)
+  VALUES (v_new_id, p_project_id, p_organization_id, p_parent_run_id, v_root, v_next_version, p_label, 'draft', COALESCE(p_content_json,'{}'::jsonb), p_created_by, p_prompt_version, p_model_version);
+  RETURN QUERY SELECT v_new_id, v_next_version, v_root;
+END; $function$
+;
+
+CREATE OR REPLACE FUNCTION public.allocate_and_insert_success_profile(p_search_id uuid, p_organization_id uuid, p_content_json jsonb, p_is_generating boolean, p_created_by uuid, p_prompt_version text, p_model_version text)
+ RETURNS TABLE(id uuid, version integer, was_existing boolean)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_locked_search_id uuid;
+  v_existing_id      uuid;
+  v_existing_version int;
+  v_next_version     int;
+  v_inserted_id      uuid;
+BEGIN
+  SELECT executive_searches.id
+    INTO v_locked_search_id
+    FROM public.executive_searches
+   WHERE executive_searches.id = p_search_id
+   FOR UPDATE;
+
+  IF v_locked_search_id IS NULL THEN
+    RAISE EXCEPTION 'Executive search % not found or not accessible.', p_search_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  IF p_is_generating THEN
+    SELECT role_success_profiles.id, role_success_profiles.version
+      INTO v_existing_id, v_existing_version
+      FROM public.role_success_profiles
+     WHERE role_success_profiles.search_id = p_search_id
+       AND role_success_profiles.is_generating = true
+     ORDER BY role_success_profiles.version DESC
+     LIMIT 1;
+
+    IF v_existing_id IS NOT NULL THEN
+      RETURN QUERY SELECT v_existing_id, v_existing_version, true::boolean;
+      RETURN;
+    END IF;
+  END IF;
+
+  SELECT COALESCE(MAX(role_success_profiles.version), 0) + 1
+    INTO v_next_version
+    FROM public.role_success_profiles
+   WHERE role_success_profiles.search_id = p_search_id;
+
+  INSERT INTO public.role_success_profiles (
+    search_id, organization_id, version, content_json,
+    status, is_generating, created_by, prompt_version, model_version
+  )
+  VALUES (
+    p_search_id, p_organization_id, v_next_version, p_content_json,
+    'draft', p_is_generating, p_created_by, p_prompt_version, p_model_version
+  )
+  RETURNING role_success_profiles.id INTO v_inserted_id;
+
+  RETURN QUERY SELECT v_inserted_id, v_next_version, false::boolean;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.approve_admin_grant(p_request_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor uuid := (SELECT auth.uid()); v_org uuid := (SELECT public.current_user_org_id());
+  v_req public.admin_grant_requests%ROWTYPE; v_label text;
+BEGIN
+  IF v_actor IS NULL OR NOT coalesce(public.is_org_admin(), false) THEN
+    RAISE EXCEPTION 'Only an admin may approve an admin grant.' USING ERRCODE='insufficient_privilege';
+  END IF;
+  SELECT * INTO v_req FROM public.admin_grant_requests
+   WHERE id = p_request_id AND organization_id = v_org FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'That request is not yours to decide.' USING ERRCODE='P0002'; END IF;
+  IF v_req.status <> 'pending' THEN RAISE EXCEPTION 'That request is already %.', v_req.status USING ERRCODE='P0001'; END IF;
+  IF v_req.expires_at <= now() THEN RAISE EXCEPTION 'That request has expired. Propose it again.' USING ERRCODE='P0001'; END IF;
+  IF v_req.proposed_by = v_actor THEN
+    RAISE EXCEPTION 'An admin grant must be approved by a different admin.' USING ERRCODE='insufficient_privilege';
+  END IF;
+  PERFORM set_config('mandate.allow_admin_grant','on',true);
+  IF v_req.kind = 'promotion' THEN
+    UPDATE public.users SET role='admin' WHERE id = v_req.target_user_id;
+    SELECT coalesce(nullif(btrim(full_name),''), email) INTO v_label FROM public.users WHERE id = v_req.target_user_id;
+  ELSE
+    INSERT INTO public.staff_invitations (organization_id, email, full_name, role, invited_by, invited_by_label)
+    VALUES (v_org, v_req.target_email, v_req.target_full_name, 'admin', v_req.proposed_by,
+      (SELECT coalesce(nullif(btrim(full_name),''), email) FROM public.users WHERE id = v_req.proposed_by));
+    v_label := v_req.target_email;
+  END IF;
+  PERFORM set_config('mandate.allow_admin_grant','',true);
+  UPDATE public.admin_grant_requests SET status='approved', decided_by=v_actor, decided_at=now() WHERE id = p_request_id;
+  PERFORM public.write_activity_event(
+    p_organization_id => v_org, p_event_type => 'admin_grant_approved', p_visibility => 'admin',
+    p_target_user_id => v_req.target_user_id,
+    p_detail => jsonb_build_object('request_id', p_request_id, 'kind', v_req.kind, 'target', v_label,
+                                   'proposed_by', v_req.proposed_by));
+  RETURN jsonb_build_object('outcome','approved','kind',v_req.kind);
+END; $function$
+;
+
+CREATE OR REPLACE FUNCTION public.approve_assessment(p_assessment_id uuid, p_search_id uuid, p_candidate_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor     uuid := auth.uid();
+  v_target_id uuid;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to approve an assessment.' USING ERRCODE = 'P0001';
+  END IF;
+  PERFORM set_config('mandate.allow_assessment_transition', 'on', true);
+  SELECT ea.id INTO v_target_id
+    FROM public.executive_assessments AS ea
+   WHERE ea.id = p_assessment_id AND ea.search_id = p_search_id AND ea.candidate_id = p_candidate_id
+     AND ea.status IN ('draft', 'archived')
+   FOR UPDATE;
+  IF v_target_id IS NULL THEN
+    RAISE EXCEPTION 'Assessment % could not be approved (not found, not accessible, or not a draft).', p_assessment_id
+      USING ERRCODE = 'P0002';
+  END IF;
+  UPDATE public.executive_assessments AS ea
+     SET status = 'archived', updated_at = now()
+   WHERE ea.search_id = p_search_id AND ea.candidate_id = p_candidate_id
+     AND ea.status = 'approved' AND ea.id <> p_assessment_id;
+  UPDATE public.executive_assessments AS ea
+     SET status = 'approved', approved_by = v_actor, approved_at = now(), updated_at = now()
+   WHERE ea.id = p_assessment_id;
+  PERFORM set_config('mandate.allow_assessment_transition', '', true);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.approve_client_interview(p_interview_id uuid, p_project_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor     uuid := auth.uid();
+  v_target_id uuid;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to approve a client interview.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM set_config('mandate.allow_client_interview_transition', 'on', true);
+
+  SELECT ci.id
+    INTO v_target_id
+    FROM public.client_interviews AS ci
+   WHERE ci.id = p_interview_id
+     AND ci.project_id = p_project_id
+     AND ci.is_generating = false
+     AND ci.generation_error IS NULL
+     AND ci.status IN ('draft', 'archived')
+   FOR UPDATE;
+
+  IF v_target_id IS NULL THEN
+    RAISE EXCEPTION 'Client interview % could not be approved (not found, not accessible, or not a healthy draft).', p_interview_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.client_interviews AS ci
+     SET status = 'archived', updated_at = now()
+   WHERE ci.project_id = p_project_id
+     AND ci.status = 'approved'
+     AND ci.id <> p_interview_id;
+
+  UPDATE public.client_interviews AS ci
+     SET status = 'approved',
+         approved_by = v_actor,
+         approved_at = now(),
+         updated_at = now()
+   WHERE ci.id = p_interview_id;
+
+  PERFORM set_config('mandate.allow_client_interview_transition', '', true);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.approve_interview_plan(p_plan_id uuid, p_search_id uuid, p_candidate_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor     uuid := auth.uid();
+  v_target_id uuid;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to approve an interview plan.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM set_config('mandate.allow_plan_transition', 'on', true);
+
+  SELECT eip.id
+    INTO v_target_id
+    FROM public.executive_interview_plans AS eip
+   WHERE eip.id = p_plan_id
+     AND eip.search_id = p_search_id
+     AND eip.candidate_id = p_candidate_id
+     AND eip.is_generating = false
+     AND eip.generation_error IS NULL
+     AND eip.status IN ('draft', 'archived')
+   FOR UPDATE;
+
+  IF v_target_id IS NULL THEN
+    RAISE EXCEPTION 'Interview plan % could not be approved (not found, not accessible, or not a healthy draft).', p_plan_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.executive_interview_plans AS eip
+     SET status = 'archived', updated_at = now()
+   WHERE eip.search_id = p_search_id
+     AND eip.candidate_id = p_candidate_id
+     AND eip.status = 'approved'
+     AND eip.id <> p_plan_id;
+
+  UPDATE public.executive_interview_plans AS eip
+     SET status = 'approved', approved_by = v_actor, approved_at = now(), updated_at = now()
+   WHERE eip.id = p_plan_id;
+
+  PERFORM set_config('mandate.allow_plan_transition', '', true);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.approve_project_interview_plan(p_plan_id uuid, p_project_id uuid, p_candidate_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor     uuid := auth.uid();
+  v_target_id uuid;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to approve an interview plan.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM set_config('mandate.allow_project_plan_transition', 'on', true);
+
+  SELECT ip.id
+    INTO v_target_id
+    FROM public.interview_plans AS ip
+   WHERE ip.id = p_plan_id
+     AND ip.project_id = p_project_id
+     AND ip.candidate_id = p_candidate_id
+     AND ip.is_generating = false
+     AND ip.generation_error IS NULL
+     AND ip.status IN ('draft', 'archived')
+   FOR UPDATE;
+
+  IF v_target_id IS NULL THEN
+    RAISE EXCEPTION 'Interview plan % could not be approved (not found, not accessible, or not a healthy draft).', p_plan_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.interview_plans AS ip
+     SET status = 'archived', updated_at = now()
+   WHERE ip.project_id = p_project_id
+     AND ip.candidate_id = p_candidate_id
+     AND ip.status = 'approved'
+     AND ip.id <> p_plan_id;
+
+  UPDATE public.interview_plans AS ip
+     SET status = 'approved',
+         approved_by = v_actor,
+         approved_at = now(),
+         updated_at = now()
+   WHERE ip.id = p_plan_id;
+
+  PERFORM set_config('mandate.allow_project_plan_transition', '', true);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.approve_risk_review(p_risk_review_id uuid, p_search_id uuid, p_candidate_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor     uuid := auth.uid();
+  v_target_id uuid;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to approve a risk review.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM set_config('mandate.allow_risk_review_transition', 'on', true);
+
+  SELECT err.id
+    INTO v_target_id
+    FROM public.executive_risk_reviews AS err
+   WHERE err.id = p_risk_review_id
+     AND err.search_id = p_search_id
+     AND err.candidate_id = p_candidate_id
+     AND err.is_generating = false
+     AND err.generation_error IS NULL
+     AND err.status IN ('draft', 'archived')
+   FOR UPDATE;
+
+  IF v_target_id IS NULL THEN
+    RAISE EXCEPTION 'Risk review % could not be approved (not found, not accessible, or not a healthy draft).', p_risk_review_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.executive_risk_reviews AS err
+     SET status = 'archived', updated_at = now()
+   WHERE err.search_id = p_search_id
+     AND err.candidate_id = p_candidate_id
+     AND err.status = 'approved'
+     AND err.id <> p_risk_review_id;
+
+  UPDATE public.executive_risk_reviews AS err
+     SET status = 'approved',
+         approved_by = v_actor,
+         approved_at = now(),
+         updated_at = now()
+   WHERE err.id = p_risk_review_id;
+
+  PERFORM set_config('mandate.allow_risk_review_transition', '', true);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.approve_success_profile(p_profile_id uuid, p_search_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor     uuid := auth.uid();
+  v_target_id uuid;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to approve a profile.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM set_config('mandate.allow_profile_transition', 'on', true);
+
+  SELECT rsp.id
+    INTO v_target_id
+    FROM public.role_success_profiles AS rsp
+   WHERE rsp.id = p_profile_id
+     AND rsp.search_id = p_search_id
+     AND rsp.is_generating = false
+     AND rsp.generation_error IS NULL
+     AND rsp.status IN ('draft', 'archived')
+   FOR UPDATE;
+
+  IF v_target_id IS NULL THEN
+    RAISE EXCEPTION 'Profile % could not be approved (not found, not accessible, or not a healthy draft).', p_profile_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  -- Archive-then-promote, in that order: the partial unique index on
+  -- (search_id) WHERE status='approved' is enforced per row, so promoting
+  -- first would transiently create two approved rows and abort. Both
+  -- statements run in this function's transaction — a failure in either
+  -- rolls back the pair, so approve + archive still cannot partially apply.
+  UPDATE public.role_success_profiles AS rsp
+     SET status = 'archived',
+         updated_at = now()
+   WHERE rsp.search_id = p_search_id
+     AND rsp.status = 'approved'
+     AND rsp.id <> p_profile_id;
+
+  UPDATE public.role_success_profiles AS rsp
+     SET status = 'approved',
+         approved_by = v_actor,
+         approved_at = now(),
+         updated_at = now()
+   WHERE rsp.id = p_profile_id;
+
+  PERFORM set_config('mandate.allow_profile_transition', '', true);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_client_contacts()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_type text;
+  v_mode text;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => 'client_contact_added',
+      p_visibility      => 'org',
+      p_client_id       => NEW.client_id,
+      p_detail          => jsonb_build_object(
+                             'contact_id', NEW.id,
+                             'name', NEW.full_name,
+                             'title', NEW.title,
+                             'contact_type', NEW.contact_type,
+                             'is_primary', NEW.is_primary,
+                             'mode', 'created'));
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.is_archived IS DISTINCT FROM OLD.is_archived THEN
+      v_type := CASE WHEN NEW.is_archived THEN 'client_contact_removed'
+                     ELSE 'client_contact_added' END;
+      v_mode := CASE WHEN NEW.is_archived THEN 'archived' ELSE 'restored' END;
+
+    ELSIF NEW.full_name    IS DISTINCT FROM OLD.full_name
+       OR NEW.title        IS DISTINCT FROM OLD.title
+       OR NEW.email        IS DISTINCT FROM OLD.email
+       OR NEW.contact_type IS DISTINCT FROM OLD.contact_type
+       OR NEW.is_primary   IS DISTINCT FROM OLD.is_primary THEN
+      v_type := 'client_contact_updated';
+      v_mode := 'edited';
+    ELSE
+      RETURN NEW;
+    END IF;
+
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => v_type,
+      p_visibility      => 'org',
+      p_client_id       => NEW.client_id,
+      p_detail          => jsonb_build_object(
+                             'contact_id', NEW.id,
+                             'name', NEW.full_name,
+                             'name_from', OLD.full_name,
+                             'title', NEW.title,
+                             'contact_type', NEW.contact_type,
+                             'is_primary', NEW.is_primary,
+                             'was_primary', OLD.is_primary,
+                             'mode', v_mode));
+    RETURN NEW;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.clients WHERE id = OLD.client_id) THEN
+    RETURN OLD;
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => OLD.organization_id,
+    p_event_type      => 'client_contact_removed',
+    p_visibility      => 'org',
+    p_client_id       => OLD.client_id,
+    p_detail          => jsonb_build_object(
+                           'contact_id', OLD.id,
+                           'name', OLD.full_name,
+                           'title', OLD.title,
+                           'contact_type', OLD.contact_type,
+                           'mode', 'deleted'));
+  RETURN OLD;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_fee_lines()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.kind <> 'instalment' THEN
+      PERFORM public.write_activity_event(
+        p_organization_id => NEW.organization_id,
+        p_event_type      => 'fee_reversed',
+        p_visibility      => 'fees',
+        p_placement_id    => NEW.placement_id,
+        p_detail          => jsonb_build_object(
+                               'label', NEW.label,
+                               'kind', NEW.kind,
+                               'amount', NEW.amount,
+                               'currency', NEW.currency,
+                               'base_amount', NEW.base_amount,
+                               'base_currency', NEW.base_currency,
+                               'earned_on', NEW.earned_on,
+                               'reason', NEW.reason));
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF NEW.status IS DISTINCT FROM OLD.status
+     AND NEW.status IN ('earned', 'cancelled') THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => CASE NEW.status
+                             WHEN 'earned' THEN 'fee_line_earned'
+                             ELSE 'fee_line_cancelled'
+                           END,
+      p_visibility      => 'fees',
+      p_placement_id    => NEW.placement_id,
+      p_detail          => jsonb_build_object(
+                             'label', NEW.label,
+                             'amount', NEW.amount,
+                             'currency', NEW.currency,
+                             'base_amount', NEW.base_amount,
+                             'base_currency', NEW.base_currency,
+                             'earned_on', NEW.earned_on,
+                             'due_on', NEW.due_on));
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_fee_terms()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_row public.fee_terms;
+  v_type text;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    v_row := OLD;
+    v_type := 'fee_terms_deleted';
+  ELSIF TG_OP = 'INSERT' THEN
+    v_row := NEW;
+    v_type := 'fee_terms_created';
+  ELSE
+    v_row := NEW;
+    v_type := 'fee_terms_updated';
+    IF NEW.fee_model      IS NOT DISTINCT FROM OLD.fee_model
+       AND NEW.fee_percentage   IS NOT DISTINCT FROM OLD.fee_percentage
+       AND NEW.fixed_fee_amount IS NOT DISTINCT FROM OLD.fixed_fee_amount
+       AND NEW.currency         IS NOT DISTINCT FROM OLD.currency
+       AND NEW.fee_basis        IS NOT DISTINCT FROM OLD.fee_basis
+       AND NEW.guarantee_days   IS NOT DISTINCT FROM OLD.guarantee_days
+       AND NEW.payment_terms_days IS NOT DISTINCT FROM OLD.payment_terms_days
+       AND NEW.instalment_plan  IS NOT DISTINCT FROM OLD.instalment_plan THEN
+      RETURN NEW;
+    END IF;
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_row.organization_id,
+    p_event_type      => v_type,
+    p_visibility      => 'fees',
+    p_project_id      => v_row.project_id,
+    p_client_id       => v_row.client_id,
+    p_detail          => jsonb_build_object(
+                           'model', v_row.fee_model,
+                           'percentage', v_row.fee_percentage,
+                           'fixed_amount', v_row.fixed_fee_amount,
+                           'currency', v_row.currency,
+                           'guarantee_days', v_row.guarantee_days,
+                           'payment_terms_days', v_row.payment_terms_days,
+                           'scope', CASE WHEN v_row.client_id IS NOT NULL
+                                         THEN 'client' ELSE 'mandate' END));
+
+  IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_invitations()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => 'external_invited',
+      p_visibility      => 'org',
+      p_client_id       => NEW.client_id,
+      p_detail          => jsonb_build_object(
+                             'email', NEW.email,
+                             'invitee', NEW.full_name,
+                             'role', NEW.role,
+                             'mandates', coalesce(array_length(NEW.grant_project_ids, 1), 0)));
+    RETURN NEW;
+  END IF;
+
+  IF NEW.revoked_at IS NOT NULL AND OLD.revoked_at IS NULL THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => 'external_invitation_revoked',
+      p_visibility      => 'org',
+      p_client_id       => NEW.client_id,
+      p_detail          => jsonb_build_object(
+                             'email', NEW.email, 'invitee', NEW.full_name,
+                             'role', NEW.role));
+  END IF;
+
+  IF NEW.accepted_at IS NOT NULL AND OLD.accepted_at IS NULL THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => 'external_joined',
+      p_visibility      => 'org',
+      p_client_id       => NEW.client_id,
+      p_target_user_id  => NEW.accepted_user_id,
+      p_detail          => jsonb_build_object(
+                             'email', NEW.email, 'member', NEW.full_name,
+                             'role', NEW.role));
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_mandate_grants()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_member text;
+BEGIN
+  SELECT coalesce(nullif(btrim(u.full_name), ''), u.email) INTO v_member
+    FROM public.users u
+   WHERE u.id = coalesce(NEW.user_id, OLD.user_id);
+
+  IF TG_OP = 'INSERT' THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => 'external_access_granted',
+      p_visibility      => 'org',
+      p_project_id      => NEW.project_id,
+      p_client_id       => NEW.client_id,
+      p_target_user_id  => NEW.user_id,
+      p_detail          => jsonb_build_object('member', v_member));
+    RETURN NEW;
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => OLD.organization_id,
+    p_event_type      => 'external_access_revoked',
+    p_visibility      => 'org',
+    p_project_id      => OLD.project_id,
+    p_client_id       => OLD.client_id,
+    p_target_user_id  => OLD.user_id,
+    p_detail          => jsonb_build_object('member', v_member));
+  RETURN OLD;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_mandate_shares()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => 'mandate_shared',
+      p_visibility      => 'org',
+      p_project_id      => NEW.project_id,
+      p_client_id       => NEW.client_id);
+    RETURN NEW;
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => OLD.organization_id,
+    p_event_type      => 'mandate_unshared',
+    p_visibility      => 'org',
+    p_project_id      => OLD.project_id,
+    p_client_id       => OLD.client_id);
+  RETURN OLD;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_member_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org uuid := coalesce(NEW.organization_id, OLD.organization_id);
+  v_member text := coalesce(nullif(btrim(NEW.full_name), ''), NEW.email);
+  v_from_name text;
+  v_to_name text;
+BEGIN
+  IF NEW.client_id IS NOT NULL THEN
+    IF OLD.client_id IS NULL THEN
+      RETURN NEW;
+    END IF;
+
+    v_org := public.client_org(NEW.client_id);
+
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      PERFORM public.write_activity_event(
+        p_organization_id => v_org,
+        p_event_type      => 'external_role_changed',
+        p_visibility      => 'org',
+        p_client_id       => NEW.client_id,
+        p_target_user_id  => NEW.id,
+        p_detail          => jsonb_build_object(
+                               'from', OLD.role, 'to', NEW.role,
+                               'member', v_member));
+    END IF;
+
+    IF NEW.status IS DISTINCT FROM OLD.status THEN
+      PERFORM public.write_activity_event(
+        p_organization_id => v_org,
+        p_event_type      => 'external_status_changed',
+        p_visibility      => 'org',
+        p_client_id       => NEW.client_id,
+        p_target_user_id  => NEW.id,
+        p_detail          => jsonb_build_object(
+                               'from', OLD.status, 'to', NEW.status,
+                               'member', v_member));
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  IF NEW.organization_id IS DISTINCT FROM OLD.organization_id THEN
+    SELECT name INTO v_from_name FROM public.organizations WHERE id = OLD.organization_id;
+    SELECT name INTO v_to_name   FROM public.organizations WHERE id = NEW.organization_id;
+
+    IF OLD.organization_id IS NOT NULL THEN
+      PERFORM public.write_activity_event(
+        p_organization_id => OLD.organization_id,
+        p_event_type      => 'member_org_changed',
+        p_visibility      => 'admin',
+        p_detail          => jsonb_build_object(
+                               'from', v_from_name, 'to', v_to_name,
+                               'member', v_member, 'member_id', NEW.id::text));
+    END IF;
+
+    IF NEW.organization_id IS NOT NULL THEN
+      PERFORM public.write_activity_event(
+        p_organization_id => NEW.organization_id,
+        p_event_type      => 'member_org_changed',
+        p_visibility      => 'admin',
+        p_target_user_id  => NEW.id,
+        p_detail          => jsonb_build_object(
+                               'from', v_from_name, 'to', v_to_name,
+                               'member', v_member));
+    END IF;
+  END IF;
+
+  IF NEW.role IS DISTINCT FROM OLD.role THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => v_org,
+      p_event_type      => 'member_role_changed',
+      p_visibility      => 'admin',
+      p_target_user_id  => NEW.id,
+      p_detail          => jsonb_build_object(
+                             'from', OLD.role, 'to', NEW.role,
+                             'member', v_member));
+  END IF;
+
+  IF NEW.status IS DISTINCT FROM OLD.status THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => v_org,
+      p_event_type      => 'member_status_changed',
+      p_visibility      => 'admin',
+      p_target_user_id  => NEW.id,
+      p_detail          => jsonb_build_object(
+                             'from', OLD.status, 'to', NEW.status,
+                             'member', v_member));
+  END IF;
+
+  IF NEW.is_founder IS DISTINCT FROM OLD.is_founder THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => v_org,
+      p_event_type      => 'member_founder_changed',
+      p_visibility      => 'admin',
+      p_target_user_id  => NEW.id,
+      p_detail          => jsonb_build_object(
+                             'from', OLD.is_founder, 'to', NEW.is_founder,
+                             'member', v_member));
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_member_manager()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_member text := coalesce(nullif(btrim(NEW.full_name), ''), NEW.email);
+  v_from text;
+  v_to text;
+BEGIN
+  IF NEW.manager_id IS NOT DISTINCT FROM OLD.manager_id THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT coalesce(nullif(btrim(full_name), ''), email) INTO v_from
+    FROM public.users WHERE id = OLD.manager_id;
+  SELECT coalesce(nullif(btrim(full_name), ''), email) INTO v_to
+    FROM public.users WHERE id = NEW.manager_id;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => coalesce(NEW.organization_id, OLD.organization_id),
+    p_event_type      => 'member_manager_changed',
+    p_visibility      => 'admin',
+    p_target_user_id  => NEW.id,
+    p_detail          => jsonb_build_object(
+                           'from', v_from, 'to', v_to,
+                           'member', v_member));
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_placement_fees()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => 'fee_recorded',
+      p_visibility      => 'fees',
+      p_placement_id    => NEW.placement_id,
+      p_detail          => jsonb_build_object(
+                             'total', NEW.total_fee_amount,
+                             'currency', NEW.currency,
+                             'base_total', NEW.total_fee_base_amount,
+                             'base_currency', NEW.base_currency,
+                             'model', NEW.fee_model,
+                             'percentage', NEW.fee_percentage,
+                             'terms_source', NEW.terms_source));
+    RETURN NEW;
+  END IF;
+
+  IF NEW.total_fee_amount IS DISTINCT FROM OLD.total_fee_amount
+     OR NEW.fee_percentage IS DISTINCT FROM OLD.fee_percentage
+     OR NEW.currency       IS DISTINCT FROM OLD.currency THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => 'fee_updated',
+      p_visibility      => 'fees',
+      p_placement_id    => NEW.placement_id,
+      p_detail          => jsonb_build_object(
+                             'total_from', OLD.total_fee_amount,
+                             'total_to', NEW.total_fee_amount,
+                             'percentage_from', OLD.fee_percentage,
+                             'percentage_to', NEW.fee_percentage,
+                             'currency_from', OLD.currency,
+                             'currency_to', NEW.currency,
+                             'currency', NEW.currency));
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.audit_placements()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => NEW.organization_id,
+      p_event_type      => 'placement_recorded',
+      p_visibility      => 'org',
+      p_project_id      => NEW.project_id,
+      p_candidate_id    => NEW.candidate_id,
+      p_client_id       => NEW.client_id,
+      p_placement_id    => NEW.id,
+      p_detail          => jsonb_build_object(
+                             'status', NEW.status,
+                             'offer_date', NEW.offer_date,
+                             'signed_off_by', NEW.signed_off_by_label));
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.status IS DISTINCT FROM OLD.status THEN
+      PERFORM public.write_activity_event(
+        p_organization_id => NEW.organization_id,
+        p_event_type      => 'placement_status_changed',
+        p_visibility      => 'org',
+        p_project_id      => NEW.project_id,
+        p_candidate_id    => NEW.candidate_id,
+        p_client_id       => NEW.client_id,
+        p_placement_id    => NEW.id,
+        p_detail          => jsonb_build_object(
+                               'from', OLD.status,
+                               'to', NEW.status,
+                               'start_date', NEW.start_date,
+                               'reason', NEW.fell_through_reason));
+    END IF;
+
+    -- The label alone, deliberately. `signed_off_by_contact_id` is
+    -- ON DELETE SET NULL, so including it would emit "changed the sign-off
+    -- from Jane to Jane" for every placement a deleted contact ever signed.
+    IF NEW.signed_off_by_label IS DISTINCT FROM OLD.signed_off_by_label THEN
+      PERFORM public.write_activity_event(
+        p_organization_id => NEW.organization_id,
+        p_event_type      => 'placement_signoff_changed',
+        p_visibility      => 'org',
+        p_project_id      => NEW.project_id,
+        p_candidate_id    => NEW.candidate_id,
+        p_client_id       => NEW.client_id,
+        p_placement_id    => NEW.id,
+        p_detail          => jsonb_build_object(
+                               'from', OLD.signed_off_by_label,
+                               'to', NEW.signed_off_by_label,
+                               'contact_id', NEW.signed_off_by_contact_id));
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => OLD.organization_id,
+    p_event_type      => 'placement_deleted',
+    p_visibility      => 'org',
+    p_project_id      => OLD.project_id,
+    p_candidate_id    => OLD.candidate_id,
+    p_client_id       => OLD.client_id,
+    p_detail          => jsonb_build_object('status', OLD.status));
+  RETURN OLD;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.can_manage_desk()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT coalesce(public.current_user_role() IN ('admin', 'manager'), false)
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.can_read_fees()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT public.current_user_role() IN ('admin', 'manager', 'recruiter')
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.can_read_org()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT public.current_user_role()
+         IN ('admin', 'manager', 'recruiter', 'researcher', 'viewer')
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.can_share_clients()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT public.current_user_role() IN ('admin', 'manager', 'recruiter')
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.can_view_portal_mandate(p_project_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT coalesce(
+    EXISTS (
+      SELECT 1 FROM public.mandate_shares s
+       WHERE s.project_id = p_project_id
+         AND s.client_id = (SELECT public.current_user_client_id())
+    )
+    AND (
+      public.current_user_role() IN ('client_hr', 'client_admin')
+      OR EXISTS (
+        SELECT 1 FROM public.mandate_grants g
+         WHERE g.project_id = p_project_id
+           AND g.user_id = (SELECT auth.uid())
+      )
+    ),
+    false)
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.can_write_candidates()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT public.current_user_role() IN ('admin', 'manager', 'recruiter', 'researcher')
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.can_write_mandates()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT public.current_user_role() IN ('admin', 'manager', 'recruiter')
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.can_write_okrs()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT coalesce(
+    public.current_user_role() IN ('admin', 'manager', 'recruiter', 'researcher'),
+    false)
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidate_erasure_open(p_candidate_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.candidates c
+      JOIN public.candidate_erasure_requests r
+        ON r.organization_id = c.organization_id
+     WHERE c.id = p_candidate_id
+       AND r.resolved_at IS NULL
+       AND (
+         (r.network_profile_id IS NOT NULL
+          AND c.network_profile_id IS NOT NULL
+          AND r.network_profile_id = c.network_profile_id)
+         OR (c.network_profile_id IS NOT NULL
+             AND EXISTS (
+               SELECT 1 FROM public.network_profile_aliases a
+                WHERE a.organization_id = r.organization_id
+                  AND a.profile_id = c.network_profile_id
+                  AND a.identity_key = r.identity_key))
+         OR r.identity_key = public.candidate_identity_key(
+              c.email, c.linkedin_url, c.full_name, c.current_company)
+         OR c.id = ANY (r.covered_candidate_ids)
+       )
+  );
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidate_identity_key(p_email text, p_linkedin_url text, p_full_name text, p_current_company text)
+ RETURNS text
+ LANGUAGE sql
+ IMMUTABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT CASE
+    WHEN NULLIF(btrim(p_email), '') IS NOT NULL
+      THEN 'email:' || lower(btrim(p_email))
+    WHEN NULLIF(btrim(p_linkedin_url), '') IS NOT NULL
+      THEN 'linkedin:' || regexp_replace(lower(btrim(p_linkedin_url)), '/$', '')
+    ELSE
+      'name:' || lower(btrim(p_full_name))
+              || '|' || lower(btrim(COALESCE(p_current_company, '')))
+  END
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidate_portal_context(p_token uuid)
+ RETURNS TABLE(person_name text, email text, phone text, location text, linkedin_url text, github_url text, website_url text, twitter_url text, current_title text, current_company text, has_cv boolean, source_kind text, source_platform text, sourced_at timestamp with time zone, notified_at timestamp with time zone, organization_id uuid, organization_name text, expires_at timestamp with time zone, identity_basis text)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_tok public.candidate_portal_tokens%ROWTYPE;
+BEGIN
+  v_tok := public.candidate_portal_token_row(p_token);
+
+  UPDATE public.candidate_portal_tokens t SET last_opened_at = now()
+   WHERE t.id = v_tok.id;
+
+  RETURN QUERY
+  SELECT c.full_name, c.email, c.phone, c.location,
+         c.linkedin_url, c.github_url, c.website_url, c.twitter_url,
+         c.current_title, c.current_company,
+         (c.cv_url IS NOT NULL),
+         c.source_kind, c.source_platform, c.sourced_at,
+         (SELECT max(n.sent_at) FROM public.candidate_notifications n
+           WHERE n.organization_id = v_tok.organization_id
+             AND n.candidate_id IN (
+               SELECT c2.id FROM public.candidates c2
+                WHERE c2.organization_id = v_tok.organization_id
+                  AND public.candidate_identity_key(
+                        c2.email, c2.linkedin_url, c2.full_name, c2.current_company)
+                      = v_tok.identity_key)
+             AND n.status = 'sent'),
+         v_tok.organization_id,
+         (SELECT o.name FROM public.organizations o WHERE o.id = v_tok.organization_id),
+         v_tok.expires_at,
+         split_part(v_tok.identity_key, ':', 1)
+    FROM public.candidates c
+   WHERE c.organization_id = v_tok.organization_id
+     AND public.candidate_identity_key(
+           c.email, c.linkedin_url, c.full_name, c.current_company)
+         = v_tok.identity_key
+   ORDER BY c.updated_at DESC NULLS LAST, c.created_at DESC
+   LIMIT 1;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidate_portal_list_searches(p_token uuid)
+ RETURNS TABLE(project_id uuid, role_title text, stage text, added_at timestamp with time zone)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_tok public.candidate_portal_tokens%ROWTYPE;
+BEGIN
+  v_tok := public.candidate_portal_token_row(p_token);
+
+  RETURN QUERY
+  SELECT c.project_id, p.title, coalesce(c.pipeline_stage, 'found'), c.created_at
+    FROM public.candidates c
+    JOIN public.projects p ON p.id = c.project_id
+   WHERE c.organization_id = v_tok.organization_id
+     AND public.candidate_identity_key(
+           c.email, c.linkedin_url, c.full_name, c.current_company)
+         = v_tok.identity_key
+   ORDER BY c.created_at DESC;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidate_portal_record_cv(p_token uuid, p_storage_path text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_tok public.candidate_portal_tokens%ROWTYPE;
+BEGIN
+  v_tok := public.candidate_portal_token_row(p_token);
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_tok.organization_id,
+    p_event_type      => 'candidate_cv_submitted',
+    p_visibility      => 'org',
+    p_detail          => jsonb_build_object(
+                           'person', v_tok.recipient_label,
+                           'storage_path', p_storage_path));
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidate_portal_request_erasure(p_token uuid, p_note text DEFAULT NULL::text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_tok     public.candidate_portal_tokens%ROWTYPE;
+  v_profile uuid;
+  v_covered uuid[];
+  v_request uuid;
+  v_sup     uuid;
+BEGIN
+  v_tok := public.candidate_portal_token_row(p_token);
+
+  -- Who is this, as a person? The profile that literally keys this way,
+  -- else the person §203's alias says this key now belongs to.
+  SELECT np.id INTO v_profile
+    FROM public.network_profiles np
+   WHERE np.organization_id = v_tok.organization_id
+     AND np.identity_key = v_tok.identity_key;
+  IF v_profile IS NULL THEN
+    SELECT a.profile_id INTO v_profile
+      FROM public.network_profile_aliases a
+     WHERE a.organization_id = v_tok.organization_id
+       AND a.identity_key = v_tok.identity_key;
+  END IF;
+
+  -- What did the ask cover? Every row that is this person right now, plus
+  -- every row that still computes this key (a CV mid-parse has no person).
+  SELECT coalesce(array_agg(c.id), '{}'::uuid[]) INTO v_covered
+    FROM public.candidates c
+   WHERE c.organization_id = v_tok.organization_id
+     AND (
+       (v_profile IS NOT NULL AND c.network_profile_id = v_profile)
+       OR public.candidate_identity_key(
+            c.email, c.linkedin_url, c.full_name, c.current_company)
+          = v_tok.identity_key
+     );
+
+  BEGIN
+    INSERT INTO public.candidate_erasure_requests
+      (organization_id, identity_key, network_profile_id, covered_candidate_ids,
+       requested_via_token, requester_label, note)
+    VALUES (v_tok.organization_id, v_tok.identity_key, v_profile, v_covered,
+            v_tok.id, v_tok.recipient_label,
+            nullif(btrim(coalesce(p_note, '')), ''))
+    RETURNING id INTO v_request;
+  EXCEPTION WHEN unique_violation THEN
+    RAISE EXCEPTION 'your erasure request is already with the team'
+      USING ERRCODE = 'check_violation';
+  END;
+
+  -- §209 D1: the request KEEPS THE ROW'S ID. This return value was
+  -- discarded, so the decline had to re-find the row by (profile, source)
+  -- and picked the wrong one whenever a merge had put two erasure rows on
+  -- one person.
+  IF v_profile IS NOT NULL THEN
+    v_sup := public.record_network_suppression(
+               v_profile, 'erasure requested via their portal', 'erasure');
+
+    IF v_sup IS NOT NULL THEN
+      UPDATE public.candidate_erasure_requests
+         SET suppression_id = v_sup
+       WHERE id = v_request;
+
+      PERFORM public.write_activity_event(
+        p_organization_id => v_tok.organization_id,
+        p_event_type      => 'network_dnc_set',
+        p_visibility      => 'org',
+        p_detail          => jsonb_build_object(
+                               'person', v_tok.recipient_label,
+                               'reason', 'erasure requested via their portal',
+                               'source', 'erasure'));
+    END IF;
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_tok.organization_id,
+    p_event_type      => 'candidate_erasure_requested',
+    p_visibility      => 'org',
+    p_detail          => jsonb_build_object('person', v_tok.recipient_label));
+END;
+$function$
+;
+CREATE OR REPLACE FUNCTION public.candidate_portal_token_row(p_token uuid)
+ RETURNS candidate_portal_tokens
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_row public.candidate_portal_tokens%ROWTYPE;
+BEGIN
+  SELECT * INTO v_row FROM public.candidate_portal_tokens t
+   WHERE t.token = p_token
+     AND t.revoked_at IS NULL
+     AND t.expires_at > now();
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'this link is not valid' USING ERRCODE = 'no_data_found';
+  END IF;
+  RETURN v_row;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidate_portal_update_contact(p_token uuid, p_full_name text DEFAULT NULL::text, p_phone text DEFAULT NULL::text, p_location text DEFAULT NULL::text, p_linkedin_url text DEFAULT NULL::text, p_github_url text DEFAULT NULL::text, p_website_url text DEFAULT NULL::text, p_twitter_url text DEFAULT NULL::text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_tok public.candidate_portal_tokens%ROWTYPE;
+  v_basis text;
+  v_changed text[] := '{}';
+  v_label text;
+BEGIN
+  v_tok := public.candidate_portal_token_row(p_token);
+  v_basis := split_part(v_tok.identity_key, ':', 1);
+
+  IF v_basis = 'name' AND p_full_name IS NOT NULL THEN
+    RAISE EXCEPTION 'your name anchors this link — ask the search team to correct it'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_basis = 'linkedin' AND p_linkedin_url IS NOT NULL THEN
+    RAISE EXCEPTION 'your linkedin profile anchors this link — ask the search team to correct it'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF p_full_name IS NOT NULL AND btrim(p_full_name) = '' THEN
+    RAISE EXCEPTION 'your name cannot be empty' USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF p_full_name    IS NOT NULL THEN v_changed := array_append(v_changed, 'full_name'); END IF;
+  IF p_phone        IS NOT NULL THEN v_changed := array_append(v_changed, 'phone'); END IF;
+  IF p_location     IS NOT NULL THEN v_changed := array_append(v_changed, 'location'); END IF;
+  IF p_linkedin_url IS NOT NULL THEN v_changed := array_append(v_changed, 'linkedin_url'); END IF;
+  IF p_github_url   IS NOT NULL THEN v_changed := array_append(v_changed, 'github_url'); END IF;
+  IF p_website_url  IS NOT NULL THEN v_changed := array_append(v_changed, 'website_url'); END IF;
+  IF p_twitter_url  IS NOT NULL THEN v_changed := array_append(v_changed, 'twitter_url'); END IF;
+
+  IF array_length(v_changed, 1) IS NULL THEN
+    RAISE EXCEPTION 'nothing to change' USING ERRCODE = 'check_violation';
+  END IF;
+
+  UPDATE public.candidates c
+     SET full_name    = CASE WHEN p_full_name IS NOT NULL THEN btrim(p_full_name) ELSE c.full_name END,
+         phone        = CASE WHEN p_phone IS NOT NULL THEN nullif(btrim(p_phone), '') ELSE c.phone END,
+         location     = CASE WHEN p_location IS NOT NULL THEN nullif(btrim(p_location), '') ELSE c.location END,
+         linkedin_url = CASE WHEN p_linkedin_url IS NOT NULL THEN nullif(btrim(p_linkedin_url), '') ELSE c.linkedin_url END,
+         github_url   = CASE WHEN p_github_url IS NOT NULL THEN nullif(btrim(p_github_url), '') ELSE c.github_url END,
+         website_url  = CASE WHEN p_website_url IS NOT NULL THEN nullif(btrim(p_website_url), '') ELSE c.website_url END,
+         twitter_url  = CASE WHEN p_twitter_url IS NOT NULL THEN nullif(btrim(p_twitter_url), '') ELSE c.twitter_url END,
+         updated_at   = now()
+   WHERE c.organization_id = v_tok.organization_id
+     AND public.candidate_identity_key(
+           c.email, c.linkedin_url, c.full_name, c.current_company)
+         = v_tok.identity_key;
+
+  v_label := coalesce(nullif(btrim(p_full_name), ''), v_tok.recipient_label);
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_tok.organization_id,
+    p_event_type      => 'candidate_self_updated',
+    p_visibility      => 'org',
+    p_detail          => jsonb_build_object(
+                           'person', v_label,
+                           'fields', to_jsonb(v_changed)));
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidate_portal_withdraw(p_token uuid, p_project_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_tok public.candidate_portal_tokens%ROWTYPE;
+  v_cand record;
+  v_profile uuid;
+BEGIN
+  v_tok := public.candidate_portal_token_row(p_token);
+
+  SELECT c.* INTO v_cand FROM public.candidates c
+   WHERE c.organization_id = v_tok.organization_id
+     AND c.project_id = p_project_id
+     AND public.candidate_identity_key(
+           c.email, c.linkedin_url, c.full_name, c.current_company)
+         = v_tok.identity_key;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'you are not in that search' USING ERRCODE = 'no_data_found';
+  END IF;
+
+  IF v_cand.pipeline_stage = 'withdrawn' THEN
+    RAISE EXCEPTION 'you have already withdrawn from this search'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF v_cand.pipeline_stage = 'hired' THEN
+    RAISE EXCEPTION 'this search already concluded with your hire — talk to the search team'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  UPDATE public.candidates c
+     SET pipeline_stage = 'withdrawn', updated_at = now()
+   WHERE c.id = v_cand.id;
+
+  -- 098: the withdrawal suppresses the PERSON until a founder-level act says
+  -- otherwise. S208/D5: aimed at the person the token RESOLVES to (their
+  -- profile, else the person an alias says the key belongs to), not at
+  -- whatever profile still literally keys that way — a link issued before an
+  -- email was corrected used to suppress NOBODY, silently, which is the
+  -- defect S207 fixed in this function's sibling and left standing here.
+  -- And it is a LEDGER ROW now, so it stands beside any other reason.
+  SELECT np.id INTO v_profile FROM public.network_profiles np
+   WHERE np.organization_id = v_tok.organization_id
+     AND np.identity_key = v_tok.identity_key;
+  IF v_profile IS NULL THEN
+    SELECT al.profile_id INTO v_profile FROM public.network_profile_aliases al
+     WHERE al.organization_id = v_tok.organization_id
+       AND al.identity_key = v_tok.identity_key;
+  END IF;
+  IF v_profile IS NULL THEN
+    v_profile := v_cand.network_profile_id;
+  END IF;
+
+  IF v_profile IS NOT NULL AND public.record_network_suppression(
+       v_profile, 'candidate withdrew via their portal', 'withdrawal') IS NOT NULL THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => v_tok.organization_id,
+      p_event_type      => 'network_dnc_set',
+      p_visibility      => 'org',
+      p_detail          => jsonb_build_object(
+                             'person', v_tok.recipient_label,
+                             'reason', 'candidate withdrew via their portal',
+                             'source', 'withdrawal'));
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_tok.organization_id,
+    p_event_type      => 'candidate_withdrew',
+    p_visibility      => 'org',
+    p_project_id      => p_project_id,
+    p_candidate_id    => v_cand.id,
+    p_detail          => jsonb_build_object(
+                           'person', v_tok.recipient_label,
+                           'from_stage', coalesce(v_cand.pipeline_stage, 'found')));
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidate_stage_counts()
+ RETURNS TABLE(pipeline_stage text, candidate_count integer)
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT
+    COALESCE(c.pipeline_stage, 'found') AS pipeline_stage,
+    COUNT(*)::integer AS candidate_count
+  FROM public.candidates AS c
+  GROUP BY COALESCE(c.pipeline_stage, 'found');
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidate_weekly_counts(p_weeks integer)
+ RETURNS TABLE(weeks_ago integer, candidate_count integer)
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT
+    FLOOR(EXTRACT(EPOCH FROM (now() - c.created_at)) / 604800)::integer
+      AS weeks_ago,
+    COUNT(*)::integer AS candidate_count
+  FROM public.candidates AS c
+  WHERE c.created_at IS NOT NULL
+    AND c.created_at > now() - (GREATEST(p_weeks, 0) * INTERVAL '7 days')
+  GROUP BY 1;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.candidates_link_network_profile()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  -- The declared identity holds its link. `source = 'apply'` is the one
+  -- row-creation path where the subject typed their own details and was
+  -- shown the Art.13 notice against them; nothing derived from the file
+  -- afterwards may move that link to a different person.
+  IF TG_OP = 'UPDATE'
+     AND NEW.source = 'apply'
+     AND OLD.network_profile_id IS NOT NULL THEN
+    NEW.network_profile_id := OLD.network_profile_id;
+    RETURN NEW;
+  END IF;
+
+  -- §196/139 — we have not read the document yet, and a name is the
+  -- only thing we have. That is not an identity, it is a filename.
+  -- Mint nothing; the parser's own UPDATE fires this trigger again with
+  -- something real and the fill-if-null path below keys the person once.
+  IF coalesce(NEW.cv_processing, false)
+     AND nullif(btrim(coalesce(NEW.email, '')), '') IS NULL
+     AND nullif(btrim(coalesce(NEW.linkedin_url, '')), '') IS NULL
+     AND nullif(btrim(coalesce(NEW.current_company, '')), '') IS NULL THEN
+    NEW.network_profile_id := CASE
+      WHEN TG_OP = 'UPDATE' THEN OLD.network_profile_id
+      ELSE NULL
+    END;
+    RETURN NEW;
+  END IF;
+
+  -- Everything else: find-or-create on the current identity, exactly as
+  -- before. An UPDATE that fills a previously-empty link lands here too,
+  -- which is the ruled fill-if-null case.
+  NEW.network_profile_id := public.resolve_network_profile(
+    NEW.organization_id, NEW.full_name, NEW.email,
+    NEW.linkedin_url, NEW.current_company);
+
+  -- §207 — the row just changed person. Whatever the person it is leaving
+  -- was suppressed with comes along; the one it is joining is never
+  -- lowered. Only on a REAL repoint: a fill-if-null (OLD was NULL) joins
+  -- a person for the first time and has nothing to carry.
+  IF TG_OP = 'UPDATE'
+     AND OLD.network_profile_id IS NOT NULL
+     AND NEW.network_profile_id IS NOT NULL
+     AND NEW.network_profile_id IS DISTINCT FROM OLD.network_profile_id THEN
+    PERFORM public.carry_network_suppression(
+      OLD.network_profile_id, NEW.network_profile_id);
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.carry_network_suppression(p_from uuid, p_to uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_from public.network_profiles%ROWTYPE;
+  v_to   public.network_profiles%ROWTYPE;
+  v_row  record;
+  v_any  boolean := false;
+BEGIN
+  IF p_from IS NULL OR p_to IS NULL OR p_from = p_to THEN
+    RETURN false;
+  END IF;
+
+  SELECT * INTO v_from FROM public.network_profiles WHERE id = p_from;
+  IF NOT FOUND OR NOT v_from.dnc THEN
+    RETURN false;                         -- nothing to carry
+  END IF;
+  SELECT * INTO v_to FROM public.network_profiles WHERE id = p_to;
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+  IF v_to.organization_id IS DISTINCT FROM v_from.organization_id THEN
+    RETURN false;                         -- never across organisations
+  END IF;
+
+  -- S208: EVERY standing reason travels, each as its own row pointing at the
+  -- one it came from, so a lift can follow exactly as far. Nothing is
+  -- overwritten and nothing is compared: the earliest still governs, because
+  -- the derivation says so.
+  FOR v_row IN
+    SELECT s.id, s.reason, s.set_at, s.set_by
+      FROM public.network_suppressions s
+     WHERE s.profile_id = p_from AND s.lifted_at IS NULL
+  LOOP
+    IF public.record_network_suppression(
+         p_to, v_row.reason, 'carried', v_row.set_by, v_row.set_at, v_row.id
+       ) IS NOT NULL THEN
+      v_any := true;
+    END IF;
+  END LOOP;
+
+  IF v_any THEN
+    PERFORM public.write_activity_event(
+      p_organization_id => v_to.organization_id,
+      p_event_type      => 'network_dnc_set',
+      p_visibility      => 'org',
+      p_detail          => jsonb_build_object(
+                             'person',       v_to.display_name,
+                             'reason',       v_from.dnc_reason,
+                             'source',       'identity_edit',
+                             'carried_from', v_from.display_name));
+  END IF;
+
+  RETURN v_any;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.check_rate_limit(p_scope text, p_key text)
+ RETURNS TABLE(allowed boolean, reason text, retry_after_seconds integer)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_policy      public.rate_limit_policy%ROWTYPE;
+  v_now         timestamptz := now();
+  v_epoch       bigint;
+  v_bucket      bigint;
+  v_key         text;
+  v_key_expires timestamptz;
+  v_global_key  text;
+  v_count       integer;
+  v_global_ct   integer;
+BEGIN
+  SELECT * INTO v_policy FROM public.rate_limit_policy WHERE scope = p_scope;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'check_rate_limit: unknown scope %', p_scope;
+  END IF;
+
+  DELETE FROM public.rate_limit
+   WHERE bucket_key IN (
+     SELECT bucket_key FROM public.rate_limit
+      WHERE expires_at < v_now LIMIT 100
+   );
+
+  IF v_policy.global_daily_limit IS NOT NULL THEN
+    v_global_key := 'global:' || p_scope || ':' || to_char(v_now, 'YYYYMMDD');
+    INSERT INTO public.rate_limit (bucket_key, count, expires_at)
+    VALUES (v_global_key, 1, date_trunc('day', v_now) + interval '1 day')
+    ON CONFLICT (bucket_key)
+      DO UPDATE SET count = public.rate_limit.count + 1
+    RETURNING public.rate_limit.count INTO v_global_ct;
+
+    IF v_global_ct > v_policy.global_daily_limit THEN
+      RETURN QUERY SELECT
+        false, 'global'::text,
+        GREATEST(1, EXTRACT(epoch FROM
+          (date_trunc('day', v_now) + interval '1 day') - v_now)::integer);
+      RETURN;
+    END IF;
+  END IF;
+
+  v_epoch := EXTRACT(epoch FROM v_now)::bigint;
+  v_bucket := v_epoch / v_policy.window_seconds;
+  v_key := p_scope || ':' || coalesce(nullif(p_key, ''), 'unknown') || ':' || v_bucket::text;
+  v_key_expires := to_timestamp((v_bucket + 1) * v_policy.window_seconds);
+
+  INSERT INTO public.rate_limit (bucket_key, count, expires_at)
+  VALUES (v_key, 1, v_key_expires)
+  ON CONFLICT (bucket_key)
+    DO UPDATE SET count = public.rate_limit.count + 1
+  RETURNING public.rate_limit.count INTO v_count;
+
+  IF v_count > v_policy.per_key_limit THEN
+    RETURN QUERY SELECT
+      false, 'key'::text,
+      GREATEST(1, EXTRACT(epoch FROM (v_key_expires - v_now))::integer);
+    RETURN;
+  END IF;
+
+  RETURN QUERY SELECT true, 'ok'::text, 0;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.claim_evaluation(p_candidate_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_claimed boolean;
+BEGIN
+  UPDATE public.candidates
+     SET cv_structured = coalesce(cv_structured, '{}'::jsonb)
+                         || jsonb_build_object('evaluation_claim', now())
+   WHERE id = p_candidate_id
+     AND (
+       cv_structured->>'evaluation_claim' IS NULL
+       OR (cv_structured->>'evaluation_claim')::timestamptz < now() - interval '5 minutes'
+     )
+  RETURNING true INTO v_claimed;
+  RETURN coalesce(v_claimed, false);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.clear_network_dnc(p_profile_id uuid, p_reason text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org uuid := (SELECT public.current_user_org_id());
+  v_id  uuid;
+  v_any boolean := false;
+BEGIN
+  IF NOT (SELECT public.is_current_user_founder()) THEN
+    RAISE EXCEPTION 'clear_network_dnc: only a founder-level act with a recorded reason un-sets do-not-contact'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  IF nullif(btrim(coalesce(p_reason, '')), '') IS NULL THEN
+    RAISE EXCEPTION 'clear_network_dnc: the un-set must record its reason'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  LOOP
+    SELECT s.id INTO v_id
+      FROM public.network_suppressions s
+      JOIN public.network_profiles p ON p.id = s.profile_id
+     WHERE s.profile_id = p_profile_id AND s.lifted_at IS NULL
+       AND p.organization_id = v_org
+     ORDER BY s.set_at ASC, s.id ASC
+     LIMIT 1;
+    EXIT WHEN v_id IS NULL;
+    PERFORM public.lift_network_suppression(v_id, p_reason);
+    v_any := true;
+  END LOOP;
+
+  IF NOT v_any THEN
+    RAISE EXCEPTION 'clear_network_dnc: no suppressed profile in your organisation matches'
+      USING ERRCODE = 'no_data_found';
+  END IF;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.client_org(p_client_id uuid)
+ RETURNS uuid
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT organization_id FROM public.clients WHERE id = p_client_id
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.complete_candidate_send(p_outreach_id uuid, p_provider_message_id text, p_recipient text DEFAULT NULL::text, p_template_key text DEFAULT NULL::text, p_template_version text DEFAULT NULL::text, p_notice_version text DEFAULT NULL::text, p_notice_idempotency_key text DEFAULT NULL::text)
+ RETURNS TABLE(id uuid, subject_notified_at timestamp with time zone)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor uuid := auth.uid();
+  v_row   public.candidate_outreach%ROWTYPE;
+  v_notified timestamptz;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to complete a send.'
+      USING ERRCODE = 'P0001';
+  END IF;
+  IF (SELECT public.is_agent()) THEN
+    RAISE EXCEPTION 'complete_candidate_send: candidate sends are human acts — no mission system exists for an agent to send under.'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  IF nullif(btrim(coalesce(p_provider_message_id, '')), '') IS NULL THEN
+    RAISE EXCEPTION 'complete_candidate_send: a completion without the provider''s reference is not a confirmation.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  SELECT * INTO v_row FROM public.candidate_outreach AS o
+   WHERE o.id = p_outreach_id FOR UPDATE;
+  IF v_row.id IS NULL THEN
+    RAISE EXCEPTION 'Outreach row % not found (or not accessible).', p_outreach_id
+      USING ERRCODE = 'P0002';
+  END IF;
+  IF v_row.delivery_status IS DISTINCT FROM 'queued' THEN
+    RAISE EXCEPTION 'complete_candidate_send: row % is %, not queued — a send completes exactly once.',
+      p_outreach_id, coalesce(v_row.delivery_status, 'not a provider send')
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  UPDATE public.candidate_outreach AS o
+     SET delivery_status = 'sent',
+         provider_message_id = p_provider_message_id
+   WHERE o.id = p_outreach_id;
+
+  -- 044 permits ONE sent notification per candidate EVER: if the duty
+  -- is already met, a later notice-carrying send is belt-and-braces
+  -- text, not a statutory record — skip the record rather than fail a
+  -- send the provider already made.
+  SELECT c.subject_notified_at INTO v_notified
+    FROM public.candidates c WHERE c.id = v_row.candidate_id;
+  IF v_row.includes_privacy_notice AND v_notified IS NULL THEN
+    IF p_recipient IS NULL OR p_template_key IS NULL
+       OR p_template_version IS NULL OR p_notice_version IS NULL
+       OR p_notice_idempotency_key IS NULL THEN
+      RAISE EXCEPTION 'complete_candidate_send: a notice-carrying send must record its notification.'
+        USING ERRCODE = 'P0001';
+    END IF;
+    SELECT n.subject_notified_at INTO v_notified
+      FROM public.record_notification_sent(
+        v_row.candidate_id, p_recipient, p_template_key,
+        p_template_version, p_notice_version, p_provider_message_id,
+        p_notice_idempotency_key, now()) AS n;
+  END IF;
+
+  RETURN QUERY SELECT p_outreach_id, v_notified;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.count_network_people()
+ RETURNS integer
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT COUNT(DISTINCT c.network_profile_id)::integer
+  FROM public.candidates AS c
+  WHERE c.network_profile_id IS NOT NULL;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.current_user_client_id()
+ RETURNS uuid
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT client_id
+    FROM public.users
+   WHERE id = (SELECT auth.uid())
+     AND status = 'active'
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.current_user_org_id()
+ RETURNS uuid
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT organization_id FROM public.users WHERE id = auth.uid();
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.current_user_role()
+ RETURNS text
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT role
+    FROM public.users
+   WHERE id = (SELECT auth.uid())
+     AND status = 'active'
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.decide_admin_grant(p_request_id uuid, p_decision text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor uuid := (SELECT auth.uid()); v_org uuid := (SELECT public.current_user_org_id());
+  v_req public.admin_grant_requests%ROWTYPE;
+BEGIN
+  IF p_decision NOT IN ('rejected','withdrawn') THEN
+    RAISE EXCEPTION 'Decision must be rejected or withdrawn.' USING ERRCODE='P0001'; END IF;
+  IF v_actor IS NULL OR NOT coalesce(public.is_org_admin(), false) THEN
+    RAISE EXCEPTION 'Only an admin may decide an admin grant.' USING ERRCODE='insufficient_privilege'; END IF;
+  SELECT * INTO v_req FROM public.admin_grant_requests
+   WHERE id = p_request_id AND organization_id = v_org FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'That request is not yours to decide.' USING ERRCODE='P0002'; END IF;
+  IF v_req.status <> 'pending' THEN RAISE EXCEPTION 'That request is already %.', v_req.status USING ERRCODE='P0001'; END IF;
+  IF p_decision='withdrawn' AND v_req.proposed_by <> v_actor THEN
+    RAISE EXCEPTION 'Only the admin who proposed it may withdraw it.' USING ERRCODE='insufficient_privilege'; END IF;
+  UPDATE public.admin_grant_requests SET status=p_decision, decided_by=v_actor, decided_at=now() WHERE id = p_request_id;
+  PERFORM public.write_activity_event(
+    p_organization_id => v_org, p_event_type => 'admin_grant_rejected', p_visibility => 'admin',
+    p_target_user_id => v_req.target_user_id,
+    p_detail => jsonb_build_object('request_id', p_request_id, 'kind', v_req.kind, 'decision', p_decision,
+                                   'target', coalesce(v_req.target_email, v_req.target_user_id::text)));
+  RETURN jsonb_build_object('outcome', p_decision);
+END; $function$
+;
+
+CREATE OR REPLACE FUNCTION public.demote_other_primary_contacts()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF NEW.is_primary IS NOT TRUE THEN
+    RETURN NEW;
+  END IF;
+
+  UPDATE public.client_contacts
+     SET is_primary = false,
+         updated_at = now()
+   WHERE client_id = NEW.client_id
+     AND id <> NEW.id
+     AND is_primary;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.expire_admin_grants()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE v_row public.admin_grant_requests%ROWTYPE; v_n integer := 0;
+BEGIN
+  FOR v_row IN SELECT * FROM public.admin_grant_requests WHERE status='pending' AND expires_at <= now() FOR UPDATE
+  LOOP
+    UPDATE public.admin_grant_requests SET status='expired' WHERE id = v_row.id;
+    PERFORM public.write_activity_event(
+      p_organization_id => v_row.organization_id, p_event_type => 'admin_grant_expired',
+      p_visibility => 'admin', p_target_user_id => v_row.target_user_id,
+      p_detail => jsonb_build_object('request_id', v_row.id, 'kind', v_row.kind));
+    v_n := v_n + 1;
+  END LOOP;
+  RETURN v_n;
+END; $function$
+;
+
+CREATE OR REPLACE FUNCTION public.fee_instalment_plan_is_valid(p_plan jsonb)
+ RETURNS boolean
+ LANGUAGE sql
+ IMMUTABLE
+ SET search_path TO 'pg_catalog'
+AS $function$
+  SELECT
+    CASE
+      WHEN p_plan IS NULL OR jsonb_typeof(p_plan) <> 'array' THEN false
+      WHEN jsonb_array_length(p_plan) = 0 THEN true
+      ELSE (
+        SELECT bool_and(
+                 jsonb_typeof(e.value) = 'object'
+                 AND coalesce(btrim(e.value->>'label'), '') <> ''
+                 AND (e.value->>'trigger') IN (
+                       'engagement', 'shortlist', 'offer_accepted',
+                       'start_date', 'guarantee_passed')
+                 AND (e.value->>'percent_of_fee') ~ '^[0-9]+(\.[0-9]+)?$'
+                 AND (e.value->>'percent_of_fee')::numeric > 0
+               )
+          FROM jsonb_array_elements(p_plan) e
+      )
+      AND (
+        SELECT round(sum((e.value->>'percent_of_fee')::numeric), 4) = 100
+          FROM jsonb_array_elements(p_plan) e
+      )
+    END
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.finalize_job_spec(p_spec_id uuid, p_project_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_locked_project_id uuid;
+  v_target_id         uuid;
+  v_promoted          int;
+BEGIN
+  SELECT id INTO v_locked_project_id
+    FROM public.projects
+   WHERE id = p_project_id
+   FOR UPDATE;
+
+  IF v_locked_project_id IS NULL THEN
+    RAISE EXCEPTION 'Project % not found or not accessible.', p_project_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  SELECT id INTO v_target_id
+    FROM public.job_specs
+   WHERE id         = p_spec_id
+     AND project_id = p_project_id
+   FOR UPDATE;
+
+  IF v_target_id IS NULL THEN
+    RAISE EXCEPTION
+      'Target job spec % not found for project % (RLS denial, deleted row, or wrong project).',
+      p_spec_id, p_project_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.job_specs
+     SET is_final   = false,
+         updated_at = now()
+   WHERE project_id = p_project_id
+     AND is_final = true
+     AND id <> p_spec_id;
+
+  WITH promoted AS (
+    UPDATE public.job_specs
+       SET is_final   = true,
+           updated_at = now()
+     WHERE id         = p_spec_id
+       AND project_id = p_project_id
+    RETURNING id
+  )
+  SELECT count(*) INTO v_promoted FROM promoted;
+
+  IF v_promoted <> 1 THEN
+    RAISE EXCEPTION
+      'Failed to promote job spec % to final (rows updated: %).',
+      p_spec_id, v_promoted
+      USING ERRCODE = 'P0002';
+  END IF;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.governing_network_suppression(p_profile uuid)
+ RETURNS uuid
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT s.id FROM public.network_suppressions s
+   WHERE s.profile_id = p_profile AND s.lifted_at IS NULL
+   ORDER BY s.set_at ASC, s.id ASC
+   LIMIT 1;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.grant_mandate_access(p_project_id uuid, p_user_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_client uuid := (SELECT public.current_user_client_id());
+  v_share         record;
+BEGIN
+  IF NOT (public.is_client_admin() AND v_caller_client IS NOT NULL) THEN
+    RAISE EXCEPTION 'only a client admin may grant access here'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  SELECT s.* INTO v_share
+    FROM public.mandate_shares s
+   WHERE s.project_id = p_project_id AND s.client_id = v_caller_client;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'this mandate is not shared with your company'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  INSERT INTO public.mandate_grants (organization_id, project_id, client_id, user_id, granted_by)
+  VALUES (v_share.organization_id, p_project_id, v_caller_client, p_user_id, (SELECT auth.uid()))
+  ON CONFLICT (project_id, user_id) DO NOTHING;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_admin_invitations()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF NEW.role <> 'admin' THEN
+    RETURN NEW;
+  END IF;
+  IF (SELECT auth.uid()) IS NULL THEN
+    RETURN NEW;
+  END IF;
+  IF public.is_current_user_founder() THEN
+    RETURN NEW;
+  END IF;
+  IF coalesce(current_setting('mandate.allow_admin_grant', true), '') <> 'on'
+     AND public.active_admin_count(NEW.organization_id) >= 2 THEN
+    RAISE EXCEPTION
+      'inviting an admin requires approval by a second admin — propose it from Settings / Members'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_assignment_active_model()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  if not exists (
+    select 1
+      from public.provider_models m
+      join public.model_providers p on p.name = m.provider
+     where m.model_id = new.model_id
+       and m.status = 'active'
+       and p.status = 'active'
+  ) then
+    raise exception
+      'capability_assignments: % is not an active model on an active provider — benchmark and activate it first',
+      new.model_id;
+  end if;
+  return new;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_author_in_org()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_new       jsonb := to_jsonb(new);
+  v_old       jsonb := case when tg_op = 'UPDATE' then to_jsonb(old) else null end;
+  v_org       uuid  := (v_new->>'organization_id')::uuid;
+  v_col       text;
+  v_author    uuid;
+  v_author_org uuid;
+  v_author_client uuid;
+  v_founder   boolean;
+  v_role      text;
+  v_status    text;
+  v_found     boolean;
+begin
+  if v_org is null then
+    return new;
+  end if;
+
+  foreach v_col in array tg_argv loop
+    if v_old is not null
+       and (v_old->>v_col) is not distinct from (v_new->>v_col) then
+      continue;
+    end if;
+
+    v_author := (v_new->>v_col)::uuid;
+    if v_author is null then
+      continue;
+    end if;
+
+    select u.organization_id, u.client_id, u.is_founder, u.role, u.status, true
+      into v_author_org, v_author_client, v_founder, v_role, v_status, v_found
+      from public.users u
+     where u.id = v_author;
+
+    if not coalesce(v_found, false) then
+      continue;
+    end if;
+
+    if coalesce(v_founder, false) then
+      continue;
+    end if;
+
+    if v_role = 'agent' and v_status = 'active' then
+      continue;
+    end if;
+
+    if v_author_client is not null
+       and public.client_org(v_author_client) = v_org then
+      continue;
+    end if;
+
+    if v_author_org is distinct from v_org then
+      raise exception
+        '%.% names %, who is not a member of organisation %',
+        tg_table_name, v_col, v_author, v_org
+        using errcode = 'foreign_key_violation';
+    end if;
+  end loop;
+
+  return new;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_client_interviews()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transition_allowed boolean :=
+    COALESCE(current_setting('mandate.allow_client_interview_transition', true), '') = 'on';
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status <> 'draft' AND NOT v_transition_allowed THEN
+      RAISE EXCEPTION 'Client interviews are created as drafts. Use approve_client_interview() to approve.'
+        USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD.status IN ('approved', 'archived') AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Client interview % is % and immutable. Create a new version instead.', OLD.id, OLD.status
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF NEW.status = 'approved'
+     AND OLD.status IS DISTINCT FROM 'approved'
+     AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Use approve_client_interview() to approve a client interview.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_executive_assessments()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transition_allowed boolean :=
+    COALESCE(current_setting('mandate.allow_assessment_transition', true), '') = 'on';
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status <> 'draft' AND NOT v_transition_allowed THEN
+      RAISE EXCEPTION 'Assessments are created as drafts. Use approve_assessment() to approve.'
+        USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+  END IF;
+  IF OLD.status IN ('approved', 'archived') AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Assessment % is % and immutable. Create a new version instead.', OLD.id, OLD.status
+      USING ERRCODE = 'P0001';
+  END IF;
+  IF NEW.status = 'approved'
+     AND OLD.status IS DISTINCT FROM 'approved'
+     AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Use approve_assessment() to approve an assessment.'
+      USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_executive_interview_plans()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transition_allowed boolean :=
+    COALESCE(current_setting('mandate.allow_plan_transition', true), '') = 'on';
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status <> 'draft' AND NOT v_transition_allowed THEN
+      RAISE EXCEPTION 'Interview plans are created as drafts. Use approve_interview_plan() to approve.'
+        USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD.status IN ('approved', 'archived') AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Interview plan % is % and immutable. Create a new version instead.', OLD.id, OLD.status
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF NEW.status = 'approved'
+     AND OLD.status IS DISTINCT FROM 'approved'
+     AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Use approve_interview_plan() to approve an interview plan.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_executive_risk_reviews()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transition_allowed boolean :=
+    COALESCE(current_setting('mandate.allow_risk_review_transition', true), '') = 'on';
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status <> 'draft' AND NOT v_transition_allowed THEN
+      RAISE EXCEPTION 'Risk reviews are created as drafts. Use approve_risk_review() to approve.'
+        USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD.status IN ('approved', 'archived') AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Risk review % is % and immutable. Create a new version instead.', OLD.id, OLD.status
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF NEW.status = 'approved'
+     AND OLD.status IS DISTINCT FROM 'approved'
+     AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Use approve_risk_review() to approve a risk review.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_financial_key_results()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_owner_role text;
+BEGIN
+  IF NEW.kind = 'financial'
+     AND (TG_OP = 'INSERT'
+          OR NEW.kind IS DISTINCT FROM OLD.kind
+          OR NEW.objective_id IS DISTINCT FROM OLD.objective_id) THEN
+    SELECT u.role INTO v_owner_role
+      FROM public.objectives o
+      JOIN public.users u ON u.id = o.owner_user_id
+     WHERE o.id = NEW.objective_id;
+    IF coalesce(v_owner_role, '') NOT IN ('manager', 'recruiter') THEN
+      RAISE EXCEPTION 'a financial key result needs an owner who can read it — researchers hold no fees tier';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_interview_plans()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transition_allowed boolean :=
+    COALESCE(current_setting('mandate.allow_project_plan_transition', true), '') = 'on';
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status <> 'draft' AND NOT v_transition_allowed THEN
+      RAISE EXCEPTION 'Interview plans are created as drafts. Use approve_project_interview_plan() to approve.'
+        USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD.status IN ('approved', 'archived') AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Interview plan % is % and immutable. Create a new version instead.', OLD.id, OLD.status
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF NEW.status = 'approved'
+     AND OLD.status IS DISTINCT FROM 'approved'
+     AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Use approve_project_interview_plan() to approve an interview plan.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_invitation_integrity()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF public.client_org(NEW.client_id) IS DISTINCT FROM NEW.organization_id THEN
+    RAISE EXCEPTION 'invitation client % does not belong to organisation %',
+      NEW.client_id, NEW.organization_id
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  IF NEW.contact_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM public.client_contacts c
+     WHERE c.id = NEW.contact_id AND c.client_id = NEW.client_id
+  ) THEN
+    RAISE EXCEPTION 'invitation contact % does not belong to client %',
+      NEW.contact_id, NEW.client_id
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_invoice_lines()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_allowed boolean :=
+    COALESCE(current_setting('mandate.allow_invoice_transition', true), '') = 'on';
+  v_status   text;
+  v_currency text;
+  v_provenance_only boolean := false;
+BEGIN
+  SELECT status, currency
+    INTO v_status, v_currency
+    FROM public.invoices
+   WHERE id = COALESCE(NEW.invoice_id, OLD.invoice_id);
+
+  IF v_status IS NULL THEN
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    v_provenance_only :=
+      (to_jsonb(NEW) - 'placement_id' - 'fee_line_id')
+        = (to_jsonb(OLD) - 'placement_id' - 'fee_line_id')
+      AND (NEW.placement_id IS NOT DISTINCT FROM OLD.placement_id OR NEW.placement_id IS NULL)
+      AND (NEW.fee_line_id  IS NOT DISTINCT FROM OLD.fee_line_id  OR NEW.fee_line_id  IS NULL);
+  END IF;
+
+  IF v_status <> 'draft' AND NOT v_allowed AND NOT v_provenance_only THEN
+    RAISE EXCEPTION 'Invoice lines are frozen once the invoice is %.', v_status
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF TG_OP IN ('INSERT', 'UPDATE') AND NEW.currency <> v_currency THEN
+    RAISE EXCEPTION 'This line is in % but the invoice bills in % — an invoice carries one currency.', NEW.currency, v_currency
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  RETURN COALESCE(NEW, OLD);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_invoices()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_allowed boolean :=
+    COALESCE(current_setting('mandate.allow_invoice_transition', true), '') = 'on';
+  v_provenance_only boolean;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status <> 'draft' AND NOT v_allowed THEN
+      RAISE EXCEPTION 'Invoices are created as drafts. Use issue_invoice() to issue.'
+        USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    IF OLD.status <> 'draft' AND NOT v_allowed THEN
+      RAISE EXCEPTION 'Invoice % is % and is a record — it cannot be deleted. Void it instead.', OLD.id, OLD.status
+        USING ERRCODE = 'P0001';
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  -- UPDATE from here down. The one edit a frozen document admits:
+  -- provenance FKs (template, client, author) going NULL because the
+  -- row they pointed at was deleted — everything else identical.
+  v_provenance_only :=
+    (to_jsonb(NEW) - 'template_id' - 'client_id' - 'created_by')
+      = (to_jsonb(OLD) - 'template_id' - 'client_id' - 'created_by')
+    AND (NEW.template_id IS NOT DISTINCT FROM OLD.template_id OR NEW.template_id IS NULL)
+    AND (NEW.client_id   IS NOT DISTINCT FROM OLD.client_id   OR NEW.client_id   IS NULL)
+    AND (NEW.created_by  IS NOT DISTINCT FROM OLD.created_by  OR NEW.created_by  IS NULL);
+
+  IF OLD.status = 'void' AND NOT v_allowed AND NOT v_provenance_only THEN
+    RAISE EXCEPTION 'Invoice % is void and immutable.', OLD.id
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF OLD.status = 'issued' AND NOT v_allowed AND NOT v_provenance_only THEN
+    RAISE EXCEPTION 'Invoice % is issued and immutable. Use void_invoice() and reissue.', OLD.id
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF NEW.status = 'issued' AND OLD.status IS DISTINCT FROM 'issued' AND NOT v_allowed THEN
+    RAISE EXCEPTION 'Use issue_invoice() to issue an invoice.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF NEW.status = 'void' AND OLD.status IS DISTINCT FROM 'void' AND NOT v_allowed THEN
+    RAISE EXCEPTION 'Use void_invoice() to void an invoice.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_lead_recruiter_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_lead_role   text;
+  v_lead_status text;
+BEGIN
+  IF (SELECT auth.uid()) IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF public.is_current_user_founder() THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE'
+     AND NEW.lead_recruiter_id IS NOT DISTINCT FROM OLD.lead_recruiter_id THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' AND NOT public.can_manage_desk() THEN
+    RAISE EXCEPTION 'only a manager or admin can reassign a mandate'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF TG_OP = 'INSERT'
+     AND NEW.lead_recruiter_id IS NOT NULL
+     AND NEW.lead_recruiter_id <> (SELECT auth.uid())
+     AND NOT public.can_manage_desk() THEN
+    RAISE EXCEPTION 'only a manager or admin can assign a mandate to someone else'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF NEW.lead_recruiter_id IS NOT NULL THEN
+    SELECT u.role, u.status INTO v_lead_role, v_lead_status
+      FROM public.users u
+     WHERE u.id = NEW.lead_recruiter_id;
+
+    IF v_lead_role IS NOT NULL
+       AND (v_lead_status <> 'active'
+            OR v_lead_role NOT IN ('admin', 'manager', 'recruiter')) THEN
+      RAISE EXCEPTION 'the lead recruiter must be an active admin, manager or recruiter'
+        USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_mandate_grant_integrity()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_project_org    uuid;
+  v_project_client uuid;
+  v_user_client    uuid;
+  v_user_role      text;
+BEGIN
+  SELECT p.organization_id, p.client_id
+    INTO v_project_org, v_project_client
+    FROM public.projects p WHERE p.id = NEW.project_id;
+
+  IF v_project_org IS DISTINCT FROM NEW.organization_id
+     OR v_project_client IS NULL
+     OR v_project_client IS DISTINCT FROM NEW.client_id THEN
+    RAISE EXCEPTION 'a grant must name a mandate of its own client'
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  SELECT u.client_id, u.role INTO v_user_client, v_user_role
+    FROM public.users u WHERE u.id = NEW.user_id;
+
+  IF v_user_client IS DISTINCT FROM NEW.client_id
+     OR v_user_role IS DISTINCT FROM 'hiring_manager' THEN
+    RAISE EXCEPTION 'a grant must name a hiring manager of the same client'
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_mandate_share_integrity()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_project_org    uuid;
+  v_project_client uuid;
+BEGIN
+  SELECT p.organization_id, p.client_id
+    INTO v_project_org, v_project_client
+    FROM public.projects p WHERE p.id = NEW.project_id;
+
+  IF v_project_org IS DISTINCT FROM NEW.organization_id
+     OR v_project_client IS NULL
+     OR v_project_client IS DISTINCT FROM NEW.client_id THEN
+    RAISE EXCEPTION 'a mandate can only be shared to its own client'
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_network_dnc()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_allowed boolean :=
+    COALESCE(current_setting('mandate.allow_dnc_write', true), '') = 'on';
+BEGIN
+  IF NOT v_allowed THEN
+    IF NEW.dnc IS DISTINCT FROM OLD.dnc
+       OR NEW.dnc_reason IS DISTINCT FROM OLD.dnc_reason
+       OR NEW.dnc_set_at IS DISTINCT FROM OLD.dnc_set_at
+       OR NEW.dnc_set_by IS DISTINCT FROM OLD.dnc_set_by THEN
+      RAISE EXCEPTION 'do-not-contact is set by set_network_dnc(), cleared by clear_network_dnc(), or set by the candidate portal — never written directly'
+        USING ERRCODE = 'P0001';
+    END IF;
+    IF (NEW.relationship_state = 'do_not_contact')
+       IS DISTINCT FROM (OLD.relationship_state = 'do_not_contact') THEN
+      RAISE EXCEPTION 'a relationship enters or leaves do_not_contact only through the DNC RPCs'
+        USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_objective_owner_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_role   text;
+  v_status text;
+BEGIN
+  IF TG_OP = 'UPDATE' AND NEW.created_by IS DISTINCT FROM OLD.created_by THEN
+    RAISE EXCEPTION 'an objective''s author does not change';
+  END IF;
+
+  IF TG_OP = 'UPDATE'
+     AND NEW.owner_user_id IS DISTINCT FROM OLD.owner_user_id
+     AND coalesce(public.can_manage_desk(), false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'only the desk hands an objective to someone else';
+  END IF;
+
+  IF TG_OP = 'INSERT'
+     AND NEW.owner_user_id IS DISTINCT FROM (SELECT auth.uid())
+     AND coalesce(public.can_manage_desk(), false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'only the desk sets an objective''s owner to someone else';
+  END IF;
+
+  IF TG_OP = 'INSERT' OR NEW.owner_user_id IS DISTINCT FROM OLD.owner_user_id THEN
+    SELECT role, status INTO v_role, v_status
+      FROM public.users WHERE id = NEW.owner_user_id;
+    IF v_role IS NULL
+       OR coalesce(v_status, '') <> 'active'
+       OR v_role NOT IN ('manager', 'recruiter', 'researcher') THEN
+      RAISE EXCEPTION 'an objective''s owner must be an active manager, recruiter or researcher — admins are support, not subjects';
+    END IF;
+    IF v_role = 'researcher'
+       AND EXISTS (
+         SELECT 1 FROM public.objective_key_results kr
+          WHERE kr.objective_id = NEW.id AND kr.kind = 'financial'
+       ) THEN
+      RAISE EXCEPTION 'this objective carries financial key results — a researcher owner could not read them';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+CREATE OR REPLACE FUNCTION public.guard_provider_model_status()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  if tg_op = 'INSERT' then
+    if new.status = 'active' then
+      raise exception
+        'provider_models: a new model enters benchmarking — activation is the eval harness''s door';
+    end if;
+    return new;
+  end if;
+
+  -- UPDATE. Active only from benchmarking: a retired model re-enters
+  -- benchmarking before it can come back.
+  if new.status = 'active' and old.status <> 'active'
+     and old.status <> 'benchmarking' then
+    raise exception
+      'provider_models: % may become active only from benchmarking (it is %)',
+      new.model_id, old.status;
+  end if;
+
+  -- Production never points at an inactive row: clear the capability
+  -- assignments before a model leaves 'active'.
+  if old.status = 'active' and new.status <> 'active'
+     and exists (select 1 from public.capability_assignments a
+                  where a.model_id = new.model_id) then
+    raise exception
+      'provider_models: % is assigned to a capability — clear the assignment first',
+      new.model_id;
+  end if;
+
+  return new;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_role_success_profiles()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transition_allowed boolean :=
+    COALESCE(current_setting('mandate.allow_profile_transition', true), '') = 'on';
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status <> 'draft' AND NOT v_transition_allowed THEN
+      RAISE EXCEPTION 'Profiles are created as drafts. Use approve_success_profile() to approve.'
+        USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD.status IN ('approved', 'archived') AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Profile % is % and immutable. Create a new version instead.', OLD.id, OLD.status
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF NEW.status = 'approved'
+     AND OLD.status IS DISTINCT FROM 'approved'
+     AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Use approve_success_profile() to approve a profile.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_sourcing_runs()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transition_allowed boolean := COALESCE(current_setting('mandate.allow_sourcing_run_transition', true), '') = 'on';
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status <> 'draft' AND NOT v_transition_allowed THEN
+      RAISE EXCEPTION 'Sourcing runs are created as drafts. Use mark_sourcing_run_executed() to execute.' USING ERRCODE='P0001';
+    END IF;
+    RETURN NEW;
+  END IF;
+  IF OLD.status IN ('executed','archived') THEN
+    IF NEW.content_json IS DISTINCT FROM OLD.content_json THEN
+      RAISE EXCEPTION 'Sourcing run % is % — its strategy is frozen. Create a new version instead.', OLD.id, OLD.status USING ERRCODE='P0001';
+    END IF;
+    IF NEW.parent_run_id IS DISTINCT FROM OLD.parent_run_id OR NEW.root_run_id IS DISTINCT FROM OLD.root_run_id OR NEW.version IS DISTINCT FROM OLD.version THEN
+      RAISE EXCEPTION 'Sourcing run % is % — its lineage is frozen.', OLD.id, OLD.status USING ERRCODE='P0001';
+    END IF;
+    IF NEW.executed_at IS DISTINCT FROM OLD.executed_at OR NEW.result_count IS DISTINCT FROM OLD.result_count THEN
+      RAISE EXCEPTION 'Sourcing run % is % — its execution record is frozen.', OLD.id, OLD.status USING ERRCODE='P0001';
+    END IF;
+    IF NEW.status = 'draft' THEN
+      RAISE EXCEPTION 'Sourcing run % cannot return to draft.', OLD.id USING ERRCODE='P0001';
+    END IF;
+  END IF;
+  IF NEW.status = 'executed' AND OLD.status IS DISTINCT FROM 'executed' AND NOT v_transition_allowed THEN
+    RAISE EXCEPTION 'Use mark_sourcing_run_executed() to execute a sourcing run.' USING ERRCODE='P0001';
+  END IF;
+  RETURN NEW;
+END; $function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_subject_notified()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_allowed boolean :=
+    COALESCE(current_setting('mandate.allow_notification_stamp', true), '') = 'on';
+BEGIN
+  IF NEW.subject_notified_at IS DISTINCT FROM OLD.subject_notified_at
+     AND NOT v_allowed THEN
+    RAISE EXCEPTION 'subject_notified_at is set by log_candidate_outreach(), not directly — it records that a person was actually told.'
+      USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_task_assignee_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_role   text;
+  v_status text;
+BEGIN
+  IF TG_OP = 'UPDATE' AND NEW.created_by IS DISTINCT FROM OLD.created_by THEN
+    RAISE EXCEPTION 'a task''s author does not change';
+  END IF;
+
+  IF TG_OP = 'UPDATE'
+     AND NEW.assignee_id IS DISTINCT FROM OLD.assignee_id
+     AND coalesce(public.can_manage_desk(), false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'only the desk assigns or reassigns a task';
+  END IF;
+
+  IF NEW.assignee_id IS NOT NULL
+     AND (TG_OP = 'INSERT' OR NEW.assignee_id IS DISTINCT FROM OLD.assignee_id) THEN
+    SELECT role, status INTO v_role, v_status
+      FROM public.users WHERE id = NEW.assignee_id;
+    IF v_role IS NULL
+       OR coalesce(v_status, '') <> 'active'
+       OR v_role NOT IN ('admin', 'manager', 'recruiter', 'researcher') THEN
+      RAISE EXCEPTION 'the assignee must be an active admin, manager, recruiter or researcher';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.guard_user_privilege_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_other_admins int;
+  v_mgr_org uuid;
+  v_mgr_role text;
+  v_mgr_status text;
+  v_mgr_manager uuid;
+BEGIN
+  IF NEW.manager_id IS DISTINCT FROM OLD.manager_id THEN
+    IF NEW.manager_id IS NOT NULL THEN
+      IF NEW.manager_id = NEW.id THEN
+        RAISE EXCEPTION 'a member cannot report to themselves'
+          USING ERRCODE = 'check_violation';
+      END IF;
+
+      SELECT organization_id, role, status, manager_id
+        INTO v_mgr_org, v_mgr_role, v_mgr_status, v_mgr_manager
+        FROM public.users
+       WHERE id = NEW.manager_id;
+
+      IF v_mgr_org IS DISTINCT FROM NEW.organization_id THEN
+        RAISE EXCEPTION 'a member can only report to someone in the same organization'
+          USING ERRCODE = 'check_violation';
+      END IF;
+
+      IF v_mgr_role NOT IN ('manager', 'admin') THEN
+        RAISE EXCEPTION 'only a manager or an admin can head a desk'
+          USING ERRCODE = 'check_violation';
+      END IF;
+
+      IF v_mgr_status <> 'active' THEN
+        RAISE EXCEPTION 'a desk cannot be headed by a suspended account'
+          USING ERRCODE = 'check_violation';
+      END IF;
+
+      IF v_mgr_manager = NEW.id THEN
+        RAISE EXCEPTION 'those two would report to each other'
+          USING ERRCODE = 'check_violation';
+      END IF;
+    END IF;
+
+    IF (SELECT auth.uid()) IS NOT NULL
+       AND NOT public.is_current_user_founder()
+       AND NOT coalesce(public.is_org_admin(), false) THEN
+      RAISE EXCEPTION 'reporting lines are set by an admin from Settings / Members'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+  END IF;
+
+  IF (SELECT auth.uid()) IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF public.is_current_user_founder() THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.is_founder IS DISTINCT FROM OLD.is_founder THEN
+    RAISE EXCEPTION 'is_founder can only be changed by a founder'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF NEW.organization_id IS DISTINCT FROM OLD.organization_id THEN
+    RAISE EXCEPTION 'organization_id can only be changed by a founder'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF NEW.client_id IS DISTINCT FROM OLD.client_id THEN
+    RAISE EXCEPTION 'client_id can only be changed by a founder'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF (NEW.role = 'agent') IS DISTINCT FROM (OLD.role = 'agent') THEN
+    RAISE EXCEPTION 'the agent role can only be granted or removed by a founder'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF NEW.role = 'admin' AND OLD.role IS DISTINCT FROM 'admin' THEN
+    IF coalesce(current_setting('mandate.allow_admin_grant', true), '') <> 'on'
+       AND public.active_admin_count(OLD.organization_id) >= 2 THEN
+      RAISE EXCEPTION
+        'granting admin requires approval by a second admin — propose it from Settings / Members'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+  END IF;
+
+  IF OLD.id = (SELECT auth.uid())
+     AND NOT coalesce(public.is_org_admin(), false) THEN
+    IF NEW.role IS DISTINCT FROM OLD.role
+       OR NEW.email IS DISTINCT FROM OLD.email
+       OR (NEW.status IS DISTINCT FROM OLD.status
+           AND NOT public.is_client_admin()) THEN
+      RAISE EXCEPTION 'only your name may be changed on your own account'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD.client_id IS NOT NULL THEN
+    IF (SELECT public.current_user_client_id()) IS NOT NULL THEN
+      IF NOT public.is_client_admin() THEN
+        RAISE EXCEPTION 'only a client admin may administer client accounts'
+          USING ERRCODE = 'insufficient_privilege';
+      END IF;
+      IF NEW.role IS DISTINCT FROM OLD.role
+         OR NEW.email IS DISTINCT FROM OLD.email
+         OR NEW.full_name IS DISTINCT FROM OLD.full_name THEN
+        RAISE EXCEPTION 'a client admin may only change account status'
+          USING ERRCODE = 'insufficient_privilege';
+      END IF;
+    ELSE
+      IF NEW.email IS DISTINCT FROM OLD.email THEN
+        RAISE EXCEPTION 'email can only be changed by a founder'
+          USING ERRCODE = 'insufficient_privilege';
+      END IF;
+    END IF;
+  END IF;
+
+  IF OLD.role = 'admin' AND NEW.role IS DISTINCT FROM 'admin' THEN
+    SELECT count(*) INTO v_other_admins
+      FROM public.users
+     WHERE organization_id = OLD.organization_id
+       AND id <> OLD.id
+       AND role = 'admin'
+       AND status = 'active';
+    IF v_other_admins = 0 THEN
+      RAISE EXCEPTION 'an organization must keep at least one active admin'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+  END IF;
+
+  IF OLD.role = 'admin' AND OLD.status = 'active' AND NEW.status IS DISTINCT FROM 'active' THEN
+    SELECT count(*) INTO v_other_admins
+      FROM public.users
+     WHERE organization_id = OLD.organization_id
+       AND id <> OLD.id
+       AND role = 'admin'
+       AND status = 'active';
+    IF v_other_admins = 0 THEN
+      RAISE EXCEPTION 'an organization must keep at least one active admin'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_founder_emails text[] := ARRAY[
+    'vbreygin@gmail.com',
+    'v.breygin7990@gmail.com',
+    'filmreecon@gmail.com'
+  ];
+  v_is_founder boolean;
+  v_org_id uuid;
+  v_role text;
+  v_status text;
+  v_full_name text;
+BEGIN
+  v_is_founder := lower(NEW.email) = ANY(v_founder_emails);
+  v_full_name := NULLIF(NEW.raw_user_meta_data->>'full_name', '');
+
+  IF v_is_founder THEN
+    SELECT id INTO v_org_id FROM public.organizations WHERE slug = 'mandate-hq';
+    IF v_org_id IS NULL THEN
+      INSERT INTO public.organizations (name, slug)
+      VALUES ('Mandate HQ', 'mandate-hq')
+      RETURNING id INTO v_org_id;
+    END IF;
+    v_role   := 'admin';
+    v_status := 'active';
+  ELSE
+    v_org_id := NULL;
+    v_role   := 'viewer';
+    v_status := 'pending';
+  END IF;
+
+  INSERT INTO public.users (id, email, full_name, organization_id, role, is_founder, status)
+  VALUES (NEW.id, NEW.email, v_full_name, v_org_id, v_role, v_is_founder, v_status);
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.is_agent()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT coalesce(public.current_user_role() = 'agent', false)
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.is_client_admin()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT coalesce(public.current_user_role() = 'client_admin', false)
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.is_current_user_founder()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT COALESCE(
+    (SELECT is_founder FROM public.users WHERE id = auth.uid()),
+    false
+  );
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.is_org_admin()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT public.current_user_role() = 'admin'
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.is_placement_credited(p_placement_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.placements p
+     WHERE p.id = p_placement_id
+       AND (SELECT auth.uid()) IN (p.owner_user_id, p.sourced_by_user_id)
+  )
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.issue_candidate_portal_token(p_candidate_id uuid)
+ RETURNS TABLE(token_id uuid, portal_token uuid, recipient_label text, expires_at timestamp with time zone)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller uuid := (SELECT auth.uid());
+  v_org uuid := (SELECT public.current_user_org_id());
+  v_cand record;
+  v_key text;
+  v_label text;
+  v_row public.candidate_portal_tokens%ROWTYPE;
+BEGIN
+  IF NOT coalesce(public.can_share_clients(), false) THEN
+    RAISE EXCEPTION 'issuing a candidate portal link needs the client-sharing tier'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  SELECT c.* INTO v_cand FROM public.candidates c
+   WHERE c.id = p_candidate_id AND c.organization_id = v_org;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'candidate not found in your organisation'
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  v_key := public.candidate_identity_key(
+    v_cand.email, v_cand.linkedin_url, v_cand.full_name, v_cand.current_company);
+  v_label := coalesce(nullif(btrim(v_cand.full_name), ''), v_cand.email, 'Candidate');
+
+  SELECT * INTO v_row FROM public.candidate_portal_tokens t
+   WHERE t.organization_id = v_org AND t.identity_key = v_key
+     AND t.revoked_at IS NULL;
+
+  IF FOUND THEN
+    IF v_row.expires_at <= now() THEN
+      UPDATE public.candidate_portal_tokens t
+         SET expires_at = now() + interval '30 days'
+       WHERE t.id = v_row.id
+       RETURNING * INTO v_row;
+    END IF;
+  ELSE
+    INSERT INTO public.candidate_portal_tokens
+      (organization_id, identity_key, recipient_label, issued_by, expires_at)
+    VALUES (v_org, v_key, v_label, v_caller, now() + interval '30 days')
+    RETURNING * INTO v_row;
+
+    PERFORM public.write_activity_event(
+      p_organization_id => v_org,
+      p_event_type      => 'candidate_portal_link_issued',
+      p_visibility      => 'org',
+      p_candidate_id    => p_candidate_id,
+      p_detail          => jsonb_build_object('person', v_label));
+  END IF;
+
+  RETURN QUERY SELECT v_row.id, v_row.token, v_row.recipient_label, v_row.expires_at;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.issue_external_invitation(p_client_id uuid, p_email text, p_full_name text, p_role text, p_project_ids uuid[] DEFAULT '{}'::uuid[], p_contact_id uuid DEFAULT NULL::uuid)
+ RETURNS TABLE(invitation_id uuid, invitation_token uuid)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller        uuid := (SELECT auth.uid());
+  v_caller_org    uuid := (SELECT public.current_user_org_id());
+  v_caller_client uuid := (SELECT public.current_user_client_id());
+  v_client_org    uuid := public.client_org(p_client_id);
+  v_is_staff      boolean;
+  v_is_cadmin     boolean;
+  v_email         text := btrim(coalesce(p_email, ''));
+  v_full_name     text := btrim(coalesce(p_full_name, ''));
+  v_project_ids   uuid[];
+  v_pid           uuid;
+  v_contact_id    uuid := p_contact_id;
+  v_label         text;
+  v_id            uuid;
+  v_token         uuid;
+BEGIN
+  IF v_client_org IS NULL THEN
+    RAISE EXCEPTION 'unknown client' USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  v_is_staff  := v_caller_org IS NOT NULL
+                 AND v_caller_org = v_client_org
+                 AND coalesce(public.can_share_clients(), false);
+  v_is_cadmin := public.is_client_admin() AND v_caller_client = p_client_id;
+
+  IF NOT (v_is_staff OR v_is_cadmin) THEN
+    RAISE EXCEPTION 'not allowed to invite to this client'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF p_role NOT IN ('hiring_manager', 'client_hr', 'client_admin') THEN
+    RAISE EXCEPTION '% is not an external role', p_role
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_email = '' OR position('@' in v_email) <= 1 THEN
+    RAISE EXCEPTION 'an invitation needs a real email address'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_full_name = '' THEN
+    RAISE EXCEPTION 'an invitation needs the person''s name'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.users u WHERE lower(u.email) = lower(v_email)) THEN
+    RAISE EXCEPTION 'this email already has a Mandate account'
+      USING ERRCODE = 'unique_violation';
+  END IF;
+
+  v_project_ids := (SELECT coalesce(array_agg(DISTINCT pid), '{}'::uuid[])
+                      FROM unnest(coalesce(p_project_ids, '{}'::uuid[])) pid);
+
+  IF p_role <> 'hiring_manager' AND v_project_ids <> '{}'::uuid[] THEN
+    RAISE EXCEPTION 'only a hiring manager invitation carries mandate grants'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  FOREACH v_pid IN ARRAY v_project_ids LOOP
+    IF NOT EXISTS (
+      SELECT 1 FROM public.projects p
+       WHERE p.id = v_pid
+         AND p.organization_id = v_client_org
+         AND p.client_id = p_client_id
+    ) THEN
+      RAISE EXCEPTION 'mandate % does not belong to this client', v_pid
+        USING ERRCODE = 'foreign_key_violation';
+    END IF;
+
+    IF v_is_cadmin THEN
+      IF NOT EXISTS (
+        SELECT 1 FROM public.mandate_shares s WHERE s.project_id = v_pid
+      ) THEN
+        RAISE EXCEPTION 'a client admin can only grant mandates already shared with the company'
+          USING ERRCODE = 'insufficient_privilege';
+      END IF;
+    ELSE
+      INSERT INTO public.mandate_shares (organization_id, project_id, client_id, shared_by)
+      VALUES (v_client_org, v_pid, p_client_id, v_caller)
+      ON CONFLICT (project_id) DO NOTHING;
+    END IF;
+  END LOOP;
+
+  IF v_contact_id IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM public.client_contacts c
+       WHERE c.id = v_contact_id AND c.client_id = p_client_id
+    ) THEN
+      RAISE EXCEPTION 'contact does not belong to this client'
+        USING ERRCODE = 'foreign_key_violation';
+    END IF;
+  ELSE
+    SELECT c.id INTO v_contact_id
+      FROM public.client_contacts c
+     WHERE c.client_id = p_client_id
+       AND c.email_key = lower(v_email)
+     LIMIT 1;
+
+    IF v_contact_id IS NULL THEN
+      INSERT INTO public.client_contacts
+        (organization_id, client_id, full_name, email, contact_type, created_by)
+      VALUES
+        (v_client_org, p_client_id, v_full_name, v_email,
+         CASE p_role WHEN 'hiring_manager' THEN 'hiring_manager'
+                     WHEN 'client_hr' THEN 'hr'
+                     ELSE 'other' END,
+         v_caller)
+      RETURNING id INTO v_contact_id;
+    END IF;
+  END IF;
+
+  SELECT coalesce(nullif(btrim(u.full_name), ''), u.email) INTO v_label
+    FROM public.users u WHERE u.id = v_caller;
+
+  INSERT INTO public.invitations
+    (organization_id, client_id, contact_id, email, full_name, role,
+     grant_project_ids, invited_by, invited_by_label)
+  VALUES
+    (v_client_org, p_client_id, v_contact_id, v_email, v_full_name, p_role,
+     v_project_ids, v_caller, coalesce(v_label, ''))
+  RETURNING id, token INTO v_id, v_token;
+
+  RETURN QUERY SELECT v_id, v_token;
+EXCEPTION WHEN unique_violation THEN
+  RAISE EXCEPTION 'there is already a live invitation for % at this client', v_email
+    USING ERRCODE = 'unique_violation';
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.issue_invoice(p_invoice_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org        uuid := (SELECT public.current_user_org_id());
+  v_inv        public.invoices%ROWTYPE;
+  v_tpl        public.invoice_templates%ROWTYPE;
+  v_lines      integer;
+  v_mismatched integer;
+  v_number     text;
+  v_total      numeric(14,2);
+BEGIN
+  IF (SELECT auth.uid()) IS NULL OR v_org IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to issue an invoice.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF NOT (coalesce((SELECT public.can_write_mandates()), false)
+          AND coalesce((SELECT public.can_read_fees()), false)) THEN
+    RAISE EXCEPTION 'Issuing an invoice is a fee-writer''s act.'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  SELECT * INTO v_inv
+    FROM public.invoices
+   WHERE id = p_invoice_id AND organization_id = v_org
+   FOR UPDATE;
+
+  IF v_inv.id IS NULL THEN
+    RAISE EXCEPTION 'Invoice % was not found (or is not yours to issue).', p_invoice_id
+      USING ERRCODE = 'P0002';
+  END IF;
+  IF v_inv.status <> 'draft' THEN
+    RAISE EXCEPTION 'Invoice % is already % — only drafts issue.', p_invoice_id, v_inv.status
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF v_inv.template_id IS NULL THEN
+    RAISE EXCEPTION 'The draft has no template — a template carries the billing identity and the number sequence.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  SELECT * INTO v_tpl
+    FROM public.invoice_templates
+   WHERE id = v_inv.template_id AND organization_id = v_org
+   FOR UPDATE;
+
+  IF v_tpl.id IS NULL THEN
+    RAISE EXCEPTION 'The draft''s template no longer exists — pick another before issuing.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  SELECT count(*), count(*) FILTER (WHERE currency <> v_inv.currency)
+    INTO v_lines, v_mismatched
+    FROM public.invoice_lines
+   WHERE invoice_id = v_inv.id;
+
+  IF v_lines = 0 THEN
+    RAISE EXCEPTION 'An invoice with no lines bills nothing — add at least one.'
+      USING ERRCODE = 'P0001';
+  END IF;
+  IF v_mismatched > 0 THEN
+    RAISE EXCEPTION 'The draft mixes currencies — an invoice carries one.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF coalesce(btrim(v_inv.bill_to->>'name'), '') = '' THEN
+    RAISE EXCEPTION 'The document needs a bill-to name before it can issue.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  v_number := coalesce(v_tpl.structure->>'numbering_prefix', 'INV-')
+              || lpad(v_tpl.numbering_next::text, 4, '0');
+
+  UPDATE public.invoice_templates
+     SET numbering_next = numbering_next + 1,
+         updated_at = now()
+   WHERE id = v_tpl.id;
+
+  SELECT coalesce(sum(amount), 0) INTO v_total
+    FROM public.invoice_lines
+   WHERE invoice_id = v_inv.id;
+
+  IF v_total < 0 THEN
+    RAISE EXCEPTION 'The draft totals below zero — a negative invoice is a credit note, which this product does not write.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM set_config('mandate.allow_invoice_transition', 'on', true);
+
+  UPDATE public.invoices
+     SET status         = 'issued',
+         invoice_number = v_number,
+         issue_date     = current_date,
+         due_date       = current_date + v_inv.payment_terms_days,
+         from_snapshot  = v_tpl.structure
+                          || jsonb_build_object(
+                               'template_name', v_tpl.name,
+                               'logo_path', v_tpl.logo_path),
+         total_amount   = v_total,
+         updated_at     = now()
+   WHERE id = v_inv.id;
+
+  PERFORM set_config('mandate.allow_invoice_transition', '', true);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.lift_network_suppression(p_suppression uuid, p_reason text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org    uuid := (SELECT public.current_user_org_id());
+  v_actor  uuid := (SELECT auth.uid());
+  v_row    record;
+  v_people jsonb := '[]'::jsonb;
+  v_n      integer := 0;
+BEGIN
+  IF NOT (SELECT public.is_current_user_founder()) THEN
+    RAISE EXCEPTION 'lift_network_suppression: only a founder-level act with a recorded reason un-sets do-not-contact'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  IF nullif(btrim(coalesce(p_reason, '')), '') IS NULL THEN
+    RAISE EXCEPTION 'lift_network_suppression: the un-set must record its reason'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  FOR v_row IN
+    SELECT r.suppression_id, r.profile_id, r.display_name
+      FROM public.network_suppression_reach(p_suppression) r
+      JOIN public.network_profiles p ON p.id = r.profile_id
+     WHERE p.organization_id = v_org
+  LOOP
+    UPDATE public.network_suppressions
+       SET lifted_at = now(), lifted_by = v_actor, lift_reason = btrim(p_reason)
+     WHERE id = v_row.suppression_id AND lifted_at IS NULL;
+
+    v_n := v_n + 1;
+    v_people := v_people || to_jsonb(v_row.display_name);
+
+    PERFORM public.write_activity_event(
+      p_organization_id => v_org,
+      p_event_type      => 'network_dnc_cleared',
+      p_visibility      => 'org',
+      p_detail          => jsonb_build_object(
+                             'person', v_row.display_name,
+                             'reason', btrim(p_reason),
+                             'carried', v_row.suppression_id <> p_suppression));
+  END LOOP;
+
+  IF v_n = 0 THEN
+    RAISE EXCEPTION 'lift_network_suppression: no standing suppression in your organisation matches'
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  RETURN jsonb_build_object('lifted', v_n, 'people', v_people);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.list_client_invitations(p_client_id uuid)
+ RETURNS TABLE(id uuid, email text, full_name text, role text, invited_by_label text, mandate_count integer, expires_at timestamp with time zone, revoked_at timestamp with time zone, accepted_at timestamp with time zone, created_at timestamp with time zone)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT i.id, i.email, i.full_name, i.role,
+         i.invited_by_label,
+         coalesce(array_length(i.grant_project_ids, 1), 0),
+         i.expires_at, i.revoked_at, i.accepted_at, i.created_at
+    FROM public.invitations i
+   WHERE i.client_id = p_client_id
+     AND (
+       ((SELECT public.current_user_org_id()) = i.organization_id
+         AND coalesce(public.can_share_clients(), false))
+       OR (public.is_client_admin()
+         AND (SELECT public.current_user_client_id()) = p_client_id)
+     )
+   ORDER BY i.created_at DESC
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.log_candidate_outreach(p_candidate_id uuid, p_channel text, p_direction text, p_subject text, p_body text, p_includes_privacy_notice boolean, p_occurred_at timestamp with time zone)
+ RETURNS TABLE(id uuid, subject_notified_at timestamp with time zone)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor uuid := auth.uid();
+  v_candidate public.candidates%ROWTYPE;
+  v_id uuid;
+  v_when timestamptz := COALESCE(p_occurred_at, now());
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to log outreach.' USING ERRCODE='P0001';
+  END IF;
+  SELECT * INTO v_candidate FROM public.candidates AS c WHERE c.id = p_candidate_id FOR UPDATE;
+  IF v_candidate.id IS NULL THEN
+    RAISE EXCEPTION 'Candidate % not found (or not accessible).', p_candidate_id USING ERRCODE='P0002';
+  END IF;
+  IF p_includes_privacy_notice AND p_direction = 'inbound' THEN
+    RAISE EXCEPTION 'An inbound message cannot carry the privacy notice.' USING ERRCODE='P0001';
+  END IF;
+  INSERT INTO public.candidate_outreach (
+    candidate_id, project_id, organization_id, channel, direction,
+    subject, body, includes_privacy_notice, occurred_at, created_by)
+  VALUES (p_candidate_id, v_candidate.project_id, v_candidate.organization_id,
+    p_channel, COALESCE(p_direction,'outbound'), p_subject, p_body,
+    COALESCE(p_includes_privacy_notice,false), v_when, v_actor)
+  RETURNING candidate_outreach.id INTO v_id;
+  RETURN QUERY SELECT v_id, v_candidate.subject_notified_at;
+END; $function$
+;
+
+CREATE OR REPLACE FUNCTION public.mark_sourcing_run_executed(p_run_id uuid, p_result_count integer)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor  uuid := auth.uid();
+  v_target uuid;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to execute a sourcing run.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM set_config('mandate.allow_sourcing_run_transition', 'on', true);
+
+  SELECT sr.id INTO v_target
+    FROM public.sourcing_runs AS sr
+   WHERE sr.id = p_run_id
+     AND sr.status = 'draft'
+   FOR UPDATE;
+
+  IF v_target IS NULL THEN
+    RAISE EXCEPTION 'Sourcing run % could not be executed (not found, not accessible, or not a draft).', p_run_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.sourcing_runs AS sr
+     SET status = 'executed',
+         executed_at = clock_timestamp(),
+         executed_by = v_actor,
+         result_count = GREATEST(COALESCE(p_result_count, 0), 0),
+         updated_at = now()
+   WHERE sr.id = p_run_id;
+
+  PERFORM set_config('mandate.allow_sourcing_run_transition', '', true);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.merge_candidates(p_keep uuid, p_discard uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org      uuid := (SELECT public.current_user_org_id());
+  v_keep     public.candidates%ROWTYPE;
+  v_discard  public.candidates%ROWTYPE;
+  v_moved    jsonb := '{}'::jsonb;
+  v_dropped  jsonb := '{}'::jsonb;
+  v_filled   text[] := ARRAY[]::text[];
+  v_n        integer;
+  v_placement_ref text;
+BEGIN
+  IF coalesce((SELECT public.can_write_candidates()), false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'merging records is a candidate-writer act'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF p_keep IS NULL OR p_discard IS NULL THEN
+    RAISE EXCEPTION 'two records are required';
+  END IF;
+
+  IF p_keep = p_discard THEN
+    RAISE EXCEPTION 'a record cannot be merged into itself';
+  END IF;
+
+  SELECT * INTO v_keep FROM public.candidates
+   WHERE id = p_keep AND organization_id = v_org;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'the record to keep was not found';
+  END IF;
+
+  SELECT * INTO v_discard FROM public.candidates
+   WHERE id = p_discard AND organization_id = v_org;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'the record to discard was not found';
+  END IF;
+
+  IF v_keep.project_id IS DISTINCT FROM v_discard.project_id THEN
+    RAISE EXCEPTION 'both records must be in the same mandate';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.placements WHERE candidate_id = p_discard) THEN
+    SELECT 'a placement (' || p.status ||
+           coalesce(', offer dated ' || to_char(p.offer_date, 'DD Mon YYYY'), '') || ')'
+      INTO v_placement_ref
+      FROM public.placements p WHERE p.candidate_id = p_discard LIMIT 1;
+    RAISE EXCEPTION
+      'the record you are discarding carries % — make it the record you keep, or remove the placement first',
+      coalesce(v_placement_ref, 'a placement');
+  END IF;
+
+  UPDATE public.candidate_notes SET candidate_id = p_keep
+   WHERE candidate_id = p_discard;
+  GET DIAGNOSTICS v_n = ROW_COUNT;
+  IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('notes', v_n); END IF;
+
+  UPDATE public.feedback SET candidate_id = p_keep
+   WHERE candidate_id = p_discard;
+  GET DIAGNOSTICS v_n = ROW_COUNT;
+  IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('feedback', v_n); END IF;
+
+  UPDATE public.candidate_outreach SET candidate_id = p_keep
+   WHERE candidate_id = p_discard;
+  GET DIAGNOSTICS v_n = ROW_COUNT;
+  IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('outreach', v_n); END IF;
+
+  UPDATE public.verdict_ledger SET candidate_id = p_keep
+   WHERE candidate_id = p_discard;
+  GET DIAGNOSTICS v_n = ROW_COUNT;
+  IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('verdicts', v_n); END IF;
+
+  UPDATE public.activity_events SET candidate_id = p_keep
+   WHERE candidate_id = p_discard;
+  GET DIAGNOSTICS v_n = ROW_COUNT;
+  IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('trail_events', v_n); END IF;
+
+  UPDATE public.sourcing_run_results SET matched_candidate_id = p_keep
+   WHERE matched_candidate_id = p_discard;
+  UPDATE public.sourcing_run_results SET promoted_candidate_id = p_keep
+   WHERE promoted_candidate_id = p_discard;
+
+  DELETE FROM public.sourcing_run_candidates d
+   WHERE d.candidate_id = p_discard
+     AND EXISTS (SELECT 1 FROM public.sourcing_run_candidates k
+                  WHERE k.candidate_id = p_keep AND k.run_id = d.run_id);
+  UPDATE public.sourcing_run_candidates SET candidate_id = p_keep
+   WHERE candidate_id = p_discard;
+
+  IF EXISTS (SELECT 1 FROM public.candidate_scores WHERE candidate_id = p_keep) THEN
+    SELECT count(*) INTO v_n FROM public.candidate_scores WHERE candidate_id = p_discard;
+    IF v_n > 0 THEN
+      v_dropped := v_dropped || jsonb_build_object(
+        'score', (SELECT overall_score FROM public.candidate_scores
+                   WHERE candidate_id = p_discard LIMIT 1));
+    END IF;
+  ELSE
+    UPDATE public.candidate_scores SET candidate_id = p_keep WHERE candidate_id = p_discard;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('score', v_n); END IF;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.engagement_states WHERE candidate_id = p_keep) THEN
+    SELECT count(*) INTO v_n FROM public.engagement_states WHERE candidate_id = p_discard;
+    IF v_n > 0 THEN v_dropped := v_dropped || jsonb_build_object('engagement', v_n); END IF;
+  ELSE
+    UPDATE public.engagement_states SET candidate_id = p_keep WHERE candidate_id = p_discard;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('engagement', v_n); END IF;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.prescreens WHERE candidate_id = p_keep) THEN
+    SELECT count(*) INTO v_n FROM public.prescreens WHERE candidate_id = p_discard;
+    IF v_n > 0 THEN v_dropped := v_dropped || jsonb_build_object('prescreens', v_n); END IF;
+  ELSE
+    UPDATE public.prescreens SET candidate_id = p_keep WHERE candidate_id = p_discard;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('prescreens', v_n); END IF;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.outreach_strategies WHERE candidate_id = p_keep) THEN
+    SELECT count(*) INTO v_n FROM public.outreach_strategies WHERE candidate_id = p_discard;
+    IF v_n > 0 THEN v_dropped := v_dropped || jsonb_build_object('outreach_strategies', v_n); END IF;
+  ELSE
+    UPDATE public.outreach_strategies SET candidate_id = p_keep WHERE candidate_id = p_discard;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('outreach_strategies', v_n); END IF;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.interview_plans WHERE candidate_id = p_keep) THEN
+    SELECT count(*) INTO v_n FROM public.interview_plans WHERE candidate_id = p_discard;
+    IF v_n > 0 THEN v_dropped := v_dropped || jsonb_build_object('interview_plans', v_n); END IF;
+  ELSE
+    UPDATE public.interview_plans SET candidate_id = p_keep WHERE candidate_id = p_discard;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('interview_plans', v_n); END IF;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.candidate_notifications
+              WHERE candidate_id = p_keep AND status = 'sent') THEN
+    SELECT count(*) INTO v_n FROM public.candidate_notifications
+      WHERE candidate_id = p_discard AND status = 'sent';
+    IF v_n > 0 THEN v_dropped := v_dropped || jsonb_build_object('sent_notifications', v_n); END IF;
+    DELETE FROM public.candidate_notifications
+      WHERE candidate_id = p_discard AND status = 'sent';
+  END IF;
+  UPDATE public.candidate_notifications SET candidate_id = p_keep
+   WHERE candidate_id = p_discard;
+  GET DIAGNOSTICS v_n = ROW_COUNT;
+  IF v_n > 0 THEN v_moved := v_moved || jsonb_build_object('notifications', v_n); END IF;
+
+  DELETE FROM public.executive_assessments d
+   WHERE d.candidate_id = p_discard
+     AND EXISTS (SELECT 1 FROM public.executive_assessments k
+                  WHERE k.candidate_id = p_keep AND k.search_id = d.search_id);
+  UPDATE public.executive_assessments SET candidate_id = p_keep WHERE candidate_id = p_discard;
+
+  DELETE FROM public.executive_risk_reviews d
+   WHERE d.candidate_id = p_discard
+     AND EXISTS (SELECT 1 FROM public.executive_risk_reviews k
+                  WHERE k.candidate_id = p_keep AND k.search_id = d.search_id);
+  UPDATE public.executive_risk_reviews SET candidate_id = p_keep WHERE candidate_id = p_discard;
+
+  DELETE FROM public.executive_interview_plans d
+   WHERE d.candidate_id = p_discard
+     AND EXISTS (SELECT 1 FROM public.executive_interview_plans k
+                  WHERE k.candidate_id = p_keep AND k.search_id = d.search_id);
+  UPDATE public.executive_interview_plans SET candidate_id = p_keep WHERE candidate_id = p_discard;
+
+  DELETE FROM public.executive_search_candidates d
+   WHERE d.candidate_id = p_discard
+     AND EXISTS (SELECT 1 FROM public.executive_search_candidates k
+                  WHERE k.candidate_id = p_keep AND k.search_id = d.search_id);
+  UPDATE public.executive_search_candidates SET candidate_id = p_keep WHERE candidate_id = p_discard;
+
+  IF nullif(btrim(coalesce(v_keep.email, '')), '') IS NULL
+     AND nullif(btrim(coalesce(v_discard.email, '')), '') IS NOT NULL THEN
+    UPDATE public.candidates SET email = v_discard.email WHERE id = p_keep;
+    v_filled := array_append(v_filled, 'email');
+  END IF;
+
+  IF nullif(btrim(coalesce(v_keep.linkedin_url, '')), '') IS NULL
+     AND nullif(btrim(coalesce(v_discard.linkedin_url, '')), '') IS NOT NULL THEN
+    UPDATE public.candidates SET linkedin_url = v_discard.linkedin_url WHERE id = p_keep;
+    v_filled := array_append(v_filled, 'linkedin_url');
+  END IF;
+
+  IF nullif(btrim(coalesce(v_keep.phone, '')), '') IS NULL
+     AND nullif(btrim(coalesce(v_discard.phone, '')), '') IS NOT NULL THEN
+    UPDATE public.candidates SET phone = v_discard.phone WHERE id = p_keep;
+    v_filled := array_append(v_filled, 'phone');
+  END IF;
+
+  IF nullif(btrim(coalesce(v_keep.location, '')), '') IS NULL
+     AND nullif(btrim(coalesce(v_discard.location, '')), '') IS NOT NULL THEN
+    UPDATE public.candidates SET location = v_discard.location WHERE id = p_keep;
+    v_filled := array_append(v_filled, 'location');
+  END IF;
+
+  IF nullif(btrim(coalesce(v_keep.current_company, '')), '') IS NULL
+     AND nullif(btrim(coalesce(v_discard.current_company, '')), '') IS NOT NULL THEN
+    UPDATE public.candidates SET current_company = v_discard.current_company WHERE id = p_keep;
+    v_filled := array_append(v_filled, 'current_company');
+  END IF;
+
+  IF nullif(btrim(coalesce(v_keep.current_title, '')), '') IS NULL
+     AND nullif(btrim(coalesce(v_discard.current_title, '')), '') IS NOT NULL THEN
+    UPDATE public.candidates SET current_title = v_discard.current_title WHERE id = p_keep;
+    v_filled := array_append(v_filled, 'current_title');
+  END IF;
+
+  UPDATE public.candidates
+     SET identity_review_of = NULL,
+         identity_review_label = NULL,
+         identity_review_at = NULL
+   WHERE id = p_keep
+     AND (identity_review_of = p_discard OR identity_review_of IS NULL);
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_org,
+    p_event_type      => 'candidates_merged',
+    p_visibility      => 'org',
+    p_project_id      => v_keep.project_id,
+    p_candidate_id    => p_keep,
+    p_detail          => jsonb_build_object(
+      'kept_label',      v_keep.full_name,
+      'discarded_label', v_discard.full_name,
+      'moved',           v_moved,
+      'dropped',         v_dropped,
+      'filled',          to_jsonb(v_filled)
+    )
+  );
+
+  DELETE FROM public.candidates WHERE id = p_discard;
+
+  RETURN jsonb_build_object(
+    'kept_id',         p_keep,
+    'kept_label',      v_keep.full_name,
+    'discarded_label', v_discard.full_name,
+    'discarded_cv',    v_discard.cv_url,
+    'moved',           v_moved,
+    'dropped',         v_dropped,
+    'filled',          to_jsonb(v_filled)
+  );
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.merge_network_profiles(p_keep uuid, p_discard uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org        uuid := (SELECT public.current_user_org_id());
+  v_keep       public.network_profiles%ROWTYPE;
+  v_discard    public.network_profiles%ROWTYPE;
+  v_moved      integer := 0;
+  v_moved_ids  uuid[] := ARRAY[]::uuid[];
+  v_aliases    integer := 0;
+  v_erasures   integer := 0;
+  v_state      text;
+  v_moved_sup  uuid[] := ARRAY[]::uuid[];
+  v_carried    boolean := false;
+  v_filled     text[] := ARRAY[]::text[];
+  v_follow_at  date;
+  v_follow_note text;
+  v_last       timestamptz;
+BEGIN
+  IF (SELECT public.is_agent()) THEN
+    RAISE EXCEPTION 'merging two people is a human act — an agent can never do it'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  IF coalesce((SELECT public.can_write_candidates()), false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'merging people is a candidate-writer act'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  IF p_keep IS NULL OR p_discard IS NULL THEN
+    RAISE EXCEPTION 'two people are required';
+  END IF;
+  IF p_keep = p_discard THEN
+    RAISE EXCEPTION 'a person cannot be merged into themselves';
+  END IF;
+
+  SELECT * INTO v_keep FROM public.network_profiles
+   WHERE id = p_keep AND organization_id = v_org;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'the person to keep was not found';
+  END IF;
+  SELECT * INTO v_discard FROM public.network_profiles
+   WHERE id = p_discard AND organization_id = v_org;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'the person to merge in was not found in your organisation';
+  END IF;
+
+  SELECT coalesce(array_agg(c.id), ARRAY[]::uuid[]) INTO v_moved_ids
+    FROM public.candidates c
+   WHERE c.network_profile_id = p_discard AND c.organization_id = v_org;
+
+  UPDATE public.candidates SET network_profile_id = p_keep
+   WHERE network_profile_id = p_discard AND organization_id = v_org;
+  GET DIAGNOSTICS v_moved = ROW_COUNT;
+
+  -- D2 — suppression is contagious, and a merge can never lower it.
+  -- S208: the discarded person's REASONS move to the survivor rather than
+  -- one of them overwriting the other. Both are true of the same human, the
+  -- earliest still governs what the badge says, and neither is lost. The
+  -- move must happen before the DELETE below, which would cascade them away.
+  SELECT coalesce(array_agg(s.id), ARRAY[]::uuid[]) INTO v_moved_sup
+    FROM public.network_suppressions s
+   WHERE s.profile_id = p_discard AND s.lifted_at IS NULL;
+
+  UPDATE public.network_suppressions
+     SET profile_id = p_keep
+   WHERE profile_id = p_discard AND organization_id = v_org;
+
+  v_carried := coalesce((SELECT public.governing_network_suppression(p_keep)) = ANY(v_moved_sup), false);
+
+  -- D3 — the warmer state, with the two non-temperatures decided first.
+  IF v_keep.dnc OR v_discard.dnc THEN
+    v_state := 'do_not_contact';
+  ELSIF v_keep.relationship_state = 'client_contact'
+        OR v_discard.relationship_state = 'client_contact' THEN
+    v_state := 'client_contact';
+  ELSIF public.relationship_warmth(v_discard.relationship_state)
+        > public.relationship_warmth(v_keep.relationship_state) THEN
+    v_state := v_discard.relationship_state;
+  ELSE
+    v_state := v_keep.relationship_state;
+  END IF;
+
+  v_last := GREATEST(
+    coalesce(v_keep.last_meaningful_contact_at, '-infinity'::timestamptz),
+    coalesce(v_discard.last_meaningful_contact_at, '-infinity'::timestamptz));
+  IF v_last = '-infinity'::timestamptz THEN v_last := NULL; END IF;
+
+  IF v_keep.follow_up_at IS NULL
+     OR (v_discard.follow_up_at IS NOT NULL AND v_discard.follow_up_at < v_keep.follow_up_at) THEN
+    v_follow_at   := coalesce(v_discard.follow_up_at, v_keep.follow_up_at);
+    v_follow_note := CASE WHEN v_discard.follow_up_at IS NOT NULL
+                            AND (v_keep.follow_up_at IS NULL
+                                 OR v_discard.follow_up_at < v_keep.follow_up_at)
+                          THEN v_discard.follow_up_note
+                          ELSE v_keep.follow_up_note END;
+  ELSE
+    v_follow_at   := v_keep.follow_up_at;
+    v_follow_note := v_keep.follow_up_note;
+  END IF;
+
+  IF nullif(btrim(coalesce(v_keep.primary_email, '')), '') IS NULL
+     AND nullif(btrim(coalesce(v_discard.primary_email, '')), '') IS NOT NULL THEN
+    v_filled := array_append(v_filled, 'primary_email');
+  END IF;
+  IF nullif(btrim(coalesce(v_keep.linkedin_url, '')), '') IS NULL
+     AND nullif(btrim(coalesce(v_discard.linkedin_url, '')), '') IS NOT NULL THEN
+    v_filled := array_append(v_filled, 'linkedin_url');
+  END IF;
+
+  PERFORM set_config('mandate.allow_dnc_write', 'on', true);
+
+  UPDATE public.network_profiles p
+     -- S208: dnc and its three companions are DERIVED from the ledger and
+     -- are not written here. guard_network_dnc still refuses any hand that
+     -- tries; refresh_network_suppression is the only writer.
+     SET relationship_state = v_state,
+         last_meaningful_contact_at = v_last,
+         follow_up_at   = v_follow_at,
+         follow_up_note = v_follow_note,
+         primary_email = CASE WHEN 'primary_email' = ANY(v_filled)
+                              THEN v_discard.primary_email ELSE p.primary_email END,
+         linkedin_url  = CASE WHEN 'linkedin_url' = ANY(v_filled)
+                              THEN v_discard.linkedin_url ELSE p.linkedin_url END,
+         updated_at = now()
+   WHERE p.id = p_keep;
+
+  UPDATE public.network_profile_aliases
+     SET profile_id = p_keep
+   WHERE profile_id = p_discard AND organization_id = v_org;
+  GET DIAGNOSTICS v_aliases = ROW_COUNT;
+
+  INSERT INTO public.network_profile_aliases
+    (organization_id, identity_key, profile_id, merged_by)
+  VALUES (v_org, v_discard.identity_key, p_keep, (SELECT auth.uid()))
+  ON CONFLICT (organization_id, identity_key)
+    DO UPDATE SET profile_id = p_keep,
+                  merged_by  = (SELECT auth.uid()),
+                  merged_at  = now();
+
+  UPDATE public.candidate_erasure_requests r
+     SET network_profile_id = p_keep
+   WHERE r.network_profile_id = p_discard
+     AND r.organization_id = v_org;
+
+  UPDATE public.candidate_erasure_requests r
+     SET covered_candidate_ids = (
+           SELECT coalesce(array_agg(DISTINCT x), ARRAY[]::uuid[])
+             FROM unnest(r.covered_candidate_ids || v_moved_ids) AS t(x))
+   WHERE r.network_profile_id = p_keep
+     AND r.organization_id = v_org
+     AND r.status = 'open'
+     AND cardinality(v_moved_ids) > 0;
+
+  SELECT count(*) INTO v_erasures
+    FROM public.candidate_erasure_requests r
+   WHERE r.network_profile_id = p_keep
+     AND r.organization_id = v_org
+     AND r.status = 'open';
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_org,
+    p_event_type      => 'network_profiles_merged',
+    p_visibility      => 'org',
+    p_detail          => jsonb_build_object(
+      'kept',            v_keep.display_name,
+      'merged_in',       v_discard.display_name,
+      'alias_key',       v_discard.identity_key,
+      'candidates',      v_moved,
+      'aliases_moved',   v_aliases,
+      'state',           v_state,
+      'dnc_carried',     v_carried,
+      'erasures_open',   v_erasures,
+      'filled',          to_jsonb(v_filled),
+      'other_disposition', v_discard.disposition));
+
+  -- The ledger moved under the profile UPDATE above, so have the
+  -- derivation settle the survivor's columns last.
+  PERFORM public.refresh_network_suppression(p_keep);
+
+  DELETE FROM public.network_profiles WHERE id = p_discard;
+
+  RETURN jsonb_build_object(
+    'kept_id',       p_keep,
+    'kept',          v_keep.display_name,
+    'merged_in',     v_discard.display_name,
+    'candidates',    v_moved,
+    'aliases_moved', v_aliases,
+    'state',         v_state,
+    'dnc_carried',   v_carried,
+    'erasures_open', v_erasures,
+    'filled',        to_jsonb(v_filled));
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.network_domains()
+ RETURNS TABLE(domain text)
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  SELECT DISTINCT c.cv_structured ->> 'domain' AS domain
+    FROM public.candidates c
+   WHERE c.network_profile_id IS NOT NULL
+     AND nullif(btrim(coalesce(c.cv_structured ->> 'domain', '')), '') IS NOT NULL
+   ORDER BY 1;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.network_people_matches(p_row_archetype text, p_row_domain text, p_row_tier text, p_row_years numeric, p_row_stages text[], p_archetype text, p_tier text, p_domain text, p_stage text, p_years text)
+ RETURNS boolean
+ LANGUAGE sql
+ IMMUTABLE
+AS $function$
+  SELECT (p_archetype IS NULL OR p_row_archetype = p_archetype)
+     AND (p_domain    IS NULL OR p_row_domain = p_domain)
+     AND (p_tier      IS NULL OR p_row_tier = p_tier)
+     AND (p_stage     IS NULL OR p_stage = ANY(coalesce(p_row_stages, ARRAY[]::text[])))
+     AND (p_years IS NULL OR CASE p_years
+            WHEN '0-5'   THEN coalesce(p_row_years, 0) <= 5
+            WHEN '6-10'  THEN coalesce(p_row_years, 0) BETWEEN 6 AND 10
+            WHEN '11-20' THEN coalesce(p_row_years, 0) BETWEEN 11 AND 20
+            WHEN '21+'   THEN coalesce(p_row_years, 0) >= 21
+            ELSE true END);
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.network_people_rollup(p_q text DEFAULT NULL::text, p_archetype text DEFAULT NULL::text, p_tier text DEFAULT NULL::text, p_domain text DEFAULT NULL::text, p_stage text DEFAULT NULL::text, p_years text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_where text := 'public.network_people_matches(v.archetype, v.domain, v.best_tier, '
+               || 'v.years_experience, v.stages, $2, $3, $4, $5, $6)';
+  v_result jsonb;
+BEGIN
+  IF p_q IS NOT NULL THEN
+    v_where := v_where || ' AND v.search_text LIKE $1';
+  END IF;
+
+  EXECUTE format($sql$
+    WITH f AS (
+      SELECT v.profile_id, v.full_name, v.archetype, v.domain, v.average_score,
+             v.project_count, v.is_returning, v.shortlisted_before
+        FROM public.network_people_folded v
+       WHERE %s
+    )
+    SELECT jsonb_build_object(
+      'total',        (SELECT count(*) FROM f),
+      'returning',    (SELECT count(*) FROM f WHERE is_returning),
+      'shortlisted',  (SELECT count(*) FROM f WHERE shortlisted_before),
+      'domains',      (SELECT count(DISTINCT domain) FROM f WHERE domain IS NOT NULL),
+      'by_archetype', (SELECT coalesce(jsonb_agg(jsonb_build_object(
+                                'archetype', coalesce(archetype, 'Unspecified'),
+                                'count', n) ORDER BY n DESC), '[]'::jsonb)
+                         FROM (SELECT archetype, count(*)::integer AS n
+                                 FROM f GROUP BY archetype) a),
+      'by_domain',    (SELECT coalesce(jsonb_agg(jsonb_build_object(
+                                'domain', domain, 'count', n) ORDER BY n DESC), '[]'::jsonb)
+                         FROM (SELECT domain, count(*)::integer AS n
+                                 FROM f WHERE domain IS NOT NULL
+                                GROUP BY domain ORDER BY count(*) DESC LIMIT 8) d),
+      'top_by_average', (SELECT coalesce(jsonb_agg(jsonb_build_object(
+                                'profile_id', profile_id, 'full_name', full_name,
+                                'average_score', average_score)
+                                ORDER BY average_score DESC), '[]'::jsonb)
+                         FROM (SELECT profile_id, full_name, average_score FROM f
+                                WHERE average_score IS NOT NULL
+                                ORDER BY average_score DESC LIMIT 5) t),
+      'most_versatile', (SELECT coalesce(jsonb_agg(jsonb_build_object(
+                                'profile_id', profile_id, 'full_name', full_name,
+                                'project_count', project_count)
+                                ORDER BY project_count DESC), '[]'::jsonb)
+                         FROM (SELECT profile_id, full_name, project_count FROM f
+                                WHERE project_count >= 2
+                                ORDER BY project_count DESC LIMIT 5) v),
+      'people_pending', (SELECT count(*)::integer FROM public.candidates
+                          WHERE network_profile_id IS NULL)
+    )
+  $sql$, v_where)
+  INTO v_result
+  USING '%' || lower(btrim(coalesce(p_q, ''))) || '%',
+        p_archetype, p_tier, p_domain, p_stage, p_years;
+
+  RETURN v_result;
+END
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.network_suppression_reach(p_suppression uuid)
+ RETURNS TABLE(suppression_id uuid, profile_id uuid, display_name text, is_origin boolean)
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+  WITH RECURSIVE tree AS (
+    SELECT s.id, s.profile_id, s.carried_from
+      FROM public.network_suppressions s
+     WHERE s.id = p_suppression AND s.lifted_at IS NULL
+    UNION ALL
+    SELECT c.id, c.profile_id, c.carried_from
+      FROM public.network_suppressions c
+      JOIN tree t ON c.carried_from = t.id
+     WHERE c.lifted_at IS NULL
+  )
+  SELECT t.id, t.profile_id, p.display_name, (t.id = p_suppression)
+    FROM tree t JOIN public.network_profiles p ON p.id = t.profile_id;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.network_suppressions_refresh()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF TG_OP = 'UPDATE' AND OLD.profile_id IS DISTINCT FROM NEW.profile_id THEN
+    PERFORM public.refresh_network_suppression(OLD.profile_id);
+  END IF;
+  PERFORM public.refresh_network_suppression(
+    CASE WHEN TG_OP = 'DELETE' THEN OLD.profile_id ELSE NEW.profile_id END);
+  RETURN NULL;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.network_suppressions_stamp_move()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_label text;
+BEGIN
+  -- Branch on the ROW, never on FOUND (the trap migration 156 was written
+  -- to fix): this condition depends only on the two profile ids in hand.
+  IF NEW.profile_id IS DISTINCT FROM OLD.profile_id
+     AND NEW.moved_from_profile IS NULL THEN
+    SELECT p.display_name INTO v_label
+      FROM public.network_profiles p
+     WHERE p.id = OLD.profile_id;
+
+    NEW.moved_from_profile := OLD.profile_id;
+    NEW.moved_from_label   := v_label;
+    NEW.moved_at           := now();
+  END IF;
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.next_job_spec_version(p_project_id uuid)
+ RETURNS integer
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_next int;
+  v_locked_id uuid;
+BEGIN
+  SELECT id INTO v_locked_id
+    FROM public.projects
+   WHERE id = p_project_id
+   FOR UPDATE;
+
+  IF v_locked_id IS NULL THEN
+    RAISE EXCEPTION 'Project % not found or not accessible.', p_project_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  SELECT COALESCE(MAX(version), 0) + 1
+    INTO v_next
+    FROM public.job_specs
+   WHERE project_id = p_project_id;
+
+  RETURN v_next;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.portal_context()
+ RETURNS TABLE(full_name text, email text, role text, client_id uuid, client_name text, organization_name text)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT u.full_name, u.email, u.role,
+         c.id, c.name, o.name
+    FROM public.users u
+    JOIN public.clients c ON c.id = u.client_id
+    JOIN public.organizations o ON o.id = c.organization_id
+   WHERE u.id = (SELECT auth.uid())
+     AND u.status = 'active'
+     AND u.client_id IS NOT NULL
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.portal_get_invoice(p_invoice_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_inv  public.invoices%ROWTYPE;
+  v_snap jsonb;
+BEGIN
+  IF NOT public.is_client_admin() THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT * INTO v_inv
+    FROM public.invoices i
+   WHERE i.id = p_invoice_id
+     AND i.client_id = (SELECT public.current_user_client_id())
+     AND i.status IN ('issued', 'void');
+
+  IF NOT FOUND THEN
+    RETURN NULL;
+  END IF;
+
+  v_snap := coalesce(v_inv.from_snapshot, '{}'::jsonb);
+
+  RETURN jsonb_build_object(
+    'invoice', jsonb_build_object(
+      'id', v_inv.id,
+      'status', v_inv.status,
+      'invoice_number', v_inv.invoice_number,
+      'issue_date', v_inv.issue_date,
+      'due_date', v_inv.due_date,
+      'payment_terms_days', v_inv.payment_terms_days,
+      'currency', v_inv.currency,
+      'bill_to', v_inv.bill_to,
+      'total_amount', v_inv.total_amount,
+      'notes', v_inv.notes,
+      'voided_at', v_inv.voided_at,
+      'created_at', v_inv.created_at),
+    'structure', jsonb_build_object(
+      'billing_name', v_snap->>'billing_name',
+      'address_lines', coalesce(v_snap->'address_lines', '[]'::jsonb),
+      'company_number', v_snap->>'company_number',
+      'vat_number', v_snap->>'vat_number',
+      'payment_instructions', v_snap->>'payment_instructions',
+      'header_text', v_snap->>'header_text',
+      'footer_text', v_snap->>'footer_text'),
+    'logo_path', v_snap->>'logo_path',
+    'lines', coalesce((
+      SELECT jsonb_agg(jsonb_build_object(
+               'id', l.id,
+               'label', l.label,
+               'sequence', l.sequence,
+               'amount', l.amount,
+               'currency', l.currency)
+             ORDER BY l.sequence)
+        FROM public.invoice_lines l
+       WHERE l.invoice_id = v_inv.id
+    ), '[]'::jsonb)
+  );
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.portal_get_mandate(p_project_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_ids      uuid[];
+  v_project  jsonb;
+  v_result   jsonb;
+BEGIN
+  IF NOT public.can_view_portal_mandate(p_project_id) THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT jsonb_build_object(
+           'id', p.id, 'title', p.title, 'company_name', p.company_name,
+           'status', p.status,
+           -- §196/138 NAMED PROJECTION. Everything here reaches a client.
+           'calibration_model', jsonb_strip_nulls(jsonb_build_object(
+             'dimension_weights', p.calibration_model -> 'dimension_weights',
+             'custom_dimensions', (
+               SELECT coalesce(jsonb_agg(jsonb_build_object(
+                        'key',        d ->> 'key',
+                        'label',      d ->> 'label',
+                        'definition', d ->> 'definition',
+                        'weight',     d -> 'weight',
+                        'status',     d ->> 'status')), '[]'::jsonb)
+                 FROM jsonb_array_elements(
+                        CASE
+                          WHEN jsonb_typeof(p.calibration_model -> 'custom_dimensions')
+                               = 'array'
+                          THEN p.calibration_model -> 'custom_dimensions'
+                          ELSE '[]'::jsonb
+                        END) AS d
+                WHERE d ->> 'status' = 'approved'
+             )
+           )))
+    INTO v_project
+    FROM public.projects p WHERE p.id = p_project_id;
+
+  IF v_project IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  v_ids := public.portal_slate_candidate_ids(p_project_id);
+
+  SELECT jsonb_build_object(
+    'project', v_project,
+    'shortlist', (
+      SELECT jsonb_build_object('candidate_ids', to_jsonb(sl.candidate_ids),
+                                'updated_at', sl.updated_at)
+        FROM public.shortlists sl
+       WHERE sl.project_id = p_project_id
+       LIMIT 1
+    ),
+    'candidates', coalesce((
+      SELECT jsonb_agg(jsonb_build_object(
+               'id', c.id, 'full_name', c.full_name,
+               'current_title', c.current_title,
+               'current_company', c.current_company,
+               'cv_structured', c.cv_structured,
+               'recruiter_assessment', c.recruiter_assessment,
+               'pipeline_stage', c.pipeline_stage))
+        FROM public.candidates c
+       WHERE c.project_id = p_project_id
+         AND c.id = ANY(v_ids)
+    ), '[]'::jsonb),
+    'scores', coalesce((
+      SELECT jsonb_agg(jsonb_build_object(
+               'candidate_id', s.candidate_id,
+               'rank_position', s.rank_position,
+               'overall_score', s.overall_score,
+               'tier', s.tier,
+               'technical_score', s.technical_score,
+               'domain_score', s.domain_score,
+               'leadership_score', s.leadership_score,
+               'regulatory_score', s.regulatory_score,
+               'transformation_score', s.transformation_score))
+        FROM public.candidate_scores s
+       WHERE s.project_id = p_project_id
+         AND s.candidate_id = ANY(v_ids)
+    ), '[]'::jsonb),
+    'progress', (
+      SELECT jsonb_build_object(
+               'candidates_total', count(*),
+               'candidates_reviewed', count(*) FILTER (WHERE
+                 coalesce(c.pipeline_stage, 'found') IN
+                 ('reviewed', 'matched', 'shortlisted', 'submitted',
+                  'interviewed', 'passed_rounds', 'finalist', 'offer', 'hired')))
+        FROM public.candidates c
+       WHERE c.project_id = p_project_id
+    ),
+    'client_interview', (
+      SELECT jsonb_build_object(
+               'id', ci.id, 'version', ci.version,
+               'content_json', ci.content_json)
+        FROM public.client_interviews ci
+       WHERE ci.project_id = p_project_id
+         AND ci.status = 'approved'
+       LIMIT 1
+    ),
+    'my_interview_answer', (
+      SELECT jsonb_build_object(
+               'id', f.id,
+               'answers_json', f.answers_json,
+               'content', f.content,
+               'created_at', f.created_at)
+        FROM public.feedback f
+       WHERE f.project_id = p_project_id
+         AND f.feedback_type = 'client_interview'
+         AND f.submitted_by = (SELECT auth.uid())
+       LIMIT 1
+    )
+  ) INTO v_result;
+
+  RETURN v_result;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.portal_list_grants()
+ RETURNS TABLE(project_id uuid, project_title text, user_id uuid, member_name text, member_email text, granted_at timestamp with time zone)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT g.project_id, p.title, g.user_id,
+         coalesce(nullif(btrim(u.full_name), ''), u.email), u.email,
+         g.created_at
+    FROM public.mandate_grants g
+    JOIN public.projects p ON p.id = g.project_id
+    JOIN public.users u ON u.id = g.user_id
+   WHERE public.is_client_admin()
+     AND g.client_id = (SELECT public.current_user_client_id())
+   ORDER BY p.title, g.created_at
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.portal_list_invoices()
+ RETURNS TABLE(id uuid, invoice_number text, status text, issue_date date, due_date date, currency text, total_amount numeric)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT i.id, i.invoice_number, i.status, i.issue_date, i.due_date,
+         i.currency, i.total_amount
+    FROM public.invoices i
+   WHERE public.is_client_admin()
+     AND i.client_id = (SELECT public.current_user_client_id())
+     AND i.status IN ('issued', 'void')
+   ORDER BY i.issue_date DESC NULLS LAST, i.invoice_number DESC
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.portal_list_mandates()
+ RETURNS TABLE(project_id uuid, title text, status text, shared_at timestamp with time zone, my_last_submission_at timestamp with time zone)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT p.id, p.title, p.status,
+         s.created_at,
+         (SELECT max(r.submitted_at)
+            FROM public.hiring_manager_reviews r
+           WHERE r.project_id = p.id
+             AND r.submitted_by_user_id = (SELECT auth.uid()))
+    FROM public.mandate_shares s
+    JOIN public.projects p ON p.id = s.project_id
+   WHERE s.client_id = (SELECT public.current_user_client_id())
+     AND (
+       public.current_user_role() IN ('client_hr', 'client_admin')
+       OR EXISTS (
+         SELECT 1 FROM public.mandate_grants g
+          WHERE g.project_id = p.id
+            AND g.user_id = (SELECT auth.uid())
+       )
+     )
+   ORDER BY s.created_at DESC
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.portal_list_my_reviews(p_project_id uuid)
+ RETURNS TABLE(id uuid, candidate_ratings jsonb, top_concern text, priority_order uuid[], submitted_at timestamp with time zone)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT r.id, r.candidate_ratings, r.top_concern, r.priority_order, r.submitted_at
+    FROM public.hiring_manager_reviews r
+   WHERE r.project_id = p_project_id
+     AND r.submitted_by_user_id = (SELECT auth.uid())
+     AND public.can_view_portal_mandate(p_project_id)
+   ORDER BY r.submitted_at DESC
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.portal_slate_candidate_ids(p_project_id uuid)
+ RETURNS uuid[]
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT CASE
+    WHEN sl.candidate_ids IS NOT NULL AND array_length(sl.candidate_ids, 1) > 0
+      THEN sl.candidate_ids
+    ELSE coalesce((
+      SELECT array_agg(cs.candidate_id ORDER BY cs.rank_position)
+        FROM (
+          SELECT candidate_id, rank_position
+            FROM public.candidate_scores
+           WHERE project_id = p_project_id
+             AND rank_position IS NOT NULL
+           ORDER BY rank_position
+           LIMIT 5
+        ) cs
+    ), '{}'::uuid[])
+  END
+  FROM (SELECT 1) one
+  LEFT JOIN LATERAL (
+    SELECT candidate_ids FROM public.shortlists
+     WHERE project_id = p_project_id
+     LIMIT 1
+  ) sl ON true
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.promote_sourcing_results(p_run_id uuid, p_decisions jsonb)
+ RETURNS TABLE(created_count integer, linked_count integer, imported_count integer)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor        uuid := auth.uid();
+  v_run          public.sourcing_runs%ROWTYPE;
+  v_decision     jsonb;
+  v_result_id    uuid;
+  v_action       text;
+  v_candidate_id uuid;
+  v_staged       public.sourcing_run_results%ROWTYPE;
+  v_created      integer := 0;
+  v_linked       integer := 0;
+  v_imported     integer;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to promote sourcing results.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF p_decisions IS NULL OR jsonb_typeof(p_decisions) <> 'array' THEN
+    RAISE EXCEPTION 'Promotion decisions must be a JSON array.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  -- Lock the run for the whole promotion so two recruiters promoting from the
+  -- same review table cannot both recompute imported_count from a stale count.
+  SELECT * INTO v_run
+    FROM public.sourcing_runs AS sr
+   WHERE sr.id = p_run_id
+   FOR UPDATE;
+
+  IF v_run.id IS NULL THEN
+    RAISE EXCEPTION 'Sourcing run % not found (or not accessible).', p_run_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  -- Only an executed run may attribute. The attribution view ignores drafts, so
+  -- promoting into one would create candidates that no strategy ever claims.
+  IF v_run.status <> 'executed' THEN
+    RAISE EXCEPTION 'Sourcing run % is % — results can only be promoted from an executed run.', p_run_id, v_run.status
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  FOR v_decision IN SELECT * FROM jsonb_array_elements(p_decisions)
+  LOOP
+    v_result_id  := NULLIF(v_decision->>'result_id', '')::uuid;
+    v_action     := COALESCE(v_decision->>'action', '');
+    v_candidate_id := NULLIF(v_decision->>'candidate_id', '')::uuid;
+
+    IF v_result_id IS NULL THEN
+      RAISE EXCEPTION 'Promotion decision is missing result_id.'
+        USING ERRCODE = 'P0001';
+    END IF;
+    IF v_action NOT IN ('create', 'link') THEN
+      RAISE EXCEPTION 'Unknown promotion action "%" for staged result %.', v_action, v_result_id
+        USING ERRCODE = 'P0001';
+    END IF;
+
+    SELECT * INTO v_staged
+      FROM public.sourcing_run_results AS srr
+     WHERE srr.id = v_result_id
+       AND srr.run_id = p_run_id
+     FOR UPDATE;
+
+    IF v_staged.id IS NULL THEN
+      RAISE EXCEPTION 'Staged result % does not belong to sourcing run % (or is not accessible).', v_result_id, p_run_id
+        USING ERRCODE = 'P0002';
+    END IF;
+
+    -- Re-promotion would create a second candidates row for the same person and
+    -- double-count the yield. The review table filters promoted rows out; this
+    -- is the guarantee behind that.
+    IF v_staged.promoted_candidate_id IS NOT NULL THEN
+      RAISE EXCEPTION 'Staged result % has already been promoted.', v_result_id
+        USING ERRCODE = 'P0001';
+    END IF;
+
+    IF v_action = 'link' THEN
+      IF v_candidate_id IS NULL THEN
+        RAISE EXCEPTION 'Linking staged result % requires a candidate_id.', v_result_id
+          USING ERRCODE = 'P0001';
+      END IF;
+
+      PERFORM 1
+        FROM public.candidates AS c
+       WHERE c.id = v_candidate_id
+         AND c.project_id = v_run.project_id
+         AND c.organization_id = v_run.organization_id;
+
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'Candidate % is not in this run''s project.', v_candidate_id
+          USING ERRCODE = 'P0002';
+      END IF;
+
+      v_linked := v_linked + 1;
+    ELSE
+      INSERT INTO public.candidates (
+        organization_id, project_id, full_name, current_title, current_company,
+        location, email, linkedin_url,
+        source_kind, source_platform, source_url, sourced_at
+      )
+      VALUES (
+        v_run.organization_id, v_run.project_id, v_staged.full_name,
+        v_staged.current_title, v_staged.current_company, v_staged.location,
+        v_staged.email,
+        -- Only a LinkedIn profile URL lands in linkedin_url: identityKey reads
+        -- that column, and filing a GitHub or company-bio URL there would make
+        -- the same person look like two on the next import.
+        CASE WHEN v_staged.profile_url ILIKE '%linkedin.com%'
+             THEN v_staged.profile_url END,
+        'sourced', v_staged.source_platform, v_staged.profile_url, now()
+      )
+      RETURNING id INTO v_candidate_id;
+
+      v_created := v_created + 1;
+    END IF;
+
+    -- Every appearance is recorded. ON CONFLICT because the same candidate can
+    -- legitimately be surfaced by several rows of one import; the link is the
+    -- fact, and it is already true.
+    INSERT INTO public.sourcing_run_candidates (run_id, candidate_id, organization_id)
+    VALUES (p_run_id, v_candidate_id, v_run.organization_id)
+    ON CONFLICT (run_id, candidate_id) DO NOTHING;
+
+    UPDATE public.sourcing_run_results AS srr
+       SET promoted_candidate_id = v_candidate_id,
+           promoted_at = now(),
+           promoted_by = v_actor
+     WHERE srr.id = v_result_id;
+  END LOOP;
+
+  -- Recomputed rather than incremented, so a partially-promoted run that is
+  -- resumed later converges on the truth instead of drifting.
+  SELECT count(*) INTO v_imported
+    FROM public.sourcing_run_candidates AS src
+   WHERE src.run_id = p_run_id;
+
+  UPDATE public.sourcing_runs AS sr
+     SET imported_count = v_imported,
+         updated_at = now()
+   WHERE sr.id = p_run_id;
+
+  RETURN QUERY SELECT v_created, v_linked, v_imported;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.propose_admin_grant(p_target_user_id uuid DEFAULT NULL::uuid, p_target_email text DEFAULT NULL::text, p_full_name text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor uuid := (SELECT auth.uid()); v_org uuid := (SELECT public.current_user_org_id());
+  v_kind text; v_id uuid; v_label text; v_target record;
+BEGIN
+  IF v_actor IS NULL OR v_org IS NULL OR NOT coalesce(public.is_org_admin(), false) THEN
+    RAISE EXCEPTION 'Only an admin may propose an admin grant.' USING ERRCODE='insufficient_privilege';
+  END IF;
+  IF (p_target_user_id IS NULL) = (p_target_email IS NULL) THEN
+    RAISE EXCEPTION 'Name either a member to promote or an address to invite, not both.' USING ERRCODE='P0001';
+  END IF;
+  v_kind := CASE WHEN p_target_user_id IS NOT NULL THEN 'promotion' ELSE 'invitation' END;
+  IF v_kind = 'promotion' THEN
+    SELECT id, role, status, organization_id, full_name, email INTO v_target
+      FROM public.users WHERE id = p_target_user_id AND organization_id = v_org;
+    IF NOT FOUND THEN RAISE EXCEPTION 'That member is not in your organisation.' USING ERRCODE='P0002'; END IF;
+    IF v_target.role = 'admin' THEN RAISE EXCEPTION 'That member is already an admin.' USING ERRCODE='P0001'; END IF;
+    v_label := coalesce(nullif(btrim(v_target.full_name), ''), v_target.email);
+  ELSE v_label := p_target_email; END IF;
+  IF public.active_admin_count(v_org) < 2 THEN
+    IF v_kind = 'promotion' THEN
+      PERFORM set_config('mandate.allow_admin_grant','on',true);
+      UPDATE public.users SET role='admin' WHERE id = p_target_user_id;
+      PERFORM set_config('mandate.allow_admin_grant','',true);
+    END IF;
+    RETURN jsonb_build_object('outcome','granted','kind',v_kind);
+  END IF;
+  INSERT INTO public.admin_grant_requests
+    (organization_id, kind, target_user_id, target_email, target_full_name, proposed_by)
+  VALUES (v_org, v_kind, p_target_user_id, p_target_email, p_full_name, v_actor) RETURNING id INTO v_id;
+  PERFORM public.write_activity_event(
+    p_organization_id => v_org, p_event_type => 'admin_grant_proposed', p_visibility => 'admin',
+    p_target_user_id => p_target_user_id,
+    p_detail => jsonb_build_object('request_id', v_id, 'kind', v_kind, 'target', v_label));
+  RETURN jsonb_build_object('outcome','pending','request_id',v_id,'kind',v_kind);
+END; $function$
+;
+
+CREATE OR REPLACE FUNCTION public.purge_staged_results_for_candidate()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  DELETE FROM public.sourcing_run_results AS srr
+   WHERE srr.promoted_candidate_id = OLD.id OR srr.matched_candidate_id = OLD.id;
+  RETURN OLD;
+END; $function$
+;
+
+CREATE OR REPLACE FUNCTION public.record_activity_event(p_event_type text, p_project_id uuid DEFAULT NULL::uuid, p_candidate_id uuid DEFAULT NULL::uuid, p_client_id uuid DEFAULT NULL::uuid, p_detail jsonb DEFAULT '{}'::jsonb)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org uuid := (SELECT public.current_user_org_id());
+BEGIN
+  IF p_event_type NOT IN ('shortlist_published', 'report_exported',
+                          'hm_portal_opened', 'mandate_reassigned',
+                          'skill_created', 'skill_updated', 'skill_paused',
+                          'skill_activated', 'skill_deleted',
+                          'candidate_stage_changed',
+                          'candidate_duplicate_discarded',
+                          'task_assigned', 'task_completed',
+                          'objective_created', 'objective_closed',
+                          'interview_plan_generation_requested',
+                          'interview_plan_generation_failed',
+                          'interview_plan_approved',
+                          'client_interview_generation_requested',
+                          'client_interview_generation_failed',
+                          'client_interview_approved',
+                          'model_provider_added',
+                          'model_assignment_changed',
+                          'invoice_created', 'invoice_issued',
+                          'invoice_voided', 'invoice_sent') THEN
+    RAISE EXCEPTION 'record_activity_event: % is not an app-recordable event', p_event_type;
+  END IF;
+
+  -- 102 + 120: skills and the model registry are admin territory —
+  -- only the role that can change one can claim to have changed one.
+  -- Agents are 'agent', not admin; the same refusal covers them.
+  IF (p_event_type LIKE 'skill\_%'
+      OR p_event_type IN ('model_provider_added', 'model_assignment_changed'))
+     AND (SELECT public.is_org_admin()) IS NOT TRUE THEN
+    RAISE EXCEPTION 'record_activity_event: % is an admin act', p_event_type
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  -- 104 + 141: moving a candidate through the pipeline, and discarding a
+  -- duplicate upload, are both candidate-writer acts.
+  IF p_event_type IN ('candidate_stage_changed', 'candidate_duplicate_discarded')
+     AND (SELECT public.can_write_candidates()) IS NOT TRUE THEN
+    RAISE EXCEPTION 'record_activity_event: % is a candidate-writer act', p_event_type
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  -- Assigning work is the desk's act; completing rides the actor
+  -- stamp (the RLS pin already proved the right to complete).
+  IF p_event_type = 'task_assigned'
+     AND coalesce((SELECT public.can_manage_desk()), false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'record_activity_event: % is a desk act', p_event_type
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  -- 107: setting or closing an objective is an okr-writer's act. The
+  -- detail carries titles, scopes and outcomes — never amounts (R1:
+  -- these rows are org-visible and the money is not).
+  IF p_event_type IN ('objective_created', 'objective_closed')
+     AND coalesce((SELECT public.can_write_okrs()), false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'record_activity_event: % is an okr-writer act', p_event_type
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  -- 116 + 117: both interview lifecycles are a mandate-writer's act.
+  IF p_event_type IN ('interview_plan_generation_requested',
+                      'interview_plan_generation_failed',
+                      'interview_plan_approved',
+                      'client_interview_generation_requested',
+                      'client_interview_generation_failed',
+                      'client_interview_approved')
+     AND coalesce((SELECT public.can_write_mandates()), false) IS NOT TRUE THEN
+    RAISE EXCEPTION 'record_activity_event: % is a mandate-writer act', p_event_type
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  -- 123 + 126: the invoice lifecycle is the fee-writer's act — 050's
+  -- split, BOTH halves. The rows land at 'fees' visibility below, which
+  -- is the only reason amounts may ride the detail (gate D.3).
+  IF p_event_type IN ('invoice_created', 'invoice_issued', 'invoice_voided',
+                      'invoice_sent')
+     AND NOT (coalesce((SELECT public.can_read_fees()), false)
+              AND coalesce((SELECT public.can_write_mandates()), false)) THEN
+    RAISE EXCEPTION 'record_activity_event: % is a fee-writer act', p_event_type
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF v_org IS NULL OR (SELECT public.can_read_org()) IS NOT TRUE THEN
+    RETURN;
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_org,
+    p_event_type      => p_event_type,
+    p_visibility      => CASE
+                           WHEN p_event_type IN ('invoice_created',
+                                                 'invoice_issued',
+                                                 'invoice_voided',
+                                                 'invoice_sent')
+                             THEN 'fees'
+                           ELSE 'org'
+                         END,
+    p_project_id      => p_project_id,
+    p_candidate_id    => p_candidate_id,
+    p_client_id       => p_client_id,
+    p_detail          => p_detail
+  );
+END;
+$function$
+;
+CREATE OR REPLACE FUNCTION public.record_agent_event(p_event_type text, p_project_id uuid DEFAULT NULL::uuid, p_candidate_id uuid DEFAULT NULL::uuid, p_detail jsonb DEFAULT '{}'::jsonb)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_org uuid;
+begin
+  if p_event_type not in ('feedback_interpreted', 'candidates_ranked',
+                          'candidate_parsed', 'candidate_evaluated',
+                          'candidate_positioned', 'candidate_researched',
+                          'candidate_triangulated', 'candidate_profiled',
+                          'desk_digest_generated', 'company_researched',
+                          'hm_researched', 'culture_profiled',
+                          'sourcing_queries_generated', 'intake_analyzed',
+                          'health_suggested', 'weekly_report_generated',
+                          'calibration_derived', 'job_spec_generated',
+                          'shortlist_report_generated', 'copilot_answered',
+                          'success_profile_generated', 'interview_plan_generated',
+                          'executive_context_researched',
+                          'candidate_search_answered', 'sourcing_search_executed',
+                          'outreach_strategy_drafted',
+                          'relationship_updated', 'engagement_updated',
+                          'prescreen_updated',
+                          'calibration_rederived',
+                          'evaluation_contested') then
+    raise exception 'record_agent_event: % is not an agent-recordable event', p_event_type;
+  end if;
+
+  if not public.is_agent() then
+    raise exception 'record_agent_event: only an active agent principal may record agent events'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  if p_project_id is not null then
+    select organization_id into v_org from public.projects where id = p_project_id;
+  end if;
+  if v_org is null and p_candidate_id is not null then
+    select organization_id into v_org from public.candidates where id = p_candidate_id;
+  end if;
+  if v_org is null then
+    v_org := (select public.current_user_org_id());
+  end if;
+  if v_org is null then
+    return;
+  end if;
+
+  perform public.write_activity_event(
+    p_organization_id => v_org,
+    p_event_type      => p_event_type,
+    p_visibility      => 'org',
+    p_project_id      => p_project_id,
+    p_candidate_id    => p_candidate_id,
+    p_detail          => coalesce(p_detail, '{}'::jsonb)
+  );
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.record_client_interview_answered(p_token uuid, p_interview_id uuid, p_answered integer)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_tok record;
+  v_int record;
+BEGIN
+  SELECT id, project_id, organization_id, label
+    INTO v_tok
+  FROM public.hiring_manager_tokens
+  WHERE token = p_token
+    AND revoked_at IS NULL
+    AND expires_at > now();
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  SELECT id, version
+    INTO v_int
+  FROM public.client_interviews
+  WHERE id = p_interview_id
+    AND project_id = v_tok.project_id
+    AND status = 'approved';
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_tok.organization_id,
+    p_event_type      => 'client_interview_answered',
+    p_visibility      => 'org',
+    p_project_id      => v_tok.project_id,
+    p_candidate_id    => NULL,
+    p_client_id       => NULL,
+    p_placement_id    => NULL,
+    p_target_user_id  => NULL,
+    p_detail          => jsonb_build_object(
+                           'label', v_tok.label,
+                           'token_id', v_tok.id,
+                           'interview_id', v_int.id,
+                           'version', v_int.version,
+                           'answered_count', GREATEST(0, COALESCE(p_answered, 0))));
+  RETURN true;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.record_email_delivery_event(p_provider_message_id text, p_status text, p_address text DEFAULT NULL::text, p_detail text DEFAULT NULL::text)
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_row      public.candidate_outreach%ROWTYPE;
+  v_delivery public.invoice_deliveries%ROWTYPE;
+  v_org      uuid;
+BEGIN
+  IF p_status NOT IN ('delivered', 'bounced', 'complained') THEN
+    RETURN 0;
+  END IF;
+  IF nullif(btrim(coalesce(p_provider_message_id, '')), '') IS NULL THEN
+    RETURN 0;
+  END IF;
+
+  SELECT * INTO v_row FROM public.candidate_outreach AS o
+   WHERE o.provider_message_id = btrim(p_provider_message_id)
+     AND o.provider IS NOT NULL
+   FOR UPDATE;
+
+  IF v_row.id IS NOT NULL THEN
+    IF v_row.delivery_status IN ('bounced', 'complained') THEN
+      RETURN 0;
+    END IF;
+
+    UPDATE public.candidate_outreach AS o
+       SET delivery_status = p_status
+     WHERE o.id = v_row.id;
+
+    v_org := v_row.organization_id;
+  ELSE
+    SELECT * INTO v_delivery FROM public.invoice_deliveries AS d
+     WHERE d.provider_message_id = btrim(p_provider_message_id)
+     FOR UPDATE;
+
+    IF v_delivery.id IS NULL THEN
+      RETURN 0;
+    END IF;
+    IF v_delivery.delivery_status IN ('bounced', 'complained') THEN
+      RETURN 0;
+    END IF;
+
+    UPDATE public.invoice_deliveries AS d
+       SET delivery_status = p_status,
+           failure_detail = CASE
+             WHEN p_status IN ('bounced', 'complained')
+               THEN nullif(btrim(coalesce(p_detail, '')), '')
+             ELSE d.failure_detail
+           END
+     WHERE d.id = v_delivery.id;
+
+    v_org := v_delivery.organization_id;
+  END IF;
+
+  IF p_status IN ('bounced', 'complained')
+     AND v_org IS NOT NULL
+     AND nullif(lower(btrim(coalesce(p_address, ''))), '') IS NOT NULL THEN
+    INSERT INTO public.email_suppressions (organization_id, address, reason, detail)
+    VALUES (
+      v_org,
+      lower(btrim(p_address)),
+      CASE p_status WHEN 'bounced' THEN 'bounce' ELSE 'complaint' END,
+      nullif(btrim(coalesce(p_detail, '')), '')
+    )
+    ON CONFLICT (organization_id, address) DO NOTHING;
+  END IF;
+
+  RETURN 1;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.record_hm_portal_opened(p_token uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_tok record;
+BEGIN
+  SELECT id, project_id, organization_id, label
+    INTO v_tok
+  FROM public.hiring_manager_tokens
+  WHERE token = p_token
+    AND revoked_at IS NULL
+    AND expires_at > now();
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.activity_events
+    WHERE event_type = 'hm_portal_opened'
+      AND detail->>'token_id' = v_tok.id::text
+      AND created_at > now() - interval '1 hour'
+  ) THEN
+    RETURN false;
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_tok.organization_id,
+    p_event_type      => 'hm_portal_opened',
+    p_visibility      => 'org',
+    p_project_id      => v_tok.project_id,
+    p_candidate_id    => NULL,
+    p_client_id       => NULL,
+    p_placement_id    => NULL,
+    p_target_user_id  => NULL,
+    p_detail          => jsonb_build_object(
+                           'label', v_tok.label,
+                           'token_id', v_tok.id));
+  RETURN true;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.record_network_suppression(p_profile uuid, p_reason text, p_source text, p_set_by uuid DEFAULT NULL::uuid, p_set_at timestamp with time zone DEFAULT NULL::timestamp with time zone, p_carried_from uuid DEFAULT NULL::uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org uuid;
+  v_id  uuid;
+BEGIN
+  IF p_profile IS NULL THEN RETURN NULL; END IF;
+  SELECT organization_id INTO v_org FROM public.network_profiles WHERE id = p_profile;
+  IF v_org IS NULL THEN RETURN NULL; END IF;
+
+  IF p_carried_from IS NOT NULL AND EXISTS (
+    SELECT 1 FROM public.network_suppressions s
+     WHERE s.profile_id = p_profile AND s.carried_from = p_carried_from
+       AND s.lifted_at IS NULL
+  ) THEN
+    RETURN NULL;
+  END IF;
+
+  INSERT INTO public.network_suppressions
+    (organization_id, profile_id, reason, source, set_at, set_by, carried_from)
+  VALUES (v_org, p_profile, btrim(p_reason), p_source,
+          coalesce(p_set_at, now()), p_set_by, p_carried_from)
+  RETURNING id INTO v_id;
+
+  RETURN v_id;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.record_notification_failed(p_candidate_id uuid, p_recipient text, p_template_key text, p_template_version text, p_notice_version text, p_error text, p_idempotency_key text)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor uuid := auth.uid();
+  v_candidate public.candidates%ROWTYPE;
+  v_id uuid;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to record a notification.' USING ERRCODE='P0001';
+  END IF;
+  SELECT * INTO v_candidate FROM public.candidates AS c WHERE c.id = p_candidate_id;
+  IF v_candidate.id IS NULL THEN
+    RAISE EXCEPTION 'Candidate % not found (or not accessible).', p_candidate_id USING ERRCODE='P0002';
+  END IF;
+  INSERT INTO public.candidate_notifications (
+    candidate_id, project_id, organization_id, recipient, template_key,
+    template_version, notice_version, status, error, created_by, idempotency_key)
+  VALUES (p_candidate_id, v_candidate.project_id, v_candidate.organization_id,
+    p_recipient, p_template_key, p_template_version, p_notice_version,
+    'failed', COALESCE(p_error,'unknown error'), v_actor, p_idempotency_key)
+  RETURNING candidate_notifications.id INTO v_id;
+  RETURN v_id;
+END; $function$
+;
+
+CREATE OR REPLACE FUNCTION public.record_notification_sent(p_candidate_id uuid, p_recipient text, p_template_key text, p_template_version text, p_notice_version text, p_provider_message_id text, p_idempotency_key text, p_sent_at timestamp with time zone)
+ RETURNS TABLE(id uuid, subject_notified_at timestamp with time zone)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor uuid := auth.uid();
+  v_candidate public.candidates%ROWTYPE;
+  v_id uuid;
+  v_when timestamptz := COALESCE(p_sent_at, now());
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to record a notification.' USING ERRCODE='P0001';
+  END IF;
+  SELECT * INTO v_candidate FROM public.candidates AS c WHERE c.id = p_candidate_id FOR UPDATE;
+  IF v_candidate.id IS NULL THEN
+    RAISE EXCEPTION 'Candidate % not found (or not accessible).', p_candidate_id USING ERRCODE='P0002';
+  END IF;
+  INSERT INTO public.candidate_notifications (
+    candidate_id, project_id, organization_id, recipient, template_key,
+    template_version, notice_version, provider_message_id, status, sent_at,
+    created_by, idempotency_key)
+  VALUES (p_candidate_id, v_candidate.project_id, v_candidate.organization_id,
+    p_recipient, p_template_key, p_template_version, p_notice_version,
+    p_provider_message_id, 'sent', v_when, v_actor, p_idempotency_key)
+  RETURNING candidate_notifications.id INTO v_id;
+  IF v_candidate.subject_notified_at IS NULL THEN
+    PERFORM set_config('mandate.allow_notification_stamp','on',true);
+    UPDATE public.candidates AS c SET subject_notified_at = v_when, updated_at = now()
+     WHERE c.id = p_candidate_id;
+    PERFORM set_config('mandate.allow_notification_stamp','',true);
+  END IF;
+  RETURN QUERY SELECT v_id, COALESCE(v_candidate.subject_notified_at, v_when);
+END; $function$
+;
+
+CREATE OR REPLACE FUNCTION public.record_portal_client_interview_answered(p_project_id uuid, p_interview_id uuid, p_answered integer)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org   uuid;
+  v_int   record;
+  v_label text;
+BEGIN
+  IF NOT public.can_view_portal_mandate(p_project_id) THEN
+    RETURN false;
+  END IF;
+
+  SELECT organization_id INTO v_org
+    FROM public.projects WHERE id = p_project_id;
+  IF v_org IS NULL THEN
+    RETURN false;
+  END IF;
+
+  SELECT id, version
+    INTO v_int
+    FROM public.client_interviews
+   WHERE id = p_interview_id
+     AND project_id = p_project_id
+     AND status = 'approved';
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  SELECT coalesce(nullif(btrim(full_name), ''), email)
+    INTO v_label
+    FROM public.users
+   WHERE id = (SELECT auth.uid());
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_org,
+    p_event_type      => 'client_interview_answered',
+    p_visibility      => 'org',
+    p_project_id      => p_project_id,
+    p_candidate_id    => NULL,
+    p_client_id       => NULL,
+    p_placement_id    => NULL,
+    p_target_user_id  => NULL,
+    p_detail          => jsonb_build_object(
+                           'label', v_label,
+                           'door', 'portal',
+                           'interview_id', v_int.id,
+                           'version', v_int.version,
+                           'answered_count', GREATEST(0, COALESCE(p_answered, 0))));
+  RETURN true;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.record_skill_version()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_version int;
+  v_actor   uuid := auth.uid();
+  v_label   text;
+BEGIN
+  SELECT COALESCE(MAX(version), 0) + 1 INTO v_version
+    FROM public.skill_versions WHERE skill_id = NEW.id;
+
+  IF v_actor IS NOT NULL THEN
+    SELECT full_name INTO v_label FROM public.users WHERE id = v_actor;
+  END IF;
+
+  INSERT INTO public.skill_versions
+    (skill_id, organization_id, version, change_kind,
+     name, description, skill_type, trigger_conditions, instructions,
+     applies_to_project_id, applies_to_client_id, is_active,
+     changed_by, changed_by_label)
+  VALUES
+    (NEW.id, NEW.organization_id, v_version,
+     CASE WHEN TG_OP = 'INSERT' THEN 'created' ELSE 'updated' END,
+     NEW.name, NEW.description, NEW.skill_type,
+     NEW.trigger_conditions, NEW.instructions,
+     NEW.applies_to_project_id, NEW.applies_to_client_id, NEW.is_active,
+     v_actor, v_label);
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.redeem_invitation(p_token uuid, p_user_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_inv  record;
+  v_user record;
+BEGIN
+  SELECT * INTO v_inv
+    FROM public.invitations
+   WHERE token = p_token
+     AND revoked_at IS NULL
+     AND accepted_at IS NULL
+     AND expires_at > now()
+   FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'invitation is not redeemable' USING ERRCODE = 'no_data_found';
+  END IF;
+
+  SELECT * INTO v_user FROM public.users WHERE id = p_user_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'no account for %', p_user_id USING ERRCODE = 'no_data_found';
+  END IF;
+
+  IF lower(v_user.email) IS DISTINCT FROM v_inv.email_key THEN
+    RAISE EXCEPTION 'account email does not match the invitation'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_user.organization_id IS NOT NULL OR v_user.client_id IS NOT NULL THEN
+    RAISE EXCEPTION 'this account already belongs somewhere'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  UPDATE public.users
+     SET role       = v_inv.role,
+         client_id  = v_inv.client_id,
+         status     = 'active',
+         full_name  = coalesce(nullif(btrim(full_name), ''), v_inv.full_name),
+         updated_at = now()
+   WHERE id = p_user_id;
+
+  UPDATE public.invitations
+     SET accepted_at      = now(),
+         accepted_user_id = p_user_id,
+         updated_at       = now()
+   WHERE id = v_inv.id;
+
+  INSERT INTO public.mandate_grants (organization_id, project_id, client_id, user_id, granted_by)
+  SELECT v_inv.organization_id, pid, v_inv.client_id, p_user_id, v_inv.invited_by
+    FROM unnest(v_inv.grant_project_ids) pid
+  ON CONFLICT (project_id, user_id) DO NOTHING;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.redeem_staff_invitation(p_token uuid, p_user_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_inv public.staff_invitations%rowtype;
+  v_user public.users%rowtype;
+begin
+  select * into v_inv
+    from public.staff_invitations
+   where token = p_token
+     and revoked_at is null
+     and accepted_at is null
+     and expires_at > now()
+   for update;
+  if not found then
+    raise exception 'redeem_staff_invitation: invitation is not live';
+  end if;
+
+  select * into v_user from public.users where id = p_user_id;
+  if not found then
+    raise exception 'redeem_staff_invitation: no user row for %', p_user_id;
+  end if;
+
+  if lower(btrim(v_user.email)) is distinct from v_inv.email_key then
+    raise exception 'redeem_staff_invitation: the account email does not match the invitation';
+  end if;
+
+  if v_user.organization_id is not null
+     and v_user.organization_id is distinct from v_inv.organization_id then
+    raise exception 'redeem_staff_invitation: the account already belongs to another organisation';
+  end if;
+
+  if v_user.client_id is not null then
+    raise exception 'redeem_staff_invitation: a client-side account cannot redeem a staff invitation';
+  end if;
+
+  update public.users
+     set organization_id = v_inv.organization_id,
+         role = v_inv.role,
+         status = 'active',
+         full_name = coalesce(nullif(btrim(full_name), ''), v_inv.full_name),
+         updated_at = now()
+   where id = p_user_id;
+
+  update public.staff_invitations
+     set accepted_at = now(),
+         accepted_user_id = p_user_id,
+         updated_at = now()
+   where id = v_inv.id;
+end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.refresh_invoice_total()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_invoice uuid := COALESCE(NEW.invoice_id, OLD.invoice_id);
+BEGIN
+  UPDATE public.invoices
+     SET total_amount = COALESCE((
+           SELECT sum(amount) FROM public.invoice_lines WHERE invoice_id = v_invoice
+         ), 0),
+         updated_at = now()
+   WHERE id = v_invoice
+     AND status = 'draft';
+  RETURN COALESCE(NEW, OLD);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.refresh_network_suppression(p_profile uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_gov public.network_suppressions%ROWTYPE;
+BEGIN
+  IF p_profile IS NULL THEN RETURN; END IF;
+
+  SELECT * INTO v_gov
+    FROM public.network_suppressions s
+   WHERE s.profile_id = p_profile AND s.lifted_at IS NULL
+   ORDER BY s.set_at ASC, s.id ASC
+   LIMIT 1;
+
+  PERFORM set_config('mandate.allow_dnc_write', 'on', true);
+
+  -- v_gov.id, NOT FOUND: the PERFORM above resets FOUND.
+  IF v_gov.id IS NOT NULL THEN
+    UPDATE public.network_profiles p
+       SET dnc = true,
+           dnc_reason = v_gov.reason,
+           dnc_set_at = v_gov.set_at,
+           dnc_set_by = v_gov.set_by,
+           relationship_state = 'do_not_contact',
+           updated_at = now()
+     WHERE p.id = p_profile
+       AND (p.dnc IS DISTINCT FROM true
+            OR p.dnc_reason IS DISTINCT FROM v_gov.reason
+            OR p.dnc_set_at IS DISTINCT FROM v_gov.set_at
+            OR p.dnc_set_by IS DISTINCT FROM v_gov.set_by
+            OR p.relationship_state IS DISTINCT FROM 'do_not_contact');
+  ELSE
+    UPDATE public.network_profiles p
+       SET dnc = false,
+           dnc_reason = NULL,
+           dnc_set_at = NULL,
+           dnc_set_by = NULL,
+           relationship_state = CASE WHEN p.relationship_state = 'do_not_contact'
+                                     THEN 'cold' ELSE p.relationship_state END,
+           updated_at = now()
+     WHERE p.id = p_profile AND p.dnc;
+  END IF;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.relationship_warmth(p_state text)
+ RETURNS integer
+ LANGUAGE sql
+ IMMUTABLE
+ SET search_path TO ''
+AS $function$
+  SELECT CASE p_state
+    WHEN 'cold'      THEN 0
+    WHEN 'contacted' THEN 1
+    WHEN 'engaged'   THEN 2
+    WHEN 'warm'      THEN 3
+    WHEN 'placed'    THEN 4
+    ELSE -1
+  END
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.resend_external_invitation(p_invitation_id uuid)
+ RETURNS TABLE(invitation_token uuid, email text, full_name text, role text, expires_at timestamp with time zone)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_inv           record;
+  v_caller_org    uuid := (SELECT public.current_user_org_id());
+  v_caller_client uuid := (SELECT public.current_user_client_id());
+  v_allowed       boolean;
+BEGIN
+  SELECT * INTO v_inv FROM public.invitations i WHERE i.id = p_invitation_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'unknown invitation' USING ERRCODE = 'no_data_found';
+  END IF;
+
+  v_allowed := (v_caller_org IS NOT NULL
+                AND v_caller_org = v_inv.organization_id
+                AND coalesce(public.can_share_clients(), false))
+            OR (public.is_client_admin() AND v_caller_client = v_inv.client_id);
+
+  IF NOT v_allowed THEN
+    RAISE EXCEPTION 'not allowed to resend this invitation'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF v_inv.accepted_at IS NOT NULL THEN
+    RAISE EXCEPTION 'this invitation was already accepted — the account exists'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_inv.revoked_at IS NOT NULL THEN
+    RAISE EXCEPTION 'this invitation was withdrawn — send a fresh one instead'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  UPDATE public.invitations i
+     SET expires_at = now() + interval '14 days',
+         updated_at = now()
+   WHERE i.id = p_invitation_id;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_inv.organization_id,
+    p_event_type      => 'external_invitation_resent',
+    p_visibility      => 'org',
+    p_client_id       => v_inv.client_id,
+    p_detail          => jsonb_build_object(
+                           'email', v_inv.email,
+                           'invitee', v_inv.full_name,
+                           'role', v_inv.role));
+
+  RETURN QUERY
+  SELECT i.token, i.email, i.full_name, i.role, i.expires_at
+    FROM public.invitations i
+   WHERE i.id = p_invitation_id;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.resolve_client(p_organization_id uuid, p_name text, p_created_by uuid DEFAULT NULL::uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_name text := btrim(coalesce(p_name, ''));
+  v_id   uuid;
+BEGIN
+  IF v_name = '' OR lower(v_name) IN ('analyzing…', 'analyzing...') THEN
+    RETURN NULL;
+  END IF;
+
+  INSERT INTO public.clients (organization_id, name, created_by)
+  VALUES (p_organization_id, v_name, p_created_by)
+  ON CONFLICT (organization_id, name_key) DO NOTHING
+  RETURNING id INTO v_id;
+
+  IF v_id IS NULL THEN
+    SELECT id INTO v_id
+      FROM public.clients
+     WHERE organization_id = p_organization_id
+       AND name_key = lower(v_name);
+  END IF;
+
+  RETURN v_id;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.resolve_network_profile(p_org uuid, p_full_name text, p_email text, p_linkedin_url text, p_current_company text)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_key text;
+  v_id  uuid;
+BEGIN
+  IF p_org IS NULL OR nullif(btrim(coalesce(p_full_name, '')), '') IS NULL THEN
+    RETURN NULL;
+  END IF;
+  v_key := public.candidate_identity_key(
+             p_email, p_linkedin_url, p_full_name, p_current_company);
+
+  SELECT a.profile_id INTO v_id
+    FROM public.network_profile_aliases a
+   WHERE a.organization_id = p_org AND a.identity_key = v_key;
+  IF v_id IS NOT NULL THEN
+    RETURN v_id;
+  END IF;
+
+  INSERT INTO public.network_profiles
+    (organization_id, identity_key, display_name, primary_email, linkedin_url)
+  VALUES
+    (p_org, v_key, btrim(p_full_name),
+     nullif(lower(btrim(coalesce(p_email, ''))), ''),
+     nullif(btrim(coalesce(p_linkedin_url, '')), ''))
+  ON CONFLICT (organization_id, identity_key) DO NOTHING
+  RETURNING id INTO v_id;
+
+  IF v_id IS NULL THEN
+    SELECT id INTO v_id FROM public.network_profiles
+     WHERE organization_id = p_org AND identity_key = v_key;
+  END IF;
+  RETURN v_id;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.revoke_candidate_portal_token(p_token_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org uuid := (SELECT public.current_user_org_id());
+  v_row public.candidate_portal_tokens%ROWTYPE;
+BEGIN
+  IF NOT coalesce(public.can_share_clients(), false) THEN
+    RAISE EXCEPTION 'revoking a candidate portal link needs the client-sharing tier'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  UPDATE public.candidate_portal_tokens t
+     SET revoked_at = now()
+   WHERE t.id = p_token_id AND t.organization_id = v_org AND t.revoked_at IS NULL
+  RETURNING * INTO v_row;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'no live link to revoke' USING ERRCODE = 'no_data_found';
+  END IF;
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_org,
+    p_event_type      => 'candidate_portal_link_revoked',
+    p_visibility      => 'org',
+    p_detail          => jsonb_build_object('person', v_row.recipient_label));
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.revoke_external_invitation(p_invitation_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_inv           record;
+  v_caller_org    uuid := (SELECT public.current_user_org_id());
+  v_caller_client uuid := (SELECT public.current_user_client_id());
+  v_allowed       boolean;
+BEGIN
+  SELECT * INTO v_inv FROM public.invitations WHERE id = p_invitation_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'unknown invitation' USING ERRCODE = 'no_data_found';
+  END IF;
+
+  v_allowed := (v_caller_org IS NOT NULL
+                AND v_caller_org = v_inv.organization_id
+                AND coalesce(public.can_share_clients(), false))
+            OR (public.is_client_admin() AND v_caller_client = v_inv.client_id);
+
+  IF NOT v_allowed THEN
+    RAISE EXCEPTION 'not allowed to revoke this invitation'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  IF v_inv.accepted_at IS NOT NULL THEN
+    RAISE EXCEPTION 'this invitation was already accepted — suspend the account instead'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  UPDATE public.invitations
+     SET revoked_at = coalesce(revoked_at, now()),
+         updated_at = now()
+   WHERE id = p_invitation_id;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.revoke_mandate_access(p_project_id uuid, p_user_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_client uuid := (SELECT public.current_user_client_id());
+BEGIN
+  IF NOT (public.is_client_admin() AND v_caller_client IS NOT NULL) THEN
+    RAISE EXCEPTION 'only a client admin may revoke access here'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  DELETE FROM public.mandate_grants
+   WHERE project_id = p_project_id
+     AND user_id = p_user_id
+     AND client_id = v_caller_client;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.rls_auto_enable()
+ RETURNS event_trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog'
+AS $function$
+DECLARE
+  cmd record;
+BEGIN
+  FOR cmd IN
+    SELECT *
+    FROM pg_event_trigger_ddl_commands()
+    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
+      AND object_type IN ('table','partitioned table')
+  LOOP
+     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN
+      BEGIN
+        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);
+        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
+      END;
+     ELSE
+        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;
+     END IF;
+  END LOOP;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.run_guarantee_maintenance()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  earned_count integer;
+BEGIN
+  UPDATE public.placement_fee_lines l
+  SET status     = 'earned',
+      earned_on  = p.guarantee_ends_on,
+      updated_at = now()
+  FROM public.placements p
+  WHERE p.id = l.placement_id
+    AND l.kind = 'instalment'
+    AND l."trigger" = 'guarantee_passed'
+    AND l.status = 'pending'
+    AND p.status = 'started'
+    AND p.guarantee_ends_on IS NOT NULL
+    AND p.guarantee_ends_on <= current_date;
+
+  GET DIAGNOSTICS earned_count = ROW_COUNT;
+  RETURN earned_count;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.set_network_dnc(p_profile_id uuid, p_reason text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_org  uuid := (SELECT public.current_user_org_id());
+  v_name text;
+BEGIN
+  IF (SELECT public.is_agent()) THEN
+    RAISE EXCEPTION 'set_network_dnc: do-not-contact is a human act — an agent can never set it'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  IF NOT (SELECT public.can_write_candidates()) THEN
+    RAISE EXCEPTION 'set_network_dnc: your role cannot suppress a person'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  IF nullif(btrim(coalesce(p_reason, '')), '') IS NULL THEN
+    RAISE EXCEPTION 'set_network_dnc: a suppression without a reason is not a record — say why'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  SELECT display_name INTO v_name FROM public.network_profiles
+   WHERE id = p_profile_id AND organization_id = v_org;
+  IF v_name IS NULL THEN
+    RAISE EXCEPTION 'set_network_dnc: no profile in your organisation matches'
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  -- S208: a row, not an overwrite. Somebody who says no twice has said no
+  -- twice, and lifting one reason must not lift the other.
+  PERFORM public.record_network_suppression(
+    p_profile_id, p_reason, 'recruiter', (SELECT auth.uid()));
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_org,
+    p_event_type      => 'network_dnc_set',
+    p_visibility      => 'org',
+    p_detail          => jsonb_build_object(
+                           'person', v_name,
+                           'reason', btrim(p_reason),
+                           'source', 'recruiter'));
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.stamp_client_note_author()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF NEW.created_by IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT coalesce(nullif(btrim(full_name), ''), email)
+    INTO NEW.author_label
+    FROM public.users
+   WHERE id = NEW.created_by;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.stamp_verdict_outcome()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_rank int;
+BEGIN
+  IF NEW.pipeline_stage IS NOT DISTINCT FROM OLD.pipeline_stage THEN
+    RETURN NEW;
+  END IF;
+
+  v_rank := CASE NEW.pipeline_stage
+    WHEN 'found' THEN 0 WHEN 'reviewed' THEN 1 WHEN 'matched' THEN 2
+    WHEN 'shortlisted' THEN 3 WHEN 'submitted' THEN 4 WHEN 'interviewed' THEN 5
+    WHEN 'passed_rounds' THEN 6 WHEN 'finalist' THEN 7 WHEN 'offer' THEN 8
+    WHEN 'hired' THEN 9
+    ELSE NULL
+  END;
+
+  UPDATE public.verdict_ledger
+     SET furthest_stage = CASE WHEN v_rank IS NOT NULL AND v_rank > furthest_rank
+                               THEN NEW.pipeline_stage ELSE furthest_stage END,
+         furthest_rank  = CASE WHEN v_rank IS NOT NULL AND v_rank > furthest_rank
+                               THEN v_rank ELSE furthest_rank END,
+         terminal_outcome = CASE WHEN NEW.pipeline_stage IN ('hired','rejected','withdrawn')
+                                 THEN NEW.pipeline_stage ELSE terminal_outcome END,
+         outcome_at = now()
+   WHERE candidate_id = NEW.id;
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.submit_application(p_token uuid, p_full_name text, p_email text, p_ext text)
+ RETURNS TABLE(candidate_id uuid, organization_id uuid, project_id uuid, storage_path text)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_project public.projects%ROWTYPE;
+  v_open boolean;
+  v_id uuid;
+  v_path text;
+BEGIN
+  IF p_token IS NULL THEN RAISE EXCEPTION 'invalid token'; END IF;
+  IF p_ext NOT IN ('pdf','docx') THEN RAISE EXCEPTION 'invalid file type'; END IF;
+  IF coalesce(btrim(p_full_name),'') = '' THEN RAISE EXCEPTION 'name required'; END IF;
+
+  SELECT * INTO v_project FROM public.projects WHERE apply_token = p_token;
+  IF NOT FOUND THEN RAISE EXCEPTION 'invalid token'; END IF;
+
+  SELECT open INTO v_open FROM public.verify_apply_token(p_token);
+  IF NOT coalesce(v_open, false) THEN RAISE EXCEPTION 'applications closed'; END IF;
+
+  v_id := gen_random_uuid();
+  v_path := v_project.organization_id || '/' || v_project.id || '/' || v_id || '/cv.' || p_ext;
+
+  INSERT INTO public.candidates (
+    id, organization_id, project_id, full_name, email,
+    pipeline_stage, cv_processing, source, cv_url, subject_notified_at
+  ) VALUES (
+    v_id, v_project.organization_id, v_project.id,
+    btrim(p_full_name), nullif(btrim(p_email), ''),
+    'found', true, 'apply', v_path, now()
+  );
+
+  PERFORM public.write_activity_event(
+    p_organization_id => v_project.organization_id,
+    p_event_type      => 'candidate_cv_submitted',
+    p_visibility      => 'org',
+    p_project_id      => v_project.id,
+    p_candidate_id    => v_id,
+    p_detail          => jsonb_build_object('source', 'apply')
+  );
+
+  RETURN QUERY SELECT v_id, v_project.organization_id, v_project.id, v_path;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.sync_candidate_stage_with_placement()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_stage text;
+BEGIN
+  v_stage := CASE NEW.status
+    WHEN 'offered'  THEN 'offer'
+    WHEN 'accepted' THEN 'offer'
+    WHEN 'started'  THEN 'hired'
+    ELSE NULL
+  END;
+
+  IF v_stage IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  UPDATE public.candidates
+     SET pipeline_stage = v_stage,
+         updated_at = now()
+   WHERE id = NEW.candidate_id
+     AND coalesce(pipeline_stage, '') <> v_stage
+     AND coalesce(pipeline_stage, '') <> 'rejected'
+     AND NOT (v_stage = 'offer' AND pipeline_stage = 'hired');
+
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.update_cv_structured_field(p_candidate_id uuid, p_project_id uuid, p_key text, p_value jsonb)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_rows_changed integer;
+BEGIN
+  IF p_candidate_id IS NULL OR p_project_id IS NULL THEN
+    RAISE EXCEPTION 'candidate_id and project_id are required';
+  END IF;
+  IF p_key IS NULL OR length(btrim(p_key)) = 0 THEN
+    RAISE EXCEPTION 'key cannot be blank';
+  END IF;
+
+  UPDATE public.candidates
+     SET cv_structured = CASE
+           WHEN p_value IS NULL
+             THEN COALESCE(cv_structured, '{}'::jsonb) - p_key
+           ELSE jsonb_set(
+             COALESCE(cv_structured, '{}'::jsonb),
+             ARRAY[p_key],
+             p_value,
+             true
+           )
+         END,
+         updated_at = now()
+   WHERE id         = p_candidate_id
+     AND project_id = p_project_id;
+
+  GET DIAGNOSTICS v_rows_changed = ROW_COUNT;
+
+  IF v_rows_changed = 0 THEN
+    RAISE EXCEPTION 'candidate not found or not authorised';
+  END IF;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.verify_apply_token(p_token uuid)
+ RETURNS TABLE(role_title text, company_name text, open boolean)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT
+    coalesce(p.calibration_model->>'role_title', p.title),
+    p.company_name,
+    (
+      p.status = 'active'
+      AND NOT EXISTS (
+        SELECT 1 FROM public.job_specs js
+         WHERE js.project_id = p.id AND js.is_final = true
+           AND js.id::text IS DISTINCT FROM p.calibration_model->>'derived_from_spec_id'
+      )
+    )
+  FROM public.projects p
+  WHERE p.apply_token = p_token AND p_token IS NOT NULL;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.verify_hm_token(p_token uuid)
+ RETURNS TABLE(project_id uuid, organization_id uuid, label text)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF p_token IS NULL THEN
+    RETURN;
+  END IF;
+  RETURN QUERY
+  UPDATE public.hiring_manager_tokens
+     SET last_used_at = now(), updated_at = now()
+   WHERE token = p_token
+     AND revoked_at IS NULL
+     AND expires_at > now()
+  RETURNING hiring_manager_tokens.project_id,
+            hiring_manager_tokens.organization_id,
+            hiring_manager_tokens.label;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.verify_invitation(p_token uuid)
+ RETURNS TABLE(email text, full_name text, role text, client_name text, organization_name text, invited_by_label text, expires_at timestamp with time zone)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT i.email, i.full_name, i.role,
+         c.name, o.name,
+         i.invited_by_label, i.expires_at
+    FROM public.invitations i
+    JOIN public.clients c ON c.id = i.client_id
+    JOIN public.organizations o ON o.id = i.organization_id
+   WHERE i.token = p_token
+     AND i.revoked_at IS NULL
+     AND i.accepted_at IS NULL
+     AND i.expires_at > now()
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.verify_staff_invitation(p_token uuid)
+ RETURNS TABLE(email text, full_name text, role text, organization_name text, invited_by_label text, expires_at timestamp with time zone)
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select i.email, i.full_name, i.role, o.name as organization_name,
+         coalesce(i.invited_by_label, '') as invited_by_label, i.expires_at
+    from public.staff_invitations i
+    join public.organizations o on o.id = i.organization_id
+   where i.token = p_token
+     and i.revoked_at is null
+     and i.accepted_at is null
+     and i.expires_at > now();
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.void_invoice(p_invoice_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF (SELECT auth.uid()) IS NULL THEN
+    RAISE EXCEPTION 'Authentication required to void an invoice.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM set_config('mandate.allow_invoice_transition', 'on', true);
+
+  UPDATE public.invoices
+     SET status = 'void',
+         voided_at = now(),
+         updated_at = now()
+   WHERE id = p_invoice_id
+     AND status = 'issued';
+
+  IF NOT FOUND THEN
+    PERFORM set_config('mandate.allow_invoice_transition', '', true);
+    RAISE EXCEPTION 'Invoice % could not be voided (not found, not accessible, or not issued).', p_invoice_id
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  PERFORM set_config('mandate.allow_invoice_transition', '', true);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.write_activity_event(p_organization_id uuid, p_event_type text, p_visibility text DEFAULT 'org'::text, p_project_id uuid DEFAULT NULL::uuid, p_candidate_id uuid DEFAULT NULL::uuid, p_client_id uuid DEFAULT NULL::uuid, p_placement_id uuid DEFAULT NULL::uuid, p_target_user_id uuid DEFAULT NULL::uuid, p_detail jsonb DEFAULT '{}'::jsonb)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_actor uuid := (SELECT auth.uid());
+  v_label text;
+BEGIN
+  IF p_organization_id IS NULL THEN
+    RETURN;
+  END IF;
+
+  IF v_actor IS NOT NULL THEN
+    SELECT coalesce(nullif(btrim(full_name), ''), email)
+      INTO v_label
+      FROM public.users
+     WHERE id = v_actor;
+  END IF;
+
+  INSERT INTO public.activity_events (
+    organization_id, actor_id, actor_label, event_type, visibility,
+    project_id, candidate_id, client_id, placement_id, target_user_id, detail
+  ) VALUES (
+    p_organization_id, v_actor, v_label, p_event_type, p_visibility,
+    p_project_id, p_candidate_id, p_client_id, p_placement_id, p_target_user_id,
+    coalesce(p_detail, '{}'::jsonb)
+  );
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'activity trail: could not record % (%)', p_event_type, SQLERRM;
+END;
+$function$
+;
+
+
+-- ======================= EXTENSIONS =======================
+-- Listed last for readability; a rebuild applies them FIRST.
+
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS supabase_vault WITH SCHEMA vault;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions;
+
+-- end of schema reference
