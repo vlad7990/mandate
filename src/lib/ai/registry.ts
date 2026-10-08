@@ -48,9 +48,13 @@ function warnRegistry(err: unknown): void {
   );
 }
 
+/** What the registry holds about one model, for the two questions the
+ * seam asks of it: may we route here (C9), and can we price it (C11). */
+type ModelFacts = { status: string; priced: boolean };
+
 let statusCache: {
   fetchedAt: number;
-  statuses: ReadonlyMap<string, string>;
+  models: ReadonlyMap<string, ModelFacts>;
   /** False when the window was stamped by a FAILED read with nothing
    * cached before it — the difference between "this model is not in the
    * table" and "we could not read the table". */
@@ -85,23 +89,40 @@ function warnStatusRegistry(err: unknown): void {
  */
 export type ModelActivation = "active" | "not_active" | "unknown";
 
-export async function modelActivation(
-  modelId: string
-): Promise<ModelActivation> {
+async function modelFacts(): Promise<{
+  models: ReadonlyMap<string, ModelFacts>;
+  readable: boolean;
+}> {
   const now = Date.now();
   if (!statusCache || now - statusCache.fetchedAt >= TTL_MS) {
-    let statuses = statusCache?.statuses ?? new Map<string, string>();
+    let models = statusCache?.models ?? new Map<string, ModelFacts>();
     let readable = statusCache?.readable ?? false;
     try {
       const supabase = getServiceRoleSupabaseClient();
       const { data, error } = await supabase
         .from("provider_models")
-        .select("model_id, status");
+        .select(
+          "model_id, status, price_input_per_mtok, price_output_per_mtok"
+        );
       if (error) throw error;
-      statuses = new Map(
-        (data as { model_id: string; status: string }[]).map((r) => [
+      models = new Map(
+        (
+          data as {
+            model_id: string;
+            status: string;
+            price_input_per_mtok: number | null;
+            price_output_per_mtok: number | null;
+          }[]
+        ).map((r) => [
           r.model_id,
-          r.status,
+          {
+            status: r.status,
+            // BOTH prices, because the cost formula needs both and
+            // returns NULL without either. Half a price is no price.
+            priced:
+              r.price_input_per_mtok !== null &&
+              r.price_output_per_mtok !== null,
+          },
         ])
       );
       readable = true;
@@ -111,10 +132,41 @@ export async function modelActivation(
       // database costs one attempt per TTL rather than one per call.
       warnStatusRegistry(err);
     }
-    statusCache = { fetchedAt: now, statuses, readable };
+    statusCache = { fetchedAt: now, models, readable };
   }
-  if (!statusCache.readable) return "unknown";
-  return statusCache.statuses.get(modelId) === "active" ? "active" : "not_active";
+  return statusCache;
+}
+
+export async function modelActivation(
+  modelId: string
+): Promise<ModelActivation> {
+  const { models, readable } = await modelFacts();
+  if (!readable) return "unknown";
+  return models.get(modelId)?.status === "active" ? "active" : "not_active";
+}
+
+/**
+ * Whether the registry can price `modelId` (C11) — one more question of
+ * the SAME cached read, so asking it costs no extra query.
+ *
+ *   "priced"   — both prices present; `ai_run_cost_usd` returns a number.
+ *   "unpriced" — the row exists with a NULL price, or there is no row.
+ *                `ai_run_cost_usd` returns NULL for it, so spend against
+ *                this model is invisible to the budget.
+ *   "unknown"  — the registry could not be read.
+ *
+ * As with `modelActivation`, the two non-affirmative answers are kept
+ * apart for the caller's FAIL DIRECTION rather than for the log: the
+ * budget guard refuses an `unpriced` model and allows an `unknown` one,
+ * because this question is asked on the PRIMARY call path, where an
+ * unreadable registry must never stop the product.
+ */
+export type ModelPricing = "priced" | "unpriced" | "unknown";
+
+export async function modelPricing(modelId: string): Promise<ModelPricing> {
+  const { models, readable } = await modelFacts();
+  if (!readable) return "unknown";
+  return models.get(modelId)?.priced ? "priced" : "unpriced";
 }
 
 /**

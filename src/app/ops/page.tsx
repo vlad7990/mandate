@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { UserStatusActions } from "./user-actions";
 import { ErasureQueue, type ErasureRow } from "./erasure-queue";
+import { AiSpend } from "./ai-spend";
 
 export const metadata = {
   title: "Platform operations",
@@ -52,6 +53,31 @@ export default async function OpsOverviewPage() {
       .eq("status", "open")
       .order("created_at", { ascending: true }),
   ]);
+
+  // C11 — spend, read through founder-only SECURITY DEFINER functions.
+  // The window comes from the policy row so the figure and the ceiling it
+  // is compared against can never describe different periods.
+  const policyQ = await supabase.rpc("ai_budget_policy_row").maybeSingle<{
+    window_days: number;
+    soft_usd: number;
+    hard_usd: number;
+    enabled: boolean;
+  }>();
+  const policy = policyQ.data
+    ? {
+        window_days: policyQ.data.window_days,
+        soft_usd: Number(policyQ.data.soft_usd),
+        hard_usd: Number(policyQ.data.hard_usd),
+        enabled: policyQ.data.enabled,
+      }
+    : null;
+  const spendQ = await supabase.rpc("ai_spend_by_model", {
+    p_days: policy?.window_days ?? 30,
+  });
+  // Both functions RAISE for a non-founder, so an error here is a real
+  // failure and must be shown as one. Rendering zero would read as "we
+  // have spent nothing", which is the one wrong thing to say.
+  const spendError = spendQ.error?.message ?? policyQ.error?.message;
 
   const users = (usersQ.data ?? []) as UserRow[];
   const orgs = (orgsQ.data ?? []) as OrgRow[];
@@ -114,6 +140,21 @@ export default async function OpsOverviewPage() {
         <Stat label="Clients" value={clients.length} />
         <Stat label="Waitlist pending" value={waitlistPending} highlight={waitlistPending > 0} />
       </section>
+
+      <AiSpend
+        rows={
+          (spendQ.data ?? []) as {
+            model: string;
+            runs: number;
+            priced_runs: number;
+            input_tokens: number;
+            output_tokens: number;
+            est_usd: number;
+          }[]
+        }
+        policy={policy}
+        unavailable={spendError}
+      />
 
       {/* Pending approvals — the act that was on /app/settings, now in
           the operator's own house. */}

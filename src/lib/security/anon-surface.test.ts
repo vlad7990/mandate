@@ -11,6 +11,30 @@ import path from "node:path";
  * codebase answered that 155 times and missed once: `relationship_warmth`
  * (143) was callable anonymously from the day it shipped until §210.
  *
+ * ## THE PREMISE ABOVE IS ONLY HALF TRUE, and 164 paid for the other half
+ *
+ * `anon` does not merely inherit PUBLIC on this database. Supabase's
+ * ALTER DEFAULT PRIVILEGES gives `anon` its OWN explicit EXECUTE grant on every
+ * new function in `public`, and `REVOKE … FROM PUBLIC` does not touch an
+ * explicit role grant. Read from pg_proc.proacl on 2026-10-08, after 164:
+ *
+ *     ai_budget_verdict → postgres=X  anon=X  authenticated=X  service_role=X
+ *
+ * 164 wrote `FROM PUBLIC` and nothing else on four functions, which satisfied
+ * THIS TEST while leaving `/rest/v1/rpc/ai_budget_verdict` — the platform's
+ * global AI spend — open to the publishable key. The advisor sweep caught it;
+ * this test did not, because it counted the wrong revoke.
+ *
+ * So a revoke must now name `anon` to count. That is the house convention
+ * already — 134 writes two lines for `claim_evaluation`, `FROM PUBLIC` then
+ * `FROM anon` — and of every function created across 165 migrations, the only
+ * four that never named `anon` were 164's. 165 fixed those; this guard is why
+ * the next one fails the suite instead of the sweep.
+ *
+ * A `FROM PUBLIC` revoke is still worth writing (it closes the inherited
+ * grant, which is what protects a non-Supabase deployment of this schema). It
+ * is simply not sufficient on its own here.
+ *
  * Nothing was disclosed — it is `LANGUAGE sql IMMUTABLE`, reads no table and
  * takes no id — but nothing prevented the next one either. These two guards
  * make the convention law: the surface cannot grow silently, and it cannot
@@ -62,12 +86,18 @@ function readSurface(): Surface {
     for (const m of sql.matchAll(DROP)) dropped.add(m[1]);
     for (const m of sql.matchAll(REVOKE)) {
       const roles = m[2].toLowerCase();
-      if (/\bpublic\b/.test(roles) || /\banon\b/.test(roles)) revoked.add(m[1]);
-      // §211 — a revoke FROM anon removes the name from the EFFECTIVE anon
-      // set. Before this the model relied on a later non-anon GRANT to do the
-      // removal, so a BARE `REVOKE … FROM anon` (no trailing grant) left the
-      // name counted — the model, not the surface, was wrong.
-      if (/\bpublic\b/.test(roles) || /\banon\b/.test(roles)) grantedToAnon.delete(m[1]);
+      // ONLY a revoke naming `anon` counts. See the header: anon holds its own
+      // explicit grant here, so `FROM PUBLIC` alone leaves the door open — and
+      // a guard that accepts it is a guard that passes while the door is open,
+      // which is the same failure its own comment warns about for comments.
+      if (/\banon\b/.test(roles)) {
+        revoked.add(m[1]);
+        // §211 — a revoke FROM anon removes the name from the EFFECTIVE anon
+        // set. Before this the model relied on a later non-anon GRANT to do the
+        // removal, so a BARE `REVOKE … FROM anon` (no trailing grant) left the
+        // name counted — the model, not the surface, was wrong.
+        grantedToAnon.delete(m[1]);
+      }
     }
     for (const m of sql.matchAll(GRANT)) {
       if (/\banon\b/.test(m[2].toLowerCase())) grantedToAnon.set(m[1], file);
@@ -112,12 +142,20 @@ const RULED_ANON_SURFACE = [
 ].sort();
 
 describe("§210 — no function reaches anon by Postgres' default", () => {
-  it("every live function created in a migration is revoked from PUBLIC", () => {
-    // THE WHOLE POINT. EXECUTE defaults to PUBLIC, so an omitted REVOKE is a
-    // public endpoint. This is the check that was missing when 143 shipped.
+  it("every live function created in a migration is closed to anon, or is a ruled anon door", () => {
+    // THE WHOLE POINT. EXECUTE reaches anon by default twice over — the
+    // inherited PUBLIC grant and Supabase's own explicit one — so an omitted
+    // REVOKE is a public endpoint. This is the check that was missing when 143
+    // shipped, and the `anon` requirement is the half of it that was missing
+    // when 164 shipped.
+    //
+    // Two acceptable states, and no third: the function is revoked FROM anon,
+    // or it is deliberately GRANTed TO anon — in which case it must appear in
+    // RULED_ANON_SURFACE, which the next test pins exactly. A function that is
+    // neither is one nobody decided about.
     const unrevoked = [...S.created.keys()]
       .filter(live)
-      .filter((fn) => !S.revoked.has(fn))
+      .filter((fn) => !S.revoked.has(fn) && !S.grantedToAnon.has(fn))
       .map((fn) => `${fn} (${S.created.get(fn)})`)
       .sort();
 

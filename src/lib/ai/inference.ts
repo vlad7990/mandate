@@ -12,6 +12,7 @@ import {
   type Capability,
 } from "./model-map";
 import { limitClosedServiceRole } from "@/lib/rate-limit/server";
+import { assertWithinBudget } from "./budget";
 import { assignedModelForCapability, modelActivation } from "./registry";
 
 /**
@@ -29,7 +30,7 @@ import { assignedModelForCapability, modelActivation } from "./registry";
  * already applied to the system prompt, and nothing in this module
  * gives them (or the model) a say in model choice.
  *
- * Its database access is exactly three service-role touches, none of
+ * Its database access is exactly four service-role touches, none of
  * them product data, and the differences between them matter:
  *
  *   1. the telemetry insert below — fire-and-forget. A failed write
@@ -38,10 +39,18 @@ import { assignedModelForCapability, modelActivation } from "./registry";
  *   2. the registry reads (`./registry`) — advisory on the primary
  *      path. An unreadable registry falls back to the code map and the
  *      call proceeds.
- *   3. the escalation hop ceiling (C10) — the one check that REFUSES
- *      on failure. It guards an optional retry, so refusing costs
- *      nothing the product had before escalation existed. Nothing here
- *      may ever gate a PRIMARY model call on a database read.
+ *   3. the escalation hop ceiling (C10) — REFUSES on failure, and may,
+ *      because it guards an optional retry: refusing costs nothing the
+ *      product had before escalation existed.
+ *   4. the spend ceiling (C11, `./budget`) — the ONE check that can
+ *      refuse a PRIMARY call, and the one exception to the rule below.
+ *      It is allowed only because it refuses on a MEASURED fact (we
+ *      know spend is over the cap) and never on an uncertain one: an
+ *      unreadable budget allows the call and captures to Sentry.
+ *
+ * THE RULE, with that single exception named: nothing here may gate a
+ * primary model call on whether a database read SUCCEEDED. Availability
+ * of the product must never depend on availability of its ops tables.
  *
  * NOT here, deliberately (each is a later slice behind its own gate):
  * caching, cost math, prices, retries beyond the SDK's own,
@@ -231,6 +240,20 @@ async function resolveOverrides(
   return { model, extra: thinking ? { thinking } : {} };
 }
 
+/**
+ * The C11 spend ceiling, behind the eval fence (gate 03bafc3's rule
+ * applied to a third kind of mutable production state, after the
+ * registry's two). A benchmark must be reproducible from the harness's
+ * own overrides and the code map alone; a run that passes on Tuesday and
+ * refuses on Wednesday because production spent money in between is not
+ * a benchmark. The harness's own dollar budget is a separate instrument
+ * (D4 of the ceiling gate spec) and is not this one.
+ */
+async function guardBudget(model: string): Promise<void> {
+  if (EVAL_MODE()) return;
+  await assertWithinBudget(model);
+}
+
 /** Eval-only run capture — populated behind the fence, drained by the
  * harness. Always empty in production. */
 export const __evalRecordedRuns: InferenceRunRow[] = [];
@@ -356,6 +379,14 @@ async function callModel(
   }
 ): Promise<Anthropic.Message> {
   const { model, extra, escalatedFrom } = resolved;
+  // C11, before the provider is even constructed. A refusal here writes
+  // NO inference_runs row, deliberately: that table records model calls,
+  // and no call was made. `outcome` has four honest values and none of
+  // them means "we declined to ask" — 'refused' means the MODEL refused,
+  // and borrowing it would corrupt the column's meaning for the one
+  // query anybody runs against it. The budget module logs and captures
+  // instead.
+  await guardBudget(model);
   const anthropic = getAnthropic();
   const id = randomUUID();
   const started = Date.now();
@@ -556,6 +587,10 @@ export async function runInferenceStream(
   opts?: { projectId?: string | null } & InferenceOverrides
 ): Promise<AsyncIterable<Anthropic.Messages.RawMessageStreamEvent>> {
   const { model, extra } = await resolveOverrides(capability, opts);
+  // C11 — the streaming path spends money too. Copilot is the only
+  // caller today and it is the cheapest capability in the product, which
+  // is exactly why it would be the one forgotten.
+  await guardBudget(model);
   const anthropic = getAnthropic();
   const id = randomUUID();
   const started = Date.now();
