@@ -11,7 +11,7 @@ import {
   modelForCapability,
   type Capability,
 } from "./model-map";
-import { assignedModelForCapability } from "./registry";
+import { assignedModelForCapability, modelActivation } from "./registry";
 
 /**
  * The inference seam — every model call in the product flows through
@@ -399,14 +399,44 @@ async function callModel(
  * capability; the model that actually produced the failure is not
  * the pair's from-model (the arming pin — parse_cv sits here until
  * its Haiku flip, and a founder registry override disarms a pair);
- * or MANDATE_EVAL=1 (benchmarks measure ONE model; the fence stays
- * law). One hop, never a chain: the caller marks a failed second
- * response itself and throws — 090's honest failure, unchanged.
+ * MANDATE_EVAL=1 (benchmarks measure ONE model; the fence stays law);
+ * or — C9, 2026-10-08 — the pair's to-model is not `active` in
+ * provider_models. One hop, never a chain: the caller marks a failed
+ * second response itself and throws — 090's honest failure, unchanged.
  *
  * The to-model comes from the ruled pair map alone — this is not the
  * eval override, and product code still cannot name an arbitrary
  * model (Part N holds). No thinking param rides the hop (the ruled
  * thinking rule: the config was benchmarked for the map's model).
+ *
+ * THE ACTIVATION GATE (C9). `capability_assignments_active_gate` has
+ * always refused ASSIGNING a capability to a non-active model —
+ * "benchmark and activate it first" — but escalation consulted neither
+ * the registry nor that gate, so the one path that could reach an
+ * unbenchmarked model was the one path that did not check. Migration
+ * 162 registered claude-opus-5 at `benchmarking` (it has never been
+ * benchmarked, so the provider_models_active_needs_evidence CHECK
+ * forbids `active` without a benchmark_ref); generate_evaluation's pair
+ * is armed at sonnet-5 → opus-5, and escalation has fired 0 times ever,
+ * so the first hop would also have been the first opus-5 call in
+ * production. The hop now requires the same evidence an assignment
+ * does.
+ *
+ * DIRECTION OF THE FALLBACK, stated deliberately: a status that is
+ * UNKNOWN — the registry unreadable, or the model absent from the table
+ * — SKIPS the hop, exactly as a `benchmarking` status does. That is the
+ * opposite direction from `resolveOverrides`, where an unreadable
+ * registry falls back to the code map and the call proceeds, and the
+ * difference is not an inconsistency with the registry doctrine (a
+ * registry read must never block, fail or reshape a model call): the
+ * doctrine protects the PRIMARY call, and this is an optional retry
+ * that did not exist before gate ef832fc. Skipping it returns the
+ * caller to its pre-escalation behaviour — it rethrows the schema error
+ * it already had — whereas failing open would spend an unevidenced
+ * premium call precisely when the product cannot tell whether that
+ * model is sanctioned. The conservative direction is the cheap one
+ * here, so the pair stays disarmed until opus-5 is benchmarked and
+ * activated through the models screen.
  */
 export async function escalateInference(
   capability: Capability,
@@ -419,11 +449,43 @@ export async function escalateInference(
   const pair = ESCALATION_PAIRS[capability];
   if (!pair) return null;
   if (runModelByResponse.get(failedResponse) !== pair.from) return null;
+  // Last, so the registry is read only when a hop would otherwise fire.
+  const activation = await modelActivation(pair.to);
+  if (activation !== "active") {
+    warnEscalationBlocked(capability, pair.to, activation);
+    return null;
+  }
   return callModel(capability, request, opts?.projectId ?? null, {
     model: pair.to,
     extra: {},
     escalatedFrom: pair.from,
   });
+}
+
+/** One line per (capability, model, reason) per process: a disarmed hop
+ * is a condition someone should see once, not a line per failure. */
+const escalationBlockedWarned = new Set<string>();
+function warnEscalationBlocked(
+  capability: Capability,
+  model: string,
+  activation: "not_active" | "unknown"
+): void {
+  const key = `${capability}:${model}:${activation}`;
+  if (escalationBlockedWarned.has(key)) return;
+  escalationBlockedWarned.add(key);
+  console.error(
+    `[inference] escalation for ${capability} skipped: ${model} is ` +
+      (activation === "unknown"
+        ? "of unknown status (provider_models unreadable)"
+        : "not active in provider_models") +
+      " — benchmark and activate it first. The caller's original schema " +
+      "failure stands."
+  );
+}
+
+/** Test-only: drop the warn-once latch above between cases. */
+export function __resetEscalationWarnings(): void {
+  escalationBlockedWarned.clear();
 }
 
 /**

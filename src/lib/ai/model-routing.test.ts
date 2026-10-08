@@ -20,7 +20,11 @@ import {
  *     pair arms itself, or an armed pair goes dark — with no edit to
  *     ESCALATION_PAIRS at all, and nothing failing.
  *   * An escalation `to` model is never checked against the models the
- *     product knows about. It is a bare string handed to the provider.
+ *     product knows about — it WAS a bare string handed to the provider
+ *     until C9 (2026-10-08) made escalateInference refuse a target that
+ *     is not `active` in provider_models. The runtime gate lives in
+ *     inference.ts and is proven in inference.test.ts; what this file
+ *     pins is the static pairing the gate then has to catch.
  *
  * Verified against production on 2026-10-08, after migration 162:
  *   capability_assignments ... 0 rows, so the code map governs every
@@ -197,26 +201,35 @@ describe("escalation pairs — armed or dormant, derived not asserted", () => {
     }
   });
 
-  it("STILL FLAGS that the armed escalation target is not an active model", () => {
-    // The finding is narrowed, not closed, and the remaining half is
-    // the interesting one.
+  it("the armed escalation target is not active — so the hop is gated SHUT at runtime (C9, closed)", () => {
+    // History, because the shape of the fix matters more than the fix.
     //
-    // Registering opus-5 fixed the reporting hole: an inference_runs
-    // row can now be joined to a model the registry can name. It did
-    // NOT make opus-5 usable. `capability_assignments_active_gate`
-    // refuses an assignment to any non-active model with "benchmark and
-    // activate it first".
+    // Registering opus-5 (migration 162) fixed the reporting hole: an
+    // inference_runs row can now be joined to a model the registry can
+    // name. It did NOT make opus-5 usable, and it did not change what
+    // escalation does — `capability_assignments_active_gate` refused an
+    // ASSIGNMENT to any non-active model with "benchmark and activate it
+    // first", while escalateInference consulted neither the registry nor
+    // that gate. The `to` model was a code constant handed straight to
+    // the provider, so the one path that could reach an unbenchmarked
+    // model was the one path that did not check.
     //
-    // But escalateInference never consults the registry or that gate --
-    // the `to` model is a code constant handed straight to the
-    // provider. So the one path that can reach an unbenchmarked model
-    // is the one path that does not check. Escalation has fired 0 times
-    // ever, so the first hop would also be the first opus-5 call in
-    // production.
+    // Resolution taken (C9, 2026-10-08): escalateInference now reads
+    // provider_models and refuses a `to` model that is not `active`,
+    // which disarms this pair until opus-5 is benchmarked and activated.
+    // An unreadable registry also skips the hop — the conservative
+    // direction, reasoned about where the code is.
     //
-    // Resolution is a product decision, not a test change: benchmark
-    // and activate opus-5, or make escalateInference refuse a
-    // non-active target (which disarms the pair until it is activated).
+    // This test keeps the STATIC half of the fact: the pair is armed in
+    // the code map and its target is not active in production, so the
+    // runtime gate is the only thing standing between a schema failure
+    // and an unevidenced opus-5 call. The gate's own behaviour is pinned
+    // in inference.test.ts ("the activation gate (C9)"), against a mock
+    // whose default state is this exact row of production.
+    //
+    // Activating opus-5 arms a real hop. When that happens, move
+    // claude-opus-5 into ACTIVE_IN_PRODUCTION and this test inverts —
+    // which is the point: it becomes a visible change, not a silent one.
     const armedTargets = Object.entries(ESCALATION_PAIRS)
       .filter(([c, p]) => p && modelForCapability(c as Capability) === p.from)
       .map(([, p]) => p!.to);

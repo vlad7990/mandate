@@ -5,7 +5,7 @@
 // provider errors are recorded and rethrown unchanged, and telemetry
 // can never fail a model call.
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
@@ -15,6 +15,11 @@ const mocks = vi.hoisted(() => ({
   // Rows the registry read (slice 4) returns; empty = no overrides,
   // the map governs — which is every pre-slice-4 test's assumption.
   assignmentRows: [] as { capability: string; model_id: string }[],
+  // Rows provider_models returns (C9). The default set in beforeEach is
+  // PRODUCTION as of migration 162 — opus-5 registered at
+  // `benchmarking`, never benchmarked — so the suite's baseline is the
+  // real world: the armed pair's target is not usable.
+  providerModelRows: [] as { model_id: string; status: string }[],
 }));
 
 vi.mock("server-only", () => ({}));
@@ -27,6 +32,7 @@ vi.mock("@/lib/supabase-service-role", () => ({
 
 import {
   __evalRecordedRuns,
+  __resetEscalationWarnings,
   __setEvalOverrides,
   buildRunRow,
   escalateInference,
@@ -43,9 +49,19 @@ import {
 } from "./model-map";
 import { __resetRegistryCache } from "./registry";
 
+/** Production provider_models as of migration 162: three active models
+ * and claude-opus-5 registered at `benchmarking` because the armed
+ * generate_evaluation escalation targets it. */
+const PRODUCTION_PROVIDER_MODELS = [
+  { model_id: "claude-haiku-4-5", status: "active" },
+  { model_id: "claude-sonnet-4-6", status: "active" },
+  { model_id: "claude-sonnet-5", status: "active" },
+  { model_id: "claude-opus-5", status: "benchmarking" },
+];
+
 function workingServiceClient() {
   return {
-    from: () => ({
+    from: (table: string) => ({
       insert: (row: unknown) => {
         mocks.insert(row);
         return Promise.resolve({ error: null });
@@ -57,7 +73,13 @@ function workingServiceClient() {
         },
       }),
       select: () =>
-        Promise.resolve({ data: mocks.assignmentRows, error: null }),
+        Promise.resolve({
+          data:
+            table === "provider_models"
+              ? mocks.providerModelRows
+              : mocks.assignmentRows,
+          error: null,
+        }),
     }),
   };
 }
@@ -65,7 +87,9 @@ function workingServiceClient() {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.assignmentRows = [];
+  mocks.providerModelRows = [...PRODUCTION_PROVIDER_MODELS];
   __resetRegistryCache();
+  __resetEscalationWarnings();
   mocks.getServiceClient.mockImplementation(workingServiceClient);
 });
 
@@ -495,8 +519,21 @@ describe("the escalation hop (Part G / O.5)", () => {
     });
   const request = { max_tokens: 10, messages: [] };
 
+  /** C9: the hop now requires its target to be `active` in
+   * provider_models, and in production opus-5 is `benchmarking`. A test
+   * about the hop's MECHANICS has to activate it first. */
+  const activateOpus = () => {
+    mocks.providerModelRows = [
+      ...PRODUCTION_PROVIDER_MODELS.filter(
+        (m) => m.model_id !== "claude-opus-5"
+      ),
+      { model_id: "claude-opus-5", status: "active" },
+    ];
+  };
+
   it("fires for generate_evaluation: marks the failed run, retries the SAME request on opus-5, records escalated_from", async () => {
     ok();
+    activateOpus();
     const first = await runInference("generate_evaluation", request);
     mocks.create.mockClear();
     mocks.insert.mockClear();
@@ -586,6 +623,133 @@ describe("the escalation hop (Part G / O.5)", () => {
     } finally {
       delete process.env.MANDATE_EVAL;
     }
+  });
+
+  describe("the activation gate (C9)", () => {
+    /** Each case asserts the SAME two things: no provider call was made
+     * with the pair's to-model, and the failed run was still marked
+     * schema_failed — honesty precedes the gate, exactly as it precedes
+     * the from-guard. */
+    async function attemptHop() {
+      ok();
+      const first = await runInference("generate_evaluation", request);
+      mocks.create.mockClear();
+      return escalateInference("generate_evaluation", request, undefined, first);
+    }
+
+    let errorSpy: ReturnType<typeof vi.spyOn>;
+    beforeEach(() => {
+      errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+    afterEach(() => {
+      errorSpy.mockRestore();
+    });
+
+    it("refuses the hop in PRODUCTION's own state: opus-5 is `benchmarking`, so the armed pair does not fire", async () => {
+      // This is the C9 defect closed. The pair is armed (default is
+      // sonnet-5, the pair's from is sonnet-5) and before this gate the
+      // to-model was a code constant handed straight to the provider —
+      // so the first hop would also have been the first opus-5 call ever
+      // made, on a model that has never been benchmarked.
+      expect(await attemptHop()).toBeNull();
+      expect(mocks.create).not.toHaveBeenCalled();
+      expect(mocks.update).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: "schema_failed" }),
+        expect.any(String)
+      );
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(String(errorSpy.mock.calls[0][0])).toContain(
+        "not active in provider_models"
+      );
+    });
+
+    it("refuses a `retired` target", async () => {
+      mocks.providerModelRows = [
+        ...PRODUCTION_PROVIDER_MODELS.filter(
+          (m) => m.model_id !== "claude-opus-5"
+        ),
+        { model_id: "claude-opus-5", status: "retired" },
+      ];
+      expect(await attemptHop()).toBeNull();
+      expect(mocks.create).not.toHaveBeenCalled();
+    });
+
+    it("refuses a target that is in no row at all", async () => {
+      // The state before migration 162. Absence is not permission.
+      mocks.providerModelRows = PRODUCTION_PROVIDER_MODELS.filter(
+        (m) => m.model_id !== "claude-opus-5"
+      );
+      expect(await attemptHop()).toBeNull();
+      expect(mocks.create).not.toHaveBeenCalled();
+    });
+
+    it("SKIPS the hop when provider_models cannot be read — the conservative direction, and the opposite of resolveOverrides", async () => {
+      // The registry doctrine ("a read failure never blocks, fails or
+      // reshapes a model call") protects the PRIMARY call, which still
+      // falls back to the code map and proceeds. This is an optional
+      // retry: skipping it returns the caller to its pre-escalation
+      // behaviour, whereas failing open would spend an unevidenced
+      // premium call precisely when the product cannot tell whether the
+      // model is sanctioned.
+      ok();
+      const first = await runInference("generate_evaluation", request);
+      mocks.create.mockClear();
+      mocks.getServiceClient.mockImplementation(() => ({
+        from: (table: string) => ({
+          insert: () => Promise.resolve({ error: null }),
+          update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+          select: () =>
+            table === "provider_models"
+              ? Promise.reject(new Error("registry down"))
+              : Promise.resolve({ data: [], error: null }),
+        }),
+      }));
+      __resetRegistryCache();
+
+      const second = await escalateInference(
+        "generate_evaluation",
+        request,
+        undefined,
+        first
+      );
+      expect(second).toBeNull();
+      expect(mocks.create).not.toHaveBeenCalled();
+      expect(
+        errorSpy.mock.calls.some((c: unknown[]) =>
+          String(c[0]).includes("of unknown status")
+        )
+      ).toBe(true);
+    });
+
+    it("warns ONCE per reason, not once per failure", async () => {
+      expect(await attemptHop()).toBeNull();
+      expect(await attemptHop()).toBeNull();
+      expect(await attemptHop()).toBeNull();
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("reads provider_models only when a hop would otherwise fire — a dormant pair costs no query", async () => {
+      ok();
+      // parse_cv's pair is dormant (default sonnet-4-6, from haiku-4-5),
+      // so the from-guard returns first and the registry is untouched.
+      const first = await runInference("parse_cv", request);
+      __resetRegistryCache();
+      const selects: string[] = [];
+      mocks.getServiceClient.mockImplementation(() => ({
+        from: (table: string) => ({
+          insert: () => Promise.resolve({ error: null }),
+          update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+          select: () => {
+            selects.push(table);
+            return Promise.resolve({ data: [], error: null });
+          },
+        }),
+      }));
+      expect(
+        await escalateInference("parse_cv", request, undefined, first)
+      ).toBeNull();
+      expect(selects).not.toContain("provider_models");
+    });
   });
 });
 

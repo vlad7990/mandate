@@ -4,7 +4,7 @@
 condition table in `2026-10-07-go-no-go.md` as the place to look for *state*.
 Those two remain the record of the original assessment and its reasoning.
 
-Last updated **2026-10-08**, after migrations 161 and 162.
+Last updated **2026-10-08**, after migrations 161 and 162 and the C9 escalation gate.
 
 **Nothing here is marked done because a route exists, a document was written, or
 tests pass.** Every row names the evidence, and where evidence is absent the row
@@ -110,14 +110,14 @@ says so.
 - **Owner** —
 - **Next action** Run it after any migration that adds a table or policy.
 
-### B3 · Model routing verified, not just the registry 🟡
+### B3 · Model routing verified, not just the registry 🟢
 
-- **Evidence** `capability_assignments` has **0 rows**, so the code map governs every call — there is no override layer rerouting anything. `provider_models` holds `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-sonnet-5`. Escalation has fired **0 times ever**.
-- **Work completed** `model-routing.test.ts` derives escalation arming from the map rather than restating it: `generate_evaluation` is ARMED, `parse_cv` is DORMANT, and flipping the map arms or disarms a pair as a visible failing change.
-- **Verification** 10 tests; production registry state read directly.
-- **Remaining dependency** **Half closed, and the remaining half is the interesting one.** Migration 162 registered `claude-opus-5` at status `benchmarking`, which fixes the reporting hole — an `inference_runs` row can now be joined to a model the registry names. It does **not** make opus-5 usable: `capability_assignments_active_gate` refuses assignment to any non-active model with *"benchmark and activate it first"*, and activation requires a `benchmark_ref` that does not exist. **But `escalateInference` consults neither the registry nor that gate** — `pair.to` is a code constant handed straight to the provider. So the one path that can reach an unbenchmarked model is the one path that does not check.
-- **Owner** Founder decides.
-- **Next action** Either benchmark and activate opus-5, or make `escalateInference` refuse a non-active target (which disarms the pair until it is). Pinned by a test so it cannot be forgotten.
+- **Evidence** `capability_assignments` has **0 rows**, so the code map governs every call — there is no override layer rerouting anything. `provider_models` holds `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-sonnet-5` (all `active`) and `claude-opus-5` (`benchmarking`, migration 162). Escalation has fired **0 times ever**.
+- **Work completed** `model-routing.test.ts` derives escalation arming from the map rather than restating it: `generate_evaluation` is ARMED, `parse_cv` is DORMANT, and flipping the map arms or disarms a pair as a visible failing change. **C9 closed 2026-10-08:** `escalateInference` now reads `provider_models` through `modelActivation` (`src/lib/ai/registry.ts`, same 60 s TTL cache as the assignment read) and refuses a `to` model that is not `active`, so the escalation path is held to the same evidence standard `capability_assignments_active_gate` applies to an assignment.
+- **Verification** `npm test` 1,724 passing. 10 routing tests plus six in `inference.test.ts` ("the activation gate (C9)") whose mocked `provider_models` **defaults to this exact row of production** — `benchmarking`, `retired`, absent and unreadable each skip the hop; a dormant pair never queries the table at all; the warning fires once per reason, not once per failure. Four more in `registry.test.ts` pin the read itself.
+- **Remaining dependency** The direction of the fallback is deliberate and is stated where the code is: an **unreadable** registry also skips the hop. That is the opposite of `resolveOverrides`, where a failed read falls back to the code map and the call proceeds — the registry doctrine protects the *primary* call, and escalation is an optional retry whose skip returns the caller to its pre-escalation behaviour. **Consequence to be honest about:** `generate_evaluation`'s escalation is now inert until opus-5 is benchmarked and activated, so a deterministic schema failure there surfaces the original error instead of retrying. With 0 hops ever recorded, that is what was already happening in practice — but it is now by rule rather than by luck.
+- **Owner** Founder decides whether to benchmark opus-5.
+- **Next action** None required. To arm the hop for real: run the judgment harness against opus-5 (C2), then activate it on `/app/settings/models` naming the results as `benchmark_ref`. The activation is live within 60 s with no deploy, and it inverts the `ACTIVE_IN_PRODUCTION` assertion in `model-routing.test.ts` — a visible change, not a silent one.
 
 ---
 
@@ -133,7 +133,7 @@ says so.
 | C6 | **`text-body-s` is dead** | Used 77 times, emits no CSS rule; as an unknown `text-*` it can also eat a live colour in `cn()` | — | Decide what those 77 sites should say |
 | C7 | **Two unexplained production credentials** | `STITCH_API_KEY`, `WEBCLAW_API_KEY` set in production, referenced nowhere in code | Founder | Identify or remove. **Blocks A4's subprocessor list** |
 | C8 | **38 product surfaces never verified in a browser** | No signed-in session has ever been driven | Founder | A throwaway staff account would close it |
-| C9 | **Escalation bypasses the model-activation gate** | `escalateInference` hands `pair.to` to the provider without consulting `provider_models` or `capability_assignments_active_gate` | Founder | Benchmark and activate opus-5, or make escalation refuse a non-active target |
+| ~~C9~~ | ~~**Escalation bypasses the model-activation gate**~~ — **closed 2026-10-08** | `escalateInference` now reads `provider_models` via `modelActivation` and refuses a `to` model that is not `active`; unknown or unreadable status skips the hop too. Proven by "the activation gate (C9)" in `inference.test.ts`, whose default mock state is production's own. See B3 | — | None. Arming the hop for real needs an opus-5 benchmark (C2) then activation on `/app/settings/models` |
 
 ---
 
@@ -148,5 +148,5 @@ Ordered so nothing waits on something avoidable.
 5. **Provision the backup destination** (A2) — separate provider account; generate and escrow the encryption key off-platform.
 6. **Decide "Unlimited" and "Dedicated success partner"** (A7).
 7. **Identify or remove `STITCH_API_KEY` and `WEBCLAW_API_KEY`** (C7).
-8. ~~Approve the two small production writes~~ — **done 2026-10-08.** Migration 161 applied (lock verified), migration 162 applied (opus-5 registered at `benchmarking`). Decide C9: benchmark opus-5, or make escalation refuse a non-active target.
+8. ~~Approve the two small production writes~~ — **done 2026-10-08.** Migration 161 applied (lock verified), migration 162 applied (opus-5 registered at `benchmarking`). ~~Decide C9~~ — **also done 2026-10-08:** escalation refuses a non-active target, which disarms the `generate_evaluation` pair until opus-5 is benchmarked. Code only; no migration and no production write.
 9. **Cheap and worth doing anyway**: an uptime monitor on `/api/health` (C3), `SENTRY_AUTH_TOKEN` (C4), an Anthropic budget alert.
