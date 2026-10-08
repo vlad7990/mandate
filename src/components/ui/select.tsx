@@ -97,6 +97,19 @@ function SelectTrigger({
       className={cn(
         // `group` so the chevron can read the open state off the trigger.
         "group flex h-8 w-full items-center justify-between gap-2 border border-outline-variant bg-surface-container-low px-2.5 text-left text-on-surface transition-colors outline-none",
+        // 44px floor below `md`, where a finger is doing the pointing.
+        //
+        // The design handoff has required ≥44px touch targets all along
+        // and the marketing surface enforces it in CSS; the app enforces
+        // it the same way the sidebar nav items and the user menu do —
+        // `min-h-11` released at `md`, so density returns the moment a
+        // mouse is the likely instrument. At ≥768px this renders exactly
+        // what it rendered before.
+        //
+        // A floor rather than a height on purpose: two call sites pass
+        // `h-auto` and would defeat an `h-11`, and nothing can defeat a
+        // `min-height`. One line here reaches all 57 controls.
+        "min-h-11 md:min-h-0",
         "hover:border-outline",
         // Open and focused share one treatment: the accent border. A
         // keyboard user and a mouse user see the same control.
