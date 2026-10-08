@@ -8,6 +8,7 @@ import { SLOTS, type SlotKey } from "@/lib/ai/sourcing-analysis";
 import { restoreQueryVersionAction } from "./actions";
 import { IconHistory, IconRefresh } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 // Per-slot version history with side-by-side diff, term-level
 // add/remove highlighting, restore-to-version, basic analytics
@@ -195,21 +196,22 @@ function VersionPane({
           {title}
         </div>
         {versions.length > 1 ? (
-          <select
-            value={version.version}
-            onChange={(e) => onSelect(Number(e.target.value))}
-            className="bg-surface-container-lowest border border-outline-variant px-2 py-1 font-mono-label text-mono-label uppercase tracking-widest text-on-surface focus:border-primary focus:outline-none transition-colors"
-          >
-            {versions.map((v) => (
-              <option key={v.rowId} value={v.version}>
-                v{String(v.version).padStart(2, "0")} ·{" "}
-                {formatRelative(v.updated_at)}
-                {v.candidates_attributed > 0
+          <SelectField
+            aria-label="Version"
+            value={String(version.version)}
+            onValueChange={(value) => onSelect(Number(value))}
+            options={versions.map((v) => ({
+              value: String(v.version),
+              label: [
+                `v${String(v.version).padStart(2, "0")} · `,
+                formatRelative(v.updated_at),
+                v.candidates_attributed > 0
                   ? ` · ${v.candidates_attributed} cands`
-                  : ""}
-              </option>
-            ))}
-          </select>
+                  : "",
+              ].join(""),
+            }))}
+            className="h-auto w-auto min-w-48 bg-surface-container-lowest px-2 py-1 tracking-widest"
+          />
         ) : (
           <span className="font-mono-label text-mono-label text-primary uppercase tracking-widest tabular-nums">
             v{String(version.version).padStart(2, "0")}

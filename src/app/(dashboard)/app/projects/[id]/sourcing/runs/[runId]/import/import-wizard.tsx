@@ -18,6 +18,7 @@ import {
   type ImportPreview,
 } from "../../actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 /**
  * Paste or CSV → column mapping → stage.
@@ -122,18 +123,17 @@ export function ImportWizard({
             <label className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
               Found on
             </label>
-            <select
+            <SelectField
+              aria-label="Source platform"
               value={platform}
-              onChange={(e) => setPlatform(e.target.value)}
+              onValueChange={setPlatform}
               disabled={pending}
-              className="px-2 py-1 bg-surface-container-lowest border border-outline-variant font-mono-label text-mono-label text-on-surface uppercase tracking-widest"
-            >
-              {SOURCE_PLATFORMS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
+              options={SOURCE_PLATFORMS.map((p) => ({
+                value: p.value,
+                label: p.label,
+              }))}
+              className="h-auto w-auto min-w-44 bg-surface-container-lowest px-2 py-1 tracking-widest"
+            />
           </div>
         </header>
 
@@ -205,19 +205,21 @@ export function ImportWizard({
                     {field.label}
                     {field.required && <span className="text-primary"> *</span>}
                   </span>
-                  <select
-                    value={preview.mapping[field.key] ?? ""}
-                    onChange={(e) => changeMapping(field.key, e.target.value)}
+                  <SelectField
+                    aria-label={`Column for ${field.key}`}
+                    tone="text"
+                    value={String(preview.mapping[field.key] ?? "")}
+                    onValueChange={(value) => changeMapping(field.key, value)}
                     disabled={pending}
-                    className="w-full px-2 py-1.5 bg-surface-container-lowest border border-outline-variant font-mono-data text-body-main text-on-surface"
-                  >
-                    <option value="">— not mapped —</option>
-                    {preview.headers.map((h, i) => (
-                      <option key={`${h}-${i}`} value={i}>
-                        {h || `Column ${i + 1}`}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: "", label: "— not mapped —" },
+                      ...preview.headers.map((h, i) => ({
+                        value: String(i),
+                        label: h || `Column ${i + 1}`,
+                      })),
+                    ]}
+                    className="h-auto w-full bg-surface-container-lowest px-2 py-1.5 font-mono-data"
+                  />
                 </label>
               ))}
             </div>

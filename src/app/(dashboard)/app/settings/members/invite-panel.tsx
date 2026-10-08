@@ -7,6 +7,7 @@ import { unwrap } from "@/lib/actions/result";
 import { useHydrated } from "@/lib/use-hydrated";
 import { STAFF_ROLES, ROLE_LABELS, type StaffRole } from "@/lib/auth/roles";
 import { issueStaffInvitationAction, revokeStaffInvitationAction } from "./actions";
+import { SelectField } from "@/components/ui/select";
 
 export type OpenInvitationRow = {
   id: string;
@@ -110,17 +111,17 @@ export function StaffInvitePanel({
             <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
               Role
             </span>
-            <select
+            <SelectField
+              aria-label="Role"
+              tone="text"
               value={role}
-              onChange={(e) => setRole(e.target.value as StaffRole)}
-              className="border border-outline-variant bg-surface-container-lowest px-3 py-1.5 text-body-main text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              {STAFF_ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {ROLE_LABELS[r]}
-                </option>
-              ))}
-            </select>
+              onValueChange={(r) => setRole(r as StaffRole)}
+              options={STAFF_ROLES.map((r) => ({
+                value: r,
+                label: ROLE_LABELS[r],
+              }))}
+              className="h-auto w-auto min-w-40 bg-surface-container-lowest px-3 py-1.5"
+            />
           </label>
           <button
             type="button"

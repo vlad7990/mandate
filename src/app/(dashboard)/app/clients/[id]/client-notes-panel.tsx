@@ -48,9 +48,14 @@ import {
 } from "./client-notes-actions";
 import { AUDIO_ACCEPT } from "@/lib/calls/audio";
 import { unwrap, type ActionResult } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 const FIELD =
   "w-full min-w-0 border border-outline-variant bg-surface px-3 py-2 text-body-s text-on-surface focus:border-primary focus:outline-none";
+
+/** The same field, for a `SelectField` — which draws its own border,
+ *  focus state and height, so only the box metrics carry over. */
+const SELECT_FIELD = "h-auto w-full min-w-0 bg-surface px-3 py-2 text-body-s";
 
 const LABEL =
   "block font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline";
@@ -385,60 +390,63 @@ function NoteForm({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <label className="space-y-1.5">
           <span className={LABEL}>Type</span>
-          <select
+          <SelectField
             name="noteType"
+            aria-label="Note type"
+            tone="text"
             value={noteType}
-            onChange={(e) => setNoteType(e.target.value)}
-            className={FIELD}
-          >
-            {CLIENT_NOTE_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {CLIENT_NOTE_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </select>
+            onValueChange={setNoteType}
+            options={CLIENT_NOTE_TYPES.map((t) => ({
+              value: t,
+              label: CLIENT_NOTE_TYPE_LABELS[t],
+            }))}
+            className={SELECT_FIELD}
+          />
         </label>
 
         <label className="space-y-1.5">
           <span className={LABEL}>With</span>
-          <select
+          {/*
+            Active contacts only. An archived person keeps their name on
+            notes already written, but a new note should not be filed
+            against somebody who has left — and if this note already names
+            them, the edit form keeps that value because the option is
+            rendered below.
+          */}
+          <SelectField
             name="contactId"
+            aria-label="Contact"
+            tone="text"
             defaultValue={note?.contact_id ?? ""}
-            className={FIELD}
-          >
-            <option value="">Nobody in particular</option>
-            {/*
-              Active contacts only. An archived person keeps their name on
-              notes already written, but a new note should not be filed
-              against somebody who has left — and if this note already names
-              them, the edit form keeps that value because the option is
-              rendered below.
-            */}
-            {contacts
-              .filter((c) => !c.is_archived || c.id === note?.contact_id)
-              .map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.full_name}
-                  {c.is_archived ? " (archived)" : ""}
-                </option>
-              ))}
-          </select>
+            options={[
+              { value: "", label: "Nobody in particular" },
+              ...contacts
+                .filter((c) => !c.is_archived || c.id === note?.contact_id)
+                .map((c) => ({
+                  value: c.id,
+                  label: c.is_archived
+                    ? `${c.full_name} (archived)`
+                    : c.full_name,
+                })),
+            ]}
+            className={SELECT_FIELD}
+          />
         </label>
 
         <label className="space-y-1.5">
           <span className={LABEL}>Visible to</span>
-          <select
+          <SelectField
             name="visibility"
+            aria-label="Visibility"
+            tone="text"
             value={visibility}
-            onChange={(e) => setVisibility(e.target.value as ClientNoteVisibility)}
-            className={FIELD}
-          >
-            {tiers.map((v) => (
-              <option key={v} value={v}>
-                {CLIENT_NOTE_VISIBILITY_LABELS[v]}
-              </option>
-            ))}
-          </select>
+            onValueChange={(v) => setVisibility(v as ClientNoteVisibility)}
+            options={tiers.map((v) => ({
+              value: v,
+              label: CLIENT_NOTE_VISIBILITY_LABELS[v],
+            }))}
+            className={SELECT_FIELD}
+          />
         </label>
       </div>
 

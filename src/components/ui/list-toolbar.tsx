@@ -8,6 +8,7 @@ import {
   type ListParams,
 } from "@/lib/list-params";
 import { IconClose, IconRefresh, IconSearch } from "@/components/icons";
+import { SelectField } from "@/components/ui/select";
 
 export type FilterOption = { value: string; label: string };
 
@@ -101,21 +102,17 @@ export function ListToolbar({
       </div>
 
       {filters.map((filter) => (
-        <label key={filter.key} className="flex items-center gap-2">
-          <span className="sr-only">{filter.label}</span>
-          <select
-            value={params.filters[filter.key] ?? ""}
-            onChange={(e) => setFilter(filter.key, e.target.value)}
-            className="h-9 border border-outline-variant bg-surface-container-lowest px-2.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant focus:border-primary focus:outline-none"
-          >
-            <option value="">{filter.label}: any</option>
-            {filter.options.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          key={filter.key}
+          aria-label={filter.label}
+          value={params.filters[filter.key] ?? ""}
+          onValueChange={(value) => setFilter(filter.key, value)}
+          options={[
+            { value: "", label: `${filter.label}: any` },
+            ...filter.options,
+          ]}
+          className="h-9 w-auto min-w-36 bg-surface-container-lowest text-on-surface-variant"
+        />
       ))}
 
       {showClear && (

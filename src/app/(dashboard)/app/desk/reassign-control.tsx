@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { unwrap } from "@/lib/actions/result";
 import { reassignMandateLeadAction } from "./actions";
+import { SelectField } from "@/components/ui/select";
 
 type Member = { id: string; label: string };
 
@@ -45,20 +46,18 @@ export function ReassignControl({
 
   return (
     <span className="inline-flex items-center gap-2">
-      <select
+      <SelectField
+        tone="text"
         value={selected}
-        onChange={(e) => setSelected(e.target.value)}
+        onValueChange={setSelected}
         disabled={isPending}
         aria-label="Lead recruiter"
-        className="bg-surface-container-low border border-outline-variant px-2 py-1 font-mono-label text-mono-label text-on-surface focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-      >
-        <option value="">Unassigned</option>
-        {members.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.label}
-          </option>
-        ))}
-      </select>
+        options={[
+          { value: "", label: "Unassigned" },
+          ...members.map((m) => ({ value: m.id, label: m.label })),
+        ]}
+        className="h-7 w-auto min-w-40 px-2"
+      />
       {dirty && (
         <button
           type="button"

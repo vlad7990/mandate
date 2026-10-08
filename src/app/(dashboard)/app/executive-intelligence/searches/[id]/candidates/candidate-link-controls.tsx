@@ -19,6 +19,7 @@ import {
   unlinkCandidateAction,
 } from "./actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 function useAction() {
   const router = useRouter();
@@ -86,29 +87,27 @@ export function CandidateStageSelect({
   const { isPending, run } = useAction();
 
   return (
-    <select
+    <SelectField
       value={stage}
       disabled={isPending}
       aria-label="Diligence stage"
-      onChange={(e) =>
+      onValueChange={(value) =>
         run("Stage change", async () => {
           unwrap(
             await setCandidateStageAction(
               searchId,
               candidateId,
-              e.target.value as ExecutiveCandidateStage
+              value as ExecutiveCandidateStage
             )
           );
         })
       }
-      className="bg-surface-container-lowest border border-outline-variant px-2 py-1.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant outline-none focus:border-primary transition-colors disabled:opacity-60"
-    >
-      {EXEC_CANDIDATE_STAGES.map((s) => (
-        <option key={s} value={s}>
-          {EXEC_CANDIDATE_STAGE_LABELS[s]}
-        </option>
-      ))}
-    </select>
+      options={EXEC_CANDIDATE_STAGES.map((s) => ({
+        value: s,
+        label: EXEC_CANDIDATE_STAGE_LABELS[s],
+      }))}
+      className="h-auto w-auto min-w-44 bg-surface-container-lowest px-2 py-1.5 text-on-surface-variant"
+    />
   );
 }
 

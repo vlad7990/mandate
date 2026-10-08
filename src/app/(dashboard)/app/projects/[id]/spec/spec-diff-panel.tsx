@@ -8,6 +8,7 @@ import {
   type SectionKey,
 } from "@/lib/ai/job-spec-analysis";
 import { IconArrowRight, IconDiff } from "@/components/icons";
+import { SelectField } from "@/components/ui/select";
 
 // Visual diff comparison panel rendered below the spec editor. Lets
 // the recruiter pick any two versions, see the section-by-section
@@ -147,21 +148,22 @@ function VersionPicker({
       <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
         {label}
       </span>
-      <select
+      <SelectField
+        tone="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-surface-container-lowest border border-outline-variant px-2 py-1.5 text-on-surface focus:border-primary focus:outline-none transition-colors"
-      >
-        {versions.map((v) => (
-          <option key={v.id} value={v.id}>
-            v{String(v.version).padStart(2, "0")}
-            {v.is_final ? " · FINAL" : ""}
-            {" · "}
-            {formatDate(v.updated_at)}
-            {v.created_by_name ? ` · ${v.created_by_name}` : ""}
-          </option>
-        ))}
-      </select>
+        onValueChange={onChange}
+        options={versions.map((v) => ({
+          value: v.id,
+          label: [
+            `v${String(v.version).padStart(2, "0")}`,
+            v.is_final ? " · FINAL" : "",
+            " · ",
+            formatDate(v.updated_at),
+            v.created_by_name ? ` · ${v.created_by_name}` : "",
+          ].join(""),
+        }))}
+        className="h-auto w-full bg-surface-container-lowest px-2 py-1.5"
+      />
     </label>
   );
 }

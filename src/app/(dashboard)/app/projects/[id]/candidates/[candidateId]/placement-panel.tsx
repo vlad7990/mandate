@@ -54,6 +54,7 @@ import {
   updatePlacementStatusAction,
 } from "./placement-actions";
 import { unwrap, type ActionResult } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 const FIELD =
   "w-full min-w-0 border border-outline-variant bg-surface px-3 py-2 font-mono-label text-mono-label uppercase tracking-wider text-on-surface tabular-nums focus:border-primary focus:outline-none";
@@ -590,20 +591,26 @@ function SignOff({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="space-y-1.5">
           <span className={LABEL}>Contact</span>
-          <select
+          <SelectField
             name="contactId"
+            aria-label="Signed off by"
+            tone="text"
             defaultValue={placement.signed_off_by_contact_id ?? ""}
-            className={FIELD}
-          >
-            <option value="">
-              {contacts.length === 0 ? "No contacts on file" : "Not from the contact list"}
-            </option>
-            {contacts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.title ? `${c.full_name} — ${c.title}` : c.full_name}
-              </option>
-            ))}
-          </select>
+            options={[
+              {
+                value: "",
+                label:
+                  contacts.length === 0
+                    ? "No contacts on file"
+                    : "Not from the contact list",
+              },
+              ...contacts.map((c) => ({
+                value: c.id,
+                label: c.title ? `${c.full_name} — ${c.title}` : c.full_name,
+              })),
+            ]}
+            className="h-auto w-full min-w-0 bg-surface px-3 py-2"
+          />
         </label>
 
         <label className="space-y-1.5">

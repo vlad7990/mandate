@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { IconArrowLeft, IconPlus } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
 import { createInvoiceAction } from "../actions";
+import { SelectField } from "@/components/ui/select";
 
 export function NewInvoiceForm({
   clients,
@@ -53,37 +54,35 @@ export function NewInvoiceForm({
         <span className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
           Client
         </span>
-        <select
+        {/* No `required`: this form builds its own FormData and already
+            refuses to submit while `submitDisabled` holds, so the
+            attribute never did any work here — and native validation on a
+            visually hidden control is a trap, not a safety net. */}
+        <SelectField
+          aria-label="Client"
+          tone="text"
           value={clientId}
-          onChange={(e) => setClientId(e.target.value)}
-          className={SELECT}
-          required
-        >
-          <option value="">Pick a client…</option>
-          {clients.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          onValueChange={setClientId}
+          options={[
+            { value: "", label: "Pick a client…" },
+            ...clients.map((c) => ({ value: c.id, label: c.name })),
+          ]}
+          className={SELECT_FIELD}
+        />
       </label>
 
       <label className="block space-y-1.5">
         <span className="font-mono-label text-mono-label uppercase tracking-widest text-primary">
           Template
         </span>
-        <select
+        <SelectField
+          aria-label="Template"
+          tone="text"
           value={templateId}
-          onChange={(e) => setTemplateId(e.target.value)}
-          className={SELECT}
-          required
-        >
-          {templates.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
+          onValueChange={setTemplateId}
+          options={templates.map((t) => ({ value: t.id, label: t.name }))}
+          className={SELECT_FIELD}
+        />
       </label>
 
       <div className="flex items-center justify-between gap-4 border-t border-outline-variant pt-4">
@@ -108,5 +107,5 @@ export function NewInvoiceForm({
   );
 }
 
-const SELECT =
-  "w-full border border-outline-variant bg-surface-container-low px-3 py-2 text-body-s text-on-surface focus:border-primary focus:outline-none";
+const SELECT_FIELD =
+  "h-auto w-full bg-surface-container-low px-3 py-2 text-body-s";

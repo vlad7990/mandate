@@ -12,9 +12,14 @@ import {
   createTaskAction,
   reassignTaskAction,
 } from "./actions";
+import { SelectField } from "@/components/ui/select";
 
 const inputClass =
   "bg-surface-container-low border border-outline-variant px-3 py-2 text-body-main text-on-surface placeholder:text-outline focus:border-primary focus:ring-0 outline-none transition-colors";
+
+/** The same control, for a `SelectField` — which brings its own border,
+ *  focus state and height, so only the box metrics carry over. */
+const selectClass = "h-auto bg-surface-container-low px-3 py-2";
 
 /**
  * The desk's task board (106): create, assign, reassign, complete,
@@ -100,27 +105,33 @@ export function TasksPanel({
           <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
             Assignee
           </span>
-          <select name="assignee_id" defaultValue="" className={inputClass}>
-            <option value="">Unassigned</option>
-            {members.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
-              </option>
-            ))}
-          </select>
+          <SelectField
+            name="assignee_id"
+            aria-label="Assignee"
+            tone="text"
+            defaultValue=""
+            options={[
+              { value: "", label: "Unassigned" },
+              ...members.map((m) => ({ value: m.id, label: m.label })),
+            ]}
+            className={selectClass}
+          />
         </label>
         <label className="space-y-1">
           <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
             Mandate
           </span>
-          <select name="project_id" defaultValue="" className={inputClass}>
-            <option value="">None</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
+          <SelectField
+            name="project_id"
+            aria-label="Mandate"
+            tone="text"
+            defaultValue=""
+            options={[
+              { value: "", label: "None" },
+              ...projects.map((p) => ({ value: p.id, label: p.title })),
+            ]}
+            className={selectClass}
+          />
         </label>
         <label className="space-y-1">
           <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
@@ -172,32 +183,29 @@ export function TasksPanel({
                     </span>
                   )}
                 </div>
-                <select
+                <SelectField
                   value={t.assignee_id ?? ""}
                   disabled={busy === t.id}
                   aria-label={`Reassign ${t.title}`}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     run(
                       t.id,
                       async () =>
                         unwrap(
                           await reassignTaskAction(
                             t.id,
-                            e.target.value === "" ? null : e.target.value
+                            value === "" ? null : value
                           )
                         ),
                       "Task reassigned"
                     )
                   }
-                  className={cn(inputClass, "px-2 py-1 font-mono-label text-[11px] uppercase tracking-wider")}
-                >
-                  <option value="">Unassigned</option>
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: "", label: "Unassigned" },
+                    ...members.map((m) => ({ value: m.id, label: m.label })),
+                  ]}
+                  className={cn(selectClass, "px-2 py-1 text-[11px]")}
+                />
                 <button
                   type="button"
                   disabled={busy === t.id}

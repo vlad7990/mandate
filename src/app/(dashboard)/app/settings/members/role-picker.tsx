@@ -7,14 +7,21 @@ import { setMemberRoleAction } from "./actions";
 import { STAFF_ROLES, ROLE_LABELS, type Role } from "@/lib/auth/roles";
 import { IconRefresh } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 /**
  * Role picker for one member.
  *
  * A select plus an explicit Apply, rather than saving on change. Changing
  * someone's role is not a filter — it takes access away from a colleague
- * mid-search — and a native select fires `change` on arrow-key navigation,
- * so save-on-change would demote whoever you scrolled past.
+ * mid-search — so the write wants a deliberate second act, not a side
+ * effect of browsing the list.
+ *
+ * The original reason was narrower: a native select fires `change` on
+ * arrow-key navigation, so save-on-change would have demoted whoever you
+ * scrolled past. The styled select commits only on selection, so that
+ * particular hazard is gone — but the Apply stays, because the reason
+ * above never depended on it.
  */
 export function RolePicker({
   userId,
@@ -83,22 +90,20 @@ export function RolePicker({
       <label className="sr-only" htmlFor={`role-${userId}`}>
         Role for {displayName}
       </label>
-      <select
+      {/* Staff roles only: the members screen administers the org's own
+          people, and an external role on a staff row is a contradiction
+          the 067 XOR CHECK would refuse anyway. */}
+      <SelectField
         id={`role-${userId}`}
         value={selected}
         disabled={isPending}
-        onChange={(e) => setSelected(e.target.value as Role)}
-        className="border border-outline-variant bg-surface-container-low px-2 py-1.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60"
-      >
-        {/* Staff roles only: the members screen administers the org's own
-            people, and an external role on a staff row is a contradiction
-            the 067 XOR CHECK would refuse anyway. */}
-        {STAFF_ROLES.map((role) => (
-          <option key={role} value={role}>
-            {ROLE_LABELS[role]}
-          </option>
-        ))}
-      </select>
+        onValueChange={(role) => setSelected(role as Role)}
+        options={STAFF_ROLES.map((role) => ({
+          value: role,
+          label: ROLE_LABELS[role],
+        }))}
+        className="w-auto min-w-32 px-2"
+      />
 
       <button
         type="button"

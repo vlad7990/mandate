@@ -9,6 +9,7 @@ import {
   describePeopleConfirm,
   type MergeablePerson,
 } from "@/lib/network/merge-people";
+import { SelectField } from "@/components/ui/select";
 
 /**
  * Folding two people in the network into one.
@@ -158,27 +159,30 @@ function PersonPicker({
       >
         {label}
       </label>
-      <select
+      <SelectField
         id={id}
+        tone="text"
         value={value}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full border border-outline-variant bg-surface-container-low px-3 py-2 text-body-main text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60"
-      >
-        <option value="">— choose a person —</option>
-        {people
-          // The same person cannot be both sides; the function refuses it
-          // too, but offering it would be offering a refusal.
-          .filter((p) => p.id !== exclude)
-          .map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.displayName}
-              {p.dnc ? " · DO NOT CONTACT" : ""}
-              {` · ${p.candidates} record${p.candidates === 1 ? "" : "s"}`}
-              {` · ${p.identityKey.split(":")[0]}`}
-            </option>
-          ))}
-      </select>
+        onValueChange={onChange}
+        options={[
+          { value: "", label: "— choose a person —" },
+          ...people
+            // The same person cannot be both sides; the function refuses
+            // it too, but offering it would be offering a refusal.
+            .filter((p) => p.id !== exclude)
+            .map((p) => ({
+              value: p.id,
+              label: [
+                p.displayName,
+                p.dnc ? " · DO NOT CONTACT" : "",
+                ` · ${p.candidates} record${p.candidates === 1 ? "" : "s"}`,
+                ` · ${p.identityKey.split(":")[0]}`,
+              ].join(""),
+            })),
+        ]}
+        className="h-auto w-full px-3 py-2"
+      />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { unwrap } from "@/lib/actions/result";
 import { cn } from "@/lib/utils";
 import { IconGroup, IconRefresh, IconUpload } from "@/components/icons";
 import { STAGE_ACCENTS } from "./stage-accents";
+import { SelectField } from "@/components/ui/select";
 
 export type BoardCandidate = {
   id: string;
@@ -379,22 +380,20 @@ function BoardCard({
           {formatRelative(candidate.updated_at)}
         </span>
         {canWrite && (
-          <select
+          <SelectField
             value={stage}
             disabled={pending}
             aria-label={`Move ${candidate.full_name} to stage`}
-            onChange={(e) => {
-              const to = e.target.value as PipelineStage;
+            onValueChange={(value) => {
+              const to = value as PipelineStage;
               if (to !== stage) onMove(candidate.id, candidate.full_name, to);
             }}
-            className="max-w-[110px] border border-outline-variant bg-transparent px-1 py-0.5 font-mono-label text-[10px] uppercase tracking-wider text-outline outline-none transition-colors focus:border-primary disabled:opacity-60"
-          >
-            {PIPELINE_STAGES.map((s) => (
-              <option key={s} value={s} className="bg-surface text-on-surface">
-                {PIPELINE_LABELS[s]}
-              </option>
-            ))}
-          </select>
+            options={PIPELINE_STAGES.map((s) => ({
+              value: s,
+              label: PIPELINE_LABELS[s],
+            }))}
+            className="h-auto max-w-[110px] bg-transparent px-1 py-0.5 text-[10px] text-outline"
+          />
         )}
       </div>
     </article>

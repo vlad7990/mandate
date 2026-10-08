@@ -26,9 +26,14 @@ import {
   closeObjectiveAction,
   createObjectiveAction,
 } from "./actions";
+import { SelectField } from "@/components/ui/select";
 
 const inputClass =
   "bg-surface-container-low border border-outline-variant px-3 py-2 text-body-main text-on-surface placeholder:text-outline focus:border-primary focus:ring-0 outline-none transition-colors";
+
+/** The same control, for a `SelectField` — which brings its own border,
+ *  focus state and height, so only the box metrics carry over. */
+const selectClass = "h-auto bg-surface-container-low px-3 py-2";
 
 const STATUS_TONE: Record<KeyResultStatus, ChipTone> = {
   on_track: "secondary",
@@ -145,28 +150,34 @@ export function ObjectivesPanel({
               <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
                 Owner
               </span>
-              <select name="owner_user_id" defaultValue="" className={inputClass}>
-                <option value="">Myself</option>
-                {ownerOptions.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
+              <SelectField
+                name="owner_user_id"
+                aria-label="Owner"
+                tone="text"
+                defaultValue=""
+                options={[
+                  { value: "", label: "Myself" },
+                  ...ownerOptions.map((m) => ({ value: m.id, label: m.label })),
+                ]}
+                className={selectClass}
+              />
             </label>
           )}
           <label className="space-y-1">
             <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
               Mandate
             </span>
-            <select name="project_id" defaultValue="" className={inputClass}>
-              <option value="">Whole book</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
-                </option>
-              ))}
-            </select>
+            <SelectField
+              name="project_id"
+              aria-label="Mandate"
+              tone="text"
+              defaultValue=""
+              options={[
+                { value: "", label: "Whole book" },
+                ...projects.map((p) => ({ value: p.id, label: p.title })),
+              ]}
+              className={selectClass}
+            />
           </label>
           <label className="space-y-1">
             <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
@@ -437,16 +448,19 @@ function AddKeyResultForm({ objectiveId }: { objectiveId: string }) {
         <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
           Kind
         </span>
-        <select
+        <SelectField
           name="kind"
+          aria-label="Key result kind"
+          tone="text"
           value={kind}
-          onChange={(e) => setKind(e.target.value as KeyResultKind)}
-          className={inputClass}
-        >
-          <option value="quantitative">Quantitative</option>
-          <option value="financial">Financial</option>
-          <option value="qualitative">Qualitative</option>
-        </select>
+          onValueChange={(k) => setKind(k as KeyResultKind)}
+          options={[
+            { value: "quantitative", label: "Quantitative" },
+            { value: "financial", label: "Financial" },
+            { value: "qualitative", label: "Qualitative" },
+          ]}
+          className={selectClass}
+        />
       </label>
       <label className="min-w-[200px] flex-1 space-y-1">
         <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
@@ -470,13 +484,17 @@ function AddKeyResultForm({ objectiveId }: { objectiveId: string }) {
             <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
               Metric
             </span>
-            <select name="metric_source" defaultValue={metrics[0]} className={inputClass}>
-              {metrics.map((m) => (
-                <option key={m} value={m}>
-                  {METRIC_LABELS[m]}
-                </option>
-              ))}
-            </select>
+            <SelectField
+              name="metric_source"
+              aria-label="Metric"
+              tone="text"
+              defaultValue={metrics[0]}
+              options={metrics.map((m) => ({
+                value: m,
+                label: METRIC_LABELS[m],
+              }))}
+              className={selectClass}
+            />
           </label>
           <label className="space-y-1">
             <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
@@ -495,10 +513,17 @@ function AddKeyResultForm({ objectiveId }: { objectiveId: string }) {
             <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
               Direction
             </span>
-            <select name="direction" defaultValue="at_least" className={inputClass}>
-              <option value="at_least">At least</option>
-              <option value="at_most">At most</option>
-            </select>
+            <SelectField
+              name="direction"
+              aria-label="Direction"
+              tone="text"
+              defaultValue="at_least"
+              options={[
+                { value: "at_least", label: "At least" },
+                { value: "at_most", label: "At most" },
+              ]}
+              className={selectClass}
+            />
           </label>
         </>
       )}

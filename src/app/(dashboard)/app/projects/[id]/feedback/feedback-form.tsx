@@ -12,6 +12,7 @@ import {
 import { submitFeedbackAction } from "./actions";
 import { IconPencil, IconRefresh, IconSend } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 export type CandidateOption = {
   id: string;
@@ -115,30 +116,32 @@ export function FeedbackForm({
           <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest block">
             About candidate (optional)
           </span>
-          <select
+          <SelectField
+            aria-label="Candidate"
+            tone="text"
             value={candidateId}
-            onChange={(e) => setCandidateId(e.target.value)}
+            onValueChange={setCandidateId}
             disabled={isPending}
-            className="w-full bg-surface-container-lowest border border-outline-variant rounded-none px-3 py-2 font-mono-data text-body-main text-on-surface focus:border-primary focus:ring-0 outline-none transition-colors"
-          >
-            <option value="" className="bg-surface text-on-surface">
-              {candidates.length === 0
-                ? "No candidates yet"
-                : "Project-wide (no candidate)"}
-            </option>
-            {candidates.map((c) => (
-              <option
-                key={c.id}
-                value={c.id}
-                className="bg-surface text-on-surface"
-              >
-                {c.full_name}
-                {c.rank != null ? ` · #${c.rank}` : ""}
-                {c.overall != null ? ` · ${c.overall.toFixed(1)}` : ""}
-                {c.current_title ? ` — ${c.current_title}` : ""}
-              </option>
-            ))}
-          </select>
+            options={[
+              {
+                value: "",
+                label:
+                  candidates.length === 0
+                    ? "No candidates yet"
+                    : "Project-wide (no candidate)",
+              },
+              ...candidates.map((c) => ({
+                value: c.id,
+                label: [
+                  c.full_name,
+                  c.rank != null ? ` · #${c.rank}` : "",
+                  c.overall != null ? ` · ${c.overall.toFixed(1)}` : "",
+                  c.current_title ? ` — ${c.current_title}` : "",
+                ].join(""),
+              })),
+            ]}
+            className="h-auto w-full bg-surface-container-lowest px-3 py-2 font-mono-data"
+          />
         </label>
       </div>
 

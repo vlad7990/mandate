@@ -15,6 +15,7 @@ import {
 import { IconCheckCircle, IconRefresh, IconLink } from "@/components/icons";
 import { promoteResultsAction } from "../../actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 export type StagedRow = {
   id: string;
@@ -284,22 +285,23 @@ function ReviewRow({
           <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
             Same person as
           </span>
-          <select
+          <SelectField
+            aria-label="Person"
+            tone="text"
             value={choice.candidateId ?? ""}
             disabled={disabled}
-            onChange={(e) =>
-              onChange({ candidateId: e.target.value || null })
-            }
-            className="px-2 py-1 bg-surface-container-lowest border border-outline-variant font-mono-data text-body-main text-on-surface max-w-full"
-          >
-            <option value="">— choose a person —</option>
-            {pool.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.full_name}
-                {c.current_company ? ` — ${c.current_company}` : ""}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value) => onChange({ candidateId: value || null })}
+            options={[
+              { value: "", label: "— choose a person —" },
+              ...pool.map((c) => ({
+                value: c.id,
+                label: c.current_company
+                  ? `${c.full_name} — ${c.current_company}`
+                  : c.full_name,
+              })),
+            ]}
+            className="h-auto max-w-full bg-surface-container-lowest px-2 py-1 font-mono-data"
+          />
           {!choice.candidateId && (
             <span className="font-mono-label text-mono-label text-tertiary uppercase tracking-widest">
               Not counted until you pick someone

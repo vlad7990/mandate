@@ -23,6 +23,7 @@ import {
   type OutreachDirection,
 } from "./outreach-constants";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 export type OutreachEntry = {
   id: string;
@@ -107,27 +108,28 @@ export function OutreachPanel({
         </header>
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <select
+            <SelectField
+              aria-label="Channel"
               value={channel}
-              onChange={(e) => setChannel(e.target.value as OutreachChannel)}
+              onValueChange={(c) => setChannel(c as OutreachChannel)}
               disabled={pending}
-              className="px-2 py-1.5 bg-surface-container-lowest border border-outline-variant font-mono-label text-mono-label text-on-surface uppercase tracking-widest"
-            >
-              {OUTREACH_CHANNELS.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <select
+              options={OUTREACH_CHANNELS.map((c) => ({
+                value: c.value,
+                label: c.label,
+              }))}
+              className="w-auto min-w-36 bg-surface-container-lowest px-2 tracking-widest"
+            />
+            <SelectField
+              aria-label="Direction"
               value={direction}
-              onChange={(e) => setDirection(e.target.value as OutreachDirection)}
+              onValueChange={(d) => setDirection(d as OutreachDirection)}
               disabled={pending}
-              className="px-2 py-1.5 bg-surface-container-lowest border border-outline-variant font-mono-label text-mono-label text-on-surface uppercase tracking-widest"
-            >
-              <option value="outbound">We contacted them</option>
-              <option value="inbound">They replied</option>
-            </select>
+              options={[
+                { value: "outbound", label: "We contacted them" },
+                { value: "inbound", label: "They replied" },
+              ]}
+              className="w-auto min-w-44 bg-surface-container-lowest px-2 tracking-widest"
+            />
           </div>
 
           <input

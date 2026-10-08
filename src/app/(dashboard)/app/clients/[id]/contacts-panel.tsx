@@ -37,6 +37,7 @@ import {
   updateContactAction,
 } from "./contacts-actions";
 import { unwrap, type ActionResult } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 const FIELD =
   "w-full min-w-0 border border-outline-variant bg-surface px-3 py-2 text-body-s text-on-surface focus:border-primary focus:outline-none";
@@ -318,18 +319,18 @@ function ContactForm({
 
         <label className="space-y-1.5">
           <span className={LABEL}>Relationship</span>
-          <select
+          <SelectField
             name="contactType"
+            aria-label="Contact type"
+            tone="text"
             value={contactType}
-            onChange={(e) => setContactType(e.target.value as ContactType)}
-            className={FIELD}
-          >
-            {CONTACT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {CONTACT_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </select>
+            onValueChange={(t) => setContactType(t as ContactType)}
+            options={CONTACT_TYPES.map((t) => ({
+              value: t,
+              label: CONTACT_TYPE_LABELS[t],
+            }))}
+            className="h-auto w-full min-w-0 bg-surface px-3 py-2 text-body-s"
+          />
         </label>
 
         <label className="space-y-1.5">

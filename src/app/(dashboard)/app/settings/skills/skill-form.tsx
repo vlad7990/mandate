@@ -14,6 +14,7 @@ import {
   IconSave,
 } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 export type SkillType = "role_skill" | "client_skill" | "search_skill";
 
@@ -254,20 +255,21 @@ export function SkillForm({
                   skill type.
                 </p>
               ) : (
-                <select
+                // No `required` on this one: `submitDisabled` already
+                // refuses an empty project when one is required, and
+                // native validation on a visually hidden control is a
+                // trap rather than a second guard.
+                <SelectField
                   id="skill-project"
-                  required
+                  tone="text"
                   value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                  className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface focus:border-primary focus:outline-none transition-colors"
-                >
-                  <option value="">— Select a project —</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.title}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setProjectId}
+                  options={[
+                    { value: "", label: "— Select a project —" },
+                    ...projects.map((p) => ({ value: p.id, label: p.title })),
+                  ]}
+                  className="h-auto w-full bg-surface-container-lowest px-3 py-2"
+                />
               )}
             </Field>
           )}
@@ -284,19 +286,17 @@ export function SkillForm({
                   its company; until then this skill applies org-wide.
                 </p>
               ) : (
-                <select
+                <SelectField
                   id="skill-client"
+                  tone="text"
                   value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                  className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface focus:border-primary focus:outline-none transition-colors"
-                >
-                  <option value="">— Every client (org-wide) —</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setClientId}
+                  options={[
+                    { value: "", label: "— Every client (org-wide) —" },
+                    ...clients.map((c) => ({ value: c.id, label: c.name })),
+                  ]}
+                  className="h-auto w-full bg-surface-container-lowest px-3 py-2"
+                />
               )}
             </Field>
           )}

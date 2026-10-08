@@ -38,9 +38,14 @@ import {
 } from "@/lib/fees/types";
 import { deleteFeeTermsAction, saveFeeTermsAction } from "./fee-terms-actions";
 import { unwrap, type ActionResult } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 const FIELD =
   "w-full min-w-0 border border-outline-variant bg-surface px-3 py-2 font-mono-label text-mono-label uppercase tracking-wider text-on-surface tabular-nums focus:border-primary focus:outline-none";
+
+/** The same field, for a `SelectField` — which draws its own border,
+ *  focus state, type and height, so only the box metrics carry over. */
+const SELECT_FIELD = "h-auto w-full min-w-0 bg-surface px-3 py-2";
 
 const LABEL =
   "block font-mono-label text-[11px] uppercase tracking-[0.08em] text-outline";
@@ -195,18 +200,17 @@ export function FeeTermsPanel({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <label className="space-y-1.5">
               <span className={LABEL}>Fee model</span>
-              <select
+              <SelectField
                 name="feeModel"
+                aria-label="Fee model"
                 value={model}
-                onChange={(e) => setModel(e.target.value as FeeModel)}
-                className={FIELD}
-              >
-                {FEE_MODELS.map((m) => (
-                  <option key={m} value={m}>
-                    {FEE_MODEL_LABELS[m]}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(m) => setModel(m as FeeModel)}
+                options={FEE_MODELS.map((m) => ({
+                  value: m,
+                  label: FEE_MODEL_LABELS[m],
+                }))}
+                className={SELECT_FIELD}
+              />
             </label>
 
             {model === "fixed" ? (
@@ -245,17 +249,16 @@ export function FeeTermsPanel({
 
             <label className="space-y-1.5">
               <span className={LABEL}>Fee basis</span>
-              <select
+              <SelectField
                 name="feeBasis"
+                aria-label="Fee basis"
                 defaultValue={terms?.fee_basis ?? "total_first_year_cash"}
-                className={FIELD}
-              >
-                {FEE_BASES.map((b) => (
-                  <option key={b} value={b}>
-                    {FEE_BASIS_LABELS[b]}
-                  </option>
-                ))}
-              </select>
+                options={FEE_BASES.map((b) => ({
+                  value: b,
+                  label: FEE_BASIS_LABELS[b],
+                }))}
+                className={SELECT_FIELD}
+              />
             </label>
 
             <label className="space-y-1.5">
@@ -352,13 +355,16 @@ function RetainerStages({
             placeholder={`Stage ${i + 1}`}
             className={FIELD}
           />
-          <select name="stageTrigger" defaultValue={row.trigger} className={FIELD}>
-            {FEE_TRIGGERS.map((t) => (
-              <option key={t} value={t}>
-                {FEE_TRIGGER_LABELS[t]}
-              </option>
-            ))}
-          </select>
+          <SelectField
+            name="stageTrigger"
+            aria-label="Stage trigger"
+            defaultValue={row.trigger}
+            options={FEE_TRIGGERS.map((t) => ({
+              value: t,
+              label: FEE_TRIGGER_LABELS[t],
+            }))}
+            className={SELECT_FIELD}
+          />
           <input
             name="stagePercent"
             inputMode="decimal"

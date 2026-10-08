@@ -25,6 +25,7 @@ import {
   sendPrescreenInviteAction,
 } from "./prescreen-actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 export type PrescreenRow = {
   id: string;
@@ -187,15 +188,17 @@ export function PrescreenPanel({
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <select
+              <SelectField
+                aria-label="Resolution"
                 value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
+                onValueChange={setResolution}
                 disabled={pending}
-                className="px-2 py-1.5 bg-surface-container-lowest border border-outline-variant font-mono-label text-mono-label text-on-surface uppercase tracking-widest"
-              >
-                <option value="in_progress">I&rsquo;ve handled it — continue</option>
-                <option value="abandoned">Abandon the pre-screen</option>
-              </select>
+                options={[
+                  { value: "in_progress", label: "I’ve handled it — continue" },
+                  { value: "abandoned", label: "Abandon the pre-screen" },
+                ]}
+                className="w-auto min-w-56 bg-surface-container-lowest px-2 tracking-widest"
+              />
               <button
                 type="button"
                 onClick={() =>

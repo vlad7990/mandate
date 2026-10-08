@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { cookies } from "next/headers";
 import { SAMPLE_DISMISSED_COOKIE, shouldShowSample } from "@/lib/sample";
 import { SampleSearchExample } from "@/components/sample/sample-sourcing";
+import { SelectField } from "@/components/ui/select";
 
 type CandidateRow = {
   id: string;
@@ -375,17 +376,14 @@ function FilterSelect({
       <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
         {label}
       </span>
-      <select
+      <SelectField
         name={name}
+        aria-label={name}
+        tone="text"
         defaultValue={value}
-        className="w-full bg-surface-container-lowest border border-outline-variant px-2 py-1.5 text-on-surface text-body-main focus:border-primary focus:outline-none transition-colors"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+        options={options}
+        className="h-auto w-full bg-surface-container-lowest px-2 py-1.5"
+      />
     </label>
   );
 }

@@ -7,6 +7,7 @@ import {
   IconArrowRight,
   IconRefresh,
 } from "@/components/icons";
+import { SelectField } from "@/components/ui/select";
 
 type Defaults = Record<string, unknown>;
 
@@ -17,6 +18,10 @@ function str(defaults: Defaults, key: string): string {
 
 const inputClass =
   "w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 text-body-main text-on-surface placeholder:text-outline-variant outline-none focus:border-primary transition-colors";
+
+/** The same control, for a `SelectField` — which brings its own border,
+ *  focus state and height, so only the box metrics carry over. */
+const selectClass = "h-auto w-full bg-surface-container-lowest px-3 py-2";
 
 function Field({
   label,
@@ -180,23 +185,34 @@ export function NewExecutiveSearchForm({ defaults, templateKey }: Props) {
             <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
               Role Family
             </span>
-            <select name="role_family" defaultValue={defaultRoleFamily} className={inputClass}>
-              {ROLE_FAMILIES.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
+            <SelectField
+              name="role_family"
+              aria-label="Role family"
+              tone="text"
+              defaultValue={defaultRoleFamily}
+              options={ROLE_FAMILIES.map((f) => ({
+                value: f.value,
+                label: f.label,
+              }))}
+              className={selectClass}
+            />
           </label>
           <label className="block space-y-1.5">
             <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
               New Role or Replacement
             </span>
-            <select name="is_new_role" defaultValue="" className={inputClass}>
-              <option value="">Not specified</option>
-              <option value="new">Newly created role</option>
-              <option value="replacement">Replacement</option>
-            </select>
+            <SelectField
+              name="is_new_role"
+              aria-label="New or replacement"
+              tone="text"
+              defaultValue=""
+              options={[
+                { value: "", label: "Not specified" },
+                { value: "new", label: "Newly created role" },
+                { value: "replacement", label: "Replacement" },
+              ]}
+              className={selectClass}
+            />
           </label>
           <Field label="Reporting Line" name="reporting_line" defaults={defaults} placeholder="e.g. CEO" />
           <Field label="Board Exposure" name="board_exposure" defaults={defaults} placeholder="e.g. Quarterly board reporting" />
@@ -255,11 +271,18 @@ export function NewExecutiveSearchForm({ defaults, templateKey }: Props) {
             <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
               Service Tier
             </span>
-            <select name="service_tier" defaultValue={defaultTier} className={inputClass}>
-              <option value="standard">Standard</option>
-              <option value="premium">Premium</option>
-              <option value="enterprise">Enterprise</option>
-            </select>
+            <SelectField
+              name="service_tier"
+              aria-label="Service tier"
+              tone="text"
+              defaultValue={defaultTier}
+              options={[
+                { value: "standard", label: "Standard" },
+                { value: "premium", label: "Premium" },
+                { value: "enterprise", label: "Enterprise" },
+              ]}
+              className={selectClass}
+            />
           </label>
         </div>
       </Section>

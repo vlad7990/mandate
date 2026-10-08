@@ -9,6 +9,7 @@ import { sha256Hex } from "@/lib/candidates/dedupe";
 import { IconClose, IconRefresh, IconArrowRight } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 export type IntakeMandate = {
   id: string;
@@ -246,22 +247,25 @@ export function IntakeForm({ mandates }: { mandates: IntakeMandate[] }) {
         >
           Mandate
         </label>
-        <select
+        <SelectField
           id="mandate"
+          tone="text"
           value={mandateId}
           disabled={running}
-          onChange={(e) => setMandateId(e.target.value)}
-          className="w-full max-w-xl border border-outline-variant bg-surface-container-low px-3 py-2 text-body-main text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60"
-        >
-          <option value="">— Choose the search these CVs belong to —</option>
-          {mandates.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.title}
-              {m.companyName ? ` · ${m.companyName}` : ""}
-              {m.calibrated ? "" : " (not calibrated)"}
-            </option>
-          ))}
-        </select>
+          onValueChange={setMandateId}
+          options={[
+            { value: "", label: "— Choose the search these CVs belong to —" },
+            ...mandates.map((m) => ({
+              value: m.id,
+              label: [
+                m.title,
+                m.companyName ? ` · ${m.companyName}` : "",
+                m.calibrated ? "" : " (not calibrated)",
+              ].join(""),
+            })),
+          ]}
+          className="h-auto w-full max-w-xl px-3 py-2"
+        />
 
         {/*
           §197's rule, applied here: say what is true about the state

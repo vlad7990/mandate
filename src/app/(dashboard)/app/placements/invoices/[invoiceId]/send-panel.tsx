@@ -10,6 +10,7 @@ import {
 } from "@/lib/invoices/types";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { sendInvoiceAction } from "../actions";
+import { SelectField } from "@/components/ui/select";
 
 export type ContactOption = {
   id: string;
@@ -135,19 +136,20 @@ export function SendPanel({
             Recipient
           </span>
           {contacts.length > 0 ? (
-            <select
+            <SelectField
+              aria-label="Recipient"
+              tone="text"
               value={choice}
-              onChange={(e) => setChoice(e.target.value)}
-              className={INPUT}
-            >
-              {contacts.map((c) => (
-                <option key={c.id} value={c.email}>
-                  {c.name}
-                  {c.title ? ` · ${c.title}` : ""} — {c.email}
-                </option>
-              ))}
-              <option value="__typed__">Another address…</option>
-            </select>
+              onValueChange={setChoice}
+              options={[
+                ...contacts.map((c) => ({
+                  value: c.email,
+                  label: `${c.name}${c.title ? ` · ${c.title}` : ""} — ${c.email}`,
+                })),
+                { value: "__typed__", label: "Another address…" },
+              ]}
+              className="h-auto w-full bg-surface px-2.5 py-1.5 text-body-s"
+            />
           ) : (
             <p className="text-[12px] leading-snug text-on-surface-variant">
               This client has no contacts with an email address on file — type

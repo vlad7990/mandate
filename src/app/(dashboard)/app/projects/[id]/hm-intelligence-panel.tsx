@@ -20,6 +20,7 @@ import type { HiringManagerIntelligenceReport } from "@/lib/ai/hiring-manager-re
 import { overrideFor } from "@/lib/ai/hm-override";
 import { researchHiringManagerAction } from "./actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 const HM_RESEARCH_STEPS = [
   "Verifying identity",
@@ -109,20 +110,18 @@ export function HMIntelligencePanel({
       action={
         <div className="flex flex-wrap items-center gap-2">
           {stakeholders.length >= 2 && (
-            <select
+            <SelectField
+              tone="text"
               value={selected ?? ""}
-              onChange={(e) => setSelected(e.target.value)}
+              onValueChange={setSelected}
               disabled={pending}
               aria-label="Stakeholder to research"
-              className="border border-outline-variant bg-surface-container-low px-2 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {stakeholders.map((s) => (
-                <option key={s.name} value={s.name}>
-                  {s.name}
-                  {s.role ? ` — ${s.role}` : ""}
-                </option>
-              ))}
-            </select>
+              options={stakeholders.map((s) => ({
+                value: s.name,
+                label: s.role ? `${s.name} — ${s.role}` : s.name,
+              }))}
+              className="w-auto min-w-52 px-2"
+            />
           )}
           <button
             type="button"

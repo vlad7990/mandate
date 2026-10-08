@@ -19,6 +19,7 @@ import {
   updateEngagementAction,
 } from "./engagement-actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 export type EngagementLaneRow = {
   id: string;
@@ -160,18 +161,17 @@ export function EngagementPanel({
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <select
+              <SelectField
+                aria-label="Resolution"
                 value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
+                onValueChange={setResolution}
                 disabled={pending}
-                className="px-2 py-1.5 bg-surface-container-lowest border border-outline-variant font-mono-label text-mono-label text-on-surface uppercase tracking-widest"
-              >
-                {RESOLUTIONS.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
+                options={RESOLUTIONS.map((r) => ({
+                  value: r.value,
+                  label: r.label,
+                }))}
+                className="w-auto min-w-48 bg-surface-container-lowest px-2 tracking-widest"
+              />
               <button
                 type="button"
                 onClick={() =>

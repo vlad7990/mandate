@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { approveUserAction, rejectUserAction } from "./actions";
 import { IconCheck, IconClose, IconRefresh } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 type Props = {
   userId: string;
@@ -66,19 +67,20 @@ export function UserStatusActions({
   return (
     <div className="flex items-center gap-2 justify-end">
       {needsOrg && (
-        <select
+        <SelectField
+          tone="text"
           value={orgChoice}
-          onChange={(e) => setOrgChoice(e.target.value)}
+          onValueChange={setOrgChoice}
           aria-label={`Organisation for ${fullName}`}
-          className="border border-outline-variant bg-surface-container-lowest px-2 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
-          <option value="">Choose organisation…</option>
-          {(organizations ?? []).map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.name}
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: "", label: "Choose organisation…" },
+            ...(organizations ?? []).map((o) => ({
+              value: o.id,
+              label: o.name,
+            })),
+          ]}
+          className="h-auto w-auto min-w-48 bg-surface-container-lowest px-2 py-1.5 text-on-surface-variant"
+        />
       )}
       <button
         type="button"

@@ -19,6 +19,7 @@ import {
   generateTargetCompaniesAction,
 } from "./actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 const ARCHETYPE_BLURBS: Record<
   Archetype,
@@ -122,19 +123,20 @@ export function TargetCompaniesPanel({ projectId }: { projectId: string }) {
           Target Companies · 12–20 named, mixed competitor / adjacent / feeder
         </span>
         <div className="flex items-center gap-2">
-          <select
+          <SelectField
+            aria-label="Archetype bias"
             value={archetypeHint}
-            onChange={(e) => setArchetypeHint(e.target.value as Archetype | "")}
+            onValueChange={(value) => setArchetypeHint(value as Archetype | "")}
             disabled={pending}
-            className="px-2 py-1 bg-surface-container-lowest border border-outline-variant font-mono-label text-mono-label text-on-surface uppercase tracking-widest"
-          >
-            <option value="">No archetype bias</option>
-            {ARCHETYPES.map((a) => (
-              <option key={a} value={a}>
-                Bias toward {a}s
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "", label: "No archetype bias" },
+              ...ARCHETYPES.map((a) => ({
+                value: a,
+                label: `Bias toward ${a}s`,
+              })),
+            ]}
+            className="h-auto w-auto min-w-48 bg-surface-container-lowest px-2 py-1 tracking-widest"
+          />
           <button
             type="button"
             onClick={handleGenerate}

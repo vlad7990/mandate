@@ -5,9 +5,14 @@ import { toast } from "sonner";
 import { unwrap } from "@/lib/actions/result";
 import type { ActionResult } from "@/lib/actions/result";
 import { ROLE_FAMILIES, TEMPLATE_DEFAULT_FIELDS } from "./template-fields";
+import { SelectField } from "@/components/ui/select";
 
 const inputClass =
   "w-full bg-surface-container-low border border-outline-variant px-3 py-2 text-body-main text-on-surface placeholder:text-outline focus:border-primary focus:ring-0 outline-none transition-colors";
+
+/** The same control, for a `SelectField` — which brings its own border,
+ *  focus state and height, so only the box metrics carry over. */
+const selectClass = "h-auto w-full bg-surface-container-low px-3 py-2";
 
 const labelClass =
   "font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant";
@@ -142,17 +147,17 @@ export function TemplateForm({
 
         <label className="block max-w-xs space-y-1.5">
           <span className={labelClass}>Role family</span>
-          <select
+          <SelectField
             name="role_family"
+            aria-label="Role family"
+            tone="text"
             defaultValue={initial?.role_family ?? "other"}
-            className={inputClass}
-          >
-            {ROLE_FAMILIES.map((f) => (
-              <option key={f} value={f}>
-                {f.replace(/_/g, " ")}
-              </option>
-            ))}
-          </select>
+            options={ROLE_FAMILIES.map((f) => ({
+              value: f,
+              label: f.replace(/_/g, " "),
+            }))}
+            className={selectClass}
+          />
         </label>
       </section>
 

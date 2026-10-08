@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { setMemberManagerAction } from "./actions";
 import { IconRefresh } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 export type DeskHead = { id: string; label: string };
 
@@ -13,9 +14,11 @@ export type DeskHead = { id: string; label: string };
  * Whose desk this member sits on (§200, migration 140).
  *
  * Same shape as the role picker beside it, and for the same reason:
- * explicit Apply, never save-on-change, because a native select fires
- * `change` on arrow-key navigation and this one decides which CVs an
- * agent reads on someone's behalf.
+ * explicit Apply, never save-on-change, because this one decides which
+ * CVs an agent reads on someone's behalf. (It once also guarded against
+ * a native select firing `change` on arrow-key navigation; the styled
+ * select commits only on selection, so that half of the reason has
+ * lapsed and the other half has not.)
  *
  * The list offers only active managers and admins — the database refuses
  * anyone else (140) and offering a choice the DB will reject is the
@@ -89,20 +92,18 @@ export function DeskPicker({
       <label className="sr-only" htmlFor={`desk-${userId}`}>
         Desk for {displayName}
       </label>
-      <select
+      <SelectField
         id={`desk-${userId}`}
+        tone="text"
         value={selected}
         disabled={isPending}
-        onChange={(e) => setSelected(e.target.value)}
-        className="border border-outline-variant bg-surface-container-low px-2 py-1.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60"
-      >
-        <option value="">— No desk —</option>
-        {options.map((head) => (
-          <option key={head.id} value={head.id}>
-            {head.label}
-          </option>
-        ))}
-      </select>
+        onValueChange={setSelected}
+        options={[
+          { value: "", label: "— No desk —" },
+          ...options.map((head) => ({ value: head.id, label: head.label })),
+        ]}
+        className="w-auto min-w-44 px-2"
+      />
 
       <button
         type="button"

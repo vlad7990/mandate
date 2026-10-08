@@ -36,6 +36,7 @@ import {
 import { runRoleAnalysisAction } from "./actions";
 import { addCandidateAction } from "./shortlist/actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 // ────────────────────────────────────────────────────────────────────────
 // Public types — server component pre-shapes candidates for the panel
@@ -367,17 +368,13 @@ function FilterSelect({
       <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
         {label}
       </span>
-      <select
+      <SelectField
+        tone="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-surface-container-lowest border border-outline-variant px-2 py-1.5 text-on-surface text-body-main focus:border-primary focus:outline-none transition-colors"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+        onValueChange={onChange}
+        options={options}
+        className="h-auto w-full bg-surface-container-lowest px-2 py-1.5"
+      />
     </label>
   );
 }

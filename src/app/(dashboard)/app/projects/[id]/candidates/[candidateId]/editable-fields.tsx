@@ -24,6 +24,7 @@ import {
   type CandidateEditableField,
 } from "./actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 // Family of "click-to-edit" primitives shared across the candidate
 // profile. Each component renders a display state, swaps to an input on
@@ -361,28 +362,28 @@ export function ArchetypeSelect({
     // so capping the select alone left the label at its intrinsic 400px.
     <label className="inline-flex max-w-full min-w-0 items-center gap-1">
       <span className="sr-only">Archetype</span>
-      <select
+      <SelectField
+        aria-label="Archetype"
         value={value ?? ""}
         disabled={pending}
-        onChange={(e) => handleChange(e.target.value)}
-        className={cn(
-          // `max-w-full min-w-0`: a <select> sizes to its widest *option*,
-          // and these options carry a sentence each ("BUILDER — Built
-          // something from zero…"), so it claimed 400px inside a 297px
-          // column at 360 and pushed the candidate header over. Same class
-          // of bug as the `flex-1` ones fixed in the responsive pass — the
-          // element has an intrinsic width nothing was allowing it to give
-          // up. Found sweeping the placement tab; the select is older.
-          "max-w-full min-w-0 truncate bg-surface-container-high border border-outline-variant px-2 py-0.5 font-mono-label text-mono-label uppercase tracking-wider text-on-surface-variant hover:border-primary focus:border-primary focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        )}
-      >
-        <option value="">— ARCHETYPE —</option>
-        {ARCHETYPES.map((a) => (
-          <option key={a} value={a}>
-            {a.toUpperCase()} — {ARCHETYPE_BLURB[a]}
-          </option>
-        ))}
-      </select>
+        onValueChange={handleChange}
+        options={[
+          { value: "", label: "— ARCHETYPE —" },
+          ...ARCHETYPES.map((a) => ({
+            value: a,
+            label: `${a.toUpperCase()} — ${ARCHETYPE_BLURB[a]}`,
+          })),
+        ]}
+        // `max-w-full min-w-0`: the old <select> sized itself to its
+        // widest *option*, and these carry a sentence each ("BUILDER —
+        // Built something from zero…"), so it claimed 400px inside a
+        // 297px column at 360 and pushed the candidate header over. The
+        // styled control no longer has that intrinsic width, but the
+        // clamp stays because the trigger still has to give way inside a
+        // narrow column — and the panel below caps itself to the window.
+        className="h-auto max-w-full min-w-0 bg-surface-container-high px-2 py-0.5 text-on-surface-variant hover:border-primary"
+        contentClassName="max-w-md"
+      />
     </label>
   );
 }

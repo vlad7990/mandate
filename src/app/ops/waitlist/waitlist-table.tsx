@@ -15,6 +15,7 @@ import {
   type ApprovalProvision,
 } from "./actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 export type WaitlistInvitation = {
   token: string;
@@ -325,6 +326,10 @@ function ApprovalPanel({
 
   const fieldClass =
     "border border-outline-variant bg-surface-container-lowest px-3 py-1.5 text-body-main text-on-surface placeholder:text-outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  /** The same control, for a `SelectField` — which brings its own
+   *  border, focus state and height, so only the box metrics carry. */
+  const selectFieldClass =
+    "h-auto w-auto min-w-48 bg-surface-container-lowest px-3 py-1.5";
 
   return (
     <div className="pt-3 border-t border-outline-variant/40 space-y-3">
@@ -402,34 +407,33 @@ function ApprovalPanel({
             <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
               Organisation
             </span>
-            <select
+            <SelectField
+              aria-label="Organisation"
+              tone="text"
               value={orgChoice}
-              onChange={(e) => setOrgChoice(e.target.value)}
-              className={fieldClass}
-            >
-              <option value="">Choose organisation…</option>
-              {organizations.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={setOrgChoice}
+              options={[
+                { value: "", label: "Choose organisation…" },
+                ...organizations.map((o) => ({ value: o.id, label: o.name })),
+              ]}
+              className={selectFieldClass}
+            />
           </label>
           <label className="flex flex-col gap-1">
             <span className="font-mono-label text-mono-label uppercase tracking-widest text-outline">
               Role
             </span>
-            <select
+            <SelectField
+              aria-label="Role"
+              tone="text"
               value={role}
-              onChange={(e) => setRole(e.target.value as StaffRole)}
-              className={fieldClass}
-            >
-              {STAFF_ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {ROLE_LABELS[r]}
-                </option>
-              ))}
-            </select>
+              onValueChange={(r) => setRole(r as StaffRole)}
+              options={STAFF_ROLES.map((r) => ({
+                value: r,
+                label: ROLE_LABELS[r],
+              }))}
+              className={selectFieldClass}
+            />
           </label>
         </div>
       )}

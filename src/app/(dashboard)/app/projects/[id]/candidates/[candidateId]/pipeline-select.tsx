@@ -10,6 +10,7 @@ import {
 } from "@/lib/ai/cv-parsing";
 import { updatePipelineStage } from "../actions";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 type Props = {
   candidateId: string;
@@ -39,18 +40,17 @@ export function PipelineSelect({ candidateId, projectId, current }: Props) {
   return (
     <label className="flex items-center gap-2 font-mono-label text-mono-label text-outline uppercase tracking-widest">
       Pipeline
-      <select
+      <SelectField
+        aria-label="Pipeline stage"
         value={current}
-        onChange={(e) => handleChange(e.target.value as PipelineStage)}
+        onValueChange={(stage) => handleChange(stage as PipelineStage)}
         disabled={isPending}
-        className="bg-surface-container-low border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label text-on-surface uppercase tracking-widest focus:border-primary focus:ring-0 outline-none transition-colors disabled:opacity-60"
-      >
-        {PIPELINE_STAGES.map((s) => (
-          <option key={s} value={s} className="bg-surface text-on-surface">
-            {PIPELINE_LABELS[s]}
-          </option>
-        ))}
-      </select>
+        options={PIPELINE_STAGES.map((s) => ({
+          value: s,
+          label: PIPELINE_LABELS[s],
+        }))}
+        className="w-auto min-w-40 px-3 tracking-widest"
+      />
     </label>
   );
 }

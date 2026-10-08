@@ -8,6 +8,7 @@ import { useHydrated } from "@/lib/use-hydrated";
 import { generateHmTokenAction, revokeHmTokenAction } from "./actions";
 import { IconLink, IconRefresh, IconShare } from "@/components/icons";
 import { unwrap } from "@/lib/actions/result";
+import { SelectField } from "@/components/ui/select";
 
 export type HmTokenRow = {
   id: string;
@@ -111,18 +112,22 @@ export function ShareLinkCard({
               <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
                 Contact
               </span>
-              <select
+              <SelectField
+                aria-label="Contact"
+                tone="text"
                 value={contactId}
-                onChange={(e) => setContactId(e.target.value)}
-                className="w-full min-w-0 bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface focus:border-primary focus:outline-none transition-colors"
-              >
-                <option value="">Not from the contact list</option>
-                {contacts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.title ? `${c.full_name} — ${c.title}` : c.full_name}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setContactId}
+                options={[
+                  { value: "", label: "Not from the contact list" },
+                  ...contacts.map((c) => ({
+                    value: c.id,
+                    label: c.title
+                      ? `${c.full_name} — ${c.title}`
+                      : c.full_name,
+                  })),
+                ]}
+                className="h-auto w-full min-w-0 bg-surface-container-lowest px-3 py-2"
+              />
             </label>
           )}
           <label className="flex-1 min-w-[200px] block space-y-1">

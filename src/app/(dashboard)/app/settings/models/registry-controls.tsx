@@ -12,6 +12,7 @@ import {
   setAssignmentAction,
   setModelStatusAction,
 } from "./actions";
+import { SelectField } from "@/components/ui/select";
 
 /**
  * The registry's client controls. The database triggers are the law
@@ -22,6 +23,9 @@ import {
 
 const inputCls =
   "bg-surface border border-outline-variant px-2 py-1.5 font-mono-data text-sm text-on-surface w-full focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary";
+/** The same control, for a `SelectField` — which brings its own border,
+ *  focus state and height, so only the box metrics carry over. */
+const selectCls = "h-auto w-full bg-surface px-2 py-1.5 font-mono-data text-sm";
 const buttonCls =
   "px-3 py-1.5 btn-notch bg-primary-container text-on-primary-container font-mono-label text-mono-label uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-[filter,transform] flex items-center gap-2 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const quietButtonCls =
@@ -111,24 +115,32 @@ export function AddModelForm({ providers }: { providers: string[] }) {
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
           Provider
         </span>
-        <select name="provider" className={inputCls} defaultValue={providers[0]}>
-          {providers.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
+        <SelectField
+          name="provider"
+          aria-label="Provider"
+          tone="text"
+          defaultValue={providers[0]}
+          options={providers.map((p) => ({ value: p, label: p }))}
+          className={selectCls}
+        />
       </label>
       <label className="space-y-1">
         <span className="font-mono-label text-mono-label text-outline uppercase tracking-widest">
           Tier
         </span>
-        <select name="tier" className={inputCls} defaultValue="">
-          <option value="">—</option>
-          <option value="economy">economy</option>
-          <option value="standard">standard</option>
-          <option value="premium">premium</option>
-        </select>
+        <SelectField
+          name="tier"
+          aria-label="Tier"
+          tone="text"
+          defaultValue=""
+          options={[
+            { value: "", label: "—" },
+            { value: "economy", label: "economy" },
+            { value: "standard", label: "standard" },
+            { value: "premium", label: "premium" },
+          ]}
+          className={selectCls}
+        />
       </label>
       <button type="submit" disabled={pending} className={buttonCls}>
         <IconPlus size={14} />
@@ -261,19 +273,17 @@ export function AssignmentControls({
 
   return (
     <div className="flex items-center gap-2 justify-end">
-      <select
+      <SelectField
         aria-label={`Model override for ${capability}`}
-        className={`${inputCls} w-auto`}
+        tone="text"
+        className={`${selectCls} w-auto min-w-56`}
         value={choice}
-        onChange={(e) => setChoice(e.target.value)}
-      >
-        <option value="">map default</option>
-        {activeModels.map((m) => (
-          <option key={m} value={m}>
-            {m}
-          </option>
-        ))}
-      </select>
+        onValueChange={setChoice}
+        options={[
+          { value: "", label: "map default" },
+          ...activeModels.map((m) => ({ value: m, label: m })),
+        ]}
+      />
       <button
         type="button"
         disabled={pending || !choice || choice === override}
