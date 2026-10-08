@@ -595,8 +595,15 @@ function ScoreCard({
       <div className="flex items-baseline gap-1">
         <span
           className={cn(
-            "tabular-nums leading-none",
+            "tabular-nums",
             emphasis === "major" ? "font-h1 text-h1" : "font-h2 text-h2",
+            // After the size, not before it. A font-size utility carries
+            // a line-height in this design system (`--text-h1--line-height`
+            // is 1.2), so it outranks an earlier `leading-*` — written
+            // first, this was dropped and the number took 1.2 instead of
+            // the tight leading the big figure wants. Every other score
+            // in the product already spells it in this order.
+            "leading-none",
             tone.text
           )}
         >
