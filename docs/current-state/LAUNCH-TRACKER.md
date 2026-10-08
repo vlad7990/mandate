@@ -4,7 +4,7 @@
 condition table in `2026-10-07-go-no-go.md` as the place to look for *state*.
 Those two remain the record of the original assessment and its reasoning.
 
-Last updated **2026-10-08**.
+Last updated **2026-10-08**, after migrations 161 and 162.
 
 **Nothing here is marked done because a route exists, a document was written, or
 tests pass.** Every row names the evidence, and where evidence is absent the row
@@ -38,7 +38,7 @@ says so.
 - **Evidence** `src/lib/backup/` — 12 modules, ~4,000 lines, covering all three buckets (`cvs`, `call-audio`, `invoice-assets`), AES encryption, manifests, SHA-256 integrity, incremental copy, suppression-aware pruning, partial-failure reporting, budget-bounded resumable runs, and bounded retries. `vercel.json` still has **one** cron and **no** `BACKUP_*` variable exists in any environment.
 - **Work completed** Added bounded retries (`retry.ts`, 16 tests) and a byte-identical restore proof (`restore.test.ts`, 6 tests) round-tripping 7 synthetic objects across all three buckets — binary, zero-byte, 300 KB, unicode keys — plus tamper detection. Volume measured: 4 objects, 1.05 MB, all in `cvs`. Scheduling analysed in `backup-activation.md`.
 - **Verification** 1,713 tests pass. Restore compares SHA-256 against originals, not just "verified". **Never run against real S3 or real data.**
-- **Remaining dependency** A3 and A1; a destination bucket on a separate provider account; the encryption key generated and escrowed off-platform.
+- **Remaining dependency** A3 and A1; a destination bucket on a separate provider account; the encryption key generated and escrowed off-platform. **Migration 161 is now applied** (2026-10-08) — the advisory lock exists and was verified acquiring, appearing in `pg_locks` and releasing to zero, so the run no longer refuses for want of a lock.
 - **Owner** Founder provisions; I implement and activate on approval.
 - **Next action** Provision the destination, then say go — steps 1–6 of `backup-activation.md` §6.
 
@@ -95,7 +95,8 @@ says so.
 
 - **Evidence** `supabase/schema-reference.sql` (73 tables, 154 functions, 92 SECURITY DEFINER, 261 + 10 policies, 75 triggers, 481 indexes, 328 FKs, 191 CHECKs, 10 generated columns, 1,567 grants, 41 comments, 3 buckets), `supabase/bootstrap/apply.sh`, `supabase/bootstrap/00-prerequisites.sql`, `docs/infrastructure/schema-bootstrap.md`.
 - **Work completed** Generated, then **applied to an empty PostgreSQL 14.19 database**, which found six defects in the first version — including ten generated columns emitted as `DEFAULT`, a silent error that would have produced a schema that worked and was wrong.
-- **Verification** Every count matches production. RLS exercised: owner 2 rows, `authenticated` 0, `anon` 0, `service_role` 2.
+- **Verification** Every count matches production. RLS exercised: owner 2 rows, `authenticated` 0, `anon` 0, `service_role` 2. **Re-verified after migrations 161 and 162** — the baseline was regenerated and re-applied to an empty database: 157 functions, 93 SECURITY DEFINER, all nine isolation checks still passing.
+- **Seventh defect found** A rebuild left **PUBLIC EXECUTE on all 157 functions**, because Postgres grants it on creation and the baseline emitted no `REVOKE`. Production has it revoked on 157/157. Silent, like the generated columns: nothing fails, the rebuild is just more permissive — including on 93 SECURITY DEFINER functions. Fixed; the rebuild now matches at 157/157 revoked.
 - **Remaining dependency** None for the stated scope. It is schema, not data, and `001_core_schema.sql` stays 0 bytes on purpose.
 - **Owner** —
 - **Next action** Regenerate after significant schema change so it does not drift.
@@ -114,9 +115,9 @@ says so.
 - **Evidence** `capability_assignments` has **0 rows**, so the code map governs every call — there is no override layer rerouting anything. `provider_models` holds `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-sonnet-5`. Escalation has fired **0 times ever**.
 - **Work completed** `model-routing.test.ts` derives escalation arming from the map rather than restating it: `generate_evaluation` is ARMED, `parse_cv` is DORMANT, and flipping the map arms or disarms a pair as a visible failing change.
 - **Verification** 10 tests; production registry state read directly.
-- **Remaining dependency** **Finding:** the armed `generate_evaluation` pair escalates to `claude-opus-5`, which is **not in `provider_models`**. Nothing breaks at call time, but the model picker cannot offer it (FK), cost reporting by model has a hole, and the first hop would also be the first opus-5 call in production.
-- **Owner** Founder approves; I apply.
-- **Next action** One-row insert into `provider_models`. Held because it is a production write.
+- **Remaining dependency** **Half closed, and the remaining half is the interesting one.** Migration 162 registered `claude-opus-5` at status `benchmarking`, which fixes the reporting hole — an `inference_runs` row can now be joined to a model the registry names. It does **not** make opus-5 usable: `capability_assignments_active_gate` refuses assignment to any non-active model with *"benchmark and activate it first"*, and activation requires a `benchmark_ref` that does not exist. **But `escalateInference` consults neither the registry nor that gate** — `pair.to` is a code constant handed straight to the provider. So the one path that can reach an unbenchmarked model is the one path that does not check.
+- **Owner** Founder decides.
+- **Next action** Either benchmark and activate opus-5, or make `escalateInference` refuse a non-active target (which disarms the pair until it is). Pinned by a test so it cannot be forgotten.
 
 ---
 
@@ -132,6 +133,7 @@ says so.
 | C6 | **`text-body-s` is dead** | Used 77 times, emits no CSS rule; as an unknown `text-*` it can also eat a live colour in `cn()` | — | Decide what those 77 sites should say |
 | C7 | **Two unexplained production credentials** | `STITCH_API_KEY`, `WEBCLAW_API_KEY` set in production, referenced nowhere in code | Founder | Identify or remove. **Blocks A4's subprocessor list** |
 | C8 | **38 product surfaces never verified in a browser** | No signed-in session has ever been driven | Founder | A throwaway staff account would close it |
+| C9 | **Escalation bypasses the model-activation gate** | `escalateInference` hands `pair.to` to the provider without consulting `provider_models` or `capability_assignments_active_gate` | Founder | Benchmark and activate opus-5, or make escalation refuse a non-active target |
 
 ---
 
@@ -146,5 +148,5 @@ Ordered so nothing waits on something avoidable.
 5. **Provision the backup destination** (A2) — separate provider account; generate and escrow the encryption key off-platform.
 6. **Decide "Unlimited" and "Dedicated success partner"** (A7).
 7. **Identify or remove `STITCH_API_KEY` and `WEBCLAW_API_KEY`** (C7).
-8. **Approve the two small production writes**: migration 161, and the `provider_models` row for `claude-opus-5`.
+8. ~~Approve the two small production writes~~ — **done 2026-10-08.** Migration 161 applied (lock verified), migration 162 applied (opus-5 registered at `benchmarking`). Decide C9: benchmark opus-5, or make escalation refuse a non-active target.
 9. **Cheap and worth doing anyway**: an uptime monitor on `/api/health` (C3), `SENTRY_AUTH_TOKEN` (C4), an Anthropic budget alert.

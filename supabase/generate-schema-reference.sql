@@ -13,7 +13,7 @@
 --     pg_dump --schema-only --no-owner --no-privileges "$DATABASE_URL" \
 --       > supabase/schema-reference.sql
 --
--- ## Six defects this file has already been corrected for
+-- ## Seven defects this file has already been corrected for
 --
 -- The first version of this generator produced a file that looked right
 -- and did not work. Applying it to an empty database produced 1,457
@@ -24,7 +24,7 @@
 --   1. GENERATED columns were emitted as DEFAULT. Ten columns
 --      (candidates.cv_search, clients.name_key, …) would have become
 --      ordinary writable columns holding a stale value. This was the
---      worst of the six because nothing would have failed — the rebuild
+--      worst of the seven because nothing would have failed — the rebuild
 --      would simply have been wrong.
 --   2. Foreign keys were inline in CREATE TABLE. Alphabetical order
 --      makes them unsatisfiable: 843 of the 1,457 errors. They are now a
@@ -37,6 +37,12 @@
 --      constraints.
 --   6. `extensions` must be on the search_path or every trigram index
 --      fails on gin_trgm_ops.
+--   7. PUBLIC EXECUTE was never revoked. Postgres grants it on every
+--      new function; production has revoked it on all 157. Without
+--      section 7a a rebuild is MORE PERMISSIVE than production on
+--      every function, including 93 SECURITY DEFINER ones. This is the
+--      second silent defect -- like the generated columns, nothing
+--      fails, the rebuild is just wrong.
 --
 -- Items 5 and 6 are properties of the APPLY ORDER, not of this file;
 -- they live in `supabase/bootstrap/apply.sh`.
@@ -159,6 +165,21 @@ select string_agg('CREATE EXTENSION IF NOT EXISTS ' || quote_ident(e.extname)
                   || ' WITH SCHEMA ' || quote_ident(n.nspname) || ';', E'\n' order by e.extname)
 from pg_extension e join pg_namespace n on n.oid = e.extnamespace
 where e.extname <> 'plpgsql';
+
+
+-- ===== 7a. REVOKE PUBLIC ON FUNCTIONS =================================
+-- MUST be emitted BEFORE the grants. Postgres grants EXECUTE to PUBLIC
+-- on every new function; all 157 in production have had it revoked. A
+-- baseline that replays only GRANTs rebuilds a database where every
+-- function -- including 93 SECURITY DEFINER -- is PUBLIC-executable.
+-- Defect 7, found by diffing a rebuild against the live catalogue.
+-- Tables need no equivalent: all 73 carry explicit ACLs, none grants
+-- PUBLIC.
+select string_agg('REVOKE ALL ON FUNCTION public.' || quote_ident(p.proname)
+         || '(' || pg_get_function_identity_arguments(p.oid) || ') FROM PUBLIC;',
+         E'\n' order by p.proname, pg_get_function_identity_arguments(p.oid))
+from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public';
 
 
 -- ===== 7. GRANTS ======================================================

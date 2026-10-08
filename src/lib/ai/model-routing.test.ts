@@ -22,12 +22,14 @@ import {
  *   * An escalation `to` model is never checked against the models the
  *     product knows about. It is a bare string handed to the provider.
  *
- * Verified against production on 2026-10-08:
+ * Verified against production on 2026-10-08, after migration 162:
  *   capability_assignments ... 0 rows, so the code map governs every
  *                              call today; there is no override layer
  *                              quietly rerouting anything.
  *   provider_models .......... claude-haiku-4-5, claude-sonnet-4-6,
- *                              claude-sonnet-5
+ *                              claude-sonnet-5  (all active)
+ *                              claude-opus-5    (benchmarking, added
+ *                              by 162 as the armed escalation target)
  *   inference_runs ........... sonnet-4-6 x61, sonnet-5 x14, haiku x1
  *   escalation hops .......... 0, ever
  */
@@ -45,11 +47,30 @@ const KNOWN_MODELS = new Set([
 ]);
 
 /**
- * The models `provider_models` actually held in production on
- * 2026-10-08. Kept separate from KNOWN_MODELS on purpose: the gap
- * between the two sets is a finding, not an oversight.
+ * What `provider_models` holds in production, as of migration 162.
+ *
+ * `claude-opus-5` was added by 162 at status `benchmarking` because the
+ * armed generate_evaluation escalation targets it and it was in no
+ * table at all. Registered is not the same as usable — see
+ * ACTIVE_IN_PRODUCTION below, and the test that depends on the
+ * difference.
  */
 const REGISTERED_IN_PRODUCTION = new Set([
+  "claude-haiku-4-5",
+  "claude-sonnet-4-6",
+  "claude-sonnet-5",
+  "claude-opus-5",
+]);
+
+/**
+ * The subset at status `active`. A capability may only be ASSIGNED to
+ * one of these — `capability_assignments_active_gate` refuses the rest
+ * with "benchmark and activate it first", and activation needs a
+ * `benchmark_ref`.
+ *
+ * opus-5 is deliberately absent: it has never been benchmarked.
+ */
+const ACTIVE_IN_PRODUCTION = new Set([
   "claude-haiku-4-5",
   "claude-sonnet-4-6",
   "claude-sonnet-5",
@@ -67,17 +88,17 @@ describe("the code default is the live route", () => {
     }
   });
 
-  it("routes every capability to a model registered in production", () => {
-    // capability_assignments.model_id has a FK onto provider_models, so
-    // a founder cannot OVERRIDE a capability to a model that is not
-    // registered. The code default is under no such constraint. If a
-    // default ever names an unregistered model, the UI will show a
-    // capability pointing at a model the registry does not list.
+  it("routes every capability to a model that is ACTIVE in production", () => {
+    // Stronger than "registered". A capability's default is what every
+    // call uses; it must point at a model the product has benchmarked
+    // and activated, not merely one it has heard of. opus-5 is
+    // registered but not active, so a default naming it would fail
+    // here -- which is the intended behaviour.
     for (const c of capabilities) {
       const model = modelForCapability(c);
       expect(
-        REGISTERED_IN_PRODUCTION.has(model),
-        `${c} defaults to ${model}, which is not in provider_models`
+        ACTIVE_IN_PRODUCTION.has(model),
+        `${c} defaults to ${model}, which is not an active model`
       ).toBe(true);
     }
   });
@@ -164,29 +185,42 @@ describe("escalation pairs — armed or dormant, derived not asserted", () => {
     }
   });
 
-  it("FLAGS that an escalation target is not registered in provider_models", () => {
-    // This is a finding, pinned so it cannot be forgotten.
-    //
-    // generate_evaluation is armed and escalates to claude-opus-5, but
-    // provider_models held only haiku-4-5, sonnet-4-6 and sonnet-5 on
-    // 2026-10-08. Nothing breaks at call time — the escalation hands
-    // the id straight to the provider and does not consult the table —
-    // but three things follow:
-    //
-    //   1. the model picker cannot offer opus-5, because
-    //      capability_assignments.model_id has a FK onto provider_models
-    //   2. an inference_runs row will record a model the registry does
-    //      not list, so cost reporting by model has a hole in it
-    //   3. the first time this fires will be the first time opus-5 is
-    //      called in production -- and escalation has fired 0 times ever
-    //
-    // The fix is a one-row insert into provider_models. It is listed in
-    // the launch tracker rather than done here, because adding a row to
-    // a production table is a production change.
+  it("escalates only to a model the registry knows about", () => {
+    // Was a FLAGGED finding: generate_evaluation escalates to
+    // claude-opus-5, which was in no table at all. Migration 162 added
+    // it at status `benchmarking`.
     const targets = Object.values(ESCALATION_PAIRS)
       .filter(Boolean)
       .map((p) => p!.to);
-    const unregistered = targets.filter((m) => !REGISTERED_IN_PRODUCTION.has(m));
-    expect(unregistered).toEqual(["claude-opus-5"]);
+    for (const t of targets) {
+      expect(REGISTERED_IN_PRODUCTION.has(t), `${t} is not in provider_models`).toBe(true);
+    }
+  });
+
+  it("STILL FLAGS that the armed escalation target is not an active model", () => {
+    // The finding is narrowed, not closed, and the remaining half is
+    // the interesting one.
+    //
+    // Registering opus-5 fixed the reporting hole: an inference_runs
+    // row can now be joined to a model the registry can name. It did
+    // NOT make opus-5 usable. `capability_assignments_active_gate`
+    // refuses an assignment to any non-active model with "benchmark and
+    // activate it first".
+    //
+    // But escalateInference never consults the registry or that gate --
+    // the `to` model is a code constant handed straight to the
+    // provider. So the one path that can reach an unbenchmarked model
+    // is the one path that does not check. Escalation has fired 0 times
+    // ever, so the first hop would also be the first opus-5 call in
+    // production.
+    //
+    // Resolution is a product decision, not a test change: benchmark
+    // and activate opus-5, or make escalateInference refuse a
+    // non-active target (which disarms the pair until it is activated).
+    const armedTargets = Object.entries(ESCALATION_PAIRS)
+      .filter(([c, p]) => p && modelForCapability(c as Capability) === p.from)
+      .map(([, p]) => p!.to);
+    expect(armedTargets).toEqual(["claude-opus-5"]);
+    expect(ACTIVE_IN_PRODUCTION.has("claude-opus-5")).toBe(false);
   });
 });

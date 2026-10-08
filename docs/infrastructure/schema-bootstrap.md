@@ -8,8 +8,8 @@ Counts below are measured on both sides, not asserted.
 | | production | rebuild |
 |---|---|---|
 | tables | 73 | 73 |
-| functions | 154 | 154 |
-| SECURITY DEFINER functions | 92 | 92 |
+| functions | 157 | 157 |
+| SECURITY DEFINER functions | 93 | 93 |
 | RLS policies (`public`) | 261 | 261 |
 | RLS policies (`storage`) | 10 | 10 |
 | tables with RLS enabled | 73 | 73 |
@@ -23,6 +23,7 @@ Counts below are measured on both sides, not asserted.
 | function comments | 17 | 17 |
 | storage buckets | 3 | 3 |
 | grants to anon/authenticated/service_role | 1,567 | 1,567 |
+| functions with PUBLIC execute revoked | 157 | 157 |
 
 RLS was then exercised rather than counted:
 
@@ -200,7 +201,7 @@ trusted too little.
   and has no open-source equivalent. Nothing in `public` depends on it.
 - **Ownership and default privileges are not replayed.** Objects are owned by
   whoever runs the script.
-- **The generator had six defects**, found only by running this test; they are
+- **The generator had seven defects**, found only by running this test; they are
   listed at the top of `supabase/generate-schema-reference.sql`. The one that
   matters most was silent: ten generated columns emitted as `DEFAULT` would
   have produced a schema that worked and was wrong.

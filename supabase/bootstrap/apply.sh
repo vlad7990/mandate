@@ -137,5 +137,5 @@ select 'tables='   || (select count(*) from pg_class c join pg_namespace n on n.
     || ' fks='       || (select count(*) from pg_constraint co join pg_class c on c.oid=co.conrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and co.contype='f')"
 
 echo
-echo "Expected against the 2026-10-08 baseline:"
-echo "  tables=73 functions=154 policies=261 triggers=75 rls_on=73 fks=328"
+echo "Expected against the 2026-10-08 baseline (post-161/162):"
+echo "  tables=73 functions=157 policies=261 triggers=75 rls_on=73 fks=328"
