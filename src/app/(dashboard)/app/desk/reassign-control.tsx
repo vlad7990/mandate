@@ -63,7 +63,12 @@ export function ReassignControl({
           type="button"
           onClick={apply}
           disabled={isPending}
-          className="px-2 py-1 font-mono-label text-mono-label uppercase tracking-widest text-primary border border-primary-container hover:bg-primary-container/10 transition-colors disabled:opacity-60"
+          // `min-h-11 md:min-h-0` is the house touch floor, same as the
+          // select it sits beside: 44px where a finger is pointing,
+          // released at `md` so the desk row stays dense. `inline-flex`
+          // so the label centres in the taller box rather than relying
+          // on the UA's button centring.
+          className="inline-flex items-center justify-center min-h-11 md:min-h-0 px-2 py-1 font-mono-label text-mono-label uppercase tracking-widest text-primary border border-primary-container hover:bg-primary-container/10 transition-colors disabled:opacity-60"
         >
           {isPending ? "Moving…" : "Apply"}
         </button>

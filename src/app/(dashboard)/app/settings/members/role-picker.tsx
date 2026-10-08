@@ -111,7 +111,10 @@ export function RolePicker({
         onClick={apply}
         disabled={!dirty || isPending}
         aria-busy={isPending ? true : undefined}
-        className="flex items-center gap-1.5 border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-outline-variant disabled:hover:text-on-surface-variant"
+        // `min-h-11 md:min-h-0` is the house touch floor, same as the
+        // role select it sits beside: 44px where a finger is pointing,
+        // released at `md` so the members row stays dense.
+        className="flex min-h-11 md:min-h-0 items-center gap-1.5 border border-outline-variant px-3 py-1.5 font-mono-label text-mono-label uppercase tracking-widest text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-outline-variant disabled:hover:text-on-surface-variant"
       >
         {isPending && <IconRefresh size={14} className="animate-spin" />}
         Apply
