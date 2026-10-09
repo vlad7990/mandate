@@ -51,6 +51,8 @@ items are listed in Annex M.1.
    is worse than a missing one — it is a representation.
 2. **Do not sign the DPA's breach-notification clause** until an incident-response process
    exists (Annex I.2 — there is currently none).
-3. **Do not sign the subprocessor list** while `STITCH_API_KEY` and `WEBCLAW_API_KEY` remain
-   unexplained in production (Annex F). An incomplete subprocessor list is a contractual
-   breach waiting to happen.
+3. ~~**Do not sign the subprocessor list** while `STITCH_API_KEY` and `WEBCLAW_API_KEY`
+   remain unexplained~~ — **cleared 2026-10-09.** Both traced: public company names only for
+   one day in May 2026, and a design tool never in the data path. Neither is a subprocessor,
+   and both keys have been deleted. **The subprocessor list now waits only on L3** — an
+   executed DPA with each vendor.

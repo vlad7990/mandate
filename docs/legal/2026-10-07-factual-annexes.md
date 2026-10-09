@@ -255,9 +255,16 @@ Two further facts worth recording, because they bound the exposure precisely:
 - The removed webclaw client fell back to a placeholder — `process.env.WEBCLAW_API_KEY ?? "wc-local"` — so it is not established that the production key ever authenticated anything.
 - The window in which webclaw could have been called in production is bounded by a **single day in May 2026**, which is **five months before any client data existed in this system**. The database held four candidates, all internal, as of 2026-10-08.
 
-**Both keys should still be deleted** — an unused production credential is pure liability
-regardless of what it once did — but deletion is now hygiene, not a precondition for the
-subprocessor list.
+**Both keys were deleted from Vercel on 2026-10-09** `[CODE]` — `WEBCLAW_API_KEY` from
+Production, `STITCH_API_KEY` from Production and Preview. Verified absent from every
+environment, with all critical variables intact and production health green.
+
+**They have NOT been revoked at their vendors**, and the distinction matters for any
+statement made to a client or an insurer: removing a variable from Vercel shrinks the blast
+radius of a *Vercel* compromise and does nothing else. Both credentials are presumably still
+valid at Google Stitch and at webclaw until rotated or disabled there. **Do not describe
+these as "revoked" until that is done** — "removed from the deployment environment" is the
+accurate phrase today.
 
 **DPA status with each vendor `[OPEN]`:** every operational vendor above publishes a DPA,
 but **I have not verified that any has been executed for this account.** A processor cannot
@@ -688,7 +695,7 @@ position is correctly stated for every state the client operates in.
 | # | Item | Owner |
 |---|---|---|
 | L1 | **Qualified legal review of all five drafts.** Nothing in `docs/legal/drafts/` may be published or signed without it | Founder + lawyer |
-| ~~L2~~ | ~~**Resolve `STITCH_API_KEY` and `WEBCLAW_API_KEY`**~~ — **IDENTIFIED 2026-10-09.** Webclaw: a web-research SDK that saw public company names only, added and removed the same day (2026-05-01), five months before any client data existed. Stitch: a UI design tool, never in the data path. **Neither is a subprocessor, so the list is not incomplete and may be signed.** Deleting the two keys remains sensible hygiene but no longer gates anything. Annex G carries the detail | Founder (deletion only) |
+| ~~L2~~ | ~~**Resolve `STITCH_API_KEY` and `WEBCLAW_API_KEY`**~~ — **IDENTIFIED 2026-10-09.** Webclaw: a web-research SDK that saw public company names only, added and removed the same day (2026-05-01), five months before any client data existed. Stitch: a UI design tool, never in the data path. **Neither is a subprocessor, so the list is not incomplete and may be signed.** Both keys **deleted from Vercel the same day**. Annex G carries the detail. **Residual founder action: revoke both at their vendors** — deletion from Vercel is not revocation, and the keys are presumably still valid at Google Stitch and webclaw | Founder (vendor revocation) |
 | L3 | **Execute or confirm a DPA with each operational vendor** (Supabase, Vercel, Anthropic, Resend, Sentry, Cloudflare). Obligations cannot be flowed down before they are accepted upstream | Founder |
 | L4 | **Decide the retention position.** Today the answer is "indefinitely, while the account exists". Either state that, or build a retention control. Do not write a schedule the code does not implement | Founder |
 | L5 | **Decide the deletion position.** Suppression + human resolution is what the code does. The candidate notice must match it | Founder + lawyer |

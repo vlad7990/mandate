@@ -2,14 +2,17 @@
 
 > **DRAFT — NOT APPROVED, NOT PUBLISHED. ⚠️ THIS LIST CANNOT BE SIGNED OR PUBLISHED YET.**
 >
-> **Blocking reason (Annex F, item L2):** two credentials — `STITCH_API_KEY` and
-> `WEBCLAW_API_KEY` — are set in the production environment and referenced **nowhere** in the
-> application source. Either they are dead and should be removed, or something undocumented
-> uses them and **this list is incomplete**. An incomplete subprocessor list is a
-> contractual breach waiting to happen. Resolve before publishing.
+> ~~**Blocking reason (Annex F, item L2):** two unexplained production credentials~~ —
+> **CLEARED 2026-10-09.** `WEBCLAW_API_KEY` and `STITCH_API_KEY` were traced through git
+> history: a web-research SDK that received **public company names only**, added and removed
+> on the same day (2026-05-01) five months before any client data existed; and a UI design
+> tool that was **never in the runtime data path**. Neither processed customer or candidate
+> data, so **neither belongs on this list and the list is not incomplete.** Both keys have
+> since been deleted from the deployment environment. Detail in Annex G.
 >
-> **Second blocker (item L3):** Mandate has not confirmed an executed DPA with each vendor
-> below. The DPA's flow-down clause (5.2) cannot be truthfully given until it has.
+> **Remaining blocker (item L3):** Mandate has not confirmed an executed DPA with each vendor
+> below. The DPA's flow-down clause (5.2) cannot be truthfully given until it has. **This is
+> now the only thing holding this list** — L2 is closed.
 >
 > Assembled 2026-10-07 from verified production environment-variable names and the
 > implementation. Vendor facts fetched the same day.
