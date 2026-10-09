@@ -86,14 +86,15 @@ says so.
 - **Owner** Founder provisions; I implement and activate on approval.
 - **Next action** Provision the destination, then say go — steps 1–6 of `backup-activation.md` §6.
 
-### A3 · One rehearsed restore, timed 🔴
+### A3 · One rehearsed restore, timed 🟢 *(files)*
 
-- **Evidence** No production run has ever occurred. The restore path is exercised only against a local filesystem destination with synthetic files.
-- **Work completed** The rehearsal is step 7 of `backup-activation.md` §6. The deletion-aware step it must include is in the incident runbook §5.4.
-- **Verification** None possible yet — this *is* the verification step for A2.
-- **Remaining dependency** A1 and A2.
-- **Owner** Both.
-- **Next action** After A2 activates: recover to a scratch location, compare checksums, **record elapsed time**. Without a timed rehearsal the RTO is a guess.
+- **Evidence** Run 2026-10-09 against the real Cloudflare R2 bucket with the real encryption key and **real candidate CVs**: **4 of 4 restored, 0 failures, 1,100,864 bytes, 1.74 s**, every object decrypted and SHA-256-matched against the manifest. Manifest v1, run #4.
+- **Work completed** `scripts/backup-rehearsal.mjs`. **It did not exist** — `restore.ts` had cited it in its own header (*"it is used by the rehearsal (scripts/backup-rehearsal.mjs)"*) since the module was written, and the file was never created. A documented procedure that cannot be run is not a procedure.
+- **Deliberately standalone.** The script re-implements SigV4 and the decrypt envelope rather than importing them, so it runs from a laptop with nothing but Node, the credentials and the escrowed key — no repo build, no TypeScript, no `node_modules`. That is the situation a restore is actually for. It writes nothing, anywhere.
+- **One trap recorded for whoever reads it next:** the envelope is `MAGIC("MBK1") || nonce(12) || tag(16) || body` — the GCM tag sits **before** the ciphertext, not appended after it as most AES-GCM envelopes do. Writing the decrypt from habit produces failures on every object that look exactly like a corrupt backup. The first draft of the script did precisely this.
+- **Remaining dependency** **This is the FILE half only.** A real recovery also restores the database from Supabase's daily backup, and that side has **not** been rehearsed. The manifest's `recoveryPoint` states how to pair them and warns that neither direction of skew is corruption. **Expect the database restore to dominate the RTO — 1.74 s is not the recovery time for an incident.**
+- **Owner** —
+- **Next action** Rehearse a database restore, from a real Supabase daily backup into a scratch project, and record *that* elapsed time. Until then the RTO is measured for files and still a guess overall.
 
 ### A4 · Legal pack reviewed and notices published 🔴
 
@@ -220,8 +221,8 @@ out of scope rather than outstanding. The go/no-go's per-segment verdict stands.
 | 1.3 | Generate the encryption key and **escrow it off-platform** | Founder | — |
 | ~~1.4~~ | ~~Set the seven `BACKUP_*` vars~~ — **DONE 2026-10-09** | — | Encryption key never entered the transcript; escrowed to a 600-mode file on the founder's Desktop. **`CRON_SECRET` was rotated** because Vercel "sensitive" variables are write-only — unreadable by anyone, including the founder — so the route could not otherwise be invoked by hand |
 | ~~1.5~~ | ~~Run the seed~~ — **DONE 2026-10-09: `complete`, 4 objects, 1,100,864 bytes, 0 failures** | — | **The cron is deliberately NOT yet added to `vercel.json`.** Scheduling waits on 1.6: a job that silently skips is worse than no job, and this one did exactly that until migration 166 |
-| 1.6 | **Timed restore rehearsal** (**A3**) — recover from R2, compare SHA-256 against originals, **record elapsed** | **Me** | ready now |
-| 1.7 | Add the `vercel.json` cron entry once 1.6 passes | **Me** | 1.6 |
+| ~~1.6~~ | ~~Timed restore rehearsal~~ — **DONE 2026-10-09 (A3): 4/4 restored, 0 failures, 1,100,864 bytes, 1.74 s** | — | Every object decrypted and SHA-256-matched against the manifest. `scripts/backup-rehearsal.mjs` — which `restore.ts` had cited in its header since it was written and **which did not exist** until now |
+| ~~1.7~~ | ~~Add the cron~~ — **DONE: `/api/cron/backup` daily at 04:00 UTC**, two hours before maintenance so the two never contend | — | Takes effect on the next deploy |
 | 1.8 | **Roll the R2 token.** Its secret passed through the assistant transcript during setup | Founder | after 1.6 |
 
 ### Phase 2 — Credentials and auth hardening
