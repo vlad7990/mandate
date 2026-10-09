@@ -30,14 +30,21 @@ says so.
 
 ## A. Pilot gate — the seven conditions
 
-### A1 · Supabase Pro + spend cap 🔴
+### A1 · Supabase Pro 🟢 *(spend cap unconfirmed)*
 
-- **Evidence** Organisation `Stratum` (`bfomdugfdcxxcneocihl`) returns `plan: free`, queried 2026-10-08. On Free: no backups of any kind, 1-day log retention, project pauses when idle.
-- **Work completed** Exact steps, costs, and what Pro does *not* include written up in `credential-rotation-and-dashboard.md` §6.
-- **Verification** Plan read directly from the Supabase management API. Not inferred.
-- **Remaining dependency** A $25/month purchase.
-- **Owner** Founder.
-- **Next action** Upgrade, **and turn the spend cap on in the same visit** — the upgrade flow completes without it.
+- **Evidence** Organisation `Stratum` (`bfomdugfdcxxcneocihl`) returns **`plan: pro` / `tier_pro`**, read from the management API **2026-10-09**. It returned `plan: free` the day before. **The database now has daily backups with 7-day retention — the first restore point that has ever existed for this project.**
+- **Work completed** The purchase. Steps and costs were written up in `credential-rotation-and-dashboard.md` §6; PITR was deliberately **not** enabled (it is $100/mo per 7 days, it *replaces* daily backups rather than supplementing them, and needs a compute add-on — a 24-hour RPO was the agreed position).
+- **Verification** Plan read directly from the API, not inferred, and not taken from the dashboard. **A false start is worth recording:** the first report of "Pro" was Vercel, not Supabase — both vendors sell a "Pro" tier at a similar price, and only the Supabase one buys backups. Checking the API rather than accepting the word is what caught it.
+- **Remaining dependency** **The spend cap has NOT been verified.** It is not exposed by the management API, so it cannot be confirmed from here — Pro's usage overage is otherwise unbounded, and the upgrade flow completes without setting it. **Confirm by eye:** Supabase → org `Stratum` → Billing → spend cap ON.
+- **Owner** Founder, for the spend cap only.
+- **Next action** Eyeball the spend cap. Then A1 is fully closed and 2.3 (leaked-password protection, Pro-gated) is unlocked.
+
+> **Adjacent finding, 2026-10-09: Vercel Hobby is non-commercial only.** The team
+> `vn-mn-product-group` is now on **Vercel Pro**, which is a genuine launch requirement for a
+> paying client and **was never on this checklist**. It is closed, but the omission is the
+> point — the pack costed Supabase and R2 and silently assumed the host was free to use
+> commercially. **Total recurring cost of launch is therefore two subscriptions plus
+> storage, not one.**
 
 ### A2 · File backup for the three buckets 🟡
 
@@ -167,7 +174,7 @@ out of scope rather than outstanding. The go/no-go's per-segment verdict stands.
 |---|---|---|---|
 | 0.1 | Send the legal pack to counsel (**A4**) | Founder | Weeks of lead time. It blocks the contract; nothing blocks it. Every day unsent is a day added to launch |
 | ~~0.2~~ | ~~Identify or remove `STITCH_API_KEY` / `WEBCLAW_API_KEY`~~ — **DONE 2026-10-09 (C7)** | — | Both traced and **both deleted from Vercel**. Neither was a subprocessor, so **this never blocked 0.1 after all** — send the legal pack. One residue: the keys are presumably still valid at their vendors, so **revoke them at Google Stitch and webclaw** next time you are in those accounts |
-| 0.3 | Supabase **Pro + spend cap**, same session (**A1**) | Founder | $25/mo. Unblocks all of Phase 1 and 2.3. Do **not** enable PITR |
+| ~~0.3~~ | ~~Supabase **Pro**~~ — **DONE 2026-10-09 (A1)**, `plan: pro` confirmed via API | — | **Spend cap still unverified** — not exposed by the API, so confirm it by eye in Billing. Also closed: **Vercel Pro**, which Hobby's non-commercial terms require for a paying client and which this checklist never listed |
 
 ### Phase 1 — Make the data survivable. THE GATE.
 
@@ -178,6 +185,7 @@ out of scope rather than outstanding. The go/no-go's per-segment verdict stands.
 |---|---|---|---|
 | 1.1 | Pro gives daily DB backups, 7-day retention → 24-hour RPO | — | 0.3 |
 | 1.2 | Create the R2 bucket + token scoped to **that bucket**, 5 permissions only | Founder | — |
+| 1.2a | **Which Cloudflare account:** one already exists — Turnstile has been live on `/request-access` since ~2026-08-27 and Cloudflare is already a named subprocessor in the legal drafts (bot defence, visitor IPs). **Recommended: use that same account**, because L3 (an executed DPA per vendor) is the only remaining blocker on the subprocessor list, and R2 extends an existing vendor instead of adding one. Enable **2FA** on it and **object versioning** on the bucket — a scoped token bounds the *application*, not an account-holder. ⚠️ **Which account owns Turnstile is recorded nowhere** — the same gap as C7. Write it down this time. ⚠️ **And tell counsel:** R2 expands Cloudflare from *sees a visitor IP* to *stores encrypted candidate CVs*, so the approved privacy notice and subprocessor list need that line changed — true of any storage vendor, not an argument against this one | Founder | — |
 | 1.3 | Generate the encryption key and **escrow it off-platform** | Founder | — |
 | 1.4 | Set the seven `BACKUP_*` vars (`vercel env add`, so no secret enters a transcript) | Founder | 1.2, 1.3 |
 | 1.5 | Add the cron; run the seed back-to-back until the report says `complete` | **Me** | 1.4 |
