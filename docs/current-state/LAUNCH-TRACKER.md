@@ -46,7 +46,38 @@ says so.
 > commercially. **Total recurring cost of launch is therefore two subscriptions plus
 > storage, not one.**
 
-### A2 · File backup for the three buckets 🟡
+### A2 · File backup for the three buckets 🟢 *(running; A3 rehearsal still outstanding)*
+
+> **ACTIVATED 2026-10-09.** Cloudflare R2 bucket `mandate-backups` (WNAM — deliberately
+> away from Supabase's `us-east-1`), token scoped to Object Read & Write on that one
+> bucket, all seven `BACKUP_*` variables set, encryption key generated and escrowed.
+>
+> **First real run against real S3 and real candidate data: `outcome: complete`,
+> 4 objects, 1,100,864 bytes, 0 failures, 8.8 s.** The hand-rolled SigV4 — the one risk
+> `destination.ts` names in its own header ("hand-rolled signing fails in obscure ways
+> against a specific vendor") — signs correctly against R2.
+>
+> **And the first run found a real defect, which is what first runs are for.** 161's
+> `backup_try_lock` used `pg_try_advisory_lock`, which is SESSION-scoped, and argued that
+> "a dropped connection releases it". True of a dedicated connection, **false behind
+> PostgREST's pool**: acquire landed on session A, release landed on session B where
+> `pg_advisory_unlock` returned false without erroring, and `.catch(() => {})` swallowed
+> it. Observed with the run already finished —
+> `pid 1783026 | advisory 8427301 | granted | PostgREST 14.5 | idle` — and the next call
+> answered `"another backup run holds the lock"`. **Had the cron been scheduled first,
+> the backup would have stopped after exactly one good day while the heartbeat still
+> looked plausible.** Fixed by migration **166**: a lease held by value with a 120 s
+> expiry (above the route's 60 s `maxDuration`, so a live run cannot lose its lease;
+> short enough that a killed run self-heals). Proven in production by three back-to-back
+> runs, all `complete`, lease table empty after. Three new tests pin the contract and
+> were verified to FAIL against 161's shape — the old tests passed through the bug
+> because the fake's `rpc(fn)` ignored its arguments.
+>
+> **Still outstanding: the cron is NOT scheduled** (`vercel.json` unchanged) and **A3's
+> timed restore rehearsal has not run.** Scheduling waits on the rehearsal, not the
+> other way round.
+
+### A2 (original assessment, 2026-10-07) 🟡
 
 - **Evidence** `src/lib/backup/` — 12 modules, ~4,000 lines, covering all three buckets (`cvs`, `call-audio`, `invoice-assets`), AES encryption, manifests, SHA-256 integrity, incremental copy, suppression-aware pruning, partial-failure reporting, budget-bounded resumable runs, and bounded retries. `vercel.json` still has **one** cron and **no** `BACKUP_*` variable exists in any environment.
 - **Work completed** Added bounded retries (`retry.ts`, 16 tests) and a byte-identical restore proof (`restore.test.ts`, 6 tests) round-tripping 7 synthetic objects across all three buckets — binary, zero-byte, 300 KB, unicode keys — plus tamper detection. Volume measured: 4 objects, 1.05 MB, all in `cvs`. Scheduling analysed in `backup-activation.md`.
@@ -187,9 +218,11 @@ out of scope rather than outstanding. The go/no-go's per-segment verdict stands.
 | 1.2 | Create the R2 bucket + token scoped to **that bucket**, 5 permissions only | Founder | — |
 | 1.2a | **Which Cloudflare account:** one already exists — Turnstile has been live on `/request-access` since ~2026-08-27 and Cloudflare is already a named subprocessor in the legal drafts (bot defence, visitor IPs). **Recommended: use that same account**, because L3 (an executed DPA per vendor) is the only remaining blocker on the subprocessor list, and R2 extends an existing vendor instead of adding one. Enable **2FA** on it and **object versioning** on the bucket — a scoped token bounds the *application*, not an account-holder. ⚠️ **Which account owns Turnstile is recorded nowhere** — the same gap as C7. Write it down this time. ⚠️ **And tell counsel:** R2 expands Cloudflare from *sees a visitor IP* to *stores encrypted candidate CVs*, so the approved privacy notice and subprocessor list need that line changed — true of any storage vendor, not an argument against this one | Founder | — |
 | 1.3 | Generate the encryption key and **escrow it off-platform** | Founder | — |
-| 1.4 | Set the seven `BACKUP_*` vars (`vercel env add`, so no secret enters a transcript) | Founder | 1.2, 1.3 |
-| 1.5 | Add the cron; run the seed back-to-back until the report says `complete` | **Me** | 1.4 |
-| 1.6 | **Timed restore rehearsal** (**A3**) — recover, compare checksums, record elapsed | **Me** | 1.5 |
+| ~~1.4~~ | ~~Set the seven `BACKUP_*` vars~~ — **DONE 2026-10-09** | — | Encryption key never entered the transcript; escrowed to a 600-mode file on the founder's Desktop. **`CRON_SECRET` was rotated** because Vercel "sensitive" variables are write-only — unreadable by anyone, including the founder — so the route could not otherwise be invoked by hand |
+| ~~1.5~~ | ~~Run the seed~~ — **DONE 2026-10-09: `complete`, 4 objects, 1,100,864 bytes, 0 failures** | — | **The cron is deliberately NOT yet added to `vercel.json`.** Scheduling waits on 1.6: a job that silently skips is worse than no job, and this one did exactly that until migration 166 |
+| 1.6 | **Timed restore rehearsal** (**A3**) — recover from R2, compare SHA-256 against originals, **record elapsed** | **Me** | ready now |
+| 1.7 | Add the `vercel.json` cron entry once 1.6 passes | **Me** | 1.6 |
+| 1.8 | **Roll the R2 token.** Its secret passed through the assistant transcript during setup | Founder | after 1.6 |
 
 ### Phase 2 — Credentials and auth hardening
 

@@ -474,6 +474,71 @@ describe("concurrency", () => {
     const report = await runBackup(service, dest, KEY, { skipLock: false });
     expect(report.outcome).toBe("failed");
   });
+
+  /**
+   * THE LEASE CONTRACT (166) — the regression guard for a bug that shipped
+   * green.
+   *
+   * 161's lock was `pg_try_advisory_lock`, which is SESSION-scoped. Behind
+   * PostgREST's connection pool the release landed on a different pooled
+   * session, returned false without erroring, and left the lock held on an
+   * idle connection. The first real run against R2 succeeded and then
+   * poisoned every run after it.
+   *
+   * None of the tests above caught it, because the fake's `rpc(fn)` ignored
+   * its arguments — so "holds a lock correctly" was never expressed, only
+   * "calls something named backup_try_lock". These three pin the parts that
+   * actually make the lease pool-safe.
+   */
+  function recordingService() {
+    const calls: { fn: string; args: Record<string, unknown> | undefined }[] = [];
+    const service = {
+      ...makeFakeSupabase({}),
+      rpc: (fn: string, args?: Record<string, unknown>) => {
+        calls.push({ fn, args });
+        if (fn === "backup_try_lock") return Promise.resolve({ data: true, error: null });
+        if (fn === "backup_release_lock") return Promise.resolve({ data: true, error: null });
+        return Promise.resolve({ data: null, error: { message: "no such function" } });
+      },
+    } as unknown as FakeSupabase;
+    return { service, calls };
+  }
+
+  it("takes the lease with a holder and a TTL, not as a bare session lock", async () => {
+    const { service, calls } = recordingService();
+    await runBackup(service, dest, KEY, { skipLock: false });
+
+    const acquire = calls.find((c) => c.fn === "backup_try_lock");
+    expect(acquire, "backup_try_lock was never called").toBeTruthy();
+    expect(typeof acquire!.args?.p_holder).toBe("string");
+    expect(String(acquire!.args?.p_holder).length).toBeGreaterThan(0);
+    // Must outlive the route's 60s maxDuration so a LIVE run cannot have
+    // its lease stolen mid-copy.
+    expect(Number(acquire!.args?.p_ttl_seconds)).toBeGreaterThan(60);
+  });
+
+  it("releases with the SAME holder it acquired with — the half that was broken", async () => {
+    const { service, calls } = recordingService();
+    await runBackup(service, dest, KEY, { skipLock: false });
+
+    const acquire = calls.find((c) => c.fn === "backup_try_lock");
+    const release = calls.find((c) => c.fn === "backup_release_lock");
+    expect(release, "backup_release_lock was never called").toBeTruthy();
+    // A release that cannot name its holder cannot be holder-scoped, which
+    // is what lets a release land on any pooled connection and still work.
+    expect(release!.args?.p_holder).toBe(acquire!.args?.p_holder);
+  });
+
+  it("gives every run its own holder, so one run cannot release another's lease", async () => {
+    const a = recordingService();
+    const b = recordingService();
+    await runBackup(a.service, dest, KEY, { skipLock: false });
+    await runBackup(b.service, dest, KEY, { skipLock: false });
+
+    const holderA = a.calls.find((c) => c.fn === "backup_try_lock")!.args?.p_holder;
+    const holderB = b.calls.find((c) => c.fn === "backup_try_lock")!.args?.p_holder;
+    expect(holderA).not.toBe(holderB);
+  });
 });
 
 describe("erasure safeguards end to end (requirement 8)", () => {

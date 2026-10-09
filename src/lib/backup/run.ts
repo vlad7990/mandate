@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { decrypt, encrypt, parseKey } from "./crypto";
 import type { Destination } from "./destination";
@@ -50,9 +51,43 @@ import {
  */
 
 
-// The lock key itself lives in migration 161's `backup_try_lock`, which
-// takes no argument on purpose — a caller-supplied key would be a DoS
-// primitive against any other advisory lock in the database.
+/**
+ * THE LOCK IS A LEASE, NOT A SESSION LOCK (migration 166).
+ *
+ * 161 used `pg_try_advisory_lock`, which is SESSION-scoped, and reasoned
+ * that "a dropped connection releases it, so a crashed run cannot wedge
+ * the job forever". That is true of a dedicated connection and false
+ * behind PostgREST's connection pool — which is what this code actually
+ * talks to.
+ *
+ * The first real run against Cloudflare R2 (2026-10-09) proved it. The
+ * run succeeded — 4 objects, 1,100,864 bytes, 0 failures — and then:
+ *
+ *   acquire  → pooled session A takes the lock
+ *   release  → lands on pooled session B, where pg_advisory_unlock
+ *              returns FALSE (not an error; B never held it)
+ *   result   → session A goes back to the pool, idle, still holding it
+ *
+ *     pid 1783026 | advisory 8427301 | granted | PostgREST 14.5 | idle
+ *
+ * and the next invocation answered "another backup run holds the lock".
+ * Every later run would have skipped. Had the cron been scheduled first,
+ * the backup would have stopped working after exactly one good day while
+ * the heartbeat still looked plausible — the worst failure shape a backup
+ * can have.
+ *
+ * So lock identity moves from "which connection am I on" — unknowable and
+ * unstable behind a pool — to "which run am I", passed as a value. The
+ * lease also EXPIRES, which preserves what 161 was reaching for and
+ * actually delivers it: a run killed at Vercel's 60 s ceiling cannot wedge
+ * the job, because the next run takes the lock once the lease lapses.
+ */
+
+/** Lease length. Deliberately above `maxDuration` (60 s) and well above
+ * DEFAULT_BUDGET_MS (45 s), so a LIVE run can never outlive its own lease
+ * and have it stolen mid-copy; and low enough that a DEAD run is recovered
+ * within two minutes. */
+const LOCK_TTL_SECONDS = 120;
 
 /**
  * Default wall-clock budget. Vercel's limit is the function's
@@ -80,6 +115,10 @@ export async function runBackup(
   const budgetMs = options.budgetMs ?? DEFAULT_BUDGET_MS;
   const startedAt = now();
   const deadline = startedAt.getTime() + budgetMs;
+
+  // This run's identity for the lease (166). Random per run, never
+  // derived from anything about the connection — that is the whole point.
+  const holder = randomUUID();
 
   const base = {
     startedAt: startedAt.toISOString(),
@@ -119,13 +158,14 @@ export async function runBackup(
   // ---- LOCK ------------------------------------------------------------
   let locked = false;
   if (!options.skipLock) {
-    // `backup_try_lock` wraps pg_try_advisory_lock, which lives in
-    // pg_catalog and is therefore not reachable through PostgREST. The
-    // wrapper ships in migration 161, which is deliberately NOT applied
-    // to production yet — so until it is, this call fails and the run
-    // refuses. That is the correct behaviour for an unactivated feature:
-    // a backup without exclusivity is worse than no backup today.
-    const { data, error } = await service.rpc("backup_try_lock");
+    // `backup_try_lock(holder, ttl)` takes the lease (166). An error here
+    // means exclusivity cannot be established at all — the run refuses,
+    // because two concurrent runs racing on one manifest is worse than a
+    // skipped day.
+    const { data, error } = await service.rpc("backup_try_lock", {
+      p_holder: holder,
+      p_ttl_seconds: LOCK_TTL_SECONDS,
+    });
     if (error) {
       // Cannot establish exclusivity → refuse. Two concurrent runs
       // racing on one manifest is worse than a skipped day.
@@ -374,10 +414,15 @@ export async function runBackup(
     });
   } finally {
     if (locked) {
-      // Best-effort unlock. The lock is session-scoped, so a dropped
-      // connection releases it anyway; this just returns it sooner.
+      // Holder-scoped release. Unlike 161's version this genuinely works
+      // from whichever pooled connection serves it, because the lease is
+      // a row keyed by THIS run's holder token rather than by session.
+      // Still best-effort — if it fails, the lease expires on its own
+      // within LOCK_TTL_SECONDS, which is the property 161 only claimed.
       // The builder is thenable but not a Promise, so wrap before catching.
-      await Promise.resolve(service.rpc("backup_release_lock")).catch(() => {});
+      await Promise.resolve(
+        service.rpc("backup_release_lock", { p_holder: holder })
+      ).catch(() => {});
     }
   }
 }
