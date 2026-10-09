@@ -240,11 +240,24 @@ by environment-variable name `[CODE]`:**
 | **DeepInfra** (Whisper ASR, call transcription) | `DEEPINFRA_API_KEY` **absent in production** `[CODE]`. The feature hides its own affordance and refuses if reached. No audio has ever been sent. List only if provisioned |
 | **Stripe** | Not integrated at all. No dependency, no code |
 
-**Orphaned credentials that must be resolved before any subprocessor statement is signed:**
-`STITCH_API_KEY` and `WEBCLAW_API_KEY` are set in production and referenced **nowhere** in
-`src/` `[CODE]`. Either they are dead and should be deleted, or something undocumented uses
-them and the subprocessor list is incomplete. **This must be settled before the list is
-published** — an incomplete subprocessor list is a contractual breach waiting to happen.
+**~~Orphaned credentials that must be resolved before any subprocessor statement is
+signed~~ — RESOLVED 2026-10-09 `[CODE]`.** Both were traced through git history. **Neither
+is a subprocessor of customer or candidate data, so this list is NOT incomplete and the
+blocker on publishing it is lifted.**
+
+| Credential | What it was | Data it received | Status |
+|---|---|---|---|
+| `WEBCLAW_API_KEY` | `@webclaw/sdk@^0.1.0`, a web-research provider used by the Company Intelligence Agent | **Public company names and URLs only** — the single call shape was a `"${companyName} official website"` search. Never a candidate, never a CV, never personal data | Added by `a372736` and removed by `009a9f3` **on the same day, 2026-05-01**, when the agent switched to Anthropic's native `web_search`. The dependency is gone from `package.json`; the key is absent from `src/` and from the build output |
+| `STITCH_API_KEY` | Google Stitch, a **UI design tool**. Its output is frozen as static HTML in `stitch-designs/` (project *Mandate Executive Search OS*) | **None.** It never touched the product's runtime or any data path — it is a design-time tool whose artifacts were committed and are no longer generated | Set in **Preview and Production**, where a design-time tool never had any business being |
+
+Two further facts worth recording, because they bound the exposure precisely:
+
+- The removed webclaw client fell back to a placeholder — `process.env.WEBCLAW_API_KEY ?? "wc-local"` — so it is not established that the production key ever authenticated anything.
+- The window in which webclaw could have been called in production is bounded by a **single day in May 2026**, which is **five months before any client data existed in this system**. The database held four candidates, all internal, as of 2026-10-08.
+
+**Both keys should still be deleted** — an unused production credential is pure liability
+regardless of what it once did — but deletion is now hygiene, not a precondition for the
+subprocessor list.
 
 **DPA status with each vendor `[OPEN]`:** every operational vendor above publishes a DPA,
 but **I have not verified that any has been executed for this account.** A processor cannot
@@ -675,7 +688,7 @@ position is correctly stated for every state the client operates in.
 | # | Item | Owner |
 |---|---|---|
 | L1 | **Qualified legal review of all five drafts.** Nothing in `docs/legal/drafts/` may be published or signed without it | Founder + lawyer |
-| L2 | **Resolve `STITCH_API_KEY` and `WEBCLAW_API_KEY`** — delete, or identify what uses them. The subprocessor list cannot be signed while two production credentials are unexplained | Founder |
+| ~~L2~~ | ~~**Resolve `STITCH_API_KEY` and `WEBCLAW_API_KEY`**~~ — **IDENTIFIED 2026-10-09.** Webclaw: a web-research SDK that saw public company names only, added and removed the same day (2026-05-01), five months before any client data existed. Stitch: a UI design tool, never in the data path. **Neither is a subprocessor, so the list is not incomplete and may be signed.** Deleting the two keys remains sensible hygiene but no longer gates anything. Annex G carries the detail | Founder (deletion only) |
 | L3 | **Execute or confirm a DPA with each operational vendor** (Supabase, Vercel, Anthropic, Resend, Sentry, Cloudflare). Obligations cannot be flowed down before they are accepted upstream | Founder |
 | L4 | **Decide the retention position.** Today the answer is "indefinitely, while the account exists". Either state that, or build a retention control. Do not write a schedule the code does not implement | Founder |
 | L5 | **Decide the deletion position.** Suppression + human resolution is what the code does. The candidate notice must match it | Founder + lawyer |
