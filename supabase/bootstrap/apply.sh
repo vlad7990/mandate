@@ -127,6 +127,48 @@ run "grants: tables"      "$WORK/grants_tables.sql"
 run "grants: routines"    "$WORK/grants_routines.sql"
 run "comments"            "$WORK/comments.sql"
 
+# ─────────────────────────────────────────────────────────────────────
+# Migrations newer than the baseline.
+#
+# `schema-reference.sql` is a SNAPSHOT, so it is only ever current on the
+# day it was generated. Every migration applied after that day exists in
+# `supabase/migrations/` and is NOT in the snapshot — so a rebuild that
+# stops at the baseline is silently behind by however many migrations
+# have landed since.
+#
+# That is not hypothetical and the first instance is instructive. 164
+# added `ai_budget_policy` and the four AI cost functions. A database
+# rebuilt from the baseline alone has no `ai_budget_verdict()`, and the
+# inference seam treats an unreadable budget as ALLOW (deliberately — a
+# budget outage must not take the product down). So the rebuilt database
+# would have run with NO SPEND CEILING, reporting itself healthy. The
+# counts below would have been the only hint, and only if someone read
+# them.
+#
+# Replaying here makes the drift self-healing for every future migration
+# instead of a snapshot someone has to remember to regenerate.
+# ─────────────────────────────────────────────────────────────────────
+
+# The highest migration ALREADY CONTAINED in schema-reference.sql.
+# ⚠️ Bump this whenever the snapshot is regenerated, in the same commit.
+BASELINE_MIGRATION=162
+
+echo "== migrations newer than the baseline (> $BASELINE_MIGRATION) =="
+MIGRATIONS="$HERE/../migrations"
+replayed=0
+for f in "$MIGRATIONS"/*.sql; do
+  base="$(basename "$f")"
+  num="${base%%_*}"
+  # Skip anything whose name does not start with a number, and the
+  # 0-byte 001 placeholder, which is empty on purpose.
+  [[ "$num" =~ ^[0-9]+$ ]] || continue
+  (( 10#$num > BASELINE_MIGRATION )) || continue
+  echo "  -- $base"
+  psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f "$f"
+  replayed=$(( replayed + 1 ))
+done
+echo "     replayed: $replayed"
+
 echo "== verify =="
 psql "$DB_URL" -tAc "
 select 'tables='   || (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r')
@@ -137,5 +179,10 @@ select 'tables='   || (select count(*) from pg_class c join pg_namespace n on n.
     || ' fks='       || (select count(*) from pg_constraint co join pg_class c on c.oid=co.conrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and co.contype='f')"
 
 echo
-echo "Expected against the 2026-10-08 baseline (post-161/162):"
-echo "  tables=73 functions=157 policies=261 triggers=75 rls_on=73 fks=328"
+# Read from production on 2026-10-09, after 165. Update in the same
+# commit as any migration that changes one of these counts.
+echo "Expected, matching production after migration 165:"
+echo "  tables=74 functions=161 policies=261 triggers=75 rls_on=74 fks=328"
+echo
+echo "(baseline alone, before the replay above, is"
+echo "  tables=73 functions=157 policies=261 triggers=75 rls_on=73 fks=328)"

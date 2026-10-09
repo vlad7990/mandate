@@ -163,8 +163,16 @@ coupled code.
 > `docs/infrastructure/2026-10-07-recovery-plan.md`. **This outranks everything else on this
 > checklist** — no client's candidate data should be accepted until it is done.
 >
-> Related and separate: `001_core_schema.sql` being 0 bytes means the repo **cannot rebuild
-> the database from scratch**. One committed `pg_dump --schema-only` closes it.
+> Related and separate: `001_core_schema.sql` being 0 bytes used to mean the repo **could not
+> rebuild the database from scratch**. **Closed 2026-10-08 and hardened 2026-10-09:**
+> `supabase/bootstrap/apply.sh` + `supabase/schema-reference.sql` rebuild it, and the script
+> now **replays every migration numbered above `BASELINE_MIGRATION`** after the baseline —
+> because the baseline is a snapshot and a rebuild that stopped at it was silently missing
+> 163–165 (which would have left a rebuilt database running with no AI spend ceiling, since
+> an unreadable budget deliberately fails open). Re-verified by rebuilding from empty:
+> `tables=74 functions=161 policies=261 triggers=75 rls_on=74 fks=328`, matching production.
+> **Bump `BASELINE_MIGRATION` in the same commit that regenerates the snapshot.**
+> A rebuild restores SCHEMA, never DATA — the data half is still the unpurchased Pro plan.
 
 > **First-client readiness pack (2026-10-07).** Five companion documents to the assessment:
 > `docs/legal/2026-10-07-factual-annexes.md` (12 factual annexes) ·
@@ -225,8 +233,8 @@ coupled code.
 - [x] Add rate limiting to /request-access — **done.** `limitOpen` + `clientIpFrom` from `@/lib/rate-limit/server` in `request-access/actions.ts`, Postgres-backed per `088` (identity fails open, money fails closed).
 - [x] Rate-limit `/api/demo` — migration `061`, 2026-08-14. Was a module-scoped Map, i.e. per serverless instance, so "10/hour/IP" was never the real ceiling. Now Postgres-backed: 10/hour/IP **and 200/day globally**, which is the cap that actually bounds spend. Fails closed. Its 502 body also used to return the provider's raw JSON — vendor, billing advice and a request id — to any anonymous caller; API routes are not redacted the way Server Actions are.
 - [x] Add error monitoring (Sentry or similar) — **done.** `@sentry/nextjs` wired at `src/instrumentation.ts`, `src/instrumentation-client.ts`, `src/app/global-error.tsx`, `src/app/(dashboard)/error.tsx` and `withSentryConfig` in `next.config.ts`, with a PII scrubber at `src/lib/observability/scrub.ts`; both DSNs set in production. **One real gap left:** `SENTRY_AUTH_TOKEN` is absent, so `next.config.ts` disables source-map upload and every production stack trace is minified. One env var closes it.
-- [ ] Write onboarding documentation
+- [x] Write onboarding documentation — **done 2026-10-09.** `docs/onboarding.md`: the mandate lifecycle with the real gates, the five places a human must decide, and a "what is not ready" section that names billing, unmeasured AI quality, unpublished legal drafts and the backup gap. Every `/app/...` route it cites was checked to exist — the first draft invented `/app/projects/[id]/calibration`, which does not (calibration is reviewed on the mandate page; only `calibration-history` has its own route).
 - [x] Set up status page — **done.** `/status` plus the machine-readable `GET /api/health` (`src/lib/status/checks.ts`, 30 s cache, public via the proxy allowlist). Verified live 2026-10-07: `200 {"ok":true,"checks":{"db":"ok","auth":"ok","cron":"ok"}}`. **Still open and not this line:** nothing external polls it, so an outage is found by a customer.
-- [ ] Run Lighthouse audit on / marketing page and fix any LCP/CLS issues from animations before public launch
-- [ ] Test all landing page animations on mobile devices
-- [ ] Verify simulator works correctly in production (rate limiting, API responses)
+- [x] Run Lighthouse audit on / marketing page and fix any LCP/CLS issues from animations before public launch — **run 2026-10-09 against production.** Desktop perf **97** (LCP 1.2 s, CLS 0.011, TBT 0 ms); mobile perf **93** (LCP 3.2 s, CLS 0.008, TBT 50 ms). **The animation worry in this line was unfounded** — CLS is ~0.01 against a 0.1 threshold, so the animations shift nothing. Three real findings instead, two fixed: (1) `/robots.txt` and `/sitemap.xml` **307-redirected to `/auth/signin`** because neither existed and the proxy gates everything unlisted — a crawler asking the standard question got a login page. Fixed with `src/app/robots.ts` + `src/app/sitemap.ts` and two proxy allowlist entries; robots disallows the credential-in-URL token doors and `/legal` (unreviewed drafts must not be indexed). (2) `.m-link--accent` relied on colour alone at **1.06:1** against surrounding body text where 3:1 is the WCAG 1.4.1 minimum — now underlined. (3) **Open:** mobile LCP 3.2 s is over the 2.5 s "good" threshold, and `.m-section__numeral` contrast is 1.01 — the latter is a deliberate decorative watermark carrying `aria-hidden`, so it is defensible as "pure decoration"; implementing it as a pseudo-element would remove it from the audit truthfully.
+- [x] Test all landing page animations on mobile devices — **done 2026-10-09, Playwright at 390.** No horizontal overflow; 19 animated elements, 2 infinite. **Reduced-motion verified and correct:** under `prefers-reduced-motion: reduce` there are 0 animations, 0 infinite, and critically **0 reveal elements left faded** — the dangerous failure mode (content that never becomes visible because its reveal animation was disabled) does not occur.
+- [x] Verify simulator works correctly in production (rate limiting, API responses) — **done 2026-10-09 against `getmandate.io`.** One real call returned 200 with the full strict JSON shape in 23 s; malformed JSON, empty and missing `role_input` all 400; GET 405. Rate limiting confirmed engaged by reading the `demo_ip` bucket rather than by burning nine billed calls — it counts **before** validation, so malformed probes consume quota (correct for anti-abuse). **Found C13:** the route calls `getAnthropic()` directly (line 194), writes no `inference_runs` row, and is therefore invisible to both the C11 spend ceiling and the `/ops` cost page.

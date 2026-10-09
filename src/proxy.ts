@@ -29,7 +29,14 @@ import {
 // entirely — the token in the URL is the whole credential.
 // "/apply" is the inbound application door (§190): the token in the URL
 // is the whole credential, same trust shape as /hm, /invite and /join.
-const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/invite/", "/invite", "/candidate/", "/candidate", "/join/", "/join", "/apply/", "/apply", "/api/demo", "/api/cron/", "/api/webhooks/", "/api/health"];
+// "/robots.txt" and "/sitemap.xml" are machine endpoints that must answer
+// before any notion of a session exists — the same argument as
+// "/api/health". Until 2026-10-09 they were absent from this list, so both
+// answered 307 → /auth/signin and a crawler asking the standard question
+// got a login page. Lighthouse reported "robots.txt is not valid" because
+// what came back was HTML. They are served by src/app/robots.ts and
+// src/app/sitemap.ts.
+const ALWAYS_PUBLIC_PREFIXES = ["/hm/", "/hm", "/invite/", "/invite", "/candidate/", "/candidate", "/join/", "/join", "/apply/", "/apply", "/api/demo", "/api/cron/", "/api/webhooks/", "/api/health", "/robots.txt", "/sitemap.xml"];
 
 // Public-facing pages that unauthenticated users SHOULD see. We still
 // run the session refresh on these so authenticated visitors can be

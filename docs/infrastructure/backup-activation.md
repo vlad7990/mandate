@@ -1,9 +1,14 @@
 # Storage backup — state, scheduling analysis, and activation steps
 
 **Nothing in this document has been activated.** No production transfer has
-run, no environment variable has been set, no cron has been scheduled, and
-migration 161 remains unapplied. Everything below is prepared and waiting on
-an explicit decision.
+run, no environment variable has been set, and no cron has been scheduled.
+Everything below is prepared and waiting on an explicit decision.
+
+**Updated 2026-10-09:** migration **161 is applied** (2026-10-08), so the
+"also blocking" note at the end of §1 is closed — the advisory lock exists.
+What remains is a destination bucket and its credentials, both founder
+actions. The storage backup still has **never run against real S3 or real
+candidate data.**
 
 ---
 
@@ -21,9 +26,9 @@ existing is not a backup.
 | **Executed** | ❌ never | No production run has occurred |
 | **Restore-verified** | ⚠️ synthetic only | Round-tripped against a local filesystem destination with synthetic files. **Never against real S3 and never against real candidate data.** This is condition 3 of the pilot gate and it is not met |
 
-Also blocking: **migration 161 is unapplied**, so `runBackup` would refuse for
-want of an advisory lock even if a destination existed. That refusal is
-deliberate — it is better than a backup running without exclusivity.
+~~Also blocking: **migration 161 is unapplied**~~ — **applied 2026-10-08.**
+`backup_try_lock` exists, so a run would now acquire its advisory lock
+rather than refusing for want of one.
 
 ---
 

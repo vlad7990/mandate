@@ -5,9 +5,14 @@ no production backup transfer, no production restore. Each step below is stated 
 enough to be executed or refused.
 
 **What HAS been done** (local and isolated only): the backup module is implemented and
-tested (92 tests), migration 161 is **written but unapplied**, `vercel.json` is
-**unchanged** so no cron is scheduled, and the restore procedure was rehearsed against a
-throwaway Postgres 17 with synthetic data.
+tested (92 tests), `vercel.json` is **unchanged** so no cron is scheduled, and the restore
+procedure was rehearsed against a throwaway Postgres 17 with synthetic data.
+
+**Updated 2026-10-09.** Migration **161 is applied** (2026-10-08, lock verified), so gate C
+below is closed — `backup_try_lock` exists and a run would no longer refuse for want of it.
+**Three gates remain: A (no cron entry), B (no `BACKUP_*` variables), D (no destination
+bucket).** B and D are founder actions; A is one line and is deliberately held until B and
+D are done, so the schedule does not start logging a daily 503.
 
 **Total recurring cost of everything below: $25/month, plus a few cents of object storage.**
 
@@ -21,7 +26,7 @@ All four are deliberate. Each one on its own makes the job refuse.
 |---|---|---|
 | **A** — `vercel.json` has no cron entry for `/api/cron/backup` | Not added | The job is never invoked |
 | **B** — `BACKUP_*` environment variables absent | Not set | The route answers `503 {outcome: "skipped", reason: "BACKUP_DESTINATION is not set…"}` |
-| **C** — Migration 161 unapplied | Written, not applied | `backup_try_lock` does not exist → the run **fails loudly** rather than running without exclusivity |
+| ~~**C** — Migration 161 unapplied~~ | **CLOSED 2026-10-08** | `backup_try_lock` exists and was verified against production. No longer a gate |
 | **D** — No destination bucket exists | Not provisioned | Nowhere to write |
 
 This is the honest-absence pattern the product already uses for call transcription: the

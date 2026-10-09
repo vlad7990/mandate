@@ -48,3 +48,6 @@ evals/judgment-harness/output/
 # The restore rehearsal writes its measured figures here each run; the
 # committed record is docs/infrastructure/2026-10-07-backup-restore-results.md
 evals/backup-rehearsal/last-run.json
+
+# Playwright MCP session artifacts (snapshots, screenshots)
+.playwright-mcp/

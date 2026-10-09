@@ -1,9 +1,38 @@
 # Schema bootstrap — rebuilding the database from the repository
 
-**Status: tested.** On 2026-10-08 the baseline in `supabase/schema-reference.sql`
-was applied to an empty PostgreSQL 14.19 database by
-`supabase/bootstrap/apply.sh` and reproduced the production schema exactly.
-Counts below are measured on both sides, not asserted.
+**Status: tested, and re-tested 2026-10-09 after a real gap was found.**
+`supabase/bootstrap/apply.sh` applies the baseline in
+`supabase/schema-reference.sql` to an empty PostgreSQL 14.19 database and
+reproduces the production schema exactly. Counts below are measured on both
+sides, not asserted.
+
+> ### The baseline alone was not the whole database — fixed 2026-10-09
+>
+> `schema-reference.sql` is a **snapshot**, current only on the day it was
+> generated (post-162). `apply.sh` stopped there, so every migration applied
+> afterwards was silently missing from a rebuild.
+>
+> Migrations 163–165 landed on 2026-10-08. A database rebuilt from the repo
+> that morning would have been missing `ai_budget_policy` and all four AI cost
+> functions — and because the inference seam treats an unreadable budget as
+> ALLOW (deliberately: a budget outage must not take the product down), **the
+> rebuilt database would have run with no spend ceiling while reporting itself
+> healthy.** The count line was the only hint, and only if someone read it.
+>
+> `apply.sh` now replays every migration numbered above `BASELINE_MIGRATION`
+> after the baseline sections, so the drift self-heals for future migrations
+> instead of depending on someone remembering to regenerate the snapshot.
+> **Bump `BASELINE_MIGRATION` in the same commit that regenerates the
+> snapshot.**
+>
+> Verified by rebuilding twice from empty on 2026-10-09: baseline alone gives
+> `tables=73 functions=157 rls_on=73`; with the replay it gives
+> `tables=74 functions=161 rls_on=74`, which matches production read the same
+> day. Behaviour was checked too, not just counts — `ai_budget_verdict()`
+> returns `enabled/30d/50/250`, `ai_run_cost_usd` returns `18.00` priced and
+> **NULL** unpriced, both 163 hop ceilings are present, and `anon` holds
+> EXECUTE on none of the four cost functions. All nine tenant-isolation checks
+> still pass on the rebuilt database.
 
 | | production | rebuild |
 |---|---|---|

@@ -1734,8 +1734,35 @@ details[open] > .m-faq__btn .m-faq__icon {
   color: var(--accent);
 }
 
+/* An INLINE link inside a paragraph, which is a different problem from a
+   nav or footer link and needs a different answer.
+
+   Colour alone is not enough here (WCAG 1.4.1). Measured 2026-10-09: the
+   accent #3b82f6 against the surrounding body text #7f7f93 is 1.06:1,
+   where 3:1 is the minimum for distinguishing a link by colour — so to a
+   reader with any form of colour vision deficiency, "the pricing page"
+   was indistinguishable from the sentence around it.
+
+   A nav or footer `.m-link` is exempt by position: it sits in a list of
+   links, not mid-sentence, so its link-ness is structural. That is why
+   the underline goes here and not on the base class.
+
+   The underline is drawn at 1px with the accent held back to 55% so it
+   reads as typographic rather than browser-default, and goes solid on
+   hover. The offset clears the descenders in Inter at body size. */
 .m-link--accent {
   color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  transition:
+    color 200ms var(--ease-out),
+    text-decoration-color 200ms var(--ease-out);
+}
+
+.m-link--accent:hover {
+  text-decoration-color: var(--accent);
 }
 
 /* ───────────────────────── Motion preferences ──────────────────── */
