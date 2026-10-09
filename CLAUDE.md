@@ -149,6 +149,14 @@ coupled code.
 
 ## PRE-LAUNCH CHECKLIST
 
+> **`docs/current-state/LAUNCH-TRACKER.md` is the authority for STATE and ORDER.**
+> It supersedes the boxes below — it says so in its own header, and until 2026-10-09
+> nothing here said so back, so an agent reading only this file worked from the
+> scattered list without knowing the tracker existed. **§D of the tracker is the
+> sequence to launch**: both owners, real dependencies, one ordering. The boxes below
+> remain useful as detail and evidence; when they disagree with the tracker, the
+> tracker wins.
+
 > ### 🔴 THE PRODUCTION DATABASE HAS NO BACKUPS (verified 2026-10-07)
 >
 > Supabase org `Stratum` is on the **`free`** plan: no backups of any kind, 1-day log

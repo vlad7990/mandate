@@ -4,7 +4,13 @@
 condition table in `2026-10-07-go-no-go.md` as the place to look for *state*.
 Those two remain the record of the original assessment and its reasoning.
 
-Last updated **2026-10-08**, after migrations 161–165: the C9 escalation gate, the C10 hop ceiling, and the C11 spend ceiling with cost visibility.
+**§A–C are STATE** — what is true, with its evidence. **§D is the SEQUENCE** — the
+order to do the remaining work in, and who owns each step. One of each; a second
+ordering anywhere is drift and should be deleted rather than reconciled.
+
+Last updated **2026-10-09**: migrations 161–165 (the C9 escalation gate, the C10 hop
+ceiling, the C11 spend ceiling with `/ops` cost visibility), the schema-rebuild replay
+fix, robots/sitemap, and §D rewritten as a two-owner sequence.
 
 **Nothing here is marked done because a route exists, a document was written, or
 tests pass.** Every row names the evidence, and where evidence is absent the row
@@ -143,16 +149,102 @@ says so.
 
 ---
 
-## D. Founder actions, shortest path
+## D. The sequence to launch — who does what, in order
 
-Ordered so nothing waits on something avoidable.
+**Added 2026-10-09**, replacing the founder-only "shortest path" list that stood here.
+That list was right about order and silent about half the work: it named what the
+founder does and not what follows, so nothing said who picks the task up or what it
+unblocks. This is the same items with both owners and the real dependencies. **It is
+the only ordering; if a second one appears, delete it.**
 
-1. **Send the legal pack to counsel** (A4) — longest lead time, blocks nothing while it runs.
-2. **Upgrade to Pro + spend cap** (A1) — $25/month, unblocks A2 and A3, closes the single largest risk.
-3. **Create the Supabase secret key** (A6) — then I do the swap, verification and rollback plan the same session.
-4. **Fill U1–U8 in the incident runbook** (A5) — and do not sign a notification window before U1 and U7 exist.
-5. **Provision the backup destination** (A2) — separate provider account; generate and escrow the encryption key off-platform.
-6. **Decide "Unlimited" and "Dedicated success partner"** (A7).
-7. **Identify or remove `STITCH_API_KEY` and `WEBCLAW_API_KEY`** (C7).
-8. ~~Approve the two small production writes~~ — **done 2026-10-08.** Migration 161 applied (lock verified), migration 162 applied (opus-5 registered at `benchmarking`). ~~Decide C9~~ — **also done 2026-10-08:** escalation refuses a non-active target, which disarms the `generate_evaluation` pair until opus-5 is benchmarked. Code only; no migration and no production write.
-9. **Cheap and worth doing anyway**: an uptime monitor on `/api/health` (C3), `SENTRY_AUTH_TOKEN` (C4), an Anthropic budget alert.
+**Target is the CONTROLLED PILOT** — one direct-pay client — not public launch.
+That scope is what makes Stripe (C5), entitlements, and public-launch SEO
+out of scope rather than outstanding. The go/no-go's per-segment verdict stands.
+
+### Phase 0 — Start now; these block nothing while they run
+
+| # | Action | Owner | Why first |
+|---|---|---|---|
+| 0.1 | Send the legal pack to counsel (**A4**) | Founder | Weeks of lead time. It blocks the contract; nothing blocks it. Every day unsent is a day added to launch |
+| 0.2 | Identify or remove `STITCH_API_KEY` / `WEBCLAW_API_KEY` (**C7**) | Founder | **Blocks the subprocessor list inside A4.** The old list had this at #7 and legal at #1, which would have sent counsel an incomplete pack |
+| 0.3 | Supabase **Pro + spend cap**, same session (**A1**) | Founder | $25/mo. Unblocks all of Phase 1 and 2.3. Do **not** enable PITR |
+
+### Phase 1 — Make the data survivable. THE GATE.
+
+> **No client data enters the system before 1.6 — not 1.5.** A backup that has never
+> been restored is a hypothesis, not a backup.
+
+| # | Action | Owner | Needs |
+|---|---|---|---|
+| 1.1 | Pro gives daily DB backups, 7-day retention → 24-hour RPO | — | 0.3 |
+| 1.2 | Create the R2 bucket + token scoped to **that bucket**, 5 permissions only | Founder | — |
+| 1.3 | Generate the encryption key and **escrow it off-platform** | Founder | — |
+| 1.4 | Set the seven `BACKUP_*` vars (`vercel env add`, so no secret enters a transcript) | Founder | 1.2, 1.3 |
+| 1.5 | Add the cron; run the seed back-to-back until the report says `complete` | **Me** | 1.4 |
+| 1.6 | **Timed restore rehearsal** (**A3**) — recover, compare checksums, record elapsed | **Me** | 1.5 |
+
+### Phase 2 — Credentials and auth hardening
+
+| # | Action | Owner | Note |
+|---|---|---|---|
+| 2.1 | Create a Supabase **personal access token** | Founder | **One PAT unlocks 2.2 and 2.3** — both are Management API calls, neither needs the dashboard |
+| 2.2 | Password floor → 12 chars, four classes | **Me** | The app already enforces this; the *provider* floor is 6, so `signUp()` walks past it |
+| 2.3 | Leaked-password protection on | **Me** | Pro-gated (1.1) |
+| 2.4 | Create the new **secret key**; revoke the old one after I confirm the swap | Founder | ⚠️ **Never rotate the legacy JWT secret** — it changes the anon key and signs out every user |
+| 2.5 | Swap in Vercel, deploy, verify, hold a rollback | **Me** | 2.4 |
+
+### Phase 3 — Prove it on real data. THE UNKNOWN.
+
+**38 product surfaces have never been opened by a signed-in user** (C8). This phase
+produces the remaining engineering work, and that work cannot be sized before it runs.
+
+| # | Action | Owner |
+|---|---|---|
+| 3.1 | Throwaway staff account | Founder |
+| 3.2 | Drive all 38 surfaces; fix what breaks (**C8**) | **Me** |
+| 3.3 | Supply 8–10 real CVs (anonymised is fine) | Founder |
+| 3.4 | Full loop: intake → onboarding → calibration → spec → sourcing → rank → shortlist | **Me** runs; **founder judges output quality** — that half cannot be delegated |
+| 3.5 | Triangulation report, every PDF export, email drafts in a real mail client | **Me**, founder for the mail client |
+| 3.6 | HM portal end-to-end | Founder — needs a hiring manager who is not us |
+
+### Phase 4 — Operations
+
+| # | Action | Owner |
+|---|---|---|
+| 4.1 | Uptime monitor on `/api/health`, keyword `"ok":true` not just HTTP 200 (**C3**) | Founder, ~5 min |
+| 4.2 | `SENTRY_AUTH_TOKEN` — un-minifies every production stack trace (**C4**) | Founder, one env var |
+| 4.3 | Fill U1–U8 in the incident runbook (**A5**) | Founder |
+| 4.4 | `RESEND_WEBHOOK_SECRET` — without it, bounces are silent | Founder |
+
+> **Hard rule on 4.3:** do not sign a notification window in any contract until U1
+> (incident commander) and U7 (contractual window) are filled. A 72-hour commitment
+> with no named owner is a commitment nobody holds.
+
+### Phase 5 — Commercial close
+
+| # | Action | Owner |
+|---|---|---|
+| 5.1 | Decide "Unlimited users + searches" and "Dedicated success partner" (**A7**) | Founder |
+| 5.2 | Counsel returns the pack; publish the notices | Founder + counsel |
+| 5.3 | Contract, then onboard the client | Founder |
+
+### Critical path
+
+`0.1 → counsel runs in background → 1.x → 3.x → 5.3`
+
+Phase 1 is days once the purchases are made. **Phase 3 is the unknown** and the only
+honest answer about total time is that it depends on what 3.2 and 3.4 find.
+
+**Minimum to start today:** send the legal pack, resolve the two credentials, buy Pro,
+create the R2 bucket. Everything in Phase 1 unblocks within an hour of those four.
+
+### Settled, kept so it is not re-litigated
+
+- ~~Approve the two small production writes~~ — **done 2026-10-08.** Migrations 161
+  (lock verified) and 162 (opus-5 registered at `benchmarking`).
+- ~~Decide C9~~ — **done 2026-10-08.** Escalation refuses a non-active target, which
+  disarms the `generate_evaluation` pair until opus-5 is benchmarked.
+- ~~Decide C10/C11~~ — **done 2026-10-08.** Hop ceiling (163) and dollar spend ceiling
+  with `/ops` cost visibility (164/165).
+- **Stripe is deliberately deferred.** The first client pays directly, so billing is not
+  on this path. It returns as a blocker for client #2 or any self-serve signup.
