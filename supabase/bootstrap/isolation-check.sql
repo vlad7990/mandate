@@ -52,9 +52,23 @@ INSERT INTO auth.users (id, email) VALUES
   (:'usr_a', 'smoke-a@example.invalid'),
   (:'usr_b', 'smoke-b@example.invalid');
 
-INSERT INTO users (id, organization_id, email, full_name, role, status) VALUES
-  (:'usr_a', :'org_a', 'smoke-a@example.invalid', 'SMOKE A', 'admin', 'active'),
-  (:'usr_b', :'org_b', 'smoke-b@example.invalid', 'SMOKE B', 'admin', 'active');
+-- The insert above FIRES `on_auth_user_created`, which has created the
+-- two `public.users` rows already — organization_id NULL, role
+-- 'viewer', status 'pending'. So this is an UPDATE. It used to be an
+-- INSERT, and it worked only because the baseline was silently missing
+-- that trigger (defect 9); once the baseline carried it, the INSERT
+-- became a duplicate key on `users_pkey` and the run died here, before
+-- check 1. A rebuild now behaves like production, which is the point.
+--
+-- The claim stays unset: with it set this reads as a self-edit, and a
+-- trigger refuses that with "only your name may be changed on your own
+-- account".
+UPDATE users SET organization_id = :'org_a', full_name = 'SMOKE A',
+                 role = 'admin', status = 'active'
+ WHERE id = :'usr_a';
+UPDATE users SET organization_id = :'org_b', full_name = 'SMOKE B',
+                 role = 'admin', status = 'active'
+ WHERE id = :'usr_b';
 
 INSERT INTO candidates (id, organization_id, full_name) VALUES
   (:'cnd_a', :'org_a', 'SMOKE Candidate A'),

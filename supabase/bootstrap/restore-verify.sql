@@ -29,12 +29,18 @@
 --     cover has changed and A2 needs re-reasoning, not celebrating.
 --
 --   auth_user_created_trigger   expected 1
---     This is the one check that a schema rebuild CANNOT pass and a
---     real restore must. `on_auth_user_created` lives on `auth.users`,
---     and `schema-reference.sql` captures only the `public` schema, so
---     `apply.sh` produces a database without it. Its presence is the
---     proof that what you are looking at came from a backup of the
---     whole database rather than from the repo.
+--     `on_auth_user_created` lives on `auth.users` and is the only
+--     thing that creates the `public.users` row for a new signup. It is
+--     asserted here because it was absent from `schema-reference.sql`
+--     until 2026-10-10 (defect 9) and a database missing it starts,
+--     matches every other count, and then never creates a user.
+--
+--     It no longer distinguishes a restore from a repo rebuild —
+--     fixing the generator means `apply.sh` produces it too, which was
+--     the point. **The discriminator is the data**: `candidates`,
+--     `auth_users` and `organizations` are 0 on a rebuild and non-zero
+--     on a restore. A rebuild restores shape; only a backup restores
+--     rows.
 --
 -- ## Expected values
 --

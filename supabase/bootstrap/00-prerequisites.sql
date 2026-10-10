@@ -95,9 +95,21 @@ CREATE SCHEMA IF NOT EXISTS storage;
 GRANT USAGE ON SCHEMA auth, storage TO anon, authenticated, service_role;
 
 -- auth.users: public.users.id has a FK onto this.
+--
+-- `raw_user_meta_data` is here because `on_auth_user_created` is now in
+-- the baseline (defect 9) and `handle_new_auth_user()` reads
+-- `NEW.raw_user_meta_data->>'full_name'`. Without the column the
+-- trigger is created successfully and then throws
+-- `record "new" has no field "raw_user_meta_data"` on the first insert
+-- — which is a worse failure than the missing trigger it replaced,
+-- because it breaks signup loudly on a database that passed its counts.
+--
+-- Only the columns something in this repo actually reads. This is not
+-- an attempt to reproduce Supabase's auth.users, which has ~35.
 CREATE TABLE IF NOT EXISTS auth.users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  email text
+  email text,
+  raw_user_meta_data jsonb
 );
 
 -- auth.uid(): returns the signed-in user. The stub returns NULL, so

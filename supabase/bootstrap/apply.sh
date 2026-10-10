@@ -176,7 +176,11 @@ select 'tables='   || (select count(*) from pg_class c join pg_namespace n on n.
     || ' policies='  || (select count(*) from pg_policies where schemaname='public')
     || ' triggers='  || (select count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and not t.tgisinternal)
     || ' rls_on='    || (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and c.relrowsecurity)
-    || ' fks='       || (select count(*) from pg_constraint co join pg_class c on c.oid=co.conrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and co.contype='f')"
+    || ' fks='       || (select count(*) from pg_constraint co join pg_class c on c.oid=co.conrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and co.contype='f')
+    -- Counted separately because 'triggers=' above counts public only,
+    -- which is exactly how defect 9 stayed hidden: the baseline was
+    -- missing on_auth_user_created and the count still read 75.
+    || ' auth_signup_trigger=' || (select count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='auth' and c.relname='users' and t.tgname='on_auth_user_created' and not t.tgisinternal)"
 
 echo
 # Read from production on 2026-10-10, after 166. Update in the same
@@ -188,7 +192,7 @@ echo
 # A3 database rehearsal was about to compare a restored clone against
 # the stale pair and call a correct restore a mismatch.
 echo "Expected, matching production after migration 166:"
-echo "  tables=75 functions=161 policies=261 triggers=75 rls_on=75 fks=328"
+echo "  tables=75 functions=161 policies=261 triggers=75 rls_on=75 fks=328 auth_signup_trigger=1"
 echo
 echo "(baseline alone, before the replay above, is"
-echo "  tables=73 functions=157 policies=261 triggers=75 rls_on=73 fks=328)"
+echo "  tables=73 functions=157 policies=261 triggers=75 rls_on=73 fks=328 auth_signup_trigger=1)"

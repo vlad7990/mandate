@@ -35,9 +35,19 @@ Apply to the live DB via MCP `apply_migration` **and** write the numbered file i
   `job_specs`, `boolean_queries`) was only ever in the live database.
   - Since 2026-10-08 there **is** a local fallback: `supabase/schema-reference.sql`, a
     point-in-time snapshot of the whole `public` schema (73 tables, 154 functions, 261
-    policies, 75 triggers, 395 indexes), generated from the production catalogue by
+    policies, 76 triggers, 395 indexes), generated from the production catalogue by
     `supabase/generate-schema-reference.sql`. Read it to learn the shape of a table
     without a connection.
+    - It is `public` **plus one object outside it**: `on_auth_user_created` on
+      `auth.users`, added 2026-10-10. The generator had filtered every section to
+      `nspname = 'public'`, so the snapshot carried `handle_new_auth_user()` and
+      nothing that fired it, and a rebuilt database **never created a `public.users`
+      row for a signup** — invisibly, because both sides counted `public` triggers
+      only and the count matched at 75. The rule is now the trigger **function's**
+      schema, which excludes Supabase's own 8 non-public triggers by construction.
+      If you add a trigger outside `public` that calls a `public` function, it is
+      captured automatically; the stub `auth.users` in `bootstrap/00-prerequisites.sql`
+      must then carry every column its function reads.
   - **It is not a migration.** Do not replay it over `supabase/migrations/` — those
     migrations ALTER the objects it describes — and do not paste it into `001`. It is the
     base schema *after* 160 migrations, not the original, and a file labelled `001` that

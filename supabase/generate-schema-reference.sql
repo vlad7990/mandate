@@ -13,7 +13,7 @@
 --     pg_dump --schema-only --no-owner --no-privileges "$DATABASE_URL" \
 --       > supabase/schema-reference.sql
 --
--- ## Seven defects this file has already been corrected for
+-- ## Nine defects this file has already been corrected for
 --
 -- The first version of this generator produced a file that looked right
 -- and did not work. Applying it to an empty database produced 1,457
@@ -44,15 +44,39 @@
 --      second silent defect -- like the generated columns, nothing
 --      fails, the rebuild is just wrong.
 --
--- Items 5 and 6 are properties of the APPLY ORDER, not of this file;
+--   8. The baseline was not the whole database: a rebuild stopped at
+--      the snapshot and silently omitted every migration above it.
+--      Fixed in `apply.sh`, which now replays them.
+--   9. `nspname = 'public'` dropped a trigger the product owns.
+--      `on_auth_user_created` sits on `auth.users` and calls
+--      `public.handle_new_auth_user()`, which is the only thing that
+--      creates the `public.users` row for a new signup. Every section
+--      here filtered to `public`, so the snapshot carried the function
+--      and not the trigger that fires it — and migration `002`, which
+--      created it, is far below `BASELINE_MIGRATION`, so the replay did
+--      not put it back either. A rebuilt database started, matched all
+--      its counts, and then **never created an application user for
+--      anyone who signed up**. The trigger count matched production
+--      exactly (75) because both sides counted `public` only, which is
+--      what let it hide. Fourth of the silent-wrongness defects, with
+--      1, 7 and 8. Section 3's trigger CTE is now scoped by the
+--      function's schema; see the comment there for why that and not
+--      the table's.
+--
+-- Items 5, 6 and 8 are properties of the APPLY ORDER, not of this file;
 -- they live in `supabase/bootstrap/apply.sh`.
 --
 -- ## Known differences from pg_dump
 --
 --   * No ownership, no default-privilege ACL replay, no sequences
 --     (the catalogue reports none in `public`).
---   * `public` plus the storage buckets and their policies; nothing
---     from `auth`, `realtime`, `vault` or `graphql`.
+--   * `public`, plus the storage buckets and their policies, plus any
+--     trigger on a non-`public` table whose function lives in `public`
+--     (today exactly one, on `auth.users`). Nothing else from `auth`,
+--     and nothing from `realtime`, `vault` or `graphql`.
+--   * Consequently the stub `auth.users` in
+--     `bootstrap/00-prerequisites.sql` must carry every column that
+--     trigger's function reads, or the trigger exists and throws.
 -- ─────────────────────────────────────────────────────────────────────
 
 
@@ -129,15 +153,32 @@ i as (
     )
 ),
 g as (
-  select pg_get_triggerdef(t.oid) || ';' as ddl, t.tgname, c.relname
+  -- Triggers the PRODUCT owns, wherever they sit -- see defect 9.
+  --
+  -- The test for a non-`public` table is the FUNCTION's schema, not the
+  -- table's. Supabase's own platform triggers (7 on storage.*, 1 on
+  -- realtime.subscription) call storage.* / realtime.* functions that do
+  -- not exist in a bootstrap database and are not ours to recreate;
+  -- emitting them would break the rebuild instead of completing it.
+  --
+  -- Public tables keep the old unconditional rule, so a trigger on a
+  -- public table calling e.g. extensions.moddatetime is still captured.
+  --
+  -- Measured against production 2026-10-10: 76 = the 75 public-table
+  -- triggers, plus `on_auth_user_created`, and none of the 8 platform
+  -- ones.
+  select pg_get_triggerdef(t.oid) || ';' as ddl, t.tgname, c.relname, n.nspname
   from pg_trigger t
   join pg_class c on c.oid = t.tgrelid
   join pg_namespace n on n.oid = c.relnamespace
-  where n.nspname = 'public' and not t.tgisinternal
+  join pg_proc p on p.oid = t.tgfoid
+  join pg_namespace fn on fn.oid = p.pronamespace
+  where not t.tgisinternal
+    and (n.nspname = 'public' or fn.nspname = 'public')
 )
 select coalesce((select string_agg(ddl, E'\n\n' order by relname) from v), '-- none')
     || E'\n\n' || coalesce((select string_agg(ddl, E'\n' order by indexname) from i), '-- none')
-    || E'\n\n' || coalesce((select string_agg(ddl, E'\n' order by relname, tgname) from g), '-- none');
+    || E'\n\n' || coalesce((select string_agg(ddl, E'\n' order by nspname, relname, tgname) from g), '-- none');
 
 
 -- ===== 4. ROW LEVEL SECURITY POLICIES =================================

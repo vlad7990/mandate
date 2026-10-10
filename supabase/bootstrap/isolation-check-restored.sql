@@ -39,12 +39,12 @@
 --      `INSERT INTO users` is a duplicate key, and the run dies on
 --      "users_pkey" before reaching check 1.
 --
---      That trigger lives on `auth.users`, and `schema-reference.sql`
---      captures only the `public` schema — `generate-schema-reference.sql`
---      filters every section to `nspname = 'public'`. So a database
---      built by `apply.sh` does not have it, and a restored one does.
---      `restore-verify.sql` asserts its presence for that reason: it is
---      the one row a repo rebuild cannot fake.
+--      That trigger lives on `auth.users`, and until 2026-10-10 the
+--      snapshot captured only the `public` schema, so a database built
+--      by `apply.sh` did not have it (defect 9). It does now — which
+--      is why `isolation-check.sql` had to stop INSERTing that row too.
+--      The two files still differ, on reason 1 and on tolerating
+--      pre-existing data, so both are still needed.
 --
 -- Trying to serve both shapes from one file would mean branching on
 -- which of those two worlds you are in, in SQL, twice. Two files, each
@@ -105,9 +105,12 @@ BEGIN
        AND t.tgname = 'on_auth_user_created' AND NOT t.tgisinternal
   ) THEN
     RAISE EXCEPTION
-      'on_auth_user_created is missing from auth.users. A restored '
-      'project has it; a database built from schema-reference.sql does '
-      'not, because the snapshot only covers the public schema.';
+      'on_auth_user_created is missing from auth.users. Nothing will '
+      'create the public.users row for a signup, and the setup below '
+      'relies on it. A restored project has this trigger, and since '
+      'defect 9 was fixed a database built from schema-reference.sql '
+      'has it too, so its absence means something is wrong with the '
+      'source rather than with which script you picked.';
   END IF;
 
   SELECT count(*) INTO pre_orgs       FROM organizations;
